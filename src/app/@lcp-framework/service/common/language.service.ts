@@ -1,0 +1,76 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { AuthService } from './auth.service';
+import { LocalStorageService } from './local-storage.service';
+import { Subject } from 'rxjs';
+@Injectable({
+  providedIn: 'root',
+})
+export class LanguageService {
+  private languageDataUpdated = new Subject<any>();
+
+  constructor(private authservice: AuthService, private localstore: LocalStorageService, private http: HttpClient) {}
+
+  private getLanguageIdFromCode(code: string): number {
+    switch (code) {
+      case 'en':
+        return 1;
+      case 'ae':
+        return 2;
+      default:
+        return 1; // Default to en
+    }
+  }
+
+  public getLanguageId(code: string): number {
+    return this.getLanguageIdFromCode(code);
+  }
+
+  public serviceChangeLanguage(companyId: number, languageCode: string) {
+    const languageId = this.getLanguageId(languageCode);
+    this.fetchLanguageData(companyId, languageId);
+
+    localStorage.setItem('languageCode', languageCode);
+    if (!localStorage.getItem('languageReload')) {
+      localStorage.setItem('languageReload', 'true');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  }
+
+  public fetchLanguageData(companyId: number, languageId: number) {
+    const payload = { company_id: companyId, language_id: languageId };
+
+    this.authservice.languageList(payload).subscribe({
+      next: (response: any) => {
+        if (response.code === 200 && response.status) {
+          this.localstore.removeData('lang_contents');
+          const lang_contents = response.data;
+          this.localstore.storeData('lang_contents', JSON.stringify(lang_contents));
+          this.languageDataUpdated.next(lang_contents);
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching language data:', error);
+      },
+    });
+  }
+
+  public getLanguageDataUpdates() {
+    return this.languageDataUpdated.asObservable();
+  }
+
+  public checkReloadFlag() {
+    const languageReload = localStorage.getItem('languageReload');
+    if (languageReload === 'true') {
+      localStorage.removeItem('languageReload');
+      return true;
+    }
+    return false;
+  }
+
+  public getSavedLanguageCode(): string {
+    return localStorage.getItem('languageCode') || 'en'; // Default to 'en'
+  }
+}

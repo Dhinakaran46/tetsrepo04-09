@@ -1,0 +1,5 @@
+<div class="flex flex-wrap rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]" *ngIf="listDatas?.length > 0">
+  <a title="Click to copy" href="javascript:;"
+    class="px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10 val-{{item.value}}" *ngFor="let item of listDatas"
+    (click)="copyContent(item.label)">{{item.label}}</a>
+</div>

@@ -1,0 +1,123 @@
+<h2 class="text-2xl font-bold text-primary">Page Builder</h2>
+
+<div class="panel">
+  <!-- Section 1: Header Section -->
+  <div class="mb-5 space-y-4">
+    <p><strong class="text-black">Introduction</strong></p>
+    <p class="mb-4 bg-black-light/5 p-4">
+      The Static Page Builder is a flexible and dynamic tool that allows developers to create customized web pages within the application using embedded HTML
+      content and data fetched from a PostgreSQL database. By leveraging the Static Page Builder, users can easily design and implement pages that display
+      real-time data, formatted and styled according to specific requirements.
+    </p>
+    <p class="mb-4 bg-black-light/5 p-4">
+      This tool is particularly useful for creating dashboards, reports, or any page where the content needs to be dynamically generated based on the current
+      data in the system. The Static Page Builder combines the power of HTML for designing the layout with SQL queries for retrieving and displaying data,
+      making it a versatile solution for various use cases.
+    </p>
+
+    <p><strong class="text-black">How to Create a Page Using Static Page Builder</strong></p>
+    <p class="mb-4 bg-black-light/5 p-4">To create a page using the Static Page Builder, follow these steps:</p>
+    <ul class="list-inside list-[lower-alpha] space-y-2 pl-5">
+      <li>
+        <strong class="text-black">Define the Entity Information:</strong>
+
+        <ul class="list-inside list-[lower-alpha] space-y-2 pl-5">
+          <li><strong class="text-black">Entity Name:</strong> Choose a meaningful name for the entity, such as "User Grid."</li>
+          <li><strong class="text-black">Entity Type:</strong> Specify the type of entity, which could be a "Grid Builder Module."</li>
+        </ul>
+      </li>
+
+      <li>
+        <strong class="text-black">Embed HTML Content</strong>
+
+        <ul class="list-inside list-[lower-alpha] space-y-2 pl-5">
+          <li>Use the static_page_content field to embed HTML code that defines the layout and structure of the page.</li>
+          <li>
+            You can include placeholders in the HTML where dynamic data will be injected. These placeholders will be replaced with actual data retrieved from
+            the database.
+          </li>
+        </ul>
+      </li>
+
+      <li>
+        <strong class="text-black">Configure Query Information:</strong>
+
+        <ul class="list-inside list-[lower-alpha] space-y-2 pl-5">
+          <li>Use the query_information field to define the SQL query that will fetch the necessary data from the database.</li>
+          <li>This includes specifying the tables, columns, join conditions, filters, and sorting criteria.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div>
+      <p class="pb-5"><strong> Example of Creating a Page</strong></p>
+      <p class="pb-5">Below is an example configuration for creating a "User Grid" page using the Static Page Builder:</p>
+      <p class="pb-5"><strong> Screenshot </strong></p>
+      <img class="w-90 inline ltr:-ml-1 rtl:-mr-1" src="assets/images/documentation/add-page-builder.png" alt appDynamicFontSize="headerlogo" />
+      <p class="pb-5 pt-5"><strong>Static Page Content (HTML)</strong></p>
+      <pre><code  language="xml" [highlight]="staticpagecontent">
+        
+              </code></pre>
+
+      <p class="pb-5 pt-5">
+        This HTML code generates a table with columns for Email, First Name, Last Name, Role, and Status. The `#each data_list` block is where the dynamic data
+        will be inserted.
+      </p>
+
+      <p class="pb-5 pt-5"><strong>Query Information (Postgres)</strong></p>
+      <pre><code  language="json" highlight="{
+        'group_by': [
+            'users.id',
+            'user_details.first_name',
+            'user_details.last_name'
+        ],
+        'includes': [
+            {
+                'join_type': 'INNER',
+                'table_name': 'user_details',
+                'join_condition': 'user_details.user_id = users.id'
+            }
+        ],
+        'company_id': 1,
+        'limit_range': 10,
+        'print_query': true,
+        'start_index': 0,
+        'sort_columns': [
+            [
+                'users.id',
+                'desc'
+            ]
+        ],
+        'primary_table': 'users',
+        'select_columns': [
+            [
+                'users.email',
+                'email'
+            ],
+            [
+                'users.role',
+                'role'
+            ],
+            [
+                'users.status_id',
+                'status_id'
+            ],
+            [
+                'user_details.first_name',
+                'first_name'
+            ],
+            [
+                'user_details.last_name',
+                'last_name'
+            ]
+        ]
+    }
+    ">
+        
+              </code></pre>
+
+      <p class="pb-5 pt-5"><strong>Page Builder Output:</strong></p>
+      <img class="w-90 inline ltr:-ml-1 rtl:-mr-1" src="assets/images/documentation/page-builder-output.png" alt appDynamicFontSize="headerlogo" />
+    </div>
+  </div>
+</div>

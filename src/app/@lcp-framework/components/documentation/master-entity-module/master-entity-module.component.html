@@ -1,0 +1,103 @@
+<h2 class="text-2xl font-bold text-primary">Master Entity</h2>
+
+<div class="panel">
+  <!-- Section 1: Header Section -->
+  <div class="mb-5 space-y-4">
+    <p><strong class="text-black">Introduction</strong></p>
+    <p class="mb-4 bg-black-light/5 p-4">
+      The Master Entity page is a powerful tool that allows users to manage and interact with a list of entities stored in the backend database. This page
+      presents the data in a common datatable format, making it easy to view, filter, and manipulate the information. The Master Entity is designed to be highly
+      flexible, accommodating various use cases by allowing customization of the data presentation, filtering options, and export capabilities. It serves as a
+      central point for managing different entities across the application, streamlining workflows and enhancing productivity.
+    </p>
+
+    <p><strong class="text-black">Master Entity Add/Edit Screen:</strong></p>
+    <p class="mb-4 bg-black-light/5 p-4">
+      The Master Entity Add/Edit screen is designed to provide a seamless experience for creating and managing entities within the system. This screen allows
+      users to define the parameters of a new entity or modify an existing one. Below are the key fields and functionalities available on this screen:
+    </p>
+    <ul class="list-inside list-[lower-alpha] space-y-2 pl-5">
+      <li>
+        <strong class="text-black">Entity Name:</strong>This is the name of the entity being created or edited. For example, the entity name could be "User
+        Grid."
+      </li>
+      <li>
+        <strong class="text-black">Entity Type:</strong>
+        Defines the type of entity being managed. In this case, it could be a "Grid Builder Module," which specifies that the entity is a part of the
+        grid-building framework within the application.
+      </li>
+
+      <li>
+        <strong class="text-black">Choose Entity Permission:</strong>
+        This section allows you to assign permissions to the entity, including options like view, add, edit, delete, view details, and export. These permissions
+        control what actions users can perform on this entity.
+      </li>
+
+      <li>
+        <strong class="text-black">Primary Table:</strong>
+        This is the main database table associated with the entity. For example, the primary table could be 'users,' indicating that the data for this entity
+        will be fetched from the users' table.
+      </li>
+
+      <li>
+        <strong class="text-black">Query Information:</strong>
+        This section is crucial for defining how data is fetched and displayed for the entity. It includes:
+        <ul class="list-inside list-[lower-alpha] space-y-2 pl-5">
+          <li>
+            <strong class="text-black">Includes:</strong>Specifies the tables to be joined with the primary table and the join conditions. For example, in a
+            query, you might join the 'users' table with another table to retrieve additional related information.
+          </li>
+          <li>
+            <strong class="text-black">Group By:</strong>Defines the fields by which the data should be grouped. Grouping helps in aggregating data and
+            displaying it in a meaningful way.
+          </li>
+          <li>
+            <strong class="text-black">Order By:</strong>Specifies the order in which the data should be sorted. This ensures that the data is displayed in a
+            logical and user-friendly manner.
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <div>
+      <p class="pb-5"><strong> Screenshot</strong></p>
+      <img class="w-90 inline ltr:-ml-1 rtl:-mr-1" src="assets/images/documentation/add-grid-builder.png" alt appDynamicFontSize="headerlogo" />
+      <p class="pb-5 pt-5"><strong>Query Information Code Snippet</strong></p>
+      <pre><code  language="json" highlight="{
+        'name': 'Route Outlet Mapping Grid', 
+        'entity_name': 'route_outlet_mapping',  // This is the name of the entity being created or edited.
+        'entity_type': 'grid_builder_module', // Defines the type of entity being managed.
+        
+        'primary_table': 'routes', // This is the main database table associated with the entity. 
+        'query_information': { // Defining how data is fetched and displayed for the entity. 
+          'group_by': [ // Defines the fields by which the data should be grouped
+            'route_outlet_mappings.route_id,routes.code, routes.id'
+          ],
+          'includes': [ // Specifies the tables to be joined with the primary table and the join conditions.
+            {
+              'join_type': 'LEFT',
+              'table_name': 'route_outlet_mappings',
+              'join_condition': 'routes.id = route_outlet_mappings.route_id'
+            }
+          ]
+        }">
+        
+              </code></pre>
+
+      <p class="pb-5 pt-5"><strong>Raw Query comes like below</strong></p>
+      <pre><code  language="xml" highlight="SELECT users.id AS user_id, users.name AS user_name, COUNT(DISTINCT user_roles.role_id) AS role_count 
+        FROM users 
+        LEFT JOIN user_roles ON users.id = user_roles.user_id 
+        WHERE users.status_id != '3' 
+        GROUP BY users.id, users.name 
+        ORDER BY users.name ASC 
+        LIMIT 10 OFFSET 0
+        ">
+        
+              </code></pre>
+
+      <p class="pb-5 pt-5"><strong>Entity List Page Output:</strong></p>
+      <img class="w-90 inline ltr:-ml-1 rtl:-mr-1" src="assets/images/documentation/entity-list-module.png" alt appDynamicFontSize="headerlogo" />
+    </div>
+  </div>
+</div>

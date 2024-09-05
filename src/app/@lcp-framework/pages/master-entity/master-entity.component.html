@@ -1,0 +1,667 @@
+<div [formGroup]="form">
+  <div class="panel">
+    <div class="flex flex-wrap justify-between">
+      <div class="text-md font-bold uppercase">{{ editTitle ?
+        'title_edit_entity' : 'title_add_entity' | translate }}</div>
+      <div class="relative inline-flex align-middle">
+        <button type="button"
+          class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l"
+          (click)="location.back()">{{ 'back' | translate }}</button>
+        <button type="button" [disabled]="isFormInvalid()"
+          class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l"
+          (click)="onSubmit()">
+          {{ 'submit' | translate }}
+        </button>
+      </div>
+    </div>
+    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+    <div class="mt-2">
+      <div class="flex flex-col justify-between">
+        <div
+          class="grid grid-cols-1 gap-2"
+          [ngClass]="{
+            'md:grid-cols-4': [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE].includes(
+              form.get('entityType')?.value
+            ),
+            'md:grid-cols-3': ![commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE].includes(
+              form.get('entityType')?.value
+            )
+          }">
+          <div class="mt-0">
+            <label for="name" class="required-mark mb-2 block font-medium">{{
+              'form_label_name' | translate }}</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_name_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('name') }" />
+            <div *ngIf="isFieldInvalid('name')"
+              class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('name') }}
+            </div>
+          </div>
+          <div class="mt-0">
+            <label for="entityType"
+              class="required-mark mb-2 block font-medium">{{
+              'form_label_entity_type' | translate }}</label>
+            <select
+              id="entityType"
+              formControlName="entityType"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('entityType') }"
+              appDynamicFontSize="body">
+              <option value>{{ 'form_label_entity_type_dropdown' | translate
+                }}</option>
+              <ng-container *ngFor="let item of entity_types">
+                <option [value]="item.value">{{ item.label }}</option>
+              </ng-container>
+            </select>
+            <div *ngIf="isFieldInvalid('entityType')"
+              class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('entityType') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="permissions"
+              class="required-mark mb-2 block font-medium">{{
+              'form_label_permissions' | translate }}</label>
+            <ng-select
+              [multiple]="true"
+              id="permissions"
+              formControlName="permissions"
+              appDynamicFontSize="body"
+              class="custom-multiselect"
+              [clearable]="false"
+              placeholder="Select an option"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('permissions') }">
+              @for (item of action_types; track item.id) {
+              <ng-option [value]="item.value">{{ item.label | translate
+                }}</ng-option>
+              }
+            </ng-select>
+            <div *ngIf="isFieldInvalid('permissions')"
+              class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('permissions') }}
+            </div>
+          </div>
+
+          <ng-container
+            *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+            <div class="mt-0">
+              <label for="primaryTable"
+                class="required-mark mb-2 block font-medium">{{
+                'form_label_primary_table' | translate }}</label>
+              <select
+                id="primaryTable"
+                formControlName="primaryTable"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('primaryTable') }"
+                appDynamicFontSize="body">
+                <option value>{{ 'form_label_primary_table_dropdown' | translate
+                  }}</option>
+                <ng-container *ngFor="let item of tables_list">
+                  <option [value]="item">{{ item | translate }}</option>
+                </ng-container>
+              </select>
+
+              <div *ngIf="isFieldInvalid('primaryTable')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('primaryTable') }}
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-container
+            *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE">
+            <div class="mt-0">
+              <label for="wizardType"
+                class="required-mark mb-2 block font-medium">{{
+                'form_label_wizard_type' | translate }}</label>
+              <select
+                id="wizardType"
+                formControlName="wizardType"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('wizardType') }"
+                appDynamicFontSize="body">
+                <option value>{{ 'form_label_wizard_type_dropdown' | translate
+                  }}</option>
+                <ng-container *ngFor="let item of wizard_type_list">
+                  <option [value]="item.value">{{ item.label | translate
+                    }}</option>
+                </ng-container>
+              </select>
+
+              <div *ngIf="isFieldInvalid('wizardType')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('wizardType') }}
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="wizardGroup"
+                class="required-mark mb-2 block font-medium"> {{
+                'form_label_wizard_group' | translate }}</label>
+              <div class="mt-1.5 flex items-center space-x-2">
+                <!-- Wizard Group Select -->
+                <ng-select
+                  id="wizardGroup"
+                  formControlName="wizardGroup"
+                  appDynamicFontSize="body"
+                  class="custom-multiselect min-w-[200px] flex-grow"
+                  [clearable]="false"
+                  placeholder="{{ 'select_wizard_group' | translate }}"
+                  [ngClass]="{ 'is-invalid': isFieldInvalid('wizardGroup') }">
+                  <ng-option value>
+                    {{ 'form_label_wizard_group_dropdown' | translate }}
+                  </ng-option>
+                  @for (group of wizardGroups; track group.id) {
+                  <ng-option [value]="group.id">{{ group.name }}</ng-option>
+                  }
+                </ng-select>
+                <button
+                  aria-expanded="true"
+                  aria-haspopup="true"
+                  (click)="showAddNewWizardGroup()"
+                  type="button"
+                  class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+                  appDynamicFontSize="body">
+                  <i class="fas fa-plus fa-xl"></i>&nbsp;
+                </button>
+
+                <div *ngIf="isFieldInvalid('wizardGroup')"
+                  class="invalid-feedback mt-1 text-danger">
+                  {{ getErrorMessage('wizardGroup') }}
+                </div>
+
+                <div
+                  *ngIf="showWizardGroupMenu"
+                  aria-labelledby="options-menu"
+                  aria-orientation="vertical"
+                  class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                  role="menu">
+                  <form [formGroup]="wizardGroupForm"
+                    (ngSubmit)="addNewWizardGroup()">
+                    <!-- Header -->
+                    <div
+                      class="flex items-center justify-between border-b border-gray-200 p-4">
+                      <span>{{ 'add_new_wizard_group' | translate }}</span>
+
+                      <div class="flex items-center gap-4">
+                        <button type="button" class="close"
+                          (click)="cancelAddWizardGroup()">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Body -->
+                    <!-- Body -->
+                    <ng-scrollbar class="relative !h-[calc(40vh-40px)]"
+                      appearance="compact">
+                      <div class="space-y-2 p-4">
+                        <div class="form-group">
+                          <label for="newWizardGroupName">{{ 'wizard_group_name'
+                            | translate }}</label>
+                          <input
+                            type="text"
+                            class="form-input"
+                            id="newWizardGroupName"
+                            formControlName="name"
+                            [ngClass]="{ 'is-invalid': isWizardGroupFieldInvalid('name') }" />
+                          <div *ngIf="isWizardGroupFieldInvalid('name')"
+                            class="invalid-feedback">
+                            {{ getWizardGroupErrorMessage('name') }}
+                          </div>
+                        </div>
+                      </div>
+                    </ng-scrollbar>
+
+                    <!-- Footer -->
+                    <div
+                      class="flex items-center justify-between border-t border-gray-200 p-4">
+                      <button
+                        type="button"
+                        class="btn btn-secondary mr-3 ltr:rounded-r rtl:rounded-l"
+                        appDynamicFontSize="body"
+                        (click)="cancelAddWizardGroup()">
+                        {{ 'cancel' | translate }}
+                      </button>
+                      <button type="submit" class="btn btn-primary"
+                        appDynamicFontSize="body"
+                        [disabled]="wizardGroupForm.invalid">
+                        {{ 'submit' | translate }}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="dashboard_wizard_rows"
+                class="required-mark mb-2 block font-medium">{{
+                'form_label_dashboard_wizard_rows' | translate }}</label>
+              <input
+                id="dashboard_wizard_rows"
+                type="number"
+                formControlName="dashboard_wizard_rows"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_dashboard_wizard_rows_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_rows') }" />
+              <div *ngIf="isFieldInvalid('dashboard_wizard_rows')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('dashboard_wizard_rows') }}
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="dashboard_wizard_columns"
+                class="required-mark mb-2 block font-medium">{{
+                'form_label_dashboard_wizard_columns' | translate }}</label>
+              <input
+                id="dashboard_wizard_columns"
+                type="number"
+                formControlName="dashboard_wizard_columns"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_dashboard_wizard_columns_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_columns') }" />
+              <div *ngIf="isFieldInvalid('dashboard_wizard_columns')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('dashboard_wizard_columns') }}
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="dashboard_wizard_order_no"
+                class="required-mark mb-2 block font-medium">{{
+                'form_label_dashboard_wizard_order_no' | translate
+                }}</label>
+              <input
+                id="dashboard_wizard_order_no"
+                type="number"
+                formControlName="dashboard_wizard_order_no"
+                appDynamicFontSize="body"
+                step="0.01"
+                min="0.01"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_dashboard_wizard_order_no_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_order_no') }" />
+              <div *ngIf="isFieldInvalid('dashboard_wizard_order_no')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('dashboard_wizard_order_no') }}
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <ng-container
+          *ngIf="
+            [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE, commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE].includes(
+              form.get('entityType')?.value
+            )
+          ">
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div class="mt-3">
+              <label for="queryInformation" class="mb-2 block font-medium">{{
+                'form_label_query_information' | translate }}</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="editorOptions"
+                  id="queryInformation"
+                  formControlName="queryInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('queryInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('queryInformation') }}
+              </div>
+            </div>
+
+            <div class="mt-3"
+              *ngIf="[commonConfig.WIZARD_TYPES.CHART].includes(form.get('wizardType')?.value)">
+              <label for="dashboard_wizard_options"
+                class="mb-2 block font-medium">{{
+                'form_label_dashboard_wizard_content_json' | translate
+                }}</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="editorOptions"
+                  id="dashboard_wizard_options"
+                  formControlName="dashboard_wizard_options"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('dashboard_wizard_options')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('dashboard_wizard_options') }}
+              </div>
+            </div>
+
+            <div
+              class="mt-3"
+              *ngIf="
+                [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE].includes(form.get('entityType')?.value) ||
+                [commonConfig.WIZARD_TYPES.STATIC].includes(form.get('wizardType')?.value)
+              ">
+              <label for="staticPageContent" class="mb-2 block font-medium">
+                {{
+                form.get('entityType')?.value ===
+                commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE
+                ? ('form_label_dashboard_wizard_content_html' | translate)
+                : ('form_label_static_page_Content' | translate)
+                }}
+              </label>
+
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="htmlEditorOptions"
+                  id="staticPageContent"
+                  formControlName="staticPageContent"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('staticPageContent')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('staticPageContent') }}
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container
+          *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE].includes(form.get('entityType')?.value)">
+          <div class="grid grid-cols-1 gap-2">
+            <div class="mt-3">
+              <label for="queryInformation" class="mb-2 block font-medium">{{
+                'form_label_query_information' | translate }}</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="editorOptions"
+                  id="queryInformation"
+                  formControlName="queryInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('queryInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('queryInformation') }}
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container
+          *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE">
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div class="mt-5">
+              <label for="formInformation" class="mb-2 block font-medium">Form
+                Information</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor [options]="editorOptions"
+                  id="formInformation" formControlName="formInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('formInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('formInformation') }}
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <label for="queryInformation" class="mb-2 block font-medium">
+                {{ 'form_label_query_information' | translate }}
+                <i class="fas" [ngClass]="isDarkTheme ? 'fa-sun' : 'fa-moon'"
+                  aria-hidden="true" (click)="toggleTheme()"
+                  class="ml-2 cursor-pointer"></i>
+              </label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor [options]="editorOptions"
+                  id="queryInformation" formControlName="queryInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('queryInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('queryInformation') }}
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <label for="addQueryInformation"
+                class="mb-2 block font-medium">Add JSON Structure</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  [options]="editorOptions"
+                  id="addQueryInformation"
+                  formControlName="addQueryInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('addQueryInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('addQueryInformation') }}
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <label for="editQueryInformation"
+                class="mb-2 block font-medium">Edit JSON Structure</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  [options]="editorOptions"
+                  id="editQueryInformation"
+                  formControlName="editQueryInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('editQueryInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('editQueryInformation') }}
+              </div>
+            </div>
+
+            <div class="mt-5">
+              <label for="presetQueryInformation"
+                class="mb-2 block font-medium">Preset JSON Structure</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  [options]="editorOptions"
+                  id="presetQueryInformation"
+                  formControlName="presetQueryInformation"
+                  class="monaco-editor"></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('presetQueryInformation')"
+                class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('presetQueryInformation') }}
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <ng-container
+      *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+      <div class="mt-5 flex flex-wrap justify-between">
+        <div class="text-md required-mark font-bold">{{
+          'title_entity_line_items' | translate }}</div>
+        <div class="relative inline-flex align-middle">
+          <button (click)="addItem()" type="button"
+            class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
+            <i class="fa-solid fa-plus"></i>&nbsp;
+          </button>
+        </div>
+      </div>
+      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+      <div class="mt-2">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th class="required-mark">{{ 'table_field_name' | translate
+                  }}</th>
+                <th class="required-mark">{{ 'table_display_name' | translate
+                  }}</th>
+                <th class="required-mark">{{ 'table_order_no' | translate
+                  }}</th>
+                <th>{{ 'table_is_grid_column' | translate }}</th>
+                <th>{{ 'table_is_searchable' | translate }}</th>
+                <th>{{ 'table_is_sortable' | translate }}</th>
+                <th>{{ 'table_field_type' | translate }}</th>
+                <th>{{ 'table_action' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <ng-container *ngIf="itemsControls.length <= 0">
+                <tr>
+                  <td colspan="5" class="!text-center font-semibold">{{
+                    'no_records_found' | translate }}</td>
+                </tr>
+              </ng-container>
+              <ng-container *ngFor="let item of itemsControls; index as i"
+                [formGroupName]="i">
+                <tr class="align-top">
+                  <td>
+                    <div class="mb-2">
+                      <input
+                        [id]="'fieldName' + i"
+                        type="text"
+                        formControlName="fieldName"
+                        appDynamicFontSize="body"
+                        placeholder="{{ 'table_field_name_placeholder' | translate }}"
+                        class="form-input"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldName') }" />
+                      <div *ngIf="isItemFieldInvalid(i, 'fieldName')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'fieldName') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <input
+                        [id]="'displayName' + i"
+                        type="text"
+                        formControlName="displayName"
+                        appDynamicFontSize="body"
+                        placeholder="{{ 'table_display_name_placeholder' | translate }}"
+                        class="form-input"
+                        (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'displayName') }" />
+                      <div *ngIf="isItemFieldInvalid(i, 'displayName')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'displayName') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <input
+                        [id]="'orderNo' + i"
+                        type="number"
+                        formControlName="orderNo"
+                        appDynamicFontSize="body"
+                        placeholder="{{ 'table_order_no_placeholder' | translate }}"
+                        class="form-input"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'orderNo') }" />
+                      <div *ngIf="isItemFieldInvalid(i, 'orderNo')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'orderNo') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <select
+                        [id]="'isGridColumn' + i"
+                        formControlName="isGridColumn"
+                        appDynamicFontSize="body"
+                        class="form-select"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isGridColumn') }">
+                        <option value selected disabled>{{ 'select_any' |
+                          translate }}</option>
+                        <option value="true">{{ 'yes' | translate }}</option>
+                        <option value="false">{{ 'no' | translate }}</option>
+                      </select>
+                      <div *ngIf="isItemFieldInvalid(i, 'isGridColumn')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'isGridColumn') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <select
+                        [id]="'isSearchable' + i"
+                        formControlName="isSearchable"
+                        appDynamicFontSize="body"
+                        class="form-select"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSearchable') }">
+                        <option value selected disabled>{{ 'select_any' |
+                          translate }}</option>
+                        <option value="true">{{ 'yes' | translate }}</option>
+                        <option value="false">{{ 'no' | translate }}</option>
+                      </select>
+                      <div *ngIf="isItemFieldInvalid(i, 'isSearchable')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'isSearchable') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <select
+                        [id]="'isSortable' + i"
+                        formControlName="isSortable"
+                        appDynamicFontSize="body"
+                        class="form-select"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSortable') }">
+                        <option value selected disabled>{{ 'select_any' |
+                          translate }}</option>
+                        <option value="true">{{ 'yes' | translate }}</option>
+                        <option value="false">{{ 'no' | translate }}</option>
+                      </select>
+                      <div *ngIf="isItemFieldInvalid(i, 'isSortable')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'isSortable') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <select
+                        [id]="'fieldType' + i"
+                        formControlName="fieldType"
+                        appDynamicFontSize="body"
+                        class="form-select"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldType') }">
+                        <option value selected disabled>{{ 'select_any' |
+                          translate }}</option>
+                        <ng-container *ngFor="let fieldType of field_types">
+                          <option [value]="fieldType.value">{{ fieldType.label |
+                            translate }}</option>
+                        </ng-container>
+                      </select>
+                      <div *ngIf="isItemFieldInvalid(i, 'fieldType')"
+                        class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'fieldType') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <button type="button" (click)="removeItem(i)"><i
+                        class="fa-solid fa-xmark text-xl"></i>&nbsp;</button>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

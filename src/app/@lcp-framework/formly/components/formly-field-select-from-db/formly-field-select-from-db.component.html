@@ -1,0 +1,20 @@
+<!-- <div class="form-group">
+  <select class="form-control" [formControl]="formControl" [formlyAttributes]="field"
+    [multiple]="to['multiple'] || false">
+    <option [value]="null" disabled>{{ to.placeholder || 'Select an option' }}</option>
+    <option *ngFor="let option of static_options$ | async" [value]="option.value">
+      {{ option.label }}
+    </option>
+    <option *ngFor="let option of options$ | async" [value]="option.value">
+      {{ option.label }}
+    </option>
+  </select>
+</div> -->
+<ng-select [readonly]="to['readonly'] || false" *ngIf="to['table']" bindLabel="label" bindValue="value"
+  [formControl]="formControl" [formlyAttributes]="field" [items]="options$ | async" [multiple]="to['multiple'] || false"
+  [clearable]="false" placeholder="{{ to.placeholder || 'Select an option' }}" class="custom-multiselect">
+</ng-select>
+<ng-select *ngIf="!to['table']" bindLabel="label" bindValue="value" [formControl]="formControl"
+  [formlyAttributes]="field" [items]="static_options$ | async" [multiple]="to['multiple'] || false" [clearable]="false"
+  placeholder="{{ to.placeholder || 'Select an option' }}" class="custom-multiselect">
+</ng-select>

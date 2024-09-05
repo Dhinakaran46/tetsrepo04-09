@@ -1,0 +1,14 @@
+.monaco-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 50vh; /* Initial height */
+  resize: vertical; /* Allow vertical resizing only */
+  overflow: auto; /* Ensure the content remains scrollable if needed */
+  min-height: 60vh; /* Set a minimum height to prevent collapsing */
+  max-height: 100vh; /* Prevent the container from exceeding the viewport height */
+}
+
+.monaco-editor {
+  flex: 1;
+  width: 100%;
+}

@@ -1,0 +1,108 @@
+<div class="relative min-h-screen bg-[#fafafa] font-nunito text-base font-medium text-black antialiased">
+  <div class="flex">
+    <!-- Sidebar -->
+    <div
+      class="sidebar fixed -left-[260px] top-0 z-[51] w-[260px] flex-none bg-white shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] duration-500 lg:relative lg:left-0"
+    >
+      <div class="sticky top-0">
+        <div class="p-3">
+          <a routerLink="/" class="inline-flex items-center gap-2">
+            <img class="ml-[5px] w-8 flex-none" src="assets/images/logo.svg" alt="logo" />
+            <span class="text-2xl font-semibold">LCP</span>
+          </a>
+        </div>
+        <div class="h-[calc(100vh_-_60px)] overflow-auto border-t border-dashed border-black-light/30 pb-5">
+          <ul class="text-[15px] font-semibold">
+            <li>
+              <a
+                href="javascript:void(0);"
+                (click)="currentSection = 'getting-started'"
+                class="block px-4 py-2 duration-500 hover:bg-black-light/10 hover:pl-6 hover:text-primary"
+              >
+                Getting Started
+              </a>
+            </li>
+            <li>
+              <a
+                href="javascript:void(0);"
+                (click)="currentSection = 'app-installation'"
+                class="block px-4 py-2 duration-500 hover:bg-black-light/10 hover:pl-6 hover:text-primary"
+              >
+                App Installation
+              </a>
+            </li>
+            <li>
+              <a
+                href="javascript:void(0);"
+                (click)="currentSection = 'master-entity-module'"
+                class="block px-4 py-2 duration-500 hover:bg-black-light/10 hover:pl-6 hover:text-primary"
+              >
+                Master Entity Module
+              </a>
+            </li>
+            <li>
+              <a
+                href="javascript:void(0);"
+                (click)="currentSection = 'static-page-module'"
+                class="block px-4 py-2 duration-500 hover:bg-black-light/10 hover:pl-6 hover:text-primary"
+              >
+                Page Builder
+              </a>
+            </li>
+            <li>
+              <a
+                href="javascript:void(0);"
+                (click)="currentSection = 'dashboard-wizard-module'"
+                class="block px-4 py-2 duration-500 hover:bg-black-light/10 hover:pl-6 hover:text-primary"
+              >
+                Dashboard Wizard
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1">
+      <header class="sticky top-0 z-10 bg-white py-2.5 shadow-md">
+        <div class="flex items-center justify-between px-4">
+          <a href="/" class="flex items-center lg:hidden">
+            <img class="ml-[5px] w-8 flex-none" src="/assets/images/logo.svg" alt="logo" />
+          </a>
+          <p class="hidden text-xl font-bold lg:block">Documentation</p>
+        </div>
+      </header>
+
+      <div class="p-6">
+        <div class="mx-auto grid max-w-7xl grid-cols-1">
+          <div class="space-y-5">
+            <div [ngSwitch]="currentSection">
+              <div *ngSwitchCase="'getting-started'">
+                <app-getting-started />
+              </div>
+
+              <div *ngSwitchCase="'app-installation'">
+                <app-installation />
+              </div>
+
+              <div *ngSwitchCase="'master-entity-module'">
+                <app-master-entity-module />
+              </div>
+              <div *ngSwitchCase="'static-page-module'">
+                <app-page-builder />
+              </div>
+              <div *ngSwitchCase="'dashboard-wizard-module'">
+                <app-dashboard-wizard />
+              </div>
+
+              <div *ngSwitchDefault>
+                <p>Select an option from the sidebar to view its content.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

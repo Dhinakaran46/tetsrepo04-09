@@ -1,0 +1,577 @@
+import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+
+import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
+import { TranslateService } from '@ngx-translate/core';
+import { ToastrService } from 'ngx-toastr';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { BooleanStatusPipe } from '../../pipes/boolean/boolean-status.pipe';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { CommonSharedModule } from '../../shared/common/common.module';
+import { Store } from '@ngrx/store';
+import { commonConfig } from '../../config/common.config';
+
+import { DatePipe } from '@angular/common';
+
+interface SearchCondition {
+  id: string;
+  label: string;
+  value: string;
+}
+interface SearchConditions {
+  [key: number]: SearchCondition[];
+}
+
+interface InputTypes {
+  [key: number]: string;
+}
+
+@Component({
+  selector: 'app-datatable',
+  standalone: true,
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe],
+  templateUrl: './datatable.component.html',
+  styleUrl: './datatable.component.scss',
+  animations: [
+    trigger('toggleAnimation', [
+      transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
+      transition(':leave', [animate('75ms', style({ opacity: 0, transform: 'scale(0.95)' }))]),
+    ]),
+  ],
+})
+export class DataTableComponent implements OnInit, OnChanges {
+  @ViewChild('searchInput') searchInput!: ElementRef;
+  store: any;
+  @Input() customTemplates: { [key: string]: TemplateRef<any> } = {};
+  @Input() title: any = '';
+  @Input() enableCheckBox: boolean = false;
+
+  @Input() masterInfo: any = [];
+  @Input() selectcolumns: any[] = [];
+  @Input() headercolumns: any[] = [];
+  @Input() items: any[] = [];
+  @Input() totalItems: number = 0;
+  @Input() currentPage: number = 1;
+  @Input() resultsPerPage: any = 10;
+  @Input() column: any = '';
+  @Input() query: any = '';
+  @Output() delete = new EventEmitter<any>();
+  @Output() edit = new EventEmitter<any>();
+  @Output() view = new EventEmitter<any>();
+  @Output() customAction = new EventEmitter<any>();
+  @Output() pageChange = new EventEmitter<{ page: number; start_index: number }>();
+  @Output() exportType = new EventEmitter<{ type: string }>();
+  @Output() resultsPerPageChange = new EventEmitter<{ resultsPerPage: number; start_index: number }>();
+  @Output() columnSort = new EventEmitter<any>();
+  @Output() searchQuery = new EventEmitter<any>();
+  @Output() advancedSearchQuery = new EventEmitter<any>();
+
+  search = '';
+  selectedColumns: any[] = [];
+  selectedColumn = '';
+  searchCondition: string = 'contains';
+  selectedItems: any[] = [];
+
+  totalPages: number = 1;
+  filteredItems: any[] = [];
+  filteredColumns: any[] = [];
+
+  textClass: string = '';
+
+  isMenuOpen = false;
+  filterCondition: any = true;
+  filterConditions: Array<{ field: string; operator: string; value: string }> = [];
+  selectedColumnType: any = 1;
+  currentSearchConditions: any = [];
+  field_types = commonConfig.field_types;
+  inputTypes: InputTypes = commonConfig.field_type;
+  searchConditions: SearchConditions = commonConfig.search_conditions;
+
+  mapConditionToSQL = (condition: any) => {
+    switch (condition) {
+      case 'contains':
+        return 'ILIKE';
+      case 'not_contains':
+        return 'NOT ILIKE';
+      case 'starts_with':
+        return 'ILIKE';
+      case 'ends_with':
+        return 'ILIKE';
+      case 'is_empty':
+        return '=';
+      case 'is_not_empty':
+        return '<>';
+      case 'is_null':
+        return 'IS NULL';
+      case 'is_not_null':
+        return 'IS NOT NULL';
+      default:
+        return condition;
+    }
+  };
+
+  addWildcards = (condition: any, value: any) => {
+    switch (condition) {
+      case 'contains':
+        return `%${value}%`;
+      case 'not_contains':
+        return `%${value}%`;
+      case 'starts_with':
+        return `${value}%`;
+      case 'ends_with':
+        return `%${value}`;
+      default:
+        return value;
+    }
+  };
+
+  dropdownSettings = {
+    singleSelection: false,
+    idField: 'field',
+    textField: 'title',
+    selectAllText: 'Select All',
+    unSelectAllText: 'UnSelect All',
+    itemsShowLimit: 3,
+    allowSearchFilter: true,
+    searchPlaceholderText: 'Search',
+  };
+
+  constructor(private translate: TranslateService, private toastr: ToastrService, public storeData: Store<any>, public datePipe: DatePipe) {
+    this.initStore();
+  }
+
+  ngOnInit() {
+    this.headercolumns.forEach((col) => {
+      col.sortDirection = '';
+      col.colFilterHide = false;
+    });
+
+    this.filteredItems = [...this.items];
+    this.translate.get(['table_multiselect_0', 'table_multiselect_3']).subscribe((translations) => {
+      this.dropdownSettings = {
+        singleSelection: false,
+        idField: 'field',
+        textField: 'title',
+        selectAllText: translations['table_multiselect_0'],
+        unSelectAllText: translations['table_multiselect_0'],
+        itemsShowLimit: 3,
+        allowSearchFilter: true,
+        searchPlaceholderText: translations['table_multiselect_3'],
+      };
+    });
+  }
+
+  /* advanced search filter functions */
+  updateFilterConditions() {
+    this.currentSearchConditions = this.searchConditions[this.selectedColumnType] || [];
+  }
+  getOperatorsForColumn(column: string): SearchCondition[] {
+    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
+    return this.searchConditions[columnType] || [];
+  }
+
+  getInputTypeForColumn(column: string): string {
+    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
+    return this.inputTypes[columnType] || 'text';
+  }
+
+  onColumnChange(event: Event, index: number) {
+    const target = event.target as HTMLSelectElement;
+    const column = target.value;
+
+    this.filterConditions[index].field = column;
+
+    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
+    this.filterConditions[index].operator = this.searchConditions[columnType][0].value;
+    this.filterConditions[index].value = '';
+    this.currentSearchConditions = this.searchConditions[columnType] || [];
+  }
+
+  toggleMenu() {
+    this.isMenuOpen = !this.isMenuOpen;
+    if (this.isMenuOpen && this.filterConditions.length == 0) {
+      this.addCondition();
+    }
+  }
+
+  addCondition() {
+    this.filterConditions.push({
+      field: '',
+      operator: '',
+      value: '',
+    });
+  }
+
+  removeCondition(index: number) {
+    this.filterConditions.splice(index, 1);
+  }
+
+  clearFilters() {
+    this.filterConditions = [];
+    this.applyFilters();
+  }
+  formatDateTime(dateTime: any) {
+    const date = new Date(dateTime);
+    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd HH:mm:ss.SSSZ');
+    return formattedDate;
+  }
+
+  getConditionValue(index: number): string | null {
+    const value = this.filterConditions[index].value;
+    if (value) {
+      const type = this.getInputTypeForColumn(this.filterConditions[index].field);
+      if (type === 'datetime-local' || type === 'date') {
+        return this.datePipe.transform(value, 'yyyy-MM-ddTHH:mm:ss');
+      }
+    }
+    return value;
+  }
+
+  setConditionValue(index: number, value: string): void {
+    const type = this.getInputTypeForColumn(this.filterConditions[index].field);
+    if (type === 'datetime-local' || type === 'date') {
+      this.filterConditions[index].value = value;
+    } else {
+      this.filterConditions[index].value = value;
+    }
+  }
+  applyFilters() {
+    this.removeEmptyFilters();
+    this.isMenuOpen = false;
+
+    const condition = this.filterCondition ? 'AND' : 'OR';
+
+    const data = this.filterConditions.map((key: any, index: any) => {
+      const type = this.getInputTypeForColumn(key.field);
+      if (type == 'datetime-local' || type == 'date') {
+        const formattedDate: any = this.formatDateTime(key.value);
+
+        key.value = formattedDate;
+      }
+
+      return {
+        column_name: key.field,
+        operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
+        value: this.addWildcards(key.operator, key.value).trim(),
+        isAggregate: key.field.includes('COUNT'),
+      };
+    });
+    const fdata = { data: data, condition: condition };
+
+    this.advancedSearchQuery.emit(fdata);
+  }
+
+  isApplyButtonEnabled(): boolean {
+    return this.filterConditions.some((condition) => condition.field && condition.operator && condition.value.trim() !== '');
+  }
+  getPlaceholderForColumn(column: string): string {
+    const columnType = this.getInputTypeForColumn(column);
+    switch (columnType) {
+      case 'number':
+        return 'Enter a number';
+      case 'date':
+      case 'datetime-local':
+        return 'YYYY-MM-DD';
+      default:
+        return 'Enter a value';
+    }
+  }
+
+  getMinValueForColumn(column: string): string | null {
+    const columnType = this.getInputTypeForColumn(column);
+    if (columnType === 'date' || columnType === 'datetime-local') {
+      return '1900-01-01';
+    }
+    return null;
+  }
+
+  getMaxValueForColumn(column: string): string | null {
+    const columnType = this.getInputTypeForColumn(column);
+    if (columnType === 'date' || columnType === 'datetime-local') {
+      return '2099-12-31';
+    }
+    return null;
+  }
+
+  getPatternForColumn(column: string): string | undefined {
+    const columnType = this.getInputTypeForColumn(column);
+    switch (columnType) {
+      case 'email':
+        return '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$';
+      case 'tel':
+        return '[0-9]{10}';
+      default:
+        return undefined;
+    }
+  }
+
+  getNonEmptyFilterCount(): number {
+    return this.filterConditions.filter((filter) => filter.value.trim() !== '').length;
+  }
+
+  private removeEmptyFilters(): void {
+    this.filterConditions = this.filterConditions.filter((filter: any) => filter.value.trim() !== '');
+  }
+
+  cancelFilters() {
+    this.isMenuOpen = false;
+  }
+
+  /* advanced search filter functions */
+
+  capitalizeFirstLetter(string: string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  async initStore() {
+    this.storeData
+      .select((d) => d.index)
+      .subscribe((d) => {
+        this.store = d;
+      });
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (this.selectcolumns.length > 0) {
+      const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
+      //const allowedFieldTypes = [3, 4];
+      this.translate.get(translationKeys).subscribe((translations) => {
+        this.filteredColumns = this.selectcolumns
+          .filter((col) => col.searchable)
+          .map((col) => {
+            if (translations[`GRIDS.${this.title}.fields.${col.title}`].includes('.')) {
+              return {
+                // colFilterHide: false,
+                colSearchHide: false,
+                ...col,
+                title: this.capitalizeFirstLetter(col.title),
+              };
+            } else {
+              return {
+                //colFilterHide: false,
+                colSearchHide: false,
+                ...col,
+                title: translations[`GRIDS.${this.title}.fields.${col.title}`],
+              };
+            }
+          });
+      });
+    }
+  }
+
+  toggleColumnFilterHide(col: any) {
+    col.colFilterHide = !col.colFilterHide;
+  }
+
+  toggleColumnSearchHide(col: any) {
+    col.colSearchHide = !col.colSearchHide;
+  }
+
+  updateColumn(col: any) {
+    col.hide = !col.hide;
+    this.selectedColumns = this.filteredColumns.filter((column) => !column.hide);
+  }
+
+  getTranslatedValues(key: any, label: any): Observable<string> {
+    return this.translate.get(key).pipe(
+      map((translations) => {
+        return translations.includes('.') ? label : translations;
+      })
+    );
+  }
+
+  getTranslatedValueTitle(key: any, label: any): Observable<string> {
+    return this.translate.get(key).pipe(
+      map((translations) => {
+        const title = translations.includes('.') ? label : translations;
+        return title.split('Table')[0];
+      })
+    );
+  }
+
+  selectAll() {
+    this.headercolumns.forEach((col) => {
+      if (col.header !== 'table_column_sno') {
+        col.colFilterHide = false;
+      }
+    });
+  }
+
+  // Method to clear all checkboxes
+  clearAll() {
+    this.headercolumns.forEach((col) => {
+      if (col.header !== 'table_column_sno') {
+        col.colFilterHide = true;
+      }
+    });
+  }
+
+  focusSearchInput() {
+    this.searchInput.nativeElement.focus();
+  }
+
+  onSearch() {
+    this.search = this.search.trim();
+    let hereColumns = [...this.filteredColumns];
+    let items = [3, 4];
+    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+
+    if (this.selectedColumns.length > 0) {
+      const data = this.selectedColumns.map((key: any, index: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+          value: this.addWildcards(this.searchCondition, this.search),
+        };
+      });
+      const fdata = { data: data, search: this.search };
+      this.searchQuery.emit(fdata);
+    } else {
+      //this.toastr.warning('Please select any column', 'Warning');
+
+      const data = hereColumns.map((key: any, index: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+          value: this.addWildcards(this.searchCondition, this.search),
+        };
+      });
+      const fdata = { data: data, search: this.search };
+      this.searchQuery.emit(fdata);
+    }
+  }
+  applyFilter() {
+    if (this.selectedColumn && this.search) {
+      this.filteredItems = this.items.filter((item) => item[this.selectedColumn]?.toString().toLowerCase().includes(this.search.toLowerCase()));
+    } else {
+      this.filteredItems = [...this.items];
+    }
+    this.totalItems = this.filteredItems.length;
+    this.calculateTotalPages();
+  }
+
+  toggleSelectItem(item: any) {
+    const index = this.selectedItems.indexOf(item);
+    if (index === -1) {
+      this.selectedItems.push(item);
+    } else {
+      this.selectedItems.splice(index, 1);
+    }
+  }
+
+  toggleSelectAll(event: any) {
+    if (event.target.checked) {
+      this.selectedItems = [...this.items];
+    } else {
+      this.selectedItems = [];
+    }
+  }
+
+  get gridColumnCount(): number {
+    return this.headercolumns.filter((column) => column.is_grid_column === 'true').length;
+  }
+  sortColumn(column: any) {
+    if (column.is_grid_column) {
+      column.sortDirection = column.sortDirection === 'asc' ? 'desc' : 'asc';
+      this.columnSort.emit(column);
+    }
+  }
+
+  deleteSelectedItems() {
+    this.delete.emit(this.selectedItems);
+    this.selectedItems = [];
+  }
+
+  exportTable(type: any) {
+    this.exportType.emit({ type: type });
+  }
+
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      const start_index = (this.currentPage - 1) * this.resultsPerPage;
+      this.pageChange.emit({ page: this.currentPage, start_index });
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      const start_index = (this.currentPage - 1) * this.resultsPerPage;
+      this.pageChange.emit({ page: this.currentPage, start_index });
+    }
+  }
+
+  getDisplayedItemCount(): number {
+    return Math.min(this.currentPage * this.resultsPerPage, this.totalItems);
+  }
+
+  getPageNumbers(): (number | string)[] {
+    const totalPages = this.calculateTotalPages();
+    const currentPage = this.currentPage;
+    const pageNumbers: (number | string)[] = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+
+      if (currentPage > 3) {
+        pageNumbers.push('...');
+      }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        pageNumbers.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        pageNumbers.push('...');
+      }
+
+      pageNumbers.push(totalPages);
+    }
+
+    return pageNumbers;
+  }
+
+  handleEllipsisClick(index: number) {
+    const pageNumbers = this.getPageNumbers();
+    if (index === 1) {
+      // Clicked on the first ellipsis
+      this.goToPage(Math.floor((1 + this.currentPage) / 2));
+    } else if (index === pageNumbers.length - 2) {
+      // Clicked on the last ellipsis
+      this.goToPage(Math.floor((this.totalPages + this.currentPage) / 2));
+    }
+  }
+
+  goToPage(page: number | string) {
+    if (typeof page === 'number' && page !== this.currentPage) {
+      this.currentPage = page;
+      const start_index = (page - 1) * this.resultsPerPage;
+      this.pageChange.emit({ page: this.currentPage, start_index });
+    }
+  }
+
+  onResultsPerPageChange() {
+    this.currentPage = 1;
+    this.calculateTotalPages();
+    const start_index = 0;
+    this.resultsPerPageChange.emit({ resultsPerPage: parseInt(this.resultsPerPage), start_index });
+  }
+
+  searchData(search: any) {
+    this.searchQuery.emit(search);
+  }
+
+  calculateTotalPages() {
+    this.totalPages = Math.ceil(this.totalItems / this.resultsPerPage);
+
+    return this.totalPages;
+  }
+}

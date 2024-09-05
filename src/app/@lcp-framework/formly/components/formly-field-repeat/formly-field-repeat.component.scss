@@ -1,0 +1,8 @@
+::ng-deep {
+  .formly-repeat .grid:first-child .flex-none button {
+    top: 22px;
+  }
+  .formly-repeat .grid:not(:first-child) label {
+    display: none;
+  }
+}

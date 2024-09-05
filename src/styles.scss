@@ -1,0 +1,45 @@
+/* You can add global styles to this file, and also import other style files */
+html.login-page,
+html.login-page > body {
+  height: 100%;
+  overflow: hidden;
+}
+// html:not(.login-page),
+// body:not(.login-page) {
+//   height: auto;
+//   overflow: auto;
+// }
+// .ng-scroll-content {
+//   display: inline-block;
+//   max-width: 100%;
+// }
+
+.sidebar ul.relative li {
+  max-width: calc(100% - 1.7rem);
+}
+
+.sidebar ul.sub-menu li {
+  max-width: 100%;
+}
+
+.sidebar ul.relative li a div {
+  width: 100%;
+}
+
+.sidebar ul.relative li a div {
+  width: 100%;
+}
+
+.sidebar ul.relative li a div span.text-black,
+.sidebar ul.sub-menu li a,
+.ellipsis {
+  white-space: nowrap; /* Prevents the text from wrapping to a new line */
+  overflow: hidden; /* Hides any text that overflows the container */
+  text-overflow: ellipsis; /* Adds ellipses (…) to the end of the text */
+  width: 100%; /* Ensures the container has a width set (you can adjust as needed) */
+}
+
+.required-mark:after {
+  content: ' \002A';
+  color: red;
+}

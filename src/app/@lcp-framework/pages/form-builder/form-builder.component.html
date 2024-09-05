@@ -1,0 +1,23 @@
+<div class="space-y-8">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
+    <div class="panel">
+      <div class="mb-5 flex items-center justify-between">
+        <h5 class="text-lg font-semibold dark:text-white-light">{{
+          formEntity?.name | translate }}</h5>
+        <button type="button"
+          class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l"
+          (click)="location.back()">{{ 'back' | translate }}</button>
+      </div>
+      <div class="mb-5">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <formly-form [form]="form" [fields]="fields" [options]="options"
+            [model]="model"></formly-form>
+          <button type="submit"
+            class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark mx-auto"
+            *ngIf="entity_type !== 'details'">{{'submit'
+            | translate}}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,291 @@
+<div>
+  <div class="panel">
+    <div class="mb-2.5">
+      <div
+        class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
+        <div class="font-bold py-1.5 text-xs dark:text-white-light"
+          appDynamicFontSize="subtitle">{{ title_key | translate
+          }}</div>
+        <div
+          class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative mb-2 flex-grow md:mb-0">
+              <input
+                [(ngModel)]="searchQuery"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onSearch()"
+                type="text"
+                class="form-input py-1.5 text-xs w-full pr-10 text-gray-600"
+                appDynamicFontSize="body"
+                placeholder="{{ 'table_search_placeholder' | translate }}..." />
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                *ngIf="this.masterInfo?.permissions?.create"
+                (click)="toggleMenu()"
+                ngxTippy="{{ 'form_button_add_new' | translate }}"
+                type="button"
+                class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
+                <i class="fa-solid fa-plus"></i>&nbsp;{{'form_button_add' |
+                translate}}
+              </button>
+              <button type="submit" (click)="onSubmit()"
+                class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark mx-auto">
+                {{'submit'
+                | translate}}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="datatable">
+      <div class="table-responsive overflow-x-auto">
+        <form [formGroup]="langMapForm" (ngSubmit)="onSubmit()">
+          <table class="min-w-full table-hover relative">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  class="text-xs font-bold max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left uppercase tracking-wider"
+                  appDynamicFontSize="body">
+                  {{'table_label_key' | translate}}
+                </th>
+                <th
+                  *ngFor="let lang of languages"
+                  scope="col"
+                  class="text-xs font-bold max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left uppercase tracking-wider"
+                  appDynamicFontSize="body">
+                  {{ lang.language_name }}
+                </th>
+                <th class="text-xs font-bold text-center">{{'table_action' |
+                  translate
+                  }}</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <ng-container
+                *ngFor="let group of filteredControls; let i = index">
+                <ng-container [formGroupName]="i">
+                  <tr *ngIf="group.get('isShow')?.value">
+                    <td appDynamicFontSize="body">
+                      <label class="text-xs">{{ group.get('key1')?.value
+                        }}</label>
+                    </td>
+                    <ng-container
+                      *ngFor="let controlName of getControlNames(group)">
+                      <td
+                        class="ng-tns-c617364992-2 ng-star-inserted md:text-xs md:pr-10"
+                        appDynamicFontSize="body">
+                        <input
+                          type="text"
+                          appDynamicFontSize="body"
+                          class="form-input py-1.5 text-xs w-full text-gray-600 ng-tns-c617364992-2 md:text-xs md:pr-10"
+                          [value]="group.get(controlName)?.value"
+                          (input)="onInputChange($event, group.get(controlName))"
+                          [attr.readonly]="!masterInfo?.permissions?.edit ? true : null" />
+                      </td>
+                    </ng-container>
+                    <td class="text-center">
+                      <button *ngIf="this.masterInfo?.permissions?.delete"
+                        (click)="removeItem1(group.get('key1')?.value)"
+                        class="text-red-500">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+              </ng-container>
+            </tbody>
+          </table>
+        </form>
+      </div>
+
+      <div
+        class="pagination md:flex items-center justify-between border-t border-gray-200 py-2">
+        <div class="flex items-center">
+          <div class="mr-4">
+            <select id="results-per-page" class="py-1.5 text-xs"
+              [(ngModel)]="pageSize"
+              appDynamicFontSize="body">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          <div>
+            <p class="text-gray-700 py-1.5 text-xs" appDynamicFontSize="body">
+              <span class="font-medium">{{ (currentPage - 1) * pageSize + 1
+                }}</span>
+              -
+              <span class="font-medium">{{ getDisplayedItemCount() }}</span>
+              {{ 'table_results_0' | translate }}
+              <span class="font-medium">{{ totalItems }}</span>
+              {{ 'table_results_1' | translate }}
+            </p>
+          </div>
+        </div>
+        <div>
+          <nav
+            class="py-1.5 text-xs isolate inline-flex -space-x-px rounded-md shadow-sm"
+            aria-label="Pagination" appDynamicFontSize="body">
+            <button
+              (click)="goToPage(1)"
+              class="relative inline-flex items-center rounded-l-md px-2 py-1 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              [disabled]="currentPage === 1">
+              <span class="sr-only">{{ 'first' | translate }}</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+                aria-hidden="true">
+                <path
+                  fill-rule="evenodd"
+                  d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button
+              (click)="previousPage()"
+              class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              [disabled]="currentPage === 1">
+              <span class="sr-only">{{ 'previous' | translate }}</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+                aria-hidden="true">
+                <path
+                  fill-rule="evenodd"
+                  d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <ng-container *ngFor="let page of getPageNumbers(); let i = index">
+              <ng-container [ngSwitch]="page">
+                <button
+                  *ngSwitchCase="'...'"
+                  (click)="handleEllipsisClick(i)"
+                  class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                  ...
+                </button>
+                <button
+                  *ngSwitchDefault
+                  (click)="goToPage(page)"
+                  class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                  [ngClass]="{ 'bg-blue-50': currentPage === page }">
+                  {{ page }}
+                </button>
+              </ng-container>
+            </ng-container>
+            <button
+              (click)="nextPage()"
+              class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              [disabled]="currentPage === totalPages">
+              <span class="sr-only">{{ 'next' | translate }}</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+                aria-hidden="true">
+                <path
+                  fill-rule="evenodd"
+                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button
+              (click)="goToPage(totalPages)"
+              class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              [disabled]="currentPage === totalPages">
+              <span class="sr-only">{{ 'last' | translate }}</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+                aria-hidden="true">
+                <path
+                  fill-rule="evenodd"
+                  d="M4.21 14.77a.75.75 0 01.02-1.06L8.168 10 4.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02zm6 0a.75.75 0 01.02-1.06L14.168 10 10.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="isMenuOpen"
+    aria-labelledby="options-menu"
+    aria-orientation="vertical"
+    class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+    role="menu">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-gray-200 p-4">
+      <span>{{'add_new_records' | translate}}</span>
+
+      <div class="flex items-center gap-4">
+        <button class="text-blue-500" ngxTippy="Add New Record"
+          *ngIf="this.masterInfo.permissions.create"
+          (click)="addNewItemFormArray(false)">
+          <i class="fa-solid fa-plus"></i> </button>
+      </div>
+    </div>
+    <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
+      <form [formGroup]="langMapAddForm">
+        <table class="table-hover relative min-w-full">
+          <thead class="bg-gray-50">
+            <th
+              scope="col"
+              class="font-large max-w-150 required-mark cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left uppercase tracking-wider"
+              appDynamicFontSize="body">
+              {{ 'table_label_key' | translate}}
+            </th>
+            <th
+              *ngFor="let lang of languages"
+              scope="col"
+              class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left uppercase tracking-wider"
+              appDynamicFontSize="body">
+              {{ lang.language_name }}
+            </th>
+            <th></th>
+          </thead>
+          <tbody formArrayName="items">
+            <ng-container
+              *ngFor="let group of this.getAddFormItems; let i = index">
+              <ng-container [formGroupName]="i">
+                <tr *ngIf="group.get('isShow')?.value">
+                  <ng-container
+                    *ngFor="let controlName of getControlNames1(group)">
+                    <td appDynamicFontSize="body">
+                      <input
+                        type="text"
+                        appDynamicFontSize="body"
+                        class="form-input w-full pr-10 text-gray-600"
+                        [value]="group.get(controlName)?.value"
+                        (input)="onInputChange($event, group.get(controlName))" />
+                    </td>
+                  </ng-container>
+                  <td>
+                    <button (click)="removeItem(i)" class="text-red-500">
+                      <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
+      </form>
+    </ng-scrollbar>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between border-t border-gray-200 p-4">
+      <div class="flex gap-4">
+        <button (click)="prepareNewRecords()"
+          [disabled]="langMapAddForm.invalid"
+          class="btn-primary flex items-center
+          rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold
+          dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark mx-auto">
+          {{ 'submit' | translate }}</button>
+        <button (click)="toggleMenu()" class="btn-secondary flex items-center
+        rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold
+        dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark mx-auto">{{
+          'cancel' |
+          translate
+          }}</button>
+      </div>
+    </div>
+  </div>
+</div>

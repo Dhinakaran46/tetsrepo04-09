@@ -1,0 +1,53 @@
+<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
+  <ng-container *ngFor="let tab of dashboardTabs">
+    <button
+      class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
+      [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTabId == tab.id }"
+      (click)="setActiveTab(tab.id)"
+    >
+      {{ tab.name }}
+    </button>
+  </ng-container>
+</div>
+
+<div class="flex-1 pt-5">
+  <!--<div class="grid grid-cols-4 gap-4 p-4" cdkDropList (cdkDropListDropped)="onDrop($event)">-->
+  <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
+    <ng-container *ngFor="let card of getActiveCards()">
+      <!--<div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" cdkDrag>-->
+      <div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)">
+        <div class="overflow-x-auto overflow-y-auto p-2" [ngStyle]="getScrollContainerStyle(card.rows, card.cols)">
+          <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
+          <div *ngIf="[commonConfig.WIZARD_TYPES.STATIC].includes(card.type)">
+            <div *ngFor="let content of getStaticContent(card)" [innerHTML]="content | safeHtml"></div>
+          </div>
+
+          <div *ngIf="[commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)">
+            <div class="panel">
+              <div class="mb-5 flex items-center justify-between">
+                <h5 class="text-lg font-semibold dark:text-white">{{ card.title }}</h5>
+              </div>
+              <div class="mb-5 overflow-hidden">
+                <apx-chart
+                  *ngIf="card.chart_format[0]"
+                  [series]="card.chart_format[0].series"
+                  [chart]="card.chart_format[0].chart"
+                  [xaxis]="card.chart_format[0].xaxis"
+                  [yaxis]="card.chart_format[0].yaxis!"
+                  [dataLabels]="card.chart_format[0].dataLabels!"
+                  [grid]="card.chart_format[0].grid"
+                  [stroke]="card.chart_format[0].stroke"
+                  [title]="card.chart_format[0].title!"
+                  [plotOptions]="card.chart_format[0].plotOptions!"
+                  [fill]="card.chart_format[0].fill!"
+                  [tooltip]="card.chart_format[0].tooltip!"
+                ></apx-chart>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--</ng-scrollbar>-->
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -1,0 +1,13 @@
+<div>
+  <div class="toolbar" *ngIf="to['html-editor'] || false">
+    <button type="button" (click)="toggleHtmlEdit()" class="btn btn-sm"
+      [ngClass]="{'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode}">{{(isHtmlMode)?'BACK':'EDIT HTML'}}</button>
+  </div>
+  <quill-editor *ngIf="!isHtmlMode" #quillEditor [formControl]="formControl" [formlyAttributes]="field"
+    [modules]="to['modules'] || modules" [placeholder]="to['placeholder'] || 'Enter text...'"
+    [readOnly]="to['readonly'] || false" [style.height.px]="to['rows'] ? to['rows'] * 24 : 200">
+  </quill-editor>
+  <ngx-monaco-editor *ngIf="isHtmlMode" #htmlEditor [options]="editorOptions"
+    [style.height.px]="(to['rows'] ? to['rows'] * 24 : 200) + 50" class="monaco-editor" [formControl]="formControl">
+  </ngx-monaco-editor>
+</div>
