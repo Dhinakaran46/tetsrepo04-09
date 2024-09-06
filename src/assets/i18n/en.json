@@ -1,0 +1,792 @@
+{
+  "dashboard": "Dashboard",
+  "sales": "Sales",
+  "analytics": "Analytics",
+  "apps": "Apps",
+  "components": "Components",
+  "elements": "Elements",
+  "font_icons": "Font Icons",
+  "widgets": "Widgets",
+  "tables": "Tables",
+  "datatables": "Data Tables",
+  "forms": "Forms",
+  "users": "Users",
+  "pages": "Pages",
+  "authentication": "Authentication",
+  "drag_and_drop": "Drag and Drop",
+  "maps": "Maps",
+  "charts": "Charts",
+  "starter_kit": "Starter Kit",
+  "documentation": "Documentation",
+  "ui_kit": "UI Kit",
+  "more": "More",
+  "finance": "Finance",
+  "crypto": "Crypto",
+  "chat": "Chat",
+  "mailbox": "Mailbox",
+  "todo_list": "Todo List",
+  "notes": "Notes",
+  "scrumboard": "Scrumboard",
+  "contacts": "Contacts",
+  "invoice": "Invoice",
+  "list": "List",
+  "preview": "Preview",
+  "add": "Add",
+  "edit": "Edit",
+  "calendar": "Calendar",
+  "tabs": "Tabs",
+  "accordions": "Accordions",
+  "modals": "Modals",
+  "cards": "Cards",
+  "carousel": "Carousel",
+  "countdown": "Countdown",
+  "counter": "Counter",
+  "sweet_alerts": "Sweet Alerts",
+  "timeline": "Timeline",
+  "notifications": "Notifications",
+  "media_object": "Media Object",
+  "list_group": "List Group",
+  "pricing_tables": "Pricing Tables",
+  "lightbox": "Lightbox",
+  "alerts": "Alerts",
+  "avatar": "Avatar",
+  "badges": "Badges",
+  "breadcrumbs": "Breadcrumbs",
+  "buttons": "Buttons",
+  "button_groups": "Button Groups",
+  "color_library": "Color Library",
+  "dropdown": "Dropdown",
+  "infobox": "Infobox",
+  "jumbotron": "Jumbotron",
+  "loader": "Loader",
+  "pagination": "Pagination",
+  "popovers": "Popovers",
+  "progress_bar": "Progress Bar",
+  "search": "Search",
+  "tooltips": "Tooltips",
+  "treeview": "Treeview",
+  "typography": "Typography",
+  "basic": "Basic",
+  "order_sorting": "Order Sorting",
+  "multi_column": "Multi Column",
+  "multiple_tables": "Multiple Tables",
+  "alt_pagination": "Alt. Pagination",
+  "range_search": "Range Search",
+  "export": "Export",
+  "input_group": "Input Group",
+  "layouts": "Layouts",
+  "validation": "Validation",
+  "input_mask": "Input Mask",
+  "select2": "Select2",
+  "touchspin": "Touchspin",
+  "checkbox_and_radio": "Checkbox & Radio",
+  "switches": "Switches",
+  "wizards": "Wizards",
+  "file_upload": "File Upload",
+  "quill_editor": "Quill Editor",
+  "markdown_editor": "Markdown Editor",
+  "date_and_range_picker": "Date & Range Picker",
+  "clipboard": "Clipboard",
+  "user_and_pages": "User And Pages",
+  "profile": "Profile",
+  "account_settings": "Account Settings",
+  "knowledge_base": "Knowledge Base",
+  "contact_form": "Contact Form",
+  "faq": "Faq",
+  "coming_soon": "Coming Soon",
+  "error": "Error",
+  "maintenence": "Maintenence",
+  "login_boxed": "Login Boxed",
+  "register_boxed": "Register Boxed",
+  "unlock_boxed": "Unlock Boxed",
+  "recover_id_boxed": "Recover Id Boxed",
+  "login_cover": "Login Cover",
+  "register_cover": "Register Cover",
+  "unlock_cover": "Unlock Cover",
+  "recover_id_cover": "Recover Id Cover",
+  "supports": "Supports",
+  "login": "Login",
+  "lockscreen": "Lockscreen",
+  "password_recovery": "Password Recovery",
+  "register": "Register",
+  "404": "404",
+  "500": "500",
+  "503": "503",
+  "user_interface": "User Interface",
+  "tables_and_forms": "Tables And Forms",
+  "columns_filter": "Columns Filter",
+  "column_chooser": "Column Chooser",
+  "advanced": "Advanced",
+  "checkbox": "Checkbox",
+  "skin": "Skin",
+  "sticky_header": "Sticky Header",
+  "clone_header": "Clone Header",
+  "coming_soon_boxed": "Coming Soon Boxed",
+  "coming_soon_cover": "Coming Soon Cover",
+  "contact_us_boxed": "Contact Us Boxed",
+  "contact_us_cover": "Contact Us Cover",
+  "COMMON": {
+    "back": "Back",
+    "submit": "Submit",
+    "SELECT_ANY": "Select Any",
+    "SIGNOUT": "Sign Out",
+    "PROFILE": "Profile",
+    "CHANGEPWD": "Change Password",
+    "TABLE": {
+      "TABLE_COLUMN_S.No": "S.No",
+      "TABLE_COLUMN_Status": "STATUS",
+      "TABLE_COLUMN_Action": "ACTION",
+      "TABLE_MULTISELECT_0": "All Columns",
+      "TABLE_MULTISELECT_1": "Columns",
+      "TABLE_MULTISELECT_3": "Search",
+      "TABLE_CONDSELECT_0": "Select Condition",
+      "TABLE_CONDSELECT_1": "Equals",
+      "TABLE_CONDSELECT_2": "Not Equals",
+      "TABLE_CONDSELECT_3": "Greater Than",
+      "TABLE_CONDSELECT_4": "Greater Than or Equal To",
+      "TABLE_CONDSELECT_5": "Less Than",
+      "TABLE_CONDSELECT_6": "Less Than or Equal To",
+      "TABLE_CONDSELECT_7": "Contains",
+      "TABLE_CONDSELECT_8": "Does Not Contain",
+      "TABLE_CONDSELECT_9": "Starts With",
+      "TABLE_CONDSELECT_10": "Ends With",
+      "TABLE_CONDSELECT_11": "Is Empty",
+      "TABLE_CONDSELECT_12": "Is Not Empty",
+      "TABLE_CONDSELECT_13": "Is Null",
+      "TABLE_CONDSELECT_14": "Is Not Null",
+      "TABLE_SEARCH_PLACEHOLDER": "Search",
+      "TABLE_BTN_ADDNEW": "Add",
+      "TABLE_STATUS_VAL_0": "Active",
+      "TABLE_STATUS_VAL_1": "Inactive",
+      "TABLE_STATUS_VAL_2": "Delete",
+      "TABLE_RESULTS_0": "of",
+      "TABLE_RESULTS_1": "results",
+      "TABLE_COLUMN_ACTION_STATE_0": "Edit",
+      "TABLE_COLUMN_ACTION_STATE_1": "Delete",
+      "NO_RECORDS_FOUND": "No Records Found!"
+    }
+  },
+
+  "LOGIN": {
+    "TITLE": "Sign in",
+    "DESCRIPTION": "Enter your email and password to login",
+    "FORM_EMAIL": "Email",
+    "FORM_PWD": "Password",
+    "FORM_REMEMBERME": "Remember Me",
+    "FORM_SBT_BTN": "Sign in",
+    "FORM_EMAIL_REQ_MSG": "Username field is required",
+    "FORM_EMAIL_VALID_MSG": "Invalid username",
+    "FORM_EMAIL_REQ_PWD": "Password field is required.",
+    "COPYRIGHTS": "Tracsales All Rights Reserved.",
+    "FORGET_PWD": "Forget password ?"
+  },
+  "FORGETPASSWORD": {
+    "TITLE": "Forget password",
+    "DESCRIPTION": "Enter your register email id",
+    "FORGET_EMAIL": "Email",
+    "FORM_EMAIL_REQ_MSG": "Please enter a valid email address",
+    "FORM_EMAIL_VALID_MSG": "Invalid email format. Please enter a valid email address",
+    "FORGET_SBT_BTN": "Submit",
+    "LOGIN_LINK": "Back to Login"
+  },
+  "RESETPASSWORD": {
+    "TITLE": "Reset password ",
+    "OTP": "Enter OTP",
+    "OTP_VALIDATE_MSG": "OTP is required",
+    "NEW_PWD": "Enter password",
+    "NEW_PWD_REQ": "New password is required",
+    "CONFIRM_PWD": "Enter Confirm password",
+    "CONFIRM_PWD_REQ": "Confirm password is required",
+    "CONFIRM_PWD_MATCH_MSG": "Confirm Password do not match",
+    "RESET_SBT_BTN": "Reset",
+    "COPYRIGHTS": "Tracsales All Rights Reserved."
+  },
+  "PROFILE": {
+    "TITLE": "Profile Management",
+    "FORM_PIC_UPLOAD": "Upload",
+    "FORM_PIC_UPLOAD_REQ_MSG": "Upload is Required",
+    "FORM_FIRST_NAME": "First Name",
+    "FORM_FIRST_NAME_REQ_MSG": "First Name is required",
+    "FORM_LAST_NAME": "Last Name",
+    "FORM_LAST_NAME_REQ_MSG": "Last Name is required",
+    "FORM_DOB": "Date of Birth",
+    "FORM_DOB_REQ_MSG": "Date of Birth is required",
+    "FORM_COUNTRY_CODE": "Country Code",
+    "FORM_COUNTRY_CODE_REQ_MSG": "Country Code is required",
+    "FORM_PHNUM": "Phone Number",
+    "FORM_PHNUM_REQ_MSG": "Phone Number is required",
+    "FORM_GENDER": "Gender",
+    "FORM_GENDER_REQ_MSG": "Gender is required",
+    "FORM_GENDER_OPTION_1": "Male",
+    "FORM_GENDER_OPTION_2": "Female",
+    "FORM_GENDER_OPTION_3": "Other",
+    "FORM_TIMEZONE": "Time Zone",
+    "FORM_TIMEZONE_REQ_MSG": "Time Zone is required",
+    "FORM_ADDRESS": "Address",
+    "FORM_ADDRESS_REQ_MSG": "Address is required",
+    "FORM_SUBMIT_BTN": "Update"
+  },
+  "CHANGE_PWD": {
+    "TITLE": "Change Password",
+    "FORM_OLD_PWD": "Old Password",
+    "FORM_OLD_PWD_REQ_MSG": "Old Password is required",
+    "FORM_NEW_PWD": "New Password",
+    "FORM_NEW_PWD_REQ_MSG": "New Password must be at least 8 characters long, contain one capital letter, and one special character",
+    "FORM_CONFIRM_NEW_PWD": "Confirm New Password",
+    "FORM_CONFIRM_NEW_PWD_REQ_MSG": "New Password and Confirm New Password do not match",
+    "FORM_SUBMIT_BTN": "Change Password"
+  },
+  "GRIDS": {
+    "user": {
+      "title": "Users List Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "email": "Email",
+        "status": "Status"
+      }
+    },
+    "model": {
+      "title": "model Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "description": "Description",
+        "status": "Status"
+      }
+    },
+    "route_outlet_mapping": {
+      "title": "Route Outlets Mapping Table",
+      "fields": {
+        "route_code": "Route Code",
+        "outlet_count": "Outlet Count"
+      }
+    },
+    "route_pattern": {
+      "title": "Routes Pattern Table",
+      "fields": {
+        "code": "Code",
+        "description": "Description",
+        "status": "Status"
+      }
+    },
+    "route": {
+      "title": "Routes Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "van": {
+      "title": "Vans Table",
+      "fields": {
+        "van_number": "Van Number",
+        "van_model": "Van Model",
+        "status": "Status"
+      }
+    },
+    "device": {
+      "title": "Devices Table",
+      "fields": {
+        "device_no": "Device No",
+        "device_imei": "Device IMEI",
+        "salesman": "Salesman"
+      }
+    },
+    "free_item": {
+      "title": "Free Items Table",
+      "fields": {
+        "trade_name": "Trade Name",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "item_name": "Item Name",
+        "uom_name": "UOM Name",
+        "status": "Status"
+      }
+    },
+    "item": {
+      "title": "Items Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "brand_code": "Brand Code",
+        "brand": "Brand",
+        "category": "Category",
+        "department": "Department",
+        "warehouse": "Warehouse",
+        "supplier": "Supplier",
+        "is_core_item": "Is Core Item",
+        "status": "Status"
+      }
+    },
+    "brand": {
+      "title": "Brands Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "category": {
+      "title": "Categories Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "category_type": "Category Type",
+        "parent_category": "Parent Category",
+        "status": "Status"
+      }
+    },
+    "uom": {
+      "title": "UOM Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "description": "Description",
+        "status": "Status"
+      }
+    },
+    "supplier": {
+      "title": "Suppliers Table",
+      "fields": {
+        "name": "Name",
+        "description": "Description",
+        "status": "Status"
+      }
+    },
+    "tax": {
+      "title": "Tax Table",
+      "fields": {
+        "name": "Name",
+        "tax_percentage": "Tax Percentage",
+        "status": "Status"
+      }
+    },
+    "warehouse": {
+      "title": "Warehouses Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "salesman_item_mapping": {
+      "title": "Salesman Item Mapping Table",
+      "fields": {
+        "salesman_name": "Salesman Name",
+        "item_count": "Item Count",
+        "item_category_count": "Item Category Count"
+      }
+    },
+    "outlet": {
+      "title": "Outlets Table",
+      "fields": {
+        "outlet_code": "Outlet Code",
+        "outlet_description": "Outlet Description",
+        "outlet_address": "Outlet Address",
+        "outlet_city": "Outlet City",
+        "outlet_country": "Outlet Country"
+      }
+    },
+    "outlet_credit_limit": {
+      "title": "Outlet Credit Limit Table",
+      "fields": {
+        "salesman_code": "Salesman Code",
+        "outlet_code": "Outlet Code",
+        "outlet_limit": "Outlet Limit",
+        "credit_duration": "Credit Duration",
+        "available_credit_limit": "Available Credit Limit"
+      }
+    },
+    "outlet_group": {
+      "title": "Outlet Group Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "outlet_zone": {
+      "title": "Outlet Zone Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "outlet_category": {
+      "title": "Outlet Category Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "outlet_type": {
+      "title": "Outlet Type Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "outlet_classification": {
+      "title": "Outlet Classification Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "bank": {
+      "title": "Banks Table",
+      "fields": {
+        "code": "Code",
+        "description": "Description",
+        "status": "Status"
+      }
+    },
+    "bank_branch": {
+      "title": "Bank Branches Table",
+      "fields": {
+        "bank_branch_code": "Bank Branch Code",
+        "bank_branch_name": "Bank Branch Name",
+        "bank_name": "Bank Name"
+      }
+    },
+    "salesman_target": {
+      "title": "Salesman Targets Table",
+      "fields": {
+        "code": "Code",
+        "from_date": "From Date",
+        "to_date": "To Date",
+        "status": "Status"
+      }
+    },
+    "department": {
+      "title": "Departments Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "team": {
+      "title": "Teams Table",
+      "fields": {
+        "supervisor_name": "Supervisor Name",
+        "team_name": "Team Name",
+        "status": "Status"
+      }
+    },
+    "salesman_outlet_mapping": {
+      "title": "Salesman Outlet Mapping Table",
+      "fields": {
+        "outlet_count": "Outlet Count",
+        "salesman_name": "Salesman Name",
+        "status": "Status"
+      }
+    },
+    "department_salesman_mapping": {
+      "title": "Department Salesman Mapping Table",
+      "fields": {
+        "code": "Code",
+        "name": "Name",
+        "salesman_name": "Salesman Name",
+        "status": "Status"
+      }
+    },
+    "approval_workflow": {
+      "title": "Approval Workflows Table",
+      "fields": {
+        "team_name": "Team Name",
+        "module_name": "Module Name",
+        "status": "Status"
+      }
+    },
+    "document_sequence": {
+      "title": "Document Sequences Table",
+      "fields": {
+        "module_name": "Module Name",
+        "person_code": "Person Code",
+        "start_sequence_no": "Start Sequence No",
+        "end_sequence_no": "End Sequence No",
+        "current_sequence_no": "Current Sequence No",
+        "salesman_code": "Salesman Code",
+        "status": "Status"
+      }
+    },
+    "van_load_approval": {
+      "title": "Van load Approval Table",
+      "fields": {
+        "request_no": "Request No",
+        "request_date": "Request Date",
+        "request_by": "Request By",
+        "status": "Status"
+      }
+    },
+    "invoice": {
+      "title": "Invoices Table",
+      "fields": {
+        "invoice_no": "Invoice No",
+        "invoice_date_time": "Invoice Date",
+        "code": "Code",
+        "salesman_code": "Salesman Code",
+        "payment_type": "Payment Type",
+        "transaction_type": "Transaction Type",
+        "total_amount": "Total Amount"
+      }
+    },
+    "credit_due": {
+      "title": "Credit Due Collection Table",
+      "fields": {
+        "credit_due_no": "Credit Due No",
+        "name": "Name",
+        "description": "Description",
+        "amount": "Amount",
+        "pending_amount": "Pending Amount"
+      }
+    },
+    "van_load_request": {
+      "title": "Van load Request Table",
+      "fields": {
+        "request_no": "Request No",
+        "request_date": "Request Date",
+        "salesman_name": "Salesman Name",
+        "process_status": "Process Status",
+        "status": "Status"
+      }
+    },
+    "transaction_van_unload_request": {
+      "title": "Van Unload Request Table",
+      "fields": {
+        "request_no": "Request No",
+        "request_date": "Request Date",
+        "salesman_name": "Salesman Name",
+        "process_status": "Process Status",
+        "status": "Status"
+      }
+    },
+    "return": {
+      "title": "Return Table",
+      "fields": {
+        "return_date_time": "Return Date",
+        "outlet_code": "Outlet Code",
+        "salesman_code": "Salesman Code",
+        "total_amount": "Total Amount"
+      }
+    },
+    "email_template": {
+      "title": "Email Templates Table",
+      "fields": {
+        "email_template_name": "Email Template Name",
+        "status": "Status"
+      }
+    },
+    "role": {
+      "title": "Roles Table",
+      "fields": {
+        "name": "Name",
+        "status": "Status"
+      }
+    },
+    "app_error_log": {
+      "title": "Error Logs Table",
+      "fields": {
+        "error_message": "Error Message",
+        "stack_trace": "Stack Trace",
+        "url": "URL",
+        "occured_datetime": "Occured Date",
+        "status": "Status"
+      }
+    },
+    "master_entity": {
+      "title": "Entitiy Grid",
+      "fields": {
+        "name": "Name",
+        "entity_name": "Entity Name",
+        "primary_table": "Primary Table",
+        "item_count": "Item Count",
+        "status": "Status"
+      }
+    },
+    "import_template": {
+      "title": "Import Template",
+      "fields": {
+        "name": "Name",
+        "entity_name": "Entity Name",
+        "slug": "Slug",
+        "primary_table": "Primary Table",
+        "item_count": "Item Count",
+        "status": "Status"
+      }
+    }
+  },
+  "MENU": {
+    "master": "Master",
+    "transaction": "Transaction",
+    "report": "Report",
+    "tools": "Tools",
+    "user": "User",
+    "role": "Role",
+    "field_activities": "Field Activities",
+    "attribute_definition": "Attribute Definition",
+    "role_rights": "Role Rights",
+    "user_rights": "User Rights",
+    "user_roles": "User Roles",
+    "change_password": "Change Password",
+    "configuration": "Configuration",
+    "route_outlet_mapping": "Route Outlet Mapping",
+    "van": "Van",
+    "route_pattern": "Route Pattern",
+    "journey_plan": "Journey Plan",
+    "document_sequence": "Document Sequence",
+    "device": "Device",
+    "approval": "Approval",
+    "van_unload_approval": "Van Unload Approval",
+    "item_details": "Item Details",
+    "outlet_details": "Outlet Details",
+    "asset_details": "Asset Details",
+    "language_content": "Language Content",
+    "language": "Language",
+    "template": "Template",
+    "report_template": "Report Template",
+    "van_stock_issue_report": "Van Stock Issue Report",
+    "van_unload_report": "Van Unload Report",
+    "order_taking_report": "Order Taking Report",
+    "journey_plan_report": "Journey Plan Report",
+    "route_outlet_mapping_report": "Route Outlet Mapping Report",
+    "item_price_report": "Item Price Report",
+    "route": "Route",
+    "van_load_approval": "Van Load Approval",
+    "free_item": "Free Item",
+    "van_stock_report": "Van Stock Report",
+    "bank": "Bank",
+    "item": "Item",
+    "outlet": "Outlet",
+    "asset_type": "Asset Type",
+    "asset_model": "Asset Model",
+    "asset": "Asset",
+    "asset_condition": "Asset Condition",
+    "stock_adjustment_report": "Stock Adjustment Report",
+    "stock_adjustment_print_report": "Stock Adjustment Print Report",
+    "outlet_credit_limit": "Outlet Credit Limit",
+    "outlet_approval": "Outlet Approval",
+    "asset_category": "Asset Category",
+    "promotional_stock_sales_report": "Promotional Stock Sales Report",
+    "sales_reports": "Sales Reports",
+    "invoice_report": "Invoice Report",
+    "invoice_details_report": "Invoice Details Report",
+    "invoice_collection_report": "Invoice Collection Report",
+    "sales_return_report": "Sales Return Report",
+    "bank_branch": "Bank Branch",
+    "barcode_printing": "Barcode Printing",
+    "asset_printing": "Asset Printing",
+    "outlet_printing": "Outlet Printing",
+    "stock_adjustment": "Stock Adjustment",
+    "sales_return_header_report": "Sales Return Header Report",
+    "analytics_reports": "Analytics Reports",
+    "reconcilation_detail_report": "Reconcilation Detail Report",
+    "reconcilation_summary_report": "Reconcilation Summary Report",
+    "administrative_reports": "Administrative Reports",
+    "outlet_scanning_report": "Outlet Scanning Report",
+    "outlet_not_visited_report": "Outlet Not Visited Report",
+    "item_movement_report": "Item Movement Report",
+    "sales_performance_report": "Sales Performance Report",
+    "credit_lead_time_report": "Credit Lead Time Report",
+    "invoice": "Invoice",
+    "sales_man_activity_report": "Sales Man Activity Report",
+    "asset_audit": "Asset Audit",
+    "salesman_target": "Salesman Target",
+    "vanreports": "Vanreports",
+    "asset_mapping": "Asset Mapping",
+    "user_configuration": "User Configuration",
+    "sales_man_daily_summary_report": "Sales Man Daily Summary Report",
+    "sales_man_outstanding_report": "Sales Man Outstanding Report",
+    "asset_reports": "Asset Reports",
+    "asset_history_report": "Asset History Report",
+    "asset_audit_report": "Asset Audit Report",
+    "brand": "Brand",
+    "upper_trade": "Upper Trade",
+    "usalesman_outlet_mapping_report": "Usalesman Outlet Mapping Report",
+    "department": "Department",
+    "category": "Category",
+    "uom": "Uom",
+    "stock_summary_report": "Stock Summary Report",
+    "discount": "Discount",
+    "item_special_price": "Item Special Price",
+    "credit_due": "Credit Due Collection",
+    "van_load_request": "Van Load Request",
+    "van_unload_request": "Van Unload Request",
+    "supplier": "Supplier",
+    "tax": "Tax",
+    "warehouse": "Warehouse",
+    "team": "Team",
+    "salesman_outlet_mapping": "Salesman Outlet Mapping",
+    "department_salesman_mapping": "Department Salesman Mapping",
+    "asset_brand": "Asset Brand",
+    "salesman_item_mapping": "Salesman Item Mapping",
+    "outlet_group": "Outlet Group",
+    "outlet_zone": "Outlet Zone",
+    "outlet_category": "Outlet Category",
+    "outlet_type": "Outlet Type",
+    "outlet_classfication": "Outlet Classfication",
+    "mobile_lock": "Mobile Lock",
+    "damage_request_approval": "Damage Request Approval",
+    "return": "Return",
+    "stock_transfer_approval": "Stock Transfer Approval",
+    "approval_workflow": "Approval Workflow",
+    "invoice_collection": "Invoice Collection",
+    "invoice_return": "Invoice Return",
+    "shelf_rent": "Shelf Rent",
+    "salesman_tracking": "Salesman Tracking",
+    "invoice_approval": "Invoice Approval",
+    "import_template": "Import Template",
+    "others": "Others",
+    "import_master": "Import Master",
+    "usalesman_outlet_mapping": "Usalesman Outlet Mapping",
+    "email_template": "Email Template",
+    "outlet_discount": "Outlet Discount",
+    "logistics": "Logistics",
+    "vehicle": "Vehicle",
+    "cash_receipt": "Cash Receipt",
+    "cash_receipt_report": "Cash Receipt Report",
+    "day_closure_reconciliation_report": "Day Closure Reconciliation Report",
+    "app_error_log": "Error Log",
+    "teamwise_vanload_approval": "Teamwise Vanload Approval",
+    "production": "Production",
+    "driver": "Driver",
+    "vehicle_gate_pass_mapping": "Vehicle Gate Pass Mapping",
+    "reconciliation_dump_report": "Reconciliation Dump Report",
+    "logistic_device": "Logistic Device",
+    "daily_sales_summary_report": "Daily Sales Summary Report",
+    "asset_maintenance_request": "Asset Maintenance Request",
+    "plano_gram": "Plano Gram",
+    "store_report": "Store Report",
+    "store_stock_entry_report": "Store Stock Entry Report",
+    "van_load_request_report": "Van Load Request Report",
+    "stock_allocation_report": "Stock Allocation Report",
+    "asset_request_approval": "Asset Request Approval",
+    "van_stock_allocation_report": "Van Stock Allocation Report",
+    "item_wise_stock_issue_report": "Item Wise Stock Issue Report",
+    "item_wise_sales_report": "Item Wise Sales Report",
+    "outletwise_report": "Outletwise Report",
+    "reconciliation_dump_summary_report": "Reconciliation Dump Summary Report",
+    "stock_movement_report": "Stock Movement Report",
+    "time_spent_market_analysis_report": "Time Spent Market Analysis Report",
+    "salesman_daily_transactionreport": "Salesman Daily Transactionreport",
+    "salesman_overall_summary_report": "Salesman Overall Summary Report",
+    "outletwise_sales_report": "Outletwise Sales Report",
+    "consolidated_sales_details_report": "Consolidated Sales Details Report",
+    "supplier_and_customerwise_sales_report": "Supplier And Customerwise Sales Report",
+    "supplier_and_itemwise_sales_report": "Supplier And Itemwise Sales Report",
+    "upper_trade_report": "Upper Trade Report",
+    "pre_order_report": "Pre Order Report",
+    "activity_log_report": "Activity Log Report",
+    "daily_transaction_report": "Daily Transaction Report",
+    "stock_expiry_report": "Stock Expiry Report",
+    "shelf_stock_report": "Shelf Stock Report",
+    "master_entity": "Entity Grid"
+  }
+}

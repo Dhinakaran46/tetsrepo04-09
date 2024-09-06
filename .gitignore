@@ -5,7 +5,7 @@
 /tmp
 /out-tsc
 /bazel-out
-/src/assets
+#/src/assets
 
 # Node
 /node_modules
@@ -46,4 +46,4 @@ Thumbs.db
 
 # assets files
 
-/src/assets/images
+#/src/assets/images

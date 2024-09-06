@@ -1,0 +1,4 @@
+@import 'tailwind.css';
+@import 'tippy.js/dist/tippy.css';
+@import '@ng-select/ng-select/themes/default.theme.css';
+@import 'highlight.js/styles/androidstudio.css';
