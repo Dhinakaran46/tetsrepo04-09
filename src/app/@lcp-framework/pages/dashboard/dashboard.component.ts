@@ -195,6 +195,7 @@ export class DashboardComponent implements AfterViewInit {
               if (mainElem.cards) {
                 mainElem.cards = await Promise.all(
                   mainElem.cards.map(async (item: any) => {
+                    console.log(item);
                     return {
                       ...item,
                       format: item.format ? (Array.isArray(item.format) ? item.format : [item.format]) : [],
@@ -352,7 +353,10 @@ export class DashboardComponent implements AfterViewInit {
   }
   registerHandlebarsHelpers() {
     Handlebars.registerHelper('limit', function (items: any[], limit: number) {
-      return items.slice(0, limit);
+      if (Array.isArray(items)) {
+        return items.slice(0, limit);
+      }
+      return [];
     });
   }
 
