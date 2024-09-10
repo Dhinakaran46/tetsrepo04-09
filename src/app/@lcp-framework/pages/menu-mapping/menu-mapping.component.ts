@@ -608,7 +608,7 @@ export class MenuMappingComponent implements OnInit {
             menu_img: formData.menuIcon || null,
             link_type: formData.link_type,
             permission_id: formData.parentActionItem || null,
-            target: formData.url || '#',
+            target: formData.url || '',
             order_no: formData.order_no || 1.0,
             parent_id: formData.parent || null,
             entity_id: formData.module || null,

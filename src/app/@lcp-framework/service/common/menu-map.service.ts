@@ -22,8 +22,8 @@ export class MenuMapService {
     return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.postCommnList}`, data);
   }
 
-  updatedDate(data: any) {
-    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.updatedData}`, data);
+  executeRecords(data: any) {
+    return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, data);
   }
 
   procedureCall(data: any) {

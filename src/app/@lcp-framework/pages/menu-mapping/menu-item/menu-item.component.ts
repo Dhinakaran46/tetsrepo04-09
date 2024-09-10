@@ -142,45 +142,53 @@ export class MenuItemComponent {
   }
 
   async deleteItems(ids: number[]): Promise<void> {
-    const deleteEntityType = {
-      table_name: 'menu_items',
-      update_values: {
-        status_id: 3,
-      },
-      where_all: [
-        {
-          column_name: 'deleted_at',
-          value: null,
-          operator: 'IS',
+    for (const id of ids) {
+      const deleteEntityType = {
+        data: {
+          table1: [
+            {
+              status_id: 3,
+              deleted_at: 'now()',
+            },
+          ],
         },
-        {
-          column_name: 'id',
-          value: ids,
-          operator: 'IN',
+        table: ['menu_items'],
+        action: ['update'],
+        conditions: {
+          table1: [
+            {
+              id: id,
+            },
+          ],
         },
-      ],
-      company_id: this.companyId,
-      deleted_by: 1,
-      deleted_at: 'now()',
-      print_query: true,
-    };
+        table_mapping: ['table1'],
+      };
 
-    this.menuMapService.updatedDate(deleteEntityType).subscribe({
-      next: (response: any) => {
-        if (response.code === 200 && response.status) {
-          const key = 'record_deleted_successfully';
-          const successMessage = this.translate.instant(key);
-          this.toastr.success(successMessage);
-          this.menuService.loadMenus(this.menu_id);
-          this.menuLoadService.serviceMenus(this.companyId);
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching modules:', error);
-      },
-      complete: () => {
-        console.log(`Menu Item deleted completed`);
-      },
-    });
+      await new Promise((resolve, reject) => {
+        this.menuMapService.executeRecords(deleteEntityType).subscribe({
+          next: (response: any) => {
+            if (response.code === 200 && response.status) {
+              console.log(`Menu item with id ${id} deleted successfully.`);
+            } else {
+              console.error(`Failed to delete menu item with id ${id}.`);
+            }
+            resolve(null);
+          },
+          error: (error) => {
+            console.error(`Error deleting menu item with id ${id}:`, error);
+            reject(error);
+          },
+        });
+      });
+    }
+
+    const key = 'record_deleted_successfully';
+    const successMessage = this.translate.instant(key);
+    this.toastr.success(successMessage);
+
+    this.menuService.loadMenus(this.menu_id);
+    this.menuLoadService.serviceMenus(this.companyId);
+
+    console.log('Menu item deletion process completed.');
   }
 }

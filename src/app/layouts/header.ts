@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, AfterViewInit, ViewChildren, QueryList, ViewContainerRef, ElementRef, Type } from '@angular/core';
+﻿import { Component, OnInit, Type } from '@angular/core';
 import { CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';

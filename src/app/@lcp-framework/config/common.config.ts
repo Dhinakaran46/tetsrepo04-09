@@ -16,7 +16,6 @@ export const commonConfig = {
     getAllMenu: 'user/menus',
     getCommnList: 'common/list-data',
     postCommnList: 'common/execute-transaction',
-    updatedData: 'common/update-data',
     listdata: 'common/list-data',
     executeRecords: 'common/execute-transaction',
     getTablesList: 'common/tables',
