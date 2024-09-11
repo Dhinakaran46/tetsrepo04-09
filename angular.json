@@ -30,7 +30,8 @@
                 "glob": "**/*",
                 "input": "node_modules/monaco-editor/min/vs",
                 "output": "/assets/monaco/min/vs"
-              }
+              },
+              "src/manifest.webmanifest"
             ],
             "styles": [
               "node_modules/quill/dist/quill.snow.css",
@@ -62,7 +63,8 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.ts"
                 }
-              ]
+              ],
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -116,7 +118,11 @@
             "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
-            "assets": ["src/favicon.ico", "src/assets"],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets",
+              "src/manifest.webmanifest"
+            ],
             "styles": ["node_modules/ngx-toastr/toastr.css", "src/styles.scss"],
             "scripts": []
           }
