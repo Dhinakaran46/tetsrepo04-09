@@ -6,11 +6,13 @@
           <formly-field [field]="fg"></formly-field>
         </div>
         <div class="flex-none">
-          <div class="md:col-span-1 flex items-center justify-center">
-            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button" class="btn btn-primary" (click)="add()">
+          <div class="md:col-span-1 flex items-center justify-center h-full">
+            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button"
+              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-primary" (click)="add()">
               {{ props['addText'] || '+' }}
             </button>
-            <button *ngIf="i !== 0" type="button" class="btn btn-danger" (click)="remove(i)">
+            <button *ngIf="i !== 0" type="button"
+              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-danger" (click)="remove(i)">
               {{ props['removeText'] || '-' }}
             </button>
           </div>
@@ -23,11 +25,13 @@
           <formly-field [field]="field"></formly-field>
         </div>
         <div class="flex-none">
-          <div class="md:col-span-1 flex items-center justify-center">
-            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button" class="btn btn-primary" (click)="add()">
+          <div class="md:col-span-1 flex items-center justify-center h-full">
+            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button"
+              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-primary" (click)="add()">
               {{ props['addText'] || '+' }}
             </button>
-            <button *ngIf="i !== 0" type="button" class="btn btn-danger" (click)="remove(i)">
+            <button *ngIf="i !== 0" type="button"
+              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-danger" (click)="remove(i)">
               {{ props['removeText'] || '-' }}
             </button>
           </div>
