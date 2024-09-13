@@ -11,6 +11,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
 import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
 import { DocumentationComponent } from '../../pages/documentation/documentation.component';
+import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
 
 @Injectable({
   providedIn: 'root',
@@ -114,6 +115,7 @@ export class RouteUpdateService {
                 language_contents_module: LanguageMappingComponent,
                 job_builder_module: JobPageComponent,
                 help_page_module: DocumentationComponent,
+                configurations_module: ConfigurationComponent,
               };
 
               const route: Route = {
