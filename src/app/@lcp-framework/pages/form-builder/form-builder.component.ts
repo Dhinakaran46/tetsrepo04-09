@@ -570,7 +570,6 @@ export class FormBuilderComponent implements OnInit {
         if (group.fieldArray.props) group.fieldArray.props.placeholder = group.fieldArray.props.placeholder || 'Please select';
       }
 
-      // Process individual field
       if (group.hooks && group.hooks.onInit) {
         if (group.parentConfig && group.parentConfig.hasParent) {
           group.hooks.onInit = (f: FormlyFieldConfig) => {
@@ -615,6 +614,23 @@ export class FormBuilderComponent implements OnInit {
         }
       }
 
+      // Convert string-based onInitFunc to actual functions
+      if (group.hooks && group.hooks.onInitFunc) {
+        const dynamicHook = this.stringToFunction(group.hooks.onInitFunc);
+        if (typeof dynamicHook === 'function') {
+          group.hooks.onInit = (f: FormlyFieldConfig) => {
+            dynamicHook(f);
+          };
+        }
+      } else if (group.fieldArray?.hooks && group.fieldArray.hooks.onInitFunc) {
+        const dynamicHook = this.stringToFunction(group.fieldArray.hooks.onInitFunc);
+        if (typeof dynamicHook === 'function') {
+          group.fieldArray.hooks.onInit = (f: FormlyFieldConfig) => {
+            dynamicHook(f);
+          };
+        }
+      }
+
       // Set default options for select fields
       if (group.type === 'select') {
         group.type = 'select-from-db';
@@ -629,5 +645,14 @@ export class FormBuilderComponent implements OnInit {
 
       return group;
     });
+  }
+
+  private stringToFunction(fnString: string): Function {
+    try {
+      return new Function('model', 'formState', `return (${fnString})(model, formState);`);
+    } catch (error) {
+      console.error('Error creating function from string:', fnString, error);
+      return () => null;
+    }
   }
 }
