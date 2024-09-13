@@ -41,7 +41,7 @@
                 <tr>
                   <th
                     *ngIf="masterInfo?.permissions?.edit"
-                    class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
+                    class="w-36 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
                   >
                     {{ 'config_table_field_orderno' | translate }}
                   </th>
@@ -142,7 +142,7 @@
                           class="form-checkbox h-4 w-4 border-gray-300 text-red-500 dark:border-gray-600 dark:bg-gray-800"
                         />
                       </ng-container>
-                      <ng-container *ngSwitchCase="'select'">
+                      <ng-container *ngSwitchCase="'single_select'">
                         <select
                           formControlName="config_value"
                           class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
@@ -150,7 +150,7 @@
                           <option *ngFor="let option of gridpaginationdropdownList" [value]="option">{{ option }}</option>
                         </select>
                       </ng-container>
-                      <ng-container *ngSwitchCase="'grid_pagination_multi_select'">
+                      <ng-container *ngSwitchCase="'select'">
                         <ng-select
                           [items]="gridpaginationdropdownList"
                           [multiple]="true"
@@ -179,8 +179,6 @@
   </div>
 </form>
 
-<!-- Toggle Menu Form for Adding New Configuration -->
-
 <div
   *ngIf="isMenuOpen"
   aria-labelledby="options-menu"
@@ -188,13 +186,11 @@
   class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
   role="menu"
 >
-  <!-- Header -->
   <div class="flex items-center justify-between border-b border-gray-200 p-4">
     <span>{{ 'add_new_records' | translate }}</span>
   </div>
   <form [formGroup]="newConfigForm" (ngSubmit)="onSubmitNewConfig()" class="p-4">
     <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
-      <!-- Tab Selection Field -->
       <div class="mb-4">
         <label for="tabSelect" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_category' | translate }}</label>
         <select id="tabSelect" formControlName="tab" class="form-select mt-1 block w-10/12 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800">
@@ -202,7 +198,6 @@
         </select>
       </div>
 
-      <!-- Value Type Field -->
       <div class="mb-4">
         <label for="valueType" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_categorytype' | translate }}</label>
         <select
@@ -224,7 +219,6 @@
         />
       </div>
 
-      <!-- Key Field -->
       <div class="mb-4">
         <label for="key" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_label' | translate }}</label>
         <input
@@ -235,7 +229,6 @@
         />
       </div>
 
-      <!-- Value Type Field -->
       <div class="mb-4">
         <label for="keyType" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_valuetype' | translate }}</label>
         <select id="keyType" formControlName="keyType" class="form-select mt-1 block w-10/12 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800">
@@ -243,7 +236,6 @@
         </select>
       </div>
 
-      <!-- Value Field -->
       <div class="mb-4">
         <label for="value" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_value' | translate }}</label>
         <ng-container [ngSwitch]="newConfigForm.get('keyType')?.value">
@@ -295,12 +287,12 @@
               class="form-checkbox h-4 w-4 border-gray-300 text-red-500 dark:border-gray-600 dark:bg-gray-800"
             />
           </ng-container>
-          <ng-container *ngSwitchCase="'select'">
+          <ng-container *ngSwitchCase="'single_select'">
             <select id="value" formControlName="value" class="form-select mt-1 block w-10/12 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800">
               <option *ngFor="let option of valueTypeOptions" [value]="option">{{ option }}</option>
             </select>
           </ng-container>
-          <ng-container *ngSwitchCase="'grid_pagination_multi_select'">
+          <ng-container *ngSwitchCase="'select'">
             <ng-select
               [items]="gridpaginationdropdownList"
               [multiple]="true"
@@ -314,7 +306,6 @@
       </div>
     </ng-scrollbar>
 
-    <!-- Footer -->
     <div class="flex items-center justify-between border-t border-gray-200 p-4">
       <div class="flex gap-4">
         <button

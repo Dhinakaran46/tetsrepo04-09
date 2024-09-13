@@ -42,16 +42,18 @@ export class ConfigurationComponent implements OnInit {
   currentTab: string = '';
   allTabsForm: FormGroup;
   configForm: FormGroup;
+  store: any;
+  title_key: string = 'configuration';
+  masterInfo: any;
 
   isMenuOpen = false;
   newConfigForm: FormGroup;
 
   gridpaginationdropdownList = ['5', '10', '15', '20', '25', '30', '40', '50', '60', '70', '80', '90', '100'];
-  fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'grid_pagination_multi_select', 'time'];
+  fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'select', 'time'];
   valueTypeOptions = ['static'];
 
   update_json_schema: any = {
-    // it will be removed
     print_query: true,
     action: ['update', 'insert'],
     table: ['app_configurations', 'app_configurations'],
@@ -78,7 +80,7 @@ export class ConfigurationComponent implements OnInit {
     this.configForm = this.fb.group({
       configurations: this.fb.array([]),
     });
-    // Initialize the form for new configuration
+
     this.newConfigForm = this.fb.group({
       tab: ['', Validators.required],
       key: ['', Validators.required],
@@ -90,9 +92,7 @@ export class ConfigurationComponent implements OnInit {
 
     this.initStore();
   }
-  store: any;
-  title_key: string = 'configuration';
-  masterInfo: any;
+
   ngOnInit() {
     this.title_key = this.route.snapshot.data['pageInfo'].fullEntity;
     const userData = this.localStorageService.getData('user_data');
@@ -101,7 +101,6 @@ export class ConfigurationComponent implements OnInit {
       this.userId = parsedData.main?.id;
       this.companyId = parsedData.main?.company_id;
     }
-
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
     if (pageInfo) {
       this.masterInfo = pageInfo;
@@ -125,8 +124,8 @@ export class ConfigurationComponent implements OnInit {
           break;
         case 'file':
         case 'checkbox':
+        case 'single_select':
         case 'select':
-        case 'grid_pagination_multi_select':
           valueControl.clearValidators();
           break;
         default:
@@ -168,11 +167,10 @@ export class ConfigurationComponent implements OnInit {
     const newConfig = this.newConfigForm.value;
     console.log(newConfig);
     const extracttab = newConfig.tab.split('_');
-    // Find the tab by name and get its configuration array
+
     const tab = this.getTabByName(extracttab[1]);
     const configurations = tab.get('configurations') as FormArray;
 
-    // Add new configuration to the selected tab
     configurations.push(
       this.fb.group({
         order_no: [newConfig.order_no],
@@ -184,11 +182,10 @@ export class ConfigurationComponent implements OnInit {
       })
     );
 
-    // Reset form and close the menu
     this.newConfigForm.reset();
     this.toggleMenu();
   }
-  // Find tab form group by name
+
   getTabByName(tabName: string): FormGroup {
     return this.allTabsForm.get(tabName) as FormGroup;
   }
@@ -237,13 +234,13 @@ export class ConfigurationComponent implements OnInit {
           if (this.tabs[1].configurations) {
             this.tabs[1].configurations.map(function (elem: any) {
               console.log(elem);
-              if (elem.config_field_type == 'grid_pagination_multi_select') {
+              if (elem.config_field_type == 'select') {
                 elem.config_value = elem.config_value.split(',');
               }
             });
             this.tabs[0].configurations.map(function (elem: any) {
               console.log(elem);
-              if (elem.config_field_type == 'grid_pagination_multi_select') {
+              if (elem.config_field_type == 'select') {
                 elem.config_value = elem.config_value.split(',');
               }
             });
@@ -344,7 +341,7 @@ export class ConfigurationComponent implements OnInit {
       }));
 
       updateItems.map(function (elem: any) {
-        if (elem.config_field_type == 'grid_pagination_multi_select') {
+        if (elem.config_field_type == 'select') {
           elem.config_value = elem.config_value.toString();
         }
         if (elem.config_field_type == 'file') {
@@ -354,7 +351,7 @@ export class ConfigurationComponent implements OnInit {
       });
 
       insertItems.map(function (elem: any) {
-        if (elem.config_field_type == 'grid_pagination_multi_select') {
+        if (elem.config_field_type == 'select') {
           elem.config_value = elem.config_value.toString();
         }
         if (elem.config_field_type == 'file') {
@@ -375,13 +372,8 @@ export class ConfigurationComponent implements OnInit {
             const key = 'record_updated_successfully';
             const successMessage = this.translate.instant(key);
             this.toastr.success(successMessage);
-            //this.isMenuOpen = false;
-            //this.languageService.serviceChangeLanguage(this.companyId, this.languageCode.toLowerCase());
-            //this.fetchData();
+
             this.loadAllItems('act1');
-            // setTimeout(() => {
-            //   location.reload();
-            // }, 500);
           } else {
             const key = 'record_failed_updated';
             const errorMessage = this.translate.instant(key);
@@ -394,9 +386,6 @@ export class ConfigurationComponent implements OnInit {
           this.toastr.error(errorMessage, 'Error');
         }
       );
-
-      // Here you would send the allConfigurations to your API
-      // Implement API call here
     } else {
       console.log('Form is invalid');
     }
@@ -409,7 +398,7 @@ export class ConfigurationComponent implements OnInit {
   getInputType(fieldType: string): string {
     switch (fieldType) {
       case 'text':
-      case 'grid_pagination_multi_select':
+      case 'select':
         return 'text';
       case 'number':
         return 'number';
@@ -432,10 +421,8 @@ export class ConfigurationComponent implements OnInit {
     const configControl = configurationsArray.at(index) as FormGroup;
     const newFieldType = configControl.get('config_field_type')?.value;
 
-    // Reset the config_value when field type changes
     configControl.get('config_value')?.setValue(null);
 
-    // Update the config_value_type based on the new field type
     switch (newFieldType) {
       case 'number':
         configControl.patchValue({ config_value_type: 'number' });
