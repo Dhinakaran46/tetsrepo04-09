@@ -64,6 +64,57 @@ export class MenuLoadService {
       .sort((a, b) => a.order_no - b.order_no);
   }
 
+  fetchConfigData(companyId: number): any {
+    const payload = {
+      company_id: companyId,
+      primary_table: 'app_configurations',
+      sort_columns: [['app_configurations.id', 'asc']],
+      limit_range: 1000,
+      select_columns: [
+        ['app_configurations.id'],
+        ['app_configurations.config_key'],
+        ['app_configurations.category_id'],
+        ['app_configurations.config_value'],
+        ['app_configurations.config_value_type'],
+        ['app_configurations.config_field_type'],
+      ],
+      includes: [],
+      search_all: [],
+    };
+
+    return this.menuMapService.getCommonList(payload).pipe(
+      map((response: any) => {
+        if (response.code === 200 && response.status) {
+          const finalObject = response.data.records.reduce((acc: any, record: any) => {
+            acc[record.config_key] = record.config_value;
+            return acc;
+          }, {});
+          // Store menu data
+          const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
+          if (user_data) {
+            this.localStorageService.storeData(
+              'user_data',
+              JSON.stringify({
+                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                unformattedconfig: response.data.records,
+                config: finalObject,
+              })
+            );
+          }
+
+          return true;
+        } else {
+          console.warn('Data fetch failed:', response);
+          return [];
+        }
+      }),
+      catchError((error) => {
+        console.error('Error fetching data:', error);
+        return of([]);
+      })
+    );
+  }
+
   fetchMenuData(companyId: number): Observable<MenuItem[]> {
     const userData = this.localStorageService.getData('user_data');
     this.user_info = userData ? JSON.parse(userData) : null;

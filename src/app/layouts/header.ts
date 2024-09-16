@@ -121,6 +121,7 @@ export class HeaderComponent implements OnInit {
     },
   ];
   user_info: any;
+  apiUrl = environment.apiUrl;
 
   constructor(
     public translate: TranslateService,
@@ -134,7 +135,6 @@ export class HeaderComponent implements OnInit {
     private menuLoadService: MenuLoadService
   ) {
     this.initStore();
-    this.user_info = JSON.parse(this.localstore.getData('user_data'));
   }
 
   async initStore() {
@@ -146,6 +146,7 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.user_info = JSON.parse(this.localstore.getData('user_data'));
     // this.setActiveDropdown();
     // this.router.events.subscribe((event) => {
     //   if (event instanceof NavigationEnd) {

@@ -36,6 +36,7 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { LanguageService } from '../../service/common/language.service';
 import { MenuLoadService } from '../../service/common/menu-load.service';
+import { forkJoin } from 'rxjs';
 
 interface MenuItem {
   id: number;
@@ -234,6 +235,16 @@ export class CoverLoginComponent {
       },
     });
   }
+  setConfig(companyId: number): void {
+    this.menuLoadService.fetchConfigData(companyId).subscribe({
+      next: (res: any) => {
+        console.log(res);
+      },
+      error: (error: any) => {
+        console.error('Error fetching menu data during login:', error);
+      },
+    });
+  }
 
   onSubmit() {
     this.isSubmitted = true;
@@ -286,11 +297,23 @@ export class CoverLoginComponent {
             this.localstore.removeData('rememberme');
           }
 
+          this.setConfig(this.companyId);
           this.onLoginSuccess(this.companyId);
 
           // Add dynamic routes
 
-          this.router.navigate(['/dashboard']);
+          forkJoin([
+            this.menuLoadService.fetchConfigData(this.companyId), // setConfig
+            this.menuLoadService.fetchMenuData(this.companyId), // onLoginSuccess
+          ]).subscribe({
+            next: ([configData]) => {
+              this.router.navigate(['/dashboard']);
+            },
+            error: (error) => {
+              console.error('Error during login:', error);
+              this.toastr.error('Login failed due to an internal error.');
+            },
+          });
         } else {
           if (response.code == 405 || response.code == 421) {
             const key = 'incorrect_username_or_password';

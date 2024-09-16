@@ -12,6 +12,7 @@ import { Store } from '@ngrx/store';
 import { commonConfig } from '../../config/common.config';
 
 import { DatePipe } from '@angular/common';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 interface SearchCondition {
   id: string;
@@ -136,7 +137,19 @@ export class DataTableComponent implements OnInit, OnChanges {
     searchPlaceholderText: 'Search',
   };
 
-  constructor(private translate: TranslateService, private toastr: ToastrService, public storeData: Store<any>, public datePipe: DatePipe) {
+  paginationOptions: any[] = [];
+
+  user_info: any;
+
+  constructor(
+    private translate: TranslateService,
+    private toastr: ToastrService,
+    public storeData: Store<any>,
+    public datePipe: DatePipe,
+    private localstore: LocalStorageService
+  ) {
+    this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.paginationOptions = this.user_info.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
   }
 
@@ -147,6 +160,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     });
 
     this.filteredItems = [...this.items];
+
     this.translate.get(['table_multiselect_0', 'table_multiselect_3']).subscribe((translations) => {
       this.dropdownSettings = {
         singleSelection: false,

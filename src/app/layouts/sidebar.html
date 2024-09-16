@@ -3,8 +3,10 @@
     <div class="h-full bg-white dark:bg-[#0e1726]">
       <div class="flex items-center justify-between px-4 py-3">
         <a routerLink="/" class="main-logo flex shrink-0 items-center">
-          <img class="ml-[5px] flex-none" src="assets/images/logo.svg" alt appDynamicFontSize="headerlogo" />
-          <span class="align-middle font-semibold dark:text-white-light lg:inline ltr:ml-1.5 rtl:mr-1.5" appDynamicFontSize="heading">LCP</span>
+          <img class="ml-[5px] flex-none" [src]="apiUrl+'/'+ this.user_info?.config?.logo" alt appDynamicFontSize="headerlogo" />
+          <span class="align-middle font-semibold dark:text-white-light lg:inline ltr:ml-1.5 rtl:mr-1.5" appDynamicFontSize="heading"
+            >{{this.user_info?.config?.company_name}}</span
+          >
         </a>
         <a
           href="javascript:;"

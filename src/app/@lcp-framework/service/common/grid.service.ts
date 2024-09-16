@@ -67,4 +67,14 @@ export class GridApiService {
   deleteImageByName(data: any): Observable<any> {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.deleteImageByName}`, data);
   }
+
+  uploadConfigPicture(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('pic', file, file.name);
+
+    return this.http.put(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.configpicture}`, formData, {
+      reportProgress: true,
+      observe: 'events',
+    });
+  }
 }

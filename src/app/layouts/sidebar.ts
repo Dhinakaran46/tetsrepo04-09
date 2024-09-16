@@ -14,6 +14,7 @@ import { commonConfig } from '../@lcp-framework/config/common.config';
 import { catchError, map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
+import { environment } from '../../environments/environment';
 
 interface MenuItem {
   id: number;
@@ -48,6 +49,7 @@ export class SidebarComponent {
   parentDropdown: string = '';
   user_info: any;
   COMMON_CONFIG = commonConfig;
+  apiUrl = environment.apiUrl;
 
   constructor(
     public translate: TranslateService,
@@ -57,7 +59,6 @@ export class SidebarComponent {
     private menuLoadService: MenuLoadService
   ) {
     this.initStore();
-    this.user_info = JSON.parse(this.localstore.getData('user_data'));
   }
   async initStore() {
     this.storeData
@@ -72,6 +73,7 @@ export class SidebarComponent {
 
     if (userData) {
       const parsedData = JSON.parse(userData);
+      this.user_info = parsedData;
       this.userId = parsedData.main?.id;
       this.companyId = parsedData.main?.company_id;
     }

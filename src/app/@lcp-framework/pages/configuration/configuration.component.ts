@@ -7,15 +7,17 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { commonConfig } from '../../config/common.config';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from '../../../../environments/environment';
 
 interface TabConfiguration {
   id: number;
   config_key: string;
   category_id: any;
   config_value: any;
-  config_file_value: any;
+
   config_value_type: string;
   config_field_type: string;
   order_no: any;
@@ -65,6 +67,19 @@ export class ConfigurationComponent implements OnInit {
       table1: [],
     },
   };
+  insert_particular_schema: any = {
+    print_query: true,
+    action: ['insert'],
+    table: ['app_configurations'],
+    table_mapping: ['table1'],
+    data: {
+      table1: [],
+    },
+    conditions: {},
+  };
+
+  commonConfig = commonConfig;
+  apiUrl = environment.apiUrl;
 
   constructor(
     private route: ActivatedRoute,
@@ -84,7 +99,7 @@ export class ConfigurationComponent implements OnInit {
     this.newConfigForm = this.fb.group({
       tab: ['', Validators.required],
       key: ['', Validators.required],
-      value: ['', Validators.required],
+
       order_no: ['', Validators.required],
       keyType: ['text', Validators.required],
       valueType: ['static', Validators.required],
@@ -107,9 +122,6 @@ export class ConfigurationComponent implements OnInit {
     }
     this.initializeUserData();
     this.loadAllItems('act1');
-    this.newConfigForm.get('keyType')?.valueChanges.subscribe((keyType) => {
-      this.updateValueField(keyType);
-    });
   }
 
   updateValueField(keyType: string): void {
@@ -163,28 +175,6 @@ export class ConfigurationComponent implements OnInit {
     this.isMenuOpen = !this.isMenuOpen;
     if (this.isMenuOpen) this.addNewItemFormArray(true);
   }
-  onSubmitNewConfig() {
-    const newConfig = this.newConfigForm.value;
-    console.log(newConfig);
-    const extracttab = newConfig.tab.split('_');
-
-    const tab = this.getTabByName(extracttab[1]);
-    const configurations = tab.get('configurations') as FormArray;
-
-    configurations.push(
-      this.fb.group({
-        order_no: [newConfig.order_no],
-        category_id: [extracttab[0]],
-        config_key: [newConfig.key],
-        config_value: [newConfig.value],
-        config_field_type: [newConfig.keyType],
-        config_value_type: [newConfig.valueType],
-      })
-    );
-
-    this.newConfigForm.reset();
-    this.toggleMenu();
-  }
 
   getTabByName(tabName: string): FormGroup {
     return this.allTabsForm.get(tabName) as FormGroup;
@@ -231,20 +221,18 @@ export class ConfigurationComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.tabs = response.data.records;
-          if (this.tabs[1].configurations) {
-            this.tabs[1].configurations.map(function (elem: any) {
-              console.log(elem);
+
+          this.tabs.map(function (ielem) {
+            ielem.configurations.map(function (elem: any) {
               if (elem.config_field_type == 'select') {
                 elem.config_value = elem.config_value.split(',');
               }
-            });
-            this.tabs[0].configurations.map(function (elem: any) {
-              console.log(elem);
-              if (elem.config_field_type == 'select') {
-                elem.config_value = elem.config_value.split(',');
+              if (elem.config_field_type == 'checkbox') {
+                elem.config_value = elem.config_value == 'true' && true;
               }
             });
-          }
+          });
+
           if (this.tabs.length > 0) {
             this.newConfigForm.get('tab')?.setValue(this.tabs[0].category_id + '_' + this.tabs[0].name);
           }
@@ -290,7 +278,7 @@ export class ConfigurationComponent implements OnInit {
       config_key: [config.config_key, Validators.required],
       category_id: [config.category_id],
       config_value: [config.config_value],
-      config_file_value: [config.config_file_value],
+
       order_no: [config.order_no],
       config_value_type: [config.config_value_type, Validators.required],
       config_field_type: [config.config_field_type, Validators.required],
@@ -309,16 +297,29 @@ export class ConfigurationComponent implements OnInit {
   }
 
   onFileChange(event: Event, tabName: string, index: number) {
-    const element = event.target as HTMLInputElement;
-    const file = element.files ? element.files[0] : null;
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const configurationsArray = this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
-        const configControl = configurationsArray.at(index) as FormGroup;
-        configControl.patchValue({ config_value: e.target.result });
-      };
-      reader.readAsDataURL(file);
+    const inputElement = event.target as HTMLInputElement;
+
+    if (inputElement.files && inputElement.files.length > 0) {
+      const pic = inputElement.files[0];
+      this.gridApiService.uploadConfigPicture(pic).subscribe(
+        (response: any) => {
+          if (response.body && response.body.status) {
+            const docNames: string = response.body.data;
+
+            const configurationsArray = this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
+            const configControl = configurationsArray.at(index) as FormGroup;
+            configControl.patchValue({ config_value: docNames });
+          }
+
+          // Handle success response
+        },
+        (error) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          // Handle error response
+        }
+      );
     }
   }
 
@@ -330,8 +331,6 @@ export class ConfigurationComponent implements OnInit {
         allConfigurations[tabName] = this.allTabsForm.get(tabName)?.get('configurations')?.value;
         postData.push(...this.allTabsForm.get(tabName)?.get('configurations')?.value);
       });
-      console.log(postData);
-      console.log('All configurations to be sent:', allConfigurations);
 
       const updateItems = postData.filter((item: any) => item.id);
       const insertItems = postData.filter((item: any) => !item.id);
@@ -344,19 +343,11 @@ export class ConfigurationComponent implements OnInit {
         if (elem.config_field_type == 'select') {
           elem.config_value = elem.config_value.toString();
         }
-        if (elem.config_field_type == 'file') {
-          elem.config_file_value = elem.config_value;
-          elem.config_value = '';
-        }
       });
 
       insertItems.map(function (elem: any) {
         if (elem.config_field_type == 'select') {
           elem.config_value = elem.config_value.toString();
-        }
-        if (elem.config_field_type == 'file') {
-          elem.config_file_value = elem.config_value;
-          elem.config_value = '';
         }
       });
 
@@ -364,11 +355,10 @@ export class ConfigurationComponent implements OnInit {
 
       this.update_json_schema.data['table1'] = updateItems;
       this.update_json_schema.data['table2'] = insertItems;
-      console.log(this.update_json_schema);
+
       this.gridApiService.executeRecords(this.update_json_schema).subscribe(
         (response: any) => {
           if (response.status && response.code === 200) {
-            console.log(response);
             const key = 'record_updated_successfully';
             const successMessage = this.translate.instant(key);
             this.toastr.success(successMessage);
@@ -389,6 +379,46 @@ export class ConfigurationComponent implements OnInit {
     } else {
       console.log('Form is invalid');
     }
+  }
+
+  onSubmitNewConfig() {
+    const newConfig = this.newConfigForm.value;
+
+    const extracttab = newConfig.tab.split('_');
+
+    this.insert_particular_schema.data['table1'] = [
+      {
+        order_no: newConfig.order_no,
+        category_id: extracttab[0],
+        config_key: newConfig.key,
+
+        config_field_type: newConfig.keyType,
+        config_value_type: newConfig.valueType,
+      },
+    ];
+
+    this.gridApiService.executeRecords(this.insert_particular_schema).subscribe(
+      (response: any) => {
+        if (response.status && response.code === 200) {
+          const key = 'record_updated_successfully';
+          const successMessage = this.translate.instant(key);
+          this.toastr.success(successMessage);
+
+          this.newConfigForm.reset();
+          this.toggleMenu();
+          this.loadAllItems('act1');
+        } else {
+          const key = 'record_failed_updated';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+        }
+      },
+      (error: any) => {
+        const key = 'record_failed_inserted';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   switchTab(tabName: string) {
@@ -420,25 +450,5 @@ export class ConfigurationComponent implements OnInit {
     const configurationsArray = this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
     const configControl = configurationsArray.at(index) as FormGroup;
     const newFieldType = configControl.get('config_field_type')?.value;
-
-    configControl.get('config_value')?.setValue(null);
-
-    switch (newFieldType) {
-      case 'number':
-        configControl.patchValue({ config_value_type: 'number' });
-        break;
-      case 'checkbox':
-        configControl.patchValue({ config_value_type: 'boolean' });
-        break;
-      case 'date':
-      case 'time':
-        configControl.patchValue({ config_value_type: 'date' });
-        break;
-      case 'file':
-        configControl.patchValue({ config_value_type: 'file' });
-        break;
-      default:
-        configControl.patchValue({ config_value_type: 'string' });
-    }
   }
 }
