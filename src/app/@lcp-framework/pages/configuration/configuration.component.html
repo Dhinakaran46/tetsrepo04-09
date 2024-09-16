@@ -120,7 +120,12 @@
                       <ng-container *ngSwitchCase="'file'">
                         <div>
                           <div *ngIf="config.get('config_value')?.value">
-                            <img [src]="apiUrl + '/' + config.get('config_value')?.value" alt="Loaded Image" style="max-width: 15%; max-height: 15%" />
+                            <img
+                              class="bg-slate-200"
+                              [src]="apiUrl + '/' + config.get('config_value')?.value"
+                              alt="Loaded Image"
+                              style="max-width: 15%; max-height: 15%"
+                            />
                           </div>
                           <input
                             type="file"
