@@ -79,8 +79,8 @@ export class FormBuilderComponent implements OnInit {
     });
   }
 
-  fetchList(field: FormlyFieldConfig, key: string) {
-    if (key && this.listDatas[key]) {
+  fetchList(field: FormlyFieldConfig, key: string, reset: boolean = false) {
+    if (!reset && key && this.listDatas[key]) {
       if (field && field.props) {
         field.props.options = this.listDatas[key];
       }
@@ -581,7 +581,7 @@ export class FormBuilderComponent implements OnInit {
                   tap((parentValue: any) => {
                     this.form.patchValue({ [group.key]: '' });
                     if (parentValue) {
-                      this.fetchList(f, group.key);
+                      this.fetchList(f, group.key, true);
                     }
                   })
                 )
@@ -602,7 +602,7 @@ export class FormBuilderComponent implements OnInit {
                   tap((parentValue: any) => {
                     this.form.patchValue({ [group.key]: '' });
                     if (parentValue) {
-                      this.fetchList(f, group.key);
+                      this.fetchList(f, group.key, true);
                     }
                   })
                 )

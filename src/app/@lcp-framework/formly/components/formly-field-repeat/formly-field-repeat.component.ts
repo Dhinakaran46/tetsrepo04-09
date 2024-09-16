@@ -7,11 +7,8 @@ import { FieldArrayType, FormlyFieldConfig } from '@ngx-formly/core';
   styleUrl: './formly-field-repeat.component.scss',
 })
 export class FormlyFieldRepeatComponent extends FieldArrayType {
-  // Maximum number of rows allowed
-  maxRows = this.props['limit'] || 5;
-
   isAddDisabled(): boolean {
-    return this.field.fieldGroup && this.field.fieldGroup.length >= this.maxRows ? true : false;
+    return this.field.fieldGroup && this.field.fieldGroup.length >= (this.props['limit'] || 5) ? true : false;
   }
 
   isFormGroup(field: any): boolean {
