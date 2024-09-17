@@ -10,6 +10,11 @@ import { Observable } from 'rxjs';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
+// Define a Handlebars helper for adding 1 to the index
+Handlebars.registerHelper('inc', function (value) {
+  return parseInt(value) + 1;
+});
+
 @Component({
   selector: 'app-static-page',
   standalone: true,

@@ -5,6 +5,7 @@ export const commonConfig = {
     getallprofile: 'auth/profile',
     updateprofile: 'auth/profile',
     updateprofileimage: 'auth/profile/picture',
+    configpicture: 'auth/config/picture',
     updateprofilepwd: 'auth/password/change',
     commongriddata: 'common/grid-data',
     forgetpasswordEmail: 'auth/admin/password/request/',

@@ -59,6 +59,7 @@ export class MasterListComponent implements AfterViewInit {
   title: any = '';
   listQuery: any = '';
   defaultQuery: any = '';
+  user_info: any;
 
   constructor(
     private toastr: ToastrService,
@@ -79,7 +80,10 @@ export class MasterListComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    if (pageInfo) {
+    this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
+    this.resultsPerPage = parseInt(this.user_info.config.grid_pagination_default);
+
+    if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
       const masterListConfig = pageInfo;
 
@@ -312,7 +316,8 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   fetchData(params: FetchDataParams) {
-    this.resultsPerPage = params.limit_range;
+    params.limit_range = this.resultsPerPage;
+
     this.gridApiService.getAllRecords(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -325,27 +330,42 @@ export class MasterListComponent implements AfterViewInit {
                   column_width: '40px',
                 }));
 
-              this.headercolumns = [
-                {
-                  header: 'table_column_sno',
-                  field_value: 'S.No',
-                  is_sortable: 'false',
-                  column_order: '0.00',
-                  column_width: '40px',
-                  is_searchable: 'false',
-                  is_grid_column: 'true',
-                },
-                ...data,
-                {
-                  header: 'table_column_action',
-                  field_value: 'Action',
-                  is_sortable: 'false',
-                  column_order: '0.00',
-                  column_width: '50px',
-                  is_searchable: 'false',
-                  is_grid_column: 'true',
-                },
-              ];
+              if (this.user_info.config.grid_show_serial_number == 'true') {
+                this.headercolumns = [
+                  {
+                    header: 'table_column_sno',
+                    field_value: 'S.No',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '40px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  },
+                  ...data,
+                  {
+                    header: 'table_column_action',
+                    field_value: 'Action',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '50px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  },
+                ];
+              } else {
+                this.headercolumns = [
+                  ...data,
+                  {
+                    header: 'table_column_action',
+                    field_value: 'Action',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '50px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  },
+                ];
+              }
             }
             this.headercolumns = this.headercolumns.map((item: any) => {
               if (item.header === 'status') {
@@ -377,12 +397,19 @@ export class MasterListComponent implements AfterViewInit {
                   }
                 }
               }
+              if (this.user_info.config.grid_show_serial_number == 'true') {
+                return {
+                  table_column_sno: this.listQuery.start_index + index + 1,
+                  ...formattedItem,
+                  Action: index + 1,
+                };
+              }
               return {
-                'S.No': this.listQuery.start_index + index + 1,
                 ...formattedItem,
                 Action: index + 1,
               };
             });
+
             this.totalItems = response.data.total_records;
           } else {
             this.items = [];
