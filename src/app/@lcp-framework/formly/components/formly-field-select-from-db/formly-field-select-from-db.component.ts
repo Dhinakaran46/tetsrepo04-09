@@ -12,16 +12,12 @@ import { FormControl } from '@angular/forms';
 })
 export class FormlyFieldSelectFromDbComponent extends FieldType implements OnInit {
   options$: Observable<{ value: any; label: string }[]> | undefined;
-  table = this.props['table'];
-  labelColumn = this.props['labelColumn'];
-  valueColumn = this.props['valueColumn'];
 
   constructor(private gridApiService: GridApiService) {
     super();
   }
 
   ngOnInit() {
-    // Delay evaluation until the form field is fully initialized
     this.initOptions();
     this.initOnchanges(this);
   }
@@ -60,8 +56,8 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     if (tableName && labelColumn && valueColumn) {
       // console.log('this.form', this.field.parent?.parent?.parent?.model?.unique_id);
 
-      let search_all = this.props['search_all']
-        ? this.props['search_all']
+      const updatedSearchAll = this.props['search_all']
+        ? JSON.parse(JSON.stringify(this.props['search_all']))
         : [
             {
               value: '1',
@@ -70,7 +66,8 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
             },
           ];
 
-      search_all = this.evaluateDynamicValues(search_all, this);
+      const search_all = this.evaluateDynamicValues(updatedSearchAll, this);
+      console.log('Updated search_all:', updatedSearchAll, this.props['search_all']);
 
       const limit_range = this.props['limit_range'] ? this.props['limit_range'] : 1000;
       const print_query = this.props['print_query'] ? this.props['print_query'] : false;

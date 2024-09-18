@@ -138,6 +138,13 @@ export class FormBuilderComponent implements OnInit {
     }
   }
 
+  private redirectToCurrentPage() {
+    const currentUrl = this.router.url; // Get the current URL
+    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+      this.router.navigate([currentUrl]); // Navigate back to the current URL
+    });
+  }
+
   private executeTransaction() {
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false);
     transParam = this.replacePlaceholders(transParam, this.model);
@@ -148,7 +155,7 @@ export class FormBuilderComponent implements OnInit {
           const key = 'transaction_successfully_executed';
           const successMessage = this.translate.instant(key);
           this.toastr.success(successMessage);
-          this.resetForm();
+          this.redirectToCurrentPage();
         } else {
           const key = response.message;
           const errorMessage = this.translate.instant(key);
