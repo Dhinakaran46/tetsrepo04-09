@@ -11,6 +11,7 @@ import { commonConfig } from '../../config/common.config';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../../environments/environment';
+import Swal from 'sweetalert2';
 
 interface TabConfiguration {
   id: number;
@@ -76,6 +77,16 @@ export class ConfigurationComponent implements OnInit {
       table1: [],
     },
     conditions: {},
+  };
+
+  delete_json_schema: any = {
+    // it will be removed
+    action: ['hard_delete'],
+    table: ['app_configurations'],
+    table_mapping: ['table1'],
+    conditions: {
+      table1: [],
+    },
   };
 
   commonConfig = commonConfig;
@@ -321,6 +332,55 @@ export class ConfigurationComponent implements OnInit {
         }
       );
     }
+  }
+
+  removeItem(tabName: string, index: number) {
+    const configurationsArray = this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
+    const configControl = configurationsArray.at(index) as FormGroup;
+    const id = configControl.get('id')?.value;
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      padding: '2em',
+    }).then(async (result) => {
+      if (result.value) {
+        try {
+          this.deleteRecords(id);
+        } catch (error: any) {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, error.message);
+        }
+      }
+    });
+  }
+
+  deleteRecords(id: any) {
+    this.delete_json_schema.conditions['table1'] = [{ id: id }];
+
+    this.gridApiService.executeRecords(this.delete_json_schema).subscribe(
+      (response: any) => {
+        if (response.status && response.code === 200) {
+          const key = 'record_deleted_successfully';
+          const successMessage = this.translate.instant(key);
+          this.toastr.success(successMessage);
+          this.loadAllItems('act1');
+        } else {
+          const key = 'record_failed_deleted';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+        }
+      },
+      (error: any) => {
+        const key = 'record_failed_deleted';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   saveChanges() {

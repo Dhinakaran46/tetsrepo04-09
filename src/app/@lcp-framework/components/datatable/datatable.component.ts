@@ -565,7 +565,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   goToPage(page: number | string) {
-    if (typeof page === 'number' && page !== this.currentPage) {
+    if (this.items.length > 0 && typeof page === 'number' && page !== this.currentPage) {
       this.currentPage = page;
       const start_index = (page - 1) * this.resultsPerPage;
       this.pageChange.emit({ page: this.currentPage, start_index });
