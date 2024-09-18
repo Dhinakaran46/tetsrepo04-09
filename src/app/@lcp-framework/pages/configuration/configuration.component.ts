@@ -232,6 +232,25 @@ export class ConfigurationComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.tabs = response.data.records;
+          console.log(this.tabs);
+          let commonTabs: any = [];
+          this.tabs.map(function (ielem) {
+            commonTabs.push(...ielem.configurations);
+          });
+
+          const finalObject = commonTabs.reduce((acc: any, record: any) => {
+            acc[record.config_key] = record.config_value;
+            return acc;
+          }, {});
+
+          this.localStorageService.storeData(
+            'user_data',
+            JSON.stringify({
+              ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+              unformattedconfig: commonTabs,
+              config: finalObject,
+            })
+          );
 
           this.tabs.map(function (ielem) {
             ielem.configurations.map(function (elem: any) {
