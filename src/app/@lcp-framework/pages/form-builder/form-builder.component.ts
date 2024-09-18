@@ -392,10 +392,6 @@ export class FormBuilderComponent implements OnInit {
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
-          this.form.reset();
-          this.form.markAsPristine();
-          this.form.markAsUntouched();
-          this.form.updateValueAndValidity();
           this.setDefaultData();
         } else {
           this.toastr.error('Invalid entity details given.');
