@@ -15,6 +15,7 @@ import { ExportService } from '../../service/common/export.service';
 import { commonConfig } from '../../config/common.config';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { lastValueFrom } from 'rxjs';
+import { MenuMapService } from '../../service/common/menu-map.service';
 
 interface FetchDataParams {
   entity_name: any;
@@ -73,7 +74,8 @@ export class MasterListComponent implements AfterViewInit {
     private exportService: ExportService,
     private datePipe: DatePipe,
     private translate: TranslateService,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private commonService: MenuMapService
   ) {
     this.initStore();
   }
@@ -481,35 +483,99 @@ export class MasterListComponent implements AfterViewInit {
       this.router.navigate([targetRoute]);
     }
   }
+  commonTranslate(msg: any) {
+    return this.translate.instant(msg);
+  }
 
   deleteItem(item: any) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        showCancelButton: true,
-        confirmButtonText: 'Delete',
-        padding: '2em',
-      }).then(async (result) => {
-        if (result.value) {
-          try {
-            const jobResponse = await this.localStorageService.getMasterEntity({
-              record_info: item,
-              entity_name: this.masterInfo.children.delete.entity_name,
-              entity_type: this.masterInfo.children.delete.component_class_name,
-            });
+      const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
 
-            if (jobResponse) {
-              await this.executeJob({ ...jobResponse, record_info: item });
-              Swal.fire({ title: 'Deleted!', text: 'Your file has been deleted.', icon: 'success' });
+      this.commonService.procedureCall(procedureParams).subscribe({
+        next: (response: { code: number; status: boolean; data: any; message: string }) => {
+          if (response.code === 200 && response.status && response.data) {
+            const res = response.data?.[0]?.result || [];
+
+            if (Object.keys(res).length > 0) {
+              let htmlInput =
+                `
+  <span>` +
+                this.commonTranslate('config_delete_msg_0') +
+                `</span><br><br>
+  <table style="width: 100%; text-align: center; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ddd; padding: 8px;">` +
+                this.commonTranslate('config_delete_msg_1') +
+                `</th>
+      <th style="border: 1px solid #ddd; padding: 8px;">` +
+                this.commonTranslate('config_delete_msg_2') +
+                `</th>
+    </tr> </thead><tbody>
+`;
+
+              Object.entries(res).forEach(([key, value]) => {
+                htmlInput += `
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px;">${key}</td>
+      <td style="border: 1px solid #ddd; padding: 8px;">${value}</td>
+    </tr>
+  `;
+              });
+
+              htmlInput += `</tbody></table>`;
+
+              Swal.fire({
+                title: `<span style="color: orange;">` + this.commonTranslate('config_delete_msg_3') + `!</span>`,
+                html: htmlInput,
+                customClass: {
+                  title: 'swal-title',
+                },
+              });
+            } else {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                padding: '2em',
+              }).then(async (result) => {
+                if (result.value) {
+                  try {
+                    const jobResponse = await this.localStorageService.getMasterEntity({
+                      record_info: item,
+                      entity_name: this.masterInfo.children.delete.entity_name,
+                      entity_type: this.masterInfo.children.delete.component_class_name,
+                    });
+
+                    if (jobResponse) {
+                      await this.executeJob({ ...jobResponse, record_info: item });
+                      Swal.fire({ title: 'Deleted!', text: 'Your file has been deleted.', icon: 'success' });
+                      this.fetchData(this.listQuery);
+                    }
+                  } catch (error: any) {
+                    const key = 'error';
+                    const errorMessage = this.translate.instant(key);
+                    this.toastr.error(errorMessage, error.message);
+                  }
+                }
+              });
             }
-          } catch (error: any) {
+          } else {
             const key = 'error';
             const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, error.message);
+            this.toastr.error(errorMessage, 'Error');
+            console.log(response.message);
           }
-        }
+        },
+        error: (error) => {
+          console.error('Error fetching data:', error);
+          //this.loading = false;
+        },
+        complete: () => {
+          //this.loading = false;
+        },
       });
     }
   }
