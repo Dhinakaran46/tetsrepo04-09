@@ -122,6 +122,7 @@ export class HeaderComponent implements OnInit {
   ];
   user_info: any;
   apiUrl = environment.apiUrl;
+  config: any;
 
   constructor(
     public translate: TranslateService,
@@ -147,6 +148,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.config = JSON.parse(this.localstore.getData('config'));
     // this.setActiveDropdown();
     // this.router.events.subscribe((event) => {
     //   if (event instanceof NavigationEnd) {
@@ -325,7 +327,6 @@ export class HeaderComponent implements OnInit {
     this.authService.logout().subscribe({
       next: (response) => {
         if (response) {
-          console.log(response);
           this.localstore.logout();
           this.router.navigate(['/login']); // Redirect to login page after successful logout
         }

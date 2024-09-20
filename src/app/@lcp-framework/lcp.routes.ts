@@ -20,16 +20,7 @@ export const routes: Routes = [
     component: NotFoundComponent,
     title: 'Not Found',
   },
-  {
-    path: 'forget-password',
-    component: ForgetpwdComponent,
-    title: 'Forget Password',
-  },
-  {
-    path: 'reset-password/:uuid/:id',
-    component: ResetpwdComponent,
-    title: 'Reset password',
-  },
+
   {
     path: 'documentation',
     component: DocumentationComponent,
@@ -102,6 +93,16 @@ export const routes: Routes = [
         path: 'login',
         component: CoverLoginComponent,
         title: 'Login',
+      },
+      {
+        path: 'forget-password',
+        component: ForgetpwdComponent,
+        title: 'Forget Password',
+      },
+      {
+        path: 'reset-password/:uuid/:id',
+        component: ResetpwdComponent,
+        title: 'Reset password',
       },
     ],
   },

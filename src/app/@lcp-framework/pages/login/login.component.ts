@@ -150,16 +150,6 @@ export class CoverLoginComponent {
   }
 
   ngOnInit() {
-    const languageCode = this.languageService.getSavedLanguageCode();
-    if (this.languageService.checkReloadFlag()) {
-      console.log('Reloaded');
-    } else {
-      console.log('Initial Load');
-    }
-
-    const languageId = this.languageService.getLanguageId(languageCode);
-    this.languageService.fetchLanguageData(this.companyId, languageId);
-
     document.documentElement.classList.add('login-page');
     this.loginForm.controls['email'].statusChanges.subscribe((status) => {
       if (this.isSubmitted) {
@@ -277,13 +267,25 @@ export class CoverLoginComponent {
           }, {});
 
           // Store the user data along with permissions and menu lists
-          this.localstore.storeData(
-            'user_data',
-            JSON.stringify({
-              main: response.data,
-              permissions: permissionsObj,
-            })
-          );
+          const conf: any = localStorage.getItem('config');
+          const enc_config: any = JSON.parse(conf);
+          if (enc_config.encrypt_local_storage == 'true') {
+            this.localstore.storeDataEncrypted(
+              'user_data',
+              JSON.stringify({
+                main: response.data,
+                permissions: permissionsObj,
+              })
+            );
+          } else {
+            this.localstore.storeData(
+              'user_data',
+              JSON.stringify({
+                main: response.data,
+                permissions: permissionsObj,
+              })
+            );
+          }
 
           // Update permissions list in RouteUpdateService
           this.routeUpdateService.setPermissionsList(permissionsObj);
@@ -303,7 +305,7 @@ export class CoverLoginComponent {
           // Add dynamic routes
 
           forkJoin([
-            this.menuLoadService.fetchConfigData(this.companyId), // setConfig
+            //this.menuLoadService.fetchConfigData(this.companyId), // setConfig
             this.menuLoadService.fetchMenuData(this.companyId), // onLoginSuccess
           ]).subscribe({
             next: ([configData]) => {

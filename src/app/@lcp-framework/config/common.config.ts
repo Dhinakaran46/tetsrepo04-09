@@ -21,6 +21,7 @@ export const commonConfig = {
     executeRecords: 'common/execute-transaction',
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',
+    unauthprocedureCall: 'common/call-procedure/',
     uploadImageAndGetName: 'common/file-upload/image',
     deleteImageByName: 'common/file-delete/image',
     getLanguageContent: 'common/language-content',

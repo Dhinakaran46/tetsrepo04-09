@@ -20,7 +20,10 @@ export class LocalStorageService implements OnInit {
   }
 
   public getData(key: string): any {
-    if (key == 'user_data' && localStorage.getItem('enc_user') == 'true') {
+    const conf: any = localStorage.getItem('config');
+    const config: any = JSON.parse(conf);
+
+    if (localStorage.getItem('user_data') && key == 'user_data' && config?.encrypt_local_storage == 'true') {
       return this.getDataDecrypted(key);
     }
     this.returnData = localStorage.getItem(key);
@@ -28,17 +31,15 @@ export class LocalStorageService implements OnInit {
   }
 
   public storeDataEncrypted(key: string, value: string | any): void {
-    localStorage.setItem('enc_user', 'true');
     const encryptedInfo: string = CryptoJS.AES.encrypt(value, key).toString();
     localStorage.setItem(key, encryptedInfo);
   }
 
   public getDataDecrypted(key: string): any {
-    console.log(key);
     const value: any = localStorage.getItem(key);
-    console.log(value);
+
     const bytes = CryptoJS.AES.decrypt(value, key);
-    console.log(bytes);
+
     return bytes.toString(CryptoJS.enc.Utf8);
   }
 
@@ -49,7 +50,7 @@ export class LocalStorageService implements OnInit {
 
   public logout(): void {
     localStorage.removeItem('user_data');
-    localStorage.removeItem('enc_user');
+    localStorage.removeItem('config');
     localStorage.removeItem('menu_id');
   }
 

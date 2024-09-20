@@ -140,6 +140,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   paginationOptions: any[] = [];
 
   user_info: any;
+  config: any;
 
   constructor(
     private translate: TranslateService,
@@ -148,8 +149,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     public datePipe: DatePipe,
     private localstore: LocalStorageService
   ) {
+    this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
-    this.paginationOptions = this.user_info.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
+    this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
   }
 

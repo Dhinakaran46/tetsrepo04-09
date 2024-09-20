@@ -50,6 +50,7 @@ export class SidebarComponent {
   user_info: any;
   COMMON_CONFIG = commonConfig;
   apiUrl = environment.apiUrl;
+  config: any;
 
   constructor(
     public translate: TranslateService,
@@ -69,6 +70,7 @@ export class SidebarComponent {
   }
 
   ngOnInit() {
+    this.config = JSON.parse(this.localstore.getData('config'));
     const userData = this.localstore.getData('user_data');
 
     if (userData) {

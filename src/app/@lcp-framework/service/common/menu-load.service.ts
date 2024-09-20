@@ -97,8 +97,6 @@ export class MenuLoadService {
                 'user_data',
                 JSON.stringify({
                   ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                  unformattedconfig: response.data.records,
-                  config: finalObject,
                 })
               );
             } else {
@@ -106,8 +104,6 @@ export class MenuLoadService {
                 'user_data',
                 JSON.stringify({
                   ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                  unformattedconfig: response.data.records,
-                  config: finalObject,
                 })
               );
               localStorage.removeItem('enc_user');
@@ -128,6 +124,8 @@ export class MenuLoadService {
   }
 
   fetchMenuData(companyId: number): Observable<MenuItem[]> {
+    const conf: any = localStorage.getItem('config');
+    const enc_config: any = JSON.parse(conf);
     const userData = this.localStorageService.getData('user_data');
     this.user_info = userData ? JSON.parse(userData) : null;
     if (this.user_info && this.user_info.main && this.user_info.main.role) {
@@ -188,7 +186,7 @@ export class MenuLoadService {
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           if (user_data) {
-            if (localStorage.getItem('enc_user') == 'true') {
+            if (enc_config.encrypt_local_storage == 'true') {
               this.localStorageService.storeDataEncrypted(
                 'user_data',
                 JSON.stringify({

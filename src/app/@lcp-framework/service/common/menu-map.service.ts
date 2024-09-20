@@ -29,4 +29,8 @@ export class MenuMapService {
   procedureCall(data: any) {
     return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.procedureCall}${data.proc_name}`, data.params);
   }
+
+  unAuthProcedureCall(data: any) {
+    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.unauthprocedureCall}${data.proc_name}`, data.params);
+  }
 }

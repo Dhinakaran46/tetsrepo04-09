@@ -62,6 +62,7 @@ export class MasterListComponent implements AfterViewInit {
   defaultQuery: any = '';
   user_info: any;
   grid_records_delete: any;
+  config: any;
 
   constructor(
     private toastr: ToastrService,
@@ -82,10 +83,11 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
+    this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
-    this.resultsPerPage = parseInt(this.user_info.config.grid_pagination_default);
-    this.grid_records_delete = this.user_info.config.grid_enable_associated_records_deletion;
+    this.resultsPerPage = parseInt(this.config.grid_pagination_default);
+    this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
 
     if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
@@ -241,7 +243,7 @@ export class MasterListComponent implements AfterViewInit {
     const transformedRecords = records.map((record) => {
       const transformedRecord: any = {};
       filteredHeaders.forEach((header) => {
-        const translationKey = `GRIDS.${this.title}.fields.${header.header}`;
+        const translationKey = `${header.header}`;
         const translatedHeader = this.translate.instant(translationKey);
         if (header.field_type_id == '7') {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
@@ -259,11 +261,11 @@ export class MasterListComponent implements AfterViewInit {
 
   private getStatusTranslation(status: string): string {
     if (status == '1') {
-      return this.translate.instant('COMMON.TABLE.TABLE_STATUS_VAL_0');
+      return this.translate.instant('table_status_val_0');
     } else if (status == '2') {
-      return this.translate.instant('COMMON.TABLE.TABLE_STATUS_VAL_1');
+      return this.translate.instant('table_status_val_1');
     } else {
-      return this.translate.instant('COMMON.TABLE.TABLE_STATUS_VAL_2');
+      return this.translate.instant('table_status_val_2');
     }
   }
 
@@ -334,7 +336,7 @@ export class MasterListComponent implements AfterViewInit {
                   column_width: '40px',
                 }));
 
-              if (this.user_info.config.grid_show_serial_number == 'true') {
+              if (this.config.grid_show_serial_number == 'true') {
                 this.headercolumns = [
                   {
                     header: 'table_column_sno',
@@ -401,7 +403,7 @@ export class MasterListComponent implements AfterViewInit {
                   }
                 }
               }
-              if (this.user_info.config.grid_show_serial_number == 'true') {
+              if (this.config.grid_show_serial_number == 'true') {
                 return {
                   table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,
