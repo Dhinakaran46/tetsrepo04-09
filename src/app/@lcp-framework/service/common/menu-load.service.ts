@@ -92,14 +92,26 @@ export class MenuLoadService {
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           if (user_data) {
-            this.localStorageService.storeData(
-              'user_data',
-              JSON.stringify({
-                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                unformattedconfig: response.data.records,
-                config: finalObject,
-              })
-            );
+            if (finalObject.encrypt_local_storage == 'true') {
+              this.localStorageService.storeDataEncrypted(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  unformattedconfig: response.data.records,
+                  config: finalObject,
+                })
+              );
+            } else {
+              this.localStorageService.storeData(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  unformattedconfig: response.data.records,
+                  config: finalObject,
+                })
+              );
+              localStorage.removeItem('enc_user');
+            }
           }
 
           return true;
@@ -176,14 +188,26 @@ export class MenuLoadService {
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           if (user_data) {
-            this.localStorageService.storeData(
-              'user_data',
-              JSON.stringify({
-                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                menuList: organizedMenu,
-                unorgmenuList: response.data.records,
-              })
-            );
+            if (localStorage.getItem('enc_user') == 'true') {
+              this.localStorageService.storeDataEncrypted(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  menuList: organizedMenu,
+                  unorgmenuList: response.data.records,
+                })
+              );
+            } else {
+              this.localStorageService.storeData(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  menuList: organizedMenu,
+                  unorgmenuList: response.data.records,
+                })
+              );
+              localStorage.removeItem('enc_user');
+            }
           }
 
           return organizedMenu;

@@ -73,6 +73,13 @@ interface DashboardTab {
   cards: Card[];
 }
 
+Handlebars.registerHelper('truncate', (text: string, maxLength: number) => {
+  if (text && text.length > maxLength) {
+    return text.substring(0, maxLength) + '...';
+  }
+  return text;
+});
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -111,6 +118,10 @@ export class DashboardComponent implements AfterViewInit {
   ) {
     this.initStore();
     this.registerHandlebarsHelpers();
+    Handlebars.registerHelper('translate', (key: string) => {
+      // Use the TranslateService to get the translation for the given key
+      return this.translate.instant(key);
+    });
   }
 
   ngAfterViewInit(): void {

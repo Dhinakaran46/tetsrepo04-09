@@ -21,6 +21,7 @@ interface TabConfiguration {
 
   config_value_type: string;
   config_field_type: string;
+  display_config: any;
   order_no: any;
 }
 
@@ -114,6 +115,7 @@ export class ConfigurationComponent implements OnInit {
       order_no: ['', Validators.required],
       keyType: ['text', Validators.required],
       valueType: ['static', Validators.required],
+      display_config: [false, Validators.required],
     });
 
     this.initStore();
@@ -214,7 +216,7 @@ export class ConfigurationComponent implements OnInit {
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type))) END",
+          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type))) END",
           'configurations',
         ],
       ],
@@ -243,14 +245,26 @@ export class ConfigurationComponent implements OnInit {
             return acc;
           }, {});
 
-          this.localStorageService.storeData(
-            'user_data',
-            JSON.stringify({
-              ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-              unformattedconfig: commonTabs,
-              config: finalObject,
-            })
-          );
+          if (finalObject.encrypt_local_storage == 'true') {
+            this.localStorageService.storeDataEncrypted(
+              'user_data',
+              JSON.stringify({
+                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                unformattedconfig: commonTabs,
+                config: finalObject,
+              })
+            );
+          } else {
+            this.localStorageService.storeData(
+              'user_data',
+              JSON.stringify({
+                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                unformattedconfig: commonTabs,
+                config: finalObject,
+              })
+            );
+            localStorage.removeItem('enc_user');
+          }
 
           this.tabs.map(function (ielem) {
             ielem.configurations.map(function (elem: any) {
@@ -312,6 +326,7 @@ export class ConfigurationComponent implements OnInit {
       order_no: [config.order_no],
       config_value_type: [config.config_value_type, Validators.required],
       config_field_type: [config.config_field_type, Validators.required],
+      display_config: [config.display_config, Validators.required],
     });
   }
 
@@ -473,6 +488,7 @@ export class ConfigurationComponent implements OnInit {
 
         config_field_type: newConfig.keyType,
         config_value_type: newConfig.valueType,
+        display_config: newConfig.display_config,
       },
     ];
 

@@ -14,6 +14,12 @@ import { TranslateService } from '@ngx-translate/core';
 Handlebars.registerHelper('inc', function (value) {
   return parseInt(value) + 1;
 });
+Handlebars.registerHelper('truncate', (text: string, maxLength: number) => {
+  if (text && text.length > maxLength) {
+    return text.substring(0, maxLength) + '...';
+  }
+  return text;
+});
 
 @Component({
   selector: 'app-static-page',
@@ -42,6 +48,11 @@ export class StaticPageComponent {
   ) {
     this.store$ = this.store.pipe(select('index'));
     this.initStore();
+
+    Handlebars.registerHelper('translate', (key: string) => {
+      // Use the TranslateService to get the translation for the given key
+      return this.translate.instant(key);
+    });
   }
 
   ngOnInit() {
