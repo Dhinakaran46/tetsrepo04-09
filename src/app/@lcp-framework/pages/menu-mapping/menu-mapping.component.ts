@@ -58,6 +58,7 @@ export class MenuMappingComponent implements OnInit {
   linkTypes: any[] = [];
   menuTypes: any[] = [];
   menuDeviceTypes: any[] = [];
+  menuStatusTypes: any[] = [];
 
   entityOptions: any = [];
   entityModules: any[] = [];
@@ -95,6 +96,7 @@ export class MenuMappingComponent implements OnInit {
       parentActionItem: [''],
       url: [''],
       order_no: ['1.00', [this.decimalValidator]],
+      menu_status: [1, Validators.required],
       entityType: [''],
       module: [''],
       MenuTypeName: [''],
@@ -117,6 +119,7 @@ export class MenuMappingComponent implements OnInit {
 
     this.linkTypes = commonConfig.menu_link_type;
     this.menuDeviceTypes = commonConfig.menu_device_type;
+    this.menuStatusTypes = commonConfig.status_type;
 
     this.menuForm.get('order_no')?.valueChanges.subscribe((value) => {
       this.updateOrderNo(value);
@@ -370,6 +373,7 @@ export class MenuMappingComponent implements OnInit {
       url: '',
       order_no: '1.00',
       module: '',
+      menu_status: 1,
     });
     this.setInitialSelectedIcon(); // Set selected icon after patching value
   }
