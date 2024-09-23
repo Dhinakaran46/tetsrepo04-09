@@ -73,7 +73,11 @@ interface DashboardTab {
   cards: Card[];
 }
 
-Handlebars.registerHelper('truncate', (text: string, maxLength: number) => {
+Handlebars.registerHelper('hbp_inc', function (value) {
+  return parseInt(value) + 1;
+});
+
+Handlebars.registerHelper('hbp_truncate', (text: string, maxLength: number) => {
   if (text && text.length > maxLength) {
     return text.substring(0, maxLength) + '...';
   }
@@ -118,7 +122,7 @@ export class DashboardComponent implements AfterViewInit {
   ) {
     this.initStore();
     this.registerHandlebarsHelpers();
-    Handlebars.registerHelper('translate', (key: string) => {
+    Handlebars.registerHelper('hbp_translate', (key: string) => {
       // Use the TranslateService to get the translation for the given key
       return this.translate.instant(key);
     });
