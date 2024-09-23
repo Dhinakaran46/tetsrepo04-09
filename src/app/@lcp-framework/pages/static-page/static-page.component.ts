@@ -11,10 +11,10 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
 // Define a Handlebars helper for adding 1 to the index
-Handlebars.registerHelper('inc', function (value) {
+Handlebars.registerHelper('hbp_inc', function (value) {
   return parseInt(value) + 1;
 });
-Handlebars.registerHelper('truncate', (text: string, maxLength: number) => {
+Handlebars.registerHelper('hbp_truncate', (text: string, maxLength: number) => {
   if (text && text.length > maxLength) {
     return text.substring(0, maxLength) + '...';
   }
@@ -49,9 +49,15 @@ export class StaticPageComponent {
     this.store$ = this.store.pipe(select('index'));
     this.initStore();
 
-    Handlebars.registerHelper('translate', (key: string) => {
+    Handlebars.registerHelper('hbp_translate', (key: string) => {
       // Use the TranslateService to get the translation for the given key
       return this.translate.instant(key);
+    });
+    Handlebars.registerHelper('limit', function (items: any[], limit: number) {
+      if (Array.isArray(items)) {
+        return items.slice(0, limit);
+      }
+      return [];
     });
   }
 
