@@ -4,9 +4,9 @@ import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
 import { Store, select } from '@ngrx/store';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
-import { FormArray, FormControl, FormGroup } from '@angular/forms';
-import { Observable, forkJoin } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { AbstractControl, AsyncValidatorFn, FormArray, FormControl, FormGroup, ValidationErrors } from '@angular/forms';
+import { Observable, forkJoin, of } from 'rxjs';
+import { tap, map, catchError } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyConfigModule } from '../../formly/formly-config.module';
 import { ChangeDetectorRef } from '@angular/core';
@@ -38,6 +38,7 @@ export class FormBuilderComponent implements OnInit {
   uploadedFiles: string[] = [];
   oldUploadedFiles: string[] = []; // after edit completion old fils should removed
   pageInfo: any;
+  users = ['user1', 'user2', 'user3'];
 
   constructor(
     private route: ActivatedRoute,
@@ -85,6 +86,54 @@ export class FormBuilderComponent implements OnInit {
     });
   }
 
+  uniqueValidator(key: string): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      const value = control.value;
+
+      if (!value || !this.listParams[key]) {
+        return of(null); // No validation if there's no value or key
+      }
+
+      // Clone the listParams object deeply to avoid mutating the original object
+      let listParams = JSON.parse(JSON.stringify(this.listParams[key]));
+
+      // Replace 'this.label' with the current control value, and 'this.value' with the unique_id
+      if (listParams.search_all) {
+        listParams.search_all = listParams.search_all.map((item: any) => {
+          Object.keys(item).forEach((sKey) => {
+            if (typeof item[sKey] === 'string') {
+              if (item[sKey] === 'this.label') {
+                item[sKey] = value.trim(); // Replace 'this.label' with control value
+              }
+              if (item[sKey] === 'this.value') {
+                item[sKey] = this.unique_id; // Replace 'this.value' with unique_id
+              }
+            }
+          });
+          return item;
+        });
+      }
+
+      // Replace placeholders with the updated model values
+      listParams = this.replacePlaceholders(listParams, this.model, false);
+
+      // Make the API call to check if the value is unique
+      return this.gridApiService.getAllList(listParams).pipe(
+        map((response) => {
+          if (response.status && response.code === 200) {
+            const records = response.data?.records || [];
+            return records.length > 0 ? null : { unique: true }; // If records exist, mark as not unique
+          } else {
+            return null; // No validation error if response isn't valid
+          }
+        }),
+        catchError(() => {
+          return of(null); // Handle errors gracefully, no validation error on failure
+        })
+      );
+    };
+  }
+
   fetchList(field: FormlyFieldConfig, key: string, reset: boolean = false) {
     if (!reset && key && this.listDatas[key]) {
       if (field && field.props) {
@@ -113,8 +162,34 @@ export class FormBuilderComponent implements OnInit {
     }
   }
 
+  trimFormValues(formGroup: FormGroup | FormArray) {
+    Object.keys(formGroup.controls).forEach((key) => {
+      const control = formGroup.get(key);
+
+      if (control instanceof FormControl) {
+        const value = control.value;
+
+        // Only trim if the value is a string
+        if (typeof value === 'string') {
+          control.setValue(value.trim(), { emitEvent: false });
+        }
+      } else if (control instanceof FormGroup || control instanceof FormArray) {
+        // Recursively trim values in nested FormGroup or FormArray
+        this.trimFormValues(control);
+      }
+    });
+  }
+
   onSubmit() {
     console.log('this.form.value', this.form.value);
+    // Trim all form values before validation
+    if (this.form.invalid) {
+      const key = 'please_select_all_the_required_fields';
+      const errorMessage = this.translate.instant(key);
+      this.toastr.error(errorMessage, 'Error');
+      return;
+    }
+    this.trimFormValues(this.form);
     if (this.form.invalid) {
       const key = 'please_select_all_the_required_fields';
       const errorMessage = this.translate.instant(key);
@@ -259,7 +334,8 @@ export class FormBuilderComponent implements OnInit {
 
   private replacePlaceholders(obj: any, model: any, required: boolean = true): any {
     const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
-    const placeholderPattern = /\$(.+)/;
+    // const placeholderPattern = /\$(.+)/;
+    const placeholderPattern = /^\$(.+)/;
     const replaceInObject = (item: any): any => {
       if (Array.isArray(item)) {
         return item.map(replaceInObject);
@@ -286,7 +362,9 @@ export class FormBuilderComponent implements OnInit {
 
   private replaceDataPlaceholders(obj: any, model: any, required: boolean = true): any {
     const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
-    const placeholderPattern = /\$(.+)/;
+    // const placeholderPattern = /\$(.+)/;
+    const placeholderPattern = /^\$(.+)/;
+
     const replaceInObject = (item: any, context: any = model): any => {
       if (Array.isArray(item)) {
         return item.map((subItem) => replaceInObject(subItem, context));
@@ -307,7 +385,8 @@ export class FormBuilderComponent implements OnInit {
           } else {
             value = this.getNestedProperty(placeholder, context);
           }
-          return value !== undefined ? value : required ? '$' + placeholder : null;
+          value = typeof value === 'string' ? value?.trim() : value;
+          return value !== undefined ? value : required ? match[0] + placeholder : null;
         }
       }
       return item;
@@ -322,7 +401,7 @@ export class FormBuilderComponent implements OnInit {
           const firstPlaceholder = placeholdersInTable[0];
           const firstKeyMatchKey: any = Object.keys(firstPlaceholder).find((key) => {
             const value = firstPlaceholder[key];
-            return typeof value === 'string' && value.includes('$');
+            return typeof value === 'string' && value.startsWith('$');
           });
           const firstKeyMatch =
             firstPlaceholder && firstKeyMatchKey && firstPlaceholder[firstKeyMatchKey] && firstPlaceholder[firstKeyMatchKey].match(placeholderPattern);
@@ -536,34 +615,6 @@ export class FormBuilderComponent implements OnInit {
     return new FormGroup(group);
   }
 
-  // private applyAvailableDataToForm(updateData: any, formControl: string | null = null) {
-  //   const keys = Object.keys(updateData);
-  //   const formData: any = {};
-
-  //   keys.forEach((key) => {
-  //     if (formControl) {
-  //       if (this.form.get(`${formControl}.${key}`)) {
-  //         formData[key] = updateData[key];
-  //       } else if (this.model[formControl]) {
-  //         this.model[formControl][key] = updateData[key];
-  //       }
-  //     } else {
-  //       if (this.form.get(key)) {
-  //         formData[key] = updateData[key];
-  //       } else if (this.model) {
-  //         this.model[key] = updateData[key];
-  //       }
-  //     }
-  //   });
-
-  //   if (formControl) {
-  //     const patchObject = { [formControl]: formData };
-  //     this.form.patchValue(patchObject);
-  //   } else {
-  //     this.form.patchValue(formData);
-  //   }
-  // }
-
   private processFields(fieldsJson: any[]): FormlyFieldConfig[] {
     return fieldsJson.map((group: any) => {
       // Recursively process fieldGroups if they exist and are arrays
@@ -637,6 +688,24 @@ export class FormBuilderComponent implements OnInit {
           group.fieldArray.hooks.onInit = (f: FormlyFieldConfig) => {
             dynamicHook(f);
           };
+        }
+      }
+
+      if (group.hooks && group.hooks.uniqueKey) {
+        const uniqueKey = group.hooks.uniqueKey;
+        group.modelOptions = {
+          updateOn: 'blur',
+        };
+        if (typeof uniqueKey === 'string') {
+          group.asyncValidators = { unique: { expression: this.uniqueValidator(uniqueKey), message: 'this_value_cannot_be_duplicate' } };
+        }
+      } else if (group.fieldArray?.hooks && group.fieldArray.hooks.uniqueKey) {
+        const uniqueKey = group.fieldArray.hooks.uniqueKey;
+        group.fieldArray.modelOptions = {
+          updateOn: 'blur',
+        };
+        if (typeof uniqueKey === 'string') {
+          group.fieldArray.asyncValidators = { unique: { expression: this.uniqueValidator(uniqueKey), message: 'this_value_cannot_be_duplicate' } };
         }
       }
 
