@@ -132,7 +132,7 @@ export class MenuLoadService {
       if (this.user_info.main.role !== 'super_admin') {
         this.menu_id = [1];
       } else {
-        this.menu_id = [1, 2];
+        this.menu_id = [1, 2, 5];
       }
     } else {
       console.error('User info, main, or role is missing.');
@@ -140,6 +140,7 @@ export class MenuLoadService {
     }
 
     const payload = {
+      print_query: true,
       company_id: companyId,
       primary_table: 'menu_items',
       sort_columns: [['menu_items.id', 'asc']],
@@ -186,7 +187,7 @@ export class MenuLoadService {
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           if (user_data) {
-            if (enc_config.encrypt_local_storage == 'true') {
+            if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
               this.localStorageService.storeDataEncrypted(
                 'user_data',
                 JSON.stringify({

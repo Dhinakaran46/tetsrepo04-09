@@ -217,6 +217,9 @@ export class HeaderComponent implements OnInit {
       if (item.children && item.children.length) {
         item.children = this.filterMenu(item.children, viewPermissions);
       }
+      if (item.parent_id == null) {
+        return true;
+      }
 
       return hasPermission || (item.children && item.children.length > 0);
     });

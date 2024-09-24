@@ -7,6 +7,8 @@ import { MasterEntityModuleComponent } from '../../components/documentation/mast
 import { PageBuilderComponent } from '../../components/documentation/page-builder/page-builder.component';
 import { DashboardWizardComponent } from '../../components/documentation/dashboard-wizard/dashboard-wizard.component';
 import { RouterModule } from '@angular/router';
+import { LocalStorageService } from '../../service/common/local-storage.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-documentation',
@@ -25,4 +27,14 @@ import { RouterModule } from '@angular/router';
 })
 export class DocumentationComponent {
   currentSection: string = 'getting-started';
+  config: any;
+  user_info: any;
+  apiUrl = environment.apiUrl;
+
+  constructor(private localstore: LocalStorageService) {}
+
+  ngOnInit() {
+    this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.config = JSON.parse(this.localstore.getData('config'));
+  }
 }

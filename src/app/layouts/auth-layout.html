@@ -57,8 +57,9 @@
         >
           <div class="mt-3 flex w-full items-center justify-between p-4 px-6">
             <!-- Left Side: Logo -->
-            <div class="flex-shrink-0">
-              <img [src]="apiUrl+'/'+ this.logo" alt="Logo" />
+            <div class="flex flex-shrink-0 items-center">
+              <img [src]="apiUrl+'/'+ this.logo" alt="Logo" class="max-h-14" />
+              <p class="ml-2 text-base font-bold">{{this.company}}</p>
             </div>
             <!-- Right Side: Full-width Dropdown -->
             <div class="w-full max-w-md">
@@ -100,11 +101,6 @@
             </div>
           </div>
           <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6">
-            <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
-              <a routerLink="/" class="block w-8 lg:hidden">
-                <img src="assets/images/logo.png" alt="Logo" class="mx-auto w-10" />
-              </a>
-            </div>
             <div class="w-full max-w-[440px] lg:mt-12">
               <router-outlet></router-outlet>
             </div>

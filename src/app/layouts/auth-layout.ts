@@ -33,6 +33,7 @@ export class AuthLayout {
   showTopButton = false;
   apiUrl = environment.apiUrl;
   logo: any;
+  company: any;
   copyrightContent: any;
   constructor(
     private renderer: Renderer2,
@@ -84,7 +85,8 @@ export class AuthLayout {
 
           if (Object.keys(res).length > 0) {
             this.changeFavicon(this.apiUrl + '/' + res.favicon);
-            this.logo = res.logo_with_name;
+            this.logo = res.logo;
+            this.company = res.company_name;
             this.copyrightContent = res.footer_content;
             localStorage.setItem('config', JSON.stringify(res));
           }
