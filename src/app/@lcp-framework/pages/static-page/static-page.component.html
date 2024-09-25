@@ -4,7 +4,9 @@
       <div class="mb-5 flex items-center justify-between">
         <h5 appDynamicFontSize="title" class="text-lg font-semibold dark:text-white-light">{{ entity_name | translate }}</h5>
 
-        <button type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">{{ 'back' | translate }}</button>
+        <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+          {{ 'back' | translate }}
+        </button>
       </div>
       <div class="mb-5">
         <div [innerHTML]="pageContent | safeHtml" appHighlight></div>

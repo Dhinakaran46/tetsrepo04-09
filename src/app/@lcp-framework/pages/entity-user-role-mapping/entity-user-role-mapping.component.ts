@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { OrderByControlPipe } from '../../pipes/order-by-control/order-by-control.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 export interface IRight {
   'permissions.id': number;
@@ -18,6 +19,8 @@ export interface IEntity {
   id: number;
   grid_name: string;
   entity_name: string;
+  entity_type: any;
+  is_admin_module: any;
   rights: IRight[];
 }
 
@@ -35,13 +38,16 @@ export class EntityUserRoleMappingComponent {
   entityList: any[] = [];
   userList: any[] = [];
   roleList: any[] = [];
+  user_info: any;
+  visibleEntitiesCount = 0;
 
   constructor(
     public storeData: Store<any>,
     public fb: FormBuilder,
     private toastr: ToastrService,
     private gridApiService: GridApiService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private localStorageService: LocalStorageService
   ) {
     this.initStore();
     this.mappingForm = this.fb.group({
@@ -59,6 +65,8 @@ export class EntityUserRoleMappingComponent {
       assign: [false],
       entities: this.fb.array([]),
     });
+
+    this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
   }
 
   async initStore() {
@@ -74,6 +82,15 @@ export class EntityUserRoleMappingComponent {
     this.mappingForm.get('permission_type')?.valueChanges.subscribe((value) => {
       this.onPermissionTypeChange(value);
     });
+  }
+
+  getTransformedEntityType(entityType: any) {
+    return entityType
+      .replace(/builder|module|_/g, ' ')
+      .trim()
+      .split(' ')
+      .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
 
   resetComponent() {
@@ -134,6 +151,8 @@ export class EntityUserRoleMappingComponent {
         id: new FormControl(entity.id),
         grid_name: new FormControl(entity.grid_name),
         entity_name: new FormControl(entity.entity_name),
+        entity_type: new FormControl(entity.entity_type),
+        is_admin_module: new FormControl(entity.is_admin_module),
         rights: rightsArray,
         selected: new FormControl(isSelectedEntity),
       });
@@ -392,6 +411,8 @@ export class EntityUserRoleMappingComponent {
       select_columns: [
         ['master_entities.id'],
         ['master_entities.name', 'grid_name'],
+        ['master_entities.entity_type', 'entity_type'],
+        ['master_entities.is_admin_module', 'is_admin_module'],
         ['master_entities.entity_name'],
         [
           "json_agg(json_build_object('permissions.id', permissions.id, 'permissions.name', permissions.name, 'permissions.slug', permissions.slug,'permissions.order_no', permissions.order_no))",
@@ -407,6 +428,7 @@ export class EntityUserRoleMappingComponent {
       ],
       group_by: ['master_entities.id', 'master_entities.name', 'master_entities.entity_name'],
     };
+
     if (this.search.length) {
       param.search_any = [
         {
@@ -442,6 +464,14 @@ export class EntityUserRoleMappingComponent {
     );
   }
 
+  getVisibleIndex(currentIndex: number): number {
+    this.visibleEntitiesCount = this.getEntitiesControls().reduce((count, entity, index) => {
+      const isVisible = this.user_info.main.role === 'super_admin' || (this.user_info.main.role !== 'super_admin' && !entity.get('is_admin_module')?.value);
+      return isVisible && index <= currentIndex ? count + 1 : count;
+    }, 0);
+
+    return this.visibleEntitiesCount - 1;
+  }
   getRoleList() {
     const param: any = {
       company_id: 1,

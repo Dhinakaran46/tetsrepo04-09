@@ -1,139 +1,161 @@
-<div class="space-y-8">
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
-    <div class="panel">
-      <div class="mb-5">
-        <div class="flex-1 pt-5 text-sm">
-          <h4 class="mb-4 font-semibold" appDynamicFontSize="title">{{ 'entity_user_role_map_page' | translate }}</h4>
-          <div class="mb-4">
-            <!-- form controls -->
-            <form class="space-y-5" [formGroup]="mappingForm" (submit)="mapPermissions()">
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3" appDynamicFontSize="body">
-                <div>
-                  <ul class="flex list-inside space-x-3 pt-2 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse">
-                    <li>
-                      <label class="flex cursor-pointer items-center">
-                        <input type="radio" name="permission_type" class="form-radio" value="role" formControlName="permission_type" />
-                        <span class="text-white-dark">{{ 'role_permission' | translate }}</span>
-                      </label>
-                    </li>
-                    <li>
-                      <label class="flex cursor-pointer items-center">
-                        <input type="radio" name="permission_type" class="form-radio" value="user" formControlName="permission_type" />
-                        <span class="text-white-dark">{{ 'user_permission' | translate }}</span>
-                      </label>
-                    </li>
-                  </ul>
-                </div>
-                <div *ngIf="mappingForm.get('permission_type')?.value === 'role'">
-                  <!-- <label for="role">{{ 'select_role' | translate }}</label> -->
-                  <select id="role" class="form-select w-2/4 text-white-dark" formControlName="role" (change)="getRolePermissionList()">
-                    <option value>{{ 'select_role' | translate }}</option>
-                    <option *ngFor="let role of roleList" [value]="role.id">{{ role.name }}</option>
-                  </select>
-                </div>
-                <div *ngIf="mappingForm.get('permission_type')?.value === 'user'">
-                  <!-- <label for="user">{{ 'select_user' | translate }}</label> -->
-                  <select id="user" class="form-select w-2/4 text-white-dark" formControlName="user" (change)="getUserPermissionList()">
-                    <option value>{{ 'select_user' | translate }}</option>
-                    <option *ngFor="let user of userList" [value]="user.id">{{ user.name }}</option>
-                  </select>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-1">
-                <div class="table-responsive">
-                  <table appDynamicFontSize="body">
-                    <thead>
-                      <tr>
-                        <th>{{ 'table_column_sno' | translate }}</th>
-                        <th>
-                          <label class="flex cursor-pointer items-center">
-                            <input type="checkbox" class="form-checkbox" formControlName="all" (change)="selectAll('all')" />
-                            <span>{{ 'all_entities' | translate }}</span>
-                          </label>
-                        </th>
-                        <th>
-                          <ul class="flex list-inside space-x-4 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse">
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('view')" type="checkbox" class="form-checkbox" formControlName="view" />
-                                <span class="text-white-dark">{{ 'view' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('add')" type="checkbox" class="form-checkbox" formControlName="add" />
-                                <span class="text-white-dark">{{ 'add' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('edit')" type="checkbox" class="form-checkbox" formControlName="edit" />
-                                <span class="text-white-dark">{{ 'edit' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('delete')" type="checkbox" class="form-checkbox" formControlName="delete" />
-                                <span class="text-white-dark">{{ 'delete' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('export')" type="checkbox" class="form-checkbox" formControlName="export" />
-                                <span class="text-white-dark">{{ 'export' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('details')" type="checkbox" class="form-checkbox" formControlName="details" />
-                                <span class="text-white-dark">{{ 'details' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('Approval')" type="checkbox" class="form-checkbox" formControlName="Approval" />
-                                <span class="text-white-dark">{{ 'Approval' | translate }}</span>
-                              </label>
-                            </li>
-                            <li>
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="selectAll('assign')" type="checkbox" class="form-checkbox" formControlName="assign" />
-                                <span class="text-white-dark">{{ 'assign' | translate }}</span>
-                              </label>
-                            </li>
-                          </ul>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody formArrayName="entities">
-                      <tr *ngFor="let entity of getEntitiesControls(); let i = index" [formGroupName]="i">
-                        <td>{{ i + 1 }}</td>
-                        <td>
-                          <label class="flex cursor-pointer items-center">
-                            <input type="checkbox" class="form-checkbox" formControlName="selected" (change)="onEntitySelectedChange(i)" />
-                            <span>{{ entity.get('grid_name')?.value | translate }}</span>
-                          </label>
-                        </td>
-                        <td>
-                          <ul class="flex list-inside space-x-4 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse" formArrayName="rights">
-                            <li *ngFor="let right of getRightsControls(entity) | orderByControl : 'order_no'; let j = index" [formGroupName]="j">
-                              <label class="flex cursor-pointer items-center">
-                                <input (change)="onPermissionChange(i, j)" type="checkbox" class="form-checkbox" formControlName="selected" />
-                                <span class="text-white-dark">{{ right.get('name')?.value | translate }}</span>
-                              </label>
-                            </li>
-                          </ul>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary !mt-6">{{ 'submit' | translate }}</button>
-            </form>
+<div class="panel">
+  <div class="mb-2.5">
+    <form class="space-y-5" [formGroup]="mappingForm" (submit)="mapPermissions()">
+      <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
+        <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
+          {{ 'entity_user_role_map_page' | translate }}
+        </div>
+
+        <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
+          <div class="flex flex-col gap-2 md:flex-row md:items-center">
+            <div class="relative mb-2 flex-grow md:mb-0" appDynamicFontSize="body">
+              <ul class="flex list-inside space-x-3 pt-2 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse">
+                <li>
+                  <label class="flex cursor-pointer items-center">
+                    <input type="radio" name="permission_type" class="form-radio" value="role" formControlName="permission_type" />
+                    <span class="text-white-dark">{{ 'role_permission' | translate }}</span>
+                  </label>
+                </li>
+                <li>
+                  <label class="flex cursor-pointer items-center">
+                    <input type="radio" name="permission_type" class="form-radio" value="user" formControlName="permission_type" />
+                    <span class="text-white-dark">{{ 'user_permission' | translate }}</span>
+                  </label>
+                </li>
+              </ul>
+            </div>
+            <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('permission_type')?.value === 'role'">
+              <!-- <label for="role">{{ 'select_role' | translate }}</label> -->
+              <select
+                appDynamicFontSize="body"
+                id="role"
+                class="form-select mr-2 flex w-full items-center text-white-dark"
+                formControlName="role"
+                (change)="getRolePermissionList()"
+              >
+                <option value>{{ 'select_role' | translate }}</option>
+                <option *ngFor="let role of roleList" [value]="role.id">{{ role.name }}</option>
+              </select>
+            </div>
+            <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('permission_type')?.value === 'user'">
+              <!-- <label for="user">{{ 'select_user' | translate }}</label> -->
+              <select
+                appDynamicFontSize="body"
+                id="user"
+                class="form-select mr-2 flex w-full items-center text-white-dark"
+                formControlName="user"
+                (change)="getUserPermissionList()"
+              >
+                <option value>{{ 'select_user' | translate }}</option>
+                <option *ngFor="let user of userList" [value]="user.id">{{ user.name }}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="datatable">
+        <div class="table-responsive overflow-x-auto">
+          <table class="table-hover relative min-w-full">
+            <thead>
+              <tr>
+                <th>{{ 'table_column_sno' | translate }}</th>
+                <th>
+                  <label class="flex cursor-pointer items-center">
+                    <input type="checkbox" class="form-checkbox" formControlName="all" (change)="selectAll('all')" />
+                    <span>{{ 'all_entities' | translate }}</span>
+                  </label>
+                </th>
+                <th>
+                  {{ 'entity_type' | translate }}
+                </th>
+                <th>
+                  <ul class="flex list-inside space-x-4 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse">
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('view')" type="checkbox" class="form-checkbox" formControlName="view" />
+                        <span class="text-white-dark">{{ 'view' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('add')" type="checkbox" class="form-checkbox" formControlName="add" />
+                        <span class="text-white-dark">{{ 'add' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('edit')" type="checkbox" class="form-checkbox" formControlName="edit" />
+                        <span class="text-white-dark">{{ 'edit' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('delete')" type="checkbox" class="form-checkbox" formControlName="delete" />
+                        <span class="text-white-dark">{{ 'delete' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('export')" type="checkbox" class="form-checkbox" formControlName="export" />
+                        <span class="text-white-dark">{{ 'export' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('details')" type="checkbox" class="form-checkbox" formControlName="details" />
+                        <span class="text-white-dark">{{ 'details' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('Approval')" type="checkbox" class="form-checkbox" formControlName="Approval" />
+                        <span class="text-white-dark">{{ 'Approval' | translate }}</span>
+                      </label>
+                    </li>
+                    <li>
+                      <label class="flex cursor-pointer items-center">
+                        <input (change)="selectAll('assign')" type="checkbox" class="form-checkbox" formControlName="assign" />
+                        <span class="text-white-dark">{{ 'assign' | translate }}</span>
+                      </label>
+                    </li>
+                  </ul>
+                </th>
+              </tr>
+            </thead>
+            <tbody formArrayName="entities">
+              <tr *ngFor="let entity of getEntitiesControls(); let i = index" [formGroupName]="i">
+                <ng-container
+                  *ngIf="this.user_info.main.role == 'super_admin' || (this.user_info.main.role != 'super_admin' && !entity.get('is_admin_module')?.value)"
+                >
+                  <td>{{ getVisibleIndex(i) + 1 }}</td>
+                  <td>
+                    <label class="flex cursor-pointer items-center">
+                      <input type="checkbox" class="form-checkbox" formControlName="selected" (change)="onEntitySelectedChange(i)" />
+                      <span>{{ entity.get('grid_name')?.value | translate }}</span>
+                    </label>
+                  </td>
+                  <td>
+                    {{ getTransformedEntityType(entity.get('entity_type')?.value) | translate }}
+                  </td>
+                  <td>
+                    <ul class="flex list-inside space-x-4 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse" formArrayName="rights">
+                      <li *ngFor="let right of getRightsControls(entity) | orderByControl : 'order_no'; let j = index" [formGroupName]="j">
+                        <label class="flex cursor-pointer items-center">
+                          <input (change)="onPermissionChange(i, j)" type="checkbox" class="form-checkbox" formControlName="selected" />
+                          <span class="text-white-dark">{{ right.get('name')?.value | translate }}</span>
+                        </label>
+                      </li>
+                    </ul>
+                  </td>
+                </ng-container>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="submit" class="btn btn-primary !mt-6">{{ 'submit' | translate }}</button>
+      </div>
+    </form>
   </div>
 </div>

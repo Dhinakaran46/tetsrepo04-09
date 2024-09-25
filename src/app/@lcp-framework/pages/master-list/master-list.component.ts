@@ -91,7 +91,7 @@ export class MasterListComponent implements AfterViewInit {
 
     if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
-      console.log(this.masterInfo);
+
       const masterListConfig = pageInfo;
 
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
