@@ -177,7 +177,7 @@
     "FORM_EMAIL_REQ_MSG": "Username field is required",
     "FORM_EMAIL_VALID_MSG": "Invalid username",
     "FORM_EMAIL_REQ_PWD": "Password field is required.",
-    "COPYRIGHTS": "Tracsales All Rights Reserved.",
+    "COPYRIGHTS": "LCP All Rights Reserved.",
     "FORGET_PWD": "Forget password ?"
   },
   "FORGETPASSWORD": {
@@ -199,7 +199,7 @@
     "CONFIRM_PWD_REQ": "Confirm password is required",
     "CONFIRM_PWD_MATCH_MSG": "Confirm Password do not match",
     "RESET_SBT_BTN": "Reset",
-    "COPYRIGHTS": "Tracsales All Rights Reserved."
+    "COPYRIGHTS": "LCP All Rights Reserved."
   },
   "PROFILE": {
     "TITLE": "Profile Management",

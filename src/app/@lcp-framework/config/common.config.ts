@@ -21,6 +21,7 @@ export const commonConfig = {
     executeRecords: 'common/execute-transaction',
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',
+    unauthprocedureCall: 'common/call-procedure/',
     uploadImageAndGetName: 'common/file-upload/image',
     deleteImageByName: 'common/file-delete/image',
     getLanguageContent: 'common/language-content',
@@ -37,6 +38,7 @@ export const commonConfig = {
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
+    /*DOCUMENTATION_MODULE: 'documentation_module',*/
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -107,6 +109,7 @@ export const commonConfig = {
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
+    /*{ label: 'Documentation Module', value: 'documentation_module' },*/
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

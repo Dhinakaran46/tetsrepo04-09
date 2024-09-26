@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
+import { MenuMapService } from '../../service/common/menu-map.service';
 
 interface TabConfiguration {
   id: number;
@@ -21,6 +22,7 @@ interface TabConfiguration {
 
   config_value_type: string;
   config_field_type: string;
+  display_config: any;
   order_no: any;
 }
 
@@ -93,6 +95,7 @@ export class ConfigurationComponent implements OnInit {
   apiUrl = environment.apiUrl;
 
   constructor(
+    private commonService: MenuMapService,
     private route: ActivatedRoute,
     public storeData: Store<any>,
     private gridApiService: GridApiService,
@@ -114,6 +117,7 @@ export class ConfigurationComponent implements OnInit {
       order_no: ['', Validators.required],
       keyType: ['text', Validators.required],
       valueType: ['static', Validators.required],
+      display_config: [false, Validators.required],
     });
 
     this.initStore();
@@ -214,7 +218,7 @@ export class ConfigurationComponent implements OnInit {
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type))) END",
+          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type))) END",
           'configurations',
         ],
       ],
@@ -232,25 +236,32 @@ export class ConfigurationComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.tabs = response.data.records;
-          console.log(this.tabs);
+
           let commonTabs: any = [];
           this.tabs.map(function (ielem) {
             commonTabs.push(...ielem.configurations);
           });
 
-          const finalObject = commonTabs.reduce((acc: any, record: any) => {
+          /*const finalObject = commonTabs.reduce((acc: any, record: any) => {
             acc[record.config_key] = record.config_value;
             return acc;
           }, {});
 
-          this.localStorageService.storeData(
-            'user_data',
-            JSON.stringify({
-              ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-              unformattedconfig: commonTabs,
-              config: finalObject,
-            })
-          );
+          if (finalObject.encrypt_local_storage == 'true') {
+            this.localStorageService.storeDataEncrypted(
+              'user_data',
+              JSON.stringify({
+                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+              })
+            );
+          } else {
+            this.localStorageService.storeData(
+              'user_data',
+              JSON.stringify({
+                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+              })
+            );
+          }*/
 
           this.tabs.map(function (ielem) {
             ielem.configurations.map(function (elem: any) {
@@ -277,6 +288,41 @@ export class ConfigurationComponent implements OnInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         console.error('Error fetching entity types:', error);
+      },
+    });
+  }
+
+  reloadCurrentPage() {
+    this.router.navigate([this.router.url]).then(() => {
+      window.location.reload();
+    });
+  }
+
+  getconfig() {
+    const procedureParams = { proc_name: 'get_configurations_values', params: { '0': 'ac1', '1': 'ac2' } };
+
+    this.commonService.unAuthProcedureCall(procedureParams).subscribe({
+      next: (response: { code: number; status: boolean; data: any; message: string }) => {
+        if (response.code === 200 && response.status && response.data) {
+          const res = response.data?.[0]?.result || [];
+
+          if (Object.keys(res).length > 0) {
+            localStorage.setItem('config', JSON.stringify(res));
+            this.reloadCurrentPage();
+          }
+        } else {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          console.log(response.message);
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching data:', error);
+        //this.loading = false;
+      },
+      complete: () => {
+        //this.loading = false;
       },
     });
   }
@@ -312,6 +358,7 @@ export class ConfigurationComponent implements OnInit {
       order_no: [config.order_no],
       config_value_type: [config.config_value_type, Validators.required],
       config_field_type: [config.config_field_type, Validators.required],
+      display_config: [config.display_config, Validators.required],
     });
   }
 
@@ -323,7 +370,13 @@ export class ConfigurationComponent implements OnInit {
   }
 
   getConfigurationsArray(tabName: string): FormArray {
-    return this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
+    const configurations: any = this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
+    configurations.controls.sort((a: any, b: any) => {
+      const orderA = a.get('order_no')?.value || 0;
+      const orderB = b.get('order_no')?.value || 0;
+      return orderA - orderB; // Ascending order
+    });
+    return configurations;
   }
 
   onFileChange(event: Event, tabName: string, index: number) {
@@ -441,6 +494,7 @@ export class ConfigurationComponent implements OnInit {
             const key = 'record_updated_successfully';
             const successMessage = this.translate.instant(key);
             this.toastr.success(successMessage);
+            //this.getconfig();
 
             this.loadAllItems('act1');
           } else {
@@ -473,6 +527,7 @@ export class ConfigurationComponent implements OnInit {
 
         config_field_type: newConfig.keyType,
         config_value_type: newConfig.valueType,
+        display_config: newConfig.display_config,
       },
     ];
 

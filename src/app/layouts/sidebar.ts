@@ -50,6 +50,7 @@ export class SidebarComponent {
   user_info: any;
   COMMON_CONFIG = commonConfig;
   apiUrl = environment.apiUrl;
+  config: any;
 
   constructor(
     public translate: TranslateService,
@@ -69,6 +70,7 @@ export class SidebarComponent {
   }
 
   ngOnInit() {
+    this.config = JSON.parse(this.localstore.getData('config'));
     const userData = this.localstore.getData('user_data');
 
     if (userData) {
@@ -123,6 +125,9 @@ export class SidebarComponent {
       const hasPermission = viewPermissions.includes(permissionKey);
       if (item.children && item.children.length) {
         item.children = this.filterMenu(item.children, viewPermissions);
+      }
+      if (item.parent_id == null) {
+        return true;
       }
 
       return hasPermission || (item.children && item.children.length > 0);

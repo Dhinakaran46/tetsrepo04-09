@@ -20,8 +20,27 @@ export class LocalStorageService implements OnInit {
   }
 
   public getData(key: string): any {
+    const conf: any = localStorage.getItem('config');
+    const config: any = JSON.parse(conf);
+
+    if (localStorage.getItem('user_data') && key == 'user_data' && config?.encrypt_local_storage == 'true') {
+      return this.getDataDecrypted(key);
+    }
     this.returnData = localStorage.getItem(key);
     return this.returnData;
+  }
+
+  public storeDataEncrypted(key: string, value: string | any): void {
+    const encryptedInfo: string = CryptoJS.AES.encrypt(value, key).toString();
+    localStorage.setItem(key, encryptedInfo);
+  }
+
+  public getDataDecrypted(key: string): any {
+    const value: any = localStorage.getItem(key);
+
+    const bytes = CryptoJS.AES.decrypt(value, key);
+
+    return bytes.toString(CryptoJS.enc.Utf8);
   }
 
   static isAccessible(key: string): any {
@@ -31,6 +50,7 @@ export class LocalStorageService implements OnInit {
 
   public logout(): void {
     localStorage.removeItem('user_data');
+    localStorage.removeItem('config');
     localStorage.removeItem('menu_id');
   }
 

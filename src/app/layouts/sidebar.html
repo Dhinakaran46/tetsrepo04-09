@@ -3,9 +3,9 @@
     <div class="h-full bg-white dark:bg-[#0e1726]">
       <div class="flex items-center justify-between px-4 py-3">
         <a routerLink="/" class="main-logo flex shrink-0 items-center">
-          <img class="ml-[5px] flex-none" [src]="apiUrl+'/'+ this.user_info?.config?.logo" alt appDynamicFontSize="headerlogo" />
+          <img class="ml-[5px] flex-none" [src]="apiUrl+'/'+ this.config?.logo" [alt]="this.config?.company_name" alt appDynamicFontSize="headerlogo" />
           <span class="align-middle font-semibold dark:text-white-light lg:inline ltr:ml-1.5 rtl:mr-1.5" appDynamicFontSize="heading"
-            >{{this.user_info?.config?.company_name}}</span
+            >{{this.config?.company_name}}</span
           >
         </a>
         <a
@@ -209,7 +209,11 @@
               <ng-template #noChildren>
                 <h2 class="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
                   <i class="fa-solid fa-minus xl-2 hidden flex-none"></i>
-                  <span>{{ item.name | translate }}</span>
+                  <span>
+                    <a title="{{ item.name | translate }}" [routerLink]="item.target" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                      {{ item.name | translate }}
+                    </a>
+                  </span>
                 </h2>
               </ng-template>
             </ng-container>

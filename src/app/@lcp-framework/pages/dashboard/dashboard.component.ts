@@ -30,6 +30,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -110,7 +111,8 @@ export class DashboardComponent implements AfterViewInit {
     public translate: TranslateService
   ) {
     this.initStore();
-    this.registerHandlebarsHelpers();
+
+    registerHandlebarsHelpers(this.translate);
   }
 
   ngAfterViewInit(): void {
@@ -349,14 +351,6 @@ export class DashboardComponent implements AfterViewInit {
       }
 
       return template(passData);
-    });
-  }
-  registerHandlebarsHelpers() {
-    Handlebars.registerHelper('limit', function (items: any[], limit: number) {
-      if (Array.isArray(items)) {
-        return items.slice(0, limit);
-      }
-      return [];
     });
   }
 

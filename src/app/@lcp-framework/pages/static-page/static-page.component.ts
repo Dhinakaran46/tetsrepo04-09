@@ -9,20 +9,22 @@ import { GridApiService } from '../../service/common/grid.service';
 import { Observable } from 'rxjs';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-
-// Define a Handlebars helper for adding 1 to the index
-Handlebars.registerHelper('inc', function (value) {
-  return parseInt(value) + 1;
-});
+import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
+import { slideDownUp } from '../../shared/animations';
+import { IconArrowLeftComponent } from '../../shared/icon/icon-arrow-left';
 
 @Component({
   selector: 'app-static-page',
   standalone: true,
-  imports: [CommonSharedModule, SafeHtmlPipe],
+  imports: [CommonSharedModule, SafeHtmlPipe, IconArrowLeftComponent],
   templateUrl: './static-page.component.html',
   styleUrl: './static-page.component.scss',
+  animations: [slideDownUp],
 })
 export class StaticPageComponent {
+  currentAccordion: string = 'home';
+  currentTab: string = 'home';
+
   pageContent: string = '';
   store$: Observable<any>;
   unique_id!: string | null;
@@ -42,6 +44,35 @@ export class StaticPageComponent {
   ) {
     this.store$ = this.store.pipe(select('index'));
     this.initStore();
+
+    registerHandlebarsHelpers(this.translate);
+  }
+
+  setTab(tab: string) {
+    this.currentTab = tab;
+    this.loadData();
+  }
+  setAccordion(index: any) {
+    this.currentAccordion = index;
+    this.loadData();
+  }
+  attachEventListeners() {
+    const tabLinks = document.querySelectorAll('a[data-tab]');
+
+    tabLinks.forEach((tabLink) => {
+      const tabName = tabLink.getAttribute('data-tab');
+      if (tabName) {
+        tabLink.addEventListener('click', () => this.setTab(tabName));
+      }
+    });
+
+    const buttons = document.querySelectorAll('button[data-accordion]');
+    buttons.forEach((buttonLink) => {
+      const buttonName = buttonLink.getAttribute('data-accordion');
+      if (buttonName) {
+        buttonLink.addEventListener('click', () => this.setAccordion(buttonName));
+      }
+    });
   }
 
   ngOnInit() {
@@ -53,7 +84,6 @@ export class StaticPageComponent {
       const pageInfo = data['pageInfo'];
       this.entity_name = pageInfo.fullEntity;
       this.entity_type = pageInfo.action_slug;
-      console.log('Route data:', this.entity_name, this.entity_type, this.unique_id);
     });
 
     this.initStore();
@@ -85,12 +115,22 @@ export class StaticPageComponent {
     this.gridApiService.getAllList(listParams).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
+          console.log(response.data.records);
           this.query_information = response.data.records[0].query_information;
           this.static_page_content = response.data.records[0].static_page_content;
+
           if (this.query_information) {
             this.loadDefaultData();
           } else {
-            this.pageContent = this.static_page_content;
+            //this.pageContent = this.static_page_content;
+            this.pageContent = this.compileStaticContent(this.static_page_content, {
+              currentTab: this.currentTab,
+              currentAccordion: this.currentAccordion,
+            });
+
+            setTimeout(() => {
+              this.attachEventListeners();
+            }, 0);
           }
         } else {
           this.toastr.error('Invalid entity details given1.');
@@ -114,9 +154,17 @@ export class StaticPageComponent {
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
           if (response.data?.records?.length === 1) {
-            this.pageContent = this.compileStaticContent(this.static_page_content, { result_data: response.data.records[0] });
+            this.pageContent = this.compileStaticContent(this.static_page_content, {
+              result_data: response.data.records[0],
+              currentTab: this.currentTab,
+              currentAccordion: this.currentAccordion,
+            });
           } else {
-            this.pageContent = this.compileStaticContent(this.static_page_content, { result_data: response.data.records });
+            this.pageContent = this.compileStaticContent(this.static_page_content, {
+              result_data: response.data.records,
+              currentTab: this.currentTab,
+              currentAccordion: this.currentAccordion,
+            });
           }
         }
       },
@@ -130,9 +178,24 @@ export class StaticPageComponent {
   }
 
   compileStaticContent(staticContent: string, data: any): string {
+    staticContent = staticContent.replace(/<code class="xml">([\s\S]*?)<\/code>/g, (match, p1) => {
+      return `<code class="xml">${this.escapeHtml(p1)}</code>`;
+    });
     const compiledTemplate = Handlebars.compile(staticContent);
-    console.log('compiled Data', data);
+
     return compiledTemplate(data);
+  }
+
+  escapeHtml(html: string): string {
+    return html
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+      .replace(/{/g, '&#123;')
+      .replace(/}/g, '&#125;');
+    //.replace(/\//g, '&#47;');
   }
 
   replaceUniqueId(jsonObject: any, uniqueIdPlaceholder: string, uniqueIdValue: string): any {
@@ -142,7 +205,7 @@ export class StaticPageComponent {
     // Base case: if the jsonObject is a string, replace the placeholder with the value
     if (typeof jsonObject === 'string') {
       const replacedString = jsonObject.replace(placeholderRegex, uniqueIdValue);
-      console.log('Replaced:', jsonObject, 'with:', replacedString);
+
       return replacedString;
     }
 

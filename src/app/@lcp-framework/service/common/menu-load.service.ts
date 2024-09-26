@@ -92,14 +92,22 @@ export class MenuLoadService {
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           if (user_data) {
-            this.localStorageService.storeData(
-              'user_data',
-              JSON.stringify({
-                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                unformattedconfig: response.data.records,
-                config: finalObject,
-              })
-            );
+            if (finalObject.encrypt_local_storage == 'true') {
+              this.localStorageService.storeDataEncrypted(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                })
+              );
+            } else {
+              this.localStorageService.storeData(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                })
+              );
+              localStorage.removeItem('enc_user');
+            }
           }
 
           return true;
@@ -116,13 +124,15 @@ export class MenuLoadService {
   }
 
   fetchMenuData(companyId: number): Observable<MenuItem[]> {
+    const conf: any = localStorage.getItem('config');
+    const enc_config: any = JSON.parse(conf);
     const userData = this.localStorageService.getData('user_data');
     this.user_info = userData ? JSON.parse(userData) : null;
     if (this.user_info && this.user_info.main && this.user_info.main.role) {
       if (this.user_info.main.role !== 'super_admin') {
         this.menu_id = [1];
       } else {
-        this.menu_id = [1, 2];
+        this.menu_id = [1, 2, 5];
       }
     } else {
       console.error('User info, main, or role is missing.');
@@ -130,6 +140,7 @@ export class MenuLoadService {
     }
 
     const payload = {
+      print_query: true,
       company_id: companyId,
       primary_table: 'menu_items',
       sort_columns: [['menu_items.id', 'asc']],
@@ -176,14 +187,26 @@ export class MenuLoadService {
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           if (user_data) {
-            this.localStorageService.storeData(
-              'user_data',
-              JSON.stringify({
-                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                menuList: organizedMenu,
-                unorgmenuList: response.data.records,
-              })
-            );
+            if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
+              this.localStorageService.storeDataEncrypted(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  menuList: organizedMenu,
+                  unorgmenuList: response.data.records,
+                })
+              );
+            } else {
+              this.localStorageService.storeData(
+                'user_data',
+                JSON.stringify({
+                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  menuList: organizedMenu,
+                  unorgmenuList: response.data.records,
+                })
+              );
+              localStorage.removeItem('enc_user');
+            }
           }
 
           return organizedMenu;

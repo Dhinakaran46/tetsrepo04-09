@@ -6,12 +6,12 @@
       class="horizontal-logo flex items-center justify-between lg:hidden ltr:mr-2 rtl:ml-2">
       <a routerLink="/" class="main-logo flex shrink-0 items-center">
         <img class="inline w-8 ltr:-ml-1 rtl:-mr-1"
-          [src]="apiUrl+'/'+ this.user_info?.config?.logo" alt
-          appDynamicFontSize="headerlogo" />
+          [src]="apiUrl+'/'+ this.config?.logo"
+          [alt]="this.config?.company_name" appDynamicFontSize="headerlogo" />
         <span
           class="hidden align-middle font-semibold transition-all duration-300 dark:text-white-light md:inline ltr:ml-1.5 rtl:mr-1.5"
           appDynamicFontSize="heading">
-          {{this.user_info?.config?.company_name}}
+          {{this.config?.company_name}}
         </span>
       </a>
 
@@ -262,7 +262,7 @@
         *ngIf="item.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
         <a
           *ngIf="item.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalLink"
-          [attr.href]="item.target || 'javascript:void(0);'"
+          [attr.href]="'#'+item.target || 'javascript:void(0);'"
           class="nav-link"
           [attr.target]="item.target ? '_blank' : null"
           [class.active]="item.isActive">

@@ -122,6 +122,7 @@ export class HeaderComponent implements OnInit {
   ];
   user_info: any;
   apiUrl = environment.apiUrl;
+  config: any;
 
   constructor(
     public translate: TranslateService,
@@ -147,6 +148,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.config = JSON.parse(this.localstore.getData('config'));
     // this.setActiveDropdown();
     // this.router.events.subscribe((event) => {
     //   if (event instanceof NavigationEnd) {
@@ -214,6 +216,9 @@ export class HeaderComponent implements OnInit {
       const hasPermission = viewPermissions.includes(permissionKey);
       if (item.children && item.children.length) {
         item.children = this.filterMenu(item.children, viewPermissions);
+      }
+      if (item.parent_id == null) {
+        return true;
       }
 
       return hasPermission || (item.children && item.children.length > 0);
@@ -324,8 +329,10 @@ export class HeaderComponent implements OnInit {
   logout() {
     this.authService.logout().subscribe({
       next: (response) => {
-        this.localstore.logout();
-        this.router.navigate(['/login']); // Redirect to login page after successful logout
+        if (response) {
+          this.localstore.logout();
+          this.router.navigate(['/login']); // Redirect to login page after successful logout
+        }
       },
       error: (error) => {
         console.error('Logout failed', error);

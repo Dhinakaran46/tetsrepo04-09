@@ -78,16 +78,6 @@ export class ForgetpwdComponent {
   }
 
   ngOnInit() {
-    const languageCode = this.languageService.getSavedLanguageCode();
-    if (this.languageService.checkReloadFlag()) {
-      console.log('Reloaded');
-    } else {
-      console.log('Initial Load');
-    }
-
-    const languageId = this.languageService.getLanguageId(languageCode);
-    this.languageService.fetchLanguageData(this.companyId, languageId);
-
     this.fgForm.controls['email'].statusChanges.subscribe((status) => {
       if (this.isSubmitted) {
         this.fgForm.controls['email'].markAsTouched();
