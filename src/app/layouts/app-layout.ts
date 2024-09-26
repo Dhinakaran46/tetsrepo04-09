@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Renderer2 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { Router, NavigationEnd } from '@angular/router';
@@ -9,6 +9,8 @@ import { ThemeCustomizerComponent } from './theme-customizer';
 import { HeaderComponent } from './header';
 import { FooterComponent } from './footer';
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
+import { environment } from '../../environments/environment';
+import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 
 @Component({
   selector: 'app-root',
@@ -19,11 +21,21 @@ import { CommonSharedModule } from '../@lcp-framework/shared/common/common.modul
 export class AppLayout {
   store: any;
   showTopButton = false;
-  constructor(public translate: TranslateService, public storeData: Store<any>, private service: AppService, private router: Router) {
+  apiUrl = environment.apiUrl;
+  constructor(
+    private renderer: Renderer2,
+    public translate: TranslateService,
+    public storeData: Store<any>,
+    private service: AppService,
+    private router: Router,
+    private localstore: LocalStorageService
+  ) {
     this.initStore();
   }
   headerClass = '';
   ngOnInit() {
+    const resn = JSON.parse(this.localstore.getData('config'));
+    this.changeFavicon(this.apiUrl + '/' + resn.favicon);
     this.initAnimation();
     this.toggleLoader();
     window.addEventListener('scroll', () => {
@@ -51,6 +63,11 @@ export class AppLayout {
     ele.addEventListener('animationend', () => {
       this.service.changeAnimation('remove');
     });
+  }
+
+  changeFavicon(url: any): void {
+    const favicon = this.renderer.selectRootElement('#common-favicon', true);
+    this.renderer.setAttribute(favicon, 'href', url);
   }
 
   toggleLoader() {

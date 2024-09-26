@@ -243,7 +243,7 @@
       <li class="menu nav-item relative" *ngIf="item.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
         <a
           *ngIf="item.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalLink"
-          [attr.href]="item.target || 'javascript:void(0);'"
+          [attr.href]="'#'+item.target || 'javascript:void(0);'"
           class="nav-link"
           [attr.target]="item.target ? '_blank' : null"
           [class.active]="item.isActive"

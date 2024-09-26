@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { Router, Route, Routes } from '@angular/router';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
 import { MenuMappingComponent } from '../../pages/menu-mapping/menu-mapping.component';
@@ -12,15 +12,20 @@ import { MasterEntityComponent } from '../../pages/master-entity/master-entity.c
 import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
 import { DocumentationComponent } from '../../pages/documentation/documentation.component';
 import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RouteUpdateService {
+  apiUrl = environment.apiUrl;
   private permissionsListSubject = new BehaviorSubject<any>(null);
   routeList: { path: string; component: any }[] = [];
 
-  constructor(private router: Router, private localStore: LocalStorageService) {
+  private renderer: Renderer2;
+
+  constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
+    this.renderer = this.rendererFactory.createRenderer(null, null);
     const permissionsList = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')).permissions : null;
 
     this.permissionsListSubject.next(permissionsList);
@@ -44,6 +49,11 @@ export class RouteUpdateService {
         this.extractRoutes(route.children, path);
       }
     }
+  }
+
+  changeFavicon(url: any): void {
+    const favicon = this.renderer.selectRootElement('#common-favicon', true);
+    this.renderer.setAttribute(favicon, 'href', url);
   }
 
   updateRoutesWithGridPermission(routeDataArray: any[]): Observable<Route[]> {
@@ -168,6 +178,11 @@ export class RouteUpdateService {
   }
 
   addDynamicRoutes() {
+    const resn = JSON.parse(this.localStore.getData('config'));
+    if (resn) {
+      this.changeFavicon(this.apiUrl + '/' + resn.favicon);
+    }
+
     const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
     const unorgmenuList = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
     if (unorgmenuList) {

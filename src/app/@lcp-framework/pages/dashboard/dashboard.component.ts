@@ -30,6 +30,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -73,17 +74,6 @@ interface DashboardTab {
   cards: Card[];
 }
 
-Handlebars.registerHelper('hbp_inc', function (value) {
-  return parseInt(value) + 1;
-});
-
-Handlebars.registerHelper('hbp_truncate', (text: string, maxLength: number) => {
-  if (text && text.length > maxLength) {
-    return text.substring(0, maxLength) + '...';
-  }
-  return text;
-});
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -121,11 +111,8 @@ export class DashboardComponent implements AfterViewInit {
     public translate: TranslateService
   ) {
     this.initStore();
-    this.registerHandlebarsHelpers();
-    Handlebars.registerHelper('hbp_translate', (key: string) => {
-      // Use the TranslateService to get the translation for the given key
-      return this.translate.instant(key);
-    });
+
+    registerHandlebarsHelpers(this.translate);
   }
 
   ngAfterViewInit(): void {
@@ -364,14 +351,6 @@ export class DashboardComponent implements AfterViewInit {
       }
 
       return template(passData);
-    });
-  }
-  registerHandlebarsHelpers() {
-    Handlebars.registerHelper('limit', function (items: any[], limit: number) {
-      if (Array.isArray(items)) {
-        return items.slice(0, limit);
-      }
-      return [];
     });
   }
 

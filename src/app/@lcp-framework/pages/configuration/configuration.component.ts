@@ -236,7 +236,7 @@ export class ConfigurationComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.tabs = response.data.records;
-          console.log(this.tabs);
+
           let commonTabs: any = [];
           this.tabs.map(function (ielem) {
             commonTabs.push(...ielem.configurations);
@@ -370,7 +370,13 @@ export class ConfigurationComponent implements OnInit {
   }
 
   getConfigurationsArray(tabName: string): FormArray {
-    return this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
+    const configurations: any = this.allTabsForm.get(tabName)?.get('configurations') as FormArray;
+    configurations.controls.sort((a: any, b: any) => {
+      const orderA = a.get('order_no')?.value || 0;
+      const orderB = b.get('order_no')?.value || 0;
+      return orderA - orderB; // Ascending order
+    });
+    return configurations;
   }
 
   onFileChange(event: Event, tabName: string, index: number) {

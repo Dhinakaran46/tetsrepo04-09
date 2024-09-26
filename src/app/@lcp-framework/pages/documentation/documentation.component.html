@@ -7,8 +7,8 @@
       <div class="sticky top-0">
         <div class="p-3">
           <a routerLink="/" class="inline-flex items-center gap-2">
-            <img class="ml-[5px] w-8 flex-none" src="assets/images/logo.svg" alt="logo" />
-            <span class="text-2xl font-semibold">LCP</span>
+            <img class="ml-[5px] w-8 flex-none" [src]="apiUrl + '/' + this.config?.logo" [alt]="this.config?.company_name" />
+            <span class="text-2xl font-semibold">{{ this.config?.company_name }}</span>
           </a>
         </div>
         <div class="h-[calc(100vh_-_60px)] overflow-auto border-t border-dashed border-black-light/30 pb-5">
@@ -68,7 +68,7 @@
       <header class="sticky top-0 z-10 bg-white py-2.5 shadow-md">
         <div class="flex items-center justify-between px-4">
           <a href="/" class="flex items-center lg:hidden">
-            <img class="ml-[5px] w-8 flex-none" src="/assets/images/logo.svg" alt="logo" />
+            <img class="ml-[5px] w-8 flex-none" [src]="apiUrl + '/' + this.config?.logo" [alt]="this.config?.company_name" />
           </a>
           <p class="hidden text-xl font-bold lg:block">Documentation</p>
         </div>

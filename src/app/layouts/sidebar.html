@@ -209,7 +209,11 @@
               <ng-template #noChildren>
                 <h2 class="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
                   <i class="fa-solid fa-minus xl-2 hidden flex-none"></i>
-                  <span>{{ item.name | translate }}</span>
+                  <span>
+                    <a title="{{ item.name | translate }}" [routerLink]="item.target" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                      {{ item.name | translate }}
+                    </a>
+                  </span>
                 </h2>
               </ng-template>
             </ng-container>

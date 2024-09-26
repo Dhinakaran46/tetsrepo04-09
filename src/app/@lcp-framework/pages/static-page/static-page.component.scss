@@ -1,0 +1,33 @@
+.tabs a {
+  padding: 1rem;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.tabs a.active {
+  border-bottom-color: #3490dc; /* Tailwind Primary Color */
+}
+
+.tab-content div {
+  padding: 2rem;
+}
+
+.border-in {
+  border-color: rgb(0 0 0);
+}
+
+.accordion-content {
+  overflow: hidden; /* Prevents overflow during transition */
+  transition: max-height 0.3s ease-in-out; /* Smooth transition */
+}
+
+.max-h-screen-in {
+  max-height: 100vh; /* or another appropriate value */
+  transition: max-height 0.3s ease-in-out; /* optional transition */
+}
+
+.max-h-0-in {
+  max-height: 0;
+  overflow: hidden; /* to hide content */
+  transition: max-height 0.3s ease-in-out; /* optional transition */
+}

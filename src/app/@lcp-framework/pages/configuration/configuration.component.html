@@ -143,12 +143,11 @@
                         </ng-container>
                         <ng-container *ngSwitchCase="'file'">
                           <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%">
-                            <div *ngIf="config.get('config_value')?.value" style="flex: 0 0 25%">
+                            <div *ngIf="config.get('config_value')?.value" class="h-12 w-12 flex-shrink-0">
                               <img
-                                class="bg-slate-200"
+                                class="h-full w-full bg-slate-200 object-cover"
                                 [src]="apiUrl + '/' + config.get('config_value')?.value"
                                 alt="Loaded Image"
-                                style="width: 100%; height: 100%; object-fit: cover"
                               />
                             </div>
                             <input
