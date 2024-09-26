@@ -38,7 +38,6 @@ export class FormBuilderComponent implements OnInit {
   uploadedFiles: string[] = [];
   oldUploadedFiles: string[] = []; // after edit completion old fils should removed
   pageInfo: any;
-  users = ['user1', 'user2', 'user3'];
 
   constructor(
     private route: ActivatedRoute,
@@ -73,6 +72,7 @@ export class FormBuilderComponent implements OnInit {
     this.options = {
       formState: {
         componentInstance: this, // 'this' is the actual component reference
+        submitted: false,
       },
     };
 
@@ -181,19 +181,20 @@ export class FormBuilderComponent implements OnInit {
   }
 
   onSubmit() {
+    this.options.formState.submitted = true;
     console.log('this.form.value', this.form.value);
     // Trim all form values before validation
     if (this.form.invalid) {
-      const key = 'please_select_all_the_required_fields';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
+      // const key = 'please_select_all_the_required_fields';
+      // const errorMessage = this.translate.instant(key);
+      // this.toastr.error(errorMessage, 'Error');
       return;
     }
     this.trimFormValues(this.form);
     if (this.form.invalid) {
-      const key = 'please_select_all_the_required_fields';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
+      // const key = 'please_select_all_the_required_fields';
+      // const errorMessage = this.translate.instant(key);
+      // this.toastr.error(errorMessage, 'Error');
       return;
     }
     const uploadObservables = this.collectFileUploadObservables();
@@ -221,6 +222,8 @@ export class FormBuilderComponent implements OnInit {
   }
 
   private executeTransaction() {
+    // this.model = { ...this.model, ...this.form.value };
+    // console.log(this.model);
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false);
     transParam = this.replacePlaceholders(transParam, this.model);
     this.gridApiService.executeTransaction(transParam).subscribe(
@@ -467,7 +470,6 @@ export class FormBuilderComponent implements OnInit {
           this.listParams = this.formEntity.query_information;
           this.transParam = this.entity_type === 'add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
-          // this.options = this.formEntity.form_information.options;
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
