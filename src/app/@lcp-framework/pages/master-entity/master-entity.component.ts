@@ -580,7 +580,7 @@ export class MasterEntityComponent implements OnInit {
         entity_type: formData.entityType,
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
-        ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: null }),
+        ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
 
         ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable) } : { associated_tables: null }),
         ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation) } : { query_information: null }),
