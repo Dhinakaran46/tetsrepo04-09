@@ -71,6 +71,10 @@ export const commonConfig = {
     IMPORT: 'import',
     ASSIGN: 'assign',
   },
+  status_type: [
+    { label: 'Active', value: 1 },
+    { label: 'InActive', value: 2 },
+  ],
   field_types: [
     { label: 'field_types_integer', value: 1 },
     { label: 'field_types_float', value: 2 },

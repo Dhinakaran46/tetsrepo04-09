@@ -33,8 +33,8 @@ export class MenuService {
       search_all: [
         {
           column_name: 'menu_items.status_id',
-          value: '1',
-          operator: '=',
+          value: '3',
+          operator: '!=',
         },
         {
           column_name: 'menu_items.menu_id',
