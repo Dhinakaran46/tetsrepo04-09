@@ -121,6 +121,8 @@ export class MenuMappingComponent implements OnInit {
     this.menuDeviceTypes = commonConfig.menu_device_type;
     this.menuStatusTypes = commonConfig.status_type;
 
+    console.log('this.menuStatusTypes', this.menuStatusTypes);
+
     this.menuForm.get('order_no')?.valueChanges.subscribe((value) => {
       this.updateOrderNo(value);
     });
@@ -321,22 +323,23 @@ export class MenuMappingComponent implements OnInit {
         error: (error) => {
           console.error('Error fetching entity types:', error);
           this.entity_type = null;
-          this.updateFormFields(item);
+          // this.updateFormFields(item);
         },
       });
     }
   }
 
   updateFormFields(item: any) {
-    if (item.permission_id) {
+    if (item.permission_id && item.parent_id != null) {
       this.getActionItem = true;
       this.getActionItems(item.parent_id);
     }
-
     if (item.link_type == 4) {
       this.entityElement = false;
+      this.getActionItem = false;
     } else {
       this.entityElement = true;
+      this.getActionItem = true;
     }
     this.showForm = true;
     this.editMode = true;
@@ -352,6 +355,7 @@ export class MenuMappingComponent implements OnInit {
       order_no: item.order_no || 0.0,
       entityType: this.entity_type || '',
       module: '',
+      menu_status: item.status_id || 1,
     });
     this.setInitialSelectedIcon(); // Set selected icon after patching value
   }
@@ -373,7 +377,7 @@ export class MenuMappingComponent implements OnInit {
       url: '',
       order_no: '1.00',
       module: '',
-      menu_status: 1,
+      menu_status: [1],
     });
     this.setInitialSelectedIcon(); // Set selected icon after patching value
   }
@@ -456,6 +460,7 @@ export class MenuMappingComponent implements OnInit {
           this.entityModules = response.data.records;
           if (selectedEntityID) {
             this.menuForm.patchValue({ module: selectedEntityID });
+            this.getViewPermission(selectedEntityID);
           }
         }
       },
@@ -474,6 +479,42 @@ export class MenuMappingComponent implements OnInit {
       this.menuForm.patchValue({ parentActionItem: '' });
       this.getActionItems(selectedParentMenuID);
     }
+  }
+
+  onModuleChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const selectedModuleID = target.value;
+    this.getViewPermission(parseInt(selectedModuleID));
+  }
+
+  getViewPermission(entityModuleId: number) {
+    const getViewAction = {
+      primary_table: 'permissions',
+      sort_columns: [['permissions.order_no', 'asc']],
+      limit_range: 1,
+      select_columns: [['permissions.id'], ['permissions.name'], ['permissions.slug']],
+      company_id: this.companyId,
+      search_all: [
+        { column_name: 'permissions.entity_id', operator: '=', value: entityModuleId },
+        { column_name: 'permissions.status_id', operator: '=', value: '1' },
+      ],
+    };
+
+    this.menuMapService.getCommonList(getViewAction).subscribe({
+      next: (response: any) => {
+        if (response.code === 200 && response.status) {
+          const viewActionId = response.data.records[0].id;
+          const formData = this.menuForm.value;
+          if (formData.link_type == 1 && viewActionId) {
+            this.menuForm.patchValue({ parentActionItem: viewActionId });
+            this.getActionItem = false;
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching Actions:', error);
+      },
+    });
   }
 
   onActionTypeChange(event: Event) {
@@ -616,6 +657,7 @@ export class MenuMappingComponent implements OnInit {
             order_no: formData.order_no || 1.0,
             parent_id: formData.parent || null,
             entity_id: formData.module || null,
+            status_id: formData.menu_status,
             ...(this.editMode
               ? {}
               : {

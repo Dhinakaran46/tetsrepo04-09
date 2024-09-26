@@ -49,9 +49,8 @@
                 <div class="panel">
                     <div class="mb-5 flex items-center justify-between">
                         <h5 class="text-lg font-semibold dark:text-white-light">
-                            {{editMode ? 'title_edit_menu_item' :
-                            'title_add_menu_item' |
-                            translate}}
+                            {{ (editMode ? 'title_edit_menu_item' :
+                            'title_add_menu_item') | translate }}
                         </h5>
                         <button type="button"
                             class="btn-warning flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
@@ -241,7 +240,8 @@
                                 <label for="module">{{'form_label_module'|
                                     translate}}</label>
                                 <select id="module" formControlName="module"
-                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2">
+                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
+                                    (change)="onModuleChange($event)">
                                     <option value>{{'form_label_module_dropdown'
                                         | translate}}</option>
                                     <option
@@ -261,7 +261,7 @@
                                     class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2">
                                     <option
                                         *ngFor="let statusList of menuStatusTypes"
-                                        [value]="statusList.id">
+                                        [value]="statusList.value">
                                         {{ statusList.label | uppercase |
                                         translate}}
                                     </option>
@@ -270,7 +270,7 @@
                         </div>
                         <button type="submit"
                             class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                            {{editMode ? 'update' : 'submit' | translate}}
+                            {{(editMode ? 'update' : 'submit') | translate}}
                         </button>
                     </div>
                 </div>
