@@ -17,6 +17,7 @@ import { QuillModule } from 'ngx-quill';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormlyDisplayListComponent } from './components/formly-display-list/formly-display-list.component';
 import { FormlyVsCodeComponent } from './components/formly-vs-code/formly-vs-code.component';
+import { FormlyRepeatTableFieldComponent } from './components/formly-repeat-table-field/formly-repeat-table-field.component';
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
   if (field.props) return `Should have at least ${field.props.minLength} characters`;
@@ -51,6 +52,7 @@ export const search_conditions: any = commonConfig.search_conditions;
     FormlyRichEditorComponent,
     FormlyDisplayListComponent,
     FormlyVsCodeComponent,
+    FormlyRepeatTableFieldComponent,
   ],
   imports: [
     QuillModule,
@@ -145,6 +147,7 @@ export const search_conditions: any = commonConfig.search_conditions;
         { name: 'rich-editor', component: FormlyRichEditorComponent, wrappers: ['form-field'] },
         { name: 'email-tags', component: FormlyDisplayListComponent, wrappers: ['form-field'] },
         { name: 'vs-code', component: FormlyVsCodeComponent, wrappers: ['form-field'] },
+        { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
       ],
     }),
   ],

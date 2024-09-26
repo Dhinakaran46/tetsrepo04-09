@@ -1,0 +1,58 @@
+<div class="repeat-table-field">
+  <div class="grid">
+    <form [formGroup]="editForm" class="flex items-center space-x-4">
+      <!-- Formly Form -->
+      <formly-form [form]="editForm" [fields]="getFieldGroup()" class="repeat-table-form flex-grow"></formly-form>
+
+      <!-- Buttons Section -->
+      <div class="flex space-x-2">
+        <button type="button" class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-primary"
+          (click)="saveRow()">
+          {{ currentRowIndex !== null ? 'Update' : 'Add' }}
+        </button>
+
+        <button type="button" class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-danger"
+          (click)="resetRow()">
+          {{ currentRowIndex !== null ? 'Back' : 'Reset' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="invalid-feedback" *ngIf="errorMessage">
+    {{errorMessage}}
+  </div>
+
+  <!-- Table displaying the added rows -->
+  <table class="table-fixed mb-4" *ngIf="formArray && formArray.length > 0">
+    <thead>
+      <tr>
+        <th class="py-2 px-3" *ngFor="let field of getFieldGroup()"
+          [ngClass]="{'hidden': field.props && field.props['hideColumn']}">{{ field.props?.label || field.key }}</th>
+        <th class="py-2 px-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let fgRow of formArray.controls; let i = index">
+        <td class="py-2 px-3" *ngFor="let field of getFieldGroup()"
+          [ngClass]="{'hidden': field.props && field.props['hideColumn']}">
+          <ng-container *ngIf="fgRow.get(coerceKeyToString(field.key ?? ''))?.value as fieldValue">
+            {{ getSafeDisplayValue(fieldValue, field.props?.options) }}
+          </ng-container>
+        </td>
+        <td class="py-2 px-3">
+          <div class="flex gap-2">
+            <button type="button" class="rounded-md border border-[#e0e6ed] px-2 py-1 font-semibold btn-info"
+              (click)="editRow(i)">
+              Edit
+            </button>
+            <button type="button" class="rounded-md border border-[#e0e6ed] px-2 py-1 font-semibold btn-danger"
+              (click)="deleteRow(i)">
+              Remove
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

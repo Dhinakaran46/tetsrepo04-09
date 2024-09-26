@@ -12,9 +12,11 @@
 </div> -->
 <ng-select [readonly]="to['readonly'] || false" *ngIf="to['table']" bindLabel="label" bindValue="value"
   [formControl]="formControl" [formlyAttributes]="field" [items]="options$ | async" [multiple]="to['multiple'] || false"
-  [clearable]="false" placeholder="{{ to.placeholder || 'Select an option' }}" class="custom-multiselect">
+  [clearable]="false" placeholder="{{ to.placeholder || 'Select an option' }}" class="form-control"
+  [ngClass]="{'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted)}">
 </ng-select>
 <ng-select *ngIf="!to['table']" bindLabel="label" bindValue="value" [formControl]="formControl"
   [formlyAttributes]="field" [items]="static_options$ | async" [multiple]="to['multiple'] || false" [clearable]="false"
-  placeholder="{{ to.placeholder || 'Select an option' }}" class="custom-multiselect">
+  placeholder="{{ to.placeholder || 'Select an option' }}" class="form-control"
+  [ngClass]="{'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted)}">
 </ng-select>

@@ -25,20 +25,25 @@
     outline-offset: 2px !important;
   }
 
-  formly-field .has-error .form-input,
-  formly-field .has-error .form-textarea,
-  formly-field .has-error .form-select {
-    border-color: inherit;
-    background-color: inherit;
+  formly-field .ng-select.form-control {
+    border-width: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-bottom: 0;
+  }
+
+  .was-validated .form-control:invalid,
+  .form-control.is-invalid {
+    // border-color: #dc3545;
+    --tw-text-opacity: 1;
+    border-color: rgb(231 81 90 / var(--tw-text-opacity));
+    background-color: #e7515a14;
     color: inherit;
   }
 
-  form.ng-submitted formly-field .form-control.is-invalid,
-  form.ng-submitted formly-field .form-select.is-invalid,
-  form.ng-submitted formly-field .form-select.is-invalid:focus,
-  formly-field .has-error .form-control.is-invalid.ng-touched,
-  formly-field .has-error .form-select.is-invalid.ng-touched,
-  formly-field .has-error .form-select.is-invalid.ng-touched:focus {
+  .was-validated .ng-select:invalid .ng-select-container,
+  .ng-select.is-invalid .ng-select-container {
+    // border-color: #dc3545;
     --tw-text-opacity: 1;
     border-color: rgb(231 81 90 / var(--tw-text-opacity));
     background-color: #e7515a14;

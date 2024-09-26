@@ -1,0 +1,6 @@
+::ng-deep {
+  formly-form.repeat-table-form > formly-field > formly-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+}

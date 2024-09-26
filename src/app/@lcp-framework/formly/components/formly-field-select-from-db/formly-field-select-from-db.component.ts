@@ -3,7 +3,7 @@ import { FieldType } from '@ngx-formly/core';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GridApiService } from '../../../service/common/grid.service';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-formly-field-select-from-db',
@@ -12,6 +12,7 @@ import { FormControl } from '@angular/forms';
 })
 export class FormlyFieldSelectFromDbComponent extends FieldType implements OnInit {
   options$: Observable<{ value: any; label: string }[]> | undefined;
+  labelControl: FormControl | undefined;
 
   constructor(private gridApiService: GridApiService) {
     super();
@@ -20,6 +21,30 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   ngOnInit() {
     this.initOptions();
     this.initOnchanges(this);
+    this.createLabelControl();
+  }
+
+  createLabelControl() {
+    const labelControlName = `${this.field.key}_label`;
+    if (this.field.parent?.formControl?.get(labelControlName)) {
+      const labelControl = this.field.parent?.formControl?.get(labelControlName) as FormControl;
+      this.formControl.valueChanges?.subscribe((newValue) => {
+        if (newValue == null) {
+          // If the value is null, set the label control to null as well
+          labelControl.setValue(null);
+        } else {
+          // Subscribe to the options$ observable to find the matching label
+          this.options$?.subscribe((options) => {
+            const selectedOption = options.find((option) => option.value === newValue);
+            if (selectedOption) {
+              labelControl.setValue(selectedOption.label); // Update the label control with the corresponding label
+            } else {
+              labelControl.setValue(null); // If no match, set the label to null
+            }
+          });
+        }
+      });
+    }
   }
 
   initOnchanges(context: any) {
@@ -55,7 +80,6 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
 
     if (tableName && labelColumn && valueColumn) {
       // console.log('this.form', this.field.parent?.parent?.parent?.model?.unique_id);
-
       const updatedSearchAll = this.props['search_all']
         ? JSON.parse(JSON.stringify(this.props['search_all']))
         : [
@@ -67,7 +91,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
           ];
 
       const search_all = this.evaluateDynamicValues(updatedSearchAll, this);
-      console.log('Updated search_all:', updatedSearchAll, this.props['search_all']);
+      // console.log('Updated search_all:', updatedSearchAll, this.props['search_all']);
 
       const limit_range = this.props['limit_range'] ? this.props['limit_range'] : 1000;
       const print_query = this.props['print_query'] ? this.props['print_query'] : false;
@@ -89,9 +113,14 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
         includes,
       };
 
+      let hasSetFirstValue = false;
       this.options$ = this.gridApiService.getAllList(listParams).pipe(
         map((response: any) => {
           if (response.status && response.data?.records?.length > 0) {
+            if (this.field.props && this.field.props['selectFirst'] && !hasSetFirstValue && !this.formControl.value) {
+              this.formControl.setValue(response.data.records[0].value ?? null, { emitEvent: true });
+              hasSetFirstValue = true; // Prevent subsequent value setting
+            }
             return response.data.records.map((record: any) => ({
               value: record[valueColumn] || record['value'],
               label: record[labelColumn] || record['label'],
