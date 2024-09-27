@@ -121,8 +121,6 @@ export class MenuMappingComponent implements OnInit {
     this.menuDeviceTypes = commonConfig.menu_device_type;
     this.menuStatusTypes = commonConfig.status_type;
 
-    console.log('this.menuStatusTypes', this.menuStatusTypes);
-
     this.menuForm.get('order_no')?.valueChanges.subscribe((value) => {
       this.updateOrderNo(value);
     });
@@ -377,7 +375,7 @@ export class MenuMappingComponent implements OnInit {
       url: '',
       order_no: '1.00',
       module: '',
-      menu_status: [1],
+      menu_status: 1,
     });
     this.setInitialSelectedIcon(); // Set selected icon after patching value
   }
