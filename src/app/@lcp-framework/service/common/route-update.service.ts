@@ -13,6 +13,7 @@ import { LanguageMappingComponent } from '../../pages/language-mapping/language-
 import { DocumentationComponent } from '../../pages/documentation/documentation.component';
 import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
 import { environment } from '../../../../environments/environment';
+import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
 
 @Injectable({
   providedIn: 'root',
@@ -72,6 +73,7 @@ export class RouteUpdateService {
               const exportPermissionKey = `export_${routeData.entity_name}`;
               const detailsPermissionKey = `details_${routeData.entity_name}`;
               const assignPermissionKey = `assign_${routeData.entity_name}`;
+              const printPermissionKey = `print_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -121,6 +123,7 @@ export class RouteUpdateService {
                 static_page_builder_module: StaticPageComponent,
                 form_builder_module: FormBuilderComponent,
                 entity_user_role_map_module: EntityUserRoleMappingComponent,
+                user_role_permission_map_module: UserRolePermissionComponent,
                 entity_form_module: MasterEntityComponent,
                 language_contents_module: LanguageMappingComponent,
                 job_builder_module: JobPageComponent,
@@ -157,6 +160,7 @@ export class RouteUpdateService {
                       export: permissionListJSON[exportPermissionKey] || false,
                       details: permissionListJSON[detailsPermissionKey] || false,
                       assign: permissionListJSON[assignPermissionKey] || false,
+                      print: permissionListJSON[printPermissionKey] || false,
                     },
                     children: children,
                   },

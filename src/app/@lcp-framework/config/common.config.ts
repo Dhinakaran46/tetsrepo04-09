@@ -33,11 +33,13 @@ export const commonConfig = {
     JOB_BUILDER_MODULE: 'job_builder_module',
     DASHBOARD_WIZARD_BUILDER_MODULE: 'dashboard_wizard_builder_module',
     ENTITY_USER_ROLE_MAP_MODULE: 'entity_user_role_map_module',
+    USER_ROLE_PERMISSION_MAP_MODULE: 'user_role_permission_map_module',
     MENU_MODULE: 'menu_module',
     IMPORT_MODULE: 'import_module',
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
+    BARCODE_PRINT_MODULE: 'barcode_print_module',
     /*DOCUMENTATION_MODULE: 'documentation_module',*/
   },
   MENU_LINK_TYPE: {
@@ -70,6 +72,7 @@ export const commonConfig = {
     EXPORT: 'export',
     IMPORT: 'import',
     ASSIGN: 'assign',
+    Print: 'print',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -96,6 +99,7 @@ export const commonConfig = {
     { label: 'Export', value: 'export' },
     { label: 'Import', value: 'import' },
     { label: 'Assign', value: 'assign' },
+    { label: 'Print', value: 'print' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -104,11 +108,13 @@ export const commonConfig = {
     { label: 'Job Builder Module', value: 'job_builder_module' },
     { label: 'Dashboard Wizard Builder Module', value: 'dashboard_wizard_builder_module' },
     { label: 'Entity User/Role Mapping Module', value: 'entity_user_role_map_module' },
+    { label: 'User/Role Permission Mapping Module', value: 'user_role_permission_map_module' },
     { label: 'Menu Module', value: 'menu_module' },
     { label: 'Import Module', value: 'import_module' },
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
+    { label: 'Barcode Print Module', value: 'barcode_print_module' },
     /*{ label: 'Documentation Module', value: 'documentation_module' },*/
   ],
   keypress_config: {
