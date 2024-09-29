@@ -83,14 +83,6 @@ export const routes: Routes = [
           defaultPermission: true,
         },
       },
-      {
-        path: 'user-role-permissions',
-        component: UserRolePermissionComponent,
-        title: 'User/Role Permissions',
-        data: {
-          defaultPermission: true,
-        },
-      },
     ],
   },
   {

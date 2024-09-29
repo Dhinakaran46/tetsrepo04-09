@@ -8,6 +8,10 @@ import { OrderByControlPipe } from '../../pipes/order-by-control/order-by-contro
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { IconFolderComponent } from '../../shared/icon/icon-folder';
+import { IconMinusComponent } from '../../shared/icon/icon-minus';
+import { IconFolderPlusComponent } from '../../shared/icon/icon-folder-plus';
+import { IconFolderMinusComponent } from '../../shared/icon/icon-folder-minus';
 interface IRolePermission {
   role_id: number;
   permission_id: number;
@@ -35,6 +39,7 @@ interface IPermission {
   id: number;
   parent_id: number | null;
   parent_name: string;
+  menu_img: any;
   permissions: IPermissionEntity[] | null; // Permission entities (actions like view, edit, etc.)
   children: IPermission[]; // Recursive relation for nested permissions
 }
@@ -42,7 +47,15 @@ interface IPermission {
 @Component({
   selector: 'app-user-role-permission',
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule, OrderByControlPipe],
+  imports: [
+    CommonSharedModule,
+    ReactiveFormsModule,
+    OrderByControlPipe,
+    IconFolderComponent,
+    IconMinusComponent,
+    IconFolderPlusComponent,
+    IconFolderMinusComponent,
+  ],
   templateUrl: './user-role-permission.component.html',
   styleUrl: './user-role-permission.component.scss',
 })
@@ -53,11 +66,13 @@ export class UserRolePermissionComponent {
   userList: any[] = [];
   user_info: any;
 
+  order_permissions = ['view', 'add', 'edit', 'details', 'delete', 'export', 'assign'];
+
   constructor(
     public fb: FormBuilder,
     private toastr: ToastrService,
     private gridApiService: GridApiService,
-    private translate: TranslateService,
+    public translate: TranslateService,
     private commonService: MenuMapService,
     private localStorageService: LocalStorageService
   ) {
@@ -120,6 +135,7 @@ export class UserRolePermissionComponent {
         const entityGroup = this.fb.group({
           id: new FormControl(entity.id),
           name: new FormControl(entity.parent_name),
+          menu_img: new FormControl(entity.menu_img),
           rights: rightsArray,
           children: childrenArray,
         });
@@ -161,6 +177,7 @@ export class UserRolePermissionComponent {
         const childGroup = this.fb.group({
           id: new FormControl(child.id),
           name: new FormControl(child.parent_name),
+          menu_img: new FormControl(child.menu_img),
           rights: rightsArray,
           children: childrenArray,
         });
@@ -176,6 +193,51 @@ export class UserRolePermissionComponent {
 
   getRightsControls(entityGroup: FormGroup): FormGroup[] {
     return (entityGroup.get('rights') as FormArray).controls as FormGroup[];
+  }
+  onCheckboxChange(rightGroup: FormGroup, event: Event, parentGroup: FormGroup) {
+    const rightsArray = parentGroup.get('rights') as FormArray;
+    const viewControl: any = rightsArray.at(0).get('selected'); // Assuming 'View' is at index 0
+    const isChecked = rightGroup.get('selected')?.value;
+    if (rightGroup.get('name')?.value === 'view') {
+      if (!isChecked) {
+        // If "View" is unchecked, uncheck all other checkboxes
+        rightsArray.controls.forEach((control) => {
+          control.get('selected')?.setValue(false);
+        });
+      }
+    } else {
+      if (isChecked) {
+        // If checking a checkbox other than "View", check the "View" checkbox
+        if (rightGroup.get('name')?.value !== 'view') {
+          viewControl.setValue(true); // Check the "View" checkbox
+        }
+      } else {
+        // Check if any checkboxes other than "View" are checked
+        const otherChecked = rightsArray.controls.some((control, index) => {
+          const isView = index === 0; // Change this if the View checkbox is at a different index
+          return control.get('selected')?.value && !isView;
+        });
+
+        if (!otherChecked) {
+          // If unchecked and no other checkbox is checked, uncheck both "View" and this checkbox
+          viewControl.setValue(false); // Uncheck View
+          rightGroup.get('selected')?.setValue(false); // Uncheck the unchecked checkbox
+        }
+      }
+    }
+  }
+
+  getSortedRightsControls(entityGroup: FormGroup) {
+    const rightsControls = this.getRightsControls(entityGroup);
+    return rightsControls.sort((a, b) => {
+      const aName = a.get('name')?.value;
+      const bName = b.get('name')?.value;
+
+      const aIndex = this.order_permissions.indexOf(aName);
+      const bIndex = this.order_permissions.indexOf(bName);
+
+      return aIndex - bIndex; // Sorting in ascending order
+    });
   }
 
   getChildrenControls(entityGroup: FormGroup): FormGroup[] {
@@ -452,7 +514,7 @@ export class UserRolePermissionComponent {
         table2: [],
       },
     };
-    const selectedPermissions: IRolePermission[] = [];
+    let selectedPermissions: IRolePermission[] = [];
     const entitiesArray = this.mappingForm.get('entities') as FormArray;
     this.selectedRolePermissions(entitiesArray, selectedPermissions);
     if (selectedPermissions.length === 0) {
@@ -461,7 +523,12 @@ export class UserRolePermissionComponent {
       this.toastr.error(errorMessage, 'Error');
       return;
     }
-    param.data.table2 = selectedPermissions;
+
+    const uniqueData = selectedPermissions.filter(
+      (item, index, self) => index === self.findIndex((t) => t.role_id === item.role_id && t.permission_id === item.permission_id)
+    );
+
+    param.data.table2 = uniqueData;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {

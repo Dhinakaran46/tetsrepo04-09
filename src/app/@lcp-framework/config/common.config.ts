@@ -40,6 +40,7 @@ export const commonConfig = {
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
     BARCODE_PRINT_MODULE: 'barcode_print_module',
+    EXPORT_GRID_MODULE: 'export_grid_module',
     /*DOCUMENTATION_MODULE: 'documentation_module',*/
   },
   MENU_LINK_TYPE: {
@@ -115,6 +116,8 @@ export const commonConfig = {
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
     { label: 'Barcode Print Module', value: 'barcode_print_module' },
+    { label: 'Export Grid Module', value: 'export_grid_module' },
+
     /*{ label: 'Documentation Module', value: 'documentation_module' },*/
   ],
   keypress_config: {
