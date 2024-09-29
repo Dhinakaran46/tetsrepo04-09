@@ -212,6 +212,7 @@ export class UserRolePermissionComponent {
               permission_id: rightControl.get('permission_id')?.value,
             });
           }
+
           if (rightControl.get('entity_permission_id')?.value) {
             selectedPermissions.push({
               user_id: 1, // or replace this with dynamic user_id if necessary
@@ -263,7 +264,7 @@ export class UserRolePermissionComponent {
     const permission_type = `${this.mappingForm.get('permission_type')?.value}wise`;
     const user_id = this.mappingForm.get('user')?.value || 0;
     const role_id = this.mappingForm.get('role')?.value || 0;
-    const param: any = { proc_name: 'get_menu_permissions', params: { user_id, menu_id: 1 } };
+    const param: any = { proc_name: 'get_menu_permissions', params: { user_id, menu_id: 1, role_id, permission_type } };
     this.commonService.procedureCall(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
@@ -403,7 +404,7 @@ export class UserRolePermissionComponent {
       },
     };
 
-    const selectedPermissions: IUserPermission[] = [];
+    let selectedPermissions: IUserPermission[] = [];
     const entitiesArray = this.mappingForm.get('entities') as FormArray;
     this.selectedUserPermissions(entitiesArray, selectedPermissions);
     if (selectedPermissions.length === 0) {
@@ -412,8 +413,13 @@ export class UserRolePermissionComponent {
       this.toastr.error(errorMessage, 'Error');
       return;
     }
-    console.log('Selected Permissions:', selectedPermissions);
-    param.data.table2 = selectedPermissions;
+
+    const uniqueData = selectedPermissions.filter(
+      (item, index, self) => index === self.findIndex((t) => t.user_id === item.user_id && t.permission_id === item.permission_id)
+    );
+
+    console.log('Selected Permissions:', uniqueData);
+    param.data.table2 = uniqueData;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
