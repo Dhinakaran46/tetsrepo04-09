@@ -7,17 +7,17 @@
     <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
       <div class="flex flex-col gap-2 md:flex-row md:items-center">
         <div class="relative mb-2 flex-grow md:mb-0" appDynamicFontSize="body">
-          <ul class="flex list-inside space-x-3 pt-2 font-semibold dark:text-[#d0d2d6] rtl:space-x-reverse">
+          <ul class="flex list-inside space-x-3 pt-2 font-semibold text-gray-700 dark:text-[#d0d2d6] rtl:space-x-reverse">
             <li>
               <label class="flex cursor-pointer items-center">
                 <input type="radio" name="permission_type" class="form-radio" value="role" formControlName="permission_type" />
-                <span class="text-white-dark">{{ 'role_permission' | translate }}</span>
+                <span class="text-gray-900 dark:text-white-dark">{{ 'role_permission' | translate }}</span>
               </label>
             </li>
             <li>
               <label class="flex cursor-pointer items-center">
                 <input type="radio" name="permission_type" class="form-radio" value="user" formControlName="permission_type" />
-                <span class="text-white-dark">{{ 'user_permission' | translate }}</span>
+                <span class="text-gray-900 dark:text-white-dark">{{ 'user_permission' | translate }}</span>
               </label>
             </li>
           </ul>
@@ -27,7 +27,7 @@
           <select
             appDynamicFontSize="body"
             id="role"
-            class="form-select mr-2 flex w-full items-center text-white-dark"
+            class="form-select mr-2 flex w-full items-center text-gray-700 dark:bg-gray-800 dark:text-white-dark"
             formControlName="role"
             (change)="getEntityList()"
           >
@@ -40,7 +40,7 @@
           <select
             appDynamicFontSize="body"
             id="user"
-            class="form-select mr-2 flex w-full items-center text-white-dark"
+            class="form-select mr-2 flex w-full items-center text-gray-700 dark:bg-gray-800 dark:text-white-dark"
             formControlName="user"
             (change)="getEntityList()"
           >
@@ -52,21 +52,35 @@
     </div>
   </div>
 
-  <div class="relative h-full w-full overflow-auto">
+  <div class="relative h-full w-full">
     <!-- Content Wrapper for scrolling -->
-    <div class="h-full w-full overflow-auto">
+    <div class="h-full w-full">
       <div formArrayName="entities" class="ml-2 min-w-full sm:min-w-[700px] lg:min-w-[1200px]">
         <ng-container *ngFor="let entityGroup of getEntitiesControls(); let i = index" [formGroupName]="i">
-          <div class="mb-2 rounded-lg border bg-gray-100 p-4 shadow-sm">
-            <button type="button" class="flex items-center font-semibold" appDynamicFontSize="title">
+          <div
+            class="mb-2 overflow-x-auto rounded-lg border bg-gray-100 p-4 shadow-sm dark:bg-black"
+            [ngClass]="{ 'flex items-center': getSortedRightsControls(entityGroup).length > 0 }"
+          >
+            <button
+              type="button"
+              class="flex items-center font-semibold text-gray-900 dark:text-white md:w-80"
+              appDynamicFontSize="title"
+              [title]="entityGroup.get('name')?.value | translate"
+              (click)="toggleExpand(entityGroup)"
+            >
               <i class="fas" [ngClass]="entityGroup.get('menu_img')?.value"></i>
-              <span class="ml-2" appDynamicFontSize="title"> {{ entityGroup.get('name')?.value | translate }}</span>
+              <span class="ml-2" appDynamicFontSize="title">{{ entityGroup.get('name')?.value | translate }}</span>
+              <i class="fas ml-4" [ngClass]="entityGroup.get('expanded')?.value ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
             </button>
 
-            <ng-container>
+            <ng-container *ngIf="entityGroup.get('expanded')?.value">
+              <!-- Font Awesome Right Arrow -->
+              <ng-container *ngIf="getSortedRightsControls(entityGroup).length > 0">
+                <i class="fas fa-arrow-right mx-2"></i>
+              </ng-container>
               <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
                 <ng-container *ngFor="let rightGroup of getSortedRightsControls(entityGroup); let j = index" [formGroupName]="j">
-                  <label class="flex items-center justify-center" *ngIf="rightGroup.get('name')?.value">
+                  <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
                     <input
                       type="checkbox"
                       (change)="onCheckboxChange(rightGroup, $event, entityGroup)"
@@ -80,16 +94,26 @@
 
               <div formArrayName="children" class="ml-7 mt-2">
                 <ng-container *ngFor="let childGroup of getChildrenControls(entityGroup); let k = index" [formGroupName]="k">
-                  <div class="mb-2">
-                    <button type="button" class="flex items-center" appDynamicFontSize="subtitle">
+                  <div class="mb-2 overflow-x-auto" [ngClass]="{ 'flex items-center': getSortedRightsControls(childGroup).length > 0 }">
+                    <button
+                      type="button"
+                      class="font-semibold sm:flex sm:items-center md:w-80"
+                      appDynamicFontSize="subtitle"
+                      [title]="childGroup.get('name')?.value | translate"
+                    >
                       <i class="fas" [ngClass]="childGroup.get('menu_img')?.value"></i>
                       <span class="ml-2" appDynamicFontSize="subtitle">{{ childGroup.get('name')?.value | translate }}</span>
                     </button>
 
                     <ng-container>
+                      <!-- Conditional Arrow for Grandchild Group Rights -->
+                      <ng-container *ngIf="getSortedRightsControls(childGroup).length > 0">
+                        <i class="fas fa-arrow-right mx-2"></i>
+                      </ng-container>
+
                       <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
                         <ng-container *ngFor="let rightGroup of getSortedRightsControls(childGroup); let l = index" [formGroupName]="l">
-                          <label class="flex items-center justify-center" *ngIf="rightGroup.get('name')?.value">
+                          <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
                             <input
                               type="checkbox"
                               (change)="onCheckboxChange(rightGroup, $event, childGroup)"
@@ -104,16 +128,25 @@
 
                       <div formArrayName="children" class="ml-7 mt-2">
                         <ng-container *ngFor="let grandchildGroup of getChildrenControls(childGroup); let m = index" [formGroupName]="m">
-                          <div class="mb-2">
-                            <button type="button" class="flex items-center" appDynamicFontSize="subtitle">
+                          <div class="mb-2 overflow-x-auto" [ngClass]="{ 'flex items-center': getSortedRightsControls(grandchildGroup).length > 0 }">
+                            <button
+                              type="button"
+                              class="font-semibold sm:flex sm:items-center md:w-80"
+                              appDynamicFontSize="subtitle"
+                              [title]="grandchildGroup.get('name')?.value | translate"
+                            >
                               <i class="fas" [ngClass]="grandchildGroup.get('menu_img')?.value"></i>
                               <span class="ml-2" appDynamicFontSize="subtitle">{{ grandchildGroup.get('name')?.value | translate }}</span>
                             </button>
 
                             <ng-container>
-                              <div formArrayName="rights" class="ml-7 mt-2 flex gap-2">
+                              <!-- Conditional Arrow for Grandchild Group Rights -->
+                              <ng-container *ngIf="getSortedRightsControls(grandchildGroup).length > 0">
+                                <i class="fas fa-arrow-right mx-2"></i>
+                              </ng-container>
+                              <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
                                 <ng-container *ngFor="let rightGroup of getSortedRightsControls(grandchildGroup); let n = index" [formGroupName]="n">
-                                  <label class="flex items-center justify-center" *ngIf="rightGroup.get('name')?.value">
+                                  <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
                                     <input
                                       type="checkbox"
                                       (change)="onCheckboxChange(rightGroup, $event, grandchildGroup)"
@@ -143,7 +176,7 @@
   <div class="mt-4 flex justify-end">
     <button
       type="submit"
-      class="hover:bg-primary-dark rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
     >
       Submit
     </button>

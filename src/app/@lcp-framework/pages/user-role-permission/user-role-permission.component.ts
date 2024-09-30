@@ -40,6 +40,7 @@ interface IPermission {
   parent_id: number | null;
   parent_name: string;
   menu_img: any;
+  expanded: any;
   permissions: IPermissionEntity[] | null; // Permission entities (actions like view, edit, etc.)
   children: IPermission[]; // Recursive relation for nested permissions
 }
@@ -136,6 +137,7 @@ export class UserRolePermissionComponent {
           id: new FormControl(entity.id),
           name: new FormControl(entity.parent_name),
           menu_img: new FormControl(entity.menu_img),
+          expanded: [true],
           rights: rightsArray,
           children: childrenArray,
         });
@@ -143,6 +145,167 @@ export class UserRolePermissionComponent {
         entitiesArray.push(entityGroup);
       }
     });
+
+    this.loadDashboardWizards();
+  }
+
+  async loadDashboardWizards() {
+    const entitiesArray = this.mappingForm.get('entities') as FormArray;
+    const permission_type = `${this.mappingForm.get('permission_type')?.value}`;
+    const user_id = this.mappingForm.get('user')?.value || 0;
+    const role_id = this.mappingForm.get('role')?.value || 0;
+    console.log(permission_type);
+    console.log(user_id);
+    console.log(role_id);
+    const params = {
+      company_id: 1,
+      primary_table: 'wizard_group',
+      sort_columns: [['wizard_group.id', 'asc']],
+      limit_range: 1000,
+      print_query: true,
+      select_columns: [
+        ['wizard_group.id', 'id'],
+        ['wizard_group.name', 'name'],
+        [
+          `CASE 
+            WHEN COUNT(subquery.id) = 0 THEN null 
+            ELSE COALESCE(
+                Json_agg(
+                    subquery.jsonb_object
+                    ORDER BY subquery.order_no
+                )
+            ) 
+        END`,
+          'cards',
+        ],
+      ],
+      includes: [
+        {
+          table_name: `LATERAL (
+              SELECT 
+                DISTINCT ON (master_entities.id) 
+                master_entities.id, 
+                jsonb_build_object(
+                  'id', master_entities.id,
+                  'title', master_entities.name,
+                  'type', master_entities.dashboard_wizard_type,
+                  'order_no', master_entities.dashboard_wizard_order_no,
+                  'entity_name', master_entities.entity_name,
+                  'permission_id', permissions.id,
+                  'has_permission',  
+                    CASE 
+                      WHEN '${permission_type}' = 'user' THEN
+                        CASE
+                          WHEN EXISTS (
+                            SELECT 1 
+                            FROM user_permissions 
+                            WHERE user_permissions.permission_id = permissions.id
+                            AND user_permissions.user_id = ${user_id}
+                          ) THEN true
+                          ELSE false
+                        END
+                      WHEN '${permission_type}' = 'role' THEN
+                        CASE
+                          WHEN EXISTS (
+                            SELECT 1 
+                            FROM role_permissions 
+                            WHERE role_permissions.permission_id = permissions.id
+                            AND role_permissions.role_id = ${role_id}
+                          ) THEN true
+                          ELSE false
+                        END
+                      ELSE false
+                    END
+                ) AS jsonb_object,
+                master_entities.dashboard_wizard_order_no AS order_no
+              FROM 
+                master_entities 
+              LEFT JOIN 
+                permissions ON permissions.entity_id = master_entities.id  
+              WHERE 
+                master_entities.dashboard_wizard_group_id = wizard_group.id 
+              ORDER BY 
+                master_entities.id, master_entities.dashboard_wizard_order_no
+            ) AS subquery`,
+          join_type: 'LEFT',
+          join_condition: 'TRUE',
+        },
+      ],
+      group_by: ['wizard_group.id'],
+    };
+
+    this.gridApiService.getAllList(params).subscribe(
+      async (response) => {
+        if (response.status && response.code === 200) {
+          const dashboardItems = response.data.records;
+
+          let dashboard: any = this.fb.group({
+            id: new FormControl(7777),
+            name: new FormControl('dashboard'),
+            menu_img: new FormControl('fa-gauge'),
+            expanded: [true],
+            children: this.fb.array([]), // Use FormArray for children
+            rights: this.fb.array([]),
+          });
+
+          console.log(dashboardItems);
+          dashboardItems.map((elem: any, index: any) => {
+            let tab: any = this.fb.group({
+              id: new FormControl(7777 + index),
+              name: new FormControl(elem.name),
+              menu_img: new FormControl('fa-folder-open'),
+              expanded: [true],
+              children: this.fb.array([]), // Use FormArray for children
+              rights: this.fb.array([]),
+            });
+
+            elem.cards.map((ielem: any) => {
+              let card: any = this.fb.group({
+                id: new FormControl(ielem.id),
+                name: new FormControl(ielem.title),
+                menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
+                expanded: [true],
+                children: this.fb.array([]), // If card has children, it's an array
+                rights: this.fb.array([
+                  this.fb.group({
+                    entity_id: new FormControl(ielem.id),
+                    entity_permission_id: new FormControl(ielem.permission_id),
+                    permission_id: new FormControl(ielem.permission_id),
+                    name: new FormControl('view'),
+                    permission_value: new FormControl(ielem.has_permission),
+                    entity_permission_value: new FormControl(ielem.has_permission),
+                    link_type: new FormControl(1),
+                    id: new FormControl(ielem.id),
+                    selected: new FormControl(ielem.has_permission),
+                  }),
+                ]),
+              });
+
+              // Add card to tab's children (FormArray)
+              (tab.get('children') as FormArray).push(card);
+            });
+
+            // Add tab to dashboard's children (FormArray)
+            (dashboard.get('children') as FormArray).push(tab);
+          });
+
+          // Finally, push the dashboard object to entitiesArray
+          //entitiesArray.push(dashboard);
+          if (entitiesArray && entitiesArray.controls.length > 0) {
+            // Insert the dashboard at the first position
+            entitiesArray.insert(0, dashboard);
+          }
+
+          console.log(dashboardItems);
+          console.log(entitiesArray);
+        }
+      },
+      (error) => {
+        const key = 'failed_to_load';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   addChildEntities(children: IPermission[], parentArray: FormArray): void {
@@ -178,6 +341,7 @@ export class UserRolePermissionComponent {
           id: new FormControl(child.id),
           name: new FormControl(child.parent_name),
           menu_img: new FormControl(child.menu_img),
+          expanded: [true],
           rights: rightsArray,
           children: childrenArray,
         });
@@ -185,10 +349,6 @@ export class UserRolePermissionComponent {
         parentArray.push(childGroup);
       }
     });
-  }
-
-  getEntitiesControls(): FormGroup[] {
-    return (this.mappingForm.get('entities') as FormArray).controls as FormGroup[];
   }
 
   getRightsControls(entityGroup: FormGroup): FormGroup[] {
@@ -217,27 +377,26 @@ export class UserRolePermissionComponent {
           const isView = index === 0; // Change this if the View checkbox is at a different index
           return control.get('selected')?.value && !isView;
         });
-
-        if (!otherChecked) {
-          // If unchecked and no other checkbox is checked, uncheck both "View" and this checkbox
-          viewControl.setValue(false); // Uncheck View
-          rightGroup.get('selected')?.setValue(false); // Uncheck the unchecked checkbox
-        }
       }
     }
   }
 
   getSortedRightsControls(entityGroup: FormGroup) {
     const rightsControls = this.getRightsControls(entityGroup);
-    return rightsControls.sort((a, b) => {
-      const aName = a.get('name')?.value;
-      const bName = b.get('name')?.value;
 
-      const aIndex = this.order_permissions.indexOf(aName);
-      const bIndex = this.order_permissions.indexOf(bName);
+    if (rightsControls) {
+      return rightsControls.sort((a, b) => {
+        const aName = a.get('name')?.value;
+        const bName = b.get('name')?.value;
 
-      return aIndex - bIndex; // Sorting in ascending order
-    });
+        const aIndex = this.order_permissions.indexOf(aName);
+        const bIndex = this.order_permissions.indexOf(bName);
+
+        return aIndex - bIndex; // Sorting in ascending order
+      });
+    } else {
+      return [];
+    }
   }
 
   getChildrenControls(entityGroup: FormGroup): FormGroup[] {
@@ -270,14 +429,14 @@ export class UserRolePermissionComponent {
         if (rightControl.get('selected')?.value) {
           if (rightControl.get('permission_id')?.value) {
             selectedPermissions.push({
-              user_id: 1, // or replace this with dynamic user_id if necessary
+              user_id: this.mappingForm.get('user')?.value, // or replace this with dynamic user_id if necessary
               permission_id: rightControl.get('permission_id')?.value,
             });
           }
 
           if (rightControl.get('entity_permission_id')?.value) {
             selectedPermissions.push({
-              user_id: 1, // or replace this with dynamic user_id if necessary
+              user_id: this.mappingForm.get('user')?.value, // or replace this with dynamic user_id if necessary
               permission_id: rightControl.get('entity_permission_id')?.value,
             });
           }
@@ -292,6 +451,24 @@ export class UserRolePermissionComponent {
     });
   }
 
+  toggleExpand(entityGroup: FormGroup) {
+    const isExpanded = entityGroup.get('expanded')?.value;
+    entityGroup.get('expanded')?.setValue(!isExpanded);
+  }
+
+  // Ensure that each entity group has an 'expanded' property
+  /* getEntitiesControls() {
+    return (this.mappingForm.get('entities') as FormArray).controls.map(entityGroup => {
+      if (!entityGroup.expanded) {
+        entityGroup.expanded = false; // Default to collapsed
+      }
+      return entityGroup;
+    });
+  }*/
+  getEntitiesControls(): FormGroup[] {
+    return (this.mappingForm.get('entities') as FormArray).controls as FormGroup[];
+  }
+
   selectedRolePermissions(entitiesArray: FormArray, selectedPermissions: IRolePermission[]): void {
     entitiesArray.controls.forEach((entityGroup: AbstractControl) => {
       const rightsArray = entityGroup.get('rights') as FormArray;
@@ -301,13 +478,13 @@ export class UserRolePermissionComponent {
         if (rightControl.get('selected')?.value) {
           if (rightControl.get('permission_id')?.value) {
             selectedPermissions.push({
-              role_id: 1, // or replace this with dynamic role_id if necessary
+              role_id: this.mappingForm.get('role')?.value, // or replace this with dynamic role_id if necessary
               permission_id: rightControl.get('permission_id')?.value,
             });
           }
           if (rightControl.get('entity_permission_id')?.value) {
             selectedPermissions.push({
-              role_id: 1, // or replace this with dynamic role_id if necessary
+              role_id: this.mappingForm.get('role')?.value, // or replace this with dynamic role_id if necessary
               permission_id: rightControl.get('entity_permission_id')?.value,
             });
           }
