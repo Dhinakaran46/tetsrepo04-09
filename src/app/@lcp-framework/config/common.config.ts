@@ -1,4 +1,4 @@
-export const commonConfig = {
+export const commonConfig: any = {
   API: {
     login: 'auth/admin/login',
     logout: 'auth/logout',
@@ -33,12 +33,28 @@ export const commonConfig = {
     JOB_BUILDER_MODULE: 'job_builder_module',
     DASHBOARD_WIZARD_BUILDER_MODULE: 'dashboard_wizard_builder_module',
     ENTITY_USER_ROLE_MAP_MODULE: 'entity_user_role_map_module',
+    USER_ROLE_PERMISSION_MAP_MODULE: 'user_role_permission_map_module',
     MENU_MODULE: 'menu_module',
     IMPORT_MODULE: 'import_module',
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
-    /*DOCUMENTATION_MODULE: 'documentation_module',*/
+    EXPORT_GRID_MODULE: 'export_grid_module',
+  },
+  PREFIX_SHORTCODE: {
+    grid_builder_module: 'grid',
+    form_builder_module: 'form',
+    static_page_builder_module: 'staticpage',
+    job_builder_module: 'job',
+    dashboard_wizard_builder_module: 'dashboard',
+    entity_user_role_map_module: 'userroleperm',
+    user_role_permission_map_module: 'userroleperm',
+    menu_module: 'menu',
+    import_module: 'import',
+    entity_form_module: 'entityform',
+    language_contents_module: 'lang',
+    configurations_module: 'config',
+    export_grid_module: 'export',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -70,6 +86,7 @@ export const commonConfig = {
     EXPORT: 'export',
     IMPORT: 'import',
     ASSIGN: 'assign',
+    Print: 'print',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -96,6 +113,7 @@ export const commonConfig = {
     { label: 'Export', value: 'export' },
     { label: 'Import', value: 'import' },
     { label: 'Assign', value: 'assign' },
+    { label: 'Print', value: 'print' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -104,12 +122,13 @@ export const commonConfig = {
     { label: 'Job Builder Module', value: 'job_builder_module' },
     { label: 'Dashboard Wizard Builder Module', value: 'dashboard_wizard_builder_module' },
     { label: 'Entity User/Role Mapping Module', value: 'entity_user_role_map_module' },
+    { label: 'User/Role Permission Mapping Module', value: 'user_role_permission_map_module' },
     { label: 'Menu Module', value: 'menu_module' },
     { label: 'Import Module', value: 'import_module' },
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
-    /*{ label: 'Documentation Module', value: 'documentation_module' },*/
+    { label: 'Export Grid Module', value: 'export_grid_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

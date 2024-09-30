@@ -518,7 +518,8 @@ export class MasterEntityComponent implements OnInit {
   }
 
   getAddParams(formData: any) {
-    const entitySlug = this.localStorageService.generateSlugWithTimestamp(formData.name);
+    const formDataName = commonConfig.PREFIX_SHORTCODE[formData.entityType] + '_' + formData.name;
+    const entitySlug = this.localStorageService.generateSlugWithTimestamp(formDataName);
 
     const master = [
       {

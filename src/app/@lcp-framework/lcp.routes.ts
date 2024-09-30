@@ -14,6 +14,7 @@ import { loginGuard } from './guards/login.guard';
 import { permissionGuardFactory } from './guards/permission.guard';
 import { ImportMasterComponent } from './pages/import-master/import-master.component';
 import { DocumentationComponent } from './pages/documentation/documentation.component';
+import { UserRolePermissionComponent } from './pages/user-role-permission/user-role-permission.component';
 export const routes: Routes = [
   {
     path: 'not-found',
