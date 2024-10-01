@@ -154,9 +154,7 @@ export class UserRolePermissionComponent {
     const permission_type = `${this.mappingForm.get('permission_type')?.value}`;
     const user_id = this.mappingForm.get('user')?.value || 0;
     const role_id = this.mappingForm.get('role')?.value || 0;
-    console.log(permission_type);
-    console.log(user_id);
-    console.log(role_id);
+
     const params = {
       company_id: 1,
       primary_table: 'wizard_group',
@@ -248,7 +246,6 @@ export class UserRolePermissionComponent {
             rights: this.fb.array([]),
           });
 
-          console.log(dashboardItems);
           dashboardItems.map((elem: any, index: any) => {
             let tab: any = this.fb.group({
               id: new FormControl(7777 + index),
@@ -262,7 +259,7 @@ export class UserRolePermissionComponent {
             elem.cards.map((ielem: any) => {
               let card: any = this.fb.group({
                 id: new FormControl(ielem.id),
-                name: new FormControl(ielem.title),
+                name: new FormControl(ielem.entity_name),
                 menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
                 expanded: [true],
                 children: this.fb.array([]), // If card has children, it's an array
@@ -295,9 +292,6 @@ export class UserRolePermissionComponent {
             // Insert the dashboard at the first position
             entitiesArray.insert(0, dashboard);
           }
-
-          console.log(dashboardItems);
-          console.log(entitiesArray);
         }
       },
       (error) => {
@@ -600,6 +594,11 @@ export class UserRolePermissionComponent {
           value: '1',
           operator: '=',
         },
+        {
+          value: ['super_admin', 'company_admin'],
+          operator: 'NOT IN',
+          column_name: 'users.role',
+        },
       ],
       includes: [
         {
@@ -657,7 +656,6 @@ export class UserRolePermissionComponent {
       (item, index, self) => index === self.findIndex((t) => t.user_id === item.user_id && t.permission_id === item.permission_id)
     );
 
-    console.log('Selected Permissions:', uniqueData);
     param.data.table2 = uniqueData;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
