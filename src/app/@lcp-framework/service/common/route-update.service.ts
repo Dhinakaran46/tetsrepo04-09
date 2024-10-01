@@ -64,6 +64,7 @@ export class RouteUpdateService {
           const dynamicRoutes = routeDataArray
             .filter((routeData: any) => routeData.entity_name && routeData.component_class_name)
             .map((routeData: any) => {
+              //console.log(routeData);
               //const slugParts = routeData.entity_name.split('_grid_');
               const viewPermissionKey = `view_${routeData.entity_name}`;
 
@@ -95,6 +96,15 @@ export class RouteUpdateService {
                     column_name: 'request_logs.res_status',
                     value: false,
                     operator: '=',
+                  },
+                ];
+              } else if (routeData.entity_name == 'user') {
+                finalAllCol = [
+                  ...searchAllCol,
+                  {
+                    value: ['super_admin', 'company_admin'],
+                    operator: 'NOT IN',
+                    column_name: 'users.role',
                   },
                 ];
               } else if (routeData.entity_name == 'master_entity') {
