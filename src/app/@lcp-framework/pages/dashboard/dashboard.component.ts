@@ -177,7 +177,7 @@ export class DashboardComponent implements AfterViewInit {
               FROM 
                 master_entities 
               WHERE 
-                master_entities.dashboard_wizard_group_id = wizard_group.id 
+                master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id == 1
               ORDER BY 
                 master_entities.id, master_entities.dashboard_wizard_order_no
             ) AS subquery`,
