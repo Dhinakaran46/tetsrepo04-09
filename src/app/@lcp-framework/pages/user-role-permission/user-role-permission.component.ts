@@ -161,6 +161,13 @@ export class UserRolePermissionComponent {
       sort_columns: [['wizard_group.id', 'asc']],
       limit_range: 1000,
       print_query: true,
+      search_all: [
+        {
+          value: 1,
+          operator: '=',
+          column_name: 'wizard_group.status_id',
+        },
+      ],
       select_columns: [
         ['wizard_group.id', 'id'],
         ['wizard_group.name', 'name'],
@@ -221,7 +228,7 @@ export class UserRolePermissionComponent {
               LEFT JOIN 
                 permissions ON permissions.entity_id = master_entities.id  
               WHERE 
-                master_entities.dashboard_wizard_group_id = wizard_group.id 
+                master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1
               ORDER BY 
                 master_entities.id, master_entities.dashboard_wizard_order_no
             ) AS subquery`,
@@ -247,50 +254,55 @@ export class UserRolePermissionComponent {
           });
 
           dashboardItems.map((elem: any, index: any) => {
-            let tab: any = this.fb.group({
-              id: new FormControl(7777 + index),
-              name: new FormControl(elem.name),
-              menu_img: new FormControl('fa-folder-open'),
-              expanded: [true],
-              children: this.fb.array([]), // Use FormArray for children
-              rights: this.fb.array([]),
-            });
-
-            elem.cards.map((ielem: any) => {
-              let card: any = this.fb.group({
-                id: new FormControl(ielem.id),
-                name: new FormControl(ielem.entity_name),
-                menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
+            if (elem.cards) {
+              let tab: any = this.fb.group({
+                id: new FormControl(7777 + index),
+                name: new FormControl(elem.name),
+                menu_img: new FormControl('fa-folder-open'),
                 expanded: [true],
-                children: this.fb.array([]), // If card has children, it's an array
-                rights: this.fb.array([
-                  this.fb.group({
-                    entity_id: new FormControl(ielem.id),
-                    entity_permission_id: new FormControl(ielem.permission_id),
-                    permission_id: new FormControl(ielem.permission_id),
-                    name: new FormControl('view'),
-                    permission_value: new FormControl(ielem.has_permission),
-                    entity_permission_value: new FormControl(ielem.has_permission),
-                    link_type: new FormControl(1),
-                    id: new FormControl(ielem.id),
-                    selected: new FormControl(ielem.has_permission),
-                  }),
-                ]),
+                children: this.fb.array([]), // Use FormArray for children
+                rights: this.fb.array([]),
               });
 
-              // Add card to tab's children (FormArray)
-              (tab.get('children') as FormArray).push(card);
-            });
+              elem.cards.map((ielem: any) => {
+                let card: any = this.fb.group({
+                  id: new FormControl(ielem.id),
+                  name: new FormControl(ielem.entity_name),
+                  menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
+                  expanded: [true],
+                  children: this.fb.array([]), // If card has children, it's an array
+                  rights: this.fb.array([
+                    this.fb.group({
+                      entity_id: new FormControl(ielem.id),
+                      entity_permission_id: new FormControl(ielem.permission_id),
+                      permission_id: new FormControl(ielem.permission_id),
+                      name: new FormControl('view'),
+                      permission_value: new FormControl(ielem.has_permission),
+                      entity_permission_value: new FormControl(ielem.has_permission),
+                      link_type: new FormControl(1),
+                      id: new FormControl(ielem.id),
+                      selected: new FormControl(ielem.has_permission),
+                    }),
+                  ]),
+                });
 
-            // Add tab to dashboard's children (FormArray)
-            (dashboard.get('children') as FormArray).push(tab);
+                // Add card to tab's children (FormArray)
+                (tab.get('children') as FormArray).push(card);
+              });
+
+              // Add tab to dashboard's children (FormArray)
+              (dashboard.get('children') as FormArray).push(tab);
+            }
           });
 
           // Finally, push the dashboard object to entitiesArray
           //entitiesArray.push(dashboard);
           if (entitiesArray && entitiesArray.controls.length > 0) {
             // Insert the dashboard at the first position
-            entitiesArray.insert(0, dashboard);
+
+            if (dashboard.get('children').length > 0) {
+              entitiesArray.insert(0, dashboard);
+            }
           }
         }
       },

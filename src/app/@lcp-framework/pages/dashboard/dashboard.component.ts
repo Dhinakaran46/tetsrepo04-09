@@ -139,6 +139,13 @@ export class DashboardComponent implements AfterViewInit {
       sort_columns: [['wizard_group.id', 'asc']],
       limit_range: 1000,
       print_query: true,
+      search_all: [
+        {
+          value: 1,
+          operator: '=',
+          column_name: 'wizard_group.status_id',
+        },
+      ],
       select_columns: [
         ['wizard_group.id', 'id'],
         ['wizard_group.name', 'name'],
@@ -177,7 +184,7 @@ export class DashboardComponent implements AfterViewInit {
               FROM 
                 master_entities 
               WHERE 
-                master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id == 1
+                master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1
               ORDER BY 
                 master_entities.id, master_entities.dashboard_wizard_order_no
             ) AS subquery`,
