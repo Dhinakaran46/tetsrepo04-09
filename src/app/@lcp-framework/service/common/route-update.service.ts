@@ -14,6 +14,7 @@ import { DocumentationComponent } from '../../pages/documentation/documentation.
 import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
 import { environment } from '../../../../environments/environment';
 import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
+import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
 
 @Injectable({
   providedIn: 'root',
@@ -139,6 +140,7 @@ export class RouteUpdateService {
                 job_builder_module: JobPageComponent,
                 help_page_module: DocumentationComponent,
                 configurations_module: ConfigurationComponent,
+                import_module:ImportMasterComponent
               };
 
               const route: Route = {
