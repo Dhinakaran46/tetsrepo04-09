@@ -13,6 +13,7 @@ import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { Title } from '@angular/platform-browser';
 
 interface TabConfiguration {
   id: number;
@@ -103,7 +104,8 @@ export class ConfigurationComponent implements OnInit {
     private fb: FormBuilder,
     private translate: TranslateService,
     private toastr: ToastrService,
-    public router: Router
+    public router: Router,
+    private titleService: Title
   ) {
     this.allTabsForm = this.fb.group({});
     this.configForm = this.fb.group({
@@ -125,6 +127,8 @@ export class ConfigurationComponent implements OnInit {
 
   ngOnInit() {
     this.title_key = this.route.snapshot.data['pageInfo'].fullEntity;
+    const translateTitle = this.translate.instant(this.title_key);
+    this.titleService.setTitle(translateTitle);
     const userData = this.localStorageService.getData('user_data');
     if (userData) {
       const parsedData = JSON.parse(userData);

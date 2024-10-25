@@ -16,6 +16,7 @@ import { commonConfig } from '../../config/common.config';
 import { MenuLoadService } from '../../service/common/menu-load.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-menu-mapping',
@@ -83,7 +84,8 @@ export class MenuMappingComponent implements OnInit {
     private route: ActivatedRoute,
     private http: HttpClient,
     private menuLoadService: MenuLoadService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private titleService: Title
   ) {
     this.menu_id = this.localStorageService.getData('menu_id');
 
@@ -107,6 +109,9 @@ export class MenuMappingComponent implements OnInit {
 
   ngOnInit() {
     this.title_key = this.route.snapshot.data['pageInfo'].fullEntity;
+
+    const translateTitle = this.translate.instant(this.title_key);
+    this.titleService.setTitle(translateTitle);
 
     const userData = this.localStorageService.getData('user_data');
     if (userData) {
@@ -366,7 +371,7 @@ export class MenuMappingComponent implements OnInit {
     this.parentActionList = [];
 
     this.menuForm.reset({
-      menu_type: ['' || this.menu_id],
+      menu_type: [this.menu_id ?? ''],
       menuIcon: '',
       link_type: 1,
       parent: '',

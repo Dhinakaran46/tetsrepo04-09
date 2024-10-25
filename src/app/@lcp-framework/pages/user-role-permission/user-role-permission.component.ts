@@ -12,6 +12,7 @@ import { IconFolderComponent } from '../../shared/icon/icon-folder';
 import { IconMinusComponent } from '../../shared/icon/icon-minus';
 import { IconFolderPlusComponent } from '../../shared/icon/icon-folder-plus';
 import { IconFolderMinusComponent } from '../../shared/icon/icon-folder-minus';
+import { Title } from '@angular/platform-browser';
 interface IRolePermission {
   role_id: number;
   permission_id: number;
@@ -75,7 +76,8 @@ export class UserRolePermissionComponent {
     private gridApiService: GridApiService,
     public translate: TranslateService,
     private commonService: MenuMapService,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private titleService: Title
   ) {
     this.mappingForm = this.fb.group({
       permission_type: ['user', Validators.required],
@@ -87,6 +89,8 @@ export class UserRolePermissionComponent {
   }
 
   ngOnInit() {
+    const translateTitle = this.translate.instant('entity_user_role_map_page');
+    this.titleService.setTitle(translateTitle);
     this.resetComponent();
   }
 
