@@ -16,6 +16,7 @@ import { GridApiService } from '../../service/common/grid.service';
 import Swal from 'sweetalert2';
 import { LanguageService } from '../../service/common/language.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Title } from '@angular/platform-browser';
 
 interface Language {
   description: string | null;
@@ -101,7 +102,8 @@ export class LanguageMappingComponent implements OnInit {
     private gridApiService: GridApiService,
     private route: ActivatedRoute,
     private languageService: LanguageService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private titleService: Title
   ) {
     this.langMapForm = this.formBuilder.group({
       items: this.formBuilder.array([]),
@@ -115,6 +117,8 @@ export class LanguageMappingComponent implements OnInit {
 
   ngOnInit() {
     this.title_key = this.route.snapshot.data['pageInfo'].fullEntity;
+    const translateTitle = this.translate.instant(this.title_key);
+    this.titleService.setTitle(translateTitle);
     const userData = this.localStorageService.getData('user_data');
     if (userData) {
       const parsedData = JSON.parse(userData);

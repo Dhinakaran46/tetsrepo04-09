@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 import { slideDownUp } from '../../shared/animations';
 import { IconArrowLeftComponent } from '../../shared/icon/icon-arrow-left';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-static-page',
@@ -40,7 +41,8 @@ export class StaticPageComponent {
     private toastr: ToastrService,
     private store: Store<any>,
     public location: Location,
-    public translate: TranslateService
+    public translate: TranslateService,
+    private titleService: Title
   ) {
     this.store$ = this.store.pipe(select('index'));
     this.initStore();
@@ -83,6 +85,8 @@ export class StaticPageComponent {
     this.route.data.subscribe((data) => {
       const pageInfo = data['pageInfo'];
       this.entity_name = pageInfo.fullEntity;
+      const translateTitle = this.translate.instant(this.entity_name);
+      this.titleService.setTitle(translateTitle);
       this.entity_type = pageInfo.action_slug;
     });
 
