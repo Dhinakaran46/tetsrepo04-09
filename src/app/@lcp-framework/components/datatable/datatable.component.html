@@ -38,9 +38,7 @@
               type="button"
             >
               <i class="fa-solid fa-filter"></i>&nbsp;<span class="hidden md:inline">{{ 'table_filter' | translate }}</span>
-              <span *ngIf="getNonEmptyFilterCount() > 0" class="badge absolute -top-3 rounded-full bg-danger p-0.5 px-1.5 ltr:right-0 rtl:left-0">{{
-                getNonEmptyFilterCount()
-              }}</span>
+              <span *ngIf="getNonEmptyFilterCount() > 0" class="badge absolute -top-3 rounded-full bg-danger p-0.5 px-1.5">{{ getNonEmptyFilterCount() }}</span>
             </button>
 
             <div
