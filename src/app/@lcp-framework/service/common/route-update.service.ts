@@ -5,7 +5,7 @@ import { MenuMappingComponent } from '../../pages/menu-mapping/menu-mapping.comp
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
 import { JobPageComponent } from '../../pages/job-page/job-page.component';
 import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
-import { EntityUserRoleMappingComponent } from '../../pages/entity-user-role-mapping/entity-user-role-mapping.component';
+
 import { LocalStorageService } from './local-storage.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
@@ -133,14 +133,14 @@ export class RouteUpdateService {
                 menu_module: MenuMappingComponent,
                 static_page_builder_module: StaticPageComponent,
                 form_builder_module: FormBuilderComponent,
-                //entity_user_role_map_module: EntityUserRoleMappingComponent,
+
                 entity_user_role_map_module: UserRolePermissionComponent,
                 entity_form_module: MasterEntityComponent,
                 language_contents_module: LanguageMappingComponent,
                 job_builder_module: JobPageComponent,
                 help_page_module: DocumentationComponent,
                 configurations_module: ConfigurationComponent,
-                import_module:ImportMasterComponent
+                import_module: ImportMasterComponent,
               };
 
               const route: Route = {

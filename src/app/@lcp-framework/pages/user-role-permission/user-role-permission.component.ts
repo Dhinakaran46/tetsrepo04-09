@@ -100,6 +100,7 @@ export class UserRolePermissionComponent {
       user: '',
       role: '',
     });
+    this.getActionTypes();
     this.getEntityList();
     this.getUserList();
     this.getRoleList();
@@ -509,6 +510,43 @@ export class UserRolePermissionComponent {
     });
   }
 
+  getActionTypes() {
+    const param: any = {
+      company_id: 1,
+      print_query: false,
+      primary_table: 'action_types',
+      start_index: 0,
+      limit_range: 100,
+      sort_columns: [['action_types.id', 'asc']],
+
+      select_columns: [['action_types.id'], ['action_types.name', 'name'], ['action_types.description', 'description']],
+    };
+    this.gridApiService.getListData(param).subscribe(
+      (response: ApiResponce) => {
+        if (response.status) {
+          console.log(response.data?.records);
+          if (response.data?.records) {
+            let finalList: any = [];
+            response.data?.records.map(function (elem: any) {
+              finalList.push(elem.name);
+            });
+            this.order_permissions = finalList;
+          }
+
+          //this.order_permissions = response.data?.records || [];
+        } else if (!response.status) {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+        }
+      },
+      (error: any) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
   getEntityList() {
     const permission_type = `${this.mappingForm.get('permission_type')?.value}wise`;
     const user_id = this.mappingForm.get('user')?.value || 0;
