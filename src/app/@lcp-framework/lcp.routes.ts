@@ -14,6 +14,7 @@ import { loginGuard } from './guards/login.guard';
 import { permissionGuardFactory } from './guards/permission.guard';
 import { ImportMasterComponent } from './pages/import-master/import-master.component';
 import { DocumentationComponent } from './pages/documentation/documentation.component';
+import { ImportConfirmDeactivateGuard } from './guards/impotrt-confirm-deactivate.guard';
 export const routes: Routes = [
   {
     path: 'not-found',
@@ -77,6 +78,7 @@ export const routes: Routes = [
       {
         path: 'import',
         component: ImportMasterComponent,
+        canDeactivate: [ImportConfirmDeactivateGuard],
         title: 'Import Master',
         data: {
           defaultPermission: true,

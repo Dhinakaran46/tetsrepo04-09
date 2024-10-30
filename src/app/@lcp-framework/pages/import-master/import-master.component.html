@@ -15,6 +15,12 @@
             (click)="section = 'section2'">
             {{ 'step_2' | translate }}
           </a>
+          <a href="javascript:;"
+            class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
+            [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': section.toLowerCase() === 'section3' }"
+            (click)="section = 'section3'">
+            {{ 'step_3' | translate }}
+          </a>
         </div>
         <div class="flex-1 pt-5 text-sm">
           <div *ngIf="section.toLowerCase() === 'section1'">
@@ -58,10 +64,11 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let filedData of selectedTemplate.importable_fields | orderBy : 'order_no'">
-                      <td><label [for]="filedData.field_name">{{filedData.display_name}}</label></td>
+                      <td><label
+                          [for]="filedData.field_table+'.'+filedData.field_name">{{filedData.display_name}}</label></td>
                       <td>
                         <select class="form-select text-white-dark" [id]="filedData.field_name"
-                          [formControlName]="filedData.field_name">
+                          [formControlName]="filedData.field_table+'.'+filedData.field_name">
                           <option value="">{{ 'select' | translate }}</option>
                           <option *ngFor="let fileHeader of fileHeaders" [value]="fileHeader">
                             {{'{ '+fileHeader+' }'}}
@@ -89,6 +96,31 @@
               </form>
             </div>
           </div>
+
+          <div *ngIf="section.toLowerCase() === 'section3'">
+            <h4 class="mb-4 text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
+            <div class="mb-12">
+              <table class="table" *ngIf="sheet_data && sheet_data.header_details">
+                <thead>
+                  <tr>
+                    <th *ngFor="let header of sheet_data.header_details | keyvalue">{{ header.value.display_name }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row_data of sheet_data.row_datas">
+                    <td *ngFor="let header of sheet_data.header_details | keyvalue" [ngClass]="{
+                        'bg-red-200 text-red-600': row_data.errors[header.key].length > 0,
+                        'bg-orange-200 text-orange-600': row_data.warnings[header.key].length > 0
+                      }" [title]="getMessages(row_data, header.key)">
+                      {{ row_data.columns[header.key] ?? '' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+
         </div>
       </div>
     </div>

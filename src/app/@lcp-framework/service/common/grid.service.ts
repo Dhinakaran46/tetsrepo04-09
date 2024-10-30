@@ -77,4 +77,8 @@ export class GridApiService {
       observe: 'events',
     });
   }
+
+  deleteFileByUuid(uuid: any): Observable<any> {
+    return this.http.delete(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplatedeletefile}/${uuid}`);
+  }
 }
