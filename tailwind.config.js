@@ -2,6 +2,7 @@
 module.exports = {
   mode: 'jit',
   safelist: [
+    'w-4/5',
     'bg-gray-800',
     'group-hover:bg-primary/10',
     'dark:text-white-dark',

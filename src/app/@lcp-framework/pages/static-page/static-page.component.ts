@@ -182,12 +182,49 @@ export class StaticPageComponent {
   }
 
   compileStaticContent(staticContent: string, data: any): string {
+    // Escape HTML in code blocks
     staticContent = staticContent.replace(/<code class="xml">([\s\S]*?)<\/code>/g, (match, p1) => {
       return `<code class="xml">${this.escapeHtml(p1)}</code>`;
     });
-    const compiledTemplate = Handlebars.compile(staticContent);
 
-    return compiledTemplate(data);
+    // Pretty-print JSON if data contains JSON fields
+    const formattedData = this.prettifyJsonFields(data);
+
+    // Compile the static content using Handlebars
+    const compiledTemplate = Handlebars.compile(staticContent);
+    return compiledTemplate(formattedData);
+  }
+
+  // Utility function to prettify JSON fields in the data object
+  prettifyJsonFields(data: any): any {
+    const formattedData = { ...data.result_data };
+
+    for (const key in formattedData) {
+      if (formattedData.hasOwnProperty(key)) {
+        const value = formattedData[key];
+
+        // Check if the field value is a JSON string or JSON object
+
+        if (this.isValidJson(value)) {
+          // If it's JSON, pretty-print it with 2-space indentation
+          formattedData[key] = JSON.stringify(JSON.parse(value), null, 2);
+        }
+        console.log('json no');
+      }
+    }
+
+    data.result_data = formattedData;
+    return data;
+  }
+
+  // Helper function to check if a string contains valid JSON
+  isValidJson(value: string): boolean {
+    try {
+      JSON.parse(value);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   escapeHtml(html: string): string {
