@@ -12,6 +12,7 @@ import { FormlyConfigModule } from '../../formly/formly-config.module';
 import { ChangeDetectorRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-form-builder',
@@ -47,7 +48,8 @@ export class FormBuilderComponent implements OnInit {
     private store: Store<any>,
     private cdRef: ChangeDetectorRef,
     public location: Location,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private titleService: Title
   ) {
     this.store$ = this.store.pipe(select('index'));
   }
@@ -363,6 +365,11 @@ export class FormBuilderComponent implements OnInit {
     return replaceInObject(result);
   }
 
+  titleChange() {
+    const translateTitle = this.translate.instant(this.formEntity?.entity_name);
+    this.titleService.setTitle(translateTitle);
+  }
+
   private replaceDataPlaceholders(obj: any, model: any, required: boolean = true): any {
     const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
     // const placeholderPattern = /\$(.+)/;
@@ -474,6 +481,7 @@ export class FormBuilderComponent implements OnInit {
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
           this.setDefaultData();
+          this.titleChange();
         } else {
           this.toastr.error('Invalid entity details given.');
           this.router.navigate(['/dashboard']);

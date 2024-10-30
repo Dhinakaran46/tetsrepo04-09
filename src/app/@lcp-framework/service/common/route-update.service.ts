@@ -5,7 +5,7 @@ import { MenuMappingComponent } from '../../pages/menu-mapping/menu-mapping.comp
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
 import { JobPageComponent } from '../../pages/job-page/job-page.component';
 import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
-import { EntityUserRoleMappingComponent } from '../../pages/entity-user-role-mapping/entity-user-role-mapping.component';
+
 import { LocalStorageService } from './local-storage.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
@@ -14,6 +14,7 @@ import { DocumentationComponent } from '../../pages/documentation/documentation.
 import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
 import { environment } from '../../../../environments/environment';
 import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
+import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
 
 @Injectable({
   providedIn: 'root',
@@ -64,6 +65,7 @@ export class RouteUpdateService {
           const dynamicRoutes = routeDataArray
             .filter((routeData: any) => routeData.entity_name && routeData.component_class_name)
             .map((routeData: any) => {
+              //console.log(routeData);
               //const slugParts = routeData.entity_name.split('_grid_');
               const viewPermissionKey = `view_${routeData.entity_name}`;
 
@@ -97,6 +99,15 @@ export class RouteUpdateService {
                     operator: '=',
                   },
                 ];
+              } else if (routeData.entity_name == 'user') {
+                finalAllCol = [
+                  ...searchAllCol,
+                  {
+                    value: ['super_admin', 'company_admin'],
+                    operator: 'NOT IN',
+                    column_name: 'users.role',
+                  },
+                ];
               } else if (routeData.entity_name == 'master_entity') {
                 finalAllCol = [
                   ...searchAllCol,
@@ -122,13 +133,14 @@ export class RouteUpdateService {
                 menu_module: MenuMappingComponent,
                 static_page_builder_module: StaticPageComponent,
                 form_builder_module: FormBuilderComponent,
-                entity_user_role_map_module: EntityUserRoleMappingComponent,
-                user_role_permission_map_module: UserRolePermissionComponent,
+
+                entity_user_role_map_module: UserRolePermissionComponent,
                 entity_form_module: MasterEntityComponent,
                 language_contents_module: LanguageMappingComponent,
                 job_builder_module: JobPageComponent,
                 help_page_module: DocumentationComponent,
                 configurations_module: ConfigurationComponent,
+                import_module: ImportMasterComponent,
               };
 
               const route: Route = {

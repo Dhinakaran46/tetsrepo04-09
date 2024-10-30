@@ -147,16 +147,12 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           this.importTemplates = response.data.records;
         } else if (!response.status) {
           this.importTemplates = [];
-          const key = response.message;
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+          this.toastr.error(`Code: ${response.code} , ${response.message}`);
         }
       },
       (error: any) => {
         this.importTemplates = [];
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+        this.toastr.error('Error getting ImportTemplateDetail');
       }
     );
   }
@@ -172,14 +168,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getTemplateDetail() {
     if (this.importForm.invalid) {
-      let key: any;
       if (this.importForm.controls['import_template'].hasError('required')) {
-        key = 'please_select_import_template_before_continuing';
+        this.toastr.error('please_select_import_template_before_continuing');
       } else if (this.importForm.controls['import_template_file'].hasError('required')) {
-        key = 'please_select_a_import_template_file_before_continuing';
+        this.toastr.error('please_select_a_import_template_file_before_continuing');
       }
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
       return;
     }
     if (this.file) {
@@ -196,15 +189,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             this.fileUploadLog = response.data.fileUploadLog;
             this.section = 'section2';
           } else {
-            const key = response.message;
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
+            this.toastr.error(response.message);
           }
         },
         (error: any) => {
-          const key = 'error';
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
+          this.toastr.error('Error getting import template detail');
         }
       );
     }
@@ -224,15 +213,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getValidationData() {
     if (this.fieldsForm.invalid) {
-      const key = 'please_select_all_the_required_fields';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
+      this.toastr.error('please_select_all_the_required_fields');
       return;
     }
     if (!this.selectedTemplate || !this.fileUploadLog) {
-      const key = 'session_expired_please_try_again';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
+      this.toastr.error('session_expired_please_try_again');
       this.resetComponent();
       return;
     }
@@ -243,15 +228,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           this.section = 'section3';
           this.sheet_data = response.data; //{ header_details, row_datas }
         } else {
-          const key = response.message;
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
+          this.toastr.error(response.message);
         }
       },
       (error: any) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+        this.toastr.error('Error getting import template data');
       }
     );
   }

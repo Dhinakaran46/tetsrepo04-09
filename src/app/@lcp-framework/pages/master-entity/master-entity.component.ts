@@ -20,6 +20,7 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { EditorComponent } from 'ngx-monaco-editor-v2';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
+import { Title } from '@angular/platform-browser';
 
 export function viewMandatoryValidator(): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
@@ -122,7 +123,8 @@ export class MasterEntityComponent implements OnInit {
     public localStorageService: LocalStorageService,
     public storeData: Store<any>,
     public location: Location,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private titleService: Title
   ) {
     this.initStore();
   }
@@ -154,6 +156,7 @@ export class MasterEntityComponent implements OnInit {
       this.editTitle = true;
       this.loadData(this.id);
     }
+    this.titleChange();
   }
 
   // ngAfterViewInit() {
@@ -211,6 +214,11 @@ export class MasterEntityComponent implements OnInit {
       });
   }
 
+  titleChange() {
+    const title = this.editTitle ? 'title_edit_entity' : 'title_add_entity';
+    const translateTitle = this.translate.instant(title);
+    this.titleService.setTitle(translateTitle);
+  }
   decimalValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
     if (value !== null && value !== undefined && !/^\d+(\.\d{1,2})?$/.test(value)) {
@@ -518,7 +526,8 @@ export class MasterEntityComponent implements OnInit {
   }
 
   getAddParams(formData: any) {
-    const entitySlug = this.localStorageService.generateSlugWithTimestamp(formData.name);
+    const formDataName = commonConfig.PREFIX_SHORTCODE[formData.entityType] + '_' + formData.name;
+    const entitySlug = this.localStorageService.generateSlugWithTimestamp(formDataName);
 
     const master = [
       {

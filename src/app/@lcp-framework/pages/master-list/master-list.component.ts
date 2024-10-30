@@ -16,6 +16,7 @@ import { commonConfig } from '../../config/common.config';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { Title } from '@angular/platform-browser';
 
 interface FetchDataParams {
   entity_name: any;
@@ -77,7 +78,8 @@ export class MasterListComponent implements AfterViewInit {
     private datePipe: DatePipe,
     private translate: TranslateService,
     private localStorageService: LocalStorageService,
-    private commonService: MenuMapService
+    private commonService: MenuMapService,
+    private titleService: Title
   ) {
     this.initStore();
   }
@@ -93,6 +95,9 @@ export class MasterListComponent implements AfterViewInit {
       this.masterInfo = pageInfo;
 
       const masterListConfig = pageInfo;
+
+      const translateTitle = this.translate.instant(masterListConfig.fullEntity);
+      this.titleService.setTitle(translateTitle);
 
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
 

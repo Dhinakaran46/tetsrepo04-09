@@ -1,4 +1,4 @@
-export const commonConfig = {
+export const commonConfig: any = {
   API: {
     login: 'auth/admin/login',
     logout: 'auth/logout',
@@ -40,8 +40,20 @@ export const commonConfig = {
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
-    BARCODE_PRINT_MODULE: 'barcode_print_module',
-    /*DOCUMENTATION_MODULE: 'documentation_module',*/
+  },
+  PREFIX_SHORTCODE: {
+    grid_builder_module: 'grid',
+    form_builder_module: 'form',
+    static_page_builder_module: 'staticpage',
+    job_builder_module: 'job',
+    dashboard_wizard_builder_module: 'dashboard',
+    entity_user_role_map_module: 'userroleperm',
+    user_role_permission_map_module: 'userroleperm',
+    menu_module: 'menu',
+    import_module: 'import',
+    entity_form_module: 'entityform',
+    language_contents_module: 'lang',
+    configurations_module: 'config',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -115,8 +127,6 @@ export const commonConfig = {
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
-    { label: 'Barcode Print Module', value: 'barcode_print_module' },
-    /*{ label: 'Documentation Module', value: 'documentation_module' },*/
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

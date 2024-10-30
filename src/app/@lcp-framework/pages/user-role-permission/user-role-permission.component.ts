@@ -8,6 +8,11 @@ import { OrderByControlPipe } from '../../pipes/order-by-control/order-by-contro
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { IconFolderComponent } from '../../shared/icon/icon-folder';
+import { IconMinusComponent } from '../../shared/icon/icon-minus';
+import { IconFolderPlusComponent } from '../../shared/icon/icon-folder-plus';
+import { IconFolderMinusComponent } from '../../shared/icon/icon-folder-minus';
+import { Title } from '@angular/platform-browser';
 interface IRolePermission {
   role_id: number;
   permission_id: number;
@@ -35,6 +40,8 @@ interface IPermission {
   id: number;
   parent_id: number | null;
   parent_name: string;
+  menu_img: any;
+  expanded: any;
   permissions: IPermissionEntity[] | null; // Permission entities (actions like view, edit, etc.)
   children: IPermission[]; // Recursive relation for nested permissions
 }
@@ -42,7 +49,15 @@ interface IPermission {
 @Component({
   selector: 'app-user-role-permission',
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule, OrderByControlPipe],
+  imports: [
+    CommonSharedModule,
+    ReactiveFormsModule,
+    OrderByControlPipe,
+    IconFolderComponent,
+    IconMinusComponent,
+    IconFolderPlusComponent,
+    IconFolderMinusComponent,
+  ],
   templateUrl: './user-role-permission.component.html',
   styleUrl: './user-role-permission.component.scss',
 })
@@ -53,13 +68,16 @@ export class UserRolePermissionComponent {
   userList: any[] = [];
   user_info: any;
 
+  order_permissions = ['view', 'add', 'edit', 'details', 'delete', 'export', 'assign'];
+
   constructor(
     public fb: FormBuilder,
     private toastr: ToastrService,
     private gridApiService: GridApiService,
-    private translate: TranslateService,
+    public translate: TranslateService,
     private commonService: MenuMapService,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private titleService: Title
   ) {
     this.mappingForm = this.fb.group({
       permission_type: ['user', Validators.required],
@@ -71,6 +89,8 @@ export class UserRolePermissionComponent {
   }
 
   ngOnInit() {
+    const translateTitle = this.translate.instant('entity_user_role_map_page');
+    this.titleService.setTitle(translateTitle);
     this.resetComponent();
   }
 
@@ -80,6 +100,7 @@ export class UserRolePermissionComponent {
       user: '',
       role: '',
     });
+    this.getActionTypes();
     this.getEntityList();
     this.getUserList();
     this.getRoleList();
@@ -120,6 +141,8 @@ export class UserRolePermissionComponent {
         const entityGroup = this.fb.group({
           id: new FormControl(entity.id),
           name: new FormControl(entity.parent_name),
+          menu_img: new FormControl(entity.menu_img),
+          expanded: [true],
           rights: rightsArray,
           children: childrenArray,
         });
@@ -127,6 +150,173 @@ export class UserRolePermissionComponent {
         entitiesArray.push(entityGroup);
       }
     });
+
+    this.loadDashboardWizards();
+  }
+
+  async loadDashboardWizards() {
+    const entitiesArray = this.mappingForm.get('entities') as FormArray;
+    const permission_type = `${this.mappingForm.get('permission_type')?.value}`;
+    const user_id = this.mappingForm.get('user')?.value || 0;
+    const role_id = this.mappingForm.get('role')?.value || 0;
+
+    const params = {
+      company_id: 1,
+      primary_table: 'wizard_group',
+      sort_columns: [['wizard_group.id', 'asc']],
+      limit_range: 1000,
+      print_query: true,
+      search_all: [
+        {
+          value: 1,
+          operator: '=',
+          column_name: 'wizard_group.status_id',
+        },
+      ],
+      select_columns: [
+        ['wizard_group.id', 'id'],
+        ['wizard_group.name', 'name'],
+        [
+          `CASE 
+            WHEN COUNT(subquery.id) = 0 THEN null 
+            ELSE COALESCE(
+                Json_agg(
+                    subquery.jsonb_object
+                    ORDER BY subquery.order_no
+                )
+            ) 
+        END`,
+          'cards',
+        ],
+      ],
+      includes: [
+        {
+          table_name: `LATERAL (
+              SELECT 
+                DISTINCT ON (master_entities.id) 
+                master_entities.id, 
+                jsonb_build_object(
+                  'id', master_entities.id,
+                  'title', master_entities.name,
+                  'type', master_entities.dashboard_wizard_type,
+                  'order_no', master_entities.dashboard_wizard_order_no,
+                  'entity_name', master_entities.entity_name,
+                  'permission_id', permissions.id,
+                  'has_permission',  
+                    CASE 
+                      WHEN '${permission_type}' = 'user' THEN
+                        CASE
+                          WHEN EXISTS (
+                            SELECT 1 
+                            FROM user_permissions 
+                            WHERE user_permissions.permission_id = permissions.id
+                            AND user_permissions.user_id = ${user_id}
+                          ) THEN true
+                          ELSE false
+                        END
+                      WHEN '${permission_type}' = 'role' THEN
+                        CASE
+                          WHEN EXISTS (
+                            SELECT 1 
+                            FROM role_permissions 
+                            WHERE role_permissions.permission_id = permissions.id
+                            AND role_permissions.role_id = ${role_id}
+                          ) THEN true
+                          ELSE false
+                        END
+                      ELSE false
+                    END
+                ) AS jsonb_object,
+                master_entities.dashboard_wizard_order_no AS order_no
+              FROM 
+                master_entities 
+              LEFT JOIN 
+                permissions ON permissions.entity_id = master_entities.id  
+              WHERE 
+                master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1
+              ORDER BY 
+                master_entities.id, master_entities.dashboard_wizard_order_no
+            ) AS subquery`,
+          join_type: 'LEFT',
+          join_condition: 'TRUE',
+        },
+      ],
+      group_by: ['wizard_group.id'],
+    };
+
+    this.gridApiService.getAllList(params).subscribe(
+      async (response) => {
+        if (response.status && response.code === 200) {
+          const dashboardItems = response.data.records;
+
+          let dashboard: any = this.fb.group({
+            id: new FormControl(7777),
+            name: new FormControl('dashboard'),
+            menu_img: new FormControl('fa-gauge'),
+            expanded: [true],
+            children: this.fb.array([]), // Use FormArray for children
+            rights: this.fb.array([]),
+          });
+
+          dashboardItems.map((elem: any, index: any) => {
+            if (elem.cards) {
+              let tab: any = this.fb.group({
+                id: new FormControl(7777 + index),
+                name: new FormControl(elem.name),
+                menu_img: new FormControl('fa-folder-open'),
+                expanded: [true],
+                children: this.fb.array([]), // Use FormArray for children
+                rights: this.fb.array([]),
+              });
+
+              elem.cards.map((ielem: any) => {
+                let card: any = this.fb.group({
+                  id: new FormControl(ielem.id),
+                  name: new FormControl(ielem.entity_name),
+                  menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
+                  expanded: [true],
+                  children: this.fb.array([]), // If card has children, it's an array
+                  rights: this.fb.array([
+                    this.fb.group({
+                      entity_id: new FormControl(ielem.id),
+                      entity_permission_id: new FormControl(ielem.permission_id),
+                      permission_id: new FormControl(ielem.permission_id),
+                      name: new FormControl('view'),
+                      permission_value: new FormControl(ielem.has_permission),
+                      entity_permission_value: new FormControl(ielem.has_permission),
+                      link_type: new FormControl(1),
+                      id: new FormControl(ielem.id),
+                      selected: new FormControl(ielem.has_permission),
+                    }),
+                  ]),
+                });
+
+                // Add card to tab's children (FormArray)
+                (tab.get('children') as FormArray).push(card);
+              });
+
+              // Add tab to dashboard's children (FormArray)
+              (dashboard.get('children') as FormArray).push(tab);
+            }
+          });
+
+          // Finally, push the dashboard object to entitiesArray
+          //entitiesArray.push(dashboard);
+          if (entitiesArray && entitiesArray.controls.length > 0) {
+            // Insert the dashboard at the first position
+
+            if (dashboard.get('children').length > 0) {
+              entitiesArray.insert(0, dashboard);
+            }
+          }
+        }
+      },
+      (error) => {
+        const key = 'failed_to_load';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   addChildEntities(children: IPermission[], parentArray: FormArray): void {
@@ -161,6 +351,8 @@ export class UserRolePermissionComponent {
         const childGroup = this.fb.group({
           id: new FormControl(child.id),
           name: new FormControl(child.parent_name),
+          menu_img: new FormControl(child.menu_img),
+          expanded: [true],
           rights: rightsArray,
           children: childrenArray,
         });
@@ -170,12 +362,52 @@ export class UserRolePermissionComponent {
     });
   }
 
-  getEntitiesControls(): FormGroup[] {
-    return (this.mappingForm.get('entities') as FormArray).controls as FormGroup[];
-  }
-
   getRightsControls(entityGroup: FormGroup): FormGroup[] {
     return (entityGroup.get('rights') as FormArray).controls as FormGroup[];
+  }
+  onCheckboxChange(rightGroup: FormGroup, event: Event, parentGroup: FormGroup) {
+    const rightsArray = parentGroup.get('rights') as FormArray;
+    const viewControl: any = rightsArray.at(0).get('selected'); // Assuming 'View' is at index 0
+    const isChecked = rightGroup.get('selected')?.value;
+    if (rightGroup.get('name')?.value === 'view') {
+      if (!isChecked) {
+        // If "View" is unchecked, uncheck all other checkboxes
+        rightsArray.controls.forEach((control) => {
+          control.get('selected')?.setValue(false);
+        });
+      }
+    } else {
+      if (isChecked) {
+        // If checking a checkbox other than "View", check the "View" checkbox
+        if (rightGroup.get('name')?.value !== 'view') {
+          viewControl.setValue(true); // Check the "View" checkbox
+        }
+      } else {
+        // Check if any checkboxes other than "View" are checked
+        const otherChecked = rightsArray.controls.some((control, index) => {
+          const isView = index === 0; // Change this if the View checkbox is at a different index
+          return control.get('selected')?.value && !isView;
+        });
+      }
+    }
+  }
+
+  getSortedRightsControls(entityGroup: FormGroup) {
+    const rightsControls = this.getRightsControls(entityGroup);
+
+    if (rightsControls) {
+      return rightsControls.sort((a, b) => {
+        const aName = a.get('name')?.value;
+        const bName = b.get('name')?.value;
+
+        const aIndex = this.order_permissions.indexOf(aName);
+        const bIndex = this.order_permissions.indexOf(bName);
+
+        return aIndex - bIndex; // Sorting in ascending order
+      });
+    } else {
+      return [];
+    }
   }
 
   getChildrenControls(entityGroup: FormGroup): FormGroup[] {
@@ -208,13 +440,14 @@ export class UserRolePermissionComponent {
         if (rightControl.get('selected')?.value) {
           if (rightControl.get('permission_id')?.value) {
             selectedPermissions.push({
-              user_id: 1, // or replace this with dynamic user_id if necessary
+              user_id: this.mappingForm.get('user')?.value, // or replace this with dynamic user_id if necessary
               permission_id: rightControl.get('permission_id')?.value,
             });
           }
+
           if (rightControl.get('entity_permission_id')?.value) {
             selectedPermissions.push({
-              user_id: 1, // or replace this with dynamic user_id if necessary
+              user_id: this.mappingForm.get('user')?.value, // or replace this with dynamic user_id if necessary
               permission_id: rightControl.get('entity_permission_id')?.value,
             });
           }
@@ -229,6 +462,24 @@ export class UserRolePermissionComponent {
     });
   }
 
+  toggleExpand(entityGroup: FormGroup) {
+    const isExpanded = entityGroup.get('expanded')?.value;
+    entityGroup.get('expanded')?.setValue(!isExpanded);
+  }
+
+  // Ensure that each entity group has an 'expanded' property
+  /* getEntitiesControls() {
+    return (this.mappingForm.get('entities') as FormArray).controls.map(entityGroup => {
+      if (!entityGroup.expanded) {
+        entityGroup.expanded = false; // Default to collapsed
+      }
+      return entityGroup;
+    });
+  }*/
+  getEntitiesControls(): FormGroup[] {
+    return (this.mappingForm.get('entities') as FormArray).controls as FormGroup[];
+  }
+
   selectedRolePermissions(entitiesArray: FormArray, selectedPermissions: IRolePermission[]): void {
     entitiesArray.controls.forEach((entityGroup: AbstractControl) => {
       const rightsArray = entityGroup.get('rights') as FormArray;
@@ -238,13 +489,13 @@ export class UserRolePermissionComponent {
         if (rightControl.get('selected')?.value) {
           if (rightControl.get('permission_id')?.value) {
             selectedPermissions.push({
-              role_id: 1, // or replace this with dynamic role_id if necessary
+              role_id: this.mappingForm.get('role')?.value, // or replace this with dynamic role_id if necessary
               permission_id: rightControl.get('permission_id')?.value,
             });
           }
           if (rightControl.get('entity_permission_id')?.value) {
             selectedPermissions.push({
-              role_id: 1, // or replace this with dynamic role_id if necessary
+              role_id: this.mappingForm.get('role')?.value, // or replace this with dynamic role_id if necessary
               permission_id: rightControl.get('entity_permission_id')?.value,
             });
           }
@@ -259,11 +510,48 @@ export class UserRolePermissionComponent {
     });
   }
 
+  getActionTypes() {
+    const param: any = {
+      company_id: 1,
+      print_query: false,
+      primary_table: 'action_types',
+      start_index: 0,
+      limit_range: 100,
+      sort_columns: [['action_types.id', 'asc']],
+
+      select_columns: [['action_types.id'], ['action_types.name', 'name'], ['action_types.description', 'description']],
+    };
+    this.gridApiService.getListData(param).subscribe(
+      (response: ApiResponce) => {
+        if (response.status) {
+          console.log(response.data?.records);
+          if (response.data?.records) {
+            let finalList: any = [];
+            response.data?.records.map(function (elem: any) {
+              finalList.push(elem.name);
+            });
+            this.order_permissions = finalList;
+          }
+
+          //this.order_permissions = response.data?.records || [];
+        } else if (!response.status) {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+        }
+      },
+      (error: any) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
   getEntityList() {
     const permission_type = `${this.mappingForm.get('permission_type')?.value}wise`;
     const user_id = this.mappingForm.get('user')?.value || 0;
     const role_id = this.mappingForm.get('role')?.value || 0;
-    const param: any = { proc_name: 'get_menu_permissions', params: { user_id, menu_id: 1 } };
+    const param: any = { proc_name: 'get_menu_permissions', params: { user_id, menu_id: 1, role_id, permission_type } };
     this.commonService.procedureCall(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
@@ -360,6 +648,11 @@ export class UserRolePermissionComponent {
           value: '1',
           operator: '=',
         },
+        {
+          value: ['super_admin', 'company_admin'],
+          operator: 'NOT IN',
+          column_name: 'users.role',
+        },
       ],
       includes: [
         {
@@ -403,7 +696,7 @@ export class UserRolePermissionComponent {
       },
     };
 
-    const selectedPermissions: IUserPermission[] = [];
+    let selectedPermissions: IUserPermission[] = [];
     const entitiesArray = this.mappingForm.get('entities') as FormArray;
     this.selectedUserPermissions(entitiesArray, selectedPermissions);
     if (selectedPermissions.length === 0) {
@@ -412,8 +705,12 @@ export class UserRolePermissionComponent {
       this.toastr.error(errorMessage, 'Error');
       return;
     }
-    console.log('Selected Permissions:', selectedPermissions);
-    param.data.table2 = selectedPermissions;
+
+    const uniqueData = selectedPermissions.filter(
+      (item, index, self) => index === self.findIndex((t) => t.user_id === item.user_id && t.permission_id === item.permission_id)
+    );
+
+    param.data.table2 = uniqueData;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
@@ -446,7 +743,7 @@ export class UserRolePermissionComponent {
         table2: [],
       },
     };
-    const selectedPermissions: IRolePermission[] = [];
+    let selectedPermissions: IRolePermission[] = [];
     const entitiesArray = this.mappingForm.get('entities') as FormArray;
     this.selectedRolePermissions(entitiesArray, selectedPermissions);
     if (selectedPermissions.length === 0) {
@@ -455,7 +752,12 @@ export class UserRolePermissionComponent {
       this.toastr.error(errorMessage, 'Error');
       return;
     }
-    param.data.table2 = selectedPermissions;
+
+    const uniqueData = selectedPermissions.filter(
+      (item, index, self) => index === self.findIndex((t) => t.role_id === item.role_id && t.permission_id === item.permission_id)
+    );
+
+    param.data.table2 = uniqueData;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
