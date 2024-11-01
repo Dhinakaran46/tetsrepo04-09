@@ -25,6 +25,7 @@ export const commonConfig: any = {
     uploadImageAndGetName: 'common/file-upload/image',
     deleteImageByName: 'common/file-delete/image',
     getLanguageContent: 'common/language-content',
+    importtemplatedeletefile: 'common/import-template/remove',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
