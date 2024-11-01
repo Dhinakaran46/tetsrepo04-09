@@ -59,7 +59,7 @@ export class ImportTemplateComponent implements OnInit {
   store: any;
   form!: FormGroup;
   items: any = [];
-  entity_types: any = [];
+  //entity_types: any = [];
   action_types: any[] = [];
   field_types: any[] = [];
   tables_list: any = [];
@@ -71,6 +71,10 @@ export class ImportTemplateComponent implements OnInit {
   existing_actions: string[] = [];
   redirect_url: string = '';
   rowsLength: number = 26;
+
+  lineItemForm!: FormGroup;
+  selectedItem: any = null;
+  editingItemIndex: number = -1;
 
   editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 1, insertSpaces: true };
   htmlEditorOptions = { ...this.editorOptions, language: 'html' };
@@ -90,7 +94,7 @@ export class ImportTemplateComponent implements OnInit {
 
   update_json_schema: any = {
     // it will be removed
-    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
+    action: ['update', 'hard_delete', 'insert'],
     table: ['import_templates', 'import_template_line_items', 'import_template_line_items'],
     table_mapping: ['table1', 'table2', 'table3'],
     data: {
@@ -132,7 +136,7 @@ export class ImportTemplateComponent implements OnInit {
 
     // To load all the lookups
     this.field_types = this.commonConfig.field_types;
-    this.entity_types = this.commonConfig.entity_types;
+    //this.entity_types = this.commonConfig.entity_types;
     this.action_types = this.commonConfig.action_types;
     this.wizard_type_list = this.commonConfig.wizard_type;
     this.fetchAllTables();
@@ -160,6 +164,109 @@ export class ImportTemplateComponent implements OnInit {
       });
   }
 
+  initLineItemForm() {
+    this.lineItemForm = this.fb.group({
+      field_name: ['', [Validators.required, Validators.maxLength(100)]],
+      display_name: ['', [Validators.required, Validators.maxLength(100)]],
+      order_no: ['', [Validators.required, Validators.min(0)]],
+      field_table: ['', Validators.required],
+      default_value: [''],
+      check_reg_exp: [''],
+      is_nullable: [false],
+      is_unique: [false],
+      is_foreign: [false],
+      is_multiple: [false],
+      is_enum: [false],
+      enum_values: [''],
+      foreign_table: [''],
+      foreign_column: [''],
+      foreign_can_create: [false],
+      field_type_id: ['', Validators.required],
+    });
+
+    this.addFormArraySubscriptions();
+    if (!this.id) {
+      this.initNewLineItem();
+    }
+  }
+
+  addFormArraySubscriptions() {
+    this.lineItemForm.get('is_foreign')?.valueChanges.subscribe((value) => {
+      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create'];
+      foreignControls.forEach((control) => {
+        const formControl = this.lineItemForm.get(control);
+        if (value) {
+          formControl?.enable();
+        } else {
+          formControl?.disable();
+        }
+      });
+    });
+
+    this.lineItemForm.get('is_enum')?.valueChanges.subscribe((value) => {
+      const enumControl = this.lineItemForm.get('enum_values');
+      if (value) {
+        enumControl?.enable();
+      } else {
+        enumControl?.disable();
+      }
+    });
+  }
+
+  initNewLineItem() {
+    this.editingItemIndex = -1;
+    this.selectedItem = {};
+    this.lineItemForm.reset({
+      is_nullable: false,
+      is_unique: false,
+      is_foreign: false,
+      is_multiple: false,
+      is_enum: false,
+      foreign_can_create: false,
+    });
+  }
+
+  editLineItem(index: number) {
+    this.editingItemIndex = index;
+    const itemsArray = this.form.get('items') as FormArray;
+    const item = itemsArray.at(index);
+    this.selectedItem = item.value;
+    this.lineItemForm.patchValue(item.value);
+  }
+
+  cancelLineItemEdit() {
+    this.selectedItem = null;
+    this.editingItemIndex = -1;
+    this.lineItemForm.reset();
+  }
+
+  onLineItemSubmit() {
+    if (this.lineItemForm.valid) {
+      const itemsArray = this.form.get('items') as FormArray;
+      const formValue = this.lineItemForm.value;
+
+      if (this.editingItemIndex !== -1) {
+        // Update existing item in FormArray
+        itemsArray.at(this.editingItemIndex).patchValue(formValue);
+      } else {
+        // Push new item to FormArray
+        itemsArray.push(this.fb.group(formValue));
+      }
+
+      this.cancelLineItemEdit(); // Clear form after submission
+    }
+  }
+
+  getFieldTypeName(typeId: number): string {
+    const fieldType = this.field_types.find((type) => type.value === typeId);
+    return fieldType ? fieldType.label : '';
+  }
+
+  isLineItemFieldInvalid(fieldName: string): boolean {
+    const field = this.lineItemForm?.get(fieldName);
+    return field ? field.invalid && (field.touched || this.submitted) : false;
+  }
+
   titleChange() {
     const title = this.editTitle ? 'title_edit_entity' : 'title_add_entity';
     const translateTitle = this.translate.instant(title);
@@ -182,6 +289,7 @@ export class ImportTemplateComponent implements OnInit {
       status_id: [1],
       items: this.fb.array([]),
     });
+    this.initLineItemForm();
   }
 
   updateFormValidation(entityType: any) {
@@ -191,10 +299,10 @@ export class ImportTemplateComponent implements OnInit {
 
     const itemsControl = this.form.get('items');
 
-    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
+    /*if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
       primary_tableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
-    }
+    }*/
 
     this.form.updateValueAndValidity();
   }
@@ -228,21 +336,6 @@ export class ImportTemplateComponent implements OnInit {
     );
   }
 
-  addItem() {
-    const items = this.form.get('items') as FormArray;
-    items.push(
-      this.fb.group({
-        fieldName: ['', [Validators.required, Validators.maxLength(100)]],
-        displayName: ['', [Validators.required, Validators.maxLength(100)]],
-        orderNo: ['', [Validators.required, Validators.min(0)]],
-        isGridColumn: ['true', Validators.required],
-        isSearchable: ['true', Validators.required],
-        isSortable: ['true', Validators.required],
-        fieldType: [this.commonConfig.field_types[0].value, Validators.required],
-      })
-    );
-  }
-
   removeItem(index: number) {
     const items = this.form.get('items') as FormArray;
     if (items.length > 0) {
@@ -268,7 +361,7 @@ export class ImportTemplateComponent implements OnInit {
         ['import_templates.*'],
 
         [
-          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', import_template_line_items.id,'field_name', import_template_line_items.field_name,'display_name', import_template_line_items.display_name,'order_no', import_template_line_items.order_no,'is_grid_column', import_template_line_items.is_grid_column,'is_searchable', import_template_line_items.is_searchable,'is_sortable', import_template_line_items.is_sortable,'field_type_id', import_template_line_items.field_type_id))) END",
+          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create, 'field_type_id', import_template_line_items.field_type_id))) END",
           'items',
         ],
       ],
@@ -276,7 +369,7 @@ export class ImportTemplateComponent implements OnInit {
         {
           table_name: 'import_template_line_items',
           join_type: 'LEFT',
-          join_condition: `import_templates.id = import_template_line_items.item_template_id AND import_templates.uuid = '${id}'`,
+          join_condition: `import_templates.id = import_template_line_items.import_template_id AND import_templates.uuid = '${id}'`,
         },
       ],
       group_by: ['import_templates.id'],
@@ -286,7 +379,6 @@ export class ImportTemplateComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-          this.existing_actions = this.populateSelectedActionTypes(entity.permissions);
 
           this.form.patchValue({
             name: entity.name,
@@ -332,21 +424,13 @@ export class ImportTemplateComponent implements OnInit {
     );
   }
 
-  populateSelectedActionTypes(permissions: any) {
-    const permissionList = permissions.map((item: any) => {
-      const actionType = this.action_types.find((elem: any) => elem.value == item.name);
-      return actionType ? actionType.value : '';
-    });
-    return permissionList;
-  }
-
   getAddParams(formData: any) {
     const master = [
       {
         name: formData.name,
-        entity_type: formData.entityType,
+        //entity_type: formData.entityType,
         primary_table: formData.primary_table,
-        status_id: formData.statusId,
+        status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
       },
@@ -354,7 +438,7 @@ export class ImportTemplateComponent implements OnInit {
 
     if (formData.items && formData.items.length > 0) {
       const items = formData.items.map((item: any) => ({
-        item_template_id: '@table1.id',
+        import_template_id: '@table1.id',
         field_name: item.field_name,
         display_name: item.display_name,
         order_no: item.order_no,
@@ -384,9 +468,9 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        entity_type: formData.entityType,
+        //entity_type: formData.entityType,
         primary_table: formData.primary_table,
-        status_id: formData.statusId,
+        status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
       },
@@ -395,11 +479,11 @@ export class ImportTemplateComponent implements OnInit {
     this.update_json_schema.data['table1'] = master;
     this.update_json_schema.conditions['table1'] = [{ uuid: id }];
 
-    this.update_json_schema.conditions['table2'] = [{ item_template_id: '@table1.id' }];
+    this.update_json_schema.conditions['table2'] = [{ import_template_id: '@table1.id' }];
 
     if (formData.items && formData.items.length > 0) {
       const items = formData.items.map((item: any) => ({
-        item_template_id: '@table1.id',
+        import_template_id: '@table1.id',
         field_name: item.field_name,
         display_name: item.display_name,
         order_no: item.order_no,
@@ -437,7 +521,8 @@ export class ImportTemplateComponent implements OnInit {
 
     const formData = this.form.value;
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
-
+    console.log(payload);
+    //return;
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -512,6 +597,23 @@ export class ImportTemplateComponent implements OnInit {
   getItemErrorMessage(index: number, fieldName: string): string {
     const items = this.form.get('items') as FormArray;
     const field = items.at(index).get(fieldName);
+    if (field) {
+      if (field.hasError('required')) {
+        return 'required_message';
+      }
+      if (field.hasError('maxlength')) {
+        return `Maximum length exceeded (${field.errors?.['maxlength'].requiredLength} characters allowed)`;
+      }
+      if (field.hasError('min')) {
+        return `Minimum value is ${field.errors?.['min'].min}`;
+      }
+    }
+    return '';
+  }
+
+  getLineItemErrorMessage(fieldName: string): string {
+    const field = this.lineItemForm.get(fieldName);
+
     if (field) {
       if (field.hasError('required')) {
         return 'required_message';
