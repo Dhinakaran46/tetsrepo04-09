@@ -1,0 +1,18 @@
+<!-- example-client-datatable.component.html -->
+<div class="p-4">
+  <div class="rounded-lg bg-white shadow">
+    <div class="p-6">
+      <h2 class="mb-4 text-xl font-semibold">Inventory Items</h2>
+
+      <app-client-datatable
+        [data]="tableData"
+        [config]="tableConfig"
+        (dataChange)="onDataChange($event)"
+        (sortChange)="onSortChange($event)"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+        (searchChange)="onSearch($event)"
+      ></app-client-datatable>
+    </div>
+  </div>
+</div>

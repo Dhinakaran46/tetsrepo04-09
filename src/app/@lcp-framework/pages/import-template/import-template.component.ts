@@ -59,6 +59,7 @@ export class ImportTemplateComponent implements OnInit {
   store: any;
   form!: FormGroup;
   items: any = [];
+  queries: any = [];
   //entity_types: any = [];
   action_types: any[] = [];
   field_types: any[] = [];
@@ -76,6 +77,10 @@ export class ImportTemplateComponent implements OnInit {
   selectedItem: any = null;
   editingItemIndex: number = -1;
 
+  lineQueryForm!: FormGroup;
+  selectedQuery: any = null;
+  editingQueryIndex: number = -1;
+
   editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 1, insertSpaces: true };
   htmlEditorOptions = { ...this.editorOptions, language: 'html' };
   isDarkTheme = true; // Default theme
@@ -83,27 +88,30 @@ export class ImportTemplateComponent implements OnInit {
 
   insert_json_schema: any = {
     // it will be removed
-    action: ['insert', 'insert'],
-    table: ['import_templates', 'import_template_line_items'],
-    table_mapping: ['table1', 'table2'],
+    action: ['insert', 'insert', 'insert'],
+    table: ['import_templates', 'import_template_line_items', 'import_template_queries'],
+    table_mapping: ['table1', 'table2', 'table3'],
     data: {
       table1: [],
       table2: [],
+      table3: [],
     },
   };
 
   update_json_schema: any = {
     // it will be removed
-    action: ['update', 'hard_delete', 'insert'],
-    table: ['import_templates', 'import_template_line_items', 'import_template_line_items'],
-    table_mapping: ['table1', 'table2', 'table3'],
+    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
+    table: ['import_templates', 'import_template_line_items', 'import_template_line_items', 'import_template_queries', 'import_template_queries'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5'],
     data: {
       table1: [],
       table3: [],
+      table5: [],
     },
     conditions: {
       table1: [],
       table2: [],
+      table4: [],
     },
   };
 
@@ -140,11 +148,6 @@ export class ImportTemplateComponent implements OnInit {
     this.action_types = this.commonConfig.action_types;
     this.wizard_type_list = this.commonConfig.wizard_type;
     this.fetchAllTables();
-
-    // To listen "entityType" on value change
-    this.form.get('entityType')?.valueChanges.subscribe((value) => {
-      this.updateFormValidation(value);
-    });
 
     // If "id" is not available we need consider it as "Add", otherwise "Edit"
     if (!this.id) {
@@ -189,6 +192,16 @@ export class ImportTemplateComponent implements OnInit {
       this.initNewLineItem();
     }
   }
+  initLineQueryForm() {
+    this.lineQueryForm = this.fb.group({
+      raw_query: ['', [Validators.required]],
+      order_no: ['', [Validators.required, Validators.min(0)]],
+    });
+
+    if (!this.id) {
+      this.initNewLineQuery();
+    }
+  }
 
   addFormArraySubscriptions() {
     this.lineItemForm.get('is_foreign')?.valueChanges.subscribe((value) => {
@@ -225,6 +238,22 @@ export class ImportTemplateComponent implements OnInit {
       foreign_can_create: false,
     });
   }
+  initNewLineQuery() {
+    this.editingQueryIndex = -1;
+    this.selectedQuery = {};
+    this.lineQueryForm.reset({
+      raw_query: '',
+      order_no: '',
+    });
+  }
+
+  editQueryItem(index: number) {
+    this.editingQueryIndex = index;
+    const queriesArray = this.form.get('queries') as FormArray;
+    const query = queriesArray.at(index);
+    this.selectedQuery = query.value;
+    this.lineQueryForm.patchValue(query.value);
+  }
 
   editLineItem(index: number) {
     this.editingItemIndex = index;
@@ -238,6 +267,12 @@ export class ImportTemplateComponent implements OnInit {
     this.selectedItem = null;
     this.editingItemIndex = -1;
     this.lineItemForm.reset();
+  }
+
+  cancelLineQueryEdit() {
+    this.selectedQuery = null;
+    this.editingQueryIndex = -1;
+    this.lineQueryForm.reset();
   }
 
   onLineItemSubmit() {
@@ -257,6 +292,23 @@ export class ImportTemplateComponent implements OnInit {
     }
   }
 
+  onLineQuerySubmit() {
+    if (this.lineQueryForm.valid) {
+      const queriesArray = this.form.get('queries') as FormArray;
+      const formValue = this.lineQueryForm.value;
+
+      if (this.editingQueryIndex !== -1) {
+        // Update existing item in FormArray
+        queriesArray.at(this.editingQueryIndex).patchValue(formValue);
+      } else {
+        // Push new item to FormArray
+        queriesArray.push(this.fb.group(formValue));
+      }
+
+      this.cancelLineQueryEdit(); // Clear form after submission
+    }
+  }
+
   getFieldTypeName(typeId: number): string {
     const fieldType = this.field_types.find((type) => type.value === typeId);
     return fieldType ? fieldType.label : '';
@@ -264,6 +316,11 @@ export class ImportTemplateComponent implements OnInit {
 
   isLineItemFieldInvalid(fieldName: string): boolean {
     const field = this.lineItemForm?.get(fieldName);
+    return field ? field.invalid && (field.touched || this.submitted) : false;
+  }
+
+  isLineQueryFieldInvalid(fieldName: string): boolean {
+    const field = this.lineQueryForm?.get(fieldName);
     return field ? field.invalid && (field.touched || this.submitted) : false;
   }
 
@@ -288,8 +345,10 @@ export class ImportTemplateComponent implements OnInit {
       primary_table: [''],
       status_id: [1],
       items: this.fb.array([]),
+      queries: this.fb.array([]),
     });
     this.initLineItemForm();
+    this.initLineQueryForm();
   }
 
   updateFormValidation(entityType: any) {
@@ -298,11 +357,7 @@ export class ImportTemplateComponent implements OnInit {
     const primary_tableControl = this.form.get('primary_table');
 
     const itemsControl = this.form.get('items');
-
-    /*if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
-      primary_tableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
-      itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
-    }*/
+    const queriesControl = this.form.get('queries');
 
     this.form.updateValueAndValidity();
   }
@@ -345,8 +400,20 @@ export class ImportTemplateComponent implements OnInit {
     }
   }
 
+  removeQuery(index: number) {
+    const queries = this.form.get('queries') as FormArray;
+    if (queries.length > 0) {
+      queries.removeAt(index);
+    } else {
+      this.toastr.warning('At least one item is required.');
+    }
+  }
+
   get itemsControls() {
     return (this.form.get('items') as FormArray).controls;
+  }
+  get queriesControls() {
+    return (this.form.get('queries') as FormArray).controls;
   }
 
   loadData(id: number) {
@@ -357,6 +424,14 @@ export class ImportTemplateComponent implements OnInit {
       start_index: 0,
       limit_range: 1,
       sort_columns: [['import_templates.id', 'desc']],
+      search_all: [
+        {
+          column_name: 'import_templates.uuid',
+          value: id,
+          operator: '=',
+        },
+        //['import_templates.uuid = '${id}'']
+      ],
       select_columns: [
         ['import_templates.*'],
 
@@ -364,12 +439,21 @@ export class ImportTemplateComponent implements OnInit {
           "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create, 'field_type_id', import_template_line_items.field_type_id))) END",
           'items',
         ],
+        [
+          "CASE WHEN COUNT(import_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('raw_query', import_template_queries.raw_query, 'order_no', import_template_queries.order_no))) END",
+          'queries',
+        ],
       ],
       includes: [
         {
           table_name: 'import_template_line_items',
           join_type: 'LEFT',
-          join_condition: `import_templates.id = import_template_line_items.import_template_id AND import_templates.uuid = '${id}'`,
+          join_condition: `import_templates.id = import_template_line_items.import_template_id`,
+        },
+        {
+          table_name: 'import_template_queries',
+          join_type: 'LEFT',
+          join_condition: `import_templates.id = import_template_queries.import_template_id`,
         },
       ],
       group_by: ['import_templates.id'],
@@ -398,18 +482,31 @@ export class ImportTemplateComponent implements OnInit {
                   display_name: [item.display_name, Validators.required],
                   order_no: [item.order_no, [Validators.required, Validators.min(0)]],
                   field_table: [item.field_table, Validators.required],
-                  default_value: [item.default_value, Validators.required],
-                  check_reg_exp: [item.check_reg_exp, Validators.required],
-                  is_nullable: [item.is_nullable, Validators.required],
-                  is_unique: [item.is_unique, Validators.required],
-                  is_foreign: [item.is_foreign, Validators.required],
-                  is_multiple: [item.is_multiple, Validators.required],
-                  is_enum: [item.is_enum, Validators.required],
-                  enum_values: [item.enum_values, Validators.required],
-                  foreign_table: [item.foreign_table, Validators.required],
-                  foreign_column: [item.foreign_column, Validators.required],
-                  foreign_can_create: [item.foreign_can_create, Validators.required],
+                  default_value: [item.default_value],
+                  check_reg_exp: [item.check_reg_exp],
+                  is_nullable: [item.is_nullable],
+                  is_unique: [item.is_unique],
+                  is_foreign: [item.is_foreign],
+                  is_multiple: [item.is_multiple],
+                  is_enum: [item.is_enum],
+                  enum_values: [item.enum_values],
+                  foreign_table: [item.foreign_table],
+                  foreign_column: [item.foreign_column],
+                  foreign_can_create: [item.foreign_can_create],
                   field_type_id: [item.field_type_id, Validators.required],
+                })
+              );
+            });
+          }
+
+          const queries = this.form.get('queries') as FormArray;
+
+          if (entity.queries && entity.queries.length > 0) {
+            entity.queries.forEach((query: any) => {
+              queries.push(
+                this.fb.group({
+                  raw_query: [query.raw_query, Validators.required],
+                  order_no: [query.order_no, [Validators.required, Validators.min(0)]],
                 })
               );
             });
@@ -459,6 +556,15 @@ export class ImportTemplateComponent implements OnInit {
       this.insert_json_schema.data['table2'] = items;
     }
 
+    if (formData.queries && formData.queries.length > 0) {
+      const queries = formData.queries.map((query: any) => ({
+        import_template_id: '@table1.id',
+        raw_query: query.raw_query,
+        order_no: query.order_no,
+      }));
+      this.insert_json_schema.data['table3'] = queries;
+    }
+
     this.insert_json_schema.data['table1'] = master;
 
     return this.insert_json_schema;
@@ -480,6 +586,7 @@ export class ImportTemplateComponent implements OnInit {
     this.update_json_schema.conditions['table1'] = [{ uuid: id }];
 
     this.update_json_schema.conditions['table2'] = [{ import_template_id: '@table1.id' }];
+    this.update_json_schema.conditions['table4'] = [{ import_template_id: '@table1.id' }];
 
     if (formData.items && formData.items.length > 0) {
       const items = formData.items.map((item: any) => ({
@@ -504,6 +611,15 @@ export class ImportTemplateComponent implements OnInit {
 
       this.update_json_schema.data['table3'] = items;
     }
+    if (formData.queries && formData.queries.length > 0) {
+      const queries = formData.queries.map((query: any) => ({
+        import_template_id: '@table1.id',
+        raw_query: query.raw_query,
+        order_no: query.order_no,
+      }));
+
+      this.update_json_schema.data['table5'] = queries;
+    }
 
     return this.update_json_schema;
   }
@@ -521,7 +637,7 @@ export class ImportTemplateComponent implements OnInit {
 
     const formData = this.form.value;
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
-    console.log(payload);
+
     //return;
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
@@ -557,7 +673,8 @@ export class ImportTemplateComponent implements OnInit {
   }
 
   isFormInvalid() {
-    return this.form.invalid || this.itemsControls.length === 0;
+    return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0;
+    //return this.form.invalid;
   }
 
   logFormStatus(): void {
@@ -594,6 +711,12 @@ export class ImportTemplateComponent implements OnInit {
     return field ? field.invalid && (field.touched || this.submitted) : false;
   }
 
+  isQueryFieldInvalid(index: number, fieldName: string): boolean {
+    const queries = this.form.get('queries') as FormArray;
+    const field = queries.at(index).get(fieldName);
+    return field ? field.invalid && (field.touched || this.submitted) : false;
+  }
+
   getItemErrorMessage(index: number, fieldName: string): string {
     const items = this.form.get('items') as FormArray;
     const field = items.at(index).get(fieldName);
@@ -610,9 +733,42 @@ export class ImportTemplateComponent implements OnInit {
     }
     return '';
   }
+  getQueryErrorMessage(index: number, fieldName: string): string {
+    const queries = this.form.get('queries') as FormArray;
+    const field = queries.at(index).get(fieldName);
+    if (field) {
+      if (field.hasError('required')) {
+        return 'required_message';
+      }
+      if (field.hasError('maxlength')) {
+        return `Maximum length exceeded (${field.errors?.['maxlength'].requiredLength} characters allowed)`;
+      }
+      if (field.hasError('min')) {
+        return `Minimum value is ${field.errors?.['min'].min}`;
+      }
+    }
+    return '';
+  }
 
   getLineItemErrorMessage(fieldName: string): string {
     const field = this.lineItemForm.get(fieldName);
+
+    if (field) {
+      if (field.hasError('required')) {
+        return 'required_message';
+      }
+      if (field.hasError('maxlength')) {
+        return `Maximum length exceeded (${field.errors?.['maxlength'].requiredLength} characters allowed)`;
+      }
+      if (field.hasError('min')) {
+        return `Minimum value is ${field.errors?.['min'].min}`;
+      }
+    }
+    return '';
+  }
+
+  getQueryItemErrorMessage(fieldName: string): string {
+    const field = this.lineQueryForm.get(fieldName);
 
     if (field) {
       if (field.hasError('required')) {

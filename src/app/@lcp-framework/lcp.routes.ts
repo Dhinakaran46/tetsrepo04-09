@@ -15,6 +15,7 @@ import { permissionGuardFactory } from './guards/permission.guard';
 import { ImportMasterComponent } from './pages/import-master/import-master.component';
 import { DocumentationComponent } from './pages/documentation/documentation.component';
 import { ImportConfirmDeactivateGuard } from './guards/impotrt-confirm-deactivate.guard';
+import { ExampleClientDatatableComponent } from './pages/example-client-datatable/example-client-datatable.component';
 export const routes: Routes = [
   {
     path: 'not-found',
@@ -80,6 +81,15 @@ export const routes: Routes = [
         component: ImportMasterComponent,
         canDeactivate: [ImportConfirmDeactivateGuard],
         title: 'Import Master',
+        data: {
+          defaultPermission: true,
+        },
+      },
+      {
+        path: 'exampletable',
+        component: ExampleClientDatatableComponent,
+
+        title: 'Example Client DataTable',
         data: {
           defaultPermission: true,
         },

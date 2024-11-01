@@ -112,204 +112,301 @@
     </div>
   </div>
 
-  <!-- Form Section for Add/Edit -->
-  <div class="panel mt-10" id="import-line-item-add" *ngIf="selectedItem">
-    <div class="flex flex-wrap justify-center">
-      <div class="text-md font-bold uppercase">
-        {{ editingItemIndex !== -1 ? ('title_edit_import_template_line_item' | translate) : ('title_add_import_template_line_item' | translate) }}
+  <div class="panel mt-10">
+    <!-- Form Section for Add/Edit -->
+    <div class="panel mb-5 border-2 border-solid border-indigo-600" id="import-line-item-add" *ngIf="selectedItem">
+      <div class="flex flex-wrap justify-center">
+        <div class="text-md font-bold uppercase">
+          {{ editingItemIndex !== -1 ? ('title_edit_import_template_line_item' | translate) : ('title_add_import_template_line_item' | translate) }}
+        </div>
       </div>
-    </div>
-    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
 
-    <div class="mt-5">
-      <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <!-- Basic Information Fields -->
-          <div class="mt-0">
-            <label for="field_name" class="required-mark mb-2 block font-medium">{{ 'form_label_field_name' | translate }}</label>
-            <input
-              id="field_name"
-              type="text"
-              formControlName="field_name"
-              class="form-input w-full"
-              [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_name') }"
-            />
-            <div *ngIf="isLineItemFieldInvalid('field_name')" class="invalid-feedback">{{ getLineItemErrorMessage('field_name') }}</div>
-          </div>
-
-          <div class="mt-0">
-            <label for="display_name" class="required-mark mb-2 block font-medium">{{ 'form_label_display_name' | translate }}</label>
-            <input
-              id="display_name"
-              type="text"
-              formControlName="display_name"
-              class="form-input w-full"
-              [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('display_name') }"
-            />
-          </div>
-
-          <div class="mt-0">
-            <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
-            <input
-              id="order_no"
-              type="number"
-              formControlName="order_no"
-              class="form-input w-full"
-              [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
-            />
-          </div>
-
-          <!-- Field Configuration -->
-          <div class="mt-0">
-            <label for="field_table" class="required-mark mb-2 block font-medium">{{ 'form_label_field_table' | translate }}</label>
-            <select
-              id="field_table"
-              formControlName="field_table"
-              class="form-select w-full"
-              [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_table') }"
-            >
-              <option value="">Select Table</option>
-              <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
-            </select>
-          </div>
-
-          <div class="mt-0">
-            <label for="field_type_id" class="required-mark mb-2 block font-medium">{{ 'form_label_field_type' | translate }}</label>
-            <select
-              id="field_type_id"
-              formControlName="field_type_id"
-              class="form-select w-full"
-              [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_type_id') }"
-            >
-              <option value="">Select Field Type</option>
-              <option *ngFor="let type of field_types" [value]="type.value">{{ type.label }}</option>
-            </select>
-          </div>
-
-          <div class="mt-0">
-            <label for="default_value" class="mb-2 block font-medium">{{ 'form_label_default_value' | translate }}</label>
-            <input id="default_value" type="text" formControlName="default_value" class="form-input w-full" />
-          </div>
-
-          <div class="mt-0">
-            <label for="check_reg_exp" class="mb-2 block font-medium">{{ 'form_label_check_reg_exp' | translate }}</label>
-            <input id="check_reg_exp" type="text" formControlName="check_reg_exp" class="form-input w-full" />
-          </div>
-
-          <!-- Checkbox Group -->
-          <div class="col-span-3 mt-0 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <div class="flex items-center">
-              <input type="checkbox" id="is_nullable" formControlName="is_nullable" class="form-checkbox" />
-              <label for="is_nullable" class="ml-2">{{ 'form_label_is_nullable' | translate }}</label>
-            </div>
-
-            <div class="flex items-center">
-              <input type="checkbox" id="is_unique" formControlName="is_unique" class="form-checkbox" />
-              <label for="is_unique" class="ml-2">{{ 'form_label_is_unique' | translate }}</label>
-            </div>
-
-            <div class="flex items-center">
-              <input type="checkbox" id="is_multiple" formControlName="is_multiple" class="form-checkbox" />
-              <label for="is_multiple" class="ml-2">{{ 'form_label_is_multiple' | translate }}</label>
-            </div>
-
-            <div class="flex items-center">
-              <input type="checkbox" id="is_enum" formControlName="is_enum" class="form-checkbox" />
-              <label for="is_enum" class="ml-2">{{ 'form_label_is_enum' | translate }}</label>
-            </div>
-          </div>
-
-          <!-- Foreign Key Section -->
-          <div class="col-span-3 mt-4">
-            <div class="flex items-center">
-              <input type="checkbox" id="is_foreign" formControlName="is_foreign" class="form-checkbox" />
-              <label for="is_foreign" class="ml-2">{{ 'form_label_is_foreign' | translate }}</label>
-            </div>
-          </div>
-
-          <!-- Enum Section -->
-          <div class="mt-0" *ngIf="lineItemForm.get('is_enum')?.value">
-            <label for="enum_values" class="mb-2 block font-medium">{{ 'form_label_enum_values' | translate }}</label>
-            <input id="enum_values" type="text" formControlName="enum_values" class="form-input w-full" />
-          </div>
-
-          <!-- Foreign Key Configuration (visible when is_foreign is checked) -->
-          <ng-container *ngIf="lineItemForm.get('is_foreign')?.value">
+      <div class="mt-5">
+        <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <!-- Basic Information Fields -->
             <div class="mt-0">
-              <label for="foreign_table" class="mb-2 block font-medium">{{ 'form_label_foreign_table' | translate }}</label>
-              <select id="foreign_table" formControlName="foreign_table" class="form-select w-full">
+              <label for="field_name" class="required-mark mb-2 block font-medium">{{ 'form_label_field_name' | translate }}</label>
+              <input
+                id="field_name"
+                type="text"
+                formControlName="field_name"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_name') }"
+              />
+              <div *ngIf="isLineItemFieldInvalid('field_name')" class="invalid-feedback">{{ getLineItemErrorMessage('field_name') }}</div>
+            </div>
+
+            <div class="mt-0">
+              <label for="display_name" class="required-mark mb-2 block font-medium">{{ 'form_label_display_name' | translate }}</label>
+              <input
+                id="display_name"
+                type="text"
+                formControlName="display_name"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('display_name') }"
+              />
+            </div>
+
+            <div class="mt-0">
+              <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
+              <input
+                id="order_no"
+                type="number"
+                formControlName="order_no"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
+              />
+            </div>
+
+            <!-- Field Configuration -->
+            <div class="mt-0">
+              <label for="field_table" class="required-mark mb-2 block font-medium">{{ 'form_label_field_table' | translate }}</label>
+              <select
+                id="field_table"
+                formControlName="field_table"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_table') }"
+              >
                 <option value="">Select Table</option>
                 <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
               </select>
             </div>
 
             <div class="mt-0">
-              <label for="foreign_column" class="mb-2 block font-medium">{{ 'form_label_foreign_column' | translate }}</label>
-              <input id="foreign_column" type="text" formControlName="foreign_column" class="form-input w-full" />
+              <label for="field_type_id" class="required-mark mb-2 block font-medium">{{ 'form_label_field_type' | translate }}</label>
+              <select
+                id="field_type_id"
+                formControlName="field_type_id"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_type_id') }"
+              >
+                <option value="">Select Field Type</option>
+                <option *ngFor="let type of field_types" [value]="type.value">{{ type.label }}</option>
+              </select>
             </div>
 
-            <div class="mt-0 flex items-center">
-              <input type="checkbox" id="foreign_can_create" formControlName="foreign_can_create" class="form-checkbox" />
-              <label for="foreign_can_create" class="ml-2">{{ 'form_label_foreign_can_create' | translate }}</label>
+            <div class="mt-0">
+              <label for="default_value" class="mb-2 block font-medium">{{ 'form_label_default_value' | translate }}</label>
+              <input id="default_value" type="text" formControlName="default_value" class="form-input w-full" />
             </div>
-          </ng-container>
-        </div>
 
-        <!-- Form Actions -->
-        <div class="mt-6 flex justify-end space-x-4">
-          <button type="button" class="btn btn-danger" (click)="cancelLineItemEdit()">{{ 'cancel' | translate }}</button>
-          <button type="submit" class="btn btn-primary" [disabled]="lineItemForm.invalid">
-            {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+            <div class="mt-0">
+              <label for="check_reg_exp" class="mb-2 block font-medium">{{ 'form_label_check_reg_exp' | translate }}</label>
+              <input id="check_reg_exp" type="text" formControlName="check_reg_exp" class="form-input w-full" />
+            </div>
 
-  <!-- Table Section -->
-  <div class="panel mt-10" id="import-line-item-list">
-    <div class="mt-5 flex flex-wrap justify-between">
-      <div class="text-md required-mark font-bold">{{ 'title_import_template_line_items' | translate }}</div>
-      <div class="relative inline-flex align-middle">
-        <button (click)="initNewLineItem()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
-          <i class="fa-solid fa-plus"></i>&nbsp;{{ 'add_new' | translate }}
-        </button>
+            <!-- Checkbox Group -->
+            <div class="col-span-3 mt-0 grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div class="flex items-center">
+                <input type="checkbox" id="is_nullable" formControlName="is_nullable" class="form-checkbox" />
+                <label for="is_nullable" class="ml-2">{{ 'form_label_is_nullable' | translate }}</label>
+              </div>
+
+              <div class="flex items-center">
+                <input type="checkbox" id="is_unique" formControlName="is_unique" class="form-checkbox" />
+                <label for="is_unique" class="ml-2">{{ 'form_label_is_unique' | translate }}</label>
+              </div>
+
+              <div class="flex items-center">
+                <input type="checkbox" id="is_multiple" formControlName="is_multiple" class="form-checkbox" />
+                <label for="is_multiple" class="ml-2">{{ 'form_label_is_multiple' | translate }}</label>
+              </div>
+
+              <div class="flex items-center">
+                <input type="checkbox" id="is_enum" formControlName="is_enum" class="form-checkbox" />
+                <label for="is_enum" class="ml-2">{{ 'form_label_is_enum' | translate }}</label>
+              </div>
+            </div>
+
+            <!-- Foreign Key Section -->
+            <div class="col-span-3 mt-4">
+              <div class="flex items-center">
+                <input type="checkbox" id="is_foreign" formControlName="is_foreign" class="form-checkbox" />
+                <label for="is_foreign" class="ml-2">{{ 'form_label_is_foreign' | translate }}</label>
+              </div>
+            </div>
+
+            <!-- Enum Section -->
+            <div class="mt-0" *ngIf="lineItemForm.get('is_enum')?.value">
+              <label for="enum_values" class="mb-2 block font-medium">{{ 'form_label_enum_values' | translate }}</label>
+              <input id="enum_values" type="text" formControlName="enum_values" class="form-input w-full" />
+            </div>
+
+            <!-- Foreign Key Configuration (visible when is_foreign is checked) -->
+            <ng-container *ngIf="lineItemForm.get('is_foreign')?.value">
+              <div class="mt-0">
+                <label for="foreign_table" class="mb-2 block font-medium">{{ 'form_label_foreign_table' | translate }}</label>
+                <select id="foreign_table" formControlName="foreign_table" class="form-select w-full">
+                  <option value="">Select Table</option>
+                  <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
+                </select>
+              </div>
+
+              <div class="mt-0">
+                <label for="foreign_column" class="mb-2 block font-medium">{{ 'form_label_foreign_column' | translate }}</label>
+                <input id="foreign_column" type="text" formControlName="foreign_column" class="form-input w-full" />
+              </div>
+
+              <div class="mt-0 flex items-center">
+                <input type="checkbox" id="foreign_can_create" formControlName="foreign_can_create" class="form-checkbox" />
+                <label for="foreign_can_create" class="ml-2">{{ 'form_label_foreign_can_create' | translate }}</label>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="mt-6 flex justify-end space-x-4">
+            <button type="button" class="btn btn-danger" (click)="cancelLineItemEdit()">{{ 'cancel' | translate }}</button>
+            <button type="submit" class="btn btn-primary" [disabled]="lineItemForm.invalid">
+              {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+    <!-- Table Section -->
+    <div class="panel" id="import-line-item-list">
+      <div class="mt-5 flex flex-wrap justify-between">
+        <div class="text-md font-bold uppercase">{{ 'title_import_template_line_items' | translate }}</div>
+        <div class="relative inline-flex align-middle">
+          <button (click)="initNewLineItem()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
+            <i class="fa-solid fa-plus"></i>&nbsp;{{ 'add_new' | translate }}
+          </button>
+        </div>
+      </div>
 
-    <div class="mt-2">
-      <div class="table-responsive">
-        <table class="w-full table-auto">
-          <thead>
-            <tr>
-              <th>{{ 'table_field_name' | translate }}</th>
-              <th>{{ 'table_display_name' | translate }}</th>
-              <th>{{ 'table_order_no' | translate }}</th>
-              <th>{{ 'table_field_table' | translate }}</th>
-              <th>{{ 'table_field_type' | translate }}</th>
-              <th>{{ 'table_action' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody formArrayName="items">
-            <tr *ngFor="let item of itemsControls; let i = index" [formGroupName]="i">
-              <td>{{ item.get('field_name')?.value }}</td>
-              <td>{{ item.get('display_name')?.value }}</td>
-              <td>{{ item.get('order_no')?.value }}</td>
-              <td>{{ item.get('field_table')?.value }}</td>
-              <td>{{ getFieldTypeName(item.get('field_type_id')?.value) }}</td>
-              <td class="whitespace-nowrap">
-                <button type="button" class="mr-2" (click)="editLineItem(i)">
-                  <i class="fa-solid fa-edit"></i>
-                </button>
-                <button type="button" class="" (click)="removeItem(i)">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+      <div class="mt-2">
+        <div class="table-responsive">
+          <table class="w-full table-auto">
+            <thead>
+              <tr>
+                <th>{{ 'table_field_name' | translate }}</th>
+                <th>{{ 'table_display_name' | translate }}</th>
+                <th>{{ 'table_order_no' | translate }}</th>
+                <th>{{ 'table_field_table' | translate }}</th>
+                <th>{{ 'table_field_type' | translate }}</th>
+                <th>{{ 'table_action' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="items">
+              <tr *ngFor="let item of itemsControls; let i = index" [formGroupName]="i">
+                <td>{{ item.get('field_name')?.value }}</td>
+                <td>{{ item.get('display_name')?.value }}</td>
+                <td>{{ item.get('order_no')?.value }}</td>
+                <td>{{ item.get('field_table')?.value }}</td>
+                <td>{{ getFieldTypeName(item.get('field_type_id')?.value) }}</td>
+                <td class="whitespace-nowrap">
+                  <button type="button" class="mr-2" (click)="editLineItem(i)">
+                    <i class="fa-solid fa-edit"></i>
+                  </button>
+                  <button type="button" class="" (click)="removeItem(i)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel mt-10">
+    <!-- Form Section for Add/Edit -->
+    <div class="panel mb-5 border-2 border-solid border-indigo-600" id="import-line-query-add" *ngIf="selectedQuery">
+      <div class="flex flex-wrap justify-center">
+        <div class="text-md font-bold uppercase">
+          {{ editingQueryIndex !== -1 ? ('title_edit_import_template_line_query' | translate) : ('title_add_import_template_line_query' | translate) }}
+        </div>
+      </div>
+      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+      <div class="mt-5">
+        <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <!-- Basic Information Fields -->
+            <div class="mt-0">
+              <label for="raw_query" class="required-mark mb-2 block font-medium">{{ 'form_label_raw_query' | translate }}</label>
+              <textarea
+                id="raw_query"
+                type="text"
+                formControlName="raw_query"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('raw_query') }"
+              ></textarea>
+
+              <div *ngIf="isLineItemFieldInvalid('field_name')" class="invalid-feedback">{{ getLineItemErrorMessage('field_name') }}</div>
+            </div>
+
+            <div class="mt-0">
+              <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
+              <input
+                id="order_no"
+                type="number"
+                formControlName="order_no"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
+              />
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="mt-6 flex justify-end space-x-4">
+            <button type="button" class="btn btn-danger" (click)="cancelLineQueryEdit()">{{ 'cancel' | translate }}</button>
+            <button type="submit" class="btn btn-primary" [disabled]="lineQueryForm.invalid">
+              {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="panel" id="import-line-query-list">
+      <div class="mt-5 flex flex-wrap justify-between">
+        <div class="text-md font-bold uppercase">{{ 'title_import_template_line_queries' | translate }}</div>
+        <div class="relative inline-flex align-middle">
+          <button (click)="initNewLineQuery()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
+            <i class="fa-solid fa-plus"></i>&nbsp;{{ 'add_new' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+      <div class="mt-2">
+        <div class="table-responsive">
+          <table class="w-full table-auto">
+            <thead>
+              <tr>
+                <th>{{ 'table_raw_query' | translate }}</th>
+                <th>{{ 'table_order_no' | translate }}</th>
+                <th>{{ 'table_action' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="queries">
+              <tr *ngFor="let query of queriesControls; let i = index" [formGroupName]="i">
+                <td>{{ query.get('raw_query')?.value }}</td>
+
+                <td>{{ query.get('order_no')?.value }}</td>
+
+                <td class="whitespace-nowrap">
+                  <button type="button" class="mr-2" (click)="editQueryItem(i)">
+                    <i class="fa-solid fa-edit"></i>
+                  </button>
+                  <button type="button" class="" (click)="removeQuery(i)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
