@@ -21,6 +21,7 @@ import { EditorComponent } from 'ngx-monaco-editor-v2';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
+import { ClientDatatableComponent, TableConfig } from '../../components/client-datatable/client-datatable.component';
 
 export function viewMandatoryValidator(): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
@@ -31,6 +32,31 @@ export function viewMandatoryValidator(): ValidatorFn {
     return { viewMandatory: true }; // Invalid
   };
 }
+
+interface LineItem {
+  field_name: string;
+  display_name: string;
+  field_table: string;
+  order_no: number;
+  default_value: string;
+  check_reg_exp: string;
+  is_nullable: boolean;
+  is_unique: boolean;
+  is_foreign: boolean;
+  is_multiple: boolean;
+  is_enum: boolean;
+  enum_values: string;
+  foreign_table: string;
+  foreign_column: string;
+  foreign_can_create: boolean;
+  field_type_id: number;
+}
+
+interface QueryItem {
+  raw_query: string;
+  order_no: number;
+}
+
 @Component({
   selector: 'app-import-template',
   standalone: true,
@@ -45,6 +71,7 @@ export function viewMandatoryValidator(): ValidatorFn {
     IconXCircleComponent,
     IconPlusCircleComponent,
     ReactiveFormsModule,
+    ClientDatatableComponent,
   ],
   templateUrl: './import-template.component.html',
   styleUrl: './import-template.component.scss',
@@ -70,7 +97,7 @@ export class ImportTemplateComponent implements OnInit {
   submitted = false;
   commonConfig = commonConfig;
   existing_actions: string[] = [];
-  redirect_url: string = '';
+  redirect_url: string = 'import_template';
   rowsLength: number = 26;
 
   lineItemForm!: FormGroup;
@@ -85,6 +112,9 @@ export class ImportTemplateComponent implements OnInit {
   htmlEditorOptions = { ...this.editorOptions, language: 'html' };
   isDarkTheme = true; // Default theme
   @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
+
+  private _originalItems: any[] = [];
+  private _originalQueries: any[] = [];
 
   insert_json_schema: any = {
     // it will be removed
@@ -115,12 +145,68 @@ export class ImportTemplateComponent implements OnInit {
     },
   };
 
-  // wizard group properties
-  wizardGroups: any[] = [];
-  showWizardGroupMenu: boolean = false;
-  showWizardGroupModal: boolean = false;
-  newWizardGroupName: string = '';
-  wizardGroupForm!: FormGroup;
+  // Items Datatable Configuration
+  itemsTableConfig: TableConfig = {
+    columns: [
+      { key: 'field_name', label: 'Field Name', sortable: true },
+      { key: 'display_name', label: 'Display Name', sortable: true },
+      { key: 'field_table', label: 'Field Table', sortable: true },
+      { key: 'order_no', label: 'Order No', sortable: true },
+      { key: 'field_type_id', label: 'Field Type', sortable: true },
+      {
+        key: 'actions',
+        label: 'Actions',
+        type: 'button',
+        actions: [
+          {
+            icon: 'fa-solid fa-edit',
+            onClick: (item: any) => this.editLineItem(item),
+            class: ' btn-sm btn-outline-primary mr-2',
+            tooltip: 'Edit Item',
+          },
+          {
+            icon: 'fa-solid fa-trash',
+            onClick: (item: any) => this.removeItem(item),
+            class: ' btn-sm btn-outline-danger',
+            tooltip: 'Delete Item',
+          },
+        ],
+      },
+    ],
+    pageSizes: [5, 10, 25, 50],
+    defaultPageSize: 5,
+    searchable: true,
+  };
+
+  // Queries Datatable Configuration
+  queriesTableConfig: TableConfig = {
+    columns: [
+      { key: 'raw_query', label: 'Raw Query', sortable: true },
+      { key: 'order_no', label: 'Order No', sortable: true },
+      {
+        key: 'actions',
+        label: 'Actions',
+        type: 'button',
+        actions: [
+          {
+            icon: 'fa-solid fa-edit',
+            onClick: (item: any) => this.editQueryItem(item),
+            class: ' btn-outline-primary btn-sm mr-2',
+            tooltip: 'Edit Query',
+          },
+          {
+            icon: 'fa-solid fa-trash',
+            onClick: (item: any) => this.removeQuery(item),
+            class: ' btn-outline-danger btn-sm',
+            tooltip: 'Delete Query',
+          },
+        ],
+      },
+    ],
+    pageSizes: [5, 10, 25, 50],
+    defaultPageSize: 5,
+    searchable: true,
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -140,7 +226,7 @@ export class ImportTemplateComponent implements OnInit {
   ngOnInit() {
     this.id = this.route.snapshot.params['id'] || null;
     this.initForm();
-    this.constructRedirectUrl();
+    //this.constructRedirectUrl();
 
     // To load all the lookups
     this.field_types = this.commonConfig.field_types;
@@ -247,20 +333,31 @@ export class ImportTemplateComponent implements OnInit {
     });
   }
 
-  editQueryItem(index: number) {
-    this.editingQueryIndex = index;
-    const queriesArray = this.form.get('queries') as FormArray;
+  editQueryItem(index: any) {
+    console.log(index);
+    //this.editingQueryIndex = index;
+    this.selectedQuery = index;
+    this.editingQueryIndex = this.queriesData.findIndex((q) => q === index);
+    this.lineQueryForm.patchValue(index);
+    /*const queriesArray = this.form.get('queries') as FormArray;
     const query = queriesArray.at(index);
     this.selectedQuery = query.value;
-    this.lineQueryForm.patchValue(query.value);
+    this.lineQueryForm.patchValue(query.value);*/
   }
 
-  editLineItem(index: number) {
-    this.editingItemIndex = index;
-    const itemsArray = this.form.get('items') as FormArray;
+  editLineItem(index: any) {
+    console.log(index);
+    //this.editingItemIndex = index;
+    /* const itemsArray = this.form.get('items') as FormArray;
     const item = itemsArray.at(index);
     this.selectedItem = item.value;
-    this.lineItemForm.patchValue(item.value);
+    this.lineItemForm.patchValue(item.value);*/
+
+    /*this.selectedItem = index;
+    this.lineItemForm.patchValue(index);*/
+    this.selectedItem = index;
+    this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
+    this.lineItemForm.patchValue(index);
   }
 
   cancelLineItemEdit() {
@@ -475,6 +572,7 @@ export class ImportTemplateComponent implements OnInit {
           const items = this.form.get('items') as FormArray;
 
           if (entity.items && entity.items.length > 0) {
+            this._originalItems = [...entity.items];
             entity.items.forEach((item: any) => {
               items.push(
                 this.fb.group({
@@ -502,6 +600,7 @@ export class ImportTemplateComponent implements OnInit {
           const queries = this.form.get('queries') as FormArray;
 
           if (entity.queries && entity.queries.length > 0) {
+            this._originalQueries = [...entity.queries];
             entity.queries.forEach((query: any) => {
               queries.push(
                 this.fb.group({
@@ -782,5 +881,86 @@ export class ImportTemplateComponent implements OnInit {
       }
     }
     return '';
+  }
+
+  // Items Table Methods
+  get itemsData(): any[] {
+    return (this.form.get('items') as FormArray).controls.map((control) => control.value);
+  }
+
+  get queriesData(): any[] {
+    return (this.form.get('queries') as FormArray).controls.map((control) => control.value);
+  }
+
+  private createItemFormGroup(item: any) {
+    return this.fb.group({
+      field_name: [item.field_name, Validators.required],
+      display_name: [item.display_name, Validators.required],
+      order_no: [item.order_no, [Validators.required, Validators.min(0)]],
+      field_table: [item.field_table, Validators.required],
+      default_value: [item.default_value],
+      check_reg_exp: [item.check_reg_exp],
+      is_nullable: [item.is_nullable],
+      is_unique: [item.is_unique],
+      is_foreign: [item.is_foreign],
+      is_multiple: [item.is_multiple],
+      is_enum: [item.is_enum],
+      enum_values: [item.enum_values],
+      foreign_table: [item.foreign_table],
+      foreign_column: [item.foreign_column],
+      foreign_can_create: [item.foreign_can_create],
+      field_type_id: [item.field_type_id, Validators.required],
+    });
+  }
+
+  private createQueryFormGroup(query: any) {
+    return this.fb.group({
+      raw_query: [query.raw_query, Validators.required],
+      order_no: [query.order_no, [Validators.required, Validators.min(0)]],
+    });
+  }
+
+  onItemsDataChange(data: any[]) {
+    const items = this.form.get('items') as FormArray;
+    items.clear();
+
+    // If data is empty or undefined, use original data
+    const itemsToUse = !data || data.length === 0 ? this._originalItems : data;
+
+    itemsToUse.forEach((item) => {
+      items.push(this.createItemFormGroup(item));
+    });
+  }
+
+  onQueriesDataChange(data: any[]) {
+    const queries = this.form.get('queries') as FormArray;
+    queries.clear();
+
+    // If data is empty or undefined, use original data
+    const queriesToUse = !data || data.length === 0 ? this._originalQueries : data;
+
+    queriesToUse.forEach((query) => {
+      queries.push(this.createQueryFormGroup(query));
+    });
+  }
+
+  onItemsSortChange(sort: { column: string; direction: 'asc' | 'desc' }) {
+    const items = [...this.itemsData];
+    items.sort((a, b) => {
+      const aVal = a[sort.column];
+      const bVal = b[sort.column];
+      return sort.direction === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
+    });
+    this.onItemsDataChange(items);
+  }
+
+  onQueriesSortChange(sort: { column: string; direction: 'asc' | 'desc' }) {
+    const queries = [...this.queriesData];
+    queries.sort((a, b) => {
+      const aVal = a[sort.column];
+      const bVal = b[sort.column];
+      return sort.direction === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
+    });
+    this.onQueriesDataChange(queries);
   }
 }

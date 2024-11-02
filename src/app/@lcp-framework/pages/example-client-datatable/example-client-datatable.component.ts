@@ -161,13 +161,13 @@ export class ExampleClientDatatableComponent implements OnInit {
           {
             icon: 'fa-solid fa-edit',
             onClick: (item: any) => this.editItem(item),
-            class: 'btn btn-outline-primary mr-2',
+            class: 'btn-sm btn-outline-primary mr-2',
             tooltip: 'Edit Item',
           },
           {
             icon: 'fa-solid fa-trash',
             onClick: (item: any) => this.deleteItem(item),
-            class: 'btn btn-outline-danger',
+            class: 'btn-sm btn-outline-danger',
             tooltip: 'Delete Item',
           },
         ],

@@ -48,6 +48,7 @@ export class ClientDatatableComponent implements OnInit {
   sortDirection: 'asc' | 'desc' = 'asc';
 
   private _formArray: FormArray | null = null;
+  private _originalData: any[] = [];
 
   constructor() {}
 
@@ -60,14 +61,22 @@ export class ClientDatatableComponent implements OnInit {
     if (!this.config.columns || this.config.columns.length === 0) {
       throw new Error('Datatable configuration must include at least one column');
     }
+
+    // Store original data
+    if (this.data) {
+      this._originalData = [...this.data];
+      //console.log(this._originalData);
+    }
   }
 
   get filteredData(): any[] {
     let filtered = [...this.data];
 
-    if (this.searchQuery) {
-      const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter((item) => Object.values(item).some((val) => val?.toString().toLowerCase().includes(query)));
+    if (this.searchQuery?.trim()) {
+      const query = this.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((item) =>
+        Object.values(item).some((val) => val !== null && val !== undefined && val.toString().toLowerCase().includes(query))
+      );
     }
 
     if (this.sortColumn) {
@@ -90,6 +99,18 @@ export class ClientDatatableComponent implements OnInit {
     return filtered;
   }
 
+  onSearch(query: string): void {
+    this.searchQuery = query;
+    this.currentPage = 1;
+
+    // When search is cleared, emit the original data
+    if (!query?.trim()) {
+      this.dataChange.emit(this._originalData);
+    } else {
+      this.dataChange.emit(this.filteredData);
+    }
+  }
+
   get paginatedData(): any[] {
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
@@ -108,11 +129,25 @@ export class ClientDatatableComponent implements OnInit {
     return this.filteredData.length === 0 ? 0 : Math.min(this.startIndex + this.pageSize, this.filteredData.length);
   }
 
-  onSearch(query: string): void {
+  /*onSearch(query: string): void {
     this.searchQuery = query;
     this.currentPage = 1;
     this.dataChange.emit(this.filteredData);
-  }
+  }*/
+
+  /*onSearch(query: string): void {
+    this.searchQuery = query;
+    this.currentPage = 1;
+    console.log(query);
+    // When search is cleared, emit the original data
+    if (!query?.trim()) {
+      this.dataChange.emit([]);
+    }
+    // Otherwise, emit the filtered data
+    else {
+      this.dataChange.emit(this.filteredData);
+    }
+  }*/
 
   onSort(column: string): void {
     if (this.sortColumn === column) {

@@ -280,39 +280,12 @@
 
       <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
 
-      <div class="mt-2">
-        <div class="table-responsive">
-          <table class="w-full table-auto">
-            <thead>
-              <tr>
-                <th>{{ 'table_field_name' | translate }}</th>
-                <th>{{ 'table_display_name' | translate }}</th>
-                <th>{{ 'table_order_no' | translate }}</th>
-                <th>{{ 'table_field_table' | translate }}</th>
-                <th>{{ 'table_field_type' | translate }}</th>
-                <th>{{ 'table_action' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody formArrayName="items">
-              <tr *ngFor="let item of itemsControls; let i = index" [formGroupName]="i">
-                <td>{{ item.get('field_name')?.value }}</td>
-                <td>{{ item.get('display_name')?.value }}</td>
-                <td>{{ item.get('order_no')?.value }}</td>
-                <td>{{ item.get('field_table')?.value }}</td>
-                <td>{{ getFieldTypeName(item.get('field_type_id')?.value) }}</td>
-                <td class="whitespace-nowrap">
-                  <button type="button" class="mr-2" (click)="editLineItem(i)">
-                    <i class="fa-solid fa-edit"></i>
-                  </button>
-                  <button type="button" class="" (click)="removeItem(i)">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <app-client-datatable
+        [data]="itemsData"
+        [config]="itemsTableConfig"
+        (dataChange)="onItemsDataChange($event)"
+        (sortChange)="onItemsSortChange($event)"
+      ></app-client-datatable>
     </div>
   </div>
 
@@ -379,35 +352,12 @@
 
       <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
 
-      <div class="mt-2">
-        <div class="table-responsive">
-          <table class="w-full table-auto">
-            <thead>
-              <tr>
-                <th>{{ 'table_raw_query' | translate }}</th>
-                <th>{{ 'table_order_no' | translate }}</th>
-                <th>{{ 'table_action' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody formArrayName="queries">
-              <tr *ngFor="let query of queriesControls; let i = index" [formGroupName]="i">
-                <td>{{ query.get('raw_query')?.value }}</td>
-
-                <td>{{ query.get('order_no')?.value }}</td>
-
-                <td class="whitespace-nowrap">
-                  <button type="button" class="mr-2" (click)="editQueryItem(i)">
-                    <i class="fa-solid fa-edit"></i>
-                  </button>
-                  <button type="button" class="" (click)="removeQuery(i)">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <app-client-datatable
+        [data]="queriesData"
+        [config]="queriesTableConfig"
+        (dataChange)="onQueriesDataChange($event)"
+        (sortChange)="onQueriesSortChange($event)"
+      ></app-client-datatable>
     </div>
   </div>
 </div>
