@@ -3,15 +3,9 @@
     <div class="p-6">
       <h2 class="mb-4 text-xl font-semibold">Example Items</h2>
 
-      <app-client-datatable
-        [data]="tableData"
-        [config]="tableConfig"
-        (dataChange)="onDataChange($event)"
-        (sortChange)="onSortChange($event)"
-        (pageChange)="onPageChange($event)"
-        (pageSizeChange)="onPageSizeChange($event)"
-        (searchChange)="onSearch($event)"
-      ></app-client-datatable>
+      <app-client-datatable [data]="tableData" [config]="tableConfig" (dataChange)="onDataChange($event)"
+        (sortChange)="onSortChange($event)" (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)" (searchChange)="onSearch($event)"></app-client-datatable>
     </div>
   </div>
 </div>

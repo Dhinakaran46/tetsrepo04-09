@@ -216,4 +216,10 @@ export class ClientDatatableComponent implements OnInit {
       this.onPageChange(Math.floor((this.totalPages + this.currentPage) / 2));
     }
   }
+
+  getMessages(rowData: any, key: string): string {
+    const errorMessages = rowData.errors ? rowData.errors[key]?.map((err: any) => err.message) || [] : [];
+    const warningMessages = rowData.warnings ? rowData.warnings[key]?.map((warn: any) => warn.message) || [] : [];
+    return [...errorMessages, ...warningMessages].join('\n');
+  }
 }
