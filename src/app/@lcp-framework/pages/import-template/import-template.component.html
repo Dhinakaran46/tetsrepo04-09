@@ -112,17 +112,51 @@
     </div>
   </div>
 
-  <div class="panel mt-10">
-    <!-- Form Section for Add/Edit -->
-    <div class="panel mb-5 border-2 border-solid border-indigo-600" id="import-line-item-add" *ngIf="selectedItem">
-      <div class="flex flex-wrap justify-center">
-        <div class="text-md font-bold uppercase">
-          {{ editingItemIndex !== -1 ? ('title_edit_import_template_line_item' | translate) : ('title_add_import_template_line_item' | translate) }}
+  <div class="panel mt-5">
+    <app-client-datatable
+      [data]="itemsData"
+      [config]="itemsTableConfig"
+      (dataChange)="onItemsDataChange($event)"
+      (sortChange)="onItemsSortChange($event)"
+    ></app-client-datatable>
+    <!-- </div> -->
+  </div>
+
+  <div class="panel mt-5">
+    <!-- Table Section -->
+
+    <app-client-datatable
+      [data]="queriesData"
+      [config]="queriesTableConfig"
+      (dataChange)="onQueriesDataChange($event)"
+      (sortChange)="onQueriesSortChange($event)"
+    ></app-client-datatable>
+  </div>
+</div>
+
+<!-- Line Items Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div class="relative max-h-[90vh] w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium">
+            {{ editingItemIndex !== -1 ? ('title_edit_import_template_line_item' | translate) : ('title_add_import_template_line_item' | translate) }}
+          </h3>
+          <button type="button" class="text-gray-400 hover:text-gray-900" (click)="cancelLineItemEdit()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
       </div>
-      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
 
-      <div class="mt-5">
+      <!-- Modal Content -->
+      <div class="px-6 py-4">
         <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <!-- Basic Information Fields -->
@@ -266,56 +300,46 @@
         </form>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- Table Section -->
-    <div class="panel" id="import-line-item-list">
-      <div class="mt-5 flex flex-wrap justify-between">
-        <div class="text-md font-bold uppercase">{{ 'title_import_template_line_items' | translate }}</div>
-        <div class="relative inline-flex align-middle">
-          <button (click)="initNewLineItem()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
-            <i class="fa-solid fa-plus"></i>&nbsp;{{ 'add_new' | translate }}
+<!-- Line Queries Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isQueryModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div class="relative max-h-[90vh] w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium">
+            {{ editingQueryIndex !== -1 ? ('title_edit_import_template_line_query' | translate) : ('title_add_import_template_line_query' | translate) }}
+          </h3>
+          <button type="button" class="text-gray-400 hover:text-gray-900" (click)="cancelLineQueryEdit()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
 
-      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
-
-      <app-client-datatable
-        [data]="itemsData"
-        [config]="itemsTableConfig"
-        (dataChange)="onItemsDataChange($event)"
-        (sortChange)="onItemsSortChange($event)"
-      ></app-client-datatable>
-    </div>
-  </div>
-
-  <div class="panel mt-10">
-    <!-- Form Section for Add/Edit -->
-    <div class="panel mb-5 border-2 border-solid border-indigo-600" id="import-line-query-add" *ngIf="selectedQuery">
-      <div class="flex flex-wrap justify-center">
-        <div class="text-md font-bold uppercase">
-          {{ editingQueryIndex !== -1 ? ('title_edit_import_template_line_query' | translate) : ('title_add_import_template_line_query' | translate) }}
-        </div>
-      </div>
-      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
-
-      <div class="mt-5">
+      <!-- Modal Content -->
+      <div class="px-6 py-4">
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <!-- Basic Information Fields -->
+
             <div class="mt-0">
-              <label for="raw_query" class="required-mark mb-2 block font-medium">{{ 'form_label_raw_query' | translate }}</label>
-              <textarea
-                id="raw_query"
+              <label for="query_name" class="required-mark mb-2 block font-medium">{{ 'form_label_query_name' | translate }}</label>
+              <input
+                id="query_name"
                 type="text"
-                formControlName="raw_query"
+                formControlName="query_name"
                 class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('raw_query') }"
-              ></textarea>
-
-              <div *ngIf="isLineItemFieldInvalid('field_name')" class="invalid-feedback">{{ getLineItemErrorMessage('field_name') }}</div>
+                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('query_name') }"
+              />
             </div>
-
             <div class="mt-0">
               <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
               <input
@@ -325,6 +349,25 @@
                 class="form-input w-full"
                 [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
               />
+            </div>
+
+            <div class="flex items-center">
+              <input type="checkbox" id="allow_multiple" formControlName="allow_multiple" class="form-checkbox" />
+              <label for="allow_multiple" class="ml-2">{{ 'form_label_allow_multiple' | translate }}</label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-1">
+            <div class="mt-0">
+              <label for="query_string" class="required-mark mb-2 block font-medium">{{ 'form_label_query_string' | translate }}</label>
+              <textarea
+                id="query_string"
+                type="text"
+                formControlName="query_string"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('query_string') }"
+              ></textarea>
+
+              <div *ngIf="isLineItemFieldInvalid('query_string')" class="invalid-feedback">{{ getLineItemErrorMessage('query_string') }}</div>
             </div>
           </div>
 
@@ -337,27 +380,6 @@
           </div>
         </form>
       </div>
-    </div>
-
-    <!-- Table Section -->
-    <div class="panel" id="import-line-query-list">
-      <div class="mt-5 flex flex-wrap justify-between">
-        <div class="text-md font-bold uppercase">{{ 'title_import_template_line_queries' | translate }}</div>
-        <div class="relative inline-flex align-middle">
-          <button (click)="initNewLineQuery()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
-            <i class="fa-solid fa-plus"></i>&nbsp;{{ 'add_new' | translate }}
-          </button>
-        </div>
-      </div>
-
-      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
-
-      <app-client-datatable
-        [data]="queriesData"
-        [config]="queriesTableConfig"
-        (dataChange)="onQueriesDataChange($event)"
-        (sortChange)="onQueriesSortChange($event)"
-      ></app-client-datatable>
     </div>
   </div>
 </div>

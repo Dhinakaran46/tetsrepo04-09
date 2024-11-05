@@ -176,6 +176,13 @@ export class ExampleClientDatatableComponent implements OnInit {
     pageSizes: [5, 10, 25, 50],
     defaultPageSize: 5,
     searchable: true,
+    headerConfig: {
+      title: 'Example Items',
+      showHeader: true,
+      enableFilter: true,
+      enableColumnSelector: true,
+      enableExport: true,
+    },
   };
 
   constructor(private toastr: ToastrService) {}

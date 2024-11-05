@@ -53,8 +53,10 @@ interface LineItem {
 }
 
 interface QueryItem {
-  raw_query: string;
+  query_string: string;
   order_no: number;
+  query_name: string;
+  allow_multiple: boolean;
 }
 
 @Component({
@@ -145,14 +147,18 @@ export class ImportTemplateComponent implements OnInit {
     },
   };
 
+  // Add modal state variables
+  isItemModalOpen = false;
+  isQueryModalOpen = false;
+
   // Items Datatable Configuration
   itemsTableConfig: TableConfig = {
     columns: [
-      { key: 'field_name', label: 'Field Name', sortable: true },
-      { key: 'display_name', label: 'Display Name', sortable: true },
-      { key: 'field_table', label: 'Field Table', sortable: true },
-      { key: 'order_no', label: 'Order No', sortable: true },
-      { key: 'field_type_id', label: 'Field Type', sortable: true },
+      { key: 'field_name', label: 'Field Name', sortable: true, searchable: true },
+      { key: 'display_name', label: 'Display Name', sortable: true, searchable: true },
+      { key: 'field_table', label: 'Field Table', sortable: true, searchable: true },
+      { key: 'order_no', label: 'Order No', sortable: true, searchable: true },
+      { key: 'field_type_id', label: 'Field Type', sortable: true, searchable: true },
       {
         key: 'actions',
         label: 'Actions',
@@ -176,13 +182,32 @@ export class ImportTemplateComponent implements OnInit {
     pageSizes: [5, 10, 25, 50],
     defaultPageSize: 5,
     searchable: true,
+    headerConfig: {
+      title: 'Import Template Line Items',
+      showHeader: true,
+      addButton: {
+        show: true,
+        label: 'Add New',
+        icon: 'fa-solid fa-plus',
+        onClick: () => this.initNewLineItem(),
+        disabled: false,
+        class:
+          'btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark',
+      },
+      enableFilter: true,
+      enableColumnSelector: true,
+      enableExport: true,
+    },
   };
 
   // Queries Datatable Configuration
   queriesTableConfig: TableConfig = {
     columns: [
-      { key: 'raw_query', label: 'Raw Query', sortable: true },
-      { key: 'order_no', label: 'Order No', sortable: true },
+      { key: 'query_name', label: 'Query Name', sortable: true, searchable: true },
+
+      { key: 'order_no', label: 'Order No', sortable: true, searchable: true },
+      { key: 'allow_multiple', label: 'Allow Multiple', sortable: true, searchable: true },
+      { key: 'query_string', label: 'Query String', sortable: true, searchable: true },
       {
         key: 'actions',
         label: 'Actions',
@@ -206,6 +231,22 @@ export class ImportTemplateComponent implements OnInit {
     pageSizes: [5, 10, 25, 50],
     defaultPageSize: 5,
     searchable: true,
+    headerConfig: {
+      title: 'Import Template Line Queries',
+      showHeader: true,
+      addButton: {
+        show: true,
+        label: 'Add New',
+        icon: 'fa-solid fa-plus',
+        onClick: () => this.initNewLineQuery(),
+        disabled: false,
+        class:
+          'btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark',
+      },
+      enableFilter: true,
+      enableColumnSelector: true,
+      enableExport: true,
+    },
   };
 
   constructor(
@@ -274,19 +315,21 @@ export class ImportTemplateComponent implements OnInit {
     });
 
     this.addFormArraySubscriptions();
-    if (!this.id) {
+    /*if (!this.id) {
       this.initNewLineItem();
-    }
+    }*/
   }
   initLineQueryForm() {
     this.lineQueryForm = this.fb.group({
-      raw_query: ['', [Validators.required]],
+      query_string: ['', [Validators.required]],
       order_no: ['', [Validators.required, Validators.min(0)]],
+      query_name: ['', [Validators.required, Validators.min(0)]],
+      allow_multiple: [false],
     });
 
-    if (!this.id) {
+    /*if (!this.id) {
       this.initNewLineQuery();
-    }
+    }*/
   }
 
   addFormArraySubscriptions() {
@@ -323,14 +366,18 @@ export class ImportTemplateComponent implements OnInit {
       is_enum: false,
       foreign_can_create: false,
     });
+    this.isItemModalOpen = true;
   }
   initNewLineQuery() {
     this.editingQueryIndex = -1;
     this.selectedQuery = {};
     this.lineQueryForm.reset({
-      raw_query: '',
+      query_string: '',
       order_no: '',
+      query_name: '',
+      allow_multiple: false,
     });
+    this.isQueryModalOpen = true;
   }
 
   editQueryItem(index: any) {
@@ -343,6 +390,7 @@ export class ImportTemplateComponent implements OnInit {
     const query = queriesArray.at(index);
     this.selectedQuery = query.value;
     this.lineQueryForm.patchValue(query.value);*/
+    this.isQueryModalOpen = true;
   }
 
   editLineItem(index: any) {
@@ -358,18 +406,21 @@ export class ImportTemplateComponent implements OnInit {
     this.selectedItem = index;
     this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
     this.lineItemForm.patchValue(index);
+    this.isItemModalOpen = true;
   }
 
   cancelLineItemEdit() {
     this.selectedItem = null;
     this.editingItemIndex = -1;
     this.lineItemForm.reset();
+    this.isItemModalOpen = false;
   }
 
   cancelLineQueryEdit() {
     this.selectedQuery = null;
     this.editingQueryIndex = -1;
     this.lineQueryForm.reset();
+    this.isQueryModalOpen = false;
   }
 
   onLineItemSubmit() {
@@ -385,6 +436,7 @@ export class ImportTemplateComponent implements OnInit {
         itemsArray.push(this.fb.group(formValue));
       }
 
+      this.isItemModalOpen = false;
       this.cancelLineItemEdit(); // Clear form after submission
     }
   }
@@ -402,6 +454,7 @@ export class ImportTemplateComponent implements OnInit {
         queriesArray.push(this.fb.group(formValue));
       }
 
+      this.isQueryModalOpen = false;
       this.cancelLineQueryEdit(); // Clear form after submission
     }
   }
@@ -537,7 +590,7 @@ export class ImportTemplateComponent implements OnInit {
           'items',
         ],
         [
-          "CASE WHEN COUNT(import_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('raw_query', import_template_queries.raw_query, 'order_no', import_template_queries.order_no))) END",
+          "CASE WHEN COUNT(import_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('query_string', import_template_queries.query_string,'query_name', import_template_queries.query_name,'allow_multiple', import_template_queries.allow_multiple, 'order_no', import_template_queries.order_no))) END",
           'queries',
         ],
       ],
@@ -604,8 +657,10 @@ export class ImportTemplateComponent implements OnInit {
             entity.queries.forEach((query: any) => {
               queries.push(
                 this.fb.group({
-                  raw_query: [query.raw_query, Validators.required],
+                  query_string: [query.query_string, Validators.required],
                   order_no: [query.order_no, [Validators.required, Validators.min(0)]],
+                  query_name: [query.query_name, Validators.required],
+                  allow_multiple: [query.allow_multiple ? 'Yes' : 'No'],
                 })
               );
             });
@@ -658,8 +713,10 @@ export class ImportTemplateComponent implements OnInit {
     if (formData.queries && formData.queries.length > 0) {
       const queries = formData.queries.map((query: any) => ({
         import_template_id: '@table1.id',
-        raw_query: query.raw_query,
+        query_string: query.query_string,
         order_no: query.order_no,
+        query_name: query.query_name,
+        allow_multiple: query.allow_multiple,
       }));
       this.insert_json_schema.data['table3'] = queries;
     }
@@ -713,8 +770,10 @@ export class ImportTemplateComponent implements OnInit {
     if (formData.queries && formData.queries.length > 0) {
       const queries = formData.queries.map((query: any) => ({
         import_template_id: '@table1.id',
-        raw_query: query.raw_query,
+        query_string: query.query_string,
         order_no: query.order_no,
+        query_name: query.query_name,
+        allow_multiple: query.allow_multiple,
       }));
 
       this.update_json_schema.data['table5'] = queries;
@@ -915,8 +974,10 @@ export class ImportTemplateComponent implements OnInit {
 
   private createQueryFormGroup(query: any) {
     return this.fb.group({
-      raw_query: [query.raw_query, Validators.required],
+      query_string: [query.query_string, Validators.required],
       order_no: [query.order_no, [Validators.required, Validators.min(0)]],
+      query_name: [query.query_name, Validators.required],
+      allow_multiple: [query.allow_multiple],
     });
   }
 
