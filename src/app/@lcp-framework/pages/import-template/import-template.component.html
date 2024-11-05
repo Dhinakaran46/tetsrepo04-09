@@ -309,10 +309,10 @@
   <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
 
   <!-- Modal Panel -->
-  <div class="flex min-h-screen items-center justify-center p-4">
-    <div class="relative max-h-[90vh] w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+  <div class="flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div class="relative max-h-[90vh] w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:max-w-2xl lg:max-w-4xl">
       <!-- Modal Header -->
-      <div class="border-b bg-gray-50 px-6 py-4">
+      <div class="border-b bg-gray-50 px-4 py-3 sm:px-6">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-medium">
             {{ editingQueryIndex !== -1 ? ('title_edit_import_template_line_query' | translate) : ('title_add_import_template_line_query' | translate) }}
@@ -324,12 +324,11 @@
         </div>
       </div>
 
-      <!-- Modal Content -->
-      <div class="px-6 py-4">
+      <!-- Modal Content with Scroll -->
+      <div class="overflow-y-auto px-4 py-5 sm:p-6" style="max-height: calc(90vh - 100px)">
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-3">
             <!-- Basic Information Fields -->
-
             <div class="mt-0">
               <label for="query_name" class="required-mark mb-2 block font-medium">{{ 'form_label_query_name' | translate }}</label>
               <input
@@ -356,23 +355,24 @@
               <label for="allow_multiple" class="ml-2">{{ 'form_label_allow_multiple' | translate }}</label>
             </div>
           </div>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-1">
+
+          <!-- Query String Field (Textarea with 20 rows) -->
+          <div class="grid grid-cols-1 gap-4">
             <div class="mt-0">
               <label for="query_string" class="required-mark mb-2 block font-medium">{{ 'form_label_query_string' | translate }}</label>
               <textarea
                 id="query_string"
-                type="text"
                 formControlName="query_string"
                 class="form-input w-full"
                 [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('query_string') }"
+                rows="17"
               ></textarea>
-
               <div *ngIf="isLineItemFieldInvalid('query_string')" class="invalid-feedback">{{ getLineItemErrorMessage('query_string') }}</div>
             </div>
           </div>
 
-          <!-- Form Actions -->
-          <div class="mt-6 flex justify-end space-x-4">
+          <!-- Form Actions (Add and Close buttons) -->
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white py-3">
             <button type="button" class="btn btn-danger" (click)="cancelLineQueryEdit()">{{ 'cancel' | translate }}</button>
             <button type="submit" class="btn btn-primary" [disabled]="lineQueryForm.invalid">
               {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}

@@ -230,19 +230,21 @@ export class ClientDatatableComponent implements OnInit {
     this.config.columns = this.config.columns.filter((col) => this.visibleColumns.has(col.key));
   }
 
+  isBoolean(value: any): boolean {
+    return typeof value === 'boolean';
+  }
+
   // Filtering data
   get filteredData(): any[] {
     let filtered = [...this.data];
-    console.log(filtered);
+
     if (this.searchQuery?.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter((item) => Array.from(this.visibleColumns).some((key) => item[key]?.toString().toLowerCase().includes(query)));
     }
-    console.log(filtered);
 
     if (this.filterConditions.length > 0) {
       filtered = filtered.filter((item) => {
-        console.log(item);
         const results = this.filterConditions.map((condition) => this.evaluateCondition(condition, item[condition.field]));
         return this.filterCondition ? results.every((res) => res) : results.some((res) => res);
       });
@@ -268,8 +270,6 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   private evaluateCondition(condition: FilterCondition, value: any): boolean {
-    console.log(condition);
-    console.log(value);
     if (!value) return false;
 
     const itemValue = value.toString().toLowerCase();

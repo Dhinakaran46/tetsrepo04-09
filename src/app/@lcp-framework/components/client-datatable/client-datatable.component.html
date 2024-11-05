@@ -215,6 +215,15 @@
               <ng-container *ngSwitchDefault>
                 {{ item[col.key] }}
               </ng-container>
+
+              <ng-container *ngSwitchDefault>
+                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
+                  {{ item[col.key] ? 'Yes' : 'No' }}
+                </ng-container>
+                <ng-template #defaultContent>
+                  {{ item[col.key] }}
+                </ng-template>
+              </ng-container>
             </ng-container>
           </td>
         </tr>
@@ -229,7 +238,12 @@
                 </button>
               </ng-container>
               <ng-container *ngSwitchDefault>
-                {{ item[col.key] }}
+                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
+                  {{ item[col.key] ? 'Yes' : 'No' }}
+                </ng-container>
+                <ng-template #defaultContent>
+                  {{ item[col.key] }}
+                </ng-template>
               </ng-container>
             </ng-container>
           </td>

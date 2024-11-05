@@ -660,7 +660,7 @@ export class ImportTemplateComponent implements OnInit {
                   query_string: [query.query_string, Validators.required],
                   order_no: [query.order_no, [Validators.required, Validators.min(0)]],
                   query_name: [query.query_name, Validators.required],
-                  allow_multiple: [query.allow_multiple ? 'Yes' : 'No'],
+                  allow_multiple: [query.allow_multiple],
                 })
               );
             });
@@ -701,10 +701,10 @@ export class ImportTemplateComponent implements OnInit {
         is_foreign: item.is_foreign,
         is_multiple: item.is_multiple,
         is_enum: item.is_enum,
-        enum_values: item.enum_values,
-        foreign_table: item.foreign_table,
-        foreign_column: item.foreign_column,
-        foreign_can_create: item.foreign_can_create,
+        enum_values: item.enum_values ? item.enum_values : null,
+        foreign_table: item.foreign_table ? item.foreign_table : null,
+        foreign_column: item.foreign_column ? item.foreign_column : null,
+        foreign_can_create: item.foreign_can_create ? item.foreign_can_create : null,
         field_type_id: item.field_type_id,
       }));
       this.insert_json_schema.data['table2'] = items;
@@ -758,10 +758,10 @@ export class ImportTemplateComponent implements OnInit {
         is_foreign: item.is_foreign,
         is_multiple: item.is_multiple,
         is_enum: item.is_enum,
-        enum_values: item.enum_values,
-        foreign_table: item.foreign_table,
-        foreign_column: item.foreign_column,
-        foreign_can_create: item.foreign_can_create,
+        enum_values: item.enum_values ? item.enum_values : null,
+        foreign_table: item.foreign_table ? item.foreign_table : null,
+        foreign_column: item.foreign_column ? item.foreign_column : null,
+        foreign_can_create: item.foreign_can_create ? item.foreign_can_create : false,
         field_type_id: item.field_type_id,
       }));
 
