@@ -121,7 +121,7 @@
               <button class="px-2 py-1 text-red-500" (click)="clearAllColumns()">{{ 'clear_all' | translate }}</button>
             </div>
           </li>
-          <ng-container *ngFor="let col of config.columns; index as i">
+          <ng-container *ngFor="let col of selectColumns; index as i">
             <li>
               <div class="flex items-center px-4 py-1">
                 <label [for]="'chk-' + i" class="mb-0 cursor-pointer">

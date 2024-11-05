@@ -154,11 +154,11 @@ export class ImportTemplateComponent implements OnInit {
   // Items Datatable Configuration
   itemsTableConfig: TableConfig = {
     columns: [
-      { key: 'field_name', label: 'Field Name', sortable: true },
-      { key: 'display_name', label: 'Display Name', sortable: true },
-      { key: 'field_table', label: 'Field Table', sortable: true },
-      { key: 'order_no', label: 'Order No', sortable: true },
-      { key: 'field_type_id', label: 'Field Type', sortable: true },
+      { key: 'field_name', label: 'Field Name', sortable: true, searchable: true },
+      { key: 'display_name', label: 'Display Name', sortable: true, searchable: true },
+      { key: 'field_table', label: 'Field Table', sortable: true, searchable: true },
+      { key: 'order_no', label: 'Order No', sortable: true, searchable: true },
+      { key: 'field_type_id', label: 'Field Type', sortable: true, searchable: true },
       {
         key: 'actions',
         label: 'Actions',
@@ -203,10 +203,11 @@ export class ImportTemplateComponent implements OnInit {
   // Queries Datatable Configuration
   queriesTableConfig: TableConfig = {
     columns: [
-      { key: 'query_string', label: 'Query String', sortable: true },
-      { key: 'query_name', label: 'Query Name', sortable: true },
-      { key: 'allow_multiple', label: 'Allow Multiple', sortable: true },
-      { key: 'order_no', label: 'Order No', sortable: true },
+      { key: 'query_name', label: 'Query Name', sortable: true, searchable: true },
+
+      { key: 'order_no', label: 'Order No', sortable: true, searchable: true },
+      { key: 'allow_multiple', label: 'Allow Multiple', sortable: true, searchable: true },
+      { key: 'query_string', label: 'Query String', sortable: true, searchable: true },
       {
         key: 'actions',
         label: 'Actions',
@@ -242,6 +243,9 @@ export class ImportTemplateComponent implements OnInit {
         class:
           'btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark',
       },
+      enableFilter: true,
+      enableColumnSelector: true,
+      enableExport: true,
     },
   };
 
@@ -656,7 +660,7 @@ export class ImportTemplateComponent implements OnInit {
                   query_string: [query.query_string, Validators.required],
                   order_no: [query.order_no, [Validators.required, Validators.min(0)]],
                   query_name: [query.query_name, Validators.required],
-                  allow_multiple: [query.allow_multiple],
+                  allow_multiple: [query.allow_multiple ? 'Yes' : 'No'],
                 })
               );
             });

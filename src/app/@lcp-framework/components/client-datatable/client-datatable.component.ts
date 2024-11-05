@@ -12,6 +12,7 @@ export interface Column {
   key: string;
   label: string;
   sortable?: boolean;
+  searchable?: boolean;
   type?: 'text' | 'button' | 'icon' | 'number' | 'date';
   placeholder?: string;
   min?: number;
@@ -143,8 +144,12 @@ export class ClientDatatableComponent implements OnInit {
     return this.filterConditions.filter((condition) => condition.value).length;
   }
 
+  get selectColumns(): Column[] {
+    return this.config.columns.filter((column) => column.sortable);
+  }
   get filteredColumns(): Column[] {
-    return this.config.columns;
+    //return this.config.columns;
+    return this.config.columns.filter((column) => column.searchable);
   }
 
   getPlaceholderForColumn(field: string): string {
@@ -207,7 +212,8 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   selectAllColumns() {
-    this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
+    // this.config.columns.filter((column) => column.sortable).forEach((col) => this.visibleColumns.add(col.key));
+    // this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
     this.updateVisibleColumns();
   }
 
@@ -227,14 +233,16 @@ export class ClientDatatableComponent implements OnInit {
   // Filtering data
   get filteredData(): any[] {
     let filtered = [...this.data];
-
+    console.log(filtered);
     if (this.searchQuery?.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter((item) => Array.from(this.visibleColumns).some((key) => item[key]?.toString().toLowerCase().includes(query)));
     }
+    console.log(filtered);
 
     if (this.filterConditions.length > 0) {
       filtered = filtered.filter((item) => {
+        console.log(item);
         const results = this.filterConditions.map((condition) => this.evaluateCondition(condition, item[condition.field]));
         return this.filterCondition ? results.every((res) => res) : results.some((res) => res);
       });
@@ -260,6 +268,8 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   private evaluateCondition(condition: FilterCondition, value: any): boolean {
+    console.log(condition);
+    console.log(value);
     if (!value) return false;
 
     const itemValue = value.toString().toLowerCase();

@@ -329,18 +329,6 @@
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <!-- Basic Information Fields -->
-            <div class="mt-0">
-              <label for="query_string" class="required-mark mb-2 block font-medium">{{ 'form_label_query_string' | translate }}</label>
-              <textarea
-                id="query_string"
-                type="text"
-                formControlName="query_string"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('query_string') }"
-              ></textarea>
-
-              <div *ngIf="isLineItemFieldInvalid('query_string')" class="invalid-feedback">{{ getLineItemErrorMessage('query_string') }}</div>
-            </div>
 
             <div class="mt-0">
               <label for="query_name" class="required-mark mb-2 block font-medium">{{ 'form_label_query_name' | translate }}</label>
@@ -352,12 +340,6 @@
                 [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('query_name') }"
               />
             </div>
-
-            <div class="flex items-center">
-              <input type="checkbox" id="allow_multiple" formControlName="allow_multiple" class="form-checkbox" />
-              <label for="allow_multiple" class="ml-2">{{ 'form_label_allow_multiple' | translate }}</label>
-            </div>
-
             <div class="mt-0">
               <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
               <input
@@ -367,6 +349,25 @@
                 class="form-input w-full"
                 [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
               />
+            </div>
+
+            <div class="flex items-center">
+              <input type="checkbox" id="allow_multiple" formControlName="allow_multiple" class="form-checkbox" />
+              <label for="allow_multiple" class="ml-2">{{ 'form_label_allow_multiple' | translate }}</label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-1">
+            <div class="mt-0">
+              <label for="query_string" class="required-mark mb-2 block font-medium">{{ 'form_label_query_string' | translate }}</label>
+              <textarea
+                id="query_string"
+                type="text"
+                formControlName="query_string"
+                class="form-input w-full"
+                [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('query_string') }"
+              ></textarea>
+
+              <div *ngIf="isLineItemFieldInvalid('query_string')" class="invalid-feedback">{{ getLineItemErrorMessage('query_string') }}</div>
             </div>
           </div>
 
