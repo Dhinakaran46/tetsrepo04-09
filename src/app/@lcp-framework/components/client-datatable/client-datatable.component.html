@@ -230,7 +230,15 @@
       </tbody>
       <tbody *ngIf="!formGroup">
         <tr *ngFor="let item of paginatedData">
-          <td *ngFor="let col of config.columns" class="max-w-150 truncate whitespace-nowrap">
+          <td
+            *ngFor="let col of config.columns"
+            class="max-w-150 truncate whitespace-nowrap"
+            [ngClass]="{
+              'bg-red-200 text-red-600': item.errors && item.errors[col.key]?.length > 0,
+              'bg-orange-200 text-orange-600': item.warnings && item.warnings[col.key]?.length > 0
+            }"
+            [title]="getMessages(item, col.key)"
+          >
             <ng-container [ngSwitch]="col.type">
               <ng-container *ngSwitchCase="'button'">
                 <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">

@@ -234,6 +234,12 @@ export class ClientDatatableComponent implements OnInit {
     return typeof value === 'boolean';
   }
 
+  getMessages(rowData: any, key: string): string {
+    const errorMessages = rowData.errors ? rowData.errors[key]?.map((err: any) => err.message) || [] : [];
+    const warningMessages = rowData.warnings ? rowData.warnings[key]?.map((warn: any) => warn.message) || [] : [];
+    return [...errorMessages, ...warningMessages].join('\n');
+  }
+
   // Filtering data
   get filteredData(): any[] {
     let filtered = [...this.data];
