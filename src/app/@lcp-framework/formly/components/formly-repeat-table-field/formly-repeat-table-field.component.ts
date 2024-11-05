@@ -117,7 +117,8 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
 
     // Update the model
     if (this.field.parent && this.field.parent.model) {
-      this.field.parent.model.document_transfer_line_items = this.formArray.value;
+      const key = this.field.key;
+      this.field.parent.model[`${key}`] = this.formArray.value;
     }
 
     // Reset the form fields after saving
@@ -141,7 +142,8 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     this.resetRow();
     this.formArray.removeAt(index);
     if (this.field.parent && this.field.parent.model) {
-      this.field.parent.model.document_transfer_line_items = this.formArray.value;
+      const key = this.field.key;
+      this.field.parent.model[`${key}`] = this.formArray.value;
     }
   }
 
