@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
 import { ImportConfirmDeactivate } from '../../guards/impotrt-confirm-deactivate.guard';
+import { ClientDatatableComponent } from '../../components/client-datatable/client-datatable.component';
 
 interface HeaderDetails {
   id: number;
@@ -85,7 +86,7 @@ interface EntityListDataResponce extends ApiResponce {
 @Component({
   selector: 'app-import-master',
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule],
+  imports: [CommonSharedModule, ReactiveFormsModule, ClientDatatableComponent],
   templateUrl: './import-master.component.html',
   styleUrls: ['./import-master.component.scss'],
 })
@@ -99,6 +100,12 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   fileHeaders: string[] = [];
   fileUploadLog: { uuid: string; id: number } | null = null;
   sheet_data: SheetData | null = null;
+
+  tableConfig: any = {
+    pageSizes: [5, 10, 25, 50],
+    defaultPageSize: 5,
+    searchable: true,
+  };
 
   constructor(
     public translate: TranslateService,
@@ -259,9 +266,19 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     }
   }
 
-  getMessages(rowData: RowData, key: string): string {
-    const errorMessages = rowData.errors[key]?.map((err) => err.message) || [];
-    const warningMessages = rowData.warnings[key]?.map((warn) => warn.message) || [];
-    return [...errorMessages, ...warningMessages].join('\n');
+  getSheetDatas(): any {
+    return this.sheet_data?.row_datas.map((row) => row.columns || {});
+  }
+
+  getSheetHeader() {
+    const headers: any = this.sheet_data?.header_details;
+    const columns: any = Object.entries(headers)
+      .sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no) // Sort by `order_no`
+      .map(([key, header]: [any, any]) => ({
+        key: key, // headers key
+        label: header.display_name, // headers.display_name
+        sortable: true, // assuming all columns are sortable; adjust if needed
+      }));
+    return { ...this.tableConfig, columns };
   }
 }

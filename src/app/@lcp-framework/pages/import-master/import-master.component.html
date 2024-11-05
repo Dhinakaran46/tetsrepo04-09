@@ -79,6 +79,7 @@
                         <ul
                           class="flex space-x-3 rtl:space-x-reverse dark:text-[#d0d2d6] font-semibold list-inside list-disc">
                           <!-- <ul class="list-inside list-disc space-y-3 font-semibold"> -->
+                          <li *ngIf="filedData.default_value" class="mb-1">deafult: {{filedData.default_value}}</li>
                           <li *ngIf="!filedData.is_nullable && !filedData.default_value" class="mb-1">required</li>
                           <li *ngIf="filedData.is_unique" class="mb-1">unique</li>
                         </ul>
@@ -99,24 +100,10 @@
 
           <div *ngIf="section.toLowerCase() === 'section3'">
             <h4 class="mb-4 text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
-            <div class="mb-12">
-              <table class="table" *ngIf="sheet_data && sheet_data.header_details">
-                <thead>
-                  <tr>
-                    <th *ngFor="let header of sheet_data.header_details | keyvalue">{{ header.value.display_name }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row_data of sheet_data.row_datas">
-                    <td *ngFor="let header of sheet_data.header_details | keyvalue" [ngClass]="{
-                        'bg-red-200 text-red-600': row_data.errors[header.key].length > 0,
-                        'bg-orange-200 text-orange-600': row_data.warnings[header.key].length > 0
-                      }" [title]="getMessages(row_data, header.key)">
-                      {{ row_data.columns[header.key] ?? '' }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="mb-12" *ngIf="sheet_data && sheet_data.header_details">
+              <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
+              <button type="button" class="btn btn-primary !mt-6">Import</button>
+              <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6">Back</button>
             </div>
           </div>
 

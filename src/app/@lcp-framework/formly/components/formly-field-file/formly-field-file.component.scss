@@ -167,4 +167,19 @@
     left: auto;
     right: -6px;
   }
+
+  .has-error .form-input.formly-file {
+    --tw-border-opacity: 1;
+    border-color: inherit;
+    background-color: inherit;
+    --tw-text-opacity: 1;
+    color: inherit;
+  }
+  .has-error .form-input.formly-file:invalid {
+    --tw-border-opacity: 1;
+    border-color: rgb(231 81 90 / var(--tw-border-opacity));
+    background-color: rgb(231 81 90 / 0.08);
+    --tw-text-opacity: 1;
+    color: rgb(231 81 90 / var(--tw-text-opacity));
+  }
 }
