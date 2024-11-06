@@ -210,9 +210,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     const group: { [key: string]: any } = {};
     fieldOptions.forEach((fieldOption) => {
       if (fieldOption.default_value || fieldOption.is_nullable) {
-        group[`${fieldOption.field_table}.${fieldOption.field_name}`] = [''];
+        group[`${fieldOption.field_table}-${fieldOption.field_name}`] = [''];
       } else {
-        group[`${fieldOption.field_table}.${fieldOption.field_name}`] = ['', Validators.required];
+        group[`${fieldOption.field_table}-${fieldOption.field_name}`] = ['', Validators.required];
       }
     });
     this.fieldsForm = this.fb.group(group);
@@ -267,7 +267,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getSheetDatas(): any {
-    return this.sheet_data?.row_datas.map((row) => row.columns || {});
+    return this.sheet_data?.row_datas.map((row: any) => {
+      return { ...row.columns, errors: row.errors, warnings: row.warnings };
+    });
   }
 
   getSheetHeader() {
@@ -280,5 +282,24 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         sortable: true, // assuming all columns are sortable; adjust if needed
       }));
     return { ...this.tableConfig, columns };
+  }
+
+  importTemplateDetail() {
+    const sheet_data: any = this.sheet_data;
+    const isInValid = sheet_data.row_datas?.some((row: any) => row.error === true);
+    if (!sheet_data?.row_datas?.length || isInValid) {
+      this.toastr.error('Invalid sheet data please fix the errors befor continue.');
+    } else {
+      this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, sheet_data.row_datas).subscribe(
+        (response: ApiResponce) => {
+          console.log(response);
+        },
+        (error: any) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+        }
+      );
+    }
   }
 }
