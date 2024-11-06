@@ -81,4 +81,8 @@ export class GridApiService {
   deleteFileByUuid(uuid: any): Observable<any> {
     return this.http.delete(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplatedeletefile}/${uuid}`);
   }
+
+  importTemplateDetail(template_uuid: any, file_uuid: any, data: any): Observable<any> {
+    return this.http.put(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplateuploaddata}/${template_uuid}/${file_uuid}`, data);
+  }
 }
