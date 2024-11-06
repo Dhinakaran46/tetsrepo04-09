@@ -117,166 +117,283 @@
 <!-- Line Items Modal -->
 <div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">
   <!-- Modal Backdrop -->
-  <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
 
   <!-- Modal Panel -->
-  <div class="flex min-h-screen items-center justify-center p-4">
-    <div class="relative max-h-[90vh] w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
       <!-- Modal Header -->
-      <div class="border-b bg-gray-50 px-6 py-4">
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium">
+          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
             {{ editingItemIndex !== -1 ? ('title_edit_import_template_line_item' | translate) : ('title_add_import_template_line_item' | translate) }}
           </h3>
-          <button type="button" class="text-gray-400 hover:text-gray-900" (click)="cancelLineItemEdit()">
+          <button
+            type="button"
+            class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
+            (click)="cancelLineItemEdit()"
+          >
             <span class="sr-only">Close</span>
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
 
-      <!-- Modal Content -->
-      <div class="px-6 py-4">
-        <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <!-- Basic Information Fields -->
-            <div class="mt-0">
-              <label for="field_name" class="required-mark mb-2 block font-medium">{{ 'form_label_field_name' | translate }}</label>
-              <input
-                id="field_name"
-                type="text"
-                formControlName="field_name"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_name') }"
-              />
-              <div *ngIf="isLineItemFieldInvalid('field_name')" class="invalid-feedback">{{ getLineItemErrorMessage('field_name') }}</div>
-            </div>
-
-            <div class="mt-0">
-              <label for="display_name" class="required-mark mb-2 block font-medium">{{ 'form_label_display_name' | translate }}</label>
-              <input
-                id="display_name"
-                type="text"
-                formControlName="display_name"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('display_name') }"
-              />
-            </div>
-
-            <div class="mt-0">
-              <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
-              <input
-                id="order_no"
-                type="number"
-                formControlName="order_no"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
-              />
-            </div>
-
-            <!-- Field Configuration -->
-            <div class="mt-0">
-              <label for="field_table" class="required-mark mb-2 block font-medium">{{ 'form_label_field_table' | translate }}</label>
-              <select
-                id="field_table"
-                formControlName="field_table"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_table') }"
-              >
-                <option value="">Select Table</option>
-                <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
-              </select>
-            </div>
-
-            <div class="mt-0">
-              <label for="field_type_id" class="required-mark mb-2 block font-medium">{{ 'form_label_field_type' | translate }}</label>
-              <select
-                id="field_type_id"
-                formControlName="field_type_id"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('field_type_id') }"
-              >
-                <option value="">Select Field Type</option>
-                <option *ngFor="let type of field_types" [value]="type.value">{{ type.label }}</option>
-              </select>
-            </div>
-
-            <div class="mt-0">
-              <label for="default_value" class="mb-2 block font-medium">{{ 'form_label_default_value' | translate }}</label>
-              <input id="default_value" type="text" formControlName="default_value" class="form-input w-full" />
-            </div>
-
-            <div class="mt-0">
-              <label for="check_reg_exp" class="mb-2 block font-medium">{{ 'form_label_check_reg_exp' | translate }}</label>
-              <input id="check_reg_exp" type="text" formControlName="check_reg_exp" class="form-input w-full" />
-            </div>
-
-            <!-- Checkbox Group -->
-            <div class="col-span-3 mt-0 grid grid-cols-2 gap-4 md:grid-cols-3">
-              <div class="flex items-center">
-                <input type="checkbox" id="is_nullable" formControlName="is_nullable" class="form-checkbox" />
-                <label for="is_nullable" class="ml-2">{{ 'form_label_is_nullable' | translate }}</label>
-              </div>
-
-              <div class="flex items-center">
-                <input type="checkbox" id="is_unique" formControlName="is_unique" class="form-checkbox" />
-                <label for="is_unique" class="ml-2">{{ 'form_label_is_unique' | translate }}</label>
-              </div>
-
-              <div class="flex items-center">
-                <input type="checkbox" id="is_multiple" formControlName="is_multiple" class="form-checkbox" />
-                <label for="is_multiple" class="ml-2">{{ 'form_label_is_multiple' | translate }}</label>
-              </div>
-            </div>
-
-            <div class="col-span-3 mt-0 grid grid-cols-2 gap-4 md:grid-cols-3">
-              <div class="flex items-center">
-                <input type="checkbox" id="is_enum" formControlName="is_enum" class="form-checkbox" />
-                <label for="is_enum" class="ml-2">{{ 'form_label_is_enum' | translate }}</label>
-              </div>
-              <!-- Enum Section -->
-              <div class="mt-0" *ngIf="lineItemForm.get('is_enum')?.value">
-                <label for="enum_values" class="mb-2 block font-medium">{{ 'form_label_enum_values' | translate }}</label>
-                <input id="enum_values" type="text" formControlName="enum_values" class="form-input w-full" />
-              </div>
-            </div>
-
-            <div class="col-span-3 mt-0 grid grid-cols-2 gap-4 md:grid-cols-3">
-              <!-- Foreign Key Section -->
-              <div class="mt-0">
-                <div class="flex items-center">
-                  <input type="checkbox" id="is_foreign" formControlName="is_foreign" class="form-checkbox" />
-                  <label for="is_foreign" class="ml-2">{{ 'form_label_is_foreign' | translate }}</label>
+      <!-- Line Items Modal Content Section -->
+      <div class="px-4 py-4 sm:px-6">
+        <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()" class="space-y-6">
+          <!-- Basic Information Fields -->
+          <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Field Name -->
+            <div class="col-span-1">
+              <label for="field_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_field_name' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="field_name"
+                  type="text"
+                  formControlName="field_name"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                  [ngClass]="{ 'border-red-500': isLineItemFieldInvalid('field_name') }"
+                />
+                <div *ngIf="isLineItemFieldInvalid('field_name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {{ getLineItemErrorMessage('field_name') }}
                 </div>
               </div>
-              <!-- Foreign Key Configuration (visible when is_foreign is checked) -->
-              <ng-container *ngIf="lineItemForm.get('is_foreign')?.value">
-                <div class="mt-0">
-                  <label for="foreign_table" class="mb-2 block font-medium">{{ 'form_label_foreign_table' | translate }}</label>
-                  <select id="foreign_table" formControlName="foreign_table" class="form-select w-full">
-                    <option value="">Select Table</option>
-                    <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
-                  </select>
-                </div>
+            </div>
 
-                <div class="mt-0">
-                  <label for="foreign_column" class="mb-2 block font-medium">{{ 'form_label_foreign_column' | translate }}</label>
-                  <input id="foreign_column" type="text" formControlName="foreign_column" class="form-input w-full" />
+            <!-- Display Name -->
+            <div class="col-span-1">
+              <label for="display_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_display_name' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="display_name"
+                  type="text"
+                  formControlName="display_name"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Order Number -->
+            <div class="col-span-1">
+              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_order_no' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="order_no"
+                  type="number"
+                  formControlName="order_no"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Field Table -->
+            <div class="col-span-1">
+              <label for="field_table" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_field_table' | translate }}
+              </label>
+              <div class="mt-1">
+                <select
+                  id="field_table"
+                  formControlName="field_table"
+                  class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                >
+                  <option value="">Select Table</option>
+                  <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Field Type -->
+            <div class="col-span-1">
+              <label for="field_type_id" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_field_type' | translate }}
+              </label>
+              <div class="mt-1">
+                <select
+                  id="field_type_id"
+                  formControlName="field_type_id"
+                  class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                >
+                  <option value="">Select Field Type</option>
+                  <option *ngFor="let type of field_types" [value]="type.value">{{ type.label }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Default Value -->
+            <div class="col-span-1">
+              <label for="default_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_default_value' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="default_value"
+                  type="text"
+                  formControlName="default_value"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Regular Expression -->
+            <div class="col-span-1">
+              <label for="check_reg_exp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_check_reg_exp' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="check_reg_exp"
+                  type="text"
+                  formControlName="check_reg_exp"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Checkbox Groups -->
+          <div class="space-y-6">
+            <!-- First Checkbox Group -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_nullable"
+                  formControlName="is_nullable"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_nullable" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_nullable' | translate }}</label>
+              </div>
+
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_unique"
+                  formControlName="is_unique"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_unique" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_unique' | translate }}</label>
+              </div>
+
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_multiple"
+                  formControlName="is_multiple"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_multiple" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_multiple' | translate }}</label>
+              </div>
+            </div>
+
+            <!-- Enum Section -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_enum"
+                  formControlName="is_enum"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_enum" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_enum' | translate }}</label>
+              </div>
+
+              <div *ngIf="lineItemForm.get('is_enum')?.value" class="col-span-1">
+                <label for="enum_values" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ 'form_label_enum_values' | translate }}
+                </label>
+                <div class="mt-1">
+                  <input
+                    id="enum_values"
+                    type="text"
+                    formControlName="enum_values"
+                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                  />
                 </div>
-                <div class="mt-0">
-                  <div class="flex items-center">
-                    <input type="checkbox" id="foreign_can_create" formControlName="foreign_can_create" class="form-checkbox" />
-                    <label for="foreign_can_create" class="ml-2">{{ 'form_label_foreign_can_create' | translate }}</label>
+              </div>
+            </div>
+
+            <!-- Foreign Key Section -->
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_foreign"
+                  formControlName="is_foreign"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_foreign" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_foreign' | translate }}</label>
+              </div>
+
+              <div *ngIf="lineItemForm.get('is_foreign')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="col-span-1">
+                  <label for="foreign_table" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ 'form_label_foreign_table' | translate }}
+                  </label>
+                  <div class="mt-1">
+                    <select
+                      id="foreign_table"
+                      formControlName="foreign_table"
+                      class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                    >
+                      <option value="">Select Table</option>
+                      <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
+                    </select>
                   </div>
                 </div>
-              </ng-container>
+
+                <div class="col-span-1">
+                  <label for="foreign_column" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ 'form_label_foreign_column' | translate }}
+                  </label>
+                  <div class="mt-1">
+                    <input
+                      id="foreign_column"
+                      type="text"
+                      formControlName="foreign_column"
+                      class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-span-1 flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="foreign_can_create"
+                    formControlName="foreign_can_create"
+                    class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                  />
+                  <label for="foreign_can_create" class="text-sm text-gray-700 dark:text-gray-300">
+                    {{ 'form_label_foreign_can_create' | translate }}
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Form Actions -->
-          <div class="mt-6 flex justify-end space-x-4">
-            <button type="button" class="btn btn-danger" (click)="cancelLineItemEdit()">{{ 'cancel' | translate }}</button>
-            <button type="submit" class="btn btn-primary" [disabled]="lineItemForm.invalid">
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              class="btn rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              (click)="cancelLineItemEdit()"
+            >
+              {{ 'cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              [disabled]="lineItemForm.invalid"
+            >
               {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
             </button>
           </div>
@@ -289,76 +406,97 @@
 <!-- Line Queries Modal -->
 <div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isQueryModalOpen">
   <!-- Modal Backdrop -->
-  <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
 
   <!-- Modal Panel -->
-  <div class="flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-8">
-    <div class="relative max-h-[90vh] w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:max-w-2xl lg:max-w-4xl">
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
       <!-- Modal Header -->
-      <div class="border-b bg-gray-50 px-4 py-3 sm:px-6">
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium">
+          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
             {{ editingQueryIndex !== -1 ? ('title_edit_import_template_line_query' | translate) : ('title_add_import_template_line_query' | translate) }}
           </h3>
-          <button type="button" class="text-gray-400 hover:text-gray-900" (click)="cancelLineQueryEdit()">
+          <button
+            type="button"
+            class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
+            (click)="cancelLineQueryEdit()"
+          >
             <span class="sr-only">Close</span>
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
 
-      <!-- Modal Content with Scroll -->
-      <div class="overflow-y-auto px-4 py-5 sm:p-6" style="max-height: calc(90vh - 100px)">
-        <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-3">
-            <!-- Basic Information Fields -->
-            <div class="mt-0">
-              <label for="query_name" class="required-mark mb-2 block font-medium">{{ 'form_label_query_name' | translate }}</label>
+      <!-- Modal Content -->
+      <div class="max-h-[calc(90vh-10rem)] overflow-y-auto px-4 py-4 sm:px-6">
+        <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()" class="space-y-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="space-y-2">
+              <label for="query_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_query_name' | translate }}
+              </label>
               <input
                 id="query_name"
                 type="text"
                 formControlName="query_name"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('query_name') }"
+                class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               />
             </div>
-            <div class="mt-0">
-              <label for="order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_order_no' | translate }}</label>
+
+            <div class="space-y-2">
+              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_order_no' | translate }}
+              </label>
               <input
                 id="order_no"
                 type="number"
                 formControlName="order_no"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineItemFieldInvalid('order_no') }"
+                class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               />
             </div>
 
-            <div class="flex items-center">
-              <input type="checkbox" id="allow_multiple" formControlName="allow_multiple" class="form-checkbox" />
-              <label for="allow_multiple" class="ml-2">{{ 'form_label_allow_multiple' | translate }}</label>
+            <div class="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="allow_multiple"
+                formControlName="allow_multiple"
+                class="form-checkbox h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <label for="allow_multiple" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_allow_multiple' | translate }}</label>
             </div>
           </div>
 
-          <!-- Query String Field (Textarea with 20 rows) -->
-          <div class="grid grid-cols-1 gap-4">
-            <div class="mt-0">
-              <label for="query_string" class="required-mark mb-2 block font-medium">{{ 'form_label_query_string' | translate }}</label>
-              <textarea
-                id="query_string"
-                formControlName="query_string"
-                class="form-input w-full"
-                [ngClass]="{ 'is-invalid': isLineQueryFieldInvalid('query_string') }"
-                rows="17"
-              ></textarea>
-              <div *ngIf="isLineItemFieldInvalid('query_string')" class="invalid-feedback">{{ getLineItemErrorMessage('query_string') }}</div>
-            </div>
+          <!-- Query String Textarea -->
+          <div class="space-y-2">
+            <label for="query_string" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'form_label_query_string' | translate }}
+            </label>
+            <textarea
+              id="query_string"
+              formControlName="query_string"
+              rows="17"
+              class="form-textarea w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            ></textarea>
           </div>
 
-          <!-- Form Actions (Add and Close buttons) -->
-          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white py-3">
-            <button type="button" class="btn btn-danger" (click)="cancelLineQueryEdit()">{{ 'cancel' | translate }}</button>
-            <button type="submit" class="btn btn-primary" [disabled]="lineQueryForm.invalid">
-              {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+          <!-- Form Actions -->
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              class="btn rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              (click)="cancelLineQueryEdit()"
+            >
+              {{ 'cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              [disabled]="lineQueryForm.invalid"
+            >
+              {{ editingQueryIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
             </button>
           </div>
         </form>

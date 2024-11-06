@@ -429,6 +429,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   onSearch() {
     this.search = this.search.trim();
     let hereColumns = [...this.filteredColumns];
+    console.log(hereColumns);
     let items = [3, 4];
     hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
 

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormArray } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -114,7 +114,7 @@ export class ClientDatatableComponent implements OnInit {
   // Column visibility
   visibleColumns: Set<string> = new Set();
 
-  constructor() {}
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.pageSize = this.config.defaultPageSize || 10;
@@ -272,6 +272,13 @@ export class ClientDatatableComponent implements OnInit {
       });
     }
 
+    // After filtering, check if current page is valid
+    const totalPages = Math.ceil(filtered.length / this.pageSize);
+    if (this.currentPage > totalPages && totalPages > 0) {
+      this.currentPage = totalPages;
+      this.pageChange.emit(this.currentPage);
+    }
+
     return filtered;
   }
 
@@ -313,8 +320,11 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   onPageChange(page: any): void {
-    this.currentPage = page;
-    this.pageChange.emit(page);
+    Promise.resolve().then(() => {
+      this.currentPage = page;
+      this.pageChange.emit(page);
+      this.cdr.detectChanges();
+    });
   }
 
   onPageSizeChange(): void {
@@ -372,20 +382,59 @@ export class ClientDatatableComponent implements OnInit {
 
   onSearch(query: string): void {
     this.searchQuery = query;
-    this.currentPage = 1;
 
-    // When search is cleared, emit the original data
-    if (!query?.trim()) {
-      this.dataChange.emit(this._originalData);
-    } else {
-      this.dataChange.emit(this.filteredData);
-    }
+    Promise.resolve().then(() => {
+      this.currentPage = 1;
+      if (!query?.trim()) {
+        this.updateDataAndPagination(this._originalData);
+      } else {
+        this.updateDataAndPagination(this.data);
+      }
+      this.cdr.detectChanges();
+    });
   }
 
+  // Update method to handle data updates
+  updateDataAndPagination(newData: any[]) {
+    this.data = newData;
+    this._originalData = [...newData];
+
+    // Calculate new total pages
+    const newTotalPages = Math.ceil(this.filteredData.length / this.pageSize);
+
+    // Use Promise.resolve to push the pagination update to the next change detection cycle
+    Promise.resolve().then(() => {
+      if (this.currentPage > newTotalPages && newTotalPages > 0) {
+        this.currentPage = newTotalPages;
+        this.pageChange.emit(this.currentPage);
+      } else if (newTotalPages === 0) {
+        this.currentPage = 1;
+        this.pageChange.emit(this.currentPage);
+      }
+
+      this.dataChange.emit(this.filteredData);
+      this.cdr.detectChanges();
+    });
+  }
+
+  // Update get paginatedData to handle empty pages better
   get paginatedData(): any[] {
+    const filteredResults = this.filteredData;
+    const totalPages = Math.ceil(filteredResults.length / this.pageSize);
+
+    // Ensure current page is valid
+    if (this.currentPage > totalPages && totalPages > 0) {
+      Promise.resolve().then(() => {
+        this.currentPage = totalPages;
+        this.pageChange.emit(this.currentPage);
+        this.cdr.detectChanges();
+      });
+    }
+
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
-    return this.filteredData.slice(start, end);
+
+    return filteredResults.slice(start, end);
   }
 
   get totalPages(): number {

@@ -539,21 +539,33 @@ export class ImportTemplateComponent implements OnInit {
     );
   }
 
-  removeItem(index: number) {
+  removeItem(item: any) {
     const items = this.form.get('items') as FormArray;
-    if (items.length > 0) {
+
+    // Find the index of the item with the matching field_name
+    const index = items.controls.findIndex((control) => control.value.field_name === item.field_name);
+
+    if (index !== -1) {
+      // If the item exists in the form array, remove it
       items.removeAt(index);
+      console.log(`Item with field_name: ${item.field_name} removed at index: ${index}`);
     } else {
-      this.toastr.warning('At least one item is required.');
+      this.toastr.warning(`Item with field_name: ${item.field_name} not found.`);
     }
   }
 
-  removeQuery(index: number) {
+  removeQuery(query: any) {
     const queries = this.form.get('queries') as FormArray;
-    if (queries.length > 0) {
+
+    // Find the index of the query with the matching query_name
+    const index = queries.controls.findIndex((control) => control.value.query_name === query.query_name);
+    console.log(index);
+    if (index !== -1) {
+      // If the query exists in the form array, remove it
       queries.removeAt(index);
+      console.log(`Query with query_name: ${query.query_name} removed at index: ${index}`);
     } else {
-      this.toastr.warning('At least one item is required.');
+      this.toastr.warning(`Query with query_name: ${query.query_name} not found.`);
     }
   }
 
@@ -702,7 +714,7 @@ export class ImportTemplateComponent implements OnInit {
         enum_values: item.enum_values ? item.enum_values : null,
         foreign_table: item.foreign_table ? item.foreign_table : null,
         foreign_column: item.foreign_column ? item.foreign_column : null,
-        foreign_can_create: item.foreign_can_create ? item.foreign_can_create : null,
+        foreign_can_create: item.foreign_can_create ? item.foreign_can_create : false,
         field_type_id: item.field_type_id,
       }));
       this.insert_json_schema.data['table2'] = items;
