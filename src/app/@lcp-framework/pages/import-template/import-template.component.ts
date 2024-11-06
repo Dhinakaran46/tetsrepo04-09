@@ -167,13 +167,13 @@ export class ImportTemplateComponent implements OnInit {
           {
             icon: 'fa-solid fa-edit',
             onClick: (item: any) => this.editLineItem(item),
-            class: ' btn-sm btn-outline-primary mr-2',
+            class: '   mr-4',
             tooltip: 'Edit Item',
           },
           {
             icon: 'fa-solid fa-trash',
             onClick: (item: any) => this.removeItem(item),
-            class: ' btn-sm btn-outline-danger',
+            class: '  ',
             tooltip: 'Delete Item',
           },
         ],
@@ -216,13 +216,13 @@ export class ImportTemplateComponent implements OnInit {
           {
             icon: 'fa-solid fa-edit',
             onClick: (item: any) => this.editQueryItem(item),
-            class: ' btn-outline-primary btn-sm mr-2',
+            class: '   mr-4',
             tooltip: 'Edit Query',
           },
           {
             icon: 'fa-solid fa-trash',
             onClick: (item: any) => this.removeQuery(item),
-            class: ' btn-outline-danger btn-sm',
+            class: '  ',
             tooltip: 'Delete Query',
           },
         ],
@@ -492,7 +492,7 @@ export class ImportTemplateComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(100)]],
       slug: [''],
       description: ['', Validators.required],
-      primary_table: [''],
+
       status_id: [1],
       items: this.fb.array([]),
       queries: this.fb.array([]),
@@ -503,8 +503,6 @@ export class ImportTemplateComponent implements OnInit {
 
   updateFormValidation(entityType: any) {
     this.form.clearValidators();
-
-    const primary_tableControl = this.form.get('primary_table');
 
     const itemsControl = this.form.get('items');
     const queriesControl = this.form.get('queries');
@@ -618,7 +616,7 @@ export class ImportTemplateComponent implements OnInit {
             name: entity.name,
             slug: entity.slug,
             description: entity.description,
-            primary_table: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
+
             status_id: entity.status_id,
           });
 
@@ -680,7 +678,7 @@ export class ImportTemplateComponent implements OnInit {
       {
         name: formData.name,
         //entity_type: formData.entityType,
-        primary_table: formData.primary_table,
+
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
@@ -731,7 +729,7 @@ export class ImportTemplateComponent implements OnInit {
       {
         name: formData.name,
         //entity_type: formData.entityType,
-        primary_table: formData.primary_table,
+
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,

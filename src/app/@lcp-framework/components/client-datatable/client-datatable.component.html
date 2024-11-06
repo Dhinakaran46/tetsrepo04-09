@@ -8,10 +8,16 @@
       {{ config.headerConfig?.title }}
     </div>
 
-    <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
+    <div class="flex items-center gap-2 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
       <!-- Search Input -->
       <div class="relative mb-2 flex-grow md:mb-0">
-        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch($event)" class="form-input w-full pr-10 text-gray-600" placeholder="Search..." />
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch($event)"
+          class="ng-pristine ng-valid ng-touched form-input w-full pr-10 text-xs text-gray-600"
+          placeholder="Search..."
+        />
       </div>
 
       <!-- Filter Button -->
@@ -19,7 +25,7 @@
         (click)="toggleMenu($event)"
         aria-expanded="true"
         aria-haspopup="true"
-        class="filter-button mr-2 flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+        class="filter-button flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
         id="options-menu"
         type="button"
       >
@@ -108,7 +114,7 @@
         <button
           hlMenuButton
           type="button"
-          class="mr-2 flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+          class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
           appDynamicFontSize="body"
         >
           <i class="fa-solid fa-table-columns"></i>&nbsp;
@@ -179,7 +185,7 @@
           <th
             *ngFor="let col of config.columns"
             scope="col"
-            class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
+            class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-3 py-2 text-left tracking-wider"
             (click)="col.sortable && onSort(col.key)"
           >
             {{ col.label }}
