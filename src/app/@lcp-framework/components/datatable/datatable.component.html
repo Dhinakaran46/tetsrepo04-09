@@ -11,7 +11,7 @@
             <input
               #searchInput
               [(ngModel)]="search"
-              (keyup.enter)="onSearch()"
+              (input)="onSearch()"
               type="text"
               class="form-input w-full pr-10 text-gray-600"
               appDynamicFontSize="body"
