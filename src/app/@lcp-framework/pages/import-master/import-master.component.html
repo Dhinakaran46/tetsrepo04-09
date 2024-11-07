@@ -68,7 +68,7 @@
                           [for]="filedData.field_table+'.'+filedData.field_name">{{filedData.display_name}}</label></td>
                       <td>
                         <select class="form-select text-white-dark" [id]="filedData.field_name"
-                          [formControlName]="filedData.field_table+'.'+filedData.field_name">
+                          [formControlName]="filedData.field_table+'-'+filedData.field_name">
                           <option value="">{{ 'select' | translate }}</option>
                           <option *ngFor="let fileHeader of fileHeaders" [value]="fileHeader">
                             {{'{ '+fileHeader+' }'}}
@@ -89,7 +89,11 @@
                   <tfoot>
                     <tr>
                       <td colspan="3">
-                        <button type="submit" class="btn btn-primary !mt-6">Submit</button>
+                        <div class="flex">
+                          <button type="submit" class="btn btn-primary !mt-6 mr-3">Submit</button>
+                          <button type="button" role="button" (click)="section = 'section1'"
+                            class="btn btn-primary !mt-6">Back</button>
+                        </div>
                       </td>
                     </tr>
                   </tfoot>
@@ -99,11 +103,29 @@
           </div>
 
           <div *ngIf="section.toLowerCase() === 'section3'">
-            <h4 class="mb-4 text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
+
+            <div class="flex justify-between items-center mb-4" *ngIf="sheet_data && sheet_data.header_details">
+              <h4 class="text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
+
+              <div class="flex space-x-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-red-200 rounded-full"></div>
+                  <span class="text-sm text-gray-700">{{ 'error' | translate }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-orange-200 rounded-full"></div>
+                  <span class="text-sm text-gray-700">{{ 'warning' | translate }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="mb-12" *ngIf="sheet_data && sheet_data.header_details">
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
-              <button type="button" class="btn btn-primary !mt-6">Import</button>
-              <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6">Back</button>
+              <div class="flex">
+                <button type="button" class="btn btn-primary !mt-6 mr-3"
+                  (click)="importTemplateDetail()">Import</button>
+                <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6">Back</button>
+              </div>
             </div>
           </div>
 
