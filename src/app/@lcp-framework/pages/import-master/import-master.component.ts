@@ -125,6 +125,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   resetComponent() {
+    this.deleteUploadedSheet();
     this.importForm.reset({
       import_template: '',
       import_template_file: '',
@@ -136,6 +137,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     this.file = null;
     this.fileHeaders = [];
     this.fileUploadLog = null;
+    this.sheet_data = null;
     this.getImportTemplates();
   }
 
@@ -186,10 +188,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       const formData = new FormData();
       formData.append('excel_file', this.file);
       formData.append('uuid', this.importForm.get('import_template')?.value);
-
       this.gridApiService.getImportTemplateDetail(formData).subscribe(
         (response: ApiResponce) => {
           if (response.status) {
+            this.deleteUploadedSheet();
             this.selectedTemplate = response.data.selectedTemplate;
             if (this.selectedTemplate) this.createFieldsForm(this.selectedTemplate.importable_fields);
             this.fileHeaders = response.data.fileHeaders;
@@ -252,6 +254,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   // Component cleanup logic in ngOnDestroy
   ngOnDestroy() {
+    this.deleteUploadedSheet();
+  }
+
+  deleteUploadedSheet() {
     if (this.fileUploadLog && this.fileUploadLog.uuid) {
       this.gridApiService.deleteFileByUuid(this.fileUploadLog?.uuid).subscribe(
         (response: ApiResponce) => {
@@ -293,6 +299,12 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, sheet_data.row_datas).subscribe(
         (response: ApiResponce) => {
           console.log(response);
+          if (response.status) {
+            this.resetComponent();
+            this.toastr.success(response.message);
+          } else {
+            this.toastr.error(response.message);
+          }
         },
         (error: any) => {
           const key = 'error';

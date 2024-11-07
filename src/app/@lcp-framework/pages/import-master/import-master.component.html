@@ -89,7 +89,11 @@
                   <tfoot>
                     <tr>
                       <td colspan="3">
-                        <button type="submit" class="btn btn-primary !mt-6">Submit</button>
+                        <div class="flex">
+                          <button type="submit" class="btn btn-primary !mt-6 mr-3">Submit</button>
+                          <button type="button" role="button" (click)="section = 'section1'"
+                            class="btn btn-primary !mt-6">Back</button>
+                        </div>
                       </td>
                     </tr>
                   </tfoot>
@@ -99,7 +103,22 @@
           </div>
 
           <div *ngIf="section.toLowerCase() === 'section3'">
-            <h4 class="mb-4 text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
+
+            <div class="flex justify-between items-center mb-4" *ngIf="sheet_data && sheet_data.header_details">
+              <h4 class="text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
+
+              <div class="flex space-x-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-red-200 rounded-full"></div>
+                  <span class="text-sm text-gray-700">{{ 'error' | translate }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-orange-200 rounded-full"></div>
+                  <span class="text-sm text-gray-700">{{ 'warning' | translate }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="mb-12" *ngIf="sheet_data && sheet_data.header_details">
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
               <div class="flex">
