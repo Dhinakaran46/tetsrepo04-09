@@ -41,6 +41,8 @@ interface RowData {
 interface SheetData {
   header_details: { [key: string]: HeaderDetails };
   row_datas: RowData[];
+  individual_header_details: { [key: string]: HeaderDetails };
+  ind_row_datas: RowData;
 }
 
 interface EntityList {
@@ -316,26 +318,33 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   importTemplateDetail() {
     const sheet_data: any = this.sheet_data;
     const isInValid = sheet_data.row_datas?.some((row: any) => row.error === true);
-    if (!sheet_data?.row_datas?.length || isInValid) {
+    const isInValidInd = sheet_data.ind_row_datas?.error;
+    if (!sheet_data?.row_datas?.length || isInValid || isInValidInd) {
       this.toastr.error('Invalid sheet data please fix the errors befor continue.');
     } else {
-      this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, sheet_data.row_datas).subscribe(
-        (response: ApiResponce) => {
-          console.log(response);
-          if (response.status) {
-            this.resetComponent();
-            this.getImportTemplates();
-            this.toastr.success(response.message);
-          } else {
-            this.toastr.error(response.message);
+      this.gridApiService
+        .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
+          row_datas: sheet_data.row_datas,
+          ind_row_datas: sheet_data.ind_row_datas,
+        })
+        .subscribe(
+          (response: ApiResponce) => {
+            console.log(response);
+            if (response.status) {
+              this.resetComponent();
+              this.updateIndividualFields([]);
+              this.getImportTemplates();
+              this.toastr.success(response.message);
+            } else {
+              this.toastr.error(response.message);
+            }
+          },
+          (error: any) => {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
           }
-        },
-        (error: any) => {
-          const key = 'error';
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
-        }
-      );
+        );
     }
   }
 
@@ -357,13 +366,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     if (uuid) {
       this.gridApiService.getIndividualImportFields(uuid).subscribe(
         (response: ApiResponce) => {
-          console.log(response);
           if (response.status) {
             this.resetComponent(uuid);
             this.individual_fields = this.getIndividualHeader(response.data.records);
             this.updateIndividualFields(response.data.records);
           } else {
-            this.toastr.error(response.message);
+            this.resetComponent(uuid);
+            this.updateIndividualFields([]);
           }
         },
         (error: any) => {
@@ -408,5 +417,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   get individualFieldsControlNames() {
     return Object.keys((this.importForm.get('individual_fields') as FormGroup).controls);
+  }
+
+  getIndividualFieldKeys() {
+    return this.sheet_data ? Object.keys(this.sheet_data.ind_row_datas.columns) : [];
   }
 }
