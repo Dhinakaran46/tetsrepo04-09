@@ -32,7 +32,7 @@
                   <div>
                     <label for="import_template">{{ 'import_template' | translate }}</label>
                     <select id="import_template" formControlName="import_template" class="form-select text-white-dark"
-                      required>
+                      required (change)="getIndividualFields()">
                       <option value="">{{ 'select_import_template' | translate }}</option>
                       <option *ngFor="let importTemplate of importTemplates" [value]="importTemplate.uuid">
                         {{importTemplate.name}}
@@ -46,6 +46,20 @@
                       required accept=".xlsx" />
                   </div>
                 </div>
+
+                <!-- Dynamically generated individual fields -->
+                <div formGroupName="individual_fields" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                  <div *ngFor="let controlName of individualFieldsControlNames">
+                    <label [for]="controlName">{{ individual_fields[controlName].display_name || controlName }}
+                      <span class="text-danger"
+                        *ngIf="!individual_fields[controlName]?.is_nullable && !individual_fields[controlName]?.default_value">
+                        *</span>
+                    </label>
+                    <input [id]="controlName" type="text" [formControlName]="controlName"
+                      class="form-input text-white-dark" />
+                  </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary !mt-6">Submit</button>
               </form>
             </div>
@@ -85,6 +99,37 @@
                         </ul>
                       </td>
                     </tr>
+
+                    <ng-container *ngIf="fieldsForm.get('individual_fields') as individualFieldsGroup"
+                      formGroupName="individual_fields">
+                      <tr>
+                        <td colspan="3" class="text-xl font-bold">{{ 'Individual Fields' | translate }}</td>
+                      </tr>
+                      <tr *ngFor="let controlName of individualFieldsControlNames">
+                        <td>
+                          <label [for]="controlName">
+                            {{ individual_fields[controlName].display_name || controlName }}
+                          </label>
+                        </td>
+                        <td>
+                          <input [id]="controlName" type="text" [formControlName]="controlName"
+                            class="form-input text-white-dark" />
+                        </td>
+                        <td>
+                          <ul
+                            class="flex space-x-3 rtl:space-x-reverse dark:text-[#d0d2d6] font-semibold list-inside list-disc">
+                            <!-- <ul class="list-inside list-disc space-y-3 font-semibold"> -->
+                            <li *ngIf="individual_fields[controlName]?.default_value" class="mb-1">deafult:
+                              {{individual_fields[controlName].default_value}}</li>
+                            <li
+                              *ngIf="!individual_fields[controlName]?.is_nullable && !individual_fields[controlName]?.default_value"
+                              class="mb-1">required</li>
+                            <li *ngIf="individual_fields[controlName]?.is_unique" class="mb-1">unique</li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </ng-container>
+
                   </tbody>
                   <tfoot>
                     <tr>

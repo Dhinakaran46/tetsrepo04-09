@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
@@ -64,6 +64,8 @@ interface ImportableField {
   field_type_id: number;
   field_table: string;
   foreign_can_create: boolean;
+  is_individual: boolean;
+  individual_column: string;
 }
 
 interface Entity {
@@ -100,6 +102,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   fileHeaders: string[] = [];
   fileUploadLog: { uuid: string; id: number } | null = null;
   sheet_data: SheetData | null = null;
+  individual_fields: { [key: string]: ImportableField } = {};
 
   tableConfig: any = {
     pageSizes: [5, 10, 25, 50],
@@ -117,28 +120,31 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     this.importForm = this.fb.group({
       import_template: ['', Validators.required],
       import_template_file: ['', Validators.required],
+      individual_fields: this.fb.group({}),
     });
   }
 
   ngOnInit() {
     this.resetComponent();
+    this.getImportTemplates();
   }
 
-  resetComponent() {
+  resetComponent(uuid: string = '') {
     this.deleteUploadedSheet();
     this.importForm.reset({
-      import_template: '',
+      import_template: uuid,
       import_template_file: '',
+      individual_fields: this.fb.group({}),
     });
     this.fieldsForm = this.fb.group({});
     this.section = 'section1';
-    this.importTemplates = [];
+    // this.importTemplates = [];
+    this.individual_fields = {};
     this.selectedTemplate = null;
     this.file = null;
     this.fileHeaders = [];
     this.fileUploadLog = null;
     this.sheet_data = null;
-    this.getImportTemplates();
   }
 
   getImportTemplates() {
@@ -210,17 +216,34 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   createFieldsForm(fieldOptions: ImportableField[]): void {
     const group: { [key: string]: any } = {};
+
+    // Initialize the main form controls based on `fieldOptions`
     fieldOptions.forEach((fieldOption) => {
-      if (fieldOption.default_value || fieldOption.is_nullable) {
-        group[`${fieldOption.field_table}-${fieldOption.field_name}`] = [''];
-      } else {
-        group[`${fieldOption.field_table}-${fieldOption.field_name}`] = ['', Validators.required];
-      }
+      const controlName = `${fieldOption.field_table}-${fieldOption.field_name}`;
+      group[controlName] = fieldOption.default_value || fieldOption.is_nullable ? [''] : ['', Validators.required];
     });
+
+    // Initialize `individual_fields` as a nested FormGroup if `importForm` has individual fields
+    const importIndividualFields = this.importForm.get('individual_fields') as FormGroup;
+    if (importIndividualFields && Object.keys(importIndividualFields.controls).length > 0) {
+      const individualFieldsGroup: { [key: string]: FormControl } = {};
+
+      // Copy each control from `importForm.individual_fields` to `fieldsForm.individual_fields`
+      Object.keys(importIndividualFields.controls).forEach((controlName) => {
+        const control = importIndividualFields.get(controlName) as FormControl;
+        individualFieldsGroup[controlName] = new FormControl(control.value, control.validator);
+      });
+
+      // Add `individual_fields` as a nested FormGroup to `fieldsForm`
+      group[`individual_fields`] = this.fb.group(individualFieldsGroup);
+    }
+
+    // Set `fieldsForm` with the created controls
     this.fieldsForm = this.fb.group(group);
   }
 
   getValidationData() {
+    console.log('this.fieldsForm', this.fieldsForm);
     if (this.fieldsForm.invalid) {
       this.toastr.error('please_select_all_the_required_fields');
       return;
@@ -301,6 +324,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           console.log(response);
           if (response.status) {
             this.resetComponent();
+            this.getImportTemplates();
             this.toastr.success(response.message);
           } else {
             this.toastr.error(response.message);
@@ -313,5 +337,76 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         }
       );
     }
+  }
+
+  getIndividualHeader(headers: any[]) {
+    // Sort the array by `order_no` in ascending order
+    const sortedData = headers.sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no);
+    // Convert to an object with keys in the "field_table-field_name" format
+    const result: any = {};
+    sortedData.forEach((item: any) => {
+      const key = `${item.field_table}-${item.field_name}`;
+      result[key] = item;
+    });
+
+    return result;
+  }
+
+  getIndividualFields() {
+    const uuid = this.importForm.get('import_template')?.value;
+    if (uuid) {
+      this.gridApiService.getIndividualImportFields(uuid).subscribe(
+        (response: ApiResponce) => {
+          console.log(response);
+          if (response.status) {
+            this.resetComponent(uuid);
+            this.individual_fields = this.getIndividualHeader(response.data.records);
+            this.updateIndividualFields(response.data.records);
+          } else {
+            this.toastr.error(response.message);
+          }
+        },
+        (error: any) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+        }
+      );
+    } else {
+      this.updateIndividualFields([]);
+    }
+  }
+
+  updateIndividualFields(fields: any[]) {
+    const individualFields = this.importForm.get('individual_fields') as FormGroup;
+
+    // Clear existing controls
+    Object.keys(individualFields.controls).forEach((controlName) => {
+      individualFields.removeControl(controlName);
+    });
+
+    fields.forEach((field) => {
+      const controlName = `${field.field_table}-${field.field_name}`;
+      const validators = this.getValidators(field);
+
+      individualFields.addControl(controlName, new FormControl(field.individual_column || '', validators));
+    });
+  }
+
+  getValidators(field: any) {
+    const validators = [];
+    if (!field.is_nullable && !field.default_value) {
+      validators.push(Validators.required);
+    }
+    return validators;
+  }
+
+  // Helper to access individual_fields FormArray controls
+  // get individualFieldsControls() {
+  //   return (this.importForm.get('individual_fields') as FormArray).controls;
+  // }
+
+  get individualFieldsControlNames() {
+    return Object.keys((this.importForm.get('individual_fields') as FormGroup).controls);
   }
 }
