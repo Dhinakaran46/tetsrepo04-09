@@ -85,4 +85,8 @@ export class GridApiService {
   importTemplateDetail(template_uuid: any, file_uuid: any, data: any): Observable<any> {
     return this.http.put(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplateuploaddata}/${template_uuid}/${file_uuid}`, data);
   }
+
+  getIndividualImportFields(uuid: any): Observable<any> {
+    return this.http.get(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplatedetails}/${uuid}`);
+  }
 }
