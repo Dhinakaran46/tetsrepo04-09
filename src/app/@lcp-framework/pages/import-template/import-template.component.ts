@@ -46,6 +46,8 @@ interface LineItem {
   is_multiple: boolean;
   is_enum: boolean;
   enum_values: string;
+  is_individual: boolean;
+  individual_column: string;
   foreign_table: string;
   foreign_column: string;
   foreign_can_create: boolean;
@@ -308,6 +310,8 @@ export class ImportTemplateComponent implements OnInit {
       is_multiple: [false],
       is_enum: [false],
       enum_values: [''],
+      is_individual: [false],
+      individual_column: [''],
       foreign_table: [''],
       foreign_column: [''],
       foreign_can_create: [false],
@@ -353,6 +357,15 @@ export class ImportTemplateComponent implements OnInit {
         enumControl?.disable();
       }
     });
+
+    this.lineItemForm.get('is_individual')?.valueChanges.subscribe((value) => {
+      const individualColumn = this.lineItemForm.get('individual_column');
+      if (value) {
+        individualColumn?.enable();
+      } else {
+        individualColumn?.disable();
+      }
+    });
   }
 
   initNewLineItem() {
@@ -364,6 +377,8 @@ export class ImportTemplateComponent implements OnInit {
       is_foreign: false,
       is_multiple: false,
       is_enum: false,
+      is_individual: false,
+
       foreign_can_create: false,
     });
     this.isItemModalOpen = true;
@@ -492,6 +507,10 @@ export class ImportTemplateComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(100)]],
       slug: [''],
       description: ['', Validators.required],
+      max_row_count: ['', Validators.required],
+      header_row: ['', Validators.required],
+      data_start_row: ['', Validators.required],
+      data_end_row: ['', Validators.required],
 
       status_id: [1],
       items: this.fb.array([]),
@@ -596,7 +615,7 @@ export class ImportTemplateComponent implements OnInit {
         ['import_templates.*'],
 
         [
-          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create, 'field_type_id', import_template_line_items.field_type_id))) END",
+          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values,'is_individual', import_template_line_items.is_individual, 'individual_column', import_template_line_items.individual_column, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create, 'field_type_id', import_template_line_items.field_type_id))) END",
           'items',
         ],
         [
@@ -628,6 +647,10 @@ export class ImportTemplateComponent implements OnInit {
             name: entity.name,
             slug: entity.slug,
             description: entity.description,
+            max_row_count: entity.max_row_count,
+            header_row: entity.header_row,
+            data_start_row: entity.data_start_row,
+            data_end_row: entity.data_end_row,
 
             status_id: entity.status_id,
           });
@@ -651,6 +674,8 @@ export class ImportTemplateComponent implements OnInit {
                   is_multiple: [item.is_multiple],
                   is_enum: [item.is_enum],
                   enum_values: [item.enum_values],
+                  is_individual: [item.is_individual],
+                  individual_column: [item.individual_column],
                   foreign_table: [item.foreign_table],
                   foreign_column: [item.foreign_column],
                   foreign_can_create: [item.foreign_can_create],
@@ -694,6 +719,10 @@ export class ImportTemplateComponent implements OnInit {
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
+        max_row_count: formData.max_row_count,
+        header_row: formData.header_row,
+        data_start_row: formData.data_start_row,
+        data_end_row: formData.data_end_row,
       },
     ];
 
@@ -712,6 +741,8 @@ export class ImportTemplateComponent implements OnInit {
         is_multiple: item.is_multiple,
         is_enum: item.is_enum,
         enum_values: item.enum_values ? item.enum_values : null,
+        is_individual: item.is_individual,
+        individual_column: item.individual_column ? item.individual_column : null,
         foreign_table: item.foreign_table ? item.foreign_table : null,
         foreign_column: item.foreign_column ? item.foreign_column : null,
         foreign_can_create: item.foreign_can_create ? item.foreign_can_create : false,
@@ -745,6 +776,10 @@ export class ImportTemplateComponent implements OnInit {
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
+        max_row_count: formData.max_row_count,
+        header_row: formData.header_row,
+        data_start_row: formData.data_start_row,
+        data_end_row: formData.data_end_row,
       },
     ];
 
@@ -769,6 +804,8 @@ export class ImportTemplateComponent implements OnInit {
         is_multiple: item.is_multiple,
         is_enum: item.is_enum,
         enum_values: item.enum_values ? item.enum_values : null,
+        is_individual: item.is_individual,
+        individual_column: item.individual_column ? item.individual_column : null,
         foreign_table: item.foreign_table ? item.foreign_table : null,
         foreign_column: item.foreign_column ? item.foreign_column : null,
         foreign_can_create: item.foreign_can_create ? item.foreign_can_create : false,
@@ -975,6 +1012,8 @@ export class ImportTemplateComponent implements OnInit {
       is_multiple: [item.is_multiple],
       is_enum: [item.is_enum],
       enum_values: [item.enum_values],
+      is_individual: [item.is_individual],
+      individual_column: [item.individual_column],
       foreign_table: [item.foreign_table],
       foreign_column: [item.foreign_column],
       foreign_can_create: [item.foreign_can_create],

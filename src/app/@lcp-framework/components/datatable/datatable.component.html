@@ -201,14 +201,14 @@
         <table class="table-hover relative min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th *ngIf="enableCheckBox" class="font-large text-left uppercase tracking-wider" appDynamicFontSize="body">
+              <th *ngIf="enableCheckBox" class="text-left uppercase tracking-wider" appDynamicFontSize="body">
                 <input type="checkbox" (change)="toggleSelectAll($event)" />
               </th>
 
               <ng-container *ngFor="let col of headercolumns; let last = last">
                 <th
                   scope="col"
-                  class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
+                  class="max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
                   [ngClass]="[last ? 'sticky right-0 z-10 bg-gray-50' : '']"
                   appDynamicFontSize="body"
                   (click)="sortColumn(col)"

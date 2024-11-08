@@ -42,6 +42,7 @@ export const commonConfig: any = {
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
     IMPORT_TEMPLATE_MODULE: 'import_template_module',
+    EXPORT_TEMPLATE_MODULE: 'export_template_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -57,6 +58,7 @@ export const commonConfig: any = {
     language_contents_module: 'lang',
     configurations_module: 'config',
     import_template_module: 'importtemplate',
+    export_template_module: 'exporttemplate',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -131,6 +133,7 @@ export const commonConfig: any = {
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
+    { label: 'Export Template Module', value: 'export_template_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

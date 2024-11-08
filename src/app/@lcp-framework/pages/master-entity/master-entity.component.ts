@@ -73,7 +73,7 @@ export class MasterEntityComponent implements OnInit {
   redirect_url: string = '';
   rowsLength: number = 26;
 
-  editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 1, insertSpaces: true };
+  editorOptions = { theme: 'vs-dark', language: 'sql', tabSize: 1, insertSpaces: true };
   htmlEditorOptions = { ...this.editorOptions, language: 'html' };
   isDarkTheme = true; // Default theme
   @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;

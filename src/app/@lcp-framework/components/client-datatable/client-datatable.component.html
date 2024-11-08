@@ -1,5 +1,5 @@
 <!-- client-datatable.component.html -->
-<div class="datatable">
+<div class="mdatatable">
   <!-- Search Section -->
 
   <!-- Header Section -->
@@ -15,7 +15,8 @@
           type="text"
           [(ngModel)]="searchQuery"
           (ngModelChange)="onSearch($event)"
-          class="ng-pristine ng-valid ng-touched form-input w-full pr-10 text-xs text-gray-600"
+          appDynamicFontSize="body"
+          class="form-input w-full pr-10 text-xs text-gray-600"
           placeholder="Search..."
         />
       </div>
@@ -168,6 +169,7 @@
       <!-- Add Button -->
       <button
         *ngIf="config.headerConfig?.addButton?.show"
+        appDynamicFontSize="body"
         (click)="onAddClick()"
         type="button"
         class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
@@ -176,198 +178,200 @@
       </button>
     </div>
   </div>
-
-  <!-- Table Section -->
-  <div class="table-responsive overflow-x-auto">
-    <table class="table-hover relative min-w-full">
-      <thead class="bg-gray-50">
-        <tr>
-          <th
-            *ngFor="let col of config.columns"
-            scope="col"
-            class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-3 py-2 text-left tracking-wider"
-            (click)="col.sortable && onSort(col.key)"
-          >
-            {{ col.label }}
-            <span *ngIf="col.sortable" class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center">
-              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                <polygon
-                  [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'asc' }"
-                  points="3.11,6.25 10.89,6.25 7,1.75"
-                  fill="currentColor"
-                  class="bh-text-black"
-                ></polygon>
-                <polygon
-                  [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'desc' }"
-                  points="7,12.25 10.89,7.75 3.11,7.75"
-                  fill="currentColor"
-                  class="bh-text-black"
-                ></polygon>
-              </svg>
-            </span>
-          </th>
-        </tr>
-      </thead>
-      <!-- Updated tbody sections -->
-      <tbody [formGroup]="formGroup!" *ngIf="formGroup" [formArrayName]="formArrayName!">
-        <tr *ngFor="let item of paginatedData; let i = index" [formGroupName]="getFormGroupIndex(i)">
-          <td *ngFor="let col of config.columns" class="max-w-150 truncate whitespace-nowrap">
-            <ng-container [ngSwitch]="col.type">
-              <ng-container *ngSwitchCase="'button'">
-                <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
-                  <i [class]="action.icon"></i>
-                </button>
-              </ng-container>
-              <ng-container *ngSwitchDefault>
-                {{ item[col.key] }}
-              </ng-container>
-
-              <ng-container *ngSwitchDefault>
-                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
-                  {{ item[col.key] ? 'Yes' : 'No' }}
+  <div class="datatable">
+    <!-- Table Section -->
+    <div class="table-responsive mt-0 overflow-x-auto">
+      <table class="table-hover relative min-w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th
+              *ngFor="let col of config.columns"
+              scope="col"
+              appDynamicFontSize="body"
+              class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-3 py-2 text-left tracking-wider"
+              (click)="col.sortable && onSort(col.key)"
+            >
+              {{ col.label }}
+              <span *ngIf="col.sortable" class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center">
+                <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                  <polygon
+                    [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'asc' }"
+                    points="3.11,6.25 10.89,6.25 7,1.75"
+                    fill="currentColor"
+                    class="bh-text-black"
+                  ></polygon>
+                  <polygon
+                    [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'desc' }"
+                    points="7,12.25 10.89,7.75 3.11,7.75"
+                    fill="currentColor"
+                    class="bh-text-black"
+                  ></polygon>
+                </svg>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <!-- Updated tbody sections -->
+        <tbody [formGroup]="formGroup!" *ngIf="formGroup" [formArrayName]="formArrayName!">
+          <tr *ngFor="let item of paginatedData; let i = index" [formGroupName]="getFormGroupIndex(i)">
+            <td *ngFor="let col of config.columns" class="max-w-150 truncate whitespace-nowrap">
+              <ng-container [ngSwitch]="col.type">
+                <ng-container *ngSwitchCase="'button'">
+                  <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
+                    <i [class]="action.icon"></i>
+                  </button>
                 </ng-container>
-                <ng-template #defaultContent>
+                <ng-container *ngSwitchDefault>
                   {{ item[col.key] }}
-                </ng-template>
-              </ng-container>
-            </ng-container>
-          </td>
-        </tr>
-      </tbody>
-      <tbody *ngIf="!formGroup">
-        <tr *ngFor="let item of paginatedData">
-          <td
-            *ngFor="let col of config.columns"
-            class="max-w-150 truncate whitespace-nowrap"
-            [ngClass]="{
-              'bg-red-200 text-red-600': item.errors && item.errors[col.key]?.length > 0,
-              'bg-orange-200 text-orange-600': item.warnings && item.warnings[col.key]?.length > 0
-            }"
-            [title]="getMessages(item, col.key)"
-          >
-            <ng-container [ngSwitch]="col.type">
-              <ng-container *ngSwitchCase="'button'">
-                <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
-                  <i [class]="action.icon"></i>
-                </button>
-              </ng-container>
-              <ng-container *ngSwitchDefault>
-                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
-                  {{ item[col.key] ? 'Yes' : 'No' }}
                 </ng-container>
-                <ng-template #defaultContent>
-                  {{ item[col.key] }}
-                </ng-template>
-              </ng-container>
-            </ng-container>
-          </td>
-        </tr>
-        <tr *ngIf="paginatedData.length === 0">
-          <td [attr.colspan]="config.columns.length" class="max-w-150 truncate whitespace-nowrap">No data available</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
 
-  <!-- Pagination Section -->
-  <div class="pagination items-center justify-between border-t border-gray-200 py-2 md:flex">
-    <div class="flex items-center">
-      <div class="mr-4">
-        <select class="py-1.5 text-xs" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()" [ngModelOptions]="{ standalone: true }">
-          <option *ngFor="let size of config.pageSizes" [value]="size">{{ size }}</option>
-        </select>
+                <ng-container *ngSwitchDefault>
+                  <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
+                    {{ item[col.key] ? 'Yes' : 'No' }}
+                  </ng-container>
+                  <ng-template #defaultContent>
+                    {{ item[col.key] }}
+                  </ng-template>
+                </ng-container>
+              </ng-container>
+            </td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="!formGroup">
+          <tr *ngFor="let item of paginatedData">
+            <td
+              *ngFor="let col of config.columns"
+              class="max-w-150 truncate whitespace-nowrap"
+              [ngClass]="{
+                'bg-red-200 text-red-600': item.errors && item.errors[col.key]?.length > 0,
+                'bg-orange-200 text-orange-600': item.warnings && item.warnings[col.key]?.length > 0
+              }"
+              [title]="getMessages(item, col.key)"
+            >
+              <ng-container [ngSwitch]="col.type">
+                <ng-container *ngSwitchCase="'button'">
+                  <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
+                    <i [class]="action.icon"></i>
+                  </button>
+                </ng-container>
+                <ng-container *ngSwitchDefault>
+                  <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
+                    {{ item[col.key] ? 'Yes' : 'No' }}
+                  </ng-container>
+                  <ng-template #defaultContent>
+                    {{ item[col.key] }}
+                  </ng-template>
+                </ng-container>
+              </ng-container>
+            </td>
+          </tr>
+          <tr *ngIf="paginatedData.length === 0">
+            <td [attr.colspan]="config.columns.length" class="max-w-150 truncate whitespace-nowrap">No data available</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination items-center justify-between border-t border-gray-200 py-2 md:flex">
+      <div class="flex items-center">
+        <div class="mr-4">
+          <select class="py-1.5 text-xs" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()" [ngModelOptions]="{ standalone: true }">
+            <option *ngFor="let size of config.pageSizes" [value]="size">{{ size }}</option>
+          </select>
+        </div>
+        <div>
+          <p class="py-1.5 text-xs text-gray-700">
+            <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span>
+            -
+            <span class="font-medium">{{ endIndex }}</span>
+            of
+            <span class="font-medium">{{ filteredData.length }}</span>
+            entries
+          </p>
+        </div>
       </div>
       <div>
-        <p class="py-1.5 text-xs text-gray-700">
-          <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span>
-          -
-          <span class="font-medium">{{ endIndex }}</span>
-          of
-          <span class="font-medium">{{ filteredData.length }}</span>
-          entries
-        </p>
-      </div>
-    </div>
-    <div>
-      <nav class="isolate inline-flex -space-x-px rounded-md py-1.5 text-xs shadow-sm" aria-label="Pagination">
-        <button
-          (click)="onPageChange(1)"
-          class="relative inline-flex items-center rounded-l-md px-2 py-1 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-          [disabled]="currentPage === 1"
-        >
-          <span class="sr-only">First</span>
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path
-              fill-rule="evenodd"
-              d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-        <button
-          (click)="onPageChange(currentPage - 1)"
-          class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-          [disabled]="currentPage === 1"
-        >
-          <span class="sr-only">Previous</span>
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path
-              fill-rule="evenodd"
-              d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
+        <nav class="isolate inline-flex -space-x-px rounded-md py-1.5 text-xs shadow-sm" aria-label="Pagination">
+          <button
+            (click)="onPageChange(1)"
+            class="relative inline-flex items-center rounded-l-md px-2 py-1 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+            [disabled]="currentPage === 1"
+          >
+            <span class="sr-only">First</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path
+                fill-rule="evenodd"
+                d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            (click)="onPageChange(currentPage - 1)"
+            class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+            [disabled]="currentPage === 1"
+          >
+            <span class="sr-only">Previous</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path
+                fill-rule="evenodd"
+                d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
 
-        <ng-container *ngFor="let page of getPageNumbers(); let i = index">
-          <ng-container [ngSwitch]="page">
-            <button
-              *ngSwitchCase="'...'"
-              (click)="handleEllipsisClick(i)"
-              class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-            >
-              ...
-            </button>
-            <button
-              *ngSwitchDefault
-              (click)="onPageChange(page)"
-              class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-              [ngClass]="{ 'bg-blue-50': currentPage === page }"
-            >
-              {{ page }}
-            </button>
+          <ng-container *ngFor="let page of getPageNumbers(); let i = index">
+            <ng-container [ngSwitch]="page">
+              <button
+                *ngSwitchCase="'...'"
+                (click)="handleEllipsisClick(i)"
+                class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              >
+                ...
+              </button>
+              <button
+                *ngSwitchDefault
+                (click)="onPageChange(page)"
+                class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                [ngClass]="{ 'bg-blue-50': currentPage === page }"
+              >
+                {{ page }}
+              </button>
+            </ng-container>
           </ng-container>
-        </ng-container>
 
-        <button
-          (click)="onPageChange(currentPage + 1)"
-          class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-          [disabled]="currentPage === totalPages"
-        >
-          <span class="sr-only">Next</span>
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path
-              fill-rule="evenodd"
-              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-        <button
-          (click)="onPageChange(totalPages)"
-          class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-          [disabled]="currentPage === totalPages"
-        >
-          <span class="sr-only">Last</span>
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path
-              fill-rule="evenodd"
-              d="M4.21 14.77a.75.75 0 01.02-1.06L8.168 10 4.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02zm6 0a.75.75 0 01.02-1.06L14.168 10 10.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </nav>
+          <button
+            (click)="onPageChange(currentPage + 1)"
+            class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+            [disabled]="currentPage === totalPages"
+          >
+            <span class="sr-only">Next</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path
+                fill-rule="evenodd"
+                d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            (click)="onPageChange(totalPages)"
+            class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+            [disabled]="currentPage === totalPages"
+          >
+            <span class="sr-only">Last</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path
+                fill-rule="evenodd"
+                d="M4.21 14.77a.75.75 0 01.02-1.06L8.168 10 4.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02zm6 0a.75.75 0 01.02-1.06L14.168 10 10.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </nav>
+      </div>
     </div>
   </div>
 </div>

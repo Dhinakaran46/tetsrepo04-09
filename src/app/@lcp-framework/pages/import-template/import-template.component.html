@@ -82,9 +82,73 @@
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
               </label>
             </div>
-
             <div *ngIf="isFieldInvalid('status_id')" class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('status_id') }}
+            </div>
+          </div>
+
+          <!-- New Integer Fields -->
+          <div class="mt-0">
+            <label for="max_row_count" class="required-mark mb-2 block font-medium">{{ 'form_label_max_row_count' | translate }}</label>
+            <input
+              id="max_row_count"
+              type="number"
+              formControlName="max_row_count"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_max_row_count_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('max_row_count') }"
+            />
+            <div *ngIf="isFieldInvalid('max_row_count')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('max_row_count') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="header_row" class="required-mark mb-2 block font-medium">{{ 'form_label_header_row' | translate }}</label>
+            <input
+              id="header_row"
+              type="number"
+              formControlName="header_row"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_header_row_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('header_row') }"
+            />
+            <div *ngIf="isFieldInvalid('header_row')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('header_row') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="data_start_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_start_row' | translate }}</label>
+            <input
+              id="data_start_row"
+              type="number"
+              formControlName="data_start_row"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_data_start_row_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('data_start_row') }"
+            />
+            <div *ngIf="isFieldInvalid('data_start_row')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('data_start_row') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="data_end_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_end_row' | translate }}</label>
+            <input
+              id="data_end_row"
+              type="number"
+              formControlName="data_end_row"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_data_end_row_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('data_end_row') }"
+            />
+            <div *ngIf="isFieldInvalid('data_end_row')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('data_end_row') }}
             </div>
           </div>
         </div>
@@ -295,8 +359,8 @@
               </div>
             </div>
 
-            <!-- Enum Section -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <!-- Enum Section -->
               <div class="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -316,6 +380,34 @@
                     id="enum_values"
                     type="text"
                     formControlName="enum_values"
+                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <!-- Individual Section -->
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_individual"
+                  formControlName="is_individual"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_individual" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_individual' | translate }}</label>
+              </div>
+
+              <!-- Individual Column Section - Only shown when is_individual is checked -->
+              <div *ngIf="lineItemForm.get('is_individual')?.value" class="flex items-center space-x-3">
+                <label for="individual_column" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ 'form_label_individual_column' | translate }}
+                </label>
+                <div class="mt-1">
+                  <input
+                    id="individual_column"
+                    type="text"
+                    formControlName="individual_column"
                     class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
                   />
                 </div>
