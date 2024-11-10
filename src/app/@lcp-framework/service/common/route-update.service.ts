@@ -16,6 +16,7 @@ import { environment } from '../../../../environments/environment';
 import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
 import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
 import { ImportTemplateComponent } from '../../pages/import-template/import-template.component';
+import { ExportTemplateComponent } from '../../pages/export-template/export-template.component';
 
 @Injectable({
   providedIn: 'root',
@@ -143,6 +144,7 @@ export class RouteUpdateService {
                 configurations_module: ConfigurationComponent,
                 import_module: ImportMasterComponent,
                 import_template_module: ImportTemplateComponent,
+                export_template_module: ExportTemplateComponent,
               };
 
               const route: Route = {

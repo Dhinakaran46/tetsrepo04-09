@@ -1,0 +1,519 @@
+<div [formGroup]="form">
+  <div class="panel">
+    <div class="flex flex-wrap justify-between">
+      <div class="text-md font-bold uppercase">{{ editTitle ? 'title_edit_export_template' : ('title_add_export_template' | translate) }}</div>
+      <div class="relative inline-flex align-middle">
+        <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+          {{ 'back' | translate }}
+        </button>
+        <button
+          appDynamicFontSize="body"
+          type="button"
+          [disabled]="isFormInvalid()"
+          class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l"
+          (click)="onSubmit()"
+        >
+          {{ 'submit' | translate }}
+        </button>
+      </div>
+    </div>
+    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+    <div class="mt-2">
+      <div class="flex flex-col justify-between">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
+          <div class="mt-0">
+            <label for="name" class="required-mark mb-2 block font-medium">{{ 'form_label_name' | translate }}</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_name_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
+            />
+            <div *ngIf="isFieldInvalid('name')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('name') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="slug" class="required-mark mb-2 block font-medium">{{ 'form_label_slug' | translate }}</label>
+            <input
+              id="slug"
+              type="text"
+              formControlName="slug"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_slug_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('slug') }"
+            />
+            <div *ngIf="isFieldInvalid('slug')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('slug') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="description" class="required-mark mb-2 block font-medium">{{ 'form_label_description' | translate }}</label>
+            <input
+              id="description"
+              type="text"
+              formControlName="description"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_description_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('description') }"
+            />
+            <div *ngIf="isFieldInvalid('description')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('description') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="status_id" class="required-mark mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="1" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+              </label>
+
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="2" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+              </label>
+            </div>
+            <div *ngIf="isFieldInvalid('status_id')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('status_id') }}
+            </div>
+          </div>
+
+          <!-- New Integer Fields -->
+          <div class="mt-0">
+            <label for="max_row_count" class="required-mark mb-2 block font-medium">{{ 'form_label_max_row_count' | translate }}</label>
+            <input
+              id="max_row_count"
+              type="number"
+              formControlName="max_row_count"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_max_row_count_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('max_row_count') }"
+            />
+            <div *ngIf="isFieldInvalid('max_row_count')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('max_row_count') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="header_row" class="required-mark mb-2 block font-medium">{{ 'form_label_header_row' | translate }}</label>
+            <input
+              id="header_row"
+              type="number"
+              formControlName="header_row"
+              (change)="validateHeaderRow($event)"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_header_row_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('header_row') }"
+            />
+            <div *ngIf="isFieldInvalid('header_row')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('header_row') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="data_start_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_start_row' | translate }}</label>
+            <input
+              id="data_start_row"
+              type="number"
+              formControlName="data_start_row"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_data_start_row_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('data_start_row') }"
+            />
+            <div *ngIf="isFieldInvalid('data_start_row')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('data_start_row') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="data_end_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_end_row' | translate }}</label>
+            <input
+              id="data_end_row"
+              type="number"
+              formControlName="data_end_row"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_data_end_row_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('data_end_row') }"
+            />
+            <div *ngIf="isFieldInvalid('data_end_row')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('data_end_row') }}
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <div class="text-md font-medium">
+              {{ 'Excel File Upload' | translate }}
+            </div>
+
+            <div class="mt-2">
+              <div class="flex flex-col gap-4">
+                <!-- File Upload Area -->
+                <div *ngIf="!selectedFile" class="flex w-full items-center justify-center">
+                  <label
+                    [class.opacity-50]="!form.get('header_row')?.value"
+                    class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-800"
+                  >
+                    <div class="flex flex-col items-center justify-center pb-6 pt-5">
+                      <svg class="mb-3 h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                        />
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Excel files only (.xlsx, .xls, .csv)</p>
+                    </div>
+                    <input type="file" class="hidden" accept=".xlsx,.xls,.csv" [disabled]="!form.get('header_row')?.value" (change)="handleFileInput($event)" />
+                  </label>
+                </div>
+
+                <!-- Selected File Info -->
+                <div *ngIf="selectedFile" class="flex items-center justify-between rounded-lg border bg-gray-50 p-4 dark:bg-gray-700">
+                  <div class="flex items-center">
+                    <div class="ml-3">
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ selectedFile.name }}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+                    </div>
+                  </div>
+                  <button (click)="removeFile()" class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div *ngIf="isProcessingFile" class="flex items-center justify-center p-4">
+                  <div class="h-6 w-6 animate-spin rounded-full border-b-2 border-gray-900 dark:border-white"></div>
+                </div>
+
+                <!-- Error Message -->
+                <div *ngIf="fileError" class="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+                  <p class="text-sm">{{ fileError }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel mt-5">
+    <app-client-datatable
+      [data]="itemsData"
+      [config]="itemsTableConfig"
+      (dataChange)="onItemsDataChange($event)"
+      (sortChange)="onItemsSortChange($event)"
+    ></app-client-datatable>
+    <!-- </div> -->
+  </div>
+
+  <div class="panel mt-5">
+    <!-- Table Section -->
+
+    <app-client-datatable
+      [data]="queriesData"
+      [config]="queriesTableConfig"
+      (dataChange)="onQueriesDataChange($event)"
+      (sortChange)="onQueriesSortChange($event)"
+    ></app-client-datatable>
+  </div>
+</div>
+
+<!-- Line Items Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
+            {{ editingItemIndex !== -1 ? ('title_edit_export_template_line_item' | translate) : ('title_add_export_template_line_item' | translate) }}
+          </h3>
+          <button
+            type="button"
+            class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
+            (click)="cancelLineItemEdit()"
+          >
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Line Items Modal Content Section -->
+      <div class="px-4 py-4 sm:px-6">
+        <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()" class="space-y-6">
+          <!-- Basic Information Fields -->
+          <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Field Name -->
+            <div class="col-span-1">
+              <label for="field_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_field_name' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="field_name"
+                  type="text"
+                  formControlName="field_name"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                  [ngClass]="{ 'border-red-500': isLineItemFieldInvalid('field_name') }"
+                />
+                <div *ngIf="isLineItemFieldInvalid('field_name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {{ getLineItemErrorMessage('field_name') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Display Name -->
+            <div class="col-span-1">
+              <label for="display_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_display_name' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="display_name"
+                  type="text"
+                  formControlName="display_name"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Order Number -->
+            <div class="col-span-1">
+              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_order_no' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="order_no"
+                  type="number"
+                  formControlName="order_no"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Field Table -->
+            <div class="col-span-1">
+              <label for="field_table" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_field_table' | translate }}
+              </label>
+              <div class="mt-1">
+                <select
+                  id="field_table"
+                  formControlName="field_table"
+                  class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                >
+                  <option value="">Select Table</option>
+                  <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Field Type -->
+            <div class="col-span-1">
+              <label for="field_type_id" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_field_type' | translate }}
+              </label>
+              <div class="mt-1">
+                <select
+                  id="field_type_id"
+                  formControlName="field_type_id"
+                  class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                >
+                  <option value="">Select Field Type</option>
+                  <option *ngFor="let type of field_types" [value]="type.value">{{ type.label | translate }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Default Value -->
+            <div class="col-span-1">
+              <label for="default_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_default_value' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="default_value"
+                  type="text"
+                  formControlName="default_value"
+                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div class="col-span-1">
+              <div class="form-group">
+                <label class="form-label">{{ 'form_label_column_name' | translate }}</label>
+
+                <div class="mt-1">
+                  <select formControlName="column_name" class="w-full rounded-md border px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
+                    <option value="">Select Excel Column</option>
+                    <option *ngFor="let header of excelHeaders" [value]="header">
+                      {{ header }}
+                    </option>
+                  </select>
+
+                  <div *ngIf="isLineItemFieldInvalid('column_name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ getLineItemErrorMessage('column_name') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              class="btn rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              (click)="cancelLineItemEdit()"
+            >
+              {{ 'cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              [disabled]="lineItemForm.invalid"
+            >
+              {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Line Queries Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isQueryModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
+            {{ editingQueryIndex !== -1 ? ('title_edit_export_template_line_query' | translate) : ('title_add_export_template_line_query' | translate) }}
+          </h3>
+          <button
+            type="button"
+            class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
+            (click)="cancelLineQueryEdit()"
+          >
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-[calc(90vh-10rem)] overflow-y-auto px-4 py-4 sm:px-6">
+        <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()" class="space-y-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="space-y-2">
+              <label for="query_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_query_name' | translate }}
+              </label>
+              <input
+                id="query_name"
+                type="text"
+                formControlName="query_name"
+                class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ 'form_label_order_no' | translate }}
+              </label>
+              <input
+                id="order_no"
+                type="number"
+                formControlName="order_no"
+                class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="query_procedure" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">{{
+                'form_label_query_procedure' | translate
+              }}</label>
+              <select
+                id="query_procedure"
+                formControlName="query_procedure"
+                class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+              >
+                <option value="" disabled>Select Any</option>
+                <option value="query">{{ 'query' | translate }}</option>
+                <option value="procedure">{{ 'procedure' | translate }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Query String Textarea -->
+          <div class="space-y-2">
+            <label for="query_string" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'form_label_query_string' | translate }}
+            </label>
+            <textarea
+              id="query_string"
+              formControlName="query_string"
+              rows="17"
+              class="form-textarea w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            ></textarea>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              class="btn rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              (click)="cancelLineQueryEdit()"
+            >
+              {{ 'cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              [disabled]="lineQueryForm.invalid"
+            >
+              {{ editingQueryIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
