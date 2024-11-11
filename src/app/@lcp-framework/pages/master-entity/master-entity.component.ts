@@ -107,6 +107,7 @@ export class MasterEntityComponent implements OnInit {
     },
   };
 
+  exportTemplates: any[] = [];
   // wizard group properties
   wizardGroups: any[] = [];
   showWizardGroupMenu: boolean = false;
@@ -135,6 +136,7 @@ export class MasterEntityComponent implements OnInit {
     this.constructRedirectUrl();
     this.initWizardGroupForm();
     this.loadWizardGroups();
+    this.loadExportTemplates();
     //this.loadWizardTypes();
 
     // To load all the lookups
@@ -239,6 +241,7 @@ export class MasterEntityComponent implements OnInit {
       associateTable: [''],
       wizardType: [''],
       wizardGroup: [''],
+      export_template_id: [''],
       dashboard_wizard_rows: [''],
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
@@ -274,6 +277,31 @@ export class MasterEntityComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           this.wizardGroups = response.data.records;
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  loadExportTemplates() {
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'export_templates',
+      start_index: 0,
+      limit_range: 1000,
+      sort_columns: [['export_templates.id', 'desc']],
+      select_columns: [['export_templates.id, export_templates.name']],
+    };
+
+    this.gridApiService.getAllList(params).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          this.exportTemplates = response.data.records;
         }
       },
       (error) => {
@@ -484,6 +512,7 @@ export class MasterEntityComponent implements OnInit {
             staticPageContent: entity.static_page_content,
             wizardType: entity.dashboard_wizard_type,
             wizardGroup: entity.dashboard_wizard_group_id,
+            export_template_id: entity.export_template_id,
             dashboard_wizard_rows: entity.dashboard_wizard_rows,
             dashboard_wizard_columns: entity.dashboard_wizard_columns,
             dashboard_wizard_order_no: entity.dashboard_wizard_order_no,
@@ -547,6 +576,8 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.staticPageContent && { static_page_content: formData.staticPageContent }),
         ...(formData.wizardType && { dashboard_wizard_type: formData.wizardType }),
         ...(formData.wizardGroup && { dashboard_wizard_group_id: formData.wizardGroup }),
+
+        ...(formData.export_template_id && { export_template_id: formData.export_template_id }),
         ...(formData.dashboard_wizard_rows && { dashboard_wizard_rows: formData.dashboard_wizard_rows }),
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
@@ -602,6 +633,8 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.staticPageContent ? { static_page_content: formData.staticPageContent } : { static_page_content: null }),
         ...(formData.wizardType ? { dashboard_wizard_type: formData.wizardType } : { dashboard_wizard_type: null }),
         ...(formData.wizardGroup ? { dashboard_wizard_group_id: formData.wizardGroup } : { dashboard_wizard_group_id: null }),
+
+        ...(formData.export_template_id ? { export_template_id: formData.export_template_id } : { export_template_id: null }),
         ...(formData.dashboard_wizard_rows ? { dashboard_wizard_rows: formData.dashboard_wizard_rows } : { dashboard_wizard_rows: null }),
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),

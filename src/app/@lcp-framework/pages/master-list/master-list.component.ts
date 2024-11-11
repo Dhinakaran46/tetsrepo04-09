@@ -17,6 +17,13 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
 import { lastValueFrom } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+
+export interface ExportResponse {
+  blob: Blob;
+  fileName: string;
+}
 
 interface FetchDataParams {
   entity_name: any;
@@ -212,6 +219,8 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   exportTable(item: any) {
+    this.exportItem(item);
+    return;
     const query = { ...this.listQuery };
     query.limit_range = 100000;
 
@@ -499,6 +508,80 @@ export class MasterListComponent implements AfterViewInit {
       const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
       this.router.navigate([targetRoute]);
     }
+  }
+
+  exportItem(item: any) {
+    if (this.masterInfo.children.export) {
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export.id).subscribe({
+        next: (response: ExportResponse) => {
+          try {
+            const blob = new Blob([response.blob], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            if (item.type === 'excel') {
+              // Excel case
+              const url = window.URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = response.fileName;
+
+              // Trigger download
+              document.body.appendChild(link);
+              link.click();
+
+              // Cleanup
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            } else if (item.type === 'pdf') {
+              // Convert Excel to PDF
+              this.convertExcelToPDF(blob, response.fileName.replace('.xlsx', '.pdf'));
+            }
+          } catch (err) {
+            console.error('Download error:', err);
+            this.toastr.error('Error downloading file');
+          }
+        },
+        error: (error) => {
+          console.error('Export error:', error);
+          this.toastr.error('Error exporting data');
+        },
+      });
+    }
+  }
+
+  convertExcelToPDF(blob: Blob, pdfFileName: string) {
+    const reader = new FileReader();
+
+    // Read the Excel file
+    reader.onload = (event: any) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      // Extract the first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+
+      // Convert the sheet to JSON
+      const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Generate a PDF
+      const doc = new jsPDF();
+      let y = 10; // Start at y=10 for the first line
+
+      // Loop through the sheetData and add it to the PDF
+      sheetData.forEach((row: any) => {
+        const rowText = row.join('  '); // Join columns with a space
+        doc.text(rowText, 10, y);
+        y += 10; // Move down for the next row
+      });
+
+      // Save the PDF
+      doc.save(pdfFileName);
+    };
+
+    // Read the Blob as an ArrayBuffer
+    reader.readAsArrayBuffer(blob);
   }
 
   assignItem(item: any) {

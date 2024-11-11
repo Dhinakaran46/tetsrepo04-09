@@ -140,6 +140,7 @@ export class RouteUpdateService {
                 entity_form_module: MasterEntityComponent,
                 language_contents_module: LanguageMappingComponent,
                 job_builder_module: JobPageComponent,
+                export_module: JobPageComponent,
                 help_page_module: DocumentationComponent,
                 configurations_module: ConfigurationComponent,
                 import_module: ImportMasterComponent,

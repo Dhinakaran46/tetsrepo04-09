@@ -1,14 +1,19 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { commonConfig } from '../../config/common.config';
-
+import { map, catchError } from 'rxjs/operators';
 export interface ApiResponce {
   code: number;
   status: boolean;
   message: string;
   data?: any;
+}
+
+interface ExportResponse {
+  blob: Blob;
+  fileName: string;
 }
 
 @Injectable({
@@ -31,6 +36,39 @@ export class GridApiService {
 
   getAllRecords(data: any): Observable<any> {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, data);
+  }
+
+  // grid.service.ts
+  exportAllRecords(menuItemId: any): Observable<ExportResponse> {
+    return this.http
+      .post(
+        `${environment.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddataexport}`,
+        { menu_item_id: menuItemId },
+        {
+          responseType: 'blob',
+          observe: 'response',
+        }
+      )
+      .pipe(
+        map((response) => {
+          if (!response.body) {
+            throw new Error('No data received from server');
+          }
+
+          const blob = response.body; // response.body is already a Blob due to responseType: 'blob'
+          const contentDisposition = response.headers.get('Content-Disposition');
+          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_${new Date().getTime()}.xlsx`;
+
+          return {
+            blob, // This is guaranteed to be a Blob
+            fileName,
+          } as ExportResponse;
+        }),
+        catchError((error) => {
+          console.error('Export error:', error);
+          throw error;
+        })
+      );
   }
 
   getListData(data: any): Observable<any> {
@@ -73,6 +111,19 @@ export class GridApiService {
     formData.append('pic', file, file.name);
 
     return this.http.put(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.configpicture}`, formData, {
+      reportProgress: true,
+      observe: 'events',
+    });
+  }
+
+  getExcelHeaders(data: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getExcelHeaders}`, data);
+  }
+  uploadExcelFile(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('exportfile', file, file.name);
+
+    return this.http.put(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.excelUpdate}`, formData, {
       reportProgress: true,
       observe: 'events',
     });

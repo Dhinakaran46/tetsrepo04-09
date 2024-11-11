@@ -320,23 +320,65 @@ export class ExportTemplateComponent implements OnInit {
       return;
     }
 
-    this.selectedFile = file;
-    this.processExcelFile(file, headerRow);
+    this.isProcessingFile = true;
+
+    this.gridApiService.uploadExcelFile(file).subscribe(
+      (response: any) => {
+        if (response.body && response.body.status) {
+          // Store the file path
+          const filePath = response.body.data;
+          this.form.patchValue({ data_filepath: filePath });
+
+          // Process the file for headers
+          this.selectedFile = file;
+          // this.processExcelFile(file, headerRow);
+
+          // Load headers after successful upload
+          this.loadExcelHeaders(filePath, headerRow);
+        }
+        this.isProcessingFile = false;
+      },
+      (error) => {
+        this.fileError = 'Error uploading file. Please try again.';
+        this.isProcessingFile = false;
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   removeFile(): void {
+    // Clear file-related data
     this.selectedFile = null;
     this.fileError = '';
     this.excelHeaders = [];
+    this.form.patchValue({ data_filepath: '' });
 
-    // Clear column_name options in existing line items
+    // Clear line items FormArray
     const items = this.form.get('items') as FormArray;
+    while (items.length > 0) {
+      items.removeAt(0);
+    }
+
+    // Reset original items array
+    this._originalItems = [];
+
+    // Clear any existing column selections
     items.controls.forEach((control) => {
       const columnNameControl = control.get('column_name');
       if (columnNameControl) {
         columnNameControl.setValue('');
       }
     });
+
+    // Close the item modal if it's open
+    this.isItemModalOpen = false;
+    this.selectedItem = null;
+    this.editingItemIndex = -1;
+
+    // Show notification
+    this.toastr.info('File and associated line items have been removed');
   }
 
   private isExcelFile(file: File): boolean {
@@ -427,94 +469,38 @@ export class ExportTemplateComponent implements OnInit {
       return;
     }
 
-    if (this.selectedFile) {
-      this.processExcelFile(this.selectedFile, value);
+    // If we have a file path, reload the headers with new row number
+    const filePath = this.form.get('data_filepath')?.value;
+    if (filePath) {
+      this.loadExcelHeaders(filePath, value);
     }
   }
 
-  /* private processExcelFile(file: File, headerRow: number): void {
-    this.isProcessingFile = true;
-    this.fileError = '';
+  private loadExcelHeaders(filePath: string, headerRow: number) {
+    if (!filePath || !headerRow) {
+      this.excelHeaders = [];
+      return;
+    }
 
-    const reader = new FileReader();
+    const params = {
+      file_path: filePath,
+      header_row: headerRow,
+    };
 
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        if (!e.target?.result) {
-          throw new Error('Failed to read file');
+    this.gridApiService.getExcelHeaders(params).subscribe(
+      (response: any) => {
+        if (response.status && response.code === 200) {
+          // Expecting array of column names from the specified header row
+          this.excelHeaders = response.data;
         }
-
-        const data = new Uint8Array(e.target.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-
-        // Get the first sheet
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-
-        // Get all rows including empty ones
-        const jsonData = XLSX.utils.sheet_to_json<ExcelRow>(worksheet, {
-          header: 1,
-          defval: '',
-          blankrows: true, // Include empty rows
-        });
-
-        // Get headers from specified row (subtract 1 for 0-based index)
-        const headerIndex = headerRow - 1;
-
-        if (!jsonData || jsonData.length <= headerIndex) {
-          this.fileError = `Excel file has only ${jsonData?.length || 0} rows. Row ${headerRow} not found.`;
-          this.isProcessingFile = false;
-          return;
-        }
-
-        // Get the headers from the specified row
-        const headers = jsonData[headerIndex];
-
-        // Convert all header values to strings and filter out empty ones
-        this.excelHeaders = headers.map((header: any) => String(header || '').trim()).filter((header: string) => header !== '');
-
-        if (this.excelHeaders.length === 0) {
-          this.fileError = `No column headers found in row ${headerRow}`;
-          this.isProcessingFile = false;
-          return;
-        }
-
-        console.log('Found headers:', this.excelHeaders);
-
-        // Enable column_name selection in line items
-        const items = this.form.get('items') as FormArray;
-        items.controls.forEach((control) => {
-          const columnNameControl = control.get('column_name');
-          if (columnNameControl) {
-            columnNameControl.enable();
-          }
-        });
-      } catch (error) {
-        console.error('Excel processing error:', error);
-        this.fileError = 'Error processing Excel file. Please try again.';
-      } finally {
-        this.isProcessingFile = false;
+      },
+      (error) => {
+        console.error('Error loading Excel headers:', error);
+        const errorMessage = this.translate.instant('error_loading_excel_headers');
+        this.toastr.error(errorMessage, 'Error');
       }
-    };
-
-    reader.onerror = () => {
-      this.fileError = 'Error reading file. Please try again.';
-      this.isProcessingFile = false;
-    };
-
-    reader.readAsArrayBuffer(file);
+    );
   }
-
-  // Add this method to validate the header row input
-  validateHeaderRow(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value);
-
-    if (this.selectedFile && value > 0) {
-      // If file is already selected, reprocess it with new header row
-      this.processExcelFile(this.selectedFile, value);
-    }
-  }*/
 
   initLineItemForm() {
     this.lineItemForm = this.fb.group({
@@ -523,7 +509,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: ['', [Validators.required, Validators.min(0)]],
       field_table: ['', Validators.required],
       default_value: [''],
-      column_name: [''],
+      column_name: ['', Validators.required],
 
       is_individual: [false],
       individual_column: [''],
@@ -632,6 +618,16 @@ export class ExportTemplateComponent implements OnInit {
     this.lineItemForm.patchValue(index);*/
     this.selectedItem = index;
     this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
+
+    // Load headers if we have file and row number
+    const filePath = this.form.get('data_filepath')?.value;
+    const headerRow = this.form.get('header_row')?.value;
+    console.log(filePath);
+    console.log(headerRow);
+    if (filePath && headerRow) {
+      this.loadExcelHeaders(filePath, headerRow);
+    }
+
     this.lineItemForm.patchValue(index);
     this.isItemModalOpen = true;
   }
@@ -720,6 +716,7 @@ export class ExportTemplateComponent implements OnInit {
       slug: [''],
       description: ['', Validators.required],
       max_row_count: ['', Validators.required],
+      data_filepath: ['', Validators.required],
       header_row: ['', Validators.required],
       data_start_row: ['', Validators.required],
       data_end_row: ['', Validators.required],
@@ -860,12 +857,29 @@ export class ExportTemplateComponent implements OnInit {
             slug: entity.slug,
             description: entity.description,
             max_row_count: entity.max_row_count,
+            data_filepath: entity.data_filepath,
             header_row: entity.header_row,
             data_start_row: entity.data_start_row,
             data_end_row: entity.data_end_row,
 
             status_id: entity.status_id,
           });
+
+          // Handle Excel file display
+          console.log(entity.data_filepath);
+          if (entity.data_filepath) {
+            const fileName = entity.data_filepath.split('/').pop() || '';
+            this.selectedFile = {
+              name: fileName,
+              size: 0, // We don't have the actual file size
+              type: fileName.split('.').pop() || '',
+            } as File;
+
+            // Load Excel headers if we have both file path and header row
+            if (entity.header_row) {
+              this.loadExcelHeaders(entity.data_filepath, entity.header_row);
+            }
+          }
 
           const items = this.form.get('items') as FormArray;
 
@@ -879,7 +893,7 @@ export class ExportTemplateComponent implements OnInit {
                   order_no: [item.order_no, [Validators.required, Validators.min(0)]],
                   field_table: [item.field_table, Validators.required],
                   default_value: [item.default_value],
-                  column_name: [item.column_name],
+                  column_name: [item.column_name, Validators.required],
 
                   is_individual: [item.is_individual],
                   individual_column: [item.individual_column],
@@ -925,6 +939,7 @@ export class ExportTemplateComponent implements OnInit {
         slug: formData.slug,
         description: formData.description,
         max_row_count: formData.max_row_count,
+        data_filepath: formData.data_filepath,
         header_row: formData.header_row,
         data_start_row: formData.data_start_row,
         data_end_row: formData.data_end_row,
@@ -975,6 +990,7 @@ export class ExportTemplateComponent implements OnInit {
         slug: formData.slug,
         description: formData.description,
         max_row_count: formData.max_row_count,
+        data_filepath: formData.data_filepath,
         header_row: formData.header_row,
         data_start_row: formData.data_start_row,
         data_end_row: formData.data_end_row,
@@ -1196,7 +1212,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: [item.order_no, [Validators.required, Validators.min(0)]],
       field_table: [item.field_table, Validators.required],
       default_value: [item.default_value],
-      column_name: [item.column_name],
+      column_name: [item.column_name, Validators.required],
 
       is_individual: [item.is_individual],
       individual_column: [item.individual_column],

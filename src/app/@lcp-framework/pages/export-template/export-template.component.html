@@ -154,7 +154,7 @@
           </div>
 
           <div class="mt-4">
-            <div class="text-md font-medium">
+            <div class="text-md required-mark font-medium">
               {{ 'Excel File Upload' | translate }}
             </div>
 
@@ -183,13 +183,16 @@
                 </div>
 
                 <!-- Selected File Info -->
+                <!-- Selected File Info -->
                 <div *ngIf="selectedFile" class="flex items-center justify-between rounded-lg border bg-gray-50 p-4 dark:bg-gray-700">
                   <div class="flex items-center">
                     <div class="ml-3">
                       <p class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ selectedFile.name }}
                       </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+                      <!-- Only show file size if it's available -->
+                      <p *ngIf="selectedFile.size" class="text-xs text-gray-500 dark:text-gray-400">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+                      <p *ngIf="!selectedFile.size" class="text-xs text-gray-500 dark:text-gray-400">Existing file</p>
                     </div>
                   </div>
                   <button (click)="removeFile()" class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600">
@@ -373,7 +376,7 @@
                 <label class="form-label">{{ 'form_label_column_name' | translate }}</label>
 
                 <div class="mt-1">
-                  <select formControlName="column_name" class="w-full rounded-md border px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
+                  <select formControlName="column_name" class="required-mark w-full rounded-md border px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
                     <option value="">Select Excel Column</option>
                     <option *ngFor="let header of excelHeaders" [value]="header">
                       {{ header }}

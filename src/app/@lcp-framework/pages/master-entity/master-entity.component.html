@@ -86,6 +86,31 @@
             </div>
           </div>
 
+          <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.EXPORT_MODULE">
+            <div class="mt-0">
+              <label for="export_templates" class="required-mark mb-2 block font-medium"> {{ 'form_label_export_templates' | translate }}</label>
+              <div class="mt-1.5 flex items-center space-x-2">
+                <!-- Wizard Group Select -->
+                <ng-select
+                  id="export_templates"
+                  formControlName="export_template_id"
+                  appDynamicFontSize="body"
+                  class="custom-multiselect min-w-[200px] flex-grow"
+                  [clearable]="false"
+                  placeholder="{{ 'select_export_templates' | translate }}"
+                  [ngClass]="{ 'is-invalid': isFieldInvalid('export_templates') }"
+                >
+                  <ng-option value>
+                    {{ 'form_label_export_templates_dropdown' | translate }}
+                  </ng-option>
+                  @for (group of exportTemplates; track group.id) {
+                  <ng-option [value]="group.id">{{ group.name }}</ng-option>
+                  }
+                </ng-select>
+              </div>
+            </div>
+          </ng-container>
+
           <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
             <div class="mt-0">
               <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
