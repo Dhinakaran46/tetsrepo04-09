@@ -30,7 +30,8 @@
               <form [formGroup]="importForm" (ngSubmit)="getTemplateDetail()">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label for="import_template">{{ 'import_template' | translate }}</label>
+                    <label for="import_template">{{ 'import_template' | translate }} <span
+                        class="text-danger">*</span></label>
                     <select id="import_template" formControlName="import_template" class="form-select text-white-dark"
                       required (change)="getIndividualFields()">
                       <option value="">{{ 'select_import_template' | translate }}</option>
@@ -40,15 +41,49 @@
                     </select>
                   </div>
                   <div>
-                    <label for="import_template_file">{{ 'import_template_file' | translate }}</label>
+                    <label for="import_template_file">{{ 'import_template_file' | translate }} <span
+                        class="text-danger">*</span></label>
                     <input id="import_template_file" type="file" (change)="onFileChange($event)"
                       class="rtl:file-ml-5 form-input p-0 file:border-0 file:bg-primary/90 file:px-4 file:py-2 file:font-semibold file:text-white file:hover:bg-primary ltr:file:mr-5"
                       required accept=".xlsx" />
                   </div>
+
+                  <!-- Max Data Row (Read-only) -->
+                  <div>
+                    <label for="max_data_row">{{ 'Max Data Row' | translate }} <span
+                        class="text-danger">*</span></label>
+                    <input min="1" id="max_data_row" type="text" formControlName="max_data_row"
+                      class="form-input text-white-dark" readonly />
+                  </div>
+
+                  <!-- Data Header Row -->
+                  <div>
+                    <label for="data_header_row">{{ 'Data Header Row' | translate }} <span
+                        class="text-danger">*</span></label>
+                    <input min="1" id="data_header_row" type="number" formControlName="data_header_row"
+                      class="form-input text-white-dark" required />
+                  </div>
+
+                  <!-- Data Start Row -->
+                  <div>
+                    <label for="data_start_row">{{ 'Data Start Row' | translate }} <span
+                        class="text-danger">*</span></label>
+                    <input min="0" id="data_start_row" type="number" formControlName="data_start_row"
+                      class="form-input text-white-dark" />
+                  </div>
+
+                  <!-- Data End Row -->
+                  <div>
+                    <label for="data_end_row">{{ 'Data End Row' | translate }}
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input min="0" id="data_end_row" type="number" formControlName="data_end_row"
+                      class="form-input text-white-dark" />
+                  </div>
                 </div>
 
                 <!-- Dynamically generated individual fields -->
-                <div formGroupName="individual_fields" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                <div formGroupName="individual_fields" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 hidden">
                   <div *ngFor="let controlName of individualFieldsControlNames">
                     <label [for]="controlName">{{ individual_fields[controlName].display_name || controlName }}
                       <span class="text-danger"
