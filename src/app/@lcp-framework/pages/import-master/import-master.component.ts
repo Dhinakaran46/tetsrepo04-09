@@ -105,6 +105,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   fileUploadLog: { uuid: string; id: number } | null = null;
   sheet_data: SheetData | null = null;
   individual_fields: { [key: string]: ImportableField } = {};
+  submitted: boolean = false;
 
   tableConfig: any = {
     pageSizes: [5, 10, 25, 50],
@@ -122,6 +123,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     this.importForm = this.fb.group({
       import_template: ['', Validators.required],
       import_template_file: ['', Validators.required],
+      data_header_row: [1, [Validators.required, Validators.min(1)]], // Minimum value 1
+      data_start_row: [0, [Validators.min(0)]], // Minimum value 0
+      data_end_row: [0, [Validators.min(0)]], // Minimum value 0
+      max_data_row: [{ value: 500, disabled: true }],
       individual_fields: this.fb.group({}),
     });
   }
@@ -136,6 +141,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     this.importForm.reset({
       import_template: uuid,
       import_template_file: '',
+      data_header_row: 1,
+      data_start_row: 0,
+      data_end_row: 0,
+      max_data_row: 500,
       individual_fields: this.fb.group({}),
     });
     this.fieldsForm = this.fb.group({});
@@ -184,6 +193,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getTemplateDetail() {
+    this.submitted = true;
     if (this.importForm.invalid) {
       if (this.importForm.controls['import_template'].hasError('required')) {
         this.toastr.error('please_select_import_template_before_continuing');
@@ -196,6 +206,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       const formData = new FormData();
       formData.append('excel_file', this.file);
       formData.append('uuid', this.importForm.get('import_template')?.value);
+      formData.append('data_header_row', this.importForm.get('data_header_row')?.value);
+      formData.append('data_start_row', this.importForm.get('data_start_row')?.value);
+      formData.append('data_end_row', this.importForm.get('data_end_row')?.value);
+      formData.append('max_data_row', this.importForm.get('max_data_row')?.value);
       this.gridApiService.getImportTemplateDetail(formData).subscribe(
         (response: ApiResponce) => {
           if (response.status) {
@@ -245,7 +259,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getValidationData() {
-    console.log('this.fieldsForm', this.fieldsForm);
+    // console.log('this.fieldsForm', this.fieldsForm);
     if (this.fieldsForm.invalid) {
       this.toastr.error('please_select_all_the_required_fields');
       return;
@@ -255,9 +269,16 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.resetComponent();
       return;
     }
-    this.gridApiService.getImportTemplateData(this.fieldsForm.value, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
+    const bodyParams = {
+      ...this.fieldsForm.value,
+      data_header_row: this.importForm.get('data_header_row')?.value,
+      data_start_row: this.importForm.get('data_start_row')?.value,
+      data_end_row: this.importForm.get('data_end_row')?.value,
+      max_data_row: this.importForm.get('max_data_row')?.value,
+    };
+    this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
       (response: ApiResponce) => {
-        console.log('response', response);
+        // console.log('response', response);
         if (response.status) {
           this.section = 'section3';
           this.sheet_data = response.data; //{ header_details, row_datas }
@@ -286,7 +307,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     if (this.fileUploadLog && this.fileUploadLog.uuid) {
       this.gridApiService.deleteFileByUuid(this.fileUploadLog?.uuid).subscribe(
         (response: ApiResponce) => {
-          console.log('Component destroyed');
+          // console.log('Component destroyed');
         },
         (error: any) => {
           const key = 'error';
@@ -329,11 +350,12 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         })
         .subscribe(
           (response: ApiResponce) => {
-            console.log(response);
+            // console.log(response);
             if (response.status) {
               this.resetComponent();
               this.updateIndividualFields([]);
               this.getImportTemplates();
+              this.submitted = false;
               this.toastr.success(response.message);
             } else {
               this.toastr.error(response.message);
@@ -366,10 +388,16 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     if (uuid) {
       this.gridApiService.getIndividualImportFields(uuid).subscribe(
         (response: ApiResponce) => {
-          if (response.status) {
+          if (response.status && response.data.records.length) {
             this.resetComponent(uuid);
-            this.individual_fields = this.getIndividualHeader(response.data.records);
-            this.updateIndividualFields(response.data.records);
+            this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
+            this.updateIndividualFields(response.data.records[0].importable_fields);
+            this.importForm.patchValue({
+              data_header_row: response.data.records[0].header_row,
+              data_start_row: response.data.records[0].data_start_row,
+              data_end_row: response.data.records[0].data_end_row,
+              max_data_row: response.data.records[0].max_row_count,
+            });
           } else {
             this.resetComponent(uuid);
             this.updateIndividualFields([]);
@@ -396,7 +424,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
     fields.forEach((field) => {
       const controlName = `${field.field_table}-${field.field_name}`;
-      const validators = this.getValidators(field);
+      const validators: any = []; //this.getValidators(field);
 
       individualFields.addControl(controlName, new FormControl(field.individual_column || '', validators));
     });
