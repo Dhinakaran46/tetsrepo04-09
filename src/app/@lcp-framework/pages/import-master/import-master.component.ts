@@ -194,6 +194,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getTemplateDetail() {
     this.submitted = true;
+    // console.log('val', this.importForm.value);
     if (this.importForm.invalid) {
       if (this.importForm.controls['import_template'].hasError('required')) {
         this.toastr.error('please_select_import_template_before_continuing');
@@ -390,8 +391,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         (response: ApiResponce) => {
           if (response.status && response.data.records.length) {
             this.resetComponent(uuid);
-            this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
-            this.updateIndividualFields(response.data.records[0].importable_fields);
+            if (response.data.records[0].importable_fields) {
+              // console.log(111, response.data.records[0].importable_fields);
+              this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
+              this.updateIndividualFields(response.data.records[0].importable_fields);
+            } else {
+              this.updateIndividualFields([]);
+            }
             this.importForm.patchValue({
               data_header_row: response.data.records[0].header_row,
               data_start_row: response.data.records[0].data_start_row,
