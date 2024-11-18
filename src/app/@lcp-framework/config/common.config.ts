@@ -112,6 +112,7 @@ export const commonConfig: any = {
     { label: 'field_types_integer_range', value: 8 },
     { label: 'field_types_float_range', value: 9 },
     { label: 'field_types_date_range', value: 10 },
+    { label: 'field_types_json', value: 11 },
   ],
   action_types: [
     { label: 'View', value: 'view' },
@@ -284,6 +285,7 @@ export const commonConfig: any = {
     8: 'number',
     9: 'number',
     10: 'date',
+    11: 'json',
   },
   wizard_type: [
     {

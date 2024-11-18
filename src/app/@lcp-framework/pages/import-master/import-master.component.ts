@@ -216,8 +216,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           if (response.status) {
             this.deleteUploadedSheet();
             this.selectedTemplate = response.data.selectedTemplate;
-            if (this.selectedTemplate) this.createFieldsForm(this.selectedTemplate.importable_fields);
             this.fileHeaders = response.data.fileHeaders;
+            if (this.selectedTemplate) this.createFieldsForm(this.selectedTemplate.importable_fields);
             this.fileUploadLog = response.data.fileUploadLog;
             this.section = 'section2';
           } else {
@@ -236,8 +236,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
     // Initialize the main form controls based on `fieldOptions`
     fieldOptions.forEach((fieldOption) => {
+      const defaultValue = this.fileHeaders.includes(fieldOption.display_name) ? fieldOption.display_name : '';
       const controlName = `${fieldOption.field_table}-${fieldOption.field_name}`;
-      group[controlName] = fieldOption.default_value || fieldOption.is_nullable ? [''] : ['', Validators.required];
+      group[controlName] = fieldOption.default_value || fieldOption.is_nullable ? [defaultValue] : [defaultValue, Validators.required];
     });
 
     // Initialize `individual_fields` as a nested FormGroup if `importForm` has individual fields

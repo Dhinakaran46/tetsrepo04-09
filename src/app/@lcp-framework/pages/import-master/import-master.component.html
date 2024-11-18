@@ -95,7 +95,7 @@
                   </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary !mt-6">Submit</button>
+                <button type="submit" class="btn btn-primary !mt-6">Next</button>
               </form>
             </div>
           </div>
@@ -170,9 +170,9 @@
                     <tr>
                       <td colspan="3">
                         <div class="flex">
-                          <button type="submit" class="btn btn-primary !mt-6 mr-3">Submit</button>
                           <button type="button" role="button" (click)="section = 'section1'"
-                            class="btn btn-primary !mt-6">Back</button>
+                            class="btn btn-primary !mt-6 mr-3">Back</button>
+                          <button type="submit" class="btn btn-primary !mt-6">Next</button>
                         </div>
                       </td>
                     </tr>
@@ -199,7 +199,8 @@
               </div>
             </div>
 
-            <div class="p-4 bg-white rounded-lg shadow-md" *ngIf="sheet_data && sheet_data.ind_row_datas">
+            <div class="p-4 bg-white rounded-lg shadow-md"
+              *ngIf="sheet_data && sheet_data.ind_row_datas && getIndividualFieldKeys().length">
               <h2 class="text-lg font-semibold mb-4">Individual Fields Data</h2>
 
               <!-- Table layout for displaying fields -->
@@ -244,9 +245,8 @@
             <div class="mb-12" *ngIf="sheet_data && sheet_data.header_details">
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
               <div class="flex">
-                <button type="button" class="btn btn-primary !mt-6 mr-3"
-                  (click)="importTemplateDetail()">Import</button>
-                <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6">Back</button>
+                <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">Back</button>
+                <button type="button" class="btn btn-primary !mt-6" (click)="importTemplateDetail()">Import</button>
               </div>
             </div>
           </div>
