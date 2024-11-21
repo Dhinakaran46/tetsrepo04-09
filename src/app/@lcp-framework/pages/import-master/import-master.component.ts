@@ -374,7 +374,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getIndividualHeader(headers: any[]) {
     // Sort the array by `order_no` in ascending order
-    const sortedData = headers.sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no);
+    // const sortedData = headers.sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no);
+    const sortedData = headers.sort((a: any, b: any) => a.order_no - b.order_no);
     // Convert to an object with keys in the "field_table-field_name" format
     const result: any = {};
     sortedData.forEach((item: any) => {
