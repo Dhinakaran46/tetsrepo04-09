@@ -957,7 +957,7 @@ export class ExportTemplateComponent implements OnInit {
         column_name: item.column_name,
 
         is_individual: item.is_individual,
-        individual_column: item.individual_column ? item.individual_column : null,
+        individual_column: item.is_individual ? (item.individual_column ? item.individual_column : null) : null,
 
         field_type_id: item.field_type_id,
       }));
@@ -1014,7 +1014,7 @@ export class ExportTemplateComponent implements OnInit {
         column_name: item.column_name,
 
         is_individual: item.is_individual,
-        individual_column: item.individual_column ? item.individual_column : null,
+        individual_column: item.is_individual ? (item.individual_column ? item.individual_column : null) : null,
 
         field_type_id: item.field_type_id,
       }));

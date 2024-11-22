@@ -275,7 +275,7 @@
           <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
             <!-- Field Name -->
             <div class="col-span-1">
-              <label for="field_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="field_name" class="required-mark form-label">
                 {{ 'form_label_field_name' | translate }}
               </label>
               <div class="mt-1">
@@ -294,7 +294,7 @@
 
             <!-- Display Name -->
             <div class="col-span-1">
-              <label for="display_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="display_name" class="required-mark form-label">
                 {{ 'form_label_display_name' | translate }}
               </label>
               <div class="mt-1">
@@ -309,7 +309,7 @@
 
             <!-- Order Number -->
             <div class="col-span-1">
-              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="order_no" class="required-mark form-label">
                 {{ 'form_label_order_no' | translate }}
               </label>
               <div class="mt-1">
@@ -324,7 +324,7 @@
 
             <!-- Field Table -->
             <div class="col-span-1">
-              <label for="field_table" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="field_table" class="required-mark form-label">
                 {{ 'form_label_field_table' | translate }}
               </label>
               <div class="mt-1">
@@ -341,7 +341,7 @@
 
             <!-- Field Type -->
             <div class="col-span-1">
-              <label for="field_type_id" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="field_type_id" class="required-mark form-label">
                 {{ 'form_label_field_type' | translate }}
               </label>
               <div class="mt-1">
@@ -358,7 +358,7 @@
 
             <!-- Default Value -->
             <div class="col-span-1">
-              <label for="default_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="default_value" class="form-label">
                 {{ 'form_label_default_value' | translate }}
               </label>
               <div class="mt-1">
@@ -385,6 +385,44 @@
 
                   <div *ngIf="isLineItemFieldInvalid('column_name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
                     {{ getLineItemErrorMessage('column_name') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Individual Section -->
+            <div class="col-span-1">
+              <div class="form-group">
+                <label class="form-label">{{ 'form_label_is_individual' | translate }}</label>
+
+                <div class="mt-1">
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="is_individual"
+                      formControlName="is_individual"
+                      class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Individual Column Section - Only shown when is_individual is checked -->
+            <div *ngIf="lineItemForm.get('is_individual')?.value" class="col-span-1">
+              <div class="form-group">
+                <label class="form-label">{{ 'form_label_individual_column' | translate }}</label>
+
+                <div class="mt-1">
+                  <input
+                    id="individual_column"
+                    type="text"
+                    formControlName="individual_column"
+                    class="w-full rounded-md border px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                  />
+
+                  <div *ngIf="isLineItemFieldInvalid('individual_column')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ getLineItemErrorMessage('individual_column') }}
                   </div>
                 </div>
               </div>
@@ -446,7 +484,7 @@
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()" class="space-y-4">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="space-y-2">
-              <label for="query_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="query_name" class="required-mark form-label">
                 {{ 'form_label_query_name' | translate }}
               </label>
               <input
@@ -458,7 +496,7 @@
             </div>
 
             <div class="space-y-2">
-              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="order_no" class="required-mark form-label">
                 {{ 'form_label_order_no' | translate }}
               </label>
               <input
@@ -470,9 +508,7 @@
             </div>
 
             <div class="space-y-2">
-              <label for="query_procedure" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">{{
-                'form_label_query_procedure' | translate
-              }}</label>
+              <label for="query_procedure" class="required-mark form-label">{{ 'form_label_query_procedure' | translate }}</label>
               <select
                 id="query_procedure"
                 formControlName="query_procedure"
@@ -487,7 +523,7 @@
 
           <!-- Query String Textarea -->
           <div class="space-y-2">
-            <label for="query_string" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="query_string" class="required-mark form-label">
               {{ 'form_label_query_string' | translate }}
             </label>
             <textarea

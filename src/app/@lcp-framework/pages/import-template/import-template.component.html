@@ -212,7 +212,7 @@
           <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
             <!-- Field Name -->
             <div class="col-span-1">
-              <label for="field_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="field_name" class="required-mark form-label">
                 {{ 'form_label_field_name' | translate }}
               </label>
               <div class="mt-1">
@@ -231,7 +231,7 @@
 
             <!-- Display Name -->
             <div class="col-span-1">
-              <label for="display_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="display_name" class="required-mark form-label">
                 {{ 'form_label_display_name' | translate }}
               </label>
               <div class="mt-1">
@@ -246,7 +246,7 @@
 
             <!-- Order Number -->
             <div class="col-span-1">
-              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="order_no" class="required-mark form-label">
                 {{ 'form_label_order_no' | translate }}
               </label>
               <div class="mt-1">
@@ -261,7 +261,7 @@
 
             <!-- Field Table -->
             <div class="col-span-1">
-              <label for="field_table" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="field_table" class="required-mark form-label">
                 {{ 'form_label_field_table' | translate }}
               </label>
               <div class="mt-1">
@@ -278,7 +278,7 @@
 
             <!-- Field Type -->
             <div class="col-span-1">
-              <label for="field_type_id" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="field_type_id" class="required-mark form-label">
                 {{ 'form_label_field_type' | translate }}
               </label>
               <div class="mt-1">
@@ -295,7 +295,7 @@
 
             <!-- Default Value -->
             <div class="col-span-1">
-              <label for="default_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="default_value" class="form-label">
                 {{ 'form_label_default_value' | translate }}
               </label>
               <div class="mt-1">
@@ -310,7 +310,7 @@
 
             <!-- Regular Expression -->
             <div class="col-span-1">
-              <label for="check_reg_exp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="check_reg_exp" class="form-label">
                 {{ 'form_label_check_reg_exp' | translate }}
               </label>
               <div class="mt-1">
@@ -335,7 +335,7 @@
                   formControlName="is_nullable"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                 />
-                <label for="is_nullable" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_nullable' | translate }}</label>
+                <label for="is_nullable" class="form-label">{{ 'form_label_is_nullable' | translate }}</label>
               </div>
 
               <div class="flex items-center space-x-3">
@@ -345,7 +345,7 @@
                   formControlName="is_unique"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                 />
-                <label for="is_unique" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_unique' | translate }}</label>
+                <label for="is_unique" class="form-label">{{ 'form_label_is_unique' | translate }}</label>
               </div>
 
               <div class="flex items-center space-x-3">
@@ -355,7 +355,7 @@
                   formControlName="is_multiple"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                 />
-                <label for="is_multiple" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_multiple' | translate }}</label>
+                <label for="is_multiple" class="form-label">{{ 'form_label_is_multiple' | translate }}</label>
               </div>
             </div>
 
@@ -368,11 +368,11 @@
                   formControlName="is_enum"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                 />
-                <label for="is_enum" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_enum' | translate }}</label>
+                <label for="is_enum" class="form-label">{{ 'form_label_is_enum' | translate }}</label>
               </div>
 
               <div *ngIf="lineItemForm.get('is_enum')?.value" class="col-span-1">
-                <label for="enum_values" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="enum_values" class="form-label">
                   {{ 'form_label_enum_values' | translate }}
                 </label>
                 <div class="mt-1">
@@ -395,12 +395,12 @@
                   formControlName="is_individual"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                 />
-                <label for="is_individual" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_individual' | translate }}</label>
+                <label for="is_individual" class="form-label">{{ 'form_label_is_individual' | translate }}</label>
               </div>
 
               <!-- Individual Column Section - Only shown when is_individual is checked -->
               <div *ngIf="lineItemForm.get('is_individual')?.value" class="flex items-center space-x-3">
-                <label for="individual_column" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="individual_column" class="form-label">
                   {{ 'form_label_individual_column' | translate }}
                 </label>
                 <div class="mt-1">
@@ -423,12 +423,12 @@
                   formControlName="is_foreign"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                 />
-                <label for="is_foreign" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_is_foreign' | translate }}</label>
+                <label for="is_foreign" class="form-label">{{ 'form_label_is_foreign' | translate }}</label>
               </div>
 
               <div *ngIf="lineItemForm.get('is_foreign')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div class="col-span-1">
-                  <label for="foreign_table" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label for="foreign_table" class="form-label">
                     {{ 'form_label_foreign_table' | translate }}
                   </label>
                   <div class="mt-1">
@@ -444,7 +444,7 @@
                 </div>
 
                 <div class="col-span-1">
-                  <label for="foreign_column" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label for="foreign_column" class="form-label">
                     {{ 'form_label_foreign_column' | translate }}
                   </label>
                   <div class="mt-1">
@@ -464,7 +464,7 @@
                     formControlName="foreign_can_create"
                     class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
                   />
-                  <label for="foreign_can_create" class="text-sm text-gray-700 dark:text-gray-300">
+                  <label for="foreign_can_create" class="form-label">
                     {{ 'form_label_foreign_can_create' | translate }}
                   </label>
                 </div>
@@ -527,7 +527,7 @@
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()" class="space-y-4">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="space-y-2">
-              <label for="query_name" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="query_name" class="required-mark form-label">
                 {{ 'form_label_query_name' | translate }}
               </label>
               <input
@@ -539,7 +539,7 @@
             </div>
 
             <div class="space-y-2">
-              <label for="order_no" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label for="order_no" class="required-mark form-label">
                 {{ 'form_label_order_no' | translate }}
               </label>
               <input
@@ -557,13 +557,13 @@
                 formControlName="allow_multiple"
                 class="form-checkbox h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
               />
-              <label for="allow_multiple" class="text-sm text-gray-700 dark:text-gray-300">{{ 'form_label_allow_multiple' | translate }}</label>
+              <label for="allow_multiple" class="form-label">{{ 'form_label_allow_multiple' | translate }}</label>
             </div>
           </div>
 
           <!-- Query String Textarea -->
           <div class="space-y-2">
-            <label for="query_string" class="required-mark block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="query_string" class="required-mark form-label">
               {{ 'form_label_query_string' | translate }}
             </label>
             <textarea
