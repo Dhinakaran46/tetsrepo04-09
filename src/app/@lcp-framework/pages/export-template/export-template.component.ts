@@ -509,7 +509,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: ['', [Validators.required, Validators.min(0)]],
       field_table: ['', Validators.required],
       default_value: [''],
-      column_name: ['', Validators.required],
+      column_name: [''],
 
       is_individual: [false],
       individual_column: [''],
@@ -893,7 +893,7 @@ export class ExportTemplateComponent implements OnInit {
                   order_no: [item.order_no, [Validators.required, Validators.min(0)]],
                   field_table: [item.field_table, Validators.required],
                   default_value: [item.default_value],
-                  column_name: [item.column_name, Validators.required],
+                  column_name: [item.column_name],
 
                   is_individual: [item.is_individual],
                   individual_column: [item.individual_column],
@@ -1212,7 +1212,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: [item.order_no, [Validators.required, Validators.min(0)]],
       field_table: [item.field_table, Validators.required],
       default_value: [item.default_value],
-      column_name: [item.column_name, Validators.required],
+      column_name: [item.column_name],
 
       is_individual: [item.is_individual],
       individual_column: [item.individual_column],
