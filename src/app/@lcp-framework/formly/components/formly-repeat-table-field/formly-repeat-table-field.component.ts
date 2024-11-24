@@ -3,6 +3,7 @@ import { FieldArrayType, FormlyFieldConfig } from '@ngx-formly/core';
 import { FormArray, FormGroup, FormControl } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-formly-repeat-table-field',
@@ -50,12 +51,19 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
   }
 
   // Initialize the editForm based on dynamic schema
+  // initializeDynamicForm() {
+  //   const group: { [key: string]: FormControl } = {};
+  //   this.getFieldGroup().forEach((field: any) => {
+  //     group[field.key] = new FormControl(''); // Initialize with empty values
+  //   });
+  //   this.editForm = new FormGroup(group); // Assign the dynamically created form group
+  // }
   initializeDynamicForm() {
     const group: { [key: string]: FormControl } = {};
     this.getFieldGroup().forEach((field: any) => {
-      group[field.key] = new FormControl(''); // Initialize with empty values
+      group[field.key] = new FormControl(field.defaultValue || ''); // Use field default value if available
     });
-    this.editForm = new FormGroup(group); // Assign the dynamically created form group
+    this.editForm = new FormGroup(group);
   }
 
   // Add or Update the row
@@ -125,9 +133,23 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     this.resetRow();
   }
 
+  // resetRow() {
+  //   this.editForm.reset();
+  //   this.currentRowIndex = null;
+  // }
   resetRow() {
-    this.editForm.reset();
+    const defaultValues: any = {}; // Map of default values for each control
+    this.getFieldGroup().forEach((field: any) => {
+      defaultValues[field.key] = field.defaultValue || ''; // Set default or empty value
+    });
+    this.editForm.reset(defaultValues); // Reset the form
     this.currentRowIndex = null;
+    setTimeout(() => {
+      const fileInputs = document.querySelectorAll('input[type="file"].formly-file');
+      fileInputs.forEach((fileInput, i) => {
+        (fileInput as HTMLInputElement).value = ''; // Clear the file input
+      });
+    }, 300);
   }
 
   // Edit a row in the table
@@ -176,5 +198,25 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
 
   isDisabled() {
     return this.field.props['limit'] <= this.formArray.length;
+  }
+
+  getImageSrc(fieldValue: any, key: string): string | null {
+    const pathKey = this.removeSuffix(key, '_file');
+    if (!fieldValue[key] && fieldValue[pathKey]) {
+      return `${environment.apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
+    }
+    const ImageValue = fieldValue[key];
+    if (typeof fieldValue === 'string') {
+      return ImageValue; // Return the string URL
+    } else if (ImageValue instanceof FileList && ImageValue.length > 0) {
+      return URL.createObjectURL(ImageValue[0]); // Use the first file in the FileList
+    } else if (ImageValue instanceof File) {
+      return URL.createObjectURL(ImageValue); // Handle single File object
+    }
+    return null;
+  }
+
+  private removeSuffix(value: string, suffix: string): string {
+    return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
   }
 }
