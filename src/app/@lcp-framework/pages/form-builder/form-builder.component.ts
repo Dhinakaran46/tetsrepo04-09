@@ -283,7 +283,8 @@ export class FormBuilderComponent implements OnInit {
               key: `${fieldKey}[${index}].${nestedField.key}`,
             };
           });
-          uploadObservables.push(...this.collectFileUploadObservables(nestedFields, `${fieldKey}[${index}]`));
+          // uploadObservables.push(...this.collectFileUploadObservables(nestedFields, `${fieldKey}[${index}]`));
+          uploadObservables.push(...this.collectFileUploadObservables(nestedFields));
         });
       }
 
@@ -307,10 +308,20 @@ export class FormBuilderComponent implements OnInit {
                 const docNames: string = response.body.data.map((item: { docName: string }) => item.docName).join(',');
                 this.uploadedFiles.push(...response.body.data.map((item: { docName: string }) => item.docName));
                 const controlKey = this.removeSuffix(controlName, '_file');
-                (this.form.get(controlKey) as any)?.setValue(docNames);
-                if (this.defaultData[controlKey]) {
-                  this.oldUploadedFiles.push(this.defaultData[controlKey]);
+                const formControl: any = this.getFormControlFromPath(controlKey);
+                if (formControl) {
+                  formControl.setValue(docNames);
+
+                  // Update the model using a helper to correctly set nested values
+                  this.setNestedValueInModel(this.model, controlKey, docNames);
                 }
+                const defaultValue = this.getNestedValueFromPath(this.defaultData, controlKey);
+                if (defaultValue) {
+                  this.oldUploadedFiles.push(defaultValue);
+                }
+                // if (this.defaultData[controlKey]) {
+                //   this.oldUploadedFiles.push(this.defaultData[controlKey]);
+                // }
               }
             })
           );
@@ -322,16 +333,96 @@ export class FormBuilderComponent implements OnInit {
     return uploadObservables;
   }
 
+  private setNestedValueInModel(obj: any, path: string, value: any): void {
+    if (!obj || !path) return;
+
+    // Convert array-like notation (e.g., `item_images[0].image_path`) to proper dot notation
+    const pathSegments = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+
+    let current = obj;
+    for (let i = 0; i < pathSegments.length; i++) {
+      const segment = pathSegments[i];
+
+      // If at the last segment, set the value
+      if (i === pathSegments.length - 1) {
+        current[segment] = value;
+      } else {
+        // Initialize nested objects or arrays if they don't exist
+        if (!current[segment]) {
+          current[segment] = isNaN(Number(pathSegments[i + 1])) ? {} : [];
+        }
+        current = current[segment];
+      }
+    }
+  }
+
+  private getNestedValueFromPath(obj: any, path: string): any {
+    if (!obj || !path) return undefined;
+
+    // Convert array-like notation `item_images[0].image_path` to `item_images.0.image_path`
+    const pathSegments = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+
+    let current = obj;
+    for (const segment of pathSegments) {
+      if (current && segment in current) {
+        current = current[segment];
+      } else {
+        return undefined; // Path does not exist
+      }
+    }
+
+    return current;
+  }
+
+  private getFormControlFromPath(path: string): AbstractControl | null {
+    const pathSegments = path.replace(/\[(\d+)\]/g, '.$1').split('.'); // Convert `item_images[0].image_path` to `item_images.0.image_path`
+    let control: AbstractControl | null = this.form;
+
+    for (const segment of pathSegments) {
+      if (control instanceof FormGroup) {
+        control = control.get(segment);
+      } else if (control instanceof FormArray) {
+        control = control.at(parseInt(segment, 10));
+      } else {
+        return null; // Path is invalid
+      }
+    }
+
+    return control;
+  }
+
   private getFilesFromModel(controlName: string, parentKey: string): any {
-    const keys = controlName.split('.');
+    const keys = controlName.split('.'); // Split by '.'
     let modelValue = this.model;
+
     keys.forEach((key) => {
-      if (modelValue && modelValue[key] !== undefined) {
-        modelValue = modelValue[key];
+      if (modelValue) {
+        // Check if the key contains an array index
+        const arrayMatch = key.match(/^(\w+)\[(\d+)\]$/); // Matches `key[index]`
+        if (arrayMatch) {
+          const arrayKey = arrayMatch[1]; // The array name (e.g., `item`)
+          const index = parseInt(arrayMatch[2], 10); // The index (e.g., `0`)
+          modelValue = modelValue[arrayKey]?.[index]; // Resolve to the array item
+        } else {
+          // Normal key resolution for non-array keys
+          modelValue = modelValue[key];
+        }
       }
     });
+
     return modelValue;
   }
+
+  // private getFilesFromModel(controlName: string, parentKey: string): any {
+  //   const keys = controlName.split('.');
+  //   let modelValue = this.model;
+  //   keys.forEach((key) => {
+  //     if (modelValue && modelValue[key] !== undefined) {
+  //       modelValue = modelValue[key];
+  //     }
+  //   });
+  //   return modelValue;
+  // }
 
   private removeSuffix(value: string, suffix: string): string {
     return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
@@ -450,8 +541,12 @@ export class FormBuilderComponent implements OnInit {
     return result;
   }
 
+  // private getNestedProperty(path: string, obj: any): any {
+  //   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  // }
   private getNestedProperty(path: string, obj: any): any {
-    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    const pathSegments = path.replace(/\[(\d+)\]/g, '.$1').split('.'); // Convert array-like keys to dot notation
+    return pathSegments.reduce((acc, part) => acc && acc[part], obj);
   }
 
   private resetForm() {

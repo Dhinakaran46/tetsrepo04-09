@@ -36,8 +36,13 @@
       <tr *ngFor="let fgRow of formArray.controls; let i = index">
         <td class="py-2 px-3" *ngFor="let field of getFieldGroup()"
           [ngClass]="{'hidden': field.props && field.props['hideColumn']}">
-          <ng-container *ngIf="fgRow.get(coerceKeyToString(field.key ?? ''))?.value as fieldValue">
+          <ng-container
+            *ngIf="field.type !== 'image' && fgRow.get(coerceKeyToString(field.key ?? ''))?.value as fieldValue">
             {{ getSafeDisplayValue(fieldValue, field.props?.options) }}
+          </ng-container>
+          <ng-container *ngIf="field.type === 'image'">
+            <img [src]="getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''))" alt="Image"
+              class="max-h-16 max-w-16 rounded-md" />
           </ng-container>
         </td>
         <td class="py-2 px-3">
