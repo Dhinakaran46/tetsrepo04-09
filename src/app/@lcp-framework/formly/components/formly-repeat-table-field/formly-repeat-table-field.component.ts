@@ -144,12 +144,12 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     });
     this.editForm.reset(defaultValues); // Reset the form
     this.currentRowIndex = null;
-    setTimeout(() => {
-      const fileInputs = document.querySelectorAll('input[type="file"].formly-file');
-      fileInputs.forEach((fileInput, i) => {
-        (fileInput as HTMLInputElement).value = ''; // Clear the file input
-      });
-    }, 300);
+    // setTimeout(() => {
+    //   const fileInputs = document.querySelectorAll('input[type="file"].formly-file');
+    //   fileInputs.forEach((fileInput, i) => {
+    //     (fileInput as HTMLInputElement).value = ''; // Clear the file input
+    //   });
+    // }, 300);
   }
 
   // Edit a row in the table
