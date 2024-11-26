@@ -11,4 +11,24 @@
   .text-orange-600 {
     color: #856404;
   }
+
+  .form-input.ng-invalid.ng-dirty,
+  .ng-submitted .form-input.ng-invalid,
+  .ng-submitted .form-input:invalid {
+    --tw-border-opacity: 1;
+    border-color: rgb(231 81 90 / var(--tw-border-opacity));
+    background-color: rgb(231 81 90 / 0.08);
+    --tw-text-opacity: 1;
+    color: rgb(231 81 90 / var(--tw-text-opacity));
+  }
+
+  .form-select.ng-invalid.ng-dirty,
+  .ng-submitted .form-select.ng-invalid,
+  .ng-submitted .form-select:invalid {
+    // border-color: #dc3545;
+    --tw-text-opacity: 1;
+    border-color: rgb(231 81 90 / var(--tw-text-opacity));
+    background-color: #e7515a14;
+    color: inherit;
+  }
 }
