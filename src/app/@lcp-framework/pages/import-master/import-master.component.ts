@@ -7,6 +7,7 @@ import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
 import { ImportConfirmDeactivate } from '../../guards/impotrt-confirm-deactivate.guard';
 import { ClientDatatableComponent } from '../../components/client-datatable/client-datatable.component';
+import Swal from 'sweetalert2';
 
 interface HeaderDetails {
   id: number;
@@ -43,6 +44,7 @@ interface SheetData {
   row_datas: RowData[];
   individual_header_details: { [key: string]: HeaderDetails };
   ind_row_datas: RowData;
+  error_msg?: string;
 }
 
 interface EntityList {
@@ -109,7 +111,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   tableConfig: any = {
     pageSizes: [5, 10, 25, 50],
-    defaultPageSize: 5,
+    defaultPageSize: 10,
     searchable: true,
   };
 
@@ -127,7 +129,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_start_row: [0, [Validators.min(0)]], // Minimum value 0
       data_end_row: [0, [Validators.min(0)]], // Minimum value 0
       max_data_row: [{ value: 500, disabled: true }],
-      individual_fields: this.fb.group({}),
+      // individual_fields: this.fb.group({}),
     });
   }
 
@@ -145,7 +147,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_start_row: 0,
       data_end_row: 0,
       max_data_row: 500,
-      individual_fields: this.fb.group({}),
+      // individual_fields: this.fb.group({}),
     });
     this.fieldsForm = this.fb.group({});
     this.section = 'section1';
@@ -231,6 +233,14 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     }
   }
 
+  getValidators(field: any) {
+    const validators = [Validators.pattern('^[A-Z]{1,2}(?:[1-9][0-9]{0,4}|100000)$')];
+    if (!field.is_nullable && !field.default_value) {
+      validators.push(Validators.required);
+    }
+    return validators;
+  }
+
   createFieldsForm(fieldOptions: ImportableField[]): void {
     const group: { [key: string]: any } = {};
 
@@ -242,14 +252,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     });
 
     // Initialize `individual_fields` as a nested FormGroup if `importForm` has individual fields
-    const importIndividualFields = this.importForm.get('individual_fields') as FormGroup;
-    if (importIndividualFields && Object.keys(importIndividualFields.controls).length > 0) {
+    if (this.individual_fields && Object.keys(this.individual_fields).length > 0) {
       const individualFieldsGroup: { [key: string]: FormControl } = {};
 
       // Copy each control from `importForm.individual_fields` to `fieldsForm.individual_fields`
-      Object.keys(importIndividualFields.controls).forEach((controlName) => {
-        const control = importIndividualFields.get(controlName) as FormControl;
-        individualFieldsGroup[controlName] = new FormControl(control.value, control.validator);
+      Object.keys(this.individual_fields).forEach((controlName) => {
+        const field: any = this.individual_fields[controlName];
+        individualFieldsGroup[controlName] = new FormControl(field.individual_column || '', this.getValidators(field));
       });
 
       // Add `individual_fields` as a nested FormGroup to `fieldsForm`
@@ -261,16 +270,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getValidationData() {
-    // console.log('this.fieldsForm', this.fieldsForm);
     if (this.fieldsForm.invalid) {
-      this.toastr.error('please_select_all_the_required_fields');
+      this.toastr.error('Please make sure all the fields are valid.');
       return;
     }
-    if (!this.selectedTemplate || !this.fileUploadLog) {
-      this.toastr.error('session_expired_please_try_again');
-      this.resetComponent();
-      return;
-    }
+
     const bodyParams = {
       ...this.fieldsForm.value,
       data_header_row: this.importForm.get('data_header_row')?.value,
@@ -278,9 +282,33 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_end_row: this.importForm.get('data_end_row')?.value,
       max_data_row: this.importForm.get('max_data_row')?.value,
     };
+    const emptyFields = Object.entries(this.fieldsForm.value).filter(([key, value]) => value === '');
+    if (emptyFields.length > 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Are you sure?',
+        text: `There are ${emptyFields.length} empty fields. Are you sure you want to continue?`,
+        showCancelButton: true,
+        confirmButtonText: 'Confirm',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          this.getImportTemplateData(bodyParams);
+        }
+      });
+    } else {
+      this.getImportTemplateData(bodyParams);
+    }
+  }
+
+  getImportTemplateData(bodyParams: any) {
+    if (!this.selectedTemplate || !this.fileUploadLog) {
+      this.toastr.error('session_expired_please_try_again');
+      this.resetComponent();
+      return;
+    }
     this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
       (response: ApiResponce) => {
-        // console.log('response', response);
         if (response.status) {
           this.section = 'section3';
           this.sheet_data = response.data; //{ header_details, row_datas }
@@ -292,6 +320,14 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         this.toastr.error('Error getting import template data');
       }
     );
+  }
+
+  getRowCounts(rowDatas: any) {
+    const errorCount = rowDatas.filter((row: any) => row.error === true).length;
+    const validCount = rowDatas.filter((row: any) => row.error === false && row.warning === false).length;
+    const warningCount = rowDatas.filter((row: any) => row.warning === true).length;
+    // const warningCount = rowDatas.length - (errorCount + validCount);
+    return { errorCount, validCount, warningCount };
   }
 
   canDeactivate(): boolean {
@@ -322,7 +358,28 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getSheetDatas(): any {
     return this.sheet_data?.row_datas.map((row: any) => {
-      return { ...row.columns, errors: row.errors, warnings: row.warnings };
+      // Extract error messages and combine them into a single string
+      const errorMessages = Object.values(row.errors)
+        .flat()
+        .map((error: any) => error.message)
+        .join(', ');
+      const warnMessages = Object.values(row.warnings)
+        .flat()
+        .map((warning: any) => warning.message)
+        .join(', ');
+
+      // Determine the error status
+      const status = row.warning
+        ? '<span class="badge text-xs badge-outline-warning">warning</span>'
+        : '<span class="badge text-xs badge-outline-success">valid</span>';
+      const errorstatus = row.error ? `<span class="badge text-xs badge-outline-danger">invalid</span>` : status;
+      return {
+        ...row.columns,
+        errors: row.errors,
+        warnings: row.warnings,
+        errorstatus, // Add error status
+        errorMessages: row.error ? errorMessages : warnMessages, // Add combined error messages
+      };
     });
   }
 
@@ -332,10 +389,20 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       .sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no) // Sort by `order_no`
       .map(([key, header]: [any, any]) => ({
         key: key, // headers key
-        label: header.display_name, // headers.display_name
+        label: `${header.display_name}${header.is_nullable ? '' : ' <span class="text-danger">*</span>'}`,
         sortable: true, // assuming all columns are sortable; adjust if needed
+        isHtmlHeader: true,
       }));
-    return { ...this.tableConfig, columns };
+    // Add the two new columns at the beginning
+    const additionalColumns = [
+      { key: 'errorstatus', label: 'Status', sortable: true, isHtmlValue: true },
+      { key: 'errorMessages', label: 'Messages', sortable: false, isHtmlValue: true },
+    ];
+
+    // Prepend additionalColumns to the existing columns
+    const updatedColumns = [...additionalColumns, ...columns];
+
+    return { ...this.tableConfig, columns: updatedColumns };
   }
 
   importTemplateDetail() {
@@ -345,31 +412,49 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     if (!sheet_data?.row_datas?.length || isInValid || isInValidInd) {
       this.toastr.error('Invalid sheet data please fix the errors befor continue.');
     } else {
-      this.gridApiService
-        .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
-          row_datas: sheet_data.row_datas,
-          ind_row_datas: sheet_data.ind_row_datas,
-        })
-        .subscribe(
-          (response: ApiResponce) => {
-            // console.log(response);
-            if (response.status) {
-              this.resetComponent();
-              this.updateIndividualFields([]);
-              this.getImportTemplates();
-              this.submitted = false;
-              this.toastr.success(response.message);
-            } else {
-              this.toastr.error(response.message);
-            }
-          },
-          (error: any) => {
-            const key = 'error';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
+      if (sheet_data.error_msg) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Are you sure?',
+          text: sheet_data.error_msg,
+          showCancelButton: true,
+          confirmButtonText: 'Confirm',
+          padding: '2em',
+        }).then(async (result) => {
+          if (result.value) {
+            this.callImportApi(sheet_data);
           }
-        );
+        });
+      } else {
+        this.callImportApi(sheet_data);
+      }
     }
+  }
+
+  callImportApi(sheet_data: SheetData) {
+    this.gridApiService
+      .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
+        row_datas: sheet_data.row_datas,
+        ind_row_datas: sheet_data.ind_row_datas,
+      })
+      .subscribe(
+        (response: ApiResponce) => {
+          // console.log(response);
+          if (response.status) {
+            this.resetComponent();
+            this.getImportTemplates();
+            this.submitted = false;
+            this.toastr.success(response.message);
+          } else {
+            this.toastr.error(response.message);
+          }
+        },
+        (error: any) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+        }
+      );
   }
 
   getIndividualHeader(headers: any[]) {
@@ -394,11 +479,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           if (response.status && response.data.records.length) {
             this.resetComponent(uuid);
             if (response.data.records[0].importable_fields) {
-              // console.log(111, response.data.records[0].importable_fields);
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
-              this.updateIndividualFields(response.data.records[0].importable_fields);
-            } else {
-              this.updateIndividualFields([]);
             }
             this.importForm.patchValue({
               data_header_row: response.data.records[0].header_row,
@@ -408,7 +489,6 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             });
           } else {
             this.resetComponent(uuid);
-            this.updateIndividualFields([]);
           }
         },
         (error: any) => {
@@ -417,42 +497,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           this.toastr.error(errorMessage, 'Error');
         }
       );
-    } else {
-      this.updateIndividualFields([]);
     }
   }
-
-  updateIndividualFields(fields: any[]) {
-    const individualFields = this.importForm.get('individual_fields') as FormGroup;
-
-    // Clear existing controls
-    Object.keys(individualFields.controls).forEach((controlName) => {
-      individualFields.removeControl(controlName);
-    });
-
-    fields.forEach((field) => {
-      const controlName = `${field.field_table}-${field.field_name}`;
-      const validators: any = []; //this.getValidators(field);
-
-      individualFields.addControl(controlName, new FormControl(field.individual_column || '', validators));
-    });
-  }
-
-  getValidators(field: any) {
-    const validators = [];
-    if (!field.is_nullable && !field.default_value) {
-      validators.push(Validators.required);
-    }
-    return validators;
-  }
-
-  // Helper to access individual_fields FormArray controls
-  // get individualFieldsControls() {
-  //   return (this.importForm.get('individual_fields') as FormArray).controls;
-  // }
 
   get individualFieldsControlNames() {
-    return Object.keys((this.importForm.get('individual_fields') as FormGroup).controls);
+    return Object.keys((this.fieldsForm.get('individual_fields') as FormGroup)?.controls || {});
   }
 
   getIndividualFieldKeys() {
