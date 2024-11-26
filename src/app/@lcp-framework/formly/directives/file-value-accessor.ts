@@ -17,8 +17,8 @@ export class FileValueAccessor implements ControlValueAccessor, OnChanges {
   constructor(private renderer: Renderer2, private el: ElementRef) {
     // Create an img element for preview
     this.imgElement = this.renderer.createElement('img');
-    this.renderer.setStyle(this.imgElement, 'width', '100px');
-    this.renderer.setStyle(this.imgElement, 'height', '100px');
+    this.renderer.setStyle(this.imgElement, 'width', '60px');
+    this.renderer.setStyle(this.imgElement, 'height', '60px');
     this.renderer.setAttribute(this.imgElement, 'alt', 'formly-img');
     this.renderer.setStyle(this.imgElement, 'display', 'none'); // Initially hide the image
 
