@@ -81,20 +81,6 @@
                       class="form-input text-white-dark" />
                   </div>
                 </div>
-
-                <!-- Dynamically generated individual fields -->
-                <div formGroupName="individual_fields" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 hidden">
-                  <div *ngFor="let controlName of individualFieldsControlNames">
-                    <label [for]="controlName">{{ individual_fields[controlName].display_name || controlName }}
-                      <span class="text-danger"
-                        *ngIf="!individual_fields[controlName]?.is_nullable && !individual_fields[controlName]?.default_value">
-                        *</span>
-                    </label>
-                    <input [id]="controlName" type="text" [formControlName]="controlName"
-                      class="form-input text-white-dark" />
-                  </div>
-                </div>
-
                 <button type="submit" class="btn btn-primary !mt-6">Next</button>
               </form>
             </div>
@@ -184,7 +170,7 @@
 
           <div *ngIf="section.toLowerCase() === 'section3'">
 
-            <div class="flex justify-between items-center mb-4" *ngIf="sheet_data && sheet_data.header_details">
+            <!-- <div class="flex justify-between items-center mb-4" *ngIf="sheet_data && sheet_data.header_details">
               <h4 class="text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
 
               <div class="flex space-x-4">
@@ -194,10 +180,10 @@
                 </div>
                 <div class="flex items-center space-x-2">
                   <div class="w-4 h-4 bg-orange-200 rounded-full"></div>
-                  <span class="text-sm text-gray-700">{{ 'warning' | translate }}</span>
+                  <span class="text-sm text-gray-700">{{ 'Warning' | translate }}</span>
                 </div>
               </div>
-            </div>
+            </div> -->
 
             <div class="p-4 bg-white rounded-lg shadow-md"
               *ngIf="sheet_data && sheet_data.ind_row_datas && getIndividualFieldKeys().length">
@@ -217,6 +203,8 @@
                   <tr *ngFor="let fieldKey of getIndividualFieldKeys()">
                     <td class="border px-4 py-2 font-medium text-gray-700">
                       {{ sheet_data.individual_header_details[fieldKey].display_name || fieldKey }}
+                      <span class="text-danger"
+                        *ngIf="!sheet_data.individual_header_details[fieldKey]?.is_nullable">*</span>
                     </td>
                     <td class="border px-4 py-2">
                       {{ sheet_data.ind_row_datas.columns[fieldKey] || 'N/A' }}
@@ -243,6 +231,45 @@
             </div>
 
             <div class="mb-12" *ngIf="sheet_data && sheet_data.header_details">
+              <!-- Counts Section -->
+              <div
+                class="flex flex-wrap justify-between items-center py-4 px-6 bg-gray-50 dark:bg-[#1b1f38] rounded-lg mb-5">
+                <div class="flex items-center space-x-4">
+                  <h2 class="text-lg font-semibold mb-4">{{ 'validated_records' | translate }}</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 rounded-full"></span>
+                    <span class="text-sm font-bold text-gray-600">{{ 'Total Rows:' | translate }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ (sheet_data.row_datas
+                      || []).length }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 rounded-full bg-green-200"></span>
+                    <span class="text-sm font-semibold text-green-600">{{ 'Valid Rows:' | translate }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getRowCounts(sheet_data.row_datas
+                      || []).validCount }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 rounded-full bg-red-200"></span>
+                    <span class="text-sm font-semibold text-red-600">{{ 'Errors Rows:' | translate }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getRowCounts(sheet_data.row_datas
+                      || []).errorCount }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 rounded-full bg-yellow-200"></span>
+                    <span class="text-sm font-semibold text-yellow-600">{{ 'Warnings Rows:' | translate }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getRowCounts(sheet_data.row_datas
+                      || []).warningCount }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- End Counts Section -->
+
+              <div *ngIf="sheet_data?.error_msg" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg">
+                {{ sheet_data.error_msg }}
+              </div>
+
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
               <div class="flex">
                 <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">Back</button>

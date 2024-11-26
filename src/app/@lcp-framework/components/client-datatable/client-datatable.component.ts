@@ -12,6 +12,8 @@ export interface Column {
   key: string;
   label: string;
   sortable?: boolean;
+  isHtmlHeader?: boolean;
+  isHtmlValue?: boolean;
   searchable?: boolean;
   type?: 'text' | 'button' | 'icon' | 'number' | 'date';
   placeholder?: string;
