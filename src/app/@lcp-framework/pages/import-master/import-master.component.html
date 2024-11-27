@@ -24,7 +24,7 @@
         </div>
         <div class="flex-1 pt-5 text-sm">
           <div *ngIf="section.toLowerCase() === 'section1'">
-            <h4 class="mb-4 text-2xl font-semibold">{{ 'select_template' | translate }}</h4>
+            <h2 class="text-lg font-bold mb-4">{{ 'select_template' | translate }}</h2>
             <div class="mb-4">
               <!-- form controls -->
               <form [formGroup]="importForm" (ngSubmit)="getTemplateDetail()">
@@ -50,7 +50,7 @@
 
                   <!-- Max Data Row (Read-only) -->
                   <div>
-                    <label for="max_data_row">{{ 'Max Data Row' | translate }} <span
+                    <label for="max_data_row">{{ 'max_data_row' | translate }} <span
                         class="text-danger">*</span></label>
                     <input min="1" id="max_data_row" type="text" formControlName="max_data_row"
                       class="form-input text-white-dark" readonly />
@@ -58,7 +58,7 @@
 
                   <!-- Data Header Row -->
                   <div>
-                    <label for="data_header_row">{{ 'Data Header Row' | translate }} <span
+                    <label for="data_header_row">{{ 'data_header_row' | translate }} <span
                         class="text-danger">*</span></label>
                     <input min="1" id="data_header_row" type="number" formControlName="data_header_row"
                       class="form-input text-white-dark" required />
@@ -66,7 +66,7 @@
 
                   <!-- Data Start Row -->
                   <div>
-                    <label for="data_start_row">{{ 'Data Start Row' | translate }} <span
+                    <label for="data_start_row">{{ 'data_start_row' | translate }} <span
                         class="text-danger">*</span></label>
                     <input min="0" id="data_start_row" type="number" formControlName="data_start_row"
                       class="form-input text-white-dark" />
@@ -74,19 +74,19 @@
 
                   <!-- Data End Row -->
                   <div>
-                    <label for="data_end_row">{{ 'Data End Row' | translate }}
+                    <label for="data_end_row">{{ 'data_end_row' | translate }}
                       <span class="text-danger">*</span>
                     </label>
                     <input min="0" id="data_end_row" type="number" formControlName="data_end_row"
                       class="form-input text-white-dark" />
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary !mt-6">Next</button>
+                <button type="submit" class="btn btn-primary !mt-6">{{ 'next' | translate }}</button>
               </form>
             </div>
           </div>
           <div *ngIf="section.toLowerCase() === 'section2'">
-            <h4 class="mb-4 text-2xl font-semibold">{{ 'select_columns' | translate }}</h4>
+            <h2 class="text-lg font-bold mb-4">{{ 'select_columns' | translate }}</h2>
             <div class="mb-12">
               <form [formGroup]="fieldsForm" (ngSubmit)="getValidationData()">
                 <table class="table" *ngIf="selectedTemplate">
@@ -114,9 +114,11 @@
                         <ul
                           class="flex space-x-3 rtl:space-x-reverse dark:text-[#d0d2d6] font-semibold list-inside list-disc">
                           <!-- <ul class="list-inside list-disc space-y-3 font-semibold"> -->
-                          <li *ngIf="filedData.default_value" class="mb-1">deafult: {{filedData.default_value}}</li>
-                          <li *ngIf="!filedData.is_nullable && !filedData.default_value" class="mb-1">required</li>
-                          <li *ngIf="filedData.is_unique" class="mb-1">unique</li>
+                          <li *ngIf="filedData.default_value" class="mb-1">{{ 'deafult' | translate }}:
+                            {{filedData.default_value}}</li>
+                          <li *ngIf="!filedData.is_nullable && !filedData.default_value" class="mb-1">{{ 'required' |
+                            translate }}</li>
+                          <li *ngIf="filedData.is_unique" class="mb-1">{{ 'unique' | translate }}</li>
                         </ul>
                       </td>
                     </tr>
@@ -124,7 +126,7 @@
                     <ng-container *ngIf="fieldsForm.get('individual_fields') as individualFieldsGroup"
                       formGroupName="individual_fields">
                       <tr>
-                        <td colspan="3" class="text-xl font-bold">{{ 'Individual Fields' | translate }}</td>
+                        <td colspan="3" class="text-lg font-bold">{{ 'individual_fields' | translate }}</td>
                       </tr>
                       <tr *ngFor="let controlName of individualFieldsControlNames">
                         <td>
@@ -140,12 +142,14 @@
                           <ul
                             class="flex space-x-3 rtl:space-x-reverse dark:text-[#d0d2d6] font-semibold list-inside list-disc">
                             <!-- <ul class="list-inside list-disc space-y-3 font-semibold"> -->
-                            <li *ngIf="individual_fields[controlName]?.default_value" class="mb-1">deafult:
+                            <li *ngIf="individual_fields[controlName]?.default_value" class="mb-1">{{ 'deafult' |
+                              translate }}:
                               {{individual_fields[controlName].default_value}}</li>
                             <li
                               *ngIf="!individual_fields[controlName]?.is_nullable && !individual_fields[controlName]?.default_value"
-                              class="mb-1">required</li>
-                            <li *ngIf="individual_fields[controlName]?.is_unique" class="mb-1">unique</li>
+                              class="mb-1">{{ 'required' | translate }}</li>
+                            <li *ngIf="individual_fields[controlName]?.is_unique" class="mb-1">{{ 'unique' | translate
+                              }}</li>
                           </ul>
                         </td>
                       </tr>
@@ -157,8 +161,8 @@
                       <td colspan="3">
                         <div class="flex">
                           <button type="button" role="button" (click)="section = 'section1'"
-                            class="btn btn-primary !mt-6 mr-3">Back</button>
-                          <button type="submit" class="btn btn-primary !mt-6">Next</button>
+                            class="btn btn-primary !mt-6 mr-3">{{ 'back' | translate }}</button>
+                          <button type="submit" class="btn btn-primary !mt-6">{{ 'next' | translate }}</button>
                         </div>
                       </td>
                     </tr>
@@ -185,18 +189,18 @@
               </div>
             </div> -->
 
-            <div class="p-4 bg-white rounded-lg shadow-md"
+            <div class="bg-white rounded-lg shadow-md"
               *ngIf="sheet_data && sheet_data.ind_row_datas && getIndividualFieldKeys().length">
-              <h2 class="text-lg font-semibold mb-4">Individual Fields Data</h2>
+              <h2 class="text-lg font-bold mb-4">{{ 'individual_fields_data' | translate }}</h2>
 
               <!-- Table layout for displaying fields -->
               <table class="w-full border border-gray-300">
                 <thead>
                   <tr>
-                    <th class="border px-4 py-2 text-left">Field</th>
-                    <th class="border px-4 py-2 text-left">Value</th>
-                    <th class="border px-4 py-2 text-left">Errors</th>
-                    <th class="border px-4 py-2 text-left">Warnings</th>
+                    <th class="border px-4 py-2 text-left">{{ 'field' | translate }}</th>
+                    <th class="border px-4 py-2 text-left">{{ 'value' | translate }}</th>
+                    <th class="border px-4 py-2 text-left">{{ 'errors' | translate }}</th>
+                    <th class="border px-4 py-2 text-left">{{ 'warnings' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,33 +236,32 @@
 
             <div class="mb-12" *ngIf="sheet_data && sheet_data.header_details">
               <!-- Counts Section -->
-              <div
-                class="flex flex-wrap justify-between items-center py-4 px-6 bg-gray-50 dark:bg-[#1b1f38] rounded-lg mb-5">
+              <div class="flex flex-wrap justify-between items-center bg-gray-50 dark:bg-[#1b1f38] rounded-lg my-4">
                 <div class="flex items-center space-x-4">
-                  <h2 class="text-lg font-semibold mb-4">{{ 'validated_records' | translate }}</h2>
+                  <h2 class="text-lg font-bold space-x-2">{{ 'validated_records' | translate }}</h2>
                 </div>
                 <div class="flex items-center space-x-4">
                   <div class="flex items-center space-x-2">
                     <span class="w-4 h-4 rounded-full"></span>
-                    <span class="text-sm font-bold text-gray-600">{{ 'Total Rows:' | translate }}</span>
+                    <span class="text-sm font-bold text-gray-600">{{ 'total_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ (sheet_data.row_datas
                       || []).length }}</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <span class="w-4 h-4 rounded-full bg-red-200"></span>
-                    <span class="text-sm font-semibold text-red-600">{{ 'Errors Rows:' | translate }}</span>
+                    <span class="text-sm font-semibold text-red-600">{{ 'errors_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getErrorCount(sheet_data.row_datas
                       || []) }}</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <span class="w-4 h-4 rounded-full bg-green-200"></span>
-                    <span class="text-sm font-semibold text-green-600">{{ 'Valid Rows:' | translate }}</span>
+                    <span class="text-sm font-semibold text-green-600">{{ 'valid_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getValidCount(sheet_data.row_datas
                       || []) }}</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <span class="w-4 h-4 rounded-full bg-yellow-200"></span>
-                    <span class="text-sm font-semibold text-yellow-600">{{ 'Warnings Rows:' | translate }}</span>
+                    <span class="text-sm font-semibold text-yellow-600">{{ 'warnings_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{
                       getWarningCount(sheet_data.row_datas
                       || []) }}</span>
@@ -273,14 +276,16 @@
 
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
               <div class="flex">
-                <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">Back</button>
-                <button type="button" class="btn btn-primary !mt-6 mr-3"
-                  (click)="importTemplateDetail()">Import</button>
+                <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">{{ 'back' |
+                  translate }}</button>
+                <button type="button" class="btn btn-primary !mt-6 mr-3" (click)="importTemplateDetail()">{{ 'import' |
+                  translate }}</button>
                 <button
                   *ngIf="selectedTemplate?.ignore_error_rows && getErrorCount(sheet_data.row_datas || []) > 0 && getErrorCount(sheet_data.row_datas || []) !== (sheet_data.row_datas.length || 0)"
-                  type="button" (click)="importValidRecords()" class="btn btn-warning !mt-6 mr-3">Ignore Errors &
-                  Import {{ (sheet_data.row_datas.length || 0) - getErrorCount(sheet_data.row_datas || []) }}
-                  Row(s)</button>
+                  type="button" (click)="importValidRecords()" class="btn btn-warning !mt-6 mr-3">{{
+                  'ignore_errors_and_import' | translate }} {{ (sheet_data.row_datas.length || 0) -
+                  getErrorCount(sheet_data.row_datas || []) }}
+                  {{ 'rows' | translate }}</button>
               </div>
             </div>
           </div>
