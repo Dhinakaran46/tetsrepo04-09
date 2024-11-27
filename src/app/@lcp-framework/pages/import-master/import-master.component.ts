@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ImportConfirmDeactivate } from '../../guards/impotrt-confirm-deactivate.guard';
 import { ClientDatatableComponent } from '../../components/client-datatable/client-datatable.component';
 import Swal from 'sweetalert2';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 interface HeaderDetails {
   id: number;
@@ -121,6 +122,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     private toastr: ToastrService,
     private gridApiService: GridApiService,
     public router: Router,
+    private localstore: LocalStorageService,
     private fb: FormBuilder
   ) {
     this.importForm = this.fb.group({
@@ -162,13 +164,18 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getImportTemplates() {
+    const userData = this.localstore.getData('user_data');
+    let search_all = [{ column_name: 'import_templates.status_id', operator: '=', value: '1' }];
+    if (userData || userData?.main?.role !== 'super_admin') {
+      search_all.push({ column_name: 'import_templates.is_admin_module', operator: '=', value: 'false' });
+    }
     const impTemParam: any = {
       primary_table: 'import_templates',
       sort_columns: [['import_templates.name', 'asc']],
       limit_range: 1000,
       select_columns: [['import_templates.id'], ['import_templates.name'], ['import_templates.slug'], ['import_templates.uuid']],
       company_id: 1,
-      search_all: [{ column_name: 'import_templates.status_id', operator: '=', value: '1' }],
+      search_all: search_all,
     };
     this.gridApiService.getListData(impTemParam).subscribe(
       (response: EntityListDataResponce) => {
@@ -288,7 +295,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       Swal.fire({
         icon: 'warning',
         title: 'Are you sure?',
-        text: `There are ${emptyFields.length} empty fields. Are you sure you want to continue?`,
+        text: `There are ${emptyFields.length} unmapped fieldes. Are you sure you want to continue?`,
         showCancelButton: true,
         confirmButtonText: 'Confirm',
         padding: '2em',
@@ -328,7 +335,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getWarningCount(rowDatas: any = []) {
-    return rowDatas.filter((row: any) => row.warning === true).length;
+    return rowDatas.filter((row: any) => row.warning === true && row.error === false).length;
   }
 
   getValidCount(rowDatas: any = []) {
