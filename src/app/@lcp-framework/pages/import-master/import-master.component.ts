@@ -80,6 +80,7 @@ interface Entity {
   description: string;
   primary_table: string;
   importable_fields: ImportableField[];
+  ignore_error_rows?: boolean;
 }
 
 interface EntityListDataResponce extends ApiResponce {
@@ -322,12 +323,16 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     );
   }
 
-  getRowCounts(rowDatas: any) {
-    const errorCount = rowDatas.filter((row: any) => row.error === true).length;
-    const validCount = rowDatas.filter((row: any) => row.error === false && row.warning === false).length;
-    const warningCount = rowDatas.filter((row: any) => row.warning === true).length;
-    // const warningCount = rowDatas.length - (errorCount + validCount);
-    return { errorCount, validCount, warningCount };
+  getErrorCount(rowDatas: any = []) {
+    return rowDatas.filter((row: any) => row.error === true).length;
+  }
+
+  getWarningCount(rowDatas: any = []) {
+    return rowDatas.filter((row: any) => row.warning === true).length;
+  }
+
+  getValidCount(rowDatas: any = []) {
+    return rowDatas.filter((row: any) => row.error === false && row.warning === false).length;
   }
 
   canDeactivate(): boolean {
@@ -428,6 +433,33 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       } else {
         this.callImportApi(sheet_data);
       }
+    }
+  }
+
+  importValidRecords() {
+    let sheet_data: any = this.sheet_data;
+    const onlyValidRowDatas = sheet_data.row_datas?.filter((row: any) => row.error !== true);
+    const isInValidInd = sheet_data.ind_row_datas?.error;
+    if (isInValidInd) {
+      this.toastr.error('Please fix the Individual fields errors befor continue.');
+    } else if (!onlyValidRowDatas.length) {
+      this.toastr.error('There are no valid rows available to import.');
+    } else {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Are you sure?',
+        text: `${this.getErrorCount(this.sheet_data?.row_datas || [])} error rows will be ignored, and ${
+          onlyValidRowDatas.length
+        } rows will be imported out of a total of ${this.sheet_data?.row_datas?.length || 0} records.`,
+        showCancelButton: true,
+        confirmButtonText: 'Confirm',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          sheet_data = { ...sheet_data, row_datas: onlyValidRowDatas };
+          this.callImportApi(sheet_data);
+        }
+      });
     }
   }
 

@@ -245,22 +245,23 @@
                       || []).length }}</span>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <span class="w-4 h-4 rounded-full bg-green-200"></span>
-                    <span class="text-sm font-semibold text-green-600">{{ 'Valid Rows:' | translate }}</span>
-                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getRowCounts(sheet_data.row_datas
-                      || []).validCount }}</span>
-                  </div>
-                  <div class="flex items-center space-x-2">
                     <span class="w-4 h-4 rounded-full bg-red-200"></span>
                     <span class="text-sm font-semibold text-red-600">{{ 'Errors Rows:' | translate }}</span>
-                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getRowCounts(sheet_data.row_datas
-                      || []).errorCount }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getErrorCount(sheet_data.row_datas
+                      || []) }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 rounded-full bg-green-200"></span>
+                    <span class="text-sm font-semibold text-green-600">{{ 'Valid Rows:' | translate }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getValidCount(sheet_data.row_datas
+                      || []) }}</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <span class="w-4 h-4 rounded-full bg-yellow-200"></span>
                     <span class="text-sm font-semibold text-yellow-600">{{ 'Warnings Rows:' | translate }}</span>
-                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getRowCounts(sheet_data.row_datas
-                      || []).warningCount }}</span>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white">{{
+                      getWarningCount(sheet_data.row_datas
+                      || []) }}</span>
                   </div>
                 </div>
               </div>
@@ -273,7 +274,13 @@
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
               <div class="flex">
                 <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">Back</button>
-                <button type="button" class="btn btn-primary !mt-6" (click)="importTemplateDetail()">Import</button>
+                <button type="button" class="btn btn-primary !mt-6 mr-3"
+                  (click)="importTemplateDetail()">Import</button>
+                <button
+                  *ngIf="selectedTemplate?.ignore_error_rows && getErrorCount(sheet_data.row_datas || []) > 0 && getErrorCount(sheet_data.row_datas || []) !== (sheet_data.row_datas.length || 0)"
+                  type="button" (click)="importValidRecords()" class="btn btn-warning !mt-6 mr-3">Ignore Errors &
+                  Import {{ (sheet_data.row_datas.length || 0) - getErrorCount(sheet_data.row_datas || []) }}
+                  Row(s)</button>
               </div>
             </div>
           </div>
