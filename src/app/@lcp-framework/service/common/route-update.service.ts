@@ -78,6 +78,7 @@ export class RouteUpdateService {
               const detailsPermissionKey = `details_${routeData.entity_name}`;
               const assignPermissionKey = `assign_${routeData.entity_name}`;
               const printPermissionKey = `print_${routeData.entity_name}`;
+              const recordExportPermissionKey = `record_export_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -178,6 +179,7 @@ export class RouteUpdateService {
                       details: permissionListJSON[detailsPermissionKey] || false,
                       assign: permissionListJSON[assignPermissionKey] || false,
                       print: permissionListJSON[printPermissionKey] || false,
+                      record_export: permissionListJSON[recordExportPermissionKey] || false,
                     },
                     children: children,
                   },

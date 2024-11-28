@@ -38,6 +38,37 @@ export class GridApiService {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, data);
   }
 
+  exportIndividualRecords(menuItemId: any, id: any): Observable<ExportResponse> {
+    return this.http
+      .post(
+        `${environment.apiUrl}${environment.apiAddress}${commonConfig.API.commonindividualdataexport}`,
+        { id: id, menu_item_id: menuItemId },
+        {
+          responseType: 'blob',
+          observe: 'response',
+        }
+      )
+      .pipe(
+        map((response) => {
+          if (!response.body) {
+            throw new Error('No data received from server');
+          }
+
+          const blob = response.body; // response.body is already a Blob due to responseType: 'blob'
+          const contentDisposition = response.headers.get('Content-Disposition');
+          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_${new Date().getTime()}.xlsx`;
+
+          return {
+            blob, // This is guaranteed to be a Blob
+            fileName,
+          } as ExportResponse;
+        }),
+        catchError((error) => {
+          console.error('Export error:', error);
+          throw error;
+        })
+      );
+  }
   // grid.service.ts
   exportAllRecords(menuItemId: any): Observable<ExportResponse> {
     return this.http
@@ -89,6 +120,10 @@ export class GridApiService {
 
   executeRecords(data: any): Observable<any> {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, data);
+  }
+
+  executeRecordsCase(data: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecordsCase}`, data);
   }
 
   getAllTables(): Observable<any> {

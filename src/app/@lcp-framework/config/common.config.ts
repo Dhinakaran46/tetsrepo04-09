@@ -10,6 +10,7 @@ export const commonConfig: any = {
     getExcelHeaders: 'auth/export/get-excel-headers',
     updateprofilepwd: 'auth/password/change',
     commongriddata: 'common/grid-data',
+    commonindividualdataexport: 'common/individual-data-export',
     commongriddataexport: 'common/grid-data-export',
     forgetpasswordEmail: 'auth/admin/password/request/',
     resetpasswordEmail: 'auth/admin/password/reset',
@@ -22,6 +23,8 @@ export const commonConfig: any = {
     postCommnList: 'common/execute-transaction',
     listdata: 'common/list-data',
     executeRecords: 'common/execute-transaction',
+    executeRecordsCase: 'common/execute-transaction-case',
+
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',
     unauthprocedureCall: 'common/call-procedure/',
@@ -47,6 +50,12 @@ export const commonConfig: any = {
     CONFIGURATIONS_MODULE: 'configurations_module',
     IMPORT_TEMPLATE_MODULE: 'import_template_module',
     EXPORT_TEMPLATE_MODULE: 'export_template_module',
+    MTR_DETAIL_MODULE: 'mtr_detail_module',
+    MIR_DETAIL_MODULE: 'mir_detail_module',
+    MRN_DETAIL_MODULE: 'mrn_detail_module',
+    MIN_DETAIL_MODULE: 'min_detail_module',
+    MRN_ADD_EDIT_MODULE: 'mrn_add_edit_module',
+    MIN_ADD_EDIT_MODULE: 'min_add_edit_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -64,6 +73,12 @@ export const commonConfig: any = {
     configurations_module: 'config',
     import_template_module: 'importtemplate',
     export_template_module: 'exporttemplate',
+    mtr_detail_module: 'mtrdetail',
+    mir_detail_module: 'mirdetail',
+    mrn_detail_module: 'mrndetail',
+    min_detail_module: 'mindetail',
+    mrn_add_edit_module: 'mrnaddedit',
+    min_add_edit_module: 'minaddedit',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -96,6 +111,7 @@ export const commonConfig: any = {
     IMPORT: 'import',
     ASSIGN: 'assign',
     Print: 'print',
+    RECORD_EXPORT: 'record_export',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -124,6 +140,7 @@ export const commonConfig: any = {
     { label: 'Import', value: 'import' },
     { label: 'Assign', value: 'assign' },
     { label: 'Print', value: 'print' },
+    { label: 'Record Export', value: 'record_export' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -140,6 +157,13 @@ export const commonConfig: any = {
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
+    { label: 'MTR Detail Module', value: 'mtr_detail_module' },
+    { label: 'MIR Detail Module', value: 'mir_detail_module' },
+    { label: 'MRN Detail Module', value: 'mrn_detail_module' },
+    { label: 'MIN Detail Module', value: 'min_detail_module' },
+    { label: 'MRN Add Edit Module', value: 'mrn_add_edit_module' },
+    { label: 'MIN Add Edit Module', value: 'min_add_edit_module' },
+
     { label: 'Export Template Module', value: 'export_template_module' },
   ],
   keypress_config: {

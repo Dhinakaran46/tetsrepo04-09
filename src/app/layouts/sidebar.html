@@ -4,7 +4,10 @@
       <div class="flex items-center justify-between px-4 py-3">
         <a routerLink="/" class="main-logo flex shrink-0 items-center">
           <img class="ml-[5px] flex-none" [src]="apiUrl+'/'+ this.config?.logo" [alt]="this.config?.company_name" alt appDynamicFontSize="headerlogo" />
-          <span class="align-middle font-semibold dark:text-white-light lg:inline ltr:ml-1.5 rtl:mr-1.5" appDynamicFontSize="heading"
+          <span
+            class="truncate-text hidden align-middle text-lg font-semibold dark:text-white-light lg:inline ltr:ml-1.5 rtl:mr-1.5"
+            appDynamicFontSize="heading"
+            style="max-width: 18ch"
             >{{this.config?.company_name}}</span
           >
         </a>

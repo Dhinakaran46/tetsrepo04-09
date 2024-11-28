@@ -23,6 +23,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
 import { ClientDatatableComponent, TableConfig } from '../../components/client-datatable/client-datatable.component';
 import * as XLSX from 'xlsx';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
+import { saveAs } from 'file-saver';
 
 export function viewMandatoryValidator(): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
@@ -89,6 +92,7 @@ interface ExcelRow extends Array<any> {
 export class ExportTemplateComponent implements OnInit {
   store: any;
   form!: FormGroup;
+  commonFile: any;
   items: any = [];
   queries: any = [];
   //entity_types: any = [];
@@ -266,7 +270,8 @@ export class ExportTemplateComponent implements OnInit {
     public storeData: Store<any>,
     public location: Location,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private http: HttpClient
   ) {
     this.initStore();
   }
@@ -301,6 +306,19 @@ export class ExportTemplateComponent implements OnInit {
       });
   }
 
+  downloadExcel(): void {
+    const fileUrl = `${environment.apiUrl}/${this.commonFile}`;
+    console.log(fileUrl);
+    this.http.get(fileUrl, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        saveAs(blob, 'downloaded_file.xlsx');
+      },
+      error: (err) => {
+        console.error('Error downloading the file', err);
+      },
+    });
+  }
+
   handleFileInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input?.files?.[0];
@@ -327,6 +345,8 @@ export class ExportTemplateComponent implements OnInit {
         if (response.body && response.body.status) {
           // Store the file path
           const filePath = response.body.data;
+          console.log(filePath);
+          this.commonFile = filePath;
           this.form.patchValue({ data_filepath: filePath });
 
           // Process the file for headers
@@ -868,6 +888,8 @@ export class ExportTemplateComponent implements OnInit {
           // Handle Excel file display
           console.log(entity.data_filepath);
           if (entity.data_filepath) {
+            console.log(entity.data_filepath);
+            this.commonFile = entity.data_filepath;
             const fileName = entity.data_filepath.split('/').pop() || '';
             this.selectedFile = {
               name: fileName,

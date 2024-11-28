@@ -123,7 +123,9 @@ export class ClientDatatableComponent implements OnInit {
     if (!this.config.pageSizes) {
       this.config.pageSizes = [10, 25, 50, 100];
     }
-    this._originalData = [...this.data];
+    if (this.data) {
+      this._originalData = [...this.data];
+    }
     this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
   }
 
@@ -388,7 +390,7 @@ export class ClientDatatableComponent implements OnInit {
     Promise.resolve().then(() => {
       this.currentPage = 1;
       if (!query?.trim()) {
-        this.updateDataAndPagination(this._originalData);
+        this.dataChange.emit(this._originalData);
       } else {
         this.updateDataAndPagination(this.data);
       }

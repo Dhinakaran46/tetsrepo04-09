@@ -590,6 +590,43 @@ export class MasterListComponent implements AfterViewInit {
       this.router.navigate([targetRoute]);
     }
   }
+
+  recordExport(item: any) {
+    console.log(item);
+
+    if (this.masterInfo.children.record_export) {
+      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, item.id).subscribe({
+        next: (response: ExportResponse) => {
+          try {
+            const blob = new Blob([response.blob], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            // Excel case
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = response.fileName;
+
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Download error:', err);
+            this.toastr.error('Error downloading file');
+          }
+        },
+        error: (error) => {
+          console.error('Export error:', error);
+          this.toastr.error('Error exporting data');
+        },
+      });
+    }
+  }
   commonTranslate(msg: any) {
     return this.translate.instant(msg);
   }

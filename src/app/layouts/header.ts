@@ -39,6 +39,7 @@ interface MenuItem {
 @Component({
   selector: 'header',
   templateUrl: './header.html',
+  styleUrl: './common.scss',
   standalone: true,
   imports: [CommonSharedModule, NgComponentOutlet, MenuItemComponent, IconMenuDashboardComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
