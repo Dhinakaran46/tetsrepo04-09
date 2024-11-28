@@ -547,3 +547,81 @@ button {
 button[hlMenuButton] {
   height: 38px; // Consistent height for all interactive elements
 }
+
+// Add these styles to client-datatable.component.scss
+
+.table-responsive {
+  position: relative;
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+
+    th,
+    td {
+      &.sticky {
+        position: sticky;
+        z-index: 2;
+        background-clip: padding-box;
+
+        &.right-0 {
+          right: 0;
+          // Add shadow for better visual separation
+          box-shadow: -2px 0 3px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+
+    // Specific styles for header cells
+    thead th.sticky {
+      z-index: 3; // Higher z-index to stay above body cells
+      background-color: #f9fafb; // Match your header background color
+
+      &:is(.dark *) {
+        background-color: rgb(26 41 65) !important;
+      }
+    }
+
+    // Specific styles for body cells
+    tbody td.sticky {
+      background-color: #ffffff; // Match your body background color
+
+      &:is(.dark *) {
+        background-color: rgb(14 23 38);
+      }
+    }
+  }
+}
+
+// Ensure proper spacing for action buttons
+td[class*='sticky'] {
+  padding: 0.5rem 1rem;
+
+  button {
+    margin: 0 0.25rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// Add responsive handling for smaller screens
+@media (max-width: 768px) {
+  .table-responsive {
+    table {
+      td,
+      th {
+        &.sticky {
+          position: relative; // Remove sticky positioning on mobile
+          right: auto;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+}

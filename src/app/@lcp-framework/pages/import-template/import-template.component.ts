@@ -51,6 +51,8 @@ interface LineItem {
   foreign_table: string;
   foreign_column: string;
   foreign_can_create: boolean;
+  foreign_query: boolean;
+  unique_query: boolean;
   field_type_id: number;
 }
 
@@ -59,6 +61,8 @@ interface QueryItem {
   order_no: number;
   query_name: string;
   allow_multiple: boolean;
+  is_indvidual: boolean;
+  before_lineitems: boolean;
 }
 
 @Component({
@@ -209,6 +213,9 @@ export class ImportTemplateComponent implements OnInit {
 
       { key: 'order_no', label: 'Order No', sortable: true, searchable: true },
       { key: 'allow_multiple', label: 'Allow Multiple', sortable: true, searchable: true },
+      { key: 'is_individual', label: 'Is Individual', sortable: true, searchable: true },
+      { key: 'before_lineitems', label: 'Before Line Items', sortable: true, searchable: true },
+
       { key: 'query_string', label: 'Query String', sortable: true, searchable: true },
       {
         key: 'actions',
@@ -315,6 +322,8 @@ export class ImportTemplateComponent implements OnInit {
       foreign_table: [''],
       foreign_column: [''],
       foreign_can_create: [false],
+      foreign_query: [''],
+      unique_query: [''],
       field_type_id: ['', Validators.required],
     });
 
@@ -329,6 +338,8 @@ export class ImportTemplateComponent implements OnInit {
       order_no: ['', [Validators.required, Validators.min(0)]],
       query_name: ['', [Validators.required, Validators.min(0)]],
       allow_multiple: [false],
+      is_individual: [false],
+      before_lineitems: [false],
     });
 
     /*if (!this.id) {
@@ -338,7 +349,7 @@ export class ImportTemplateComponent implements OnInit {
 
   addFormArraySubscriptions() {
     this.lineItemForm.get('is_foreign')?.valueChanges.subscribe((value) => {
-      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create'];
+      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create', 'foreign_query', 'unique_query'];
       foreignControls.forEach((control) => {
         const formControl = this.lineItemForm.get(control);
         if (value) {
@@ -380,6 +391,8 @@ export class ImportTemplateComponent implements OnInit {
       is_individual: false,
 
       foreign_can_create: false,
+      foreign_query: '',
+      unique_query: '',
     });
     this.isItemModalOpen = true;
   }
@@ -391,6 +404,8 @@ export class ImportTemplateComponent implements OnInit {
       order_no: '',
       query_name: '',
       allow_multiple: false,
+      is_individual: false,
+      before_lineitems: false,
     });
     this.isQueryModalOpen = true;
   }
@@ -511,7 +526,8 @@ export class ImportTemplateComponent implements OnInit {
       header_row: ['', Validators.required],
       data_start_row: ['', Validators.required],
       data_end_row: ['', Validators.required],
-
+      is_admin_module: [false],
+      ignore_error_rows: [false],
       status_id: [1],
       items: this.fb.array([]),
       queries: this.fb.array([]),
@@ -615,11 +631,11 @@ export class ImportTemplateComponent implements OnInit {
         ['import_templates.*'],
 
         [
-          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values,'is_individual', import_template_line_items.is_individual, 'individual_column', import_template_line_items.individual_column, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create, 'field_type_id', import_template_line_items.field_type_id))) END",
+          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values,'is_individual', import_template_line_items.is_individual, 'individual_column', import_template_line_items.individual_column, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create,'foreign_query',import_template_line_items.foreign_query,'unique_query',import_template_line_items.unique_query, 'field_type_id', import_template_line_items.field_type_id))) END",
           'items',
         ],
         [
-          "CASE WHEN COUNT(import_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('query_string', import_template_queries.query_string,'query_name', import_template_queries.query_name,'allow_multiple', import_template_queries.allow_multiple, 'order_no', import_template_queries.order_no))) END",
+          "CASE WHEN COUNT(import_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('query_string', import_template_queries.query_string,'query_name', import_template_queries.query_name,'allow_multiple', import_template_queries.allow_multiple,'is_individual',import_template_queries.is_individual,'before_lineitems',import_template_queries.before_lineitems, 'order_no', import_template_queries.order_no))) END",
           'queries',
         ],
       ],
@@ -651,7 +667,8 @@ export class ImportTemplateComponent implements OnInit {
             header_row: entity.header_row,
             data_start_row: entity.data_start_row,
             data_end_row: entity.data_end_row,
-
+            ignore_error_rows: entity.ignore_error_rows,
+            is_admin_module: entity.is_admin_module,
             status_id: entity.status_id,
           });
 
@@ -679,6 +696,8 @@ export class ImportTemplateComponent implements OnInit {
                   foreign_table: [item.foreign_table],
                   foreign_column: [item.foreign_column],
                   foreign_can_create: [item.foreign_can_create],
+                  foreign_query: [item.foreign_query],
+                  unique_query: [item.unique_query],
                   field_type_id: [item.field_type_id, Validators.required],
                 })
               );
@@ -696,6 +715,8 @@ export class ImportTemplateComponent implements OnInit {
                   order_no: [query.order_no, [Validators.required, Validators.min(0)]],
                   query_name: [query.query_name, Validators.required],
                   allow_multiple: [query.allow_multiple],
+                  is_individual: [query.is_individual],
+                  before_lineitems: [query.before_lineitems],
                 })
               );
             });
@@ -723,6 +744,8 @@ export class ImportTemplateComponent implements OnInit {
         header_row: formData.header_row,
         data_start_row: formData.data_start_row,
         data_end_row: formData.data_end_row,
+        ignore_error_rows: formData.ignore_error_rows,
+        is_admin_module: formData.is_admin_module,
       },
     ];
 
@@ -746,6 +769,9 @@ export class ImportTemplateComponent implements OnInit {
         foreign_table: item.is_foreign ? (item.foreign_table ? item.foreign_table : null) : null,
         foreign_column: item.is_foreign ? (item.foreign_column ? item.foreign_column : null) : null,
         foreign_can_create: item.is_foreign ? (item.foreign_can_create ? item.foreign_can_create : false) : false,
+        foreign_query: item.is_foreign ? (item.foreign_query ? item.foreign_query : null) : null,
+        unique_query: item.is_unique ? (item.unique_query ? item.unique_query : null) : null,
+
         field_type_id: item.field_type_id,
       }));
       this.insert_json_schema.data['table2'] = items;
@@ -758,6 +784,8 @@ export class ImportTemplateComponent implements OnInit {
         order_no: query.order_no,
         query_name: query.query_name,
         allow_multiple: query.allow_multiple,
+        is_individual: query.is_individual,
+        before_lineitems: query.before_lineitems,
       }));
       this.insert_json_schema.data['table3'] = queries;
     }
@@ -780,6 +808,8 @@ export class ImportTemplateComponent implements OnInit {
         header_row: formData.header_row,
         data_start_row: formData.data_start_row,
         data_end_row: formData.data_end_row,
+        ignore_error_rows: formData.ignore_error_rows,
+        is_admin_module: formData.is_admin_module,
       },
     ];
 
@@ -809,6 +839,8 @@ export class ImportTemplateComponent implements OnInit {
         foreign_table: item.is_foreign ? (item.foreign_table ? item.foreign_table : null) : null,
         foreign_column: item.is_foreign ? (item.foreign_column ? item.foreign_column : null) : null,
         foreign_can_create: item.is_foreign ? (item.foreign_can_create ? item.foreign_can_create : false) : false,
+        foreign_query: item.is_foreign ? (item.foreign_query ? item.foreign_query : null) : null,
+        unique_query: item.is_unique ? (item.unique_query ? item.unique_query : null) : null,
         field_type_id: item.field_type_id,
       }));
 
@@ -821,6 +853,8 @@ export class ImportTemplateComponent implements OnInit {
         order_no: query.order_no,
         query_name: query.query_name,
         allow_multiple: query.allow_multiple,
+        is_individual: query.is_individual,
+        before_lineitems: query.before_lineitems,
       }));
 
       this.update_json_schema.data['table5'] = queries;
@@ -1017,6 +1051,8 @@ export class ImportTemplateComponent implements OnInit {
       foreign_table: [item.foreign_table],
       foreign_column: [item.foreign_column],
       foreign_can_create: [item.foreign_can_create],
+      foreign_query: [item.foreign_query],
+      unique_query: [item.unique_query],
       field_type_id: [item.field_type_id, Validators.required],
     });
   }
@@ -1027,6 +1063,8 @@ export class ImportTemplateComponent implements OnInit {
       order_no: [query.order_no, [Validators.required, Validators.min(0)]],
       query_name: [query.query_name, Validators.required],
       allow_multiple: [query.allow_multiple],
+      is_individual: [query.is_individual],
+      before_lineitems: [query.before_lineitems],
     });
   }
 

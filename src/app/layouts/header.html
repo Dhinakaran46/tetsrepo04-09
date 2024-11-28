@@ -269,7 +269,7 @@
             </div>
           </a>
         </ng-template>
-        <ul class="sub-menu" *ngIf="hasVisibleChildren(item)">
+        <ul class="sub-menu custom-min-width" *ngIf="hasVisibleChildren(item)">
           <ng-container *ngFor="let child of item.children">
             <li class="menu nav-item relative" [class.active]="child.isActive" *ngIf="child.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
               <a
@@ -300,7 +300,7 @@
                 </a>
               </ng-template>
               <ul
-                class="sub-menu absolute top-0 z-[10] hidden min-w-[180px] rounded bg-white p-0 py-2 text-dark shadow dark:bg-[#1b2e4b] dark:text-white-dark ltr:left-[95%] rtl:right-[95%]"
+                class="sub-menu custom-min-width absolute top-0 z-[10] hidden min-w-[180px] rounded bg-white p-0 py-2 text-dark shadow dark:bg-[#1b2e4b] dark:text-white-dark ltr:left-[95%] rtl:right-[95%]"
                 *ngIf="hasVisibleChildren(child)"
               >
                 <ng-container *ngFor="let childin of child.children">
@@ -338,7 +338,7 @@
                       </a>
                     </ng-template>
                     <ul
-                      class="sub-menu absolute top-0 z-[10] hidden min-w-[180px] rounded bg-white p-0 py-2 text-dark shadow dark:bg-[#1b2e4b] dark:text-white-dark ltr:left-[95%] rtl:right-[95%]"
+                      class="sub-menu custom-min-width absolute top-0 z-[10] hidden min-w-[180px] rounded bg-white p-0 py-2 text-dark shadow dark:bg-[#1b2e4b] dark:text-white-dark ltr:left-[95%] rtl:right-[95%]"
                       *ngIf="hasVisibleChildren(childin)"
                     >
                       <ng-container *ngFor="let childin3 of childin.children">

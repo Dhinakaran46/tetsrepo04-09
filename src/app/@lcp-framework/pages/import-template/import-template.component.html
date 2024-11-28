@@ -86,7 +86,8 @@
               {{ getErrorMessage('status_id') }}
             </div>
           </div>
-
+        </div>
+        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-6">
           <!-- New Integer Fields -->
           <div class="mt-0">
             <label for="max_row_count" class="required-mark mb-2 block font-medium">{{ 'form_label_max_row_count' | translate }}</label>
@@ -149,6 +150,42 @@
             />
             <div *ngIf="isFieldInvalid('data_end_row')" class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('data_end_row') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="ignore_error_rows" class="required-mark mb-2 block font-medium">{{ 'form_label_ignore_error_rows' | translate }}</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="true" formControlName="ignore_error_rows" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+              </label>
+
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="false" formControlName="ignore_error_rows" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+              </label>
+            </div>
+            <div *ngIf="isFieldInvalid('ignore_error_rows')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('ignore_error_rows') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="is_admin_module" class="required-mark mb-2 block font-medium">{{ 'form_label_is_admin_module' | translate }}</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="true" formControlName="is_admin_module" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+              </label>
+
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="false" formControlName="is_admin_module" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+              </label>
+            </div>
+            <div *ngIf="isFieldInvalid('is_admin_module')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('is_admin_module') }}
             </div>
           </div>
         </div>
@@ -341,16 +378,6 @@
               <div class="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  id="is_unique"
-                  formControlName="is_unique"
-                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-                <label for="is_unique" class="form-label">{{ 'form_label_is_unique' | translate }}</label>
-              </div>
-
-              <div class="flex items-center space-x-3">
-                <input
-                  type="checkbox"
                   id="is_multiple"
                   formControlName="is_multiple"
                   class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
@@ -469,6 +496,46 @@
                   </label>
                 </div>
               </div>
+              <div *ngIf="lineItemForm.get('is_foreign')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
+                <div class="col-span-1">
+                  <label for="foreign_query" class="form-label">
+                    {{ 'form_label_foreign_query' | translate }}
+                  </label>
+                  <div class="mt-1">
+                    <textarea
+                      id="foreign_query"
+                      formControlName="foreign_query"
+                      class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_unique"
+                  formControlName="is_unique"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label for="is_unique" class="form-label">{{ 'form_label_is_unique' | translate }}</label>
+              </div>
+              <div *ngIf="lineItemForm.get('is_unique')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
+                <div class="col-span-1">
+                  <label for="unique_query" class="form-label">
+                    {{ 'form_label_unique_query' | translate }}
+                  </label>
+                  <div class="mt-1">
+                    <textarea
+                      id="unique_query"
+                      formControlName="unique_query"
+                      class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -525,7 +592,7 @@
       <!-- Modal Content -->
       <div class="max-h-[calc(90vh-10rem)] overflow-y-auto px-4 py-4 sm:px-6">
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()" class="space-y-4">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div class="space-y-2">
               <label for="query_name" class="required-mark form-label">
                 {{ 'form_label_query_name' | translate }}
@@ -558,6 +625,25 @@
                 class="form-checkbox h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
               />
               <label for="allow_multiple" class="form-label">{{ 'form_label_allow_multiple' | translate }}</label>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="is_individual"
+                formControlName="is_individual"
+                class="form-checkbox h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <label for="is_individual" class="form-label">{{ 'form_label_is_individual' | translate }}</label>
+            </div>
+            <div class="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="before_lineitems"
+                formControlName="before_lineitems"
+                class="form-checkbox h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <label for="before_lineitems" class="form-label">{{ 'form_label_before_lineitems' | translate }}</label>
             </div>
           </div>
 

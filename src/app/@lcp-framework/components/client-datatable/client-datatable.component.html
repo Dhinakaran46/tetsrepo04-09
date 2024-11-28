@@ -3,8 +3,7 @@
   <!-- Search Section -->
 
   <!-- Header Section -->
-  <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center"
-    *ngIf="config.headerConfig?.showHeader">
+  <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center" *ngIf="config.headerConfig?.showHeader">
     <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
       {{ config.headerConfig?.title }}
     </div>
@@ -12,34 +11,50 @@
     <div class="flex items-center gap-2 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
       <!-- Search Input -->
       <div class="relative mb-2 flex-grow md:mb-0">
-        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch($event)" appDynamicFontSize="body"
-          class="form-input w-full pr-10 text-xs text-gray-600" placeholder="Search..." />
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch($event)"
+          appDynamicFontSize="body"
+          class="form-input w-full pr-10 text-xs text-gray-600"
+          placeholder="Search..."
+        />
       </div>
 
       <!-- Filter Button -->
-      <button (click)="toggleMenu($event)" aria-expanded="true" aria-haspopup="true"
+      <button
+        (click)="toggleMenu($event)"
+        aria-expanded="true"
+        aria-haspopup="true"
         class="filter-button flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-        id="options-menu" type="button">
+        id="options-menu"
+        type="button"
+      >
         <i class="fa-solid fa-filter"></i>&nbsp;<span class="hidden md:inline">{{ 'table_filter' | translate }}</span>
-        <span *ngIf="getNonEmptyFilterCount() > 0" class="badge absolute -top-3 rounded-full bg-danger p-0.5 px-1.5">{{
-          getNonEmptyFilterCount() }}</span>
+        <span *ngIf="getNonEmptyFilterCount() > 0" class="badge absolute -top-3 rounded-full bg-danger p-0.5 px-1.5">{{ getNonEmptyFilterCount() }}</span>
       </button>
 
-      <div *ngIf="isMenuOpen" aria-labelledby="options-menu"
+      <div
+        *ngIf="isMenuOpen"
+        aria-labelledby="options-menu"
         class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-        role="menu">
+        role="menu"
+      >
         <!-- Filter Menu Header -->
         <div class="flex items-center justify-between border-b border-gray-200 p-4">
           <span>{{ 'table_advance_filter' | translate }}</span>
           <div class="flex items-center gap-4">
-            <button (click)="addCondition()" class="text-blue-500" ngxTippy="Add Filter"><i
-                class="fa-solid fa-plus"></i>&nbsp;</button>
+            <button (click)="addCondition()" class="text-blue-500" ngxTippy="Add Filter"><i class="fa-solid fa-plus"></i>&nbsp;</button>
             <label class="relative h-6 w-12">
-              <input type="checkbox" [(ngModel)]="filterCondition"
+              <input
+                type="checkbox"
+                [(ngModel)]="filterCondition"
                 class="custom_switch peer absolute z-10 h-full w-full cursor-pointer opacity-0"
-                id="custom_switch_checkbox" />
+                id="custom_switch_checkbox"
+              />
               <span
-                class="block h-full rounded-full bg-[#ebedf2] before:absolute before:bottom-1 before:left-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:duration-300 peer-checked:bg-primary peer-checked:before:left-7"></span>
+                class="block h-full rounded-full bg-[#ebedf2] before:absolute before:bottom-1 before:left-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:duration-300 peer-checked:bg-primary peer-checked:before:left-7"
+              ></span>
             </label>
             <span>{{ filterCondition ? 'AND' : 'OR' }}</span>
           </div>
@@ -63,14 +78,19 @@
 
                 <select [(ngModel)]="condition.operator" class="form-select w-full">
                   <option value="" selected disabled>{{ 'condition' | translate }}</option>
-                  <option *ngFor="let op of getOperatorsForColumn(condition.field)" [value]="op.value">{{ op.label }}
-                  </option>
+                  <option *ngFor="let op of getOperatorsForColumn(condition.field)" [value]="op.value">{{ op.label }}</option>
                 </select>
 
-                <input [(ngModel)]="condition.value" [type]="getInputTypeForColumn(condition.field)"
-                  class="form-input w-full pr-10 text-gray-600" [placeholder]="getPlaceholderForColumn(condition.field)"
-                  [attr.min]="getMinValueForColumn(condition.field)" [attr.max]="getMaxValueForColumn(condition.field)"
-                  [attr.pattern]="getPatternForColumn(condition.field)" [required]="true" />
+                <input
+                  [(ngModel)]="condition.value"
+                  [type]="getInputTypeForColumn(condition.field)"
+                  class="form-input w-full pr-10 text-gray-600"
+                  [placeholder]="getPlaceholderForColumn(condition.field)"
+                  [attr.min]="getMinValueForColumn(condition.field)"
+                  [attr.max]="getMaxValueForColumn(condition.field)"
+                  [attr.pattern]="getPatternForColumn(condition.field)"
+                  [required]="true"
+                />
 
                 <button (click)="removeCondition(i)" class="text-red-500">
                   <i class="fa-solid fa-xmark text-xl"></i>
@@ -84,8 +104,7 @@
         <div class="flex items-center justify-between border-t border-gray-200 p-4">
           <button (click)="clearFilters()" class="text-red-500">{{ 'table_clear_filter' | translate }}</button>
           <div class="flex gap-4">
-            <button (click)="applyFilters()" [disabled]="!isApplyButtonEnabled()" class="btn btn-primary">{{ 'apply' |
-              translate }}</button>
+            <button (click)="applyFilters()" [disabled]="!isApplyButtonEnabled()" class="btn btn-primary">{{ 'apply' | translate }}</button>
             <button (click)="cancelFilters()" class="btn btn-secondary">{{ 'cancel' | translate }}</button>
           </div>
         </div>
@@ -93,17 +112,19 @@
 
       <!-- Column Selector -->
       <div hlMenu class="dropdown mb-2 md:mb-0" *ngIf="config.headerConfig?.enableColumnSelector">
-        <button hlMenuButton type="button"
+        <button
+          hlMenuButton
+          type="button"
           class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-          appDynamicFontSize="body">
+          appDynamicFontSize="body"
+        >
           <i class="fa-solid fa-table-columns"></i>&nbsp;
           <span class="ltr:mr-1 rtl:ml-1">{{ 'table_multiselect_1' | translate }}</span>
         </button>
         <ul *hlMenuItems @toggleAnimation class="w-max ltr:left-0 rtl:right-0">
           <li>
             <div class="flex items-center border-b border-gray-200 px-4 py-1">
-              <button class="mr-2 px-2 py-1 text-blue-500" (click)="selectAllColumns()">{{ 'select_all' | translate
-                }}</button>
+              <button class="mr-2 px-2 py-1 text-blue-500" (click)="selectAllColumns()">{{ 'select_all' | translate }}</button>
               <button class="px-2 py-1 text-red-500" (click)="clearAllColumns()">{{ 'clear_all' | translate }}</button>
             </div>
           </li>
@@ -111,8 +132,7 @@
             <li>
               <div class="flex items-center px-4 py-1">
                 <label [for]="'chk-' + i" class="mb-0 cursor-pointer">
-                  <input type="checkbox" [id]="'chk-' + i" class="form-checkbox" [checked]="isColumnVisible(col.key)"
-                    (change)="toggleColumn(col.key)" />
+                  <input type="checkbox" [id]="'chk-' + i" class="form-checkbox" [checked]="isColumnVisible(col.key)" (change)="toggleColumn(col.key)" />
                   <span class="uppercase ltr:ml-2 rtl:mr-2" appDynamicFontSize="body">{{ col.label }}</span>
                 </label>
               </div>
@@ -124,8 +144,11 @@
       <!-- Export Menu -->
       <div *ngIf="config.headerConfig?.enableExport">
         <div hlMenu class="dropdown mb-2 md:mb-0">
-          <button type="button" hlMenuButton
-            class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
+          <button
+            type="button"
+            hlMenuButton
+            class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+          >
             <i class="fa-solid fa-download"></i>&nbsp;<span class="hidden md:inline">{{ 'export' | translate }}</span>
           </button>
           <ul *hlMenuItems @toggleAnimation class="whitespace-nowrap ltr:right-0 rtl:left-0">
@@ -144,11 +167,14 @@
       </div>
 
       <!-- Add Button -->
-      <button *ngIf="config.headerConfig?.addButton?.show" appDynamicFontSize="body" (click)="onAddClick()"
+      <button
+        *ngIf="config.headerConfig?.addButton?.show"
+        appDynamicFontSize="body"
+        (click)="onAddClick()"
         type="button"
-        class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
-        <i [class]="config.headerConfig?.addButton?.icon || 'fa-solid fa-plus'"></i>&nbsp;{{
-        config.headerConfig?.addButton?.label || 'Add New' | translate }}
+        class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+      >
+        <i [class]="config.headerConfig?.addButton?.icon || 'fa-solid fa-plus'"></i>&nbsp;{{ config.headerConfig?.addButton?.label || 'Add New' | translate }}
       </button>
     </div>
   </div>
@@ -158,17 +184,34 @@
       <table class="table-hover relative min-w-full">
         <thead class="bg-gray-50">
           <tr>
-            <th *ngFor="let col of config.columns" scope="col" appDynamicFontSize="body"
-              class="font-large max-w-150 cursor-pointer truncate whitespace-nowrap px-3 py-2 text-left tracking-wider"
-              (click)="col.sortable && onSort(col.key)">
+            <th
+              *ngFor="let col of config.columns; let last = last"
+              scope="col"
+              appDynamicFontSize="body"
+              class="font-large cursor-pointer truncate whitespace-nowrap px-3 py-2 text-left tracking-wider"
+              [ngClass]="{
+                'cursor-pointer': col.sortable,
+                'sticky right-0 z-10': col.type === 'button' && last,
+                'max-w-150': col.type !== 'button'
+              }"
+              (click)="col.sortable && onSort(col.key)"
+            >
               <span *ngIf="col.isHtmlHeader" [innerHTML]="col.label"></span>
               <ng-container *ngIf="!col.isHtmlHeader">{{ col.label }}</ng-container>
               <span *ngIf="col.sortable" class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center">
                 <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                  <polygon [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'asc' }"
-                    points="3.11,6.25 10.89,6.25 7,1.75" fill="currentColor" class="bh-text-black"></polygon>
-                  <polygon [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'desc' }"
-                    points="7,12.25 10.89,7.75 3.11,7.75" fill="currentColor" class="bh-text-black"></polygon>
+                  <polygon
+                    [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'asc' }"
+                    points="3.11,6.25 10.89,6.25 7,1.75"
+                    fill="currentColor"
+                    class="bh-text-black"
+                  ></polygon>
+                  <polygon
+                    [ngClass]="{ 'bh-text-primary': sortColumn === col.key && sortDirection === 'desc' }"
+                    points="7,12.25 10.89,7.75 3.11,7.75"
+                    fill="currentColor"
+                    class="bh-text-black"
+                  ></polygon>
                 </svg>
               </span>
             </th>
@@ -177,11 +220,17 @@
         <!-- Updated tbody sections -->
         <tbody [formGroup]="formGroup!" *ngIf="formGroup" [formArrayName]="formArrayName!">
           <tr *ngFor="let item of paginatedData; let i = index" [formGroupName]="getFormGroupIndex(i)">
-            <td *ngFor="let col of config.columns" class="max-w-150 truncate whitespace-nowrap">
+            <td
+              *ngFor="let col of config.columns; let last = last"
+              class="truncate whitespace-nowrap"
+              [ngClass]="{
+                'sticky right-0 z-10': col.type === 'button' && last,
+                'max-w-150': col.type !== 'button'
+              }"
+            >
               <ng-container [ngSwitch]="col.type">
                 <ng-container *ngSwitchCase="'button'">
-                  <button *ngFor="let action of col.actions" type="button" [class]="action.class"
-                    (click)="action.onClick(item)" [title]="action.tooltip || ''">
+                  <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
                     <i [class]="action.icon"></i>
                   </button>
                 </ng-container>
@@ -205,15 +254,21 @@
           </tr>
         </tbody>
         <tbody *ngIf="!formGroup">
-          <tr *ngFor="let item of paginatedData">
-            <td *ngFor="let col of config.columns" class="max-w-150 truncate whitespace-nowrap" [ngClass]="{
+          <tr *ngFor="let item of paginatedData; let i = index">
+            <td
+              *ngFor="let col of config.columns; let last = last"
+              class="truncate whitespace-nowrap"
+              [ngClass]="{
+                'sticky right-0 z-10': col.type === 'button' && last,
+                'max-w-150': col.type !== 'button',
                 'bg-red-200 text-red-600': item.errors && item.errors[col.key]?.length > 0,
                 'bg-orange-200 text-orange-600': item.warnings && item.warnings[col.key]?.length > 0
-              }" [title]="getMessages(item, col.key)">
+              }"
+              [title]="getMessages(item, col.key)"
+            >
               <ng-container [ngSwitch]="col.type">
                 <ng-container *ngSwitchCase="'button'">
-                  <button *ngFor="let action of col.actions" type="button" [class]="action.class"
-                    (click)="action.onClick(item)" [title]="action.tooltip || ''">
+                  <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
                     <i [class]="action.icon"></i>
                   </button>
                 </ng-container>
@@ -222,7 +277,6 @@
                     {{ item[col.key] ? 'Yes' : 'No' }}
                   </ng-container>
                   <ng-template #defaultContent>
-
                     <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
                     <ng-container *ngIf="!col.isHtmlValue">
                       {{ item[col.key] }}
@@ -233,8 +287,7 @@
             </td>
           </tr>
           <tr *ngIf="paginatedData.length === 0">
-            <td [attr.colspan]="config.columns.length" class="max-w-150 truncate whitespace-nowrap">No data available
-            </td>
+            <td [attr.colspan]="config.columns.length" class="max-w-150 truncate whitespace-nowrap">No data available</td>
           </tr>
         </tbody>
       </table>
@@ -244,8 +297,7 @@
     <div class="pagination items-center justify-between border-t border-gray-200 py-2 md:flex">
       <div class="flex items-center">
         <div class="mr-4">
-          <select class="py-1.5 text-xs" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()"
-            [ngModelOptions]="{ standalone: true }">
+          <select class="py-1.5 text-xs" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()" [ngModelOptions]="{ standalone: true }">
             <option *ngFor="let size of config.pageSizes" [value]="size">{{ size }}</option>
           </select>
         </div>
@@ -262,59 +314,81 @@
       </div>
       <div>
         <nav class="isolate inline-flex -space-x-px rounded-md py-1.5 text-xs shadow-sm" aria-label="Pagination">
-          <button (click)="onPageChange(1)"
+          <button
+            (click)="onPageChange(1)"
             class="relative inline-flex items-center rounded-l-md px-2 py-1 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-            [disabled]="currentPage === 1">
+            [disabled]="currentPage === 1"
+          >
             <span class="sr-only">First</span>
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd"
+              <path
+                fill-rule="evenodd"
                 d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
-                clip-rule="evenodd" />
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
-          <button (click)="onPageChange(currentPage - 1)"
+          <button
+            (click)="onPageChange(currentPage - 1)"
             class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-            [disabled]="currentPage === 1">
+            [disabled]="currentPage === 1"
+          >
             <span class="sr-only">Previous</span>
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd"
+              <path
+                fill-rule="evenodd"
                 d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                clip-rule="evenodd" />
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
 
           <ng-container *ngFor="let page of getPageNumbers(); let i = index">
             <ng-container [ngSwitch]="page">
-              <button *ngSwitchCase="'...'" (click)="handleEllipsisClick(i)"
-                class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+              <button
+                *ngSwitchCase="'...'"
+                (click)="handleEllipsisClick(i)"
+                class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              >
                 ...
               </button>
-              <button *ngSwitchDefault (click)="onPageChange(page)"
+              <button
+                *ngSwitchDefault
+                (click)="onPageChange(page)"
                 class="relative inline-flex items-center px-4 py-2 font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                [ngClass]="{ 'bg-blue-50': currentPage === page }">
+                [ngClass]="{ 'bg-blue-50': currentPage === page }"
+              >
                 {{ page }}
               </button>
             </ng-container>
           </ng-container>
 
-          <button (click)="onPageChange(currentPage + 1)"
+          <button
+            (click)="onPageChange(currentPage + 1)"
             class="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-            [disabled]="currentPage === totalPages">
+            [disabled]="currentPage === totalPages"
+          >
             <span class="sr-only">Next</span>
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd"
+              <path
+                fill-rule="evenodd"
                 d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                clip-rule="evenodd" />
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
-          <button (click)="onPageChange(totalPages)"
+          <button
+            (click)="onPageChange(totalPages)"
             class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-            [disabled]="currentPage === totalPages">
+            [disabled]="currentPage === totalPages"
+          >
             <span class="sr-only">Last</span>
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd"
+              <path
+                fill-rule="evenodd"
                 d="M4.21 14.77a.75.75 0 01.02-1.06L8.168 10 4.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02zm6 0a.75.75 0 01.02-1.06L14.168 10 10.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                clip-rule="evenodd" />
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
         </nav>
