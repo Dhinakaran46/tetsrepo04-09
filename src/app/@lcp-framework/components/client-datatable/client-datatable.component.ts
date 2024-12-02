@@ -104,7 +104,7 @@ export class ClientDatatableComponent implements OnInit {
 
   searchQuery: string = '';
   currentPage: number = 1;
-  pageSize: number = 10;
+  pageSize: any = 10;
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
@@ -127,6 +127,11 @@ export class ClientDatatableComponent implements OnInit {
       this._originalData = [...this.data];
     }
     this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
+    console.log(this.currentPage);
+    console.log(this.pageSize);
+    console.log(this.totalPages);
+    console.log(this.endIndex);
+    console.log(this.filteredData.length);
   }
 
   onAddClick(): void {
@@ -245,7 +250,7 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   // Filtering data
-  get filteredData(): any[] {
+  /*get filteredData(): any[] {
     let filtered = [...this.data];
 
     if (this.searchQuery?.trim()) {
@@ -284,7 +289,7 @@ export class ClientDatatableComponent implements OnInit {
     }
 
     return filtered;
-  }
+  }*/
 
   private evaluateCondition(condition: FilterCondition, value: any): boolean {
     if (!value) return false;
@@ -324,17 +329,25 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   onPageChange(page: any): void {
+    console.log(page);
     Promise.resolve().then(() => {
       this.currentPage = page;
       this.pageChange.emit(page);
       this.cdr.detectChanges();
+      console.log(this.currentPage);
+      console.log(this.pageSize);
+      console.log(this.totalPages);
+      console.log(this.endIndex);
+      console.log(this.filteredData.length);
+      //this.pageChange.emit(page);
+      //this.cdr.detectChanges();
     });
   }
 
-  onPageSizeChange(): void {
+  /*onPageSizeChange(): void {
     this.currentPage = 1;
     this.pageSizeChange.emit(this.pageSize);
-  }
+  }*/
 
   getFormGroupIndex(index: number): number {
     return index + this.startIndex;
@@ -345,42 +358,108 @@ export class ClientDatatableComponent implements OnInit {
     const totalPages = this.totalPages;
     const currentPage = this.currentPage;
 
+    // If less than 8 pages, show all pages
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
       }
-    } else {
-      pageNumbers.push(1);
+      return pageNumbers;
+    }
 
-      if (currentPage > 3) {
-        pageNumbers.push('...');
-      }
+    // Always add first page
+    pageNumbers.push(1);
 
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-
-      for (let i = start; i <= end; i++) {
+    // Handle different cases for showing ellipsis and page numbers
+    if (currentPage <= 4) {
+      // Show first 5 pages + ellipsis + last page
+      for (let i = 2; i <= 5; i++) {
         pageNumbers.push(i);
       }
-
-      if (currentPage < totalPages - 2) {
-        pageNumbers.push('...');
+      pageNumbers.push('...');
+      pageNumbers.push(totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      // Show first page + ellipsis + last 5 pages
+      pageNumbers.push('...');
+      for (let i = totalPages - 4; i < totalPages; i++) {
+        pageNumbers.push(i);
       }
-
+      pageNumbers.push(totalPages);
+    } else {
+      // Show first page + ellipsis + current-1,current,current+1 + ellipsis + last page
+      pageNumbers.push('...');
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        pageNumbers.push(i);
+      }
+      pageNumbers.push('...');
       pageNumbers.push(totalPages);
     }
 
     return pageNumbers;
   }
 
+  onPageSizeChange(): void {
+    // Calculate current first item index
+    console.log(this.currentPage);
+    console.log(this.pageSize);
+    console.log(this.totalPages);
+    this.pageSize = parseInt(this.pageSize);
+    const firstItemIndex = (this.currentPage - 1) * this.pageSize;
+
+    // Calculate new current page to maintain position
+    const newCurrentPage = Math.floor(firstItemIndex / this.pageSize) + 1;
+
+    // Update current page
+    this.currentPage = Math.min(newCurrentPage, this.totalPages);
+
+    // Ensure we don't exceed total pages
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    // Ensure we don't exceed total pages
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    // Reset to page 1 if no data
+    if (this.totalPages === 0) {
+      this.currentPage = 1;
+    }
+
+    // Emit changes
+    this.pageSizeChange.emit(this.pageSize);
+    this.pageChange.emit(this.currentPage);
+
+    console.log(this.currentPage);
+    console.log(this.pageSize);
+    console.log(this.totalPages);
+    console.log(this.endIndex);
+    console.log(this.filteredData.length);
+    // Update view
+    this.cdr.detectChanges();
+  }
+
+  // Also update the get paginatedData method:
+  get paginatedData(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    return this.filteredData.slice(start, end);
+  }
+
   handleEllipsisClick(index: number): void {
     const pageNumbers = this.getPageNumbers();
-    if (index === 1) {
-      // Clicked on the first ellipsis
-      this.onPageChange(Math.floor((1 + this.currentPage) / 2));
-    } else if (index === pageNumbers.length - 2) {
-      // Clicked on the last ellipsis
-      this.onPageChange(Math.floor((this.totalPages + this.currentPage) / 2));
+    const ellipsisIndex = pageNumbers.indexOf('...');
+
+    if (index === ellipsisIndex) {
+      // First ellipsis clicked
+      const nextNumber = pageNumbers[index + 1] as number;
+      const prevNumber = pageNumbers[index - 1] as number;
+      this.onPageChange(Math.floor((prevNumber + nextNumber) / 2));
+    } else {
+      // Last ellipsis clicked
+      const nextNumber = pageNumbers[index + 1] as number;
+      const prevNumber = pageNumbers[index - 1] as number;
+      this.onPageChange(Math.floor((prevNumber + nextNumber) / 2));
     }
   }
 
@@ -389,30 +468,35 @@ export class ClientDatatableComponent implements OnInit {
 
     Promise.resolve().then(() => {
       this.currentPage = 1;
+
+      // Keep track of filtered data separately
       if (!query?.trim()) {
-        this.dataChange.emit(this._originalData);
+        // If search is cleared, restore original data
+        this.data = [...this._originalData];
       } else {
-        this.updateDataAndPagination(this.data);
+        // Filter data based on search query
+        const filtered = this._originalData.filter((item) =>
+          Object.keys(item).some((key) => item[key]?.toString().toLowerCase().includes(query.toLowerCase()))
+        );
+        this.data = filtered;
       }
+
+      // Emit the filtered data
+      this.dataChange.emit(this.data);
       this.cdr.detectChanges();
     });
   }
 
   // Update method to handle data updates
-  updateDataAndPagination(newData: any[]) {
+  private updateDataAndPagination(newData: any[]): void {
     this.data = newData;
     this._originalData = [...newData];
 
-    // Calculate new total pages
     const newTotalPages = Math.ceil(this.filteredData.length / this.pageSize);
 
-    // Use Promise.resolve to push the pagination update to the next change detection cycle
     Promise.resolve().then(() => {
-      if (this.currentPage > newTotalPages && newTotalPages > 0) {
-        this.currentPage = newTotalPages;
-        this.pageChange.emit(this.currentPage);
-      } else if (newTotalPages === 0) {
-        this.currentPage = 1;
+      if (this.currentPage > newTotalPages) {
+        this.currentPage = Math.max(1, newTotalPages);
         this.pageChange.emit(this.currentPage);
       }
 
@@ -421,8 +505,36 @@ export class ClientDatatableComponent implements OnInit {
     });
   }
 
+  // Update filteredData getter
+  get filteredData(): any[] {
+    let filtered = [...this.data];
+
+    if (this.searchQuery?.trim()) {
+      const query = this.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((item) => Object.keys(item).some((key) => item[key]?.toString().toLowerCase().includes(query)));
+    }
+
+    if (this.sortColumn) {
+      filtered.sort((a, b) => {
+        const aVal = a[this.sortColumn];
+        const bVal = b[this.sortColumn];
+
+        if (aVal == null) return this.sortDirection === 'asc' ? -1 : 1;
+        if (bVal == null) return this.sortDirection === 'asc' ? 1 : -1;
+
+        if (typeof aVal === 'string') {
+          return this.sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+
+        return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      });
+    }
+
+    return filtered;
+  }
+
   // Update get paginatedData to handle empty pages better
-  get paginatedData(): any[] {
+  /*get paginatedData(): any[] {
     const filteredResults = this.filteredData;
     const totalPages = Math.ceil(filteredResults.length / this.pageSize);
 
@@ -439,7 +551,7 @@ export class ClientDatatableComponent implements OnInit {
     const end = start + this.pageSize;
 
     return filteredResults.slice(start, end);
-  }
+  }*/
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.filteredData.length / this.pageSize));
@@ -450,7 +562,7 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   get endIndex(): number {
-    return this.filteredData.length === 0 ? 0 : Math.min(this.startIndex + this.pageSize, this.filteredData.length);
+    return this.filteredData.length === 0 ? 0 : Math.min(this.startIndex + parseInt(this.pageSize), this.filteredData.length);
   }
 
   // Triggered when a column is selected for a filter condition
