@@ -110,6 +110,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   sheet_data: SheetData | null = null;
   individual_fields: { [key: string]: ImportableField } = {};
   submitted: boolean = false;
+  isLoading: boolean = false;
 
   tableConfig: any = {
     pageSizes: [5, 10, 25, 50],
@@ -214,6 +215,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       return;
     }
     if (this.file) {
+      this.isLoading = true;
       const formData = new FormData();
       formData.append('excel_file', this.file);
       formData.append('uuid', this.importForm.get('import_template')?.value);
@@ -230,12 +232,15 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             if (this.selectedTemplate) this.createFieldsForm(this.selectedTemplate.importable_fields);
             this.fileUploadLog = response.data.fileUploadLog;
             this.section = 'section2';
+            this.isLoading = false;
           } else {
             this.toastr.error(response.message);
+            this.isLoading = false;
           }
         },
         (error: any) => {
           this.toastr.error('Error getting import template detail');
+          this.isLoading = false;
         }
       );
     }
@@ -315,17 +320,21 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.resetComponent();
       return;
     }
+    this.isLoading = true;
     this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
           this.section = 'section3';
           this.sheet_data = response.data; //{ header_details, row_datas }
+          this.isLoading = false;
         } else {
           this.toastr.error(response.message);
+          this.isLoading = false;
         }
       },
       (error: any) => {
         this.toastr.error('Error getting import template data');
+        this.isLoading = false;
       }
     );
   }
@@ -471,6 +480,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   callImportApi(sheet_data: SheetData) {
+    this.isLoading = true;
     this.gridApiService
       .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
         row_datas: sheet_data.row_datas,
@@ -484,14 +494,17 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             this.getImportTemplates();
             this.submitted = false;
             this.toastr.success(response.message);
+            this.isLoading = false;
           } else {
             this.toastr.error(response.message);
+            this.isLoading = false;
           }
         },
         (error: any) => {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
+          this.isLoading = false;
         }
       );
   }
