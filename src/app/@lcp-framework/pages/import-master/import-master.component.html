@@ -1,5 +1,8 @@
 <div class="space-y-8">
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
+  <div *ngIf="isLoading" class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-1" *ngIf="!isLoading">
     <div class="panel">
       <div class="mb-5">
         <div class="mt-3 flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
@@ -278,7 +281,9 @@
               <div class="flex">
                 <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">{{ 'back' |
                   translate }}</button>
-                <button type="button" class="btn btn-primary !mt-6 mr-3" (click)="importTemplateDetail()">{{ 'import' |
+                <button
+                  *ngIf="!selectedTemplate?.ignore_error_rows || getErrorCount(sheet_data.row_datas || []) == 0 || getErrorCount(sheet_data.row_datas || []) === (sheet_data.row_datas.length || 0)"
+                  type="button" class="btn btn-primary !mt-6 mr-3" (click)="importTemplateDetail()">{{ 'import' |
                   translate }}</button>
                 <button
                   *ngIf="selectedTemplate?.ignore_error_rows && getErrorCount(sheet_data.row_datas || []) > 0 && getErrorCount(sheet_data.row_datas || []) !== (sheet_data.row_datas.length || 0)"
