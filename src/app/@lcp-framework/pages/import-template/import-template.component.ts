@@ -461,9 +461,14 @@ export class ImportTemplateComponent implements OnInit {
       if (this.editingItemIndex !== -1) {
         // Update existing item in FormArray
         itemsArray.at(this.editingItemIndex).patchValue(formValue);
+        this._originalItems[this.editingItemIndex] = {
+          ...this._originalItems[this.editingItemIndex],
+          ...formValue,
+        };
       } else {
         // Push new item to FormArray
         itemsArray.push(this.fb.group(formValue));
+        this._originalItems.push({ ...formValue });
       }
 
       this.isItemModalOpen = false;
@@ -479,9 +484,14 @@ export class ImportTemplateComponent implements OnInit {
       if (this.editingQueryIndex !== -1) {
         // Update existing item in FormArray
         queriesArray.at(this.editingQueryIndex).patchValue(formValue);
+        this._originalQueries[this.editingQueryIndex] = {
+          ...this._originalQueries[this.editingQueryIndex],
+          ...formValue,
+        };
       } else {
         // Push new item to FormArray
         queriesArray.push(this.fb.group(formValue));
+        this._originalQueries.push({ ...formValue });
       }
 
       this.isQueryModalOpen = false;
@@ -583,6 +593,9 @@ export class ImportTemplateComponent implements OnInit {
     if (index !== -1) {
       // If the item exists in the form array, remove it
       items.removeAt(index);
+      if (this._originalItems && this._originalItems[index]) {
+        this._originalItems.splice(index, 1);
+      }
       console.log(`Item with field_name: ${item.field_name} removed at index: ${index}`);
     } else {
       this.toastr.warning(`Item with field_name: ${item.field_name} not found.`);
@@ -598,6 +611,9 @@ export class ImportTemplateComponent implements OnInit {
     if (index !== -1) {
       // If the query exists in the form array, remove it
       queries.removeAt(index);
+      if (this._originalQueries && this._originalQueries[index]) {
+        this._originalQueries.splice(index, 1);
+      }
       console.log(`Query with query_name: ${query.query_name} removed at index: ${index}`);
     } else {
       this.toastr.warning(`Query with query_name: ${query.query_name} not found.`);

@@ -279,7 +279,7 @@
                   <ng-template #defaultContent>
                     <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
                     <ng-container *ngIf="!col.isHtmlValue">
-                      {{ item[col.key] }}
+                      {{ item[col.key] ? item[col.key] : '-' }}
                     </ng-container>
                   </ng-template>
                 </ng-container>

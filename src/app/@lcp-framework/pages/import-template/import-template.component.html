@@ -257,7 +257,7 @@
                   id="field_name"
                   type="text"
                   formControlName="field_name"
-                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
+                  class="form-input w-full"
                   [ngClass]="{ 'border-red-500': isLineItemFieldInvalid('field_name') }"
                 />
                 <div *ngIf="isLineItemFieldInvalid('field_name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -272,12 +272,7 @@
                 {{ 'form_label_display_name' | translate }}
               </label>
               <div class="mt-1">
-                <input
-                  id="display_name"
-                  type="text"
-                  formControlName="display_name"
-                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                />
+                <input id="display_name" type="text" formControlName="display_name" class="form-input w-full" />
               </div>
             </div>
 
@@ -287,12 +282,7 @@
                 {{ 'form_label_order_no' | translate }}
               </label>
               <div class="mt-1">
-                <input
-                  id="order_no"
-                  type="number"
-                  formControlName="order_no"
-                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                />
+                <input id="order_no" type="number" formControlName="order_no" class="form-input w-full" />
               </div>
             </div>
 
@@ -302,11 +292,7 @@
                 {{ 'form_label_field_table' | translate }}
               </label>
               <div class="mt-1">
-                <select
-                  id="field_table"
-                  formControlName="field_table"
-                  class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                >
+                <select id="field_table" formControlName="field_table" class="form-select block sm:text-sm">
                   <option value="">Select Table</option>
                   <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
                 </select>
@@ -319,11 +305,7 @@
                 {{ 'form_label_field_type' | translate }}
               </label>
               <div class="mt-1">
-                <select
-                  id="field_type_id"
-                  formControlName="field_type_id"
-                  class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                >
+                <select id="field_type_id" formControlName="field_type_id" class="form-select block sm:text-sm">
                   <option value="">Select Field Type</option>
                   <option *ngFor="let type of field_types" [value]="type.value">{{ type.label | translate }}</option>
                 </select>
@@ -336,12 +318,7 @@
                 {{ 'form_label_default_value' | translate }}
               </label>
               <div class="mt-1">
-                <input
-                  id="default_value"
-                  type="text"
-                  formControlName="default_value"
-                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                />
+                <input id="default_value" type="text" formControlName="default_value" class="form-input w-full" />
               </div>
             </div>
 
@@ -351,12 +328,7 @@
                 {{ 'form_label_check_reg_exp' | translate }}
               </label>
               <div class="mt-1">
-                <input
-                  id="check_reg_exp"
-                  type="text"
-                  formControlName="check_reg_exp"
-                  class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                />
+                <input id="check_reg_exp" type="text" formControlName="check_reg_exp" class="form-input w-full" />
               </div>
             </div>
           </div>
@@ -403,12 +375,7 @@
                   {{ 'form_label_enum_values' | translate }}
                 </label>
                 <div class="mt-1">
-                  <input
-                    id="enum_values"
-                    type="text"
-                    formControlName="enum_values"
-                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                  />
+                  <input id="enum_values" type="text" formControlName="enum_values" class="form-input w-full" />
                 </div>
               </div>
             </div>
@@ -431,12 +398,7 @@
                   {{ 'form_label_individual_column' | translate }}
                 </label>
                 <div class="mt-1">
-                  <input
-                    id="individual_column"
-                    type="text"
-                    formControlName="individual_column"
-                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                  />
+                  <input id="individual_column" type="text" formControlName="individual_column" class="form-input w-full" />
                 </div>
               </div>
             </div>
@@ -459,11 +421,7 @@
                     {{ 'form_label_foreign_table' | translate }}
                   </label>
                   <div class="mt-1">
-                    <select
-                      id="foreign_table"
-                      formControlName="foreign_table"
-                      class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                    >
+                    <select id="foreign_table" formControlName="foreign_table" class="form-select block sm:text-sm">
                       <option value="">Select Table</option>
                       <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
                     </select>
@@ -475,12 +433,7 @@
                     {{ 'form_label_foreign_column' | translate }}
                   </label>
                   <div class="mt-1">
-                    <input
-                      id="foreign_column"
-                      type="text"
-                      formControlName="foreign_column"
-                      class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                    />
+                    <input id="foreign_column" type="text" formControlName="foreign_column" class="form-input w-full" />
                   </div>
                 </div>
 
@@ -502,11 +455,7 @@
                     {{ 'form_label_foreign_query' | translate }}
                   </label>
                   <div class="mt-1">
-                    <textarea
-                      id="foreign_query"
-                      formControlName="foreign_query"
-                      class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                    ></textarea>
+                    <textarea id="foreign_query" formControlName="foreign_query" class="form-textarea block sm:text-sm"></textarea>
                   </div>
                 </div>
               </div>
@@ -528,11 +477,7 @@
                     {{ 'form_label_unique_query' | translate }}
                   </label>
                   <div class="mt-1">
-                    <textarea
-                      id="unique_query"
-                      formControlName="unique_query"
-                      class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
-                    ></textarea>
+                    <textarea id="unique_query" formControlName="unique_query" class="form-textarea block sm:text-sm"></textarea>
                   </div>
                 </div>
               </div>
@@ -597,24 +542,14 @@
               <label for="query_name" class="required-mark form-label">
                 {{ 'form_label_query_name' | translate }}
               </label>
-              <input
-                id="query_name"
-                type="text"
-                formControlName="query_name"
-                class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              />
+              <input id="query_name" type="text" formControlName="query_name" class="form-input w-full" />
             </div>
 
             <div class="space-y-2">
               <label for="order_no" class="required-mark form-label">
                 {{ 'form_label_order_no' | translate }}
               </label>
-              <input
-                id="order_no"
-                type="number"
-                formControlName="order_no"
-                class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              />
+              <input id="order_no" type="number" formControlName="order_no" class="form-input w-full" />
             </div>
 
             <div class="flex items-center space-x-3">
@@ -652,12 +587,7 @@
             <label for="query_string" class="required-mark form-label">
               {{ 'form_label_query_string' | translate }}
             </label>
-            <textarea
-              id="query_string"
-              formControlName="query_string"
-              rows="17"
-              class="form-textarea w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-            ></textarea>
+            <textarea id="query_string" formControlName="query_string" rows="17" class="form-textarea"></textarea>
           </div>
 
           <!-- Form Actions -->
