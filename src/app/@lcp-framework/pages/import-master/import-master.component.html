@@ -1,6 +1,13 @@
 <div class="space-y-8">
   <div *ngIf="isLoading" class="loader-overlay">
-    <div class="spinner"></div>
+    <div *ngIf="progress && progress < 100; Spinner">
+      <p class="font-semibold">{{ 'processing_data' | translate }}: {{ progress }}%</p>
+      <div class="w-full bg-gray-200 rounded-full h-2.5">
+        <div class="bg-blue-500 h-2.5 rounded-full" [style.width]="progress + '%'"></div>
+      </div>
+    </div>
+    <!-- Spinner -->
+    <div *ngIf="!progress || progress >= 100" class="spinner"></div>
   </div>
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-1" *ngIf="!isLoading">
     <div class="panel">

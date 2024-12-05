@@ -127,11 +127,6 @@ export class ClientDatatableComponent implements OnInit {
       this._originalData = [...this.data];
     }
     this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
-    console.log(this.currentPage);
-    console.log(this.pageSize);
-    console.log(this.totalPages);
-    console.log(this.endIndex);
-    console.log(this.filteredData.length);
   }
 
   onAddClick(): void {
@@ -157,7 +152,6 @@ export class ClientDatatableComponent implements OnInit {
     return this.config.columns.filter((column) => column.sortable);
   }
   get filteredColumns(): Column[] {
-    //return this.config.columns;
     return this.config.columns.filter((column) => column.searchable);
   }
 
@@ -197,7 +191,10 @@ export class ClientDatatableComponent implements OnInit {
 
   clearFilters() {
     this.filterConditions = [];
-    this.applyFilters();
+
+    this.isMenuOpen = false;
+    const filteredData = [...this._originalData];
+    this.dataChange.emit(filteredData);
   }
 
   applyFilters() {
@@ -221,8 +218,6 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   selectAllColumns() {
-    // this.config.columns.filter((column) => column.sortable).forEach((col) => this.visibleColumns.add(col.key));
-    // this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
     this.updateVisibleColumns();
   }
 
@@ -248,48 +243,6 @@ export class ClientDatatableComponent implements OnInit {
     const warningMessages = rowData.warnings ? rowData.warnings[key]?.map((warn: any) => warn.message) || [] : [];
     return [...errorMessages, ...warningMessages].join('\n');
   }
-
-  // Filtering data
-  /*get filteredData(): any[] {
-    let filtered = [...this.data];
-
-    if (this.searchQuery?.trim()) {
-      const query = this.searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((item) => Array.from(this.visibleColumns).some((key) => item[key]?.toString().toLowerCase().includes(query)));
-    }
-
-    if (this.filterConditions.length > 0) {
-      filtered = filtered.filter((item) => {
-        const results = this.filterConditions.map((condition) => this.evaluateCondition(condition, item[condition.field]));
-        return this.filterCondition ? results.every((res) => res) : results.some((res) => res);
-      });
-    }
-
-    if (this.sortColumn) {
-      filtered.sort((a, b) => {
-        const aVal = a[this.sortColumn];
-        const bVal = b[this.sortColumn];
-
-        if (aVal == null) return this.sortDirection === 'asc' ? -1 : 1;
-        if (bVal == null) return this.sortDirection === 'asc' ? 1 : -1;
-
-        if (typeof aVal === 'string') {
-          return this.sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-        }
-
-        return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      });
-    }
-
-    // After filtering, check if current page is valid
-    const totalPages = Math.ceil(filtered.length / this.pageSize);
-    if (this.currentPage > totalPages && totalPages > 0) {
-      this.currentPage = totalPages;
-      this.pageChange.emit(this.currentPage);
-    }
-
-    return filtered;
-  }*/
 
   private evaluateCondition(condition: FilterCondition, value: any): boolean {
     if (!value) return false;
@@ -329,25 +282,12 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   onPageChange(page: any): void {
-    console.log(page);
     Promise.resolve().then(() => {
       this.currentPage = page;
       this.pageChange.emit(page);
       this.cdr.detectChanges();
-      console.log(this.currentPage);
-      console.log(this.pageSize);
-      console.log(this.totalPages);
-      console.log(this.endIndex);
-      console.log(this.filteredData.length);
-      //this.pageChange.emit(page);
-      //this.cdr.detectChanges();
     });
   }
-
-  /*onPageSizeChange(): void {
-    this.currentPage = 1;
-    this.pageSizeChange.emit(this.pageSize);
-  }*/
 
   getFormGroupIndex(index: number): number {
     return index + this.startIndex;
@@ -399,9 +339,7 @@ export class ClientDatatableComponent implements OnInit {
 
   onPageSizeChange(): void {
     // Calculate current first item index
-    console.log(this.currentPage);
-    console.log(this.pageSize);
-    console.log(this.totalPages);
+
     this.pageSize = parseInt(this.pageSize);
     const firstItemIndex = (this.currentPage - 1) * this.pageSize;
 
@@ -430,11 +368,6 @@ export class ClientDatatableComponent implements OnInit {
     this.pageSizeChange.emit(this.pageSize);
     this.pageChange.emit(this.currentPage);
 
-    console.log(this.currentPage);
-    console.log(this.pageSize);
-    console.log(this.totalPages);
-    console.log(this.endIndex);
-    console.log(this.filteredData.length);
     // Update view
     this.cdr.detectChanges();
   }
@@ -513,6 +446,17 @@ export class ClientDatatableComponent implements OnInit {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter((item) => Object.keys(item).some((key) => item[key]?.toString().toLowerCase().includes(query)));
     }
+    if (this.filterConditions.length > 0) {
+      // Filter out invalid conditions where field, operator, or value is missing
+      const validConditions = this.filterConditions.filter((condition) => condition.field && condition.operator && condition.value);
+
+      if (validConditions.length > 0) {
+        filtered = filtered.filter((item) => {
+          const results = validConditions.map((condition) => this.evaluateCondition(condition, item[condition.field]));
+          return this.filterCondition ? results.every((res) => res) : results.some((res) => res);
+        });
+      }
+    }
 
     if (this.sortColumn) {
       filtered.sort((a, b) => {
@@ -534,24 +478,6 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   // Update get paginatedData to handle empty pages better
-  /*get paginatedData(): any[] {
-    const filteredResults = this.filteredData;
-    const totalPages = Math.ceil(filteredResults.length / this.pageSize);
-
-    // Ensure current page is valid
-    if (this.currentPage > totalPages && totalPages > 0) {
-      Promise.resolve().then(() => {
-        this.currentPage = totalPages;
-        this.pageChange.emit(this.currentPage);
-        this.cdr.detectChanges();
-      });
-    }
-
-    const start = (this.currentPage - 1) * this.pageSize;
-    const end = start + this.pageSize;
-
-    return filteredResults.slice(start, end);
-  }*/
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.filteredData.length / this.pageSize));

@@ -95,7 +95,7 @@ export class ExportTemplateComponent implements OnInit {
   commonFile: any;
   items: any = [];
   queries: any = [];
-  //entity_types: any = [];
+
   action_types: any[] = [];
   field_types: any[] = [];
   tables_list: any = [];
@@ -308,7 +308,7 @@ export class ExportTemplateComponent implements OnInit {
 
   downloadExcel(): void {
     const fileUrl = `${environment.apiUrl}/${this.commonFile}`;
-    console.log(fileUrl);
+
     this.http.get(fileUrl, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         saveAs(blob, 'downloaded_file.xlsx');
@@ -345,7 +345,7 @@ export class ExportTemplateComponent implements OnInit {
         if (response.body && response.body.status) {
           // Store the file path
           const filePath = response.body.data;
-          console.log(filePath);
+
           this.commonFile = filePath;
           this.form.patchValue({ data_filepath: filePath });
 
@@ -447,7 +447,6 @@ export class ExportTemplateComponent implements OnInit {
 
         // Store the headers
         this.excelHeaders = headers;
-        console.log('Found headers at row', headerRow, ':', headers);
 
         // Enable column_name selection in line items
         const items = this.form.get('items') as FormArray;
@@ -614,36 +613,21 @@ export class ExportTemplateComponent implements OnInit {
   }
 
   editQueryItem(index: any) {
-    console.log(index);
-    //this.editingQueryIndex = index;
     this.selectedQuery = index;
     this.editingQueryIndex = this.queriesData.findIndex((q) => q === index);
     this.lineQueryForm.patchValue(index);
-    /*const queriesArray = this.form.get('queries') as FormArray;
-    const query = queriesArray.at(index);
-    this.selectedQuery = query.value;
-    this.lineQueryForm.patchValue(query.value);*/
+
     this.isQueryModalOpen = true;
   }
 
   editLineItem(index: any) {
-    console.log(index);
-    //this.editingItemIndex = index;
-    /* const itemsArray = this.form.get('items') as FormArray;
-    const item = itemsArray.at(index);
-    this.selectedItem = item.value;
-    this.lineItemForm.patchValue(item.value);*/
-
-    /*this.selectedItem = index;
-    this.lineItemForm.patchValue(index);*/
     this.selectedItem = index;
     this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
 
     // Load headers if we have file and row number
     const filePath = this.form.get('data_filepath')?.value;
     const headerRow = this.form.get('header_row')?.value;
-    console.log(filePath);
-    console.log(headerRow);
+
     if (filePath && headerRow) {
       this.loadExcelHeaders(filePath, headerRow);
     }
@@ -820,7 +804,7 @@ export class ExportTemplateComponent implements OnInit {
 
     // Find the index of the query with the matching query_name
     const index = queries.controls.findIndex((control) => control.value.query_name === query.query_name);
-    console.log(index);
+
     if (index !== -1) {
       // If the query exists in the form array, remove it
       queries.removeAt(index);
@@ -854,7 +838,6 @@ export class ExportTemplateComponent implements OnInit {
           value: id,
           operator: '=',
         },
-        //['export_templates.uuid = '${id}'']
       ],
       select_columns: [
         ['export_templates.*'],
@@ -902,9 +885,8 @@ export class ExportTemplateComponent implements OnInit {
           });
 
           // Handle Excel file display
-          console.log(entity.data_filepath);
+
           if (entity.data_filepath) {
-            console.log(entity.data_filepath);
             this.commonFile = entity.data_filepath;
             const fileName = entity.data_filepath.split('/').pop() || '';
             this.selectedFile = {
@@ -971,7 +953,6 @@ export class ExportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        //entity_type: formData.entityType,
 
         status_id: formData.status_id,
         slug: formData.slug,
@@ -1022,7 +1003,6 @@ export class ExportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        //entity_type: formData.entityType,
 
         status_id: formData.status_id,
         slug: formData.slug,
@@ -1088,7 +1068,6 @@ export class ExportTemplateComponent implements OnInit {
     const formData = this.form.value;
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
 
-    //return;
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -1124,7 +1103,6 @@ export class ExportTemplateComponent implements OnInit {
 
   isFormInvalid() {
     return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0;
-    //return this.form.invalid;
   }
 
   logFormStatus(): void {
