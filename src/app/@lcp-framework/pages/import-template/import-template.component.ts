@@ -95,7 +95,7 @@ export class ImportTemplateComponent implements OnInit {
   form!: FormGroup;
   items: any = [];
   queries: any = [];
-  //entity_types: any = [];
+
   action_types: any[] = [];
   field_types: any[] = [];
   tables_list: any = [];
@@ -328,9 +328,6 @@ export class ImportTemplateComponent implements OnInit {
     });
 
     this.addFormArraySubscriptions();
-    /*if (!this.id) {
-      this.initNewLineItem();
-    }*/
   }
   initLineQueryForm() {
     this.lineQueryForm = this.fb.group({
@@ -341,10 +338,6 @@ export class ImportTemplateComponent implements OnInit {
       is_individual: [false],
       before_lineitems: [false],
     });
-
-    /*if (!this.id) {
-      this.initNewLineQuery();
-    }*/
   }
 
   addFormArraySubscriptions() {
@@ -411,28 +404,14 @@ export class ImportTemplateComponent implements OnInit {
   }
 
   editQueryItem(index: any) {
-    console.log(index);
-    //this.editingQueryIndex = index;
     this.selectedQuery = index;
     this.editingQueryIndex = this.queriesData.findIndex((q) => q === index);
     this.lineQueryForm.patchValue(index);
-    /*const queriesArray = this.form.get('queries') as FormArray;
-    const query = queriesArray.at(index);
-    this.selectedQuery = query.value;
-    this.lineQueryForm.patchValue(query.value);*/
+
     this.isQueryModalOpen = true;
   }
 
   editLineItem(index: any) {
-    console.log(index);
-    //this.editingItemIndex = index;
-    /* const itemsArray = this.form.get('items') as FormArray;
-    const item = itemsArray.at(index);
-    this.selectedItem = item.value;
-    this.lineItemForm.patchValue(item.value);*/
-
-    /*this.selectedItem = index;
-    this.lineItemForm.patchValue(index);*/
     this.selectedItem = index;
     this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
     this.lineItemForm.patchValue(index);
@@ -607,7 +586,7 @@ export class ImportTemplateComponent implements OnInit {
 
     // Find the index of the query with the matching query_name
     const index = queries.controls.findIndex((control) => control.value.query_name === query.query_name);
-    console.log(index);
+
     if (index !== -1) {
       // If the query exists in the form array, remove it
       queries.removeAt(index);
@@ -641,7 +620,6 @@ export class ImportTemplateComponent implements OnInit {
           value: id,
           operator: '=',
         },
-        //['import_templates.uuid = '${id}'']
       ],
       select_columns: [
         ['import_templates.*'],
@@ -751,7 +729,6 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        //entity_type: formData.entityType,
 
         status_id: formData.status_id,
         slug: formData.slug,
@@ -815,7 +792,6 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        //entity_type: formData.entityType,
 
         status_id: formData.status_id,
         slug: formData.slug,
@@ -893,7 +869,6 @@ export class ImportTemplateComponent implements OnInit {
     const formData = this.form.value;
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
 
-    //return;
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -929,7 +904,6 @@ export class ImportTemplateComponent implements OnInit {
 
   isFormInvalid() {
     return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0;
-    //return this.form.invalid;
   }
 
   logFormStatus(): void {
