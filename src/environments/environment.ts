@@ -4,4 +4,5 @@ export const environment = {
   //apiUrl: 'http://localhost:3131',
   apiAddress: '/api/',
   ENCRYPTION_KEY: 'FINfM8x6fs',
+  WS_URL: 'ws://localhost:8090',
 };

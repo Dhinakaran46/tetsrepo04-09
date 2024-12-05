@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
-import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
@@ -9,6 +9,8 @@ import { ImportConfirmDeactivate } from '../../guards/impotrt-confirm-deactivate
 import { ClientDatatableComponent } from '../../components/client-datatable/client-datatable.component';
 import Swal from 'sweetalert2';
 import { LocalStorageService } from '../../service/common/local-storage.service';
+import { WebSocketSubject } from 'rxjs/webSocket';
+import { environment } from '../../../../environments/environment';
 
 interface HeaderDetails {
   id: number;
@@ -112,6 +114,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   submitted: boolean = false;
   isLoading: boolean = false;
 
+  private socket$!: WebSocketSubject<any>;
+  public progress = 100;
+  userData!: any;
+
   tableConfig: any = {
     pageSizes: [5, 10, 25, 50],
     defaultPageSize: 10,
@@ -126,6 +132,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     private localstore: LocalStorageService,
     private fb: FormBuilder
   ) {
+    this.userData = JSON.parse(this.localstore.getData('user_data'));
     this.importForm = this.fb.group({
       import_template: ['', Validators.required],
       import_template_file: ['', Validators.required],
@@ -140,6 +147,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   ngOnInit() {
     this.resetComponent();
     this.getImportTemplates();
+    if (this.userData?.main?.user_id) {
+      const socketUrl = (environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8090';
+      this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.userData.main.user_id}`);
+      this.socket$.subscribe((data: any) => {
+        this.progress = data.progress;
+      });
+    }
   }
 
   resetComponent(uuid: string = '') {
@@ -165,9 +179,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getImportTemplates() {
-    const userData = this.localstore.getData('user_data');
     let search_all = [{ column_name: 'import_templates.status_id', operator: '=', value: '1' }];
-    if (userData || userData?.main?.role !== 'super_admin') {
+    if (this.userData || this.userData?.main?.role !== 'super_admin') {
       search_all.push({ column_name: 'import_templates.is_admin_module', operator: '=', value: 'false' });
     }
     const impTemParam: any = {
@@ -360,6 +373,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   // Component cleanup logic in ngOnDestroy
   ngOnDestroy() {
     this.deleteUploadedSheet();
+    this.socket$.complete();
   }
 
   deleteUploadedSheet() {
