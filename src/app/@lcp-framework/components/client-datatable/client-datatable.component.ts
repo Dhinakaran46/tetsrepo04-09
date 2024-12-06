@@ -7,6 +7,7 @@ import { BooleanStatusPipe } from '../../pipes/boolean/boolean-status.pipe';
 import { animate, style, transition, trigger } from '@angular/animations';
 import jsPDF from 'jspdf'; // For PDF export
 import * as XLSX from 'xlsx'; // For Excel export
+import { SafeHtmlPipe } from '../../pipes/safehtml/safe-html.pipe';
 
 export interface Column {
   key: string;
@@ -15,7 +16,8 @@ export interface Column {
   isHtmlHeader?: boolean;
   isHtmlValue?: boolean;
   searchable?: boolean;
-  type?: 'text' | 'button' | 'icon' | 'number' | 'date';
+  type?: 'text' | 'button' | 'icon' | 'number' | 'date' | 'separate';
+  template?: boolean;
   placeholder?: string;
   min?: number;
   max?: number;
@@ -33,9 +35,11 @@ export interface TableConfig {
   pageSizes?: number[];
   defaultPageSize?: number;
   searchable?: boolean;
+
   headerConfig?: {
     title?: string;
     showHeader?: boolean;
+    summary?: string;
     addButton?: {
       show?: boolean;
       label?: string;
@@ -59,7 +63,7 @@ export interface FilterCondition {
 @Component({
   selector: 'app-client-datatable',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ReactiveFormsModule, CommonSharedModule],
+  imports: [CommonModule, FormsModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ReactiveFormsModule, CommonSharedModule, SafeHtmlPipe],
   templateUrl: './client-datatable.component.html',
   styleUrls: ['./client-datatable.component.scss'],
   animations: [
@@ -127,6 +131,7 @@ export class ClientDatatableComponent implements OnInit {
       this._originalData = [...this.data];
     }
     this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
+    console.log(this.config.columns);
   }
 
   onAddClick(): void {

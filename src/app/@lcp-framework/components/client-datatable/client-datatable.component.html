@@ -6,6 +6,7 @@
     <h2 class="font-bold dark:text-white-light" appDynamicFontSize="title">{{ config.headerConfig?.title }}</h2>
 
     <div class="flex items-center gap-2 md:ml-auto md:flex-row md:items-center">
+      <div *ngIf="config.headerConfig?.summary" [innerHTML]="config.headerConfig?.summary"></div>
       <!-- Search Input -->
       <div class="relative mb-2 flex-grow md:mb-0">
         <input
@@ -267,16 +268,36 @@
                   <i [class]="action.icon"></i>
                 </button>
               </ng-container>
+              <ng-container *ngSwitchCase="'separate'">
+                <div class="flex items-center gap-2" *ngIf="col.key === 'state'">
+                  <i class="fa-solid" [ngClass]="item[col.key] === 'Valid' ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger'"> </i>
+                  <span class="text-xs font-medium" [ngClass]="item[col.key] === 'Valid' ? 'text-success' : 'text-danger'">
+                    {{ item[col.key] === 'Valid' ? 'Valid' : 'Invalid' }}
+                  </span>
+                </div>
+              </ng-container>
+
               <ng-container *ngSwitchDefault>
-                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
+                <ng-container *ngIf="isBoolean(item[col.key]); else templateOrDefault">
                   {{ item[col.key] ? 'Yes' : 'No' }}
                 </ng-container>
-                <ng-template #defaultContent>
+                <ng-template #templateOrDefault>
+                  <ng-container *ngIf="col.template; else defaultContent">
+                    <span [innerHTML]="item[col.key] | safeHtml"></span>
+                  </ng-container>
+                  <ng-template #defaultContent>
+                    <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
+                    <ng-container *ngIf="!col.isHtmlValue">
+                      {{ item[col.key] ? item[col.key] : '-' }}
+                    </ng-container>
+                  </ng-template>
+                </ng-template>
+                <!--<ng-template #defaultContent>
                   <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
                   <ng-container *ngIf="!col.isHtmlValue">
                     {{ item[col.key] ? item[col.key] : '-' }}
                   </ng-container>
-                </ng-template>
+                </ng-template>-->
               </ng-container>
             </ng-container>
           </td>
