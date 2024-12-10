@@ -1,3 +1,4 @@
+/* Base menu styles */
 .custom-min-width {
-  min-width: 200px !important;
+  @apply min-w-[200px] sm:min-w-[220px] md:min-w-[240px] lg:min-w-[260px] xl:min-w-[280px] 2xl:min-w-[300px];
 }
