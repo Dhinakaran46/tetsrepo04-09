@@ -97,7 +97,7 @@ export class MasterListComponent implements AfterViewInit {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
-
+    console.log(pageInfo);
     if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
 
@@ -219,37 +219,42 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   exportTable(item: any) {
-    this.exportItem(item);
-    return;
-    const query = { ...this.listQuery };
-    query.limit_range = 100000;
+    //console.log(this.masterInfo.children);
+    if (this.masterInfo.children.export) {
+      if (this.masterInfo.children.export.component_class_name == 'export_module') {
+        this.exportItem(item);
+      } else {
+        const query = { ...this.listQuery };
+        query.limit_range = 100000;
 
-    this.gridApiService.getAllRecords(query).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-          if (response.data.records && response.data.headers) {
-            const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
-            if (item.type == 'pdf') {
-              this.exportService.exportToPDF(filteredData, 'TableData');
+        this.gridApiService.getAllRecords(query).subscribe(
+          (response) => {
+            if (response.status && response.code === 200) {
+              if (response.data.records && response.data.headers) {
+                const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
+                if (item.type == 'pdf') {
+                  this.exportService.exportToPDF(filteredData, 'TableData');
+                } else {
+                  this.exportService.exportToExcel(filteredData, 'TableData');
+                }
+              }
             } else {
-              this.exportService.exportToExcel(filteredData, 'TableData');
-            }
-          }
-        } else {
-          this.items = [];
-          this.totalItems = 0;
+              this.items = [];
+              this.totalItems = 0;
 
-          const key = response.message;
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
-        }
-      },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+              const key = response.message;
+              const errorMessage = this.translate.instant(key);
+              this.toastr.error(errorMessage, 'Error');
+            }
+          },
+          (error) => {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
       }
-    );
+    }
   }
 
   private filterAndTransformData(headers: any[], records: any[]): any[] {
@@ -341,6 +346,7 @@ export class MasterListComponent implements AfterViewInit {
 
     this.gridApiService.getAllRecords(params).subscribe(
       (response) => {
+        console.log(response);
         if (response.status && response.code === 200) {
           if (response.data.headers) {
             if (this.headercolumns.length == 0) {

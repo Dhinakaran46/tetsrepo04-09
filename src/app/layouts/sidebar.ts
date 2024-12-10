@@ -52,6 +52,8 @@ export class SidebarComponent {
   apiUrl = environment.apiUrl;
   config: any;
 
+  showssmenu: boolean = true;
+
   constructor(
     public translate: TranslateService,
     public storeData: Store<any>,
@@ -66,6 +68,16 @@ export class SidebarComponent {
       .select((d) => d.index)
       .subscribe((d) => {
         this.store = d;
+        console.log(this.store);
+        if (this.store.menu == 'horizontal') {
+          this.showssmenu = true;
+        } else {
+          if (this.store.menu == 'vertical' && this.store.sidebar) {
+            this.showssmenu = true;
+          } else {
+            this.showssmenu = false;
+          }
+        }
       });
   }
 
