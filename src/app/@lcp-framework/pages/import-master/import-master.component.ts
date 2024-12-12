@@ -148,7 +148,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     this.resetComponent();
     this.getImportTemplates();
     if (this.userData?.main?.user_id) {
-      const socketUrl = 'wss://opensource.techcedence.net:8090'; //(environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8090';
+      const socketUrl = 'wss://opensource.techcedence.net:8089'; //(environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8089';
       this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.userData.main.user_id}`);
       this.socket$.subscribe((data: any) => {
         this.progress = data.progress;
