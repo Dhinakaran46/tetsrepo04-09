@@ -19,6 +19,7 @@ import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
+import { LoaderComponent } from '../../components/loader/loader.component';
 
 export interface ExportResponse {
   blob: Blob;
@@ -36,7 +37,7 @@ interface FetchDataParams {
 
 @Component({
   standalone: true,
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent],
+  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -64,6 +65,8 @@ export class MasterListComponent implements AfterViewInit {
   resultsPerPage: number = 10;
   enableCheckBox: boolean = false;
   masterInfo: any;
+
+  loading: boolean = false;
 
   title: any = '';
   listQuery: any = '';
@@ -219,13 +222,14 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   exportTable(item: any) {
-    //console.log(this.masterInfo.children);
-    if (this.masterInfo.children.export) {
-      if (this.masterInfo.children.export.component_class_name == 'export_module') {
+    console.log(this.masterInfo);
+    if (this.masterInfo.permissions.export) {
+      this.loading = true;
+      if (this.masterInfo.children.export && this.masterInfo.children.export.component_class_name == 'export_module') {
         this.exportItem(item);
       } else {
         const query = { ...this.listQuery };
-        query.limit_range = 100000;
+        query.limit_range = 1000000;
 
         this.gridApiService.getAllRecords(query).subscribe(
           (response) => {
@@ -237,8 +241,10 @@ export class MasterListComponent implements AfterViewInit {
                 } else {
                   this.exportService.exportToExcel(filteredData, 'TableData');
                 }
+                this.loading = false;
               }
             } else {
+              this.loading = false;
               this.items = [];
               this.totalItems = 0;
 
@@ -248,6 +254,7 @@ export class MasterListComponent implements AfterViewInit {
             }
           },
           (error) => {
+            this.loading = false;
             const key = 'error';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
@@ -259,12 +266,14 @@ export class MasterListComponent implements AfterViewInit {
 
   private filterAndTransformData(headers: any[], records: any[]): any[] {
     const filteredHeaders = headers.filter((header) => header.header !== 'id' && header.header !== 'uuid');
-
+    console.log(filteredHeaders);
     const transformedRecords = records.map((record) => {
       const transformedRecord: any = {};
       filteredHeaders.forEach((header) => {
         const translationKey = `${header.header}`;
+        console.log(translationKey);
         const translatedHeader = this.translate.instant(translationKey);
+        console.log(translatedHeader);
         if (header.field_type_id == '7') {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
         } else if (header.header == 'status') {
@@ -273,6 +282,7 @@ export class MasterListComponent implements AfterViewInit {
           transformedRecord[translatedHeader] = record[header.header];
         }
       });
+
       return transformedRecord;
     });
 
@@ -539,16 +549,20 @@ export class MasterListComponent implements AfterViewInit {
               // Cleanup
               document.body.removeChild(link);
               window.URL.revokeObjectURL(url);
+              this.loading = false;
             } else if (item.type === 'pdf') {
               // Convert Excel to PDF
               this.convertExcelToPDF(blob, response.fileName.replace('.xlsx', '.pdf'));
+              this.loading = false;
             }
           } catch (err) {
+            this.loading = false;
             console.error('Download error:', err);
             this.toastr.error('Error downloading file');
           }
         },
         error: (error) => {
+          this.loading = false;
           console.error('Export error:', error);
           this.toastr.error('Error exporting data');
         },
@@ -598,6 +612,7 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   recordExport(item: any) {
+    this.loading = true;
     console.log(item);
 
     if (this.masterInfo.children.record_export) {
@@ -621,14 +636,17 @@ export class MasterListComponent implements AfterViewInit {
             // Cleanup
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
+            this.loading = false;
           } catch (err) {
             console.error('Download error:', err);
             this.toastr.error('Error downloading file');
+            this.loading = false;
           }
         },
         error: (error) => {
           console.error('Export error:', error);
           this.toastr.error('Error exporting data');
+          this.loading = false;
         },
       });
     }
