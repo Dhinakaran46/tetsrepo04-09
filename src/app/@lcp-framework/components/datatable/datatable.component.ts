@@ -160,6 +160,7 @@ export class DataTableComponent implements OnInit, OnChanges {
       col.sortDirection = '';
       col.colFilterHide = false;
     });
+    console.log(this.headercolumns);
 
     this.filteredItems = [...this.items];
 
@@ -351,6 +352,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
+      console.log(translationKeys);
       this.translate.get(translationKeys).subscribe((translations) => {
         this.filteredColumns = this.selectcolumns
           .filter((col) => col.searchable)
@@ -406,6 +408,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   selectAll() {
+    console.log(this.headercolumns);
     this.headercolumns.forEach((col) => {
       if (col.header !== 'table_column_sno') {
         col.colFilterHide = false;
