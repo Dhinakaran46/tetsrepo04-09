@@ -100,7 +100,7 @@ export class MasterListComponent implements AfterViewInit {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
-    console.log(pageInfo);
+
     if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
 
@@ -222,7 +222,6 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   exportTable(item: any) {
-    console.log(this.masterInfo);
     if (this.masterInfo.permissions.export) {
       this.loading = true;
       if (this.masterInfo.children.export && this.masterInfo.children.export.component_class_name == 'export_module') {
@@ -266,14 +265,15 @@ export class MasterListComponent implements AfterViewInit {
 
   private filterAndTransformData(headers: any[], records: any[]): any[] {
     const filteredHeaders = headers.filter((header) => header.header !== 'id' && header.header !== 'uuid');
-    console.log(filteredHeaders);
+
     const transformedRecords = records.map((record) => {
       const transformedRecord: any = {};
+
       filteredHeaders.forEach((header) => {
         const translationKey = `${header.header}`;
-        console.log(translationKey);
+
         const translatedHeader = this.translate.instant(translationKey);
-        console.log(translatedHeader);
+
         if (header.field_type_id == '7') {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
         } else if (header.header == 'status') {
@@ -306,7 +306,7 @@ export class MasterListComponent implements AfterViewInit {
           const data = response.data.records.map((key: any, index: any) => {
             return {
               field: key.field_name,
-              title: key.display_name,
+              title: this.translate.instant(key.display_name),
               sorting: key.is_shortable,
               searchable: key.is_searchable,
               enable: true,
@@ -356,7 +356,6 @@ export class MasterListComponent implements AfterViewInit {
 
     this.gridApiService.getAllRecords(params).subscribe(
       (response) => {
-        console.log(response);
         if (response.status && response.code === 200) {
           if (response.data.headers) {
             if (this.headercolumns.length == 0) {
@@ -440,7 +439,11 @@ export class MasterListComponent implements AfterViewInit {
             this.items = response.data.records.map((item: any, index: any) => {
               const formattedItem = { ...item };
               for (const key in formattedItem) {
-                if (formattedItem.hasOwnProperty(key) && key.toLowerCase().includes('date') && this.isDate(formattedItem[key])) {
+                if (
+                  formattedItem.hasOwnProperty(key) &&
+                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
+                  this.isDate(formattedItem[key])
+                ) {
                   const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd');
                   if (transformedDate) {
                     formattedItem[key] = transformedDate;
@@ -613,7 +616,6 @@ export class MasterListComponent implements AfterViewInit {
 
   recordExport(item: any) {
     this.loading = true;
-    console.log(item);
 
     if (this.masterInfo.children.record_export) {
       this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, item.id).subscribe({
@@ -739,7 +741,6 @@ export class MasterListComponent implements AfterViewInit {
               const key = 'error';
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
-              console.log(response.message);
             }
           },
           error: (error) => {
