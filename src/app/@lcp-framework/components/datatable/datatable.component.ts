@@ -231,6 +231,11 @@ export class DataTableComponent implements OnInit, OnChanges {
     const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd HH:mm:ss.SSSZ');
     return formattedDate;
   }
+  formatDate(dateTime: any) {
+    const date = new Date(dateTime);
+    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd');
+    return formattedDate;
+  }
 
   getConditionValue(index: number): string | null {
     const value = this.filterConditions[index].value;
@@ -261,8 +266,12 @@ export class DataTableComponent implements OnInit, OnChanges {
 
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = this.getInputTypeForColumn(key.field);
-      if (type == 'datetime-local' || type == 'date') {
+      if (type == 'datetime-local') {
         const formattedDate: any = this.formatDateTime(key.value);
+
+        key.value = formattedDate;
+      } else if (type == 'date') {
+        const formattedDate: any = this.formatDate(key.value);
 
         key.value = formattedDate;
       }
