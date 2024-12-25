@@ -67,6 +67,7 @@ export class MasterListComponent implements AfterViewInit {
   masterInfo: any;
 
   loading: boolean = false;
+  gridloading: boolean = true;
 
   title: any = '';
   listQuery: any = '';
@@ -465,13 +466,16 @@ export class MasterListComponent implements AfterViewInit {
             });
 
             this.totalItems = response.data.total_records;
+            this.gridloading = false;
           } else {
             this.items = [];
             this.totalItems = 0;
+            this.gridloading = false;
           }
         } else {
           this.items = [];
           this.totalItems = 0;
+          this.gridloading = false;
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
@@ -481,6 +485,7 @@ export class MasterListComponent implements AfterViewInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
+        this.gridloading = false;
       }
     );
   }

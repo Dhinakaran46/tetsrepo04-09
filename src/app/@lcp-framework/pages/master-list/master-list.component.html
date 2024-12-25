@@ -1,5 +1,6 @@
 <div>
   <app-datatable
+    [loading]="gridloading"
     [masterInfo]="masterInfo"
     [enableCheckBox]="enableCheckBox"
     [customTemplates]="customTemplates"
@@ -40,7 +41,14 @@
         href="javascript:void(0);"
         class="hover:text-info"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.edit"
+        *ngIf="
+          this.masterInfo.permissions.edit &&
+          (this.masterInfo?.Listname == 'mrn_grid'
+            ? item?.mrn_status != 'completed'
+            : true && this.masterInfo?.Listname == 'min_grid'
+            ? item?.min_status != 'completed'
+            : true)
+        "
         (click)="this.editItem(item)"
         ngxTippy
         data-tippy-content="Edit"
@@ -101,3 +109,5 @@
     </span>
   </ng-template>
 </div>
+
+<app-loader *ngIf="loading"></app-loader>

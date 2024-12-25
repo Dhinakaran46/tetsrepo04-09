@@ -20,7 +20,7 @@
     <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
     <div class="mt-2">
       <div class="flex flex-col justify-between">
-        <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-5">
           <div class="mt-0">
             <label for="name" class="required-mark mb-2 block font-medium">{{ 'form_label_name' | translate }}</label>
             <input
@@ -84,6 +84,20 @@
             </div>
             <div *ngIf="isFieldInvalid('status_id')" class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('status_id') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="job_type" class="required-mark mb-2 block font-medium">{{ 'form_label_job_type' | translate }}</label>
+
+            <select id="job_type" formControlName="job_type" class="form-select block sm:text-sm">
+              <option disabled selected>Select Import Job</option>
+              <option value="direct">Direct</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+
+            <div *ngIf="isFieldInvalid('job_type')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('job_type') }}
             </div>
           </div>
         </div>

@@ -101,6 +101,7 @@ interface EntityListDataResponce extends ApiResponce {
   styleUrls: ['./import-master.component.scss'],
 })
 export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
+  import_job: any = 'direct';
   importForm: FormGroup;
   fieldsForm: FormGroup = this.fb.group({});
   section: string = 'section1';
@@ -148,7 +149,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     this.resetComponent();
     this.getImportTemplates();
     if (this.userData?.main?.user_id) {
-      const socketUrl = 'wss://opensource.techcedence.net:8089'; //(environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8089';
+      const socketUrl = 'wss://opensource.techcedence.net:8090'; //(environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8090';
       this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.userData.main.user_id}`);
       this.socket$.subscribe((data: any) => {
         this.progress = data.progress;
@@ -187,7 +188,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       primary_table: 'import_templates',
       sort_columns: [['import_templates.name', 'asc']],
       limit_range: 1000,
-      select_columns: [['import_templates.id'], ['import_templates.name'], ['import_templates.slug'], ['import_templates.uuid']],
+      select_columns: [['import_templates.id'], ['import_templates.name'], ['import_templates.slug'], ['import_templates.uuid'], ['import_templates.job_type']],
       company_id: 1,
       search_all: search_all,
     };
@@ -195,6 +196,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       (response: EntityListDataResponce) => {
         if (response.status && response.data?.records.length) {
           this.importTemplates = response.data.records;
+          console.log(this.importTemplates);
         } else if (!response.status) {
           this.importTemplates = [];
           this.toastr.error(`Code: ${response.code} , ${response.message}`);
@@ -417,6 +419,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       };
     });
   }
+  getSheetDatasForScheduled(): any {
+    return this.sheet_data?.row_datas.map((row: any) => {
+      return {
+        ...row.columns,
+      };
+    });
+  }
 
   getSheetHeader() {
     const headers: any = this.sheet_data?.header_details;
@@ -436,6 +445,22 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
     // Prepend additionalColumns to the existing columns
     const updatedColumns = [...additionalColumns, ...columns];
+
+    return { ...this.tableConfig, columns: updatedColumns };
+  }
+
+  getSheetHeaderForScheduled() {
+    const headers: any = this.sheet_data?.header_details;
+    const columns: any = Object.entries(headers)
+      .sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no) // Sort by `order_no`
+      .map(([key, header]: [any, any]) => ({
+        key: key, // headers key
+        label: `${header.display_name}${header.is_nullable ? '' : ' <span class="text-danger">*</span>'}`,
+        sortable: true, // assuming all columns are sortable; adjust if needed
+        isHtmlHeader: true,
+      }));
+
+    const updatedColumns = [...columns];
 
     return { ...this.tableConfig, columns: updatedColumns };
   }
@@ -493,34 +518,92 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     }
   }
 
-  callImportApi(sheet_data: SheetData) {
-    this.isLoading = true;
-    this.gridApiService
-      .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
-        row_datas: sheet_data.row_datas,
-        ind_row_datas: sheet_data.ind_row_datas,
-      })
-      .subscribe(
-        (response: ApiResponce) => {
-          // console.log(response);
-          if (response.status) {
-            this.resetComponent();
-            this.getImportTemplates();
-            this.submitted = false;
-            this.toastr.success(response.message);
-            this.isLoading = false;
-          } else {
-            this.toastr.error(response.message);
-            this.isLoading = false;
-          }
-        },
-        (error: any) => {
-          const key = 'error';
+  processScheduledInsertion(sheet_data: SheetData) {
+    console.log(sheet_data);
+    const randomValue = Math.floor(Math.random() * 100000);
+    const wholeData = this.getSheetDatasForScheduled();
+    const wholeDataConfig = this.getSheetHeaderForScheduled();
+    const rowObjectString = JSON.stringify(wholeData);
+    const rowObjectConfigString = JSON.stringify(wholeDataConfig);
+    const payload = {
+      action: ['insert', 'insert'],
+      table: ['import_jobs', 'import_job_line_items'],
+      table_mapping: ['table1', 'table2'],
+      data: {
+        table1: [
+          {
+            name: 'import_job' + randomValue,
+            description: 'import_job' + randomValue,
+            sequence_number: `{{{get_sequence_no('import_job', true)}}}`,
+            total_rows: wholeData.length,
+            completed_rows: 0,
+            error_rows: 0,
+          },
+        ],
+        table2: [
+          {
+            import_job_id: '@table1.id',
+            row_object: rowObjectString,
+            row_object_config: rowObjectConfigString,
+          },
+        ],
+      },
+    };
+    console.log(payload);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+    this.gridApiService.executeRecords(payload).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          console.log(response);
+        } else {
+          const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          this.isLoading = false;
         }
-      );
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+    //`{{{get_sequence_no('import_job', true)}}}`
+    //console.log(this.getSheetDatas());
+    //  console.log(this.getSheetHeader());
+  }
+
+  callImportApi(sheet_data: SheetData) {
+    if (this.import_job == 'scheduled') {
+      this.processScheduledInsertion(sheet_data);
+    } else {
+      this.isLoading = true;
+      this.gridApiService
+        .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
+          row_datas: sheet_data.row_datas,
+          ind_row_datas: sheet_data.ind_row_datas,
+        })
+        .subscribe(
+          (response: ApiResponce) => {
+            // console.log(response);
+            if (response.status) {
+              this.resetComponent();
+              this.getImportTemplates();
+              this.submitted = false;
+              this.toastr.success(response.message);
+              this.isLoading = false;
+            } else {
+              this.toastr.error(response.message);
+              this.isLoading = false;
+            }
+          },
+          (error: any) => {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+            this.isLoading = false;
+          }
+        );
+    }
   }
 
   getIndividualHeader(headers: any[]) {
@@ -543,10 +626,12 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.gridApiService.getIndividualImportFields(uuid).subscribe(
         (response: ApiResponce) => {
           if (response.status && response.data.records.length) {
+            console.log(response.data.records);
             this.resetComponent(uuid);
             if (response.data.records[0].importable_fields) {
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
             }
+            this.import_job = response.data.records[0].job_type;
             this.importForm.patchValue({
               data_header_row: response.data.records[0].header_row,
               data_start_row: response.data.records[0].data_start_row,

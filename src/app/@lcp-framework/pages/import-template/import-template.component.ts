@@ -342,7 +342,7 @@ export class ImportTemplateComponent implements OnInit {
 
   addFormArraySubscriptions() {
     this.lineItemForm.get('is_foreign')?.valueChanges.subscribe((value) => {
-      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create', 'foreign_query', 'unique_query'];
+      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create', 'foreign_query'];
       foreignControls.forEach((control) => {
         const formControl = this.lineItemForm.get(control);
         if (value) {
@@ -368,6 +368,15 @@ export class ImportTemplateComponent implements OnInit {
         individualColumn?.enable();
       } else {
         individualColumn?.disable();
+      }
+    });
+
+    this.lineItemForm.get('is_unique')?.valueChanges.subscribe((value) => {
+      const uniqueQueryControl = this.lineItemForm.get('unique_query');
+      if (value) {
+        uniqueQueryControl?.enable();
+      } else {
+        uniqueQueryControl?.disable();
       }
     });
   }
@@ -518,6 +527,7 @@ export class ImportTemplateComponent implements OnInit {
       is_admin_module: [false],
       ignore_error_rows: [false],
       status_id: [1],
+      job_type: ['direct'],
       items: this.fb.array([]),
       queries: this.fb.array([]),
     });
@@ -663,6 +673,7 @@ export class ImportTemplateComponent implements OnInit {
             data_end_row: entity.data_end_row,
             ignore_error_rows: entity.ignore_error_rows,
             is_admin_module: entity.is_admin_module,
+            job_type: entity.job_type,
             status_id: entity.status_id,
           });
 
@@ -739,6 +750,7 @@ export class ImportTemplateComponent implements OnInit {
         data_end_row: formData.data_end_row,
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
+        job_type: formData.job_type,
       },
     ];
 
@@ -802,6 +814,7 @@ export class ImportTemplateComponent implements OnInit {
         data_end_row: formData.data_end_row,
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
+        job_type: formData.job_type,
       },
     ];
 

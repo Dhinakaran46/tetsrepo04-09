@@ -41,6 +41,7 @@ interface InputTypes {
   ],
 })
 export class DataTableComponent implements OnInit, OnChanges {
+  @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
   store: any;
   @Input() customTemplates: { [key: string]: TemplateRef<any> } = {};
