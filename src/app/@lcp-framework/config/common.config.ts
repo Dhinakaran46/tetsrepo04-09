@@ -56,6 +56,7 @@ export const commonConfig: any = {
     MIN_DETAIL_MODULE: 'min_detail_module',
     MRN_ADD_EDIT_MODULE: 'mrn_add_edit_module',
     MIN_ADD_EDIT_MODULE: 'min_add_edit_module',
+    IMPORT_JOB_DETAIL_MODULE: 'import_job_detail_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -79,6 +80,7 @@ export const commonConfig: any = {
     min_detail_module: 'mindetail',
     mrn_add_edit_module: 'mrnaddedit',
     min_add_edit_module: 'minaddedit',
+    import_job_detail_module: 'importjobdetail',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -158,6 +160,7 @@ export const commonConfig: any = {
     { label: 'Configurations Module', value: 'configurations_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
     { label: 'MTR Detail Module', value: 'mtr_detail_module' },
+    { label: 'Import Job Detail Module', value: 'import_job_detail_module' },
     { label: 'MIR Detail Module', value: 'mir_detail_module' },
     { label: 'MRN Detail Module', value: 'mrn_detail_module' },
     { label: 'MIN Detail Module', value: 'min_detail_module' },

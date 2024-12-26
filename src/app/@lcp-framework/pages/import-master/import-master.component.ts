@@ -102,7 +102,9 @@ interface EntityListDataResponce extends ApiResponce {
 })
 export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   import_job: any = 'direct';
+  import_batch_process_count: any = 50;
   importForm: FormGroup;
+  importJobForm: FormGroup;
   fieldsForm: FormGroup = this.fb.group({});
   section: string = 'section1';
   importTemplates: EntityList[] = [];
@@ -143,6 +145,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       max_data_row: [{ value: 500, disabled: true }],
       // individual_fields: this.fb.group({}),
     });
+    this.importJobForm = this.fb.group({
+      name: ['', Validators.required],
+      description: [''],
+    });
   }
 
   ngOnInit() {
@@ -168,6 +174,12 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       max_data_row: 500,
       // individual_fields: this.fb.group({}),
     });
+
+    this.importJobForm.reset({
+      name: '',
+      description: '',
+    });
+
     this.fieldsForm = this.fb.group({});
     this.section = 'section1';
     // this.importTemplates = [];
@@ -188,7 +200,14 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       primary_table: 'import_templates',
       sort_columns: [['import_templates.name', 'asc']],
       limit_range: 1000,
-      select_columns: [['import_templates.id'], ['import_templates.name'], ['import_templates.slug'], ['import_templates.uuid'], ['import_templates.job_type']],
+      select_columns: [
+        ['import_templates.id'],
+        ['import_templates.name'],
+        ['import_templates.slug'],
+        ['import_templates.uuid'],
+        ['import_templates.job_type'],
+        ['import_templates.batch_process_count'],
+      ],
       company_id: 1,
       search_all: search_all,
     };
@@ -435,6 +454,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         key: key, // headers key
         label: `${header.display_name}${header.is_nullable ? '' : ' <span class="text-danger">*</span>'}`,
         sortable: true, // assuming all columns are sortable; adjust if needed
+        searchable: true,
         isHtmlHeader: true,
       }));
     // Add the two new columns at the beginning
@@ -457,6 +477,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         key: key, // headers key
         label: `${header.display_name}${header.is_nullable ? '' : ' <span class="text-danger">*</span>'}`,
         sortable: true, // assuming all columns are sortable; adjust if needed
+        searchable: true,
         isHtmlHeader: true,
       }));
 
@@ -519,10 +540,15 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   processScheduledInsertion(sheet_data: SheetData) {
+    if (this.importForm.invalid) {
+      this.toastr.error('Please fill the import job form');
+      return;
+    }
     console.log(sheet_data);
+
     const randomValue = Math.floor(Math.random() * 100000);
-    const wholeData = this.getSheetDatasForScheduled();
-    const wholeDataConfig = this.getSheetHeaderForScheduled();
+    const wholeData = this.getSheetDatas();
+    const wholeDataConfig = this.getSheetHeader();
     const rowObjectString = JSON.stringify(wholeData);
     const rowObjectConfigString = JSON.stringify(wholeDataConfig);
     const payload = {
@@ -532,12 +558,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data: {
         table1: [
           {
-            name: 'import_job' + randomValue,
-            description: 'import_job' + randomValue,
+            name: this.importJobForm.get('name')?.value,
+            description: this.importJobForm.get('description')?.value,
             sequence_number: `{{{get_sequence_no('import_job', true)}}}`,
             total_rows: wholeData.length,
             completed_rows: 0,
             error_rows: 0,
+            batch_process_count: this.import_batch_process_count,
           },
         ],
         table2: [
@@ -545,26 +572,40 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             import_job_id: '@table1.id',
             row_object: rowObjectString,
             row_object_config: rowObjectConfigString,
+            row_object_validated: sheet_data,
           },
         ],
       },
     };
     console.log(payload);
     console.log('Payload:', JSON.stringify(payload, null, 2));
+    //return;
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           console.log(response);
+          if (response.status) {
+            this.resetComponent();
+            this.getImportTemplates();
+            this.submitted = false;
+            this.toastr.success(response.message);
+            this.isLoading = false;
+          } else {
+            this.toastr.error(response.message);
+            this.isLoading = false;
+          }
         } else {
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
+          this.isLoading = false;
         }
       },
       (error) => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
+        this.isLoading = false;
       }
     );
     //`{{{get_sequence_no('import_job', true)}}}`
@@ -574,6 +615,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   callImportApi(sheet_data: SheetData) {
     if (this.import_job == 'scheduled') {
+      this.isLoading = true;
       this.processScheduledInsertion(sheet_data);
     } else {
       this.isLoading = true;
@@ -632,6 +674,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
             }
             this.import_job = response.data.records[0].job_type;
+            this.import_batch_process_count = response.data.records[0].batch_process_count;
             this.importForm.patchValue({
               data_header_row: response.data.records[0].header_row,
               data_start_row: response.data.records[0].data_start_row,
