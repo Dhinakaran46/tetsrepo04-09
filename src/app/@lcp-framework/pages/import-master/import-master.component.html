@@ -101,6 +101,27 @@
                     <input min="0" id="data_end_row" type="number" formControlName="data_end_row" class="form-input text-white-dark" />
                   </div>
                 </div>
+
+                <div class="flex-1 pt-5 text-sm" *ngIf="this.import_job == 'scheduled'">
+                  <h2 class="mb-4 text-lg font-bold">Import Job</h2>
+
+                  <div class="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                    <div class="flex flex-col">
+                      <label for="name">{{ 'name' | translate }} <span class="text-danger">*</span></label>
+                      <input id="name" type="text" formControlName="name" class="form-input text-white-dark" />
+                    </div>
+
+                    <div class="flex flex-col">
+                      <label for="description">{{ 'description' | translate }}</label>
+                      <textarea formControlName="description" class="form-input text-white-dark"></textarea>
+                    </div>
+                    <div class="flex flex-col">
+                      <label for="batch_process_count">{{ 'batch_process_count' | translate }}</label>
+                      <input type="text" class="form-input text-white-dark" value="{{ import_batch_process_count }}" readonly />
+                    </div>
+                  </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary !mt-6">{{ 'next' | translate }}</button>
               </form>
             </div>
@@ -190,27 +211,6 @@
           </div>
 
           <div *ngIf="section.toLowerCase() === 'section3'">
-            <div class="flex-1 pt-5 text-sm" *ngIf="this.import_job == 'scheduled'">
-              <h2 class="mb-4 text-lg font-bold">Import Job</h2>
-              <form [formGroup]="importJobForm">
-                <div class="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  <div class="flex flex-col">
-                    <label for="name">{{ 'name' | translate }} <span class="text-danger">*</span></label>
-                    <input id="name" type="text" formControlName="name" class="form-input text-white-dark" />
-                  </div>
-
-                  <div class="flex flex-col">
-                    <label for="description">{{ 'description' | translate }}</label>
-                    <textarea formControlName="description" class="form-input text-white-dark"></textarea>
-                  </div>
-                  <div class="flex flex-col">
-                    <label for="batch_process_count">{{ 'batch_process_count' | translate }}</label>
-                    <input type="text" class="form-input text-white-dark" value="{{ import_batch_process_count }}" readonly />
-                  </div>
-                </div>
-              </form>
-            </div>
-
             <!-- <div class="flex justify-between items-center mb-4" *ngIf="sheet_data && sheet_data.header_details">
               <h4 class="text-2xl font-semibold">{{ 'validated_records' | translate }}</h4>
 

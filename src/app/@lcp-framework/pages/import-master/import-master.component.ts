@@ -104,7 +104,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   import_job: any = 'direct';
   import_batch_process_count: any = 50;
   importForm: FormGroup;
-  importJobForm: FormGroup;
+
   fieldsForm: FormGroup = this.fb.group({});
   section: string = 'section1';
   importTemplates: EntityList[] = [];
@@ -143,11 +143,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_start_row: [0, [Validators.min(0)]], // Minimum value 0
       data_end_row: [0, [Validators.min(0)]], // Minimum value 0
       max_data_row: [{ value: 500, disabled: true }],
-      // individual_fields: this.fb.group({}),
-    });
-    this.importJobForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
+      // individual_fields: this.fb.group({}),
     });
   }
 
@@ -172,12 +170,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_start_row: 0,
       data_end_row: 0,
       max_data_row: 500,
-      // individual_fields: this.fb.group({}),
-    });
-
-    this.importJobForm.reset({
       name: '',
       description: '',
+      // individual_fields: this.fb.group({}),
     });
 
     this.fieldsForm = this.fb.group({});
@@ -487,11 +482,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   importTemplateDetail() {
+    this.isLoading = true;
     const sheet_data: any = this.sheet_data;
     const isInValid = sheet_data.row_datas?.some((row: any) => row.error === true);
     const isInValidInd = sheet_data.ind_row_datas?.error;
     if (!sheet_data?.row_datas?.length || isInValid || isInValidInd) {
       this.toastr.error('Invalid sheet data please fix the errors befor continue.');
+      this.isLoading = false;
     } else {
       if (sheet_data.error_msg) {
         Swal.fire({
@@ -504,6 +501,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         }).then(async (result) => {
           if (result.value) {
             this.callImportApi(sheet_data);
+          } else {
+            this.isLoading = false;
           }
         });
       } else {
@@ -545,7 +544,15 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       return;
     }
     console.log(sheet_data);
+    let finalData: any = sheet_data;
+    finalData.row_datas.forEach((item: any) => {
+      // item.error = false;
+      item.errors = {};
+      //item.warning = false;
+      item.warnings = {};
+    });
 
+    console.log(finalData);
     const randomValue = Math.floor(Math.random() * 100000);
     const wholeData = this.getSheetDatas();
     const wholeDataConfig = this.getSheetHeader();
@@ -558,8 +565,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data: {
         table1: [
           {
-            name: this.importJobForm.get('name')?.value,
-            description: this.importJobForm.get('description')?.value,
+            name: this.importForm.get('name')?.value,
+            description: this.importForm.get('description')?.value,
             sequence_number: `{{{get_sequence_no('import_job', true)}}}`,
             total_rows: wholeData.length,
             completed_rows: 0,
@@ -570,15 +577,15 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         table2: [
           {
             import_job_id: '@table1.id',
-            row_object: rowObjectString,
+            //row_object: rowObjectString, //5000
             row_object_config: rowObjectConfigString,
-            row_object_validated: sheet_data,
+            row_object_validated: { ...finalData, selectedTemplate: this.selectedTemplate?.uuid, fileUploadLog: this.fileUploadLog?.uuid },
           },
         ],
       },
     };
     console.log(payload);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
+    //    console.log('Payload:', JSON.stringify(payload, null, 2));
     //return;
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
@@ -615,10 +622,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   callImportApi(sheet_data: SheetData) {
     if (this.import_job == 'scheduled') {
-      this.isLoading = true;
+      //this.isLoading = true;
       this.processScheduledInsertion(sheet_data);
     } else {
-      this.isLoading = true;
+      //this.isLoading = true;
       this.gridApiService
         .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
           row_datas: sheet_data.row_datas,

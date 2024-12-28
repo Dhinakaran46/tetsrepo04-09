@@ -98,6 +98,33 @@ export class ImportJobDetailsComponent implements OnInit {
     return this.sheet_data ? Object.keys(this.sheet_data.ind_row_datas.columns) : [];
   }
 
+  getSheetDatas(cdata: any): any {
+    return cdata?.row_datas.map((row: any) => {
+      // Extract error messages and combine them into a single string
+      const errorMessages = Object.values(row.errors)
+        .flat()
+        .map((error: any) => error.message)
+        .join(', ');
+      const warnMessages = Object.values(row.warnings)
+        .flat()
+        .map((warning: any) => warning.message)
+        .join(', ');
+
+      // Determine the error status
+      const status = row.warning
+        ? '<span class="badge text-xs badge-outline-warning">warning</span>'
+        : '<span class="badge text-xs badge-outline-success">valid</span>';
+      const errorstatus = row.error ? `<span class="badge text-xs badge-outline-danger">invalid</span>` : status;
+      return {
+        ...row.columns,
+        errors: row.errors,
+        warnings: row.warnings,
+        errorstatus: row.errorstatus ? row.errorstatus : errorstatus, // Add error status
+        errorMessages: row.error ? errorMessages : warnMessages || 'Valid', // Add combined error messages
+      };
+    });
+  }
+
   loadData(id: any) {
     this.loading = true;
     const params = {
@@ -122,7 +149,6 @@ export class ImportJobDetailsComponent implements OnInit {
           join_condition: 'import_jobs.id = import_job_line_items.import_job_id',
         },
       ],
-      group_by: ['import_jobs.id', 'import_job_line_items.id'],
     };
 
     this.gridApiService.getAllList(params).subscribe(
@@ -136,7 +162,7 @@ export class ImportJobDetailsComponent implements OnInit {
             this.sheet_data = data.row_object_validated;
           }
 
-          this.commonItems = data.row_object;
+          this.commonItems = this.getSheetDatas(data.row_object_validated);
           this.commonItemsConfig = data.row_object_config;
           this.commonItemsConfig.columns.filter((item: any) => (item.label = item.label.replace(`<span class="text-danger">*</span>`, '')));
           this.commonItemsConfig.pageSizes = [5, 10, 25, 50];
