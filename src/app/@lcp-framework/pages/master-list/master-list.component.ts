@@ -230,16 +230,16 @@ export class MasterListComponent implements AfterViewInit {
       } else {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
-
+        const export_download = this.masterInfo?.Listname + '_table_data';
         this.gridApiService.getAllRecords(query).subscribe(
           (response) => {
             if (response.status && response.code === 200) {
               if (response.data.records && response.data.headers) {
                 const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
                 if (item.type == 'pdf') {
-                  this.exportService.exportToPDF(filteredData, 'TableData');
+                  this.exportService.exportToPDF(filteredData, export_download);
                 } else {
-                  this.exportService.exportToExcel(filteredData, 'TableData');
+                  this.exportService.exportToExcel(filteredData, export_download);
                 }
                 this.loading = false;
               }

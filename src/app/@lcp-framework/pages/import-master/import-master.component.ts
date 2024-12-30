@@ -688,6 +688,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
               data_end_row: response.data.records[0].data_end_row,
               max_data_row: response.data.records[0].max_row_count,
             });
+            if (this.import_job === 'scheduled') {
+              this.importForm.get('name')?.setValidators([Validators.required]);
+            } else {
+              this.importForm.get('name')?.clearValidators();
+            }
+
+            this.importForm.get('name')?.updateValueAndValidity();
           } else {
             this.resetComponent(uuid);
           }
