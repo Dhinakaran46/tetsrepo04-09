@@ -283,7 +283,7 @@ export class ConfigurationComponent implements OnInit {
           }
           this.initAllTabsForms();
           if (this.tabs.length > 0) {
-            this.switchTab(this.tabs[0].name);
+            this.switchTab(this.currentTab?.length ? this.currentTab : this.tabs[0].name);
           }
         }
       },
