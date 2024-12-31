@@ -143,7 +143,7 @@ export class MenuLoadService {
       print_query: true,
       company_id: companyId,
       primary_table: 'menu_items',
-      sort_columns: [['menu_items.id', 'asc']],
+      sort_columns: [['menu_items.order_no', 'asc']],
       limit_range: 1000,
       select_columns: [
         ['menu_items.id'],
