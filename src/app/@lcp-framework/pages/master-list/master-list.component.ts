@@ -230,7 +230,7 @@ export class MasterListComponent implements AfterViewInit {
       } else {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
-        const export_download = this.masterInfo?.Listname + '_table_data';
+        const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
         this.gridApiService.getAllRecords(query).subscribe(
           (response) => {
             if (response.status && response.code === 200) {
