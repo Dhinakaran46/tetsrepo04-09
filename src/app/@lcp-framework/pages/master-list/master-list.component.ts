@@ -271,12 +271,15 @@ export class MasterListComponent implements AfterViewInit {
       const transformedRecord: any = {};
 
       filteredHeaders.forEach((header) => {
+        console.log(header);
         const translationKey = `${header.header}`;
 
         const translatedHeader = this.translate.instant(translationKey);
 
-        if (header.field_type_id == '7') {
+        if (header.field_type_id == '5') {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
+        } else if (header.field_type_id == '7') {
+          transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
         } else {
@@ -445,7 +448,7 @@ export class MasterListComponent implements AfterViewInit {
                   (key.toLowerCase().includes('date') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
                   this.isDate(formattedItem[key])
                 ) {
-                  const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd');
+                  const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd HH:mm:ss');
                   if (transformedDate) {
                     formattedItem[key] = transformedDate;
                   }

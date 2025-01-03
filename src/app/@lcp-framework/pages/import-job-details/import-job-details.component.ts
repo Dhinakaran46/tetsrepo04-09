@@ -99,32 +99,37 @@ export class ImportJobDetailsComponent implements OnInit {
   }
 
   getSheetDatas(cdata: any): any {
-    return cdata?.row_datas.map((row: any) => {
+    console.log(cdata);
+    return cdata?.map((row: any) => {
       // Extract error messages and combine them into a single string
-      const errorMessages = Object.values(row.errors)
+      const errorMessages = Object.values(row.row_object.errors)
         .flat()
         .map((error: any) => error.message)
         .join(', ');
-      const warnMessages = Object.values(row.warnings)
+      const warnMessages = Object.values(row.row_object.warnings)
         .flat()
         .map((warning: any) => warning.message)
         .join(', ');
 
       // Determine the error status
-      const status = row.warning
+      const status = row.row_object.warning
         ? '<span class="badge text-xs badge-outline-warning">warning</span>'
         : '<span class="badge text-xs badge-outline-success">valid</span>';
-      const errorstatus = row.error ? `<span class="badge text-xs badge-outline-danger">invalid</span>` : status;
+      const errorstatus = row.row_object.error ? `<span class="badge text-xs badge-outline-danger">invalid</span>` : status;
+      const fStatusMesg = errorMessages ? errorMessages : warnMessages;
+      const final_status = row.job_status == 'processed' ? '<span class="badge text-xs badge-outline-success">Processed</span>' : errorstatus;
+      const final_message = row.job_status == 'processed' ? 'This item has been processed successfully' : fStatusMesg;
+
       return {
-        ...row.columns,
-        errors: row.errors,
-        warnings: row.warnings,
-        errorstatus: row.errorstatus ? row.errorstatus : errorstatus, // Add error status
-        errorMessages: row.error ? errorMessages : warnMessages || 'Valid', // Add combined error messages
+        ...row.row_object.columns,
+        errors: row.job_status == 'processed' ? {} : row.row_object.errors,
+        warnings: row.job_status == 'processed' ? {} : row.row_object.warnings,
+        errorstatus: final_status, // Add error status
+        errorMessages: final_message, // Add combined error messages
       };
     });
   }
-
+  /*
   loadData(id: any) {
     this.loading = true;
     const params = {
@@ -141,7 +146,13 @@ export class ImportJobDetailsComponent implements OnInit {
           operator: '=',
         },
       ],
-      select_columns: [['import_jobs.*'], ['import_job_line_items.*']],
+      select_columns: [
+        ['import_jobs.*'],
+        [
+          "CASE WHEN COUNT(import_job_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('row_object', import_job_line_items.row_object,'job_status', import_job_line_items.job_status))) END",
+          'items',
+        ],
+      ],
       includes: [
         {
           join_type: 'LEFT',
@@ -149,6 +160,7 @@ export class ImportJobDetailsComponent implements OnInit {
           join_condition: 'import_jobs.id = import_job_line_items.import_job_id',
         },
       ],
+      group_by: ['import_jobs.id'],
     };
 
     this.gridApiService.getAllList(params).subscribe(
@@ -158,12 +170,14 @@ export class ImportJobDetailsComponent implements OnInit {
 
           console.log(data);
           this.commonData = data;
-          if (Object.keys(data.row_object_validated.ind_row_datas.columns).length > 0) {
-            this.sheet_data = data.row_object_validated;
+          if (Object.keys(data.header_details.ind_row_datas.columns).length > 0) {
+            this.sheet_data = data.header_details;
           }
-
-          this.commonItems = this.getSheetDatas(data.row_object_validated);
-          this.commonItemsConfig = data.row_object_config;
+          const allitems: any = data.items;
+        
+          this.commonItems = this.getSheetDatas(allitems);
+          console.log(this.commonItems);
+          this.commonItemsConfig = data.table_config;
           this.commonItemsConfig.columns.filter((item: any) => (item.label = item.label.replace(`<span class="text-danger">*</span>`, '')));
           this.commonItemsConfig.pageSizes = [5, 10, 25, 50];
           this.commonItemsConfig.defaultPageSize = 10;
@@ -190,5 +204,108 @@ export class ImportJobDetailsComponent implements OnInit {
         this.loading = false;
       }
     );
+  }*/
+
+  loadData(id: any) {
+    this.loading = true;
+    this.loadImportJob(id).then((jobData) => {
+      if (jobData) {
+        this.loadImportJobLineItems(jobData.id);
+      }
+    });
+  }
+
+  private loadImportJob(uuid: string) {
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'import_jobs',
+      start_index: 0,
+      limit_range: 1,
+      sort_columns: [['import_jobs.id', 'asc']],
+      search_all: [
+        {
+          column_name: 'import_jobs.uuid',
+          value: uuid,
+          operator: '=',
+        },
+      ],
+      select_columns: [['import_jobs.*']],
+    };
+
+    return new Promise<any>((resolve) => {
+      this.gridApiService.getAllList(params).subscribe({
+        next: (response) => {
+          if (response.status && response.code === 200) {
+            const data = response.data.records[0];
+            this.commonData = data;
+            if (Object.keys(data.header_details.ind_row_datas.columns).length > 0) {
+              this.sheet_data = data.header_details;
+            }
+            this.commonItemsConfig = data.table_config;
+            resolve(data);
+          } else {
+            this.loading = false;
+            resolve(null);
+          }
+        },
+        error: (error) => {
+          const errorMessage = this.translate.instant('error');
+          this.toastr.error(errorMessage, 'Error');
+          this.loading = false;
+          resolve(null);
+        },
+      });
+    });
+  }
+
+  private loadImportJobLineItems(jobId: number) {
+    this.setupGridConfig();
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'import_job_line_items',
+
+      search_all: [
+        {
+          column_name: 'import_job_line_items.import_job_id',
+          value: jobId,
+          operator: '=',
+        },
+      ],
+      select_columns: [['import_job_line_items.*']],
+      group_by: ['import_job_line_items.id order by import_job_line_items.id asc'],
+    };
+
+    this.gridApiService.getAllList(params).subscribe({
+      next: (response) => {
+        if (response.status && response.code === 200) {
+          const allItems = response.data.records;
+          this.commonItems = this.getSheetDatas(allItems);
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        const errorMessage = this.translate.instant('error');
+        this.toastr.error(errorMessage, 'Error');
+        this.loading = false;
+      },
+    });
+  }
+
+  private setupGridConfig() {
+    this.commonItemsConfig.columns.forEach((item: any) => {
+      item.label = item.label.replace(`<span class="text-danger">*</span>`, '');
+    });
+    this.commonItemsConfig.pageSizes = [5, 10, 25, 50];
+    this.commonItemsConfig.defaultPageSize = 10;
+    this.commonItemsConfig.searchable = true;
+    this.commonItemsConfig.headerConfig = {
+      title: 'Line Items',
+      showHeader: true,
+      enableFilter: true,
+      enableColumnSelector: true,
+      enableExport: false,
+    };
   }
 }

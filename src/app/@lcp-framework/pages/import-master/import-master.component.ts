@@ -545,12 +545,19 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     }
     console.log(sheet_data);
     let finalData: any = sheet_data;
+    let finalRows: any = [];
     finalData.row_datas.forEach((item: any) => {
       // item.error = false;
       item.errors = {};
       //item.warning = false;
       item.warnings = {};
+
+      finalRows.push({
+        import_job_id: '@table1.id',
+        row_object: item,
+      });
     });
+    console.log(finalRows);
 
     console.log(finalData);
     const randomValue = Math.floor(Math.random() * 100000);
@@ -572,16 +579,18 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             completed_rows: 0,
             error_rows: 0,
             batch_process_count: this.import_batch_process_count,
+            header_details: {
+              selectedTemplate: this.selectedTemplate?.uuid,
+              fileUploadLog: this.fileUploadLog?.uuid,
+              individual_header_details: finalData.individual_header_details,
+              ind_row_datas: finalData.ind_row_datas,
+              header_details: finalData.header_details,
+              error_msg: finalData.error_msg,
+            },
+            table_config: rowObjectConfigString,
           },
         ],
-        table2: [
-          {
-            import_job_id: '@table1.id',
-            //row_object: rowObjectString, //5000
-            row_object_config: rowObjectConfigString,
-            row_object_validated: { ...finalData, selectedTemplate: this.selectedTemplate?.uuid, fileUploadLog: this.fileUploadLog?.uuid },
-          },
-        ],
+        table2: finalRows,
       },
     };
     console.log(payload);
