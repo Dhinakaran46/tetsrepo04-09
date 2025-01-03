@@ -9,6 +9,7 @@ export const commonConfig: any = {
     excelUpdate: 'auth/export/file',
     getExcelHeaders: 'auth/export/get-excel-headers',
     updateprofilepwd: 'auth/password/change',
+    resetuserpwd: 'auth/password/reset-pwd-user',
     commongriddata: 'common/grid-data',
     commonindividualdataexport: 'common/individual-data-export',
     commongriddataexport: 'common/grid-data-export',

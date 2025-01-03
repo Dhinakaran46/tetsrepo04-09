@@ -1,4 +1,5 @@
 import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
@@ -20,6 +21,7 @@ import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
+import { ProfileApiService } from '../../service/user/profile-api.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -37,7 +39,7 @@ interface FetchDataParams {
 
 @Component({
   standalone: true,
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent],
+  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -54,9 +56,13 @@ export class MasterListComponent implements AfterViewInit {
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
+  user_id: any;
+  isItemModalOpen = false;
+  changePasswordForm: FormGroup;
   column: any = '';
   query: any = '';
 
+  allowPasswordModal: any = false;
   selectcolumns: any[] = [];
   headercolumns: any[] = [];
   items: any[] = [];
@@ -79,6 +85,7 @@ export class MasterListComponent implements AfterViewInit {
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
+    private apiService: ProfileApiService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
@@ -90,9 +97,35 @@ export class MasterListComponent implements AfterViewInit {
     private translate: TranslateService,
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
-    private titleService: Title
+    private titleService: Title,
+    private formBuilder: FormBuilder
   ) {
     this.initStore();
+
+    this.changePasswordForm = this.formBuilder.group(
+      {
+        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+        confirm_new_password: ['', Validators.required],
+      },
+      { validators: this.passwordMatchValidator }
+    );
+  }
+
+  passwordValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    const isValid = hasUpperCase && hasSpecialChar;
+    return !isValid ? { passwordInvalid: true } : null;
+  }
+
+  passwordMatchValidator(group: FormGroup): ValidationErrors | null {
+    const newPassword = group.get('new_password')?.value;
+    const confirmNewPassword = group.get('confirm_new_password')?.value;
+    return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
   ngAfterViewInit() {
@@ -104,6 +137,10 @@ export class MasterListComponent implements AfterViewInit {
 
     if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
+      console.log(this.masterInfo);
+      if (this.masterInfo.ListQuery.entity_name == 'user') {
+        this.allowPasswordModal = true;
+      }
 
       const masterListConfig = pageInfo;
 
@@ -134,6 +171,48 @@ export class MasterListComponent implements AfterViewInit {
       });
   }
 
+  onChangePassword() {
+    if (this.changePasswordForm && this.changePasswordForm.errors && this.changePasswordForm.errors['passwordsMismatch']) {
+      const key = 'passwords_do_not_match';
+      const errorMessage = this.translate.instant(key);
+      this.toastr.error(errorMessage, 'Error');
+      return;
+    }
+
+    if (this.changePasswordForm.invalid) {
+      this.markAllAsTouched();
+      return;
+    }
+
+    const formData = {
+      uuid: this.user_id,
+      password: this.changePasswordForm.get('new_password')?.value,
+    };
+
+    this.apiService.resetPasswordAnyUser(formData).subscribe(
+      (response) => {
+        const key = 'password_resetted_successfully';
+        const successMessage = this.translate.instant(key);
+        this.toastr.success(successMessage);
+        this.changePasswordForm.reset();
+        this.isItemModalOpen = false;
+      },
+      (error) => {
+        const key = 'error_resetting_password';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage + error, 'Error');
+        this.isItemModalOpen = false;
+        // Handle error response
+      }
+    );
+  }
+
+  private markAllAsTouched() {
+    Object.values(this.changePasswordForm.controls).forEach((control) => {
+      control.markAsTouched();
+    });
+  }
+
   sortColumn(column: any) {
     this.column = column;
 
@@ -143,6 +222,16 @@ export class MasterListComponent implements AfterViewInit {
     this.fetchData(this.listQuery);
   }
 
+  passwordModal(item: any) {
+    console.log(item);
+    //return;
+    this.isItemModalOpen = true;
+    this.user_id = item.uuid;
+  }
+  cancelResetPwd() {
+    this.changePasswordForm.reset();
+    this.isItemModalOpen = false;
+  }
   advancedSearchData(data: any) {
     interface QueryItem {
       isAggregate: boolean;
