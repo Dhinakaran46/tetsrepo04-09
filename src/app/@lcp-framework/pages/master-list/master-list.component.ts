@@ -196,6 +196,7 @@ export class MasterListComponent implements AfterViewInit {
         this.toastr.success(successMessage);
         this.changePasswordForm.reset();
         this.isItemModalOpen = false;
+        this.fetchData(this.listQuery);
       },
       (error) => {
         const key = 'error_resetting_password';
