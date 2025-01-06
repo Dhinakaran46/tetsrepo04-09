@@ -69,10 +69,14 @@ export class ChangePwdComponent implements OnInit {
 
     this.apiService.changePassword(formData).subscribe(
       (response) => {
-        const key = 'password_changed_successfully';
-        const successMessage = this.translate.instant(key);
-        this.toastr.success(successMessage);
-        this.changePasswordForm.reset();
+        if (response.code == 200) {
+          const key = 'password_changed_successfully';
+          const successMessage = this.translate.instant(key);
+          this.toastr.success(successMessage);
+          this.changePasswordForm.reset();
+        } else {
+          this.toastr.error(response.message);
+        }
       },
       (error) => {
         const key = 'error_changing_password';
