@@ -755,6 +755,13 @@ export class MasterListComponent implements AfterViewInit {
     return this.translate.instant(msg);
   }
 
+  printItem(item: any) {
+    if (this.masterInfo.children.print) {
+      const targetRoute = this.masterInfo.children.print.target.replace(':id', item.uuid);
+      this.router.navigate([targetRoute]);
+    }
+  }
+
   directDeleteItem(item: any) {
     Swal.fire({
       icon: 'warning',
