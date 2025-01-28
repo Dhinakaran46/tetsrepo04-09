@@ -13,7 +13,7 @@
     *ngIf="isImageFile('image') && !fileMsg.length"
     [src]="defaultImageUrl"
     alt="formly-img"
-    class="formly-img"
+    class="formly-img cursor-pointer p-2"
     style="width: 60px; height: 60px"
     [hidden]="fileSelected"
     (click)="downloadFile()"

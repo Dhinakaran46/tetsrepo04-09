@@ -215,12 +215,10 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
       link.textContent = 'Download File';
       link.download = this.defaultImageUrl.split('/').pop() as string;
       // Prevent the default link behavior (such as page refresh)
-      link.addEventListener('click', (event) => {
-        event.preventDefault();
-      });
-      document.body.appendChild(link);
+      link.textContent = 'Download File';
+      link.target = '_blank';
       link.click();
-      document.body.removeChild(link);
+      link.remove();
     }
   }
 }
