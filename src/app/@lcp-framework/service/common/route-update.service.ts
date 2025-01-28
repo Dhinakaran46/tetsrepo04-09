@@ -18,7 +18,6 @@ import { ImportMasterComponent } from '../../pages/import-master/import-master.c
 import { ImportTemplateComponent } from '../../pages/import-template/import-template.component';
 import { ExportTemplateComponent } from '../../pages/export-template/export-template.component';
 import { ImportJobDetailsComponent } from '../../pages/import-job-details/import-job-details.component';
-import { BarcodePrintingComponent } from '../../../@edms/pages/barcode-printing/barcode-printing.component';
 
 @Injectable({
   providedIn: 'root',
@@ -150,7 +149,6 @@ export class RouteUpdateService {
                 import_template_module: ImportTemplateComponent,
                 export_template_module: ExportTemplateComponent,
                 import_job_detail_module: ImportJobDetailsComponent,
-                barcode_print_module: BarcodePrintingComponent,
               };
 
               const route: Route = {
