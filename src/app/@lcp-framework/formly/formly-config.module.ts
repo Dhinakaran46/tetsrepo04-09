@@ -140,6 +140,7 @@ export const search_conditions: any = commonConfig.search_conditions;
         },
       ],
       types: [
+        { name: 'file', component: FormlyFieldFileComponent, wrappers: ['form-field'] },
         { name: 'image', component: FormlyFieldFileComponent, wrappers: ['form-field'] },
         { name: 'repeat', component: FormlyFieldRepeatComponent, wrappers: ['form-field'] },
         { name: 'select-from-db', component: FormlyFieldSelectFromDbComponent, wrappers: ['form-field'] },

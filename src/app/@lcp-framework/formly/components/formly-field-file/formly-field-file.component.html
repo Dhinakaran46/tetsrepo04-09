@@ -1,9 +1,27 @@
 <!-- <input type="file" [formControl]="formControl" [formlyAttributes]="field" />
  <div class="custom-file-container" data-upload-id="myFirstImage"></div> -->
 <div class="formly-file-preview">
-  <input accept="image/*" type="file" [formControl]="formControl" [formlyAttributes]="field"
+  <input
+    [accept]="updateFileAccept(field.props['accept'])"
+    type="file"
+    [formControl]="formControl"
+    [formlyAttributes]="field"
     (change)="onFileChange($event)"
-    class="formly-file form-input file:py-2 file:px-4 file:border-0 file:font-semibold p-0 file:bg-primary/90 ltr:file:mr-5 rtl:file:ml-5 file:text-white file:hover:bg-primary" />
-  <img [src]="defaultImageUrl" alt="formly-img" class="formly-img" style="width: 60px;height: 60px;"
-    [hidden]="fileSelected">
+    class="formly-file form-input p-0 file:border-0 file:bg-primary/90 file:px-4 file:py-2 file:font-semibold file:text-white file:hover:bg-primary ltr:file:mr-5 rtl:file:ml-5"
+  />
+  <img
+    *ngIf="isImageFile('image') && !fileMsg.length"
+    [src]="defaultImageUrl"
+    alt="formly-img"
+    class="formly-img"
+    style="width: 60px; height: 60px"
+    [hidden]="fileSelected"
+    (click)="downloadFile()"
+  />
+  <div class="cursor-pointer truncate p-2 text-blue-600" appDynamicFontSize="body" *ngIf="fileMsg.length ? true : false" (click)="downloadFile()">
+    {{ fileMsg }}
+  </div>
+  <div class="text-red-500" *ngIf="formControl && formControl.errors && formControl.errors['invalidFileFormat']">
+    Invalid file format. Please upload a valid file.
+  </div>
 </div>
