@@ -85,6 +85,17 @@
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
+        *ngIf="this.masterInfo.permissions.print"
+        (click)="this.printItem(item)"
+        ngxTippy
+        data-tippy-content="Print"
+      >
+        <i class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.record_export"
         (click)="this.recordExport(item)"
         ngxTippy

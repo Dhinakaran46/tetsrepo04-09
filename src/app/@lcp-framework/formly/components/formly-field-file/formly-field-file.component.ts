@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 import { environment } from '../../../../../environments/environment';
@@ -14,6 +14,31 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
   fileNameControlKey!: string;
   fileNameControl!: FormControl;
   fileSelected: boolean = false;
+  errorMessage: string = '';
+  acceptFormat: string[] = [];
+  mimeToExtensions: Record<string, string[]> = {
+    'image/*': ['jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'webp'],
+    'application/pdf': ['pdf'],
+    'application/vnd.ms-excel': ['xls'], // XLS format
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'], // XLSX format
+    'application/msword': ['doc'], // DOC format
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'], // DOCX format
+    'text/csv': ['csv'], // CSV format
+    'application/vnd.oasis.opendocument.text': ['odt'], // ODT format
+    'image/png': ['png'], // PNG format
+    'image/jpeg': ['jpeg'], // JPEG format
+    'image/jpg': ['jpg'], // JPG format
+    'image/gif': ['gif'], // GIF format
+    'image/svg': ['svg'], // SVG format
+    'image/svg+xml': ['svg'], // SVG format
+    'image/ico': ['ico'], // ICO format
+    'image/webp': ['webp'], // WEBP format
+    'text/plain': ['txt'], //
+    'application/vnd.ms-powerpoint': ['ppt'], // PPT format
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['pptx'], // PPTX format
+  };
+
+  fileMsg = '';
 
   ngOnInit() {
     this.fileNameControlKey = this.removeSuffix(this.field.key as string, '_file');
@@ -22,7 +47,139 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
     this.fileNameControl?.valueChanges.subscribe(() => {
       this.updateDefaultImageUrl();
     });
+    this.formControl.valueChanges.subscribe((file: FileList) => {
+      if (file) {
+        const isValid = this.validateFileFormat(file);
+        this.formControl.setErrors(isValid ? null : { invalidFileFormat: true });
+      }
+    });
   }
+
+  isImageFile = (data: string): boolean => {
+    return this.acceptFormat.filter((format) => format.includes(data)).length ? true : false;
+  };
+
+  mapMimeTypeToExtensions = (mimeType: string): string[] => {
+    return this.mimeToExtensions[mimeType] || [];
+  };
+
+  updateFileAccept(type: string) {
+    if (type?.length) {
+      type.split(',').map((value) => {
+        let format = '';
+        switch (value.trim().toLowerCase()) {
+          case 'image':
+            format = 'image/*';
+            break;
+          case 'png':
+            format = 'image/png';
+            break;
+          case 'jpeg':
+            format = 'image/jpeg';
+            break;
+          case 'jpg':
+            format = 'image/jpg';
+            break;
+          case 'gif':
+            format = 'image/gif';
+            break;
+          case 'svg':
+            format = 'image/svg+xml, image/svg';
+            break;
+          case 'svg+xml':
+            format = 'image/svg+xml, image/svg';
+            break;
+          case 'ico':
+            format = 'image/ico';
+            break;
+          case 'webp':
+            format = 'image/webp';
+            break;
+          case 'powerpoint':
+            format = 'application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation';
+            break;
+          case 'ppt':
+            format = 'application/vnd.ms-powerpoint';
+            break;
+          case 'pptx':
+            format = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+            break;
+          case 'pdf':
+            format = 'application/pdf';
+            break;
+          case 'excel':
+            format = 'application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            break;
+          case 'xlsx':
+            format = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            break;
+          case 'xls':
+            format = 'application/vnd.ms-excel';
+            break;
+          case 'csv':
+            format = 'text/csv';
+            break;
+          case 'document':
+            format = 'application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.oasis.opendocument.text';
+            break;
+          case 'docx':
+            format = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            break;
+          case 'doc':
+            format = 'application/msword';
+            break;
+          case 'odt':
+            format = 'application/vnd.oasis.opendocument.text';
+            break;
+          case 'text':
+          case 'txt':
+            format = 'text/plain';
+            break;
+          case 'all':
+            format = '*/*'; // Allows all file types
+            break;
+          default:
+            format = 'image/*';
+        }
+        if (!this.acceptFormat.includes(format)) this.acceptFormat.push(format);
+      });
+    } else {
+      this.acceptFormat = ['image/*'];
+    }
+    return this.acceptFormat.join(',');
+  }
+
+  validateFileFormat = (file: FileList): boolean => {
+    if (!file || this.acceptFormat.length === 0) return false;
+    const mimeType = file[0].type; // Get the MIME type of the file
+    const fileExtension = file[0].name?.split('.')?.pop()?.toLowerCase(); // Extract the file extension
+    for (const format of this.acceptFormat) {
+      if (format === '*/*') {
+        return true; // Allow all formats
+      }
+
+      // Check MIME type matches (e.g., "image/*")
+      if (format.endsWith('/*')) {
+        const baseType = format.split('/')[0]; // e.g., "image"
+        if (mimeType?.startsWith(baseType)) {
+          return true;
+        }
+      }
+
+      // Check if the MIME type matches exactly
+      if (mimeType === format) {
+        return true;
+      }
+
+      // Check if the file extension matches (fallback)
+      const allowedExtensions = this.mapMimeTypeToExtensions(format);
+      if (allowedExtensions?.includes(fileExtension || '')) {
+        return true;
+      }
+    }
+
+    return false; // File format is not allowed
+  };
 
   private removeSuffix(value: string, suffix: string): string {
     return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
@@ -30,6 +187,11 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
 
   private updateDefaultImageUrl() {
     if (this.fileNameControl?.value) {
+      if (this.mimeToExtensions['image/*'].includes(this.fileNameControl?.value.split('.').pop())) {
+        this.fileMsg = '';
+      } else {
+        this.fileMsg = `${this.fileNameControl?.value.split('/').pop()}`;
+      }
       this.defaultImageUrl = `${environment.apiUrl}/${this.fileNameControl.value}`;
     } else {
       this.defaultImageUrl = 'assets/images/file-preview.svg';
@@ -38,10 +200,25 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
+    this.fileMsg = '';
     if (input.files && input.files[0]) {
       this.fileSelected = true;
     } else {
       this.fileSelected = false;
+    }
+  }
+
+  downloadFile(): void {
+    if (this.defaultImageUrl.startsWith('http')) {
+      const link = document.createElement('a');
+      link.href = this.defaultImageUrl;
+      link.textContent = 'Download File';
+      link.download = this.defaultImageUrl.split('/').pop() as string;
+      // Prevent the default link behavior (such as page refresh)
+      link.textContent = 'Download File';
+      link.target = '_blank';
+      link.click();
+      link.remove();
     }
   }
 }

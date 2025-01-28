@@ -184,7 +184,6 @@ export class FormBuilderComponent implements OnInit {
 
   onSubmit() {
     this.options.formState.submitted = true;
-    console.log('this.form.value', this.form.value);
     // Trim all form values before validation
     if (this.form.invalid) {
       // const key = 'please_select_all_the_required_fields';
@@ -289,10 +288,9 @@ export class FormBuilderComponent implements OnInit {
       }
 
       // Handle image field
-      if (field.type === 'image') {
+      if (field.type === 'file' || field.type === 'image') {
         const controlName = fieldKey;
         const files = this.getFilesFromModel(controlName, parentKey);
-
         if (files && files.length > 0) {
           const formData: FormData = new FormData();
           if (Array.isArray(files)) {
