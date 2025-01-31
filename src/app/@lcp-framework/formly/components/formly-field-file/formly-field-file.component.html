@@ -6,22 +6,33 @@
     type="file"
     [formControl]="formControl"
     [formlyAttributes]="field"
-    (change)="onFileChange($event)"
+    (change)="onFileChange($event, field.props['max_size'])"
     class="formly-file form-input p-0 file:border-0 file:bg-primary/90 file:px-4 file:py-2 file:font-semibold file:text-white file:hover:bg-primary ltr:file:mr-5 rtl:file:ml-5"
   />
   <img
-    *ngIf="isImageFile('image') && !fileMsg.length"
+    *ngIf="isImageFile('image') && !fileMsg.length && defaultImageUrl.length"
     [src]="defaultImageUrl"
     alt="formly-img"
-    class="formly-img cursor-pointer p-2"
-    style="width: 60px; height: 60px"
+    class="formly-img cursor-pointer"
+    style="width: 60px; height: 60px; padding: 6px"
     [hidden]="fileSelected"
     (click)="downloadFile()"
+    [title]="(defaultImageUrl || '').includes('http') ? 'Download the file ' + getFileName(true) : ''"
   />
-  <div class="cursor-pointer truncate p-2 text-blue-600" appDynamicFontSize="body" *ngIf="fileMsg.length ? true : false" (click)="downloadFile()">
+  <div
+    [title]="'Download the file ' + defaultImageUrl.split('/').pop()"
+    class="cursor-pointer truncate p-2 text-blue-600"
+    appDynamicFontSize="body"
+    *ngIf="fileMsg.length"
+    (click)="downloadFile()"
+    [title]="(defaultImageUrl || '').includes('http') ? 'Download the file ' + getFileName(true) : ''"
+  >
     {{ fileMsg }}
   </div>
-  <div class="text-red-500" *ngIf="formControl && formControl.errors && formControl.errors['invalidFileFormat']">
-    Invalid file format. Please upload a valid file.
+  <div class="p-2 text-red-500" *ngIf="formControl && formControl.errors && formControl.errors['invalidFileFormat']">
+    {{ 'Invalid file format. Please upload a valid file. Supported formats: ' + field.props['accept'].split(',').join(', ') + '.' }}
+  </div>
+  <div class="p-2 text-red-500" *ngIf="formControl && formControl.errors && formControl.errors['invalidFileSize']">
+    {{ 'File size must be up to ' + (field.props['max_size'] | uppercase) + '.' }}
   </div>
 </div>
