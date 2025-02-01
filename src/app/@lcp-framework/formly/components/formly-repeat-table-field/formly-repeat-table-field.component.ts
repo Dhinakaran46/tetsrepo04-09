@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FieldArrayType, FormlyFieldConfig } from '@ngx-formly/core';
 import { FormArray, FormGroup, FormControl } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
@@ -15,10 +15,33 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
   currentRowIndex: number | null = null; // To track editing row
   editForm: FormGroup; // Separate form for editing rows
   errorMessage: string = '';
+  imageExtensions: string[] = [];
 
   constructor() {
     super();
     this.editForm = new FormGroup({}); // Initialize empty form
+  }
+
+  isImageUrl(fieldValue: any, key: string): boolean {
+    const pathKey = this.removeSuffix(key, '_file');
+    let url = '';
+    if (!fieldValue[key] && fieldValue[pathKey]) {
+      url = `${environment.apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
+    } else {
+      const ImageValue = fieldValue[key];
+      if (typeof fieldValue === 'string') {
+        url = ImageValue; // Return the string URL
+      } else if (ImageValue instanceof FileList && ImageValue.length > 0) {
+        url = ImageValue[0].name;
+      } else if (ImageValue instanceof File) {
+        url = ImageValue.name;
+      }
+    }
+    if (url) {
+      const extension = url.split('.').pop() || '';
+      return ['jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'webp'].includes(extension);
+    }
+    return false;
   }
 
   ngOnInit() {
@@ -113,6 +136,13 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     // Logic for updating an existing row
     if (this.currentRowIndex !== null) {
       // If the row index exists, update the corresponding row
+      const keys = Object.keys(this.editForm.controls);
+      let uniqueKey = keys.filter((key) => key.endsWith('_file'))[0];
+      if (uniqueKey?.length) uniqueKey = uniqueKey.replace('_file', '');
+      this.editForm.setValue({
+        ...this.editForm.value,
+        [uniqueKey]: this.editForm.getRawValue()[`${uniqueKey}_file`] ? null : this.editForm.getRawValue()[uniqueKey],
+      });
       this.formArray.at(this.currentRowIndex).setValue(this.editForm.value);
     } else {
       // Logic for adding a new row
@@ -122,7 +152,6 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
       });
       this.formArray.push(newFormGroup); // Push the new row to the form array
     }
-
     // Update the model
     if (this.field.parent && this.field.parent.model) {
       const key = this.field.key;
@@ -200,7 +229,7 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     return this.field.props['limit'] <= this.formArray.length;
   }
 
-  getImageSrc(fieldValue: any, key: string): string | null {
+  getImageSrc(fieldValue: any, key: string, blob = false): string | null {
     const pathKey = this.removeSuffix(key, '_file');
     if (!fieldValue[key] && fieldValue[pathKey]) {
       return `${environment.apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
@@ -209,14 +238,48 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     if (typeof fieldValue === 'string') {
       return ImageValue; // Return the string URL
     } else if (ImageValue instanceof FileList && ImageValue.length > 0) {
-      return URL.createObjectURL(ImageValue[0]); // Use the first file in the FileList
+      if (ImageValue[0].type.includes('image/')) {
+        if (blob) return ImageValue[0].toString();
+        else return URL.createObjectURL(ImageValue[0]); // Use the first file in the FileList
+      } else return ImageValue[0].name;
     } else if (ImageValue instanceof File) {
-      return URL.createObjectURL(ImageValue); // Handle single File object
+      if (ImageValue.type.includes('image/')) {
+        // Use the first file in the FileList
+        if (blob) return ImageValue.toString();
+        else return URL.createObjectURL(ImageValue);
+      } else return ImageValue.name;
     }
     return null;
   }
 
   private removeSuffix(value: string, suffix: string): string {
     return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
+  }
+
+  downloadFile(url: string | null, index: number) {
+    if (url && url?.startsWith('http')) {
+      fetch(url)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = this.getFileExtension(url, index);
+          link.textContent = 'Download File';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+        })
+        .catch((error) => console.error('Download failed:', error));
+    }
+  }
+
+  getFileExtension(url: string | null, i: number): string {
+    if (url && url?.startsWith('http')) {
+      const name = this.formArray?.at(i)?.getRawValue()?.name || '';
+      const extension = url?.split('/').pop()?.split('.')[1] || '';
+      return `${name}.${extension}`;
+    }
+    return '';
   }
 }

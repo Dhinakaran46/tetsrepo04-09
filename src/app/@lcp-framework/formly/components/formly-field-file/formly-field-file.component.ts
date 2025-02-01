@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 import { environment } from '../../../../../environments/environment';
@@ -16,6 +16,7 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
   fileSelected: boolean = false;
   errorMessage: string = '';
   acceptFormat: string[] = [];
+
   mimeToExtensions: Record<string, string[]> = {
     'image/*': ['jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'webp'],
     'application/pdf': ['pdf'],
@@ -37,8 +38,10 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
     'application/vnd.ms-powerpoint': ['ppt'], // PPT format
     'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['pptx'], // PPTX format
   };
-
   fileMsg = '';
+  constructor(private cdr: ChangeDetectorRef) {
+    super();
+  }
 
   ngOnInit() {
     this.fileNameControlKey = this.removeSuffix(this.field.key as string, '_file');
@@ -48,9 +51,18 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
       this.updateDefaultImageUrl();
     });
     this.formControl.valueChanges.subscribe((file: FileList) => {
+      this.updateDefaultImageUrl();
       if (file) {
         const isValid = this.validateFileFormat(file);
-        this.formControl.setErrors(isValid ? null : { invalidFileFormat: true });
+        if (isValid) {
+          if (!this.formControl.hasError('invalidFileSize')) {
+            this.formControl.setErrors(null);
+          }
+        } else {
+          this.formControl.setErrors({
+            invalidFileFormat: true,
+          });
+        }
       }
     });
   }
@@ -150,35 +162,37 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
   }
 
   validateFileFormat = (file: FileList): boolean => {
-    if (!file || this.acceptFormat.length === 0) return false;
-    const mimeType = file[0].type; // Get the MIME type of the file
-    const fileExtension = file[0].name?.split('.')?.pop()?.toLowerCase(); // Extract the file extension
-    for (const format of this.acceptFormat) {
-      if (format === '*/*') {
-        return true; // Allow all formats
-      }
+    if (!file || !file?.length || !this.acceptFormat.length) return false;
+    if (typeof file !== 'string') {
+      const mimeType = file[0].type; // Get the MIME type of the file
+      const fileExtension = file[0].name?.split('.')?.pop()?.toLowerCase(); // Extract the file extension
+      for (const format of this.acceptFormat) {
+        if (format === '*/*') {
+          return true; // Allow all formats
+        }
 
-      // Check MIME type matches (e.g., "image/*")
-      if (format.endsWith('/*')) {
-        const baseType = format.split('/')[0]; // e.g., "image"
-        if (mimeType?.startsWith(baseType)) {
+        // Check MIME type matches (e.g., "image/*")
+        if (format.endsWith('/*')) {
+          const baseType = format.split('/')[0]; // e.g., "image"
+          if (mimeType?.startsWith(baseType)) {
+            return true;
+          }
+        }
+
+        // Check if the MIME type matches exactly
+        if (mimeType === format) {
+          return true;
+        }
+
+        // Check if the file extension matches (fallback)
+        const allowedExtensions = this.mapMimeTypeToExtensions(format);
+        if (allowedExtensions?.includes(fileExtension || '')) {
           return true;
         }
       }
-
-      // Check if the MIME type matches exactly
-      if (mimeType === format) {
-        return true;
-      }
-
-      // Check if the file extension matches (fallback)
-      const allowedExtensions = this.mapMimeTypeToExtensions(format);
-      if (allowedExtensions?.includes(fileExtension || '')) {
-        return true;
-      }
+      return false; // File format is not allowed
     }
-
-    return false; // File format is not allowed
+    return true;
   };
 
   private removeSuffix(value: string, suffix: string): string {
@@ -186,39 +200,89 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
   }
 
   private updateDefaultImageUrl() {
-    if (this.fileNameControl?.value) {
-      if (this.mimeToExtensions['image/*'].includes(this.fileNameControl?.value.split('.').pop())) {
+    if (typeof this.fileNameControl.value === 'string' && this.fileNameControl?.value?.length) {
+      if (this.mimeToExtensions['image/*'].includes(this.fileNameControl?.value?.split('.').pop() || '')) {
         this.fileMsg = '';
       } else {
-        this.fileMsg = `${this.fileNameControl?.value.split('/').pop()}`;
+        this.fileMsg = this.form?.getRawValue()?.name ? this.getFileName(true) : `${this.fileNameControl?.value.split('/').pop()}`;
       }
-      this.defaultImageUrl = `${environment.apiUrl}/${this.fileNameControl.value}`;
+      this.defaultImageUrl = this.getFileName();
     } else {
-      this.defaultImageUrl = 'assets/images/file-preview.svg';
+      if (!this.fileNameControl?.value?.length) {
+        this.fileMsg = '';
+      }
+      this.defaultImageUrl = `assets/images/file-preview.svg`;
+    }
+    this.cdr.detectChanges();
+  }
+
+  convertSizeToBytes(size: string): number {
+    const units = ['b', 'kb', 'mb', 'gb'];
+    const regex = /^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)$/i;
+    const match = size.trim().match(regex);
+
+    if (match) {
+      const value = parseFloat(match[1]);
+      const unit = match[2];
+      const exponent = units.indexOf(unit);
+      return value * Math.pow(1024, exponent);
+    } else {
+      throw new Error('Invalid size format. Please use a format like "10MB", "5kb", etc.');
     }
   }
 
-  onFileChange(event: Event) {
+  onFileChange(event: Event, maxSize = '10mb') {
     const input = event.target as HTMLInputElement;
+    const size = this.convertSizeToBytes(maxSize.toLowerCase());
     this.fileMsg = '';
     if (input.files && input.files[0]) {
+      if (input.files[0].size > size) {
+        this.formControl.setErrors({
+          invalidFileSize: true,
+        });
+      } else {
+        if (!this.formControl.hasError('invalidFileFormat')) {
+          this.formControl.setErrors(null);
+        }
+      }
       this.fileSelected = true;
     } else {
       this.fileSelected = false;
+      this.defaultImageUrl = '';
     }
   }
 
   downloadFile(): void {
-    if (this.defaultImageUrl.startsWith('http')) {
-      const link = document.createElement('a');
-      link.href = this.defaultImageUrl;
-      link.textContent = 'Download File';
-      link.download = this.defaultImageUrl.split('/').pop() as string;
-      // Prevent the default link behavior (such as page refresh)
-      link.textContent = 'Download File';
-      link.target = '_blank';
-      link.click();
-      link.remove();
+    if (this.defaultImageUrl && this.defaultImageUrl?.startsWith('http')) {
+      fetch(this.defaultImageUrl)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = this.getFileName(true);
+          link.textContent = 'Download File';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+        })
+        .catch((error) => console.error('Download failed:', error));
+    }
+  }
+
+  getFileName(download: boolean = false): string {
+    if (download) {
+      if (this.defaultImageUrl && this.defaultImageUrl?.startsWith('http')) {
+        const name = this.form?.getRawValue()?.name || '';
+        if (name) {
+          const extension = this.defaultImageUrl?.split('/').pop()?.split('.')[1] || '';
+          return `${name}.${extension}`;
+        }
+        return this.defaultImageUrl?.split('/')?.pop() || '';
+      }
+      return '';
+    } else {
+      return `${environment.apiUrl}/${this.fileNameControl.value}`;
     }
   }
 }
