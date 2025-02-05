@@ -35,6 +35,8 @@ interface FetchDataParams {
   sort_columns: any;
   search_any: any;
   search_all: any;
+  having_conditions: any;
+  having_any_conditions: any;
 }
 
 @Component({
@@ -137,7 +139,6 @@ export class MasterListComponent implements AfterViewInit {
 
     if (pageInfo && this.resultsPerPage) {
       this.masterInfo = pageInfo;
-      console.log(this.masterInfo);
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
       }
@@ -224,7 +225,6 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   passwordModal(item: any) {
-    console.log(item);
     //return;
     this.isItemModalOpen = true;
     this.user_id = item.uuid;
@@ -261,7 +261,11 @@ export class MasterListComponent implements AfterViewInit {
       return;
     }
     if (havingConditions.length > 0) {
-      clonedListQuery.having_conditions = [...havingConditions];
+      if (condition == 'AND') {
+        clonedListQuery.having_conditions = [...havingConditions];
+      } else {
+        clonedListQuery.having_any_conditions = [...havingConditions];
+      }
     }
     if (condition == 'AND') {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
@@ -287,28 +291,34 @@ export class MasterListComponent implements AfterViewInit {
       this.fetchData(clonedListQuery);
     }
   }
-  searchData(data: any) {
-    const query = data.data;
-    const search = data.search;
-
+  searchData(input: any) {
     const clonedListQuery = this.listQuery;
-    if (search == '') {
-      const orgListQuery = this.defaultQuery;
+    if (input.where.data.length) {
+      const query = input.where.data;
+      const search = input.where.search;
+      if (search == '') {
+        const orgListQuery = this.defaultQuery;
 
-      clonedListQuery.search_any = [];
-      clonedListQuery.search_any = [...orgListQuery.search_any];
-      this.fetchData(clonedListQuery);
-      return;
+        clonedListQuery.search_any = [];
+        clonedListQuery.search_any = [...orgListQuery.search_any];
+        this.fetchData(clonedListQuery);
+        return;
+      }
+
+      if (query.length === 1 && query[0].column_name === '') {
+        clonedListQuery.search_any = [...clonedListQuery.search_any];
+      } else {
+        clonedListQuery.search_any = [...query];
+      }
     }
 
-    if (query.length === 1 && query[0].column_name === '') {
-      clonedListQuery.search_any = [...clonedListQuery.search_any];
-    } else {
-      clonedListQuery.search_any = [...query];
+    if (input.having.data.length) {
+      const query = input.having.data;
+      const search = input.having.search;
+      if (search.length) clonedListQuery.having_any_conditions = [...query];
     }
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
-
     this.fetchData(clonedListQuery);
   }
 
@@ -361,7 +371,6 @@ export class MasterListComponent implements AfterViewInit {
       const transformedRecord: any = {};
 
       filteredHeaders.forEach((header) => {
-        console.log(header);
         const translationKey = `${header.header}`;
 
         const translatedHeader = this.translate.instant(translationKey);
@@ -401,7 +410,7 @@ export class MasterListComponent implements AfterViewInit {
             return {
               field: key.field_name,
               title: this.translate.instant(key.display_name),
-              sorting: key.is_shortable,
+              sorting: key.is_sortable,
               searchable: key.is_searchable,
               enable: true,
               ...key,
