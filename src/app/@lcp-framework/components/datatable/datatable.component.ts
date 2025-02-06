@@ -195,10 +195,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   onColumnChange(event: Event, index: number) {
     const target = event.target as HTMLSelectElement;
     const column = target.value;
-    console.log(
-      'event.target',
-      this.filteredColumns.find((col) => col.field === column)
-    );
     this.filterConditions[index].field = column;
     const data = this.filteredColumns.find((col) => col.field === column);
     const columnType = data?.field_type_id;
@@ -269,7 +265,6 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.isMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
-    console.log('condition', this.filterCondition, condition);
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = this.getInputTypeForColumn(key.field);
       if (type == 'datetime-local') {
