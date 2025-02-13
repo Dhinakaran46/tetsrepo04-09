@@ -35,7 +35,7 @@ export interface TableConfig {
   pageSizes?: number[];
   defaultPageSize?: number;
   searchable?: boolean;
-
+  detailStatusPopup?: boolean;
   headerConfig?: {
     title?: string;
     showHeader?: boolean;
@@ -85,6 +85,9 @@ export class ClientDatatableComponent implements OnInit {
   @Output() sortChange = new EventEmitter<{ column: string; direction: 'asc' | 'desc' }>();
   @Output() addButtonClick = new EventEmitter<void>();
 
+  isStatusModalOpen = false;
+  selectedRow: any = {};
+
   operatorsByType = {
     text: [
       { value: 'equals', label: 'Equals' },
@@ -131,7 +134,8 @@ export class ClientDatatableComponent implements OnInit {
       this._originalData = [...this.data];
     }
     this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
-    console.log(this.config.columns);
+    console.log(this._originalData);
+    console.log(this.config);
   }
 
   onAddClick(): void {
@@ -146,6 +150,25 @@ export class ClientDatatableComponent implements OnInit {
   toggleMenu(event: Event) {
     event.stopPropagation();
     this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  // Open Status Modal
+  openStatusModal(row: any) {
+    this.selectedRow = row;
+    this.isStatusModalOpen = true;
+  }
+
+  // Close Status Modal
+  closeStatusModal() {
+    this.isStatusModalOpen = false;
+    this.selectedRow = {};
+  }
+
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
+  }
+  getMessagesUnDot(messages: string): string[] {
+    return messages.split(',, ').map((msg) => msg.trim()); // Split by ", " and trim
   }
 
   // Column-related helper methods

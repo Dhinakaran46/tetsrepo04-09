@@ -286,11 +286,34 @@
                     <span [innerHTML]="item[col.key] | safeHtml"></span>
                   </ng-container>
                   <ng-template #defaultContent>
-                    <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
+                    <div
+                      *ngIf="col.isHtmlValue"
+                      [innerHTML]="item[col.key]"
+                      (click)="config.detailStatusPopup && col.key === 'errorstatus' ? openStatusModal(item) : null"
+                      [ngClass]="{ 'cursor-pointer text-blue-600': config.detailStatusPopup && col.key === 'errorstatus' }"
+                    ></div>
+
+                    <ng-container *ngIf="!col.isHtmlValue">
+                      <button
+                        *ngIf="config.detailStatusPopup && col.key === 'errorstatus'"
+                        (click)="openStatusModal(item)"
+                        class="cursor-pointer text-blue-600"
+                      >
+                        {{ item[col.key] ? item[col.key] : '-' }}
+                      </button>
+
+                      <span *ngIf="!(config.detailStatusPopup && col.key === 'errorstatus')">
+                        {{ item[col.key] ? item[col.key] : '-' }}
+                      </span>
+                    </ng-container>
+                  </ng-template>
+
+                  <!--<ng-template #defaultContent>
+                    <div (click)="openStatusModal(item)" *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
                     <ng-container *ngIf="!col.isHtmlValue">
                       {{ item[col.key] ? item[col.key] : '-' }}
                     </ng-container>
-                  </ng-template>
+                  </ng-template>-->
                 </ng-template>
                 <!--<ng-template #defaultContent>
                   <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
@@ -413,6 +436,57 @@
           </svg>
         </button>
       </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Status Detail Modal -->
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isStatusModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-full transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <h4>Item Details</h4>
+          <button class="close-btn" (click)="closeStatusModal()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-auto overflow-y-auto px-4 py-4 sm:px-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div *ngFor="let col of config.columns" class="flex border-b py-2">
+            <div class="w-1/2 pr-4 font-bold" [innerHTML]="col.label"></div>
+            <ng-container *ngIf="col.key == 'errorMessages' || col.key == 'warningMessages'; else defaultContent">
+              <ul class="list-disc pl-5 text-sm" [ngClass]="{ 'text-red-600': col.key == 'errorMessages', 'text-yellow-600': col.key == 'warningMessages' }">
+                <li
+                  *ngFor="let message of getMessagesUnDot(selectedRow[col.key])"
+                  class="border-b py-2"
+                  [ngClass]="{ 'border-red-300': col.key == 'errorMessages', 'border-yellow-300': col.key == 'warningMessages' }"
+                >
+                  {{ message }}
+                </li>
+              </ul>
+            </ng-container>
+
+            <ng-template #defaultContent>
+              <div class="w-1/2 text-gray-700" [innerHTML]="selectedRow[col.key] || '-'"></div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Dynamic Messages Section -->
+      </div>
     </div>
   </div>
 </div>
