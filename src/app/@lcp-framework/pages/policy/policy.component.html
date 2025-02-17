@@ -1,13 +1,13 @@
-<div>
+<div [formGroup]="policyForm">
   <div class="panel">
     <div class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
       <h5 class="text-lg font-semibold dark:text-white-light">
         {{ 'policy_add_edit_form' | translate }}
       </h5>
     </div>
-    <div class="mb-5 w-full space-y-5 dark:text-white">
-      <div class="rounded-md border-2 border-dashed border-gray-300 p-4 dark:text-white md:col-span-2 lg:col-span-3">
-        <form [formGroup]="policyForm" class="space-y-6">
+    <div class="w-full space-y-5 dark:text-white">
+      <div class="rounded-md p-2 md:col-span-2 lg:col-span-3">
+        <div class="space-y-5">
           <div>
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
               <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -73,24 +73,40 @@
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                     [required]="true"
                   />
+                  <div
+                    *ngIf="policyForm.get('entity_id')?.invalid && (policyForm.get('entity_id')?.touched || policyForm.get('entity_id')?.dirty)"
+                    class="invalid-feedback mt-1 text-danger"
+                  >
+                    {{ 'entity_is_required' | translate }}
+                  </div>
                 </div>
               </div>
             </div>
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
               <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div class="flex flex-col">
-                  <label for="operator" class="required-mark mb-2 block font-medium">{{ 'operator' | translate }}</label>
-                  <div class="flex items-center space-x-4">
-                    <label class="flex cursor-pointer items-center">
-                      <input type="radio" [value]="'AND'" formControlName="operator" class="form-radio" appDynamicFontSize="body" />
-                      <span class="ml-2 text-white-dark">{{ 'and' | translate }}</span>
-                    </label>
-
-                    <label class="flex cursor-pointer items-center">
-                      <input type="radio" [value]="'OR'" formControlName="operator" class="form-radio" appDynamicFontSize="body" />
-                      <span class="ml-2 text-white-dark">{{ 'or' | translate }}</span>
-                    </label>
-                  </div>
+                  <label for="entity_type">{{ 'entity_type' | translate }}</label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="entity_type"
+                    id="entity_type"
+                    type="text"
+                    readonly
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <label for="primary_table">{{ 'primary_table' | translate }}</label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="primary_table"
+                    id="primary_table"
+                    type="text"
+                    readonly
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  />
                 </div>
                 <div class="flex flex-col">
                   <label for="status_id" class="required-mark mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
@@ -109,57 +125,29 @@
               </div>
             </div>
           </div>
-        </form>
-      </div>
-    </div>
-    <div class="mb-5 w-full space-y-5 dark:text-white">
-      <div class="rounded-md border-2 border-dashed border-gray-300 p-4 dark:text-white md:col-span-2 lg:col-span-3">
-        <div class="flex flex-col justify-between gap-5 sm:flex-row">
-          <div appDynamicFontSize="title" class="font-semibold">{{ 'policy_conditions' | translate }}</div>
-          <div class="xs:w-full">
-            <button
-              type="button"
-              (click)="addCondition()"
-              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-            >
-              <i class="fa-solid fa-plus"></i>&nbsp;Add New
-            </button>
-          </div>
-        </div>
-        <div>
-          <div class="space-y-2 p-4">
-            <div class="flex flex-col gap-3">
-              <div *ngFor="let condition of filterConditions; let i = index" class="flex items-center gap-2">
-                <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" appDynamicFontSize="body" class="form-select w-full">
-                  <option appDynamicFontSize="body" value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                  <option appDynamicFontSize="body" *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title }}</option>
-                </select>
-                <select appDynamicFontSize="body" [(ngModel)]="condition.operator" class="form-select w-full">
-                  <option appDynamicFontSize="body" value selected disabled>{{ 'condition' | translate }}</option>
-                  <option appDynamicFontSize="body" *ngFor="let op of getOperatorsForColumn(condition.field)" [value]="op.value">{{ op.label }}</option>
-                </select>
-                <input
-                  [ngModel]="getConditionValue(i)"
-                  (ngModelChange)="setConditionValue(i, $event)"
-                  [type]="getInputTypeForColumn(condition.field)"
-                  class="form-input w-full pr-10 text-gray-600"
-                  [placeholder]="getPlaceholderForColumn(condition.field)"
-                  [attr.min]="getMinValueForColumn(condition.field)"
-                  [attr.max]="getMaxValueForColumn(condition.field)"
-                  [attr.pattern]="getPatternForColumn(condition.field)"
-                  [required]="true"
-                  appDynamicFontSize="body"
-                />
-                <button (click)="removeCondition(i)" class="text-red-500">
-                  <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
-
+    <div class="grid grid-cols-1">
+      <div class="mb-5 p-2">
+        <label for="query_information" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+        <div class="monaco-editor-container" appDynamicFontSize="body">
+          <ngx-monaco-editor
+            monacoEditor
+            [options]="editorOptions"
+            id="query_information"
+            formControlName="query_information"
+            class="monaco-editor !h-96"
+          ></ngx-monaco-editor>
+        </div>
+        <div
+          *ngIf="policyForm.get('query_information')?.invalid && (policyForm.get('query_information')?.touched || policyForm.get('query_information')?.dirty)"
+          class="invalid-feedback mt-1 text-danger"
+        >
+          {{ 'query_information_is_invalid' | translate }}
+        </div>
+      </div>
+    </div>
     <div class="flex flex-row justify-end gap-4 py-4">
       <button
         class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark flex w-40 flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
@@ -178,7 +166,7 @@
       </button>
 
       <div
-        class="top-15 absolute bottom-16 right-5 mb-0.5 mt-2 w-40 max-w-sm origin-bottom-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        class="top-15 absolute bottom-16 right-5 z-50 mb-0.5 mt-2 w-40 max-w-sm origin-bottom-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         *ngIf="dropdownOpen"
       >
         <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">

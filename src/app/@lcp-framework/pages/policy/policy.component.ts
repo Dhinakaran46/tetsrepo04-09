@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
@@ -12,28 +12,23 @@ import { FormlyConfigModule } from '../../formly/formly-config.module';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { DatePipe, Location, CommonModule } from '@angular/common';
-import { commonConfig } from '../../config/common.config';
-
-interface SearchCondition {
-  id: string;
-  label: string;
-  value: string;
-}
-interface SearchConditions {
-  [key: number]: SearchCondition[];
-}
-
-interface InputTypes {
-  [key: number]: string;
-}
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
+import { EditorComponent } from 'ngx-monaco-editor-v2';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-policy',
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule, LoaderComponent, FormlyConfigModule, CommonModule],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule, LoaderComponent, FormlyConfigModule, CommonModule],
   templateUrl: './policy.component.html',
   styleUrl: './policy.component.scss',
   providers: [DatePipe],
+  animations: [
+    trigger('toggleAnimation', [
+      transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
+      transition(':leave', [animate('75ms', style({ opacity: 0, transform: 'scale(0.95)' }))]),
+    ]),
+  ],
 })
 export class PolicyComponent implements OnInit {
   policyForm!: FormGroup;
@@ -42,15 +37,13 @@ export class PolicyComponent implements OnInit {
   loading = false;
   unique_id!: string | null;
   entityList: any[] = [];
-  lineItemData: any[] = [];
   dropdownOpen = false;
-  filterConditions: Array<{ field: string; operator: string; value: string; clause_type: string }> = [];
-  field_types = commonConfig.field_types;
-  inputTypes: InputTypes = commonConfig.field_type;
-  searchConditions: SearchConditions = commonConfig.search_conditions;
-  filteredColumns: any[] = [];
-  selectedColumnType: any = 1;
   title: any = '';
+
+  editorOptions = { theme: 'vs-dark', language: 'sql', tabSize: 1, insertSpaces: true };
+  htmlEditorOptions = { ...this.editorOptions, language: 'html' };
+  isDarkTheme = true; // Default theme
+  @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
 
   constructor(
     public fb: FormBuilder,
@@ -77,11 +70,11 @@ export class PolicyComponent implements OnInit {
       policy_description: [''],
       entity_id: ['', [Validators.required]],
       entity_name: [{ value: '', disabled: true }, [Validators.required]],
+      entity_type: [{ value: '', disabled: true }, [Validators.required]],
       primary_table: [{ value: '', disabled: true }, [Validators.required]],
-      operator: ['OR'],
+      query_information: [''],
       status_id: [1],
     });
-    this.addCondition();
     if (this.unique_id) {
       this.getPolicyData();
     } else {
@@ -103,10 +96,6 @@ export class PolicyComponent implements OnInit {
     }
   }
 
-  capitalizeFirstLetter(string: string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-
   ngOnDestroy() {
     // Unsubscribe from all subscriptions
   }
@@ -125,9 +114,10 @@ export class PolicyComponent implements OnInit {
       policy_name: '',
       policy_description: '',
       entity_id: '',
+      entity_type: '',
       entity_name: '',
       primary_table: '',
-      operator: 'AND',
+      query_information: '',
       status_id: 1,
     });
   }
@@ -163,7 +153,6 @@ export class PolicyComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.entityList = response.data.records;
-          console.log('response', this.entityList);
           this.loading = false;
         } else {
           this.loading = false;
@@ -177,26 +166,11 @@ export class PolicyComponent implements OnInit {
   }
 
   getEntityData() {
-    console.log('entity', this.policyForm.getRawValue());
-    this.filterConditions = [];
-    this.addCondition();
     const entityId = this.policyForm.get('entity_id')?.value || null;
     if (entityId || this.unique_id) {
       const payload = {
-        group_by: ['master_entities.id'],
-        includes: [
-          {
-            join_type: 'LEFT',
-            table_name: 'master_entity_line_items',
-            join_condition:
-              'master_entity_line_items.master_grid_id = master_entities.id AND master_entity_line_items.status_id = 1 AND master_entity_line_items.is_searchable = true',
-          },
-          {
-            join_type: 'INNER',
-            table_name: 'field_types',
-            join_condition: 'field_types.id = master_entity_line_items.field_type_id AND field_types.status_id = 1',
-          },
-        ],
+        group_by: ['master_entities.id', 'master_entities.primary_table', 'master_entities.name', 'master_entities.entity_type'],
+        includes: [],
         company_id: 1,
         search_all: [
           {
@@ -219,32 +193,7 @@ export class PolicyComponent implements OnInit {
           ['master_entities.id', 'entity_id'],
           ['master_entities.name', 'entity_name'],
           ['master_entities.primary_table', 'primary_table'],
-          [
-            `
-              COALESCE(
-                JSON_AGG(
-                  JSON_BUILD_OBJECT(
-                    'id',
-                    master_entity_line_items.id,
-                    'display_name',
-                    master_entity_line_items.display_name,
-                    'field',
-                    master_entity_line_items.field_name,
-                    'clause_type',
-                    master_entity_line_items.clause_type,
-                    'field_type_id',
-                    master_entity_line_items.field_type_id,
-                    'entity_id',
-                    master_entity_line_items.master_grid_id,
-                    'field_type',
-                    field_types.field_type
-                  ) ORDER BY master_entity_line_items.order_no ASC 
-                ) FILTER (WHERE master_entity_line_items.field_name IS NOT NULL),
-                '[]'
-              )
-            `,
-            'lineItems',
-          ],
+          ['master_entities.entity_type', 'entity_type'],
         ],
       };
       this.loading = true;
@@ -257,32 +206,8 @@ export class PolicyComponent implements OnInit {
                 entity_id: response.data.records[0].entity_id,
                 entity_name: response.data.records[0].entity_name,
                 primary_table: response.data.records[0].primary_table,
+                entity_type: this.translate.instant(response.data.records[0].entity_type),
               });
-              this.lineItemData = response.data.records[0].lineItems;
-              // this.cdr.detectChanges();
-              if (this.lineItemData.length > 0) {
-                const translationKeys = this.lineItemData.map((col: any) => `GRIDS.${this.title}.fields.${this.translate.instant(col.display_name)}`);
-                //const allowedFieldTypes = [3, 4];
-
-                this.translate.get(translationKeys).subscribe((translations) => {
-                  this.filteredColumns = this.lineItemData.map((col) => {
-                    if (translations[`GRIDS.${this.title}.fields.${this.translate.instant(col.display_name)}`].includes('.')) {
-                      return {
-                        colSearchHide: false,
-                        ...col,
-                        title: this.capitalizeFirstLetter(this.translate.instant(col.display_name)),
-                      };
-                    } else {
-                      return {
-                        colSearchHide: false,
-                        ...col,
-                        title: translations[`GRIDS.${this.title}.fields.${col.display_name}`],
-                      };
-                    }
-                  });
-                });
-              }
-              console.log('this.lineItemData ', this.lineItemData, this.policyForm.getRawValue());
             } else {
               const key = 'failed_to_fetch_the_entity_details';
               const errorMessage = this.translate.instant(key);
@@ -303,30 +228,28 @@ export class PolicyComponent implements OnInit {
         entity_id: '',
         entity_name: '',
         primary_table: '',
+        entity_type: '',
       });
     }
+  }
+
+  prepareJSON(data: any): string {
+    return JSON.stringify(JSON.parse(data));
+  }
+
+  prettyJSON(data: any) {
+    return JSON.stringify(JSON.parse(JSON.stringify(data).replace(/@table(\w+)/g, '##table$1')), null, 2);
   }
 
   getPolicyData() {
     if (this.unique_id) {
       const payload = {
-        group_by: ['policies.id', 'master_entities.primary_table', 'master_entities.name'],
+        group_by: ['policies.id', 'master_entities.primary_table', 'master_entities.name', 'master_entities.entity_type'],
         includes: [
           {
             join_type: 'LEFT',
             table_name: 'master_entities',
             join_condition: 'master_entities.id = policies.entity_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'master_entity_line_items',
-            join_condition:
-              'master_entity_line_items.master_grid_id = master_entities.id AND master_entity_line_items.status_id = 1 AND master_entity_line_items.is_searchable = true',
-          },
-          {
-            join_type: 'INNER',
-            table_name: 'field_types',
-            join_condition: 'field_types.id = master_entity_line_items.field_type_id AND field_types.status_id = 1',
           },
         ],
         company_id: 1,
@@ -351,64 +274,12 @@ export class PolicyComponent implements OnInit {
           ['policies.id', 'policy_id'],
           ['policies.name', 'policy_name'],
           ['policies.description', 'policy_description'],
-          ['policies.operator', 'operator'],
           ['policies.entity_id', 'entity_id'],
           ['policies.status_id', 'status_id'],
+          ['policies.query_information', 'query_information'],
           ['master_entities.name', 'entity_name'],
           ['master_entities.primary_table', 'primary_table'],
-          [
-            `
-              COALESCE
-              (
-                (
-                    SELECT
-                        JSON_AGG(
-                            JSON_BUILD_OBJECT(
-                                'id', policy_line_items.id,
-                                'policy_id', policy_line_items.policy_id,
-                                'column_name', policy_line_items.column_name,
-                                'clause_type', policy_line_items.clause_type,
-                                'condition', policy_line_items.condition,
-                                'column_value', policy_line_items.column_value
-                            ) ORDER BY policy_line_items.column_value ASC
-                        )
-                    FROM
-                        policy_line_items
-                    WHERE
-                        policy_line_items.policy_id = policies.id
-                        AND policy_line_items.status_id = 1
-                ),
-                '[]'
-              )
-            `,
-            'policyLineItems',
-          ],
-          [
-            `
-              COALESCE(
-                JSON_AGG(
-                  JSON_BUILD_OBJECT(
-                    'id',
-                    master_entity_line_items.id,
-                    'display_name',
-                    master_entity_line_items.display_name,
-                    'field',
-                    master_entity_line_items.field_name,
-                    'clause_type',
-                    master_entity_line_items.clause_type,
-                    'field_type_id',
-                    master_entity_line_items.field_type_id,
-                    'entity_id',
-                    master_entity_line_items.master_grid_id,
-                    'field_type',
-                    field_types.field_type
-                  ) ORDER BY master_entity_line_items.field_name ASC 
-                ) FILTER (WHERE master_entity_line_items.id IS NOT NULL),
-                '[]'
-              )
-            `,
-            'lineItems',
-          ],
+          ['master_entities.entity_type', 'entity_type'],
         ],
       };
       this.loading = true;
@@ -422,48 +293,13 @@ export class PolicyComponent implements OnInit {
                 policy_id: data.policy_id,
                 policy_name: data.policy_name,
                 policy_description: data.policy_description,
-                operator: data.operator,
+                query_information: data?.query_information ? this.prettyJSON(data.query_information) : '',
                 entity_id: data.entity_id,
                 entity_name: data.entity_name,
+                entity_type: this.translate.instant(data?.entity_type || ''),
                 primary_table: data.primary_table,
                 status_id: data.status_id,
               });
-              this.lineItemData = data.lineItems;
-              const policyLineItems: any[] = data.policyLineItems;
-              console.log('data====>', this.policyForm.getRawValue(), this.lineItemData, policyLineItems);
-
-              if (this.lineItemData.length) {
-                const translationKeys = this.lineItemData.map((col: any) => `GRIDS.${this.title}.fields.${this.translate.instant(col.display_name)}`);
-
-                this.translate.get(translationKeys).subscribe((translations) => {
-                  this.filteredColumns = this.lineItemData.map((col) => {
-                    if (translations[`GRIDS.${this.title}.fields.${this.translate.instant(col.display_name)}`].includes('.')) {
-                      return {
-                        colSearchHide: false,
-                        ...col,
-                        title: this.capitalizeFirstLetter(this.translate.instant(col.display_name)),
-                      };
-                    } else {
-                      return {
-                        colSearchHide: false,
-                        ...col,
-                        title: translations[`GRIDS.${this.title}.fields.${col.display_name}`],
-                      };
-                    }
-                  });
-                });
-                if (policyLineItems.length) {
-                  this.filterConditions = policyLineItems.map((lineItem) => {
-                    return {
-                      field: lineItem.column_name,
-                      operator: lineItem.condition,
-                      value: lineItem.column_value,
-                      clause_type: lineItem.clause_type,
-                    };
-                  });
-                  console.log('this.filterConditions', this.filterConditions);
-                }
-              }
             } else {
               const key = 'failed_to_fetch_the_policy_details';
               const errorMessage = this.translate.instant(key);
@@ -493,7 +329,7 @@ export class PolicyComponent implements OnInit {
       name: policyData.policy_name?.trim(),
       description: policyData.policy_description?.length ? policyData.policy_description : null,
       entity_id: Number(policyData.entity_id),
-      operator: policyData.operator || 'AND',
+      query_information: policyData?.query_information ? this.prepareJSON(policyData.query_information) : null,
       status_id: Number(policyData.status_id) || 1,
       ...(!this.unique_id && {
         created_at: true,
@@ -503,31 +339,13 @@ export class PolicyComponent implements OnInit {
       updated_at: true,
     };
 
-    const policyLineItemData = this.filterConditions
-      .filter((condition) => condition.field !== '' && condition.operator !== '' && condition.clause_type !== '')
-      .map((condition) => {
-        return {
-          policy_id: '@table1.id',
-          clause_type: condition.clause_type,
-          column_name: condition.field,
-          column_value: condition.value?.trim() || '',
-          condition: condition.operator,
-          status_id: 1,
-          created_at: true,
-          created_by: true,
-          updated_by: true,
-          updated_at: true,
-        };
-      });
-
     const payload: any = {
       data: {
         table1: [policyPayload],
-        ...(policyLineItemData.length && { table3: policyLineItemData }),
       },
-      table: ['policies', 'policy_line_items', ...(policyLineItemData.length ? ['policy_line_items'] : [])],
-      action: [...(this.unique_id ? ['update'] : ['insert']), 'hard_delete', ...(policyLineItemData.length ? ['insert'] : [])],
-      table_mapping: ['table1', 'table2', ...(policyLineItemData.length ? ['table3'] : [])],
+      table: ['policies'],
+      action: [...(this.unique_id ? ['update'] : ['insert'])],
+      table_mapping: ['table1'],
       conditions: {
         ...(this.unique_id && {
           table1: [
@@ -540,11 +358,6 @@ export class PolicyComponent implements OnInit {
             },
           ],
         }),
-        table2: [
-          {
-            policy_id: '@table1.id',
-          },
-        ],
       },
     };
 
@@ -576,7 +389,6 @@ export class PolicyComponent implements OnInit {
         this.toastr.error(errorMessage, 'Error');
       },
     });
-    console.log('policy update', policyPayload, policyLineItemData);
   }
 
   toggleDropdown() {
@@ -585,140 +397,5 @@ export class PolicyComponent implements OnInit {
 
   onOptionSelect() {
     this.dropdownOpen = false; // Close the dropdown after selection
-  }
-
-  mapConditionToSQL = (condition: any) => {
-    switch (condition) {
-      case 'contains':
-        return 'ILIKE';
-      case 'not_contains':
-        return 'NOT ILIKE';
-      case 'starts_with':
-        return 'ILIKE';
-      case 'ends_with':
-        return 'ILIKE';
-      case 'is_empty':
-        return '=';
-      case 'is_not_empty':
-        return '<>';
-      case 'is_null':
-        return 'IS NULL';
-      case 'is_not_null':
-        return 'IS NOT NULL';
-      default:
-        return condition;
-    }
-  };
-
-  formatDateTime(dateTime: any) {
-    const date = new Date(dateTime);
-    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd HH:mm:ss.SSSZ');
-    return formattedDate;
-  }
-  formatDate(dateTime: any) {
-    const date = new Date(dateTime);
-    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd');
-    return formattedDate;
-  }
-
-  /* advanced search filter functions */
-  getOperatorsForColumn(column: string): SearchCondition[] {
-    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
-    return this.searchConditions[columnType] || [];
-  }
-
-  getInputTypeForColumn(column: string): string {
-    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
-    return this.inputTypes[columnType] || 'text';
-  }
-
-  onColumnChange(event: Event, index: number) {
-    const target = event.target as HTMLSelectElement;
-    const column = target.value;
-    this.filterConditions[index].field = column;
-    const data = this.filteredColumns.find((col) => col.field === column);
-    const columnType = data?.field_type_id;
-    this.filterConditions[index].clause_type = data?.clause_type || 'where';
-    this.filterConditions[index].operator = this.searchConditions[columnType][0].value;
-    this.filterConditions[index].value = '';
-  }
-
-  addCondition() {
-    if (this.filterConditions.length && this.filterConditions.filter((condition) => condition.field === '' || condition.operator === '').length) {
-      return;
-    }
-    this.filterConditions.push({
-      field: '',
-      operator: '',
-      value: '',
-      clause_type: '',
-    });
-  }
-
-  removeCondition(index: number) {
-    this.filterConditions.splice(index, 1);
-  }
-
-  getConditionValue(index: number): string | null {
-    const value = this.filterConditions[index].value;
-    if (value) {
-      const type = this.getInputTypeForColumn(this.filterConditions[index].field);
-      if (type === 'datetime-local') {
-        return this.datePipe.transform(value, 'yyyy-MM-ddTHH:mm:ss');
-      } else if (type === 'date') {
-        return this.datePipe.transform(value, 'yyyy-MM-dd');
-      }
-    }
-    return value;
-  }
-
-  setConditionValue(index: number, value: string): void {
-    const type = this.getInputTypeForColumn(this.filterConditions[index].field);
-    if (type === 'datetime-local' || type === 'date') {
-      this.filterConditions[index].value = value;
-    } else {
-      this.filterConditions[index].value = value;
-    }
-  }
-
-  getPlaceholderForColumn(column: string): string {
-    const columnType = this.getInputTypeForColumn(column);
-    switch (columnType) {
-      case 'number':
-        return 'Enter a number';
-      case 'date':
-      case 'datetime-local':
-        return 'YYYY-MM-DD';
-      default:
-        return 'Enter a value';
-    }
-  }
-
-  getMinValueForColumn(column: string): string | null {
-    const columnType = this.getInputTypeForColumn(column);
-    if (columnType === 'date' || columnType === 'datetime-local') {
-      return '1900-01-01';
-    }
-    return null;
-  }
-
-  getMaxValueForColumn(column: string): string | null {
-    const columnType = this.getInputTypeForColumn(column);
-    if (columnType === 'date' || columnType === 'datetime-local') {
-      return '2099-12-31';
-    }
-    return null;
-  }
-
-  getPatternForColumn(column: string): string | undefined {
-    const columnType = this.getInputTypeForColumn(column);
-    switch (columnType) {
-      case 'email':
-        return '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$';
-      case 'tel':
-        return '[0-9]{10}';
-      default:
-        return undefined;
-    }
   }
 }

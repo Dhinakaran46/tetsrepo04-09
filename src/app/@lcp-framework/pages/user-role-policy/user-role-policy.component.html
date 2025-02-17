@@ -1,1 +1,78 @@
-<p>user-role-policy works!</p>
+<form [formGroup]="mappingForm" class="space-y-6">
+  <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
+    <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
+      {{ 'user_role_policy_map_entity' | translate }}
+    </div>
+
+    <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center">
+        <div class="relative mb-2 flex-grow md:mb-0" appDynamicFontSize="body">
+          <ul class="flex list-inside space-x-3 pt-2 font-semibold text-gray-700 dark:text-[#d0d2d6] rtl:space-x-reverse">
+            <li>
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" name="policy_type" class="form-radio" value="role" formControlName="policy_type" />
+                <span class="text-gray-900 dark:text-white-dark">{{ 'role_permission' | translate }}</span>
+              </label>
+            </li>
+            <li>
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" name="policy_type" class="form-radio" value="user" formControlName="policy_type" />
+                <span class="text-gray-900 dark:text-white-dark">{{ 'user_permission' | translate }}</span>
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('policy_type')?.value === 'role'">
+          <select
+            appDynamicFontSize="body"
+            id="role"
+            class="form-select mr-2 flex w-full items-center text-gray-700 dark:bg-gray-800 dark:text-white-dark"
+            formControlName="role"
+            (change)="getPolicyList()"
+          >
+            <option value>{{ 'select_any' | translate }}</option>
+            <option *ngFor="let role of roleList" [value]="role.id">{{ role.name }}</option>
+          </select>
+        </div>
+
+        <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('policy_type')?.value === 'user'">
+          <select
+            appDynamicFontSize="body"
+            id="user"
+            class="form-select mr-2 flex w-full items-center text-gray-700 dark:bg-gray-800 dark:text-white-dark"
+            formControlName="user"
+            (change)="getPolicyList()"
+          >
+            <option value>{{ 'select_any' | translate }}</option>
+            <option *ngFor="let user of userList" [value]="user.id">{{ user.name }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="relative h-full w-full">
+    <!-- Content Wrapper for scrolling -->
+    <div class="panel mt-5 h-full w-full rounded-md bg-white">
+      <div>
+        <app-client-datatable
+          [data]="tempPolicyList"
+          [config]="policyTableConfig"
+          (dataChange)="onPolicyDataChange($event)"
+          (sortChange)="onPolicySortChange($event)"
+        ></app-client-datatable>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 flex justify-end">
+    <button
+      type="submit"
+      (click)="mapPolicies()"
+      class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
+    >
+      Submit
+    </button>
+  </div>
+</form>
