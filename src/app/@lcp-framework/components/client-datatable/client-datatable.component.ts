@@ -445,7 +445,6 @@ export class ClientDatatableComponent implements OnInit {
   // Update filteredData getter
   get filteredData(): any[] {
     let filtered = [...this.data];
-
     if (this.searchQuery?.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter((item) => Object.keys(item).some((key) => item[key]?.toString().toLowerCase().includes(query)));
@@ -477,7 +476,7 @@ export class ClientDatatableComponent implements OnInit {
         return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       });
     }
-
+    this.selectAll = filtered.every((item) => item.isChecked);
     return filtered;
   }
 
@@ -580,6 +579,7 @@ export class ClientDatatableComponent implements OnInit {
       return item;
     });
     this.selectAll = this.data.every((item) => item.isChecked);
+    console.log('this.data', this.data, this.selectAll);
     this.dataChange.emit(this.data);
     this.cdr.detectChanges();
   }

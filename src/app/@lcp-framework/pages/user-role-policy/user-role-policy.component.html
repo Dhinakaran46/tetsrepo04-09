@@ -10,13 +10,13 @@
           <ul class="flex list-inside space-x-3 pt-2 font-semibold text-gray-700 dark:text-[#d0d2d6] rtl:space-x-reverse">
             <li>
               <label class="flex cursor-pointer items-center">
-                <input type="radio" name="policy_type" class="form-radio" value="role" formControlName="policy_type" />
+                <input type="radio" name="policy_type" class="form-radio" value="role" formControlName="policy_type" (click)="updateRadioButton()" />
                 <span class="text-gray-900 dark:text-white-dark">{{ 'role_permission' | translate }}</span>
               </label>
             </li>
             <li>
               <label class="flex cursor-pointer items-center">
-                <input type="radio" name="policy_type" class="form-radio" value="user" formControlName="policy_type" />
+                <input type="radio" name="policy_type" class="form-radio" value="user" formControlName="policy_type" (click)="updateRadioButton()" />
                 <span class="text-gray-900 dark:text-white-dark">{{ 'user_permission' | translate }}</span>
               </label>
             </li>

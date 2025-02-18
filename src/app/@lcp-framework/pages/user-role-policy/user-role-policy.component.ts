@@ -126,6 +126,14 @@ export class UserRolePolicyComponent {
     }
   }
 
+  updateRadioButton() {
+    this.mappingForm.patchValue({
+      user: '',
+      role: '',
+    });
+    this.getPolicyList();
+  }
+
   getPolicyList() {
     const role_id = this.mappingForm.get('role')?.value;
     const user_id = this.mappingForm.get('user')?.value;

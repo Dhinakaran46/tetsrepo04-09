@@ -151,7 +151,7 @@ export class RouteUpdateService {
                 import_template_module: ImportTemplateComponent,
                 export_template_module: ExportTemplateComponent,
                 import_job_detail_module: ImportJobDetailsComponent,
-                policy_module: PolicyComponent,
+                policy_add_edit_module: PolicyComponent,
                 user_role_policy_module: UserRolePolicyComponent,
               };
 

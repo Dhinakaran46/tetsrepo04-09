@@ -37,7 +37,6 @@ export class PolicyComponent implements OnInit {
   loading = false;
   unique_id!: string | null;
   entityList: any[] = [];
-  dropdownOpen = false;
   title: any = '';
 
   editorOptions = { theme: 'vs-dark', language: 'sql', tabSize: 1, insertSpaces: true };
@@ -322,7 +321,7 @@ export class PolicyComponent implements OnInit {
     }
   }
 
-  upsertPolicy(exit: boolean = false) {
+  upsertPolicy() {
     const policyData = this.policyForm.getRawValue();
 
     const policyPayload = {
@@ -366,17 +365,17 @@ export class PolicyComponent implements OnInit {
       next: (response: any) => {
         this.loading = false;
         if (response.code === 200 && response.status) {
-          const key = this.unique_id ? 'policy_created_successfully' : 'policy_updated_successfully';
+          const key = !this.unique_id ? 'policy_created_successfully' : 'policy_updated_successfully';
           const successMessage = this.translate.instant(key);
           this.toastr.success(successMessage);
-          if (exit || !this.unique_id) {
+          if (!this.unique_id) {
             this.location.back();
             return;
           }
           this.resetComponent();
           this.getPolicyData();
         } else {
-          const key = this.unique_id ? 'failed_to_create_the_policy' : 'failed_to_update_the_policy';
+          const key = !this.unique_id ? 'failed_to_create_the_policy' : 'failed_to_update_the_policy';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }
@@ -389,13 +388,5 @@ export class PolicyComponent implements OnInit {
         this.toastr.error(errorMessage, 'Error');
       },
     });
-  }
-
-  toggleDropdown() {
-    this.dropdownOpen = !this.dropdownOpen;
-  }
-
-  onOptionSelect() {
-    this.dropdownOpen = false; // Close the dropdown after selection
   }
 }

@@ -62,7 +62,7 @@
         <!-- Filter Menu Body -->
         <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
           <div class="space-y-2 p-4">
-            <ng-container *ngIf="filterConditions.length === 0; else filterList">
+            <ng-container *ngIf="!filterConditions.length; else filterList">
               <p class="text-gray-600">{{ 'No filter applied' | translate }}</p>
             </ng-container>
             <ng-template #filterList>
