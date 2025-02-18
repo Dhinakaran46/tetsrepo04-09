@@ -36,6 +36,7 @@ export interface TableConfig {
   pageSizes?: number[];
   defaultPageSize?: number;
   searchable?: boolean;
+  detailStatusPopup?: boolean;
   headerConfig?: {
     title?: string;
     showHeader?: boolean;
@@ -84,6 +85,10 @@ export class ClientDatatableComponent implements OnInit {
   @Output() pageSizeChange = new EventEmitter<number>();
   @Output() sortChange = new EventEmitter<{ column: string; direction: 'asc' | 'desc' }>();
   @Output() addButtonClick = new EventEmitter<void>();
+
+  isStatusModalOpen = false;
+  selectedRow: any = {};
+  errorKeys: any[] = ['warningMessages', 'errorMessages', 'errorstatus'];
 
   operatorsByType = {
     text: [
@@ -145,6 +150,25 @@ export class ClientDatatableComponent implements OnInit {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
+  // Open Status Modal
+  openStatusModal(row: any) {
+    this.selectedRow = row;
+    this.isStatusModalOpen = true;
+  }
+
+  // Close Status Modal
+  closeStatusModal() {
+    this.isStatusModalOpen = false;
+    this.selectedRow = {};
+  }
+
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
+  }
+  getMessagesUnDot(messages: string): string[] {
+    return messages.split(',, ').map((msg) => msg.trim()); // Split by ", " and trim
+  }
+
   // Column-related helper methods
   getNonEmptyFilterCount(): number {
     return this.filterConditions.filter((condition) => condition.value).length;
@@ -197,6 +221,10 @@ export class ClientDatatableComponent implements OnInit {
   // Filter handling methods
   addCondition() {
     this.filterConditions.push({ field: '', operator: '', value: '' });
+  }
+
+  getErrorStatusText(errorStatus: string): string {
+    return errorStatus.match(/>(.*?)<\/span>/)?.[1] || errorStatus;
   }
 
   removeCondition(index: number) {
@@ -579,7 +607,6 @@ export class ClientDatatableComponent implements OnInit {
       return item;
     });
     this.selectAll = this.data.every((item) => item.isChecked);
-    console.log('this.data', this.data, this.selectAll);
     this.dataChange.emit(this.data);
     this.cdr.detectChanges();
   }
