@@ -204,7 +204,7 @@ export class DashboardComponent implements AfterViewInit {
               if (mainElem.cards) {
                 mainElem.cards = await Promise.all(
                   mainElem.cards.map(async (item: any) => {
-                    console.log(item);
+                    // console.log(item);
                     return {
                       ...item,
                       format: item.format ? (Array.isArray(item.format) ? item.format : [item.format]) : [],

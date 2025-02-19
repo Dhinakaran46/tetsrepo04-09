@@ -37,6 +37,8 @@ interface FetchDataParams {
   search_all: any;
   having_conditions: any;
   having_any_conditions: any;
+  group_by: any;
+  includes: any;
 }
 
 @Component({
@@ -73,7 +75,7 @@ export class MasterListComponent implements AfterViewInit {
   resultsPerPage: number = 10;
   enableCheckBox: boolean = false;
   masterInfo: any;
-
+  policyData: any = null;
   loading: boolean = false;
   gridloading: boolean = true;
 
@@ -136,8 +138,10 @@ export class MasterListComponent implements AfterViewInit {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
-
     if (pageInfo && this.resultsPerPage) {
+      if (this.user_info.main?.policies) {
+        this.policyData = this.user_info.main?.policies[pageInfo.ListQuery.entity_name.trim()] || null;
+      }
       this.masterInfo = pageInfo;
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
@@ -331,7 +335,7 @@ export class MasterListComponent implements AfterViewInit {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
-        this.gridApiService.getAllRecords(query).subscribe(
+        this.gridApiService.getAllRecords(this.formatPayloadWithPolicyConditions(query)).subscribe(
           (response) => {
             if (response.status && response.code === 200) {
               if (response.data.records && response.data.headers) {
@@ -454,10 +458,53 @@ export class MasterListComponent implements AfterViewInit {
     );
   }
 
+  removeDuplicateObjects(conditions: any[]) {
+    const seen = new WeakSet();
+    return conditions.filter((condition) => !seen.has(condition) && seen.add(condition));
+  }
+
+  removeDuplicateStringsOrNumbers(conditions: any[]) {
+    return [...new Set(conditions)];
+  }
+
+  removeDuplicateData(conditions: any[]) {
+    const seen = new Set<string>();
+    return conditions.filter((condition) => !seen.has(JSON.stringify(condition)) && seen.add(JSON.stringify(condition)));
+  }
+
+  formatPayloadWithPolicyConditions(payload: FetchDataParams | any) {
+    if (!this.policyData) return payload;
+
+    for (const { query_information } of this.policyData) {
+      if (!query_information) continue;
+
+      const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns'];
+
+      for (const field of fields) {
+        if (query_information[field]) {
+          payload[field] = [...(payload[field] || []), ...query_information[field]];
+        }
+      }
+    }
+
+    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions'];
+    objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
+
+    if (payload.group_by) {
+      payload.group_by = this.removeDuplicateStringsOrNumbers(payload.group_by);
+    }
+    if (payload.sort_columns) {
+      payload.sort_columns = this.removeDuplicateData(payload.sort_columns);
+    }
+
+    return payload;
+  }
+
   fetchData(params: FetchDataParams) {
     params.limit_range = this.resultsPerPage;
-
-    this.gridApiService.getAllRecords(params).subscribe(
+    const payload = this.formatPayloadWithPolicyConditions(params);
+    console.log('payload', payload);
+    this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           if (response.data.headers) {
@@ -566,7 +613,6 @@ export class MasterListComponent implements AfterViewInit {
                 Action: index + 1,
               };
             });
-
             this.totalItems = response.data.total_records;
             this.gridloading = false;
           } else {

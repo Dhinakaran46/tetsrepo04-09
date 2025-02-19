@@ -18,7 +18,7 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
   acceptFormat: string[] = [];
 
   mimeToExtensions: Record<string, string[]> = {
-    'image/*': ['jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'webp'],
+    'image/*': ['jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'webp', 'heic', 'heif'],
     'application/pdf': ['pdf'],
     'application/vnd.ms-excel': ['xls'], // XLS format
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'], // XLSX format
@@ -31,6 +31,8 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
     'image/jpg': ['jpg'], // JPG format
     'image/gif': ['gif'], // GIF format
     'image/svg': ['svg'], // SVG format
+    'image/heic': ['heic'], // HEIC format
+    'image/heif': ['heif'], // HEIF format
     'image/svg+xml': ['svg'], // SVG format
     'image/ico': ['ico'], // ICO format
     'image/webp': ['webp'], // WEBP format
@@ -77,6 +79,7 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
 
   updateFileAccept(type: string) {
     if (type?.length) {
+      console.log('type', type);
       type.split(',').map((value) => {
         let format = '';
         switch (value.trim().toLowerCase()) {
@@ -91,6 +94,12 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
             break;
           case 'jpg':
             format = 'image/jpg';
+            break;
+          case 'heic':
+            format = 'image/heic';
+            break;
+          case 'heif':
+            format = 'image/heif';
             break;
           case 'gif':
             format = 'image/gif';
@@ -158,6 +167,7 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
     } else {
       this.acceptFormat = ['image/*'];
     }
+    console.log('this.acceptFormat', this.acceptFormat);
     return this.acceptFormat.join(',');
   }
 

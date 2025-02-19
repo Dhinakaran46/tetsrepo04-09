@@ -18,6 +18,8 @@ import { ImportMasterComponent } from '../../pages/import-master/import-master.c
 import { ImportTemplateComponent } from '../../pages/import-template/import-template.component';
 import { ExportTemplateComponent } from '../../pages/export-template/export-template.component';
 import { ImportJobDetailsComponent } from '../../pages/import-job-details/import-job-details.component';
+import { PolicyComponent } from '../../pages/policy/policy.component';
+import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
 
 @Injectable({
   providedIn: 'root',
@@ -149,6 +151,8 @@ export class RouteUpdateService {
                 import_template_module: ImportTemplateComponent,
                 export_template_module: ExportTemplateComponent,
                 import_job_detail_module: ImportJobDetailsComponent,
+                policy_add_edit_module: PolicyComponent,
+                user_role_policy_module: UserRolePolicyComponent,
               };
 
               const route: Route = {

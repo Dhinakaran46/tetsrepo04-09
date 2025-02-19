@@ -408,7 +408,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getSheetDatas(): any {
-    return this.sheet_data?.row_datas.map((row: any) => {
+    const data = this.sheet_data?.row_datas.map((row: any) => {
       // Extract error messages and combine them into a single string
       const errorMessages = Object.values(row.errors)
         .flat()
@@ -432,6 +432,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         errorMessages: row.error ? errorMessages : warnMessages, // Add combined error messages
       };
     });
+    return data;
   }
   getSheetDatasForScheduled(): any {
     return this.sheet_data?.row_datas.map((row: any) => {

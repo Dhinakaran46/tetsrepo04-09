@@ -16,7 +16,8 @@ export interface Column {
   isHtmlHeader?: boolean;
   isHtmlValue?: boolean;
   searchable?: boolean;
-  type?: 'text' | 'button' | 'icon' | 'number' | 'date' | 'separate';
+  colFilterHide?: boolean;
+  type?: 'text' | 'button' | 'icon' | 'number' | 'date' | 'separate' | 'checkbox';
   template?: boolean;
   placeholder?: string;
   min?: number;
@@ -87,6 +88,7 @@ export class ClientDatatableComponent implements OnInit {
 
   isStatusModalOpen = false;
   selectedRow: any = {};
+  errorKeys: any[] = ['warningMessages', 'errorMessages', 'errorstatus'];
 
   operatorsByType = {
     text: [
@@ -108,7 +110,7 @@ export class ClientDatatableComponent implements OnInit {
       { value: 'between', label: 'Between' },
     ],
   };
-
+  selectAll: boolean = false;
   searchQuery: string = '';
   currentPage: number = 1;
   pageSize: any = 10;
@@ -121,7 +123,6 @@ export class ClientDatatableComponent implements OnInit {
   filterConditions: FilterCondition[] = [];
 
   // Column visibility
-  visibleColumns: Set<string> = new Set();
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -133,9 +134,6 @@ export class ClientDatatableComponent implements OnInit {
     if (this.data) {
       this._originalData = [...this.data];
     }
-    this.config.columns.forEach((col) => this.visibleColumns.add(col.key));
-    console.log(this._originalData);
-    console.log(this.config);
   }
 
   onAddClick(): void {
@@ -177,10 +175,22 @@ export class ClientDatatableComponent implements OnInit {
   }
 
   get selectColumns(): Column[] {
-    return this.config.columns.filter((column) => column.sortable);
+    return this.config.columns.filter((column) => column.type !== 'checkbox' && column.key !== 'id');
   }
+
   get filteredColumns(): Column[] {
-    return this.config.columns.filter((column) => column.searchable);
+    return this.config.columns
+      .filter((column) => column.searchable || column.type === 'checkbox')
+      .map((col) => {
+        return {
+          ...col,
+          colFilterHide: col?.colFilterHide || true,
+        };
+      });
+  }
+
+  toggleColumnFilterHide(col: any) {
+    col.colFilterHide = !col.colFilterHide;
   }
 
   getPlaceholderForColumn(field: string): string {
@@ -213,6 +223,10 @@ export class ClientDatatableComponent implements OnInit {
     this.filterConditions.push({ field: '', operator: '', value: '' });
   }
 
+  getErrorStatusText(errorStatus: string): string {
+    return errorStatus.match(/>(.*?)<\/span>/)?.[1] || errorStatus;
+  }
+
   removeCondition(index: number) {
     this.filterConditions.splice(index, 1);
   }
@@ -235,31 +249,21 @@ export class ClientDatatableComponent implements OnInit {
     this.isMenuOpen = false;
   }
 
-  // Column visibility methods
-  toggleColumn(columnKey: string) {
-    if (this.visibleColumns.has(columnKey)) {
-      this.visibleColumns.delete(columnKey);
-    } else {
-      this.visibleColumns.add(columnKey);
-    }
-    this.updateVisibleColumns();
-  }
-
   selectAllColumns() {
-    this.updateVisibleColumns();
+    this.selectColumns.forEach((col) => {
+      if (col.key !== 'id') {
+        col.colFilterHide = false;
+      } else {
+        col.colFilterHide = true;
+      }
+    });
   }
 
+  // Method to clear all checkboxes
   clearAllColumns() {
-    this.visibleColumns.clear();
-    this.updateVisibleColumns();
-  }
-
-  isColumnVisible(columnKey: string): boolean {
-    return this.visibleColumns.has(columnKey);
-  }
-
-  private updateVisibleColumns() {
-    this.config.columns = this.config.columns.filter((col) => this.visibleColumns.has(col.key));
+    this.selectColumns.forEach((col) => {
+      col.colFilterHide = true;
+    });
   }
 
   isBoolean(value: any): boolean {
@@ -469,7 +473,6 @@ export class ClientDatatableComponent implements OnInit {
   // Update filteredData getter
   get filteredData(): any[] {
     let filtered = [...this.data];
-
     if (this.searchQuery?.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter((item) => Object.keys(item).some((key) => item[key]?.toString().toLowerCase().includes(query)));
@@ -501,7 +504,7 @@ export class ClientDatatableComponent implements OnInit {
         return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       });
     }
-
+    this.selectAll = filtered.every((item) => item.isChecked);
     return filtered;
   }
 
@@ -584,5 +587,27 @@ export class ClientDatatableComponent implements OnInit {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Table Data');
     XLSX.writeFile(workbook, 'table_data.xlsx');
+  }
+
+  selectAllData() {
+    this.selectAll = !this.selectAll;
+    this.data.forEach((item) => {
+      item.isChecked = this.selectAll;
+      return item;
+    });
+    this.dataChange.emit(this.data);
+    this.cdr.detectChanges();
+  }
+
+  selectData(id: number) {
+    this.data.forEach((item) => {
+      if (item.id === id) {
+        item.isChecked = !item.isChecked;
+      }
+      return item;
+    });
+    this.selectAll = this.data.every((item) => item.isChecked);
+    this.dataChange.emit(this.data);
+    this.cdr.detectChanges();
   }
 }
