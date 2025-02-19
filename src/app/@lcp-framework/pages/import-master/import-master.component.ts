@@ -408,16 +408,16 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getSheetDatas(): any {
-    return this.sheet_data?.row_datas.map((row: any) => {
+    const data = this.sheet_data?.row_datas.map((row: any) => {
       // Extract error messages and combine them into a single string
       const errorMessages = Object.values(row.errors)
         .flat()
         .map((error: any) => error.message)
-        .join(', ');
+        .join(',, ');
       const warnMessages = Object.values(row.warnings)
         .flat()
         .map((warning: any) => warning.message)
-        .join(', ');
+        .join(',, ');
 
       // Determine the error status
       const status = row.warning
@@ -432,6 +432,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         errorMessages: row.error ? errorMessages : warnMessages, // Add combined error messages
       };
     });
+    return data;
   }
   getSheetDatasForScheduled(): any {
     return this.sheet_data?.row_datas.map((row: any) => {
@@ -461,7 +462,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     // Prepend additionalColumns to the existing columns
     const updatedColumns = [...additionalColumns, ...columns];
 
-    return { ...this.tableConfig, columns: updatedColumns };
+    return { ...this.tableConfig, columns: updatedColumns, detailStatusPopup: true };
   }
 
   getSheetHeaderForScheduled() {
