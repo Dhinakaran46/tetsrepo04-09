@@ -66,7 +66,7 @@ export class PolicyComponent implements OnInit {
     this.policyForm = this.fb.group({
       policy_id: [''],
       policy_name: ['', [Validators.required]],
-      policy_description: [''],
+      policy_description: ['', [Validators.required]],
       entity_id: ['', [Validators.required]],
       entity_name: [{ value: '', disabled: true }, [Validators.required]],
       entity_type: [{ value: '', disabled: true }, [Validators.required]],

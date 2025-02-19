@@ -33,7 +33,7 @@
                   </div>
                 </div>
                 <div class="flex flex-col">
-                  <label for="policy_description">{{ 'policy_description' | translate }}</label>
+                  <label for="policy_description">{{ 'policy_description' | translate }} <span class="text-danger">*</span></label>
                   <input
                     autocomplete="off"
                     appDynamicFontSize="body"
@@ -43,6 +43,15 @@
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                     [required]="true"
                   />
+                  <div
+                    *ngIf="
+                      policyForm.get('policy_description')?.invalid &&
+                      (policyForm.get('policy_description')?.touched || policyForm.get('policy_description')?.dirty)
+                    "
+                    class="invalid-feedback mt-1 text-danger"
+                  >
+                    {{ 'policy_description_is_required' | translate }}
+                  </div>
                 </div>
                 <div class="align-center inline-contents relative justify-center" *ngIf="!unique_id">
                   <label for="entity_id">{{ 'entity_name' | translate }} <span class="text-danger">*</span></label>
