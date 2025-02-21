@@ -48,7 +48,8 @@ interface SheetData {
   individual_header_details: { [key: string]: HeaderDetails };
   ind_row_datas: RowData;
   error_msg?: string;
-  file_data?: string;
+  attachments_name?: string;
+  attachments_path?: string;
 }
 
 interface EntityList {
@@ -582,6 +583,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             completed_rows: 0,
             error_rows: 0,
             batch_process_count: this.import_batch_process_count,
+            file_path: sheet_data.attachments_path,
+            file_name: sheet_data.attachments_name,
+            created_by: this.userData.main.user_id,
             header_details: {
               selectedTemplate: this.selectedTemplate?.uuid,
               fileUploadLog: this.fileUploadLog?.uuid,
@@ -635,10 +639,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   async uploadExcelAndcallImport(sheet_data: SheetData) {
     if (this.isSendMail) {
       const formData: FormData = new FormData();
-      formData.append('image', this.importForm.controls['import_template_file'].value, 'sample.xlsx');
+      formData.append('image', this.importForm.controls['import_template_file'].value, this.importForm.controls['import_template_file'].value?.name);
       this.gridApiService.uploadImageAndGetName(formData).subscribe((response: any) => {
         if (response.body && response.body.status) {
-          sheet_data.file_data = response.body.data[0].docName;
+          sheet_data.attachments_path = response.body.data[0].docName;
+          sheet_data.attachments_name = response.body.data[0].orgName;
           this.callImportApi(sheet_data);
         }
       });
@@ -659,8 +664,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       };
 
       // Add file data if file is present
-      if (sheet_data.file_data) {
-        payload.file_data = sheet_data.file_data;
+      if (sheet_data.attachments_name) {
+        payload.attachments_name = sheet_data.attachments_name;
+        payload.attachments_path = sheet_data.attachments_path;
       }
 
       this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, payload).subscribe(
