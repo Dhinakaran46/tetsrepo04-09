@@ -48,6 +48,8 @@ interface SheetData {
   individual_header_details: { [key: string]: HeaderDetails };
   ind_row_datas: RowData;
   error_msg?: string;
+  attachments_name?: string;
+  attachments_path?: string;
 }
 
 interface EntityList {
@@ -116,6 +118,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   individual_fields: { [key: string]: ImportableField } = {};
   submitted: boolean = false;
   isLoading: boolean = false;
+  isSendMail: boolean = false;
 
   private socket$!: WebSocketSubject<any>;
   public progress = 100;
@@ -501,13 +504,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           padding: '2em',
         }).then(async (result) => {
           if (result.value) {
-            this.callImportApi(sheet_data);
+            this.uploadExcelAndcallImport(sheet_data);
           } else {
             this.isLoading = false;
           }
         });
       } else {
-        this.callImportApi(sheet_data);
+        this.uploadExcelAndcallImport(sheet_data);
       }
     }
   }
@@ -533,7 +536,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       }).then(async (result) => {
         if (result.value) {
           sheet_data = { ...sheet_data, row_datas: onlyValidRowDatas };
-          this.callImportApi(sheet_data);
+          this.uploadExcelAndcallImport(sheet_data);
         }
       });
     }
@@ -580,6 +583,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             completed_rows: 0,
             error_rows: 0,
             batch_process_count: this.import_batch_process_count,
+            file_path: sheet_data.attachments_path,
+            file_name: sheet_data.attachments_name,
+            created_by: this.userData.main.user_id,
             header_details: {
               selectedTemplate: this.selectedTemplate?.uuid,
               fileUploadLog: this.fileUploadLog?.uuid,
@@ -630,38 +636,59 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     //  console.log(this.getSheetHeader());
   }
 
+  async uploadExcelAndcallImport(sheet_data: SheetData) {
+    if (this.isSendMail) {
+      const formData: FormData = new FormData();
+      formData.append('image', this.importForm.controls['import_template_file'].value, this.importForm.controls['import_template_file'].value?.name);
+      this.gridApiService.uploadImageAndGetName(formData).subscribe((response: any) => {
+        if (response.body && response.body.status) {
+          sheet_data.attachments_path = response.body.data[0].docName;
+          sheet_data.attachments_name = response.body.data[0].orgName;
+          this.callImportApi(sheet_data);
+        }
+      });
+    } else {
+      this.callImportApi(sheet_data);
+    }
+  }
+
   callImportApi(sheet_data: SheetData) {
     if (this.import_job == 'scheduled') {
       //this.isLoading = true;
       this.processScheduledInsertion(sheet_data);
     } else {
       //this.isLoading = true;
-      this.gridApiService
-        .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
-          row_datas: sheet_data.row_datas,
-          ind_row_datas: sheet_data.ind_row_datas,
-        })
-        .subscribe(
-          (response: ApiResponce) => {
-            // console.log(response);
-            if (response.status) {
-              this.resetComponent();
-              this.getImportTemplates();
-              this.submitted = false;
-              this.toastr.success(response.message);
-              this.isLoading = false;
-            } else {
-              this.toastr.error(response.message);
-              this.isLoading = false;
-            }
-          },
-          (error: any) => {
-            const key = 'error';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
+      let payload: any = {
+        row_datas: sheet_data.row_datas,
+        ind_row_datas: sheet_data.ind_row_datas,
+      };
+
+      // Add file data if file is present
+      if (sheet_data.attachments_name) {
+        payload.attachments_name = sheet_data.attachments_name;
+        payload.attachments_path = sheet_data.attachments_path;
+      }
+
+      this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, payload).subscribe(
+        (response: ApiResponce) => {
+          if (response.status) {
+            this.resetComponent();
+            this.getImportTemplates();
+            this.submitted = false;
+            this.toastr.success(response.message);
+            this.isLoading = false;
+          } else {
+            this.toastr.error(response.message);
             this.isLoading = false;
           }
-        );
+        },
+        (error: any) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          this.isLoading = false;
+        }
+      );
     }
   }
 
@@ -691,6 +718,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
             }
             this.import_job = response.data.records[0].job_type;
+            this.isSendMail = response.data.records[0].is_send_mail;
             this.import_batch_process_count = response.data.records[0].batch_process_count;
             this.importForm.patchValue({
               data_header_row: response.data.records[0].header_row,

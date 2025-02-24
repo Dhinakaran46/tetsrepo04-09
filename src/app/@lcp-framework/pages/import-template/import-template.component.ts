@@ -526,6 +526,7 @@ export class ImportTemplateComponent implements OnInit {
       data_end_row: ['', Validators.required],
       is_admin_module: [false],
       ignore_error_rows: [false],
+      is_send_mail: [false],
       status_id: [1],
       job_type: ['direct'],
       batch_process_count: [50],
@@ -663,7 +664,6 @@ export class ImportTemplateComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-
           this.form.patchValue({
             name: entity.name,
             slug: entity.slug,
@@ -674,6 +674,7 @@ export class ImportTemplateComponent implements OnInit {
             data_end_row: entity.data_end_row,
             ignore_error_rows: entity.ignore_error_rows,
             is_admin_module: entity.is_admin_module,
+            is_send_mail: entity.is_send_mail,
             job_type: entity.job_type,
             batch_process_count: entity.batch_process_count,
             status_id: entity.status_id,
@@ -742,7 +743,6 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
@@ -752,6 +752,7 @@ export class ImportTemplateComponent implements OnInit {
         data_end_row: formData.data_end_row,
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
+        is_send_mail: formData.is_send_mail,
         job_type: formData.job_type,
         batch_process_count: formData.batch_process_count,
       },
@@ -807,7 +808,6 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
@@ -817,6 +817,7 @@ export class ImportTemplateComponent implements OnInit {
         data_end_row: formData.data_end_row,
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
+        is_send_mail: formData.is_send_mail,
         job_type: formData.job_type,
         batch_process_count: formData.batch_process_count,
       },
