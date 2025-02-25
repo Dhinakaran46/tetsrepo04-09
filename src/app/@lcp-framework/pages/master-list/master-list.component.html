@@ -26,6 +26,18 @@
   ></app-datatable>
   <ng-template #actionTemplate let-item>
     <div class="flex items-center gap-4">
+      <!-- mail resend -->
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        *ngIf="this.masterInfo.permissions.email_resend"
+        (click)="this.emailResendItem(item)"
+        ngxTippy
+        data-tippy-content="Resend Email"
+        appDynamicFontSize="body"
+      >
+        <i class="fa-solid fa-arrows-rotate {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
       <a
         href="javascript:void(0);"
         class="hover:text-primary"

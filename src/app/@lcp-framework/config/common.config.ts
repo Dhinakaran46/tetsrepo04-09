@@ -119,6 +119,7 @@ export const commonConfig: any = {
     ASSIGN: 'assign',
     Print: 'print',
     RECORD_EXPORT: 'record_export',
+    EMAIL_RESEND: 'email_resend',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -148,6 +149,7 @@ export const commonConfig: any = {
     { label: 'Assign', value: 'assign' },
     { label: 'Print', value: 'print' },
     { label: 'Record Export', value: 'record_export' },
+    { label: 'Resend Email', value: 'email_resend' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
