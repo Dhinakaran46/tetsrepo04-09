@@ -848,11 +848,43 @@ export class MasterListComponent implements AfterViewInit {
     });
   }
 
+  emailResendItem(item: any) {
+    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Resend Mail?',
+        text: 'are you sure, you want to resend mail?',
+        showCancelButton: true,
+        confirmButtonText: 'Resend',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          try {
+            const jobResponse = await this.localStorageService.getMasterEntity({
+              record_info: item,
+              entity_name: this.masterInfo.children.email_resend.entity_name,
+              entity_type: this.masterInfo.children.email_resend.component_class_name,
+            });
+
+            if (jobResponse) {
+              await this.executeJob({ ...jobResponse, record_info: item });
+              Swal.fire({ title: 'Mail resent request initiated!', text: 'Mail resent request has been initiated.', icon: 'success' });
+              this.fetchData(this.listQuery);
+            }
+          } catch (error: any) {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, error.message);
+          }
+        }
+      });
+    }
+  }
+
   deleteItem(item: any) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
-
         this.commonService.procedureCall(procedureParams).subscribe({
           next: (response: { code: number; status: boolean; data: any; message: string }) => {
             if (response.code === 200 && response.status && response.data) {
