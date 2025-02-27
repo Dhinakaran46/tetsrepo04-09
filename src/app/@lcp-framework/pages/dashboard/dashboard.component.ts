@@ -237,7 +237,7 @@ export class DashboardComponent implements AfterViewInit {
               // Parse if cards is a string
               if (typeof mainElem.cards === 'string') {
                 try {
-                  mainElem.cards = JSON.parse(mainElem.cards);
+                  mainElem.cards = []; //JSON.parse(mainElem.cards);
                 } catch (error) {
                   console.error('Error parsing JSON for cards:', error);
                   mainElem.cards = [];
