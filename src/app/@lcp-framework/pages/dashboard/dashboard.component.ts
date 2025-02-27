@@ -31,6 +31,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
+import { environment } from '../../../../environments/environment';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -133,75 +134,118 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   async loadDashboardWizards() {
-    const params = {
-      company_id: 1,
-      primary_table: 'wizard_group',
-      sort_columns: [['wizard_group.id', 'asc']],
-      limit_range: 1000,
-      print_query: true,
-      search_all: [
-        {
-          value: 1,
-          operator: '=',
-          column_name: 'wizard_group.status_id',
-        },
-      ],
-      select_columns: [
-        ['wizard_group.id', 'id'],
-        ['wizard_group.name', 'name'],
-        [
-          `CASE 
-        WHEN COUNT(subquery.id) = 0 THEN null 
-        ELSE COALESCE(
-            Json_agg(
-                subquery.jsonb_object
-                ORDER BY subquery.order_no
+    const db = (environment as any).DB || 'pg';
+    let params: any;
+    switch (db) {
+      case 'sql':
+        params = {
+          company_id: 1,
+          primary_table: 'wizard_group',
+          sort_columns: [['wizard_group.id', 'asc']],
+          limit_range: 1000,
+          print_query: true,
+          select_columns: [
+            ['wizard_group.id', 'id'],
+            ['wizard_group.name', 'name'],
+            [
+              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.query_information AS query_information, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
+              'cards',
+            ],
+          ],
+          includes: [
+            {
+              table_name: '(SELECT * FROM master_entities) as master_entities',
+              join_type: 'LEFT',
+              join_condition: 'master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1',
+            },
+          ],
+          group_by: ['wizard_group.id', 'wizard_group.name'],
+        };
+        break;
+      case 'pg':
+      default:
+        params = {
+          company_id: 1,
+          primary_table: 'wizard_group',
+          sort_columns: [['wizard_group.id', 'asc']],
+          limit_range: 1000,
+          print_query: true,
+          search_all: [
+            {
+              value: 1,
+              operator: '=',
+              column_name: 'wizard_group.status_id',
+            },
+          ],
+          select_columns: [
+            ['wizard_group.id', 'id'],
+            ['wizard_group.name', 'name'],
+            [
+              `CASE
+            WHEN COUNT(subquery.id) = 0 THEN null
+            ELSE COALESCE(
+                Json_agg(
+                    subquery.jsonb_object
+                    ORDER BY subquery.order_no
+                )
             )
-        ) 
-    END`,
-          'cards',
-        ],
-      ],
-      includes: [
-        {
-          table_name: `LATERAL (
-              SELECT 
-                DISTINCT ON (master_entities.id) 
-                master_entities.id, 
-                jsonb_build_object(
-                  'id', master_entities.id,
-                  'title', master_entities.name,
-                  'format', master_entities.static_page_content,
-                  'chart_format', master_entities.dashboard_wizard_options,
-                  'type', master_entities.dashboard_wizard_type,
-                  'rows', master_entities.dashboard_wizard_rows,
-                  'cols', master_entities.dashboard_wizard_columns,
-                  'order_no', master_entities.dashboard_wizard_order_no,
-                  'query_information', master_entities.query_information,
-                  'entity_name',master_entities.entity_name
-                ) AS jsonb_object,
-                master_entities.dashboard_wizard_order_no AS order_no
-              FROM 
-                master_entities 
-              WHERE 
-                master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1
-              ORDER BY 
-                master_entities.id, master_entities.dashboard_wizard_order_no
-            ) AS subquery`,
-          join_type: 'LEFT',
+        END`,
+              'cards',
+            ],
+          ],
+          includes: [
+            {
+              table_name: `LATERAL (
+                  SELECT
+                    DISTINCT ON (master_entities.id)
+                    master_entities.id,
+                    jsonb_build_object(
+                      'id', master_entities.id,
+                      'title', master_entities.name,
+                      'format', master_entities.static_page_content,
+                      'chart_format', master_entities.dashboard_wizard_options,
+                      'type', master_entities.dashboard_wizard_type,
+                      'rows', master_entities.dashboard_wizard_rows,
+                      'cols', master_entities.dashboard_wizard_columns,
+                      'order_no', master_entities.dashboard_wizard_order_no,
+                      'query_information', master_entities.query_information,
+                      'entity_name',master_entities.entity_name
+                    ) AS jsonb_object,
+                    master_entities.dashboard_wizard_order_no AS order_no
+                  FROM
+                    master_entities
+                  WHERE
+                    master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1
+                  ORDER BY
+                    master_entities.id, master_entities.dashboard_wizard_order_no
+                ) AS subquery`,
+              join_type: 'LEFT',
 
-          join_condition: 'TRUE',
-        },
-      ],
-      group_by: ['wizard_group.id'],
-    };
+              join_condition: 'TRUE',
+            },
+          ],
+          group_by: ['wizard_group.id'],
+        };
+        break;
+    }
 
     this.gridApiService.getAllList(params).subscribe(
       async (response) => {
         if (response.status && response.code === 200) {
           this.dashboardTabs = await Promise.all(
             response.data.records.map(async (mainElem: any) => {
-              if (mainElem.cards) {
+              // Parse if cards is a string
+              if (typeof mainElem.cards === 'string') {
+                try {
+                  mainElem.cards = JSON.parse(mainElem.cards);
+                } catch (error) {
+                  console.error('Error parsing JSON for cards:', error);
+                  mainElem.cards = [];
+                }
+              }
+
+              // Proceed with Promise.all only if cards is an array
+              if (Array.isArray(mainElem.cards)) {
                 mainElem.cards = await Promise.all(
                   mainElem.cards.map(async (item: any) => {
                     console.log(item);
@@ -210,12 +254,13 @@ export class DashboardComponent implements AfterViewInit {
                       format: item.format ? (Array.isArray(item.format) ? item.format : [item.format]) : [],
                       data: [],
                       permissions: {
-                        view: this.permissionsList[`view_` + item.entity_name],
+                        view: this.permissionsList?.[`view_` + item.entity_name] || false,
                       },
                     };
                   })
                 );
               }
+
               return mainElem;
             })
           );
