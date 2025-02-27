@@ -9,6 +9,7 @@ export const commonConfig: any = {
     excelUpdate: 'auth/export/file',
     getExcelHeaders: 'auth/export/get-excel-headers',
     updateprofilepwd: 'auth/password/change',
+    resetuserpwd: 'auth/password/reset-pwd-user',
     commongriddata: 'common/grid-data',
     commonindividualdataexport: 'common/individual-data-export',
     commongriddataexport: 'common/grid-data-export',
@@ -56,6 +57,9 @@ export const commonConfig: any = {
     MIN_DETAIL_MODULE: 'min_detail_module',
     MRN_ADD_EDIT_MODULE: 'mrn_add_edit_module',
     MIN_ADD_EDIT_MODULE: 'min_add_edit_module',
+    IMPORT_JOB_DETAIL_MODULE: 'import_job_detail_module',
+    POLICY_ADD_EDIT_MODULE: 'policy_add_edit_module',
+    USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -79,6 +83,9 @@ export const commonConfig: any = {
     min_detail_module: 'mindetail',
     mrn_add_edit_module: 'mrnaddedit',
     min_add_edit_module: 'minaddedit',
+    import_job_detail_module: 'importjobdetail',
+    policy_add_edit_module: 'policyaddedit',
+    user_role_policy_module: 'userrolepolicy',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -112,6 +119,7 @@ export const commonConfig: any = {
     ASSIGN: 'assign',
     Print: 'print',
     RECORD_EXPORT: 'record_export',
+    EMAIL_RESEND: 'email_resend',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -141,6 +149,7 @@ export const commonConfig: any = {
     { label: 'Assign', value: 'assign' },
     { label: 'Print', value: 'print' },
     { label: 'Record Export', value: 'record_export' },
+    { label: 'Resend Email', value: 'email_resend' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -158,6 +167,7 @@ export const commonConfig: any = {
     { label: 'Configurations Module', value: 'configurations_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
     { label: 'MTR Detail Module', value: 'mtr_detail_module' },
+    { label: 'Import Job Detail Module', value: 'import_job_detail_module' },
     { label: 'MIR Detail Module', value: 'mir_detail_module' },
     { label: 'MRN Detail Module', value: 'mrn_detail_module' },
     { label: 'MIN Detail Module', value: 'min_detail_module' },
@@ -165,6 +175,8 @@ export const commonConfig: any = {
     { label: 'MIN Add Edit Module', value: 'min_add_edit_module' },
 
     { label: 'Export Template Module', value: 'export_template_module' },
+    { label: 'Policy Add Edit Module', value: 'policy_add_edit_module' },
+    { label: 'User/Role Policy Module', value: 'user_role_policy_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
@@ -246,8 +258,8 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      { id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },
+      /*{ id: '7', label: 'Is Null', value: 'is_null' },
+      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
     ],
 
     // DateTime Field Conditions
@@ -258,8 +270,8 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      { id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },
+      /*{ id: '7', label: 'Is Null', value: 'is_null' },
+      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
     ],
 
     // DateTime Field Conditions
@@ -270,8 +282,8 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      { id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },
+      /*{ id: '7', label: 'Is Null', value: 'is_null' },
+      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
     ],
 
     // Integer Range Field Conditions

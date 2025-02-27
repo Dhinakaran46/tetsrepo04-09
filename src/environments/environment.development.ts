@@ -5,5 +5,5 @@ export const environment = {
   apiAddress: '/api/',
   ENCRYPTION_KEY: 'FINfM8x6fs',
   WS_URL: 'ws://localhost:8090',
-  DB: 'sql', // 'sql' or 'pg'
+  DB: 'pg', // 'sql' or 'pg'
 };

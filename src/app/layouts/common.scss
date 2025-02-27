@@ -1,3 +1,29 @@
+/* Base menu styles with manual important rules */
 .custom-min-width {
-  min-width: 200px !important;
+  min-width: 400px !important;
+}
+@media (min-width: 640px) {
+  .custom-min-width {
+    min-width: 210px !important;
+  }
+}
+@media (min-width: 768px) {
+  .custom-min-width {
+    min-width: 240px !important;
+  }
+}
+@media (min-width: 1024px) {
+  .custom-min-width {
+    min-width: 460px !important;
+  }
+}
+@media (min-width: 1280px) {
+  .custom-min-width {
+    min-width: 240px !important;
+  }
+}
+@media (min-width: 1536px) {
+  .custom-min-width {
+    min-width: 250px !important;
+  }
 }

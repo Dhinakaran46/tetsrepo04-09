@@ -6,6 +6,7 @@
     <h2 class="font-bold dark:text-white-light" appDynamicFontSize="title">{{ config.headerConfig?.title }}</h2>
 
     <div class="flex items-center gap-2 md:ml-auto md:flex-row md:items-center">
+      <div *ngIf="config.headerConfig?.summary" [innerHTML]="config.headerConfig?.summary"></div>
       <!-- Search Input -->
       <div class="relative mb-2 flex-grow md:mb-0">
         <input
@@ -61,7 +62,7 @@
         <!-- Filter Menu Body -->
         <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
           <div class="space-y-2 p-4">
-            <ng-container *ngIf="filterConditions.length === 0; else filterList">
+            <ng-container *ngIf="!filterConditions.length; else filterList">
               <p class="text-gray-600">{{ 'No filter applied' | translate }}</p>
             </ng-container>
             <ng-template #filterList>
@@ -71,7 +72,7 @@
 
                 <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select w-full">
                   <option value="" selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                  <option *ngFor="let col of filteredColumns" [value]="col.key">{{ col.label }}</option>
+                  <option *ngFor="let col of selectColumns" [value]="col.key">{{ col.label }}</option>
                 </select>
 
                 <select [(ngModel)]="condition.operator" class="form-select w-full">
@@ -126,12 +127,13 @@
               <button class="px-2 py-1 text-red-500" (click)="clearAllColumns()">{{ 'clear_all' | translate }}</button>
             </div>
           </li>
+
           <ng-container *ngFor="let col of selectColumns; index as i">
             <li>
               <div class="flex items-center px-4 py-1">
                 <label [for]="'chk-' + i" class="mb-0 cursor-pointer">
-                  <input type="checkbox" [id]="'chk-' + i" class="form-checkbox" [checked]="isColumnVisible(col.key)" (change)="toggleColumn(col.key)" />
-                  <span class="uppercase ltr:ml-2 rtl:mr-2" appDynamicFontSize="body">{{ col.label }}</span>
+                  <input type="checkbox" [id]="'chk-' + i" class="form-checkbox" [ngModel]="!col.colFilterHide" (ngModelChange)="toggleColumnFilterHide(col)" />
+                  <span class="uppercase ltr:ml-2 rtl:mr-2" appDynamicFontSize="body"> {{ col.label | translate }}</span>
                 </label>
               </div>
             </li>
@@ -184,102 +186,156 @@
     <table class="table-hover relative min-w-full">
       <thead class="bg-gray-50">
         <tr>
-          <th
-            *ngFor="let col of config.columns; let last = last"
-            scope="col"
-            appDynamicFontSize="body"
-            class="font-large cursor-pointer truncate whitespace-nowrap px-3 py-2 text-left tracking-wider"
-            [ngClass]="{
-              'cursor-pointer': col.sortable,
-              'sticky right-0 z-10': col.type === 'button' && last,
-              'max-w-150': col.type !== 'button'
-            }"
-            (click)="col.sortable && onSort(col.key)"
-          >
-            <span *ngIf="col.isHtmlHeader" [innerHTML]="col.label"></span>
-            <ng-container *ngIf="!col.isHtmlHeader">{{ col.label }}</ng-container>
-            <span *ngIf="col.sortable" class="arrow-icon ml-3 flex items-center">
-              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                <polygon
-                  [ngClass]="{ 'text-primary': sortColumn === col.key && sortDirection === 'asc' }"
-                  points="3.11,6.25 10.89,6.25 7,1.75"
-                  fill="currentColor"
-                  class="text-black"
-                ></polygon>
-                <polygon
-                  [ngClass]="{ 'text-primary': sortColumn === col.key && sortDirection === 'desc' }"
-                  points="7,12.25 10.89,7.75 3.11,7.75"
-                  fill="currentColor"
-                  class="text-black"
-                ></polygon>
-              </svg>
-            </span>
-          </th>
+          <ng-container *ngFor="let col of config.columns; let last = last">
+            <th
+              scope="col"
+              *ngIf="!col.colFilterHide ? true : false"
+              appDynamicFontSize="body"
+              class="font-large cursor-pointer truncate whitespace-nowrap py-2 text-left tracking-wider"
+              [ngClass]="{
+                'cursor-pointer': col.sortable,
+                'sticky right-0 z-10': col.type === 'button' && last,
+                'max-w-140': col.type !== 'button'
+              }"
+              (click)="col.sortable && col.type !== 'checkbox' ? onSort(col.key) : ''"
+            >
+              <span *ngIf="col.isHtmlHeader && col.type !== 'checkbox'" [innerHTML]="col.label"></span>
+              <ng-container *ngIf="!col.isHtmlHeader && col.type !== 'checkbox'">{{ col.label }}</ng-container>
+              <span *ngIf="col.type === 'checkbox'">
+                <input type="checkbox" class="form-checkbox" [checked]="selectAll" (click)="selectAllData()" />
+              </span>
+              <span *ngIf="col.sortable && col.type !== 'checkbox'" class="arrow-icon ml-3 flex items-center">
+                <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                  <polygon
+                    [ngClass]="{ 'text-primary': sortColumn === col.key && sortDirection === 'asc' }"
+                    points="3.11,6.25 10.89,6.25 7,1.75"
+                    fill="currentColor"
+                    class="text-black"
+                  ></polygon>
+                  <polygon
+                    [ngClass]="{ 'text-primary': sortColumn === col.key && sortDirection === 'desc' }"
+                    points="7,12.25 10.89,7.75 3.11,7.75"
+                    fill="currentColor"
+                    class="text-black"
+                  ></polygon>
+                </svg>
+              </span>
+            </th>
+          </ng-container>
         </tr>
       </thead>
       <tbody [formGroup]="formGroup!" *ngIf="formGroup" [formArrayName]="formArrayName!">
         <tr *ngFor="let item of paginatedData; let i = index" [formGroupName]="getFormGroupIndex(i)">
-          <td
-            *ngFor="let col of config.columns; let last = last"
-            class="truncate whitespace-nowrap"
-            [ngClass]="{
-              'sticky right-0 z-10': col.type === 'button' && last,
-              'max-w-150': col.type !== 'button'
-            }"
-          >
-            <ng-container [ngSwitch]="col.type">
-              <ng-container *ngSwitchCase="'button'">
-                <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
-                  <i [class]="action.icon"></i>
-                </button>
-              </ng-container>
-              <ng-container *ngSwitchDefault>
-                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
-                  {{ item[col.key] ? 'Yes' : 'No' }}
+          <ng-container *ngFor="let col of config.columns; let last = last">
+            <td
+              *ngIf="!col.colFilterHide ? true : false"
+              class="truncate whitespace-nowrap"
+              [ngClass]="{
+                'sticky right-0 z-10': col.type === 'button' && last,
+                'max-w-150': col.type !== 'button'
+              }"
+            >
+              <ng-container [ngSwitch]="col.type">
+                <ng-container *ngSwitchCase="'button'">
+                  <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
+                    <i [class]="action.icon"></i>
+                  </button>
                 </ng-container>
-                <ng-template #defaultContent>
-                  <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
-                  <ng-container *ngIf="!col.isHtmlValue">
-                    {{ item[col.key] ? item[col.key] : '-' }}
+                <ng-container *ngSwitchDefault>
+                  <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
+                    {{ item[col.key] ? 'Yes' : 'No' }}
                   </ng-container>
-                </ng-template>
+                  <ng-template #defaultContent>
+                    <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
+                    <ng-container *ngIf="!col.isHtmlValue">
+                      {{ item[col.key] ? item[col.key] : '-' }}
+                    </ng-container>
+                  </ng-template>
+                </ng-container>
               </ng-container>
-            </ng-container>
-          </td>
+            </td>
+          </ng-container>
         </tr>
       </tbody>
       <tbody *ngIf="!formGroup">
         <tr *ngFor="let item of paginatedData; let i = index">
-          <td
-            *ngFor="let col of config.columns; let last = last"
-            class="truncate whitespace-nowrap"
-            [ngClass]="{
-              'sticky right-0 z-10': col.type === 'button' && last,
-              'max-w-150': col.type !== 'button',
-              'bg-red-200 text-red-600': item.errors && item.errors[col.key]?.length > 0,
-              'bg-orange-200 text-orange-600': item.warnings && item.warnings[col.key]?.length > 0
-            }"
-            [title]="getMessages(item, col.key)"
-          >
-            <ng-container [ngSwitch]="col.type">
-              <ng-container *ngSwitchCase="'button'">
-                <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
-                  <i [class]="action.icon"></i>
-                </button>
-              </ng-container>
-              <ng-container *ngSwitchDefault>
-                <ng-container *ngIf="isBoolean(item[col.key]); else defaultContent">
-                  {{ item[col.key] ? 'Yes' : 'No' }}
+          <ng-container *ngFor="let col of config.columns; let last = last">
+            <td
+              *ngIf="!col.colFilterHide ? true : false"
+              class="truncate whitespace-nowrap"
+              [ngClass]="{
+                'sticky right-0 z-10': col.type === 'button' && last,
+                'max-w-150': col.type !== 'button',
+                'bg-red-200 text-red-600': item.errors && item.errors[col.key]?.length > 0,
+                'bg-orange-200 text-orange-600': item.warnings && item.warnings[col.key]?.length > 0
+              }"
+              [title]="getMessages(item, col.key)"
+            >
+              <ng-container [ngSwitch]="col.type">
+                <ng-container *ngSwitchCase="'button'">
+                  <button *ngFor="let action of col.actions" type="button" [class]="action.class" (click)="action.onClick(item)" [title]="action.tooltip || ''">
+                    <i [class]="action.icon"></i>
+                  </button>
                 </ng-container>
-                <ng-template #defaultContent>
-                  <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
-                  <ng-container *ngIf="!col.isHtmlValue">
-                    {{ item[col.key] ? item[col.key] : '-' }}
+                <ng-container *ngSwitchCase="'separate'">
+                  <div class="flex items-center gap-2" *ngIf="col.key === 'state'">
+                    <i class="fa-solid" [ngClass]="item[col.key] === 'Valid' ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger'"> </i>
+                    <span class="text-xs font-medium" [ngClass]="item[col.key] === 'Valid' ? 'text-success' : 'text-danger'">
+                      {{ item[col.key] === 'Valid' ? 'Valid' : 'Invalid' }}
+                    </span>
+                  </div>
+                </ng-container>
+                <ng-container *ngSwitchCase="'checkbox'">
+                  <input type="checkbox" class="form-checkbox" [id]="item.id" [checked]="item[col.key]" (change)="selectData(item.id)" />
+                </ng-container>
+                <ng-container *ngSwitchDefault>
+                  <ng-container *ngIf="isBoolean(item[col.key]); else templateOrDefault">
+                    {{ item[col.key] ? 'Yes' : 'No' }}
                   </ng-container>
-                </ng-template>
+                  <ng-template #templateOrDefault>
+                    <ng-container *ngIf="col.template; else defaultContent">
+                      <span [innerHTML]="item[col.key] | safeHtml"></span>
+                    </ng-container>
+                    <ng-template #defaultContent>
+                      <div
+                        *ngIf="col.isHtmlValue"
+                        [innerHTML]="item[col.key]"
+                        (click)="config.detailStatusPopup && col.key === 'errorstatus' ? openStatusModal(item) : null"
+                        [ngClass]="{ 'cursor-pointer text-blue-600': config.detailStatusPopup && col.key === 'errorstatus' }"
+                      ></div>
+
+                      <ng-container *ngIf="!col.isHtmlValue">
+                        <button
+                          *ngIf="config.detailStatusPopup && col.key === 'errorstatus'"
+                          (click)="openStatusModal(item)"
+                          class="cursor-pointer text-blue-600"
+                        >
+                          {{ item[col.key] ? item[col.key] : '-' }}
+                        </button>
+
+                        <span *ngIf="!(config.detailStatusPopup && col.key === 'errorstatus')">
+                          {{ item[col.key] ? item[col.key] : '-' }}
+                        </span>
+                      </ng-container>
+                    </ng-template>
+
+                    <!--<ng-template #defaultContent>
+                      <div (click)="openStatusModal(item)" *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
+                      <ng-container *ngIf="!col.isHtmlValue">
+                        {{ item[col.key] ? item[col.key] : '-' }}
+                      </ng-container>
+                    </ng-template>-->
+                  </ng-template>
+                  <!--<ng-template #defaultContent>
+                    <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
+                    <ng-container *ngIf="!col.isHtmlValue">
+                      {{ item[col.key] ? item[col.key] : '-' }}
+                    </ng-container>
+                  </ng-template>-->
+                </ng-container>
               </ng-container>
-            </ng-container>
-          </td>
+            </td>
+          </ng-container>
         </tr>
         <tr *ngIf="paginatedData.length === 0">
           <td [attr.colspan]="config.columns.length" class="max-w-150 truncate whitespace-nowrap">No data available</td>
@@ -392,6 +448,86 @@
           </svg>
         </button>
       </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Status Detail Modal -->
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isStatusModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-full transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <div class="flex gap-4">
+            <h4>Item Details</h4>
+            <div [innerHTML]="selectedRow['errorstatus']"></div>
+          </div>
+          <button class="close-btn" (click)="closeStatusModal()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-auto overflow-y-auto px-4 py-4 sm:px-6">
+        <div class="grid gap-4 md:grid-cols-[1fr,1px,1fr]">
+          <!-- Left Column: Error Messages -->
+          <div *ngIf="getErrorStatusText(selectedRow['errorstatus']) === 'invalid'" class="flex flex-col gap-4 p-4">
+            <ng-container *ngFor="let col of config.columns">
+              <ng-container *ngIf="errorKeys.includes(col.key)">
+                <div class="grid gap-4">
+                  <ng-container *ngIf="col.key !== 'errorstatus'">
+                    <ul
+                      class="list-disc pl-5 text-sm"
+                      [ngClass]="{
+                        'text-red-600': col.key === 'errorMessages',
+                        'text-yellow-600': col.key === 'warningMessages'
+                      }"
+                    >
+                      <li
+                        *ngFor="let message of getMessagesUnDot(selectedRow[col.key])"
+                        class="border-b py-2"
+                        [ngClass]="{
+                          'border-red-300': col.key === 'errorMessages',
+                          'border-yellow-300': col.key === 'warningMessages'
+                        }"
+                      >
+                        {{ message }}
+                      </li>
+                    </ul>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </ng-container>
+          </div>
+
+          <!-- Responsive Separator -->
+          <div class="w-30 h-[1px] bg-gray-300 md:h-full md:w-[1px]"></div>
+
+          <!-- Right Column: Other Details -->
+          <div class="grid grid-rows-2 gap-4 p-4">
+            <ng-container *ngFor="let col of config.columns">
+              <ng-container *ngIf="!errorKeys.includes(col.key)">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="pr-4 font-bold" [innerHTML]="col.label"></div>
+                  <div class="text-gray-700" [innerHTML]="selectedRow[col.key] || '-'"></div>
+                </div>
+              </ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Dynamic Messages Section -->
+      </div>
     </div>
   </div>
 </div>

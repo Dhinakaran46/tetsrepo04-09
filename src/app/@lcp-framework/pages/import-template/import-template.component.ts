@@ -342,7 +342,7 @@ export class ImportTemplateComponent implements OnInit {
 
   addFormArraySubscriptions() {
     this.lineItemForm.get('is_foreign')?.valueChanges.subscribe((value) => {
-      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create', 'foreign_query', 'unique_query'];
+      const foreignControls = ['foreign_table', 'foreign_column', 'foreign_can_create', 'foreign_query'];
       foreignControls.forEach((control) => {
         const formControl = this.lineItemForm.get(control);
         if (value) {
@@ -368,6 +368,15 @@ export class ImportTemplateComponent implements OnInit {
         individualColumn?.enable();
       } else {
         individualColumn?.disable();
+      }
+    });
+
+    this.lineItemForm.get('is_unique')?.valueChanges.subscribe((value) => {
+      const uniqueQueryControl = this.lineItemForm.get('unique_query');
+      if (value) {
+        uniqueQueryControl?.enable();
+      } else {
+        uniqueQueryControl?.disable();
       }
     });
   }
@@ -517,7 +526,10 @@ export class ImportTemplateComponent implements OnInit {
       data_end_row: ['', Validators.required],
       is_admin_module: [false],
       ignore_error_rows: [false],
+      is_send_mail: [false],
       status_id: [1],
+      job_type: ['direct'],
+      batch_process_count: [50],
       items: this.fb.array([]),
       queries: this.fb.array([]),
     });
@@ -652,7 +664,6 @@ export class ImportTemplateComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-
           this.form.patchValue({
             name: entity.name,
             slug: entity.slug,
@@ -663,6 +674,9 @@ export class ImportTemplateComponent implements OnInit {
             data_end_row: entity.data_end_row,
             ignore_error_rows: entity.ignore_error_rows,
             is_admin_module: entity.is_admin_module,
+            is_send_mail: entity.is_send_mail,
+            job_type: entity.job_type,
+            batch_process_count: entity.batch_process_count,
             status_id: entity.status_id,
           });
 
@@ -729,7 +743,6 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
@@ -739,6 +752,9 @@ export class ImportTemplateComponent implements OnInit {
         data_end_row: formData.data_end_row,
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
+        is_send_mail: formData.is_send_mail,
+        job_type: formData.job_type,
+        batch_process_count: formData.batch_process_count,
       },
     ];
 
@@ -792,7 +808,6 @@ export class ImportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-
         status_id: formData.status_id,
         slug: formData.slug,
         description: formData.description,
@@ -802,6 +817,9 @@ export class ImportTemplateComponent implements OnInit {
         data_end_row: formData.data_end_row,
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
+        is_send_mail: formData.is_send_mail,
+        job_type: formData.job_type,
+        batch_process_count: formData.batch_process_count,
       },
     ];
 

@@ -41,6 +41,7 @@ interface InputTypes {
   ],
 })
 export class DataTableComponent implements OnInit, OnChanges {
+  @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
   store: any;
   @Input() customTemplates: { [key: string]: TemplateRef<any> } = {};
@@ -81,7 +82,7 @@ export class DataTableComponent implements OnInit, OnChanges {
 
   isMenuOpen = false;
   filterCondition: any = true;
-  filterConditions: Array<{ field: string; operator: string; value: string }> = [];
+  filterConditions: Array<{ field: string; operator: string; value: string; clause_type: string }> = [];
   selectedColumnType: any = 1;
   currentSearchConditions: any = [];
   field_types = commonConfig.field_types;
@@ -194,10 +195,10 @@ export class DataTableComponent implements OnInit, OnChanges {
   onColumnChange(event: Event, index: number) {
     const target = event.target as HTMLSelectElement;
     const column = target.value;
-
     this.filterConditions[index].field = column;
-
-    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
+    const data = this.filteredColumns.find((col) => col.field === column);
+    const columnType = data?.field_type_id;
+    this.filterConditions[index].clause_type = data?.clause_type || 'where';
     this.filterConditions[index].operator = this.searchConditions[columnType][0].value;
     this.filterConditions[index].value = '';
     this.currentSearchConditions = this.searchConditions[columnType] || [];
@@ -215,6 +216,7 @@ export class DataTableComponent implements OnInit, OnChanges {
       field: '',
       operator: '',
       value: '',
+      clause_type: '',
     });
   }
 
@@ -231,13 +233,20 @@ export class DataTableComponent implements OnInit, OnChanges {
     const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd HH:mm:ss.SSSZ');
     return formattedDate;
   }
+  formatDate(dateTime: any) {
+    const date = new Date(dateTime);
+    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd');
+    return formattedDate;
+  }
 
   getConditionValue(index: number): string | null {
     const value = this.filterConditions[index].value;
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
-      if (type === 'datetime-local' || type === 'date') {
+      if (type === 'datetime-local') {
         return this.datePipe.transform(value, 'yyyy-MM-ddTHH:mm:ss');
+      } else if (type === 'date') {
+        return this.datePipe.transform(value, 'yyyy-MM-dd');
       }
     }
     return value;
@@ -256,11 +265,14 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.isMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
-
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = this.getInputTypeForColumn(key.field);
-      if (type == 'datetime-local' || type == 'date') {
+      if (type == 'datetime-local') {
         const formattedDate: any = this.formatDateTime(key.value);
+
+        key.value = formattedDate;
+      } else if (type == 'date') {
+        const formattedDate: any = this.formatDate(key.value);
 
         key.value = formattedDate;
       }
@@ -269,7 +281,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         column_name: key.field,
         operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
         value: this.addWildcards(key.operator, key.value).trim(),
-        isAggregate: key.field.includes('COUNT'),
+        isAggregate: key?.clause_type === 'having',
       };
     });
     const fdata = { data: data, condition: condition };
@@ -351,6 +363,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
+
       this.translate.get(translationKeys).subscribe((translations) => {
         this.filteredColumns = this.selectcolumns
           .filter((col) => col.searchable)
@@ -382,7 +395,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   toggleColumnSearchHide(col: any) {
     col.colSearchHide = !col.colSearchHide;
   }
-
+  // No need for now to
   updateColumn(col: any) {
     col.hide = !col.hide;
     this.selectedColumns = this.filteredColumns.filter((column) => !column.hide);
@@ -429,31 +442,62 @@ export class DataTableComponent implements OnInit, OnChanges {
   onSearch() {
     this.search = this.search.trim();
     let hereColumns = [...this.filteredColumns];
-    console.log(hereColumns);
+
     let items = [3, 4];
     hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
-
     if (this.selectedColumns.length > 0) {
-      const data = this.selectedColumns.map((key: any, index: any) => {
-        return {
-          column_name: key.field,
-          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-          value: this.addWildcards(this.searchCondition, this.search),
-        };
-      });
-      const fdata = { data: data, search: this.search };
+      const whereData = this.selectedColumns
+        .filter((key: any, index: any) => {
+          return key.clause_type === 'where';
+        })
+        .map((key: any, index: any) => {
+          return {
+            column_name: key.field,
+            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+            value: this.addWildcards(this.searchCondition, this.search),
+          };
+        });
+
+      const havingData = hereColumns
+        .filter((key: any, index: any) => {
+          return key.clause_type === 'having';
+        })
+        .map((key: any, index: any) => {
+          return {
+            column_name: key.field,
+            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+            value: this.addWildcards(this.searchCondition, this.search),
+          };
+        });
+      const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
       this.searchQuery.emit(fdata);
     } else {
       //this.toastr.warning('Please select any column', 'Warning');
 
-      const data = hereColumns.map((key: any, index: any) => {
-        return {
-          column_name: key.field,
-          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-          value: this.addWildcards(this.searchCondition, this.search),
-        };
-      });
-      const fdata = { data: data, search: this.search };
+      const whereData = hereColumns
+        .filter((key: any, index: any) => {
+          return key.clause_type === 'where';
+        })
+        .map((key: any, index: any) => {
+          return {
+            column_name: key.field,
+            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+            value: this.addWildcards(this.searchCondition, this.search),
+          };
+        });
+
+      const havingData = hereColumns
+        .filter((key: any, index: any) => {
+          return key.clause_type === 'having';
+        })
+        .map((key: any, index: any) => {
+          return {
+            column_name: key.field,
+            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+            value: this.addWildcards(this.searchCondition, this.search),
+          };
+        });
+      const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
       this.searchQuery.emit(fdata);
     }
   }

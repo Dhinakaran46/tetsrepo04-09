@@ -32,6 +32,9 @@ export class ProfileApiService {
   changePassword(data: { old_password: string; new_password: string }): Observable<any> {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.updateprofilepwd}`, data);
   }
+  resetPasswordAnyUser(data: { uuid: any; password: string }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.resetuserpwd}`, data);
+  }
 
   forgetPasswordMail(data: any): Observable<any> {
     return this.http.get(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.forgetpasswordEmail}${data}`);

@@ -1,0 +1,176 @@
+<div [formGroup]="policyForm">
+  <div class="panel">
+    <div class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+      <h5 class="text-lg font-semibold dark:text-white-light">
+        {{ 'policy_add_edit_form' | translate }}
+      </h5>
+      <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+        {{ 'back' | translate }}
+      </button>
+    </div>
+    <div class="w-full space-y-5 dark:text-white">
+      <div class="rounded-md p-2 md:col-span-2 lg:col-span-3">
+        <div class="space-y-5">
+          <div>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
+              <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div class="flex flex-col">
+                  <label for="policy_name">{{ 'policy_name' | translate }} <span class="text-danger">*</span></label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="policy_name"
+                    id="policy_name"
+                    type="text"
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                    [required]="true"
+                  />
+                  <div
+                    *ngIf="policyForm.get('policy_name')?.invalid && (policyForm.get('policy_name')?.touched || policyForm.get('policy_name')?.dirty)"
+                    class="invalid-feedback mt-1 text-danger"
+                  >
+                    {{ 'policy_name_is_required' | translate }}
+                  </div>
+                </div>
+                <div class="flex flex-col">
+                  <label for="policy_description">{{ 'policy_description' | translate }} <span class="text-danger">*</span></label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="policy_description"
+                    id="policy_description"
+                    type="text"
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                    [required]="true"
+                  />
+                  <div
+                    *ngIf="
+                      policyForm.get('policy_description')?.invalid &&
+                      (policyForm.get('policy_description')?.touched || policyForm.get('policy_description')?.dirty)
+                    "
+                    class="invalid-feedback mt-1 text-danger"
+                  >
+                    {{ 'policy_description_is_required' | translate }}
+                  </div>
+                </div>
+                <div class="align-center inline-contents relative justify-center" *ngIf="!unique_id">
+                  <label for="entity_id">{{ 'entity_name' | translate }} <span class="text-danger">*</span></label>
+                  <select
+                    appDynamicFontSize="body"
+                    id="entity_id"
+                    class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                    formControlName="entity_id"
+                    (change)="getEntityData()"
+                    [required]="true"
+                  >
+                    <option value>{{ 'Select the entity' }}</option>
+                    <option *ngFor="let entity of entityList" [value]="entity.value">{{ entity.label | translate }}</option>
+                  </select>
+                  <div
+                    *ngIf="policyForm.get('entity_id')?.invalid && (policyForm.get('entity_id')?.touched || policyForm.get('entity_id')?.dirty)"
+                    class="invalid-feedback mt-1 text-danger"
+                  >
+                    {{ 'entity_is_required' | translate }}
+                  </div>
+                </div>
+                <div class="flex flex-col" *ngIf="unique_id">
+                  <label for="entity_name">{{ 'entity_name' | translate }} <span class="text-danger">*</span></label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="entity_name"
+                    id="entity_name"
+                    type="text"
+                    readonly
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                    [required]="true"
+                  />
+                  <div
+                    *ngIf="policyForm.get('entity_id')?.invalid && (policyForm.get('entity_id')?.touched || policyForm.get('entity_id')?.dirty)"
+                    class="invalid-feedback mt-1 text-danger"
+                  >
+                    {{ 'entity_is_required' | translate }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
+              <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div class="flex flex-col">
+                  <label for="entity_type">{{ 'entity_type' | translate }}</label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="entity_type"
+                    id="entity_type"
+                    type="text"
+                    readonly
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <label for="primary_table">{{ 'primary_table' | translate }}</label>
+                  <input
+                    autocomplete="off"
+                    appDynamicFontSize="body"
+                    formControlName="primary_table"
+                    id="primary_table"
+                    type="text"
+                    readonly
+                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <label for="status_id" class="required-mark mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
+                  <div class="flex items-center space-x-4">
+                    <label class="flex cursor-pointer items-center">
+                      <input type="radio" [value]="1" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                      <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+                    </label>
+
+                    <label class="flex cursor-pointer items-center">
+                      <input type="radio" [value]="2" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                      <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1">
+      <div class="mb-5 p-2">
+        <label for="query_information" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+        <div class="monaco-editor-container" appDynamicFontSize="body">
+          <ngx-monaco-editor
+            monacoEditor
+            [options]="editorOptions"
+            id="query_information"
+            formControlName="query_information"
+            class="monaco-editor !h-96"
+          ></ngx-monaco-editor>
+        </div>
+        <div
+          *ngIf="policyForm.get('query_information')?.invalid && (policyForm.get('query_information')?.touched || policyForm.get('query_information')?.dirty)"
+          class="invalid-feedback mt-1 text-danger"
+        >
+          {{ 'query_information_is_invalid' | translate }}
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-row justify-end gap-4 py-4">
+      <button
+        class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark flex w-40 flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
+        type="button"
+        [disabled]="policyForm.invalid ? true : false"
+        (click)="upsertPolicy()"
+      >
+        Submit
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="loading"></app-loader>

@@ -166,11 +166,11 @@
                   <i class="fa-solid fa-download"></i> &nbsp; <span class="hidden md:inline">{{ 'export' | translate }} </span>
                 </button>
                 <ul *hlMenuItems @toggleAnimation class="whitespace-nowrap ltr:right-0 rtl:left-0">
-                  <li>
+                  <!--<li>
                     <a (click)="exportTable('pdf')" href="javascript:;" *hlMenuItem="let menuItem"
                       ><i class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }}
                     </a>
-                  </li>
+                  </li>-->
                   <li>
                     <a (click)="exportTable('excel')" href="javascript:;" *hlMenuItem="let menuItem"
                       ><i class="fa-solid fa-file-excel ltr:mr-2 rtl:ml-2"></i>{{ 'excel' | translate }}
@@ -241,44 +241,58 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
-            <ng-container *ngIf="items && items.length > 0; else noRecords">
-              <tr *ngFor="let item of items">
-                <td *ngIf="enableCheckBox">
-                  <input type="checkbox" (change)="toggleSelectItem(item)" [checked]="selectedItems.includes(item)" />
-                </td>
-                <ng-container *ngFor="let col of headercolumns; let last = last">
-                  <td
-                    class="max-w-150 truncate whitespace-nowrap"
-                    [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
-                    *ngIf="!col.colFilterHide"
-                  >
-                    <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
-                      <span
-                        class="block truncate"
-                        *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
-                        ngxTippy
-                        [attr.data-tippy-content]="item[col.header]"
-                      >
-                        {{ item[col.header] | booleanStatus }}
-                      </span>
-                      <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-                        {{ item[col.header] | booleanStatus }}
-                      </span>
-                    </ng-container>
-                    <ng-container *ngIf="col.customTemplate">
-                      <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
-                    </ng-container>
+            <tr *ngIf="loading">
+              <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500" appDynamicFontSize="body">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+
+            <ng-container *ngIf="!loading">
+              <ng-container *ngIf="items && items.length > 0; else noRecords">
+                <tr *ngFor="let item of items">
+                  <td *ngIf="enableCheckBox">
+                    <input type="checkbox" (change)="toggleSelectItem(item)" [checked]="selectedItems.includes(item)" />
                   </td>
-                </ng-container>
-              </tr>
+                  <ng-container *ngFor="let col of headercolumns; let last = last">
+                    <td
+                      class="max-w-150 truncate whitespace-nowrap"
+                      [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
+                      *ngIf="!col.colFilterHide"
+                    >
+                      <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
+                        <span
+                          class="block truncate"
+                          *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                          ngxTippy
+                          [attr.data-tippy-content]="item[col.header]"
+                        >
+                          {{ item[col.header] | booleanStatus }}
+                        </span>
+                        <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                          {{ item[col.header] | booleanStatus }}
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="col.customTemplate">
+                        <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
+                      </ng-container>
+                    </td>
+                  </ng-container>
+                </tr>
+              </ng-container>
+              <ng-template #noRecords>
+                <tr>
+                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500" appDynamicFontSize="body">
+                    {{ 'no_records_found' | translate }}
+                  </td>
+                </tr>
+              </ng-template>
             </ng-container>
-            <ng-template #noRecords>
-              <tr>
-                <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500" appDynamicFontSize="body">
-                  {{ 'no_records_found' | translate }}
-                </td>
-              </tr>
-            </ng-template>
           </tbody>
         </table>
       </div>

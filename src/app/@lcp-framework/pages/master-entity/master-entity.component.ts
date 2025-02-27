@@ -439,6 +439,7 @@ export class MasterEntityComponent implements OnInit {
         orderNo: ['', [Validators.required, Validators.min(0)]],
         isGridColumn: ['true', Validators.required],
         isSearchable: ['true', Validators.required],
+        clauseType: ['where', Validators.required],
         isSortable: ['true', Validators.required],
         fieldType: [this.commonConfig.field_types[0].value, Validators.required],
       })
@@ -470,7 +471,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'order_no', master_entity_line_items.order_no,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'order_no', master_entity_line_items.order_no,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
           'items',
         ],
       ],
@@ -530,6 +531,7 @@ export class MasterEntityComponent implements OnInit {
                   orderNo: [item.order_no, [Validators.required, Validators.min(0)]],
                   isGridColumn: [item.is_grid_column, Validators.required],
                   isSearchable: [item.is_searchable, Validators.required],
+                  clauseType: [item?.clause_type || 'where', Validators.required],
                   isSortable: [item.is_sortable, Validators.required],
                   fieldType: [item.field_type_id, Validators.required],
                 })
@@ -601,6 +603,7 @@ export class MasterEntityComponent implements OnInit {
         order_no: item.orderNo,
         is_grid_column: item.isGridColumn,
         is_searchable: item.isSearchable,
+        clause_type: item?.clauseType || 'where',
         is_sortable: item.isSortable,
         field_type_id: item.fieldType,
       }));
@@ -657,6 +660,7 @@ export class MasterEntityComponent implements OnInit {
         order_no: item.orderNo,
         is_grid_column: item.isGridColumn,
         is_searchable: item.isSearchable,
+        clause_type: item?.clauseType || 'where',
         is_sortable: item.isSortable,
         field_type_id: item.fieldType,
       }));
@@ -703,7 +707,6 @@ export class MasterEntityComponent implements OnInit {
 
     const formData = this.form.value;
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
-
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {

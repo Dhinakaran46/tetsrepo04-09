@@ -48,6 +48,8 @@ interface SheetData {
   individual_header_details: { [key: string]: HeaderDetails };
   ind_row_datas: RowData;
   error_msg?: string;
+  attachments_name?: string;
+  attachments_path?: string;
 }
 
 interface EntityList {
@@ -101,7 +103,10 @@ interface EntityListDataResponce extends ApiResponce {
   styleUrls: ['./import-master.component.scss'],
 })
 export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
+  import_job: any = 'direct';
+  import_batch_process_count: any = 50;
   importForm: FormGroup;
+
   fieldsForm: FormGroup = this.fb.group({});
   section: string = 'section1';
   importTemplates: EntityList[] = [];
@@ -113,6 +118,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   individual_fields: { [key: string]: ImportableField } = {};
   submitted: boolean = false;
   isLoading: boolean = false;
+  isSendMail: boolean = false;
 
   private socket$!: WebSocketSubject<any>;
   public progress = 100;
@@ -140,6 +146,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_start_row: [0, [Validators.min(0)]], // Minimum value 0
       data_end_row: [0, [Validators.min(0)]], // Minimum value 0
       max_data_row: [{ value: 500, disabled: true }],
+      name: ['', Validators.required],
+      description: [''],
       // individual_fields: this.fb.group({}),
     });
   }
@@ -165,8 +173,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data_start_row: 0,
       data_end_row: 0,
       max_data_row: 500,
+      name: '',
+      description: '',
       // individual_fields: this.fb.group({}),
     });
+
     this.fieldsForm = this.fb.group({});
     this.section = 'section1';
     // this.importTemplates = [];
@@ -187,7 +198,14 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       primary_table: 'import_templates',
       sort_columns: [['import_templates.name', 'asc']],
       limit_range: 1000,
-      select_columns: [['import_templates.id'], ['import_templates.name'], ['import_templates.slug'], ['import_templates.uuid']],
+      select_columns: [
+        ['import_templates.id'],
+        ['import_templates.name'],
+        ['import_templates.slug'],
+        ['import_templates.uuid'],
+        ['import_templates.job_type'],
+        ['import_templates.batch_process_count'],
+      ],
       company_id: 1,
       search_all: search_all,
     };
@@ -195,6 +213,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       (response: EntityListDataResponce) => {
         if (response.status && response.data?.records.length) {
           this.importTemplates = response.data.records;
+          console.log(this.importTemplates);
         } else if (!response.status) {
           this.importTemplates = [];
           this.toastr.error(`Code: ${response.code} , ${response.message}`);
@@ -392,16 +411,16 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getSheetDatas(): any {
-    return this.sheet_data?.row_datas.map((row: any) => {
+    const data = this.sheet_data?.row_datas.map((row: any) => {
       // Extract error messages and combine them into a single string
       const errorMessages = Object.values(row.errors)
         .flat()
         .map((error: any) => error.message)
-        .join(', ');
+        .join(',, ');
       const warnMessages = Object.values(row.warnings)
         .flat()
         .map((warning: any) => warning.message)
-        .join(', ');
+        .join(',, ');
 
       // Determine the error status
       const status = row.warning
@@ -416,6 +435,14 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         errorMessages: row.error ? errorMessages : warnMessages, // Add combined error messages
       };
     });
+    return data;
+  }
+  getSheetDatasForScheduled(): any {
+    return this.sheet_data?.row_datas.map((row: any) => {
+      return {
+        ...row.columns,
+      };
+    });
   }
 
   getSheetHeader() {
@@ -426,6 +453,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         key: key, // headers key
         label: `${header.display_name}${header.is_nullable ? '' : ' <span class="text-danger">*</span>'}`,
         sortable: true, // assuming all columns are sortable; adjust if needed
+        searchable: true,
         isHtmlHeader: true,
       }));
     // Add the two new columns at the beginning
@@ -437,15 +465,34 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     // Prepend additionalColumns to the existing columns
     const updatedColumns = [...additionalColumns, ...columns];
 
+    return { ...this.tableConfig, columns: updatedColumns, detailStatusPopup: true };
+  }
+
+  getSheetHeaderForScheduled() {
+    const headers: any = this.sheet_data?.header_details;
+    const columns: any = Object.entries(headers)
+      .sort(([, a]: [any, any], [, b]: [any, any]) => a.order_no - b.order_no) // Sort by `order_no`
+      .map(([key, header]: [any, any]) => ({
+        key: key, // headers key
+        label: `${header.display_name}${header.is_nullable ? '' : ' <span class="text-danger">*</span>'}`,
+        sortable: true, // assuming all columns are sortable; adjust if needed
+        searchable: true,
+        isHtmlHeader: true,
+      }));
+
+    const updatedColumns = [...columns];
+
     return { ...this.tableConfig, columns: updatedColumns };
   }
 
   importTemplateDetail() {
+    this.isLoading = true;
     const sheet_data: any = this.sheet_data;
     const isInValid = sheet_data.row_datas?.some((row: any) => row.error === true);
     const isInValidInd = sheet_data.ind_row_datas?.error;
     if (!sheet_data?.row_datas?.length || isInValid || isInValidInd) {
       this.toastr.error('Invalid sheet data please fix the errors befor continue.');
+      this.isLoading = false;
     } else {
       if (sheet_data.error_msg) {
         Swal.fire({
@@ -457,11 +504,13 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           padding: '2em',
         }).then(async (result) => {
           if (result.value) {
-            this.callImportApi(sheet_data);
+            this.uploadExcelAndcallImport(sheet_data);
+          } else {
+            this.isLoading = false;
           }
         });
       } else {
-        this.callImportApi(sheet_data);
+        this.uploadExcelAndcallImport(sheet_data);
       }
     }
   }
@@ -487,22 +536,141 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       }).then(async (result) => {
         if (result.value) {
           sheet_data = { ...sheet_data, row_datas: onlyValidRowDatas };
-          this.callImportApi(sheet_data);
+          this.uploadExcelAndcallImport(sheet_data);
         }
       });
     }
   }
 
+  processScheduledInsertion(sheet_data: SheetData) {
+    if (this.importForm.invalid) {
+      this.toastr.error('Please fill the import job form');
+      return;
+    }
+    console.log(sheet_data);
+    let finalData: any = sheet_data;
+    let finalRows: any = [];
+    finalData.row_datas.forEach((item: any) => {
+      // item.error = false;
+      item.errors = {};
+      //item.warning = false;
+      item.warnings = {};
+
+      finalRows.push({
+        import_job_id: '@table1.id',
+        row_object: item,
+      });
+    });
+    console.log(finalRows);
+
+    console.log(finalData);
+    const randomValue = Math.floor(Math.random() * 100000);
+    const wholeData = this.getSheetDatas();
+    const wholeDataConfig = this.getSheetHeader();
+    const rowObjectString = JSON.stringify(wholeData);
+    const rowObjectConfigString = JSON.stringify(wholeDataConfig);
+    const payload = {
+      action: ['insert', 'insert'],
+      table: ['import_jobs', 'import_job_line_items'],
+      table_mapping: ['table1', 'table2'],
+      data: {
+        table1: [
+          {
+            name: this.importForm.get('name')?.value,
+            description: this.importForm.get('description')?.value,
+            sequence_number: `{{{get_sequence_no('import_job', true)}}}`,
+            total_rows: wholeData.length,
+            completed_rows: 0,
+            error_rows: 0,
+            batch_process_count: this.import_batch_process_count,
+            file_path: sheet_data.attachments_path,
+            file_name: sheet_data.attachments_name,
+            created_by: this.userData.main.user_id,
+            header_details: {
+              selectedTemplate: this.selectedTemplate?.uuid,
+              fileUploadLog: this.fileUploadLog?.uuid,
+              individual_header_details: finalData.individual_header_details,
+              ind_row_datas: finalData.ind_row_datas,
+              header_details: finalData.header_details,
+              error_msg: finalData.error_msg,
+            },
+            table_config: rowObjectConfigString,
+          },
+        ],
+        table2: finalRows,
+      },
+    };
+    console.log(payload);
+    //    console.log('Payload:', JSON.stringify(payload, null, 2));
+    //return;
+    this.gridApiService.executeRecords(payload).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          console.log(response);
+          if (response.status) {
+            this.resetComponent();
+            this.getImportTemplates();
+            this.submitted = false;
+            this.toastr.success(response.message);
+            this.isLoading = false;
+          } else {
+            this.toastr.error(response.message);
+            this.isLoading = false;
+          }
+        } else {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          this.isLoading = false;
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+        this.isLoading = false;
+      }
+    );
+    //`{{{get_sequence_no('import_job', true)}}}`
+    //console.log(this.getSheetDatas());
+    //  console.log(this.getSheetHeader());
+  }
+
+  async uploadExcelAndcallImport(sheet_data: SheetData) {
+    if (this.isSendMail) {
+      const formData: FormData = new FormData();
+      formData.append('image', this.importForm.controls['import_template_file'].value, this.importForm.controls['import_template_file'].value?.name);
+      this.gridApiService.uploadImageAndGetName(formData).subscribe((response: any) => {
+        if (response.body && response.body.status) {
+          sheet_data.attachments_path = response.body.data[0].docName;
+          sheet_data.attachments_name = response.body.data[0].orgName;
+          this.callImportApi(sheet_data);
+        }
+      });
+    } else {
+      this.callImportApi(sheet_data);
+    }
+  }
+
   callImportApi(sheet_data: SheetData) {
-    this.isLoading = true;
-    this.gridApiService
-      .importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, {
+    if (this.import_job == 'scheduled') {
+      //this.isLoading = true;
+      this.processScheduledInsertion(sheet_data);
+    } else {
+      //this.isLoading = true;
+      let payload: any = {
         row_datas: sheet_data.row_datas,
         ind_row_datas: sheet_data.ind_row_datas,
-      })
-      .subscribe(
+      };
+
+      // Add file data if file is present
+      if (sheet_data.attachments_name) {
+        payload.attachments_name = sheet_data.attachments_name;
+        payload.attachments_path = sheet_data.attachments_path;
+      }
+
+      this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, payload).subscribe(
         (response: ApiResponce) => {
-          // console.log(response);
           if (response.status) {
             this.resetComponent();
             this.getImportTemplates();
@@ -521,6 +689,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
           this.isLoading = false;
         }
       );
+    }
   }
 
   getIndividualHeader(headers: any[]) {
@@ -543,16 +712,27 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.gridApiService.getIndividualImportFields(uuid).subscribe(
         (response: ApiResponce) => {
           if (response.status && response.data.records.length) {
+            console.log(response.data.records);
             this.resetComponent(uuid);
             if (response.data.records[0].importable_fields) {
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
             }
+            this.import_job = response.data.records[0].job_type;
+            this.isSendMail = response.data.records[0].is_send_mail;
+            this.import_batch_process_count = response.data.records[0].batch_process_count;
             this.importForm.patchValue({
               data_header_row: response.data.records[0].header_row,
               data_start_row: response.data.records[0].data_start_row,
               data_end_row: response.data.records[0].data_end_row,
               max_data_row: response.data.records[0].max_row_count,
             });
+            if (this.import_job === 'scheduled') {
+              this.importForm.get('name')?.setValidators([Validators.required]);
+            } else {
+              this.importForm.get('name')?.clearValidators();
+            }
+
+            this.importForm.get('name')?.updateValueAndValidity();
           } else {
             this.resetComponent(uuid);
           }

@@ -1,4 +1,5 @@
 import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
@@ -19,6 +20,8 @@ import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
+import { LoaderComponent } from '../../components/loader/loader.component';
+import { ProfileApiService } from '../../service/user/profile-api.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -32,11 +35,15 @@ interface FetchDataParams {
   sort_columns: any;
   search_any: any;
   search_all: any;
+  having_conditions: any;
+  having_any_conditions: any;
+  group_by: any;
+  includes: any;
 }
 
 @Component({
   standalone: true,
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent],
+  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -53,9 +60,13 @@ export class MasterListComponent implements AfterViewInit {
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
+  user_id: any;
+  isItemModalOpen = false;
+  changePasswordForm: FormGroup;
   column: any = '';
   query: any = '';
 
+  allowPasswordModal: any = false;
   selectcolumns: any[] = [];
   headercolumns: any[] = [];
   items: any[] = [];
@@ -64,6 +75,9 @@ export class MasterListComponent implements AfterViewInit {
   resultsPerPage: number = 10;
   enableCheckBox: boolean = false;
   masterInfo: any;
+  policyData: any = null;
+  loading: boolean = false;
+  gridloading: boolean = true;
 
   title: any = '';
   listQuery: any = '';
@@ -75,6 +89,7 @@ export class MasterListComponent implements AfterViewInit {
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
+    private apiService: ProfileApiService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
@@ -86,9 +101,35 @@ export class MasterListComponent implements AfterViewInit {
     private translate: TranslateService,
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
-    private titleService: Title
+    private titleService: Title,
+    private formBuilder: FormBuilder
   ) {
     this.initStore();
+
+    this.changePasswordForm = this.formBuilder.group(
+      {
+        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+        confirm_new_password: ['', Validators.required],
+      },
+      { validators: this.passwordMatchValidator }
+    );
+  }
+
+  passwordValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    const isValid = hasUpperCase && hasSpecialChar;
+    return !isValid ? { passwordInvalid: true } : null;
+  }
+
+  passwordMatchValidator(group: FormGroup): ValidationErrors | null {
+    const newPassword = group.get('new_password')?.value;
+    const confirmNewPassword = group.get('confirm_new_password')?.value;
+    return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
   ngAfterViewInit() {
@@ -97,9 +138,14 @@ export class MasterListComponent implements AfterViewInit {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
-
     if (pageInfo && this.resultsPerPage) {
+      if (this.user_info.main?.policies) {
+        this.policyData = this.user_info.main?.policies[pageInfo.ListQuery.entity_name.trim()] || null;
+      }
       this.masterInfo = pageInfo;
+      if (this.masterInfo.ListQuery.entity_name == 'user') {
+        this.allowPasswordModal = true;
+      }
 
       const masterListConfig = pageInfo;
 
@@ -130,6 +176,49 @@ export class MasterListComponent implements AfterViewInit {
       });
   }
 
+  onChangePassword() {
+    if (this.changePasswordForm && this.changePasswordForm.errors && this.changePasswordForm.errors['passwordsMismatch']) {
+      const key = 'passwords_do_not_match';
+      const errorMessage = this.translate.instant(key);
+      this.toastr.error(errorMessage, 'Error');
+      return;
+    }
+
+    if (this.changePasswordForm.invalid) {
+      this.markAllAsTouched();
+      return;
+    }
+
+    const formData = {
+      uuid: this.user_id,
+      password: this.changePasswordForm.get('new_password')?.value,
+    };
+
+    this.apiService.resetPasswordAnyUser(formData).subscribe(
+      (response) => {
+        const key = 'password_resetted_successfully';
+        const successMessage = this.translate.instant(key);
+        this.toastr.success(successMessage);
+        this.changePasswordForm.reset();
+        this.isItemModalOpen = false;
+        this.fetchData(this.listQuery);
+      },
+      (error) => {
+        const key = 'error_resetting_password';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage + error, 'Error');
+        this.isItemModalOpen = false;
+        // Handle error response
+      }
+    );
+  }
+
+  private markAllAsTouched() {
+    Object.values(this.changePasswordForm.controls).forEach((control) => {
+      control.markAsTouched();
+    });
+  }
+
   sortColumn(column: any) {
     this.column = column;
 
@@ -139,6 +228,15 @@ export class MasterListComponent implements AfterViewInit {
     this.fetchData(this.listQuery);
   }
 
+  passwordModal(item: any) {
+    //return;
+    this.isItemModalOpen = true;
+    this.user_id = item.uuid;
+  }
+  cancelResetPwd() {
+    this.changePasswordForm.reset();
+    this.isItemModalOpen = false;
+  }
   advancedSearchData(data: any) {
     interface QueryItem {
       isAggregate: boolean;
@@ -167,7 +265,11 @@ export class MasterListComponent implements AfterViewInit {
       return;
     }
     if (havingConditions.length > 0) {
-      clonedListQuery.having_conditions = [...havingConditions];
+      if (condition == 'AND') {
+        clonedListQuery.having_conditions = [...havingConditions];
+      } else {
+        clonedListQuery.having_any_conditions = [...havingConditions];
+      }
     }
     if (condition == 'AND') {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
@@ -193,63 +295,77 @@ export class MasterListComponent implements AfterViewInit {
       this.fetchData(clonedListQuery);
     }
   }
-  searchData(data: any) {
-    const query = data.data;
-    const search = data.search;
-
+  searchData(input: any) {
     const clonedListQuery = this.listQuery;
-    if (search == '') {
-      const orgListQuery = this.defaultQuery;
+    if (input.where.data.length) {
+      const query = input.where.data;
+      const search = input.where.search;
+      if (search == '') {
+        const orgListQuery = this.defaultQuery;
 
-      clonedListQuery.search_any = [];
-      clonedListQuery.search_any = [...orgListQuery.search_any];
-      this.fetchData(clonedListQuery);
-      return;
+        clonedListQuery.search_any = [];
+        clonedListQuery.search_any = [...orgListQuery.search_any];
+        this.fetchData(clonedListQuery);
+        return;
+      }
+
+      if (query.length === 1 && query[0].column_name === '') {
+        clonedListQuery.search_any = [...clonedListQuery.search_any];
+      } else {
+        clonedListQuery.search_any = [...query];
+      }
     }
 
-    if (query.length === 1 && query[0].column_name === '') {
-      clonedListQuery.search_any = [...clonedListQuery.search_any];
-    } else {
-      clonedListQuery.search_any = [...query];
+    if (input.having.data.length) {
+      const query = input.having.data;
+      const search = input.having.search;
+      if (search.length) clonedListQuery.having_any_conditions = [...query];
     }
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
-
     this.fetchData(clonedListQuery);
   }
 
   exportTable(item: any) {
-    this.exportItem(item);
-    return;
-    const query = { ...this.listQuery };
-    query.limit_range = 100000;
-
-    this.gridApiService.getAllRecords(query).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-          if (response.data.records && response.data.headers) {
-            const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
-            if (item.type == 'pdf') {
-              this.exportService.exportToPDF(filteredData, 'TableData');
+    if (this.masterInfo.permissions.export) {
+      this.loading = true;
+      if (this.masterInfo.children.export && this.masterInfo.children.export.component_class_name == 'export_module') {
+        this.exportItem(item);
+      } else {
+        const query = { ...this.listQuery };
+        query.limit_range = 1000000;
+        const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
+        this.gridApiService.getAllRecords(this.formatPayloadWithPolicyConditions(query)).subscribe(
+          (response) => {
+            if (response.status && response.code === 200) {
+              if (response.data.records && response.data.headers) {
+                const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
+                if (item.type == 'pdf') {
+                  this.exportService.exportToPDF(filteredData, export_download);
+                } else {
+                  this.exportService.exportToExcel(filteredData, export_download);
+                }
+                this.loading = false;
+              }
             } else {
-              this.exportService.exportToExcel(filteredData, 'TableData');
-            }
-          }
-        } else {
-          this.items = [];
-          this.totalItems = 0;
+              this.loading = false;
+              this.items = [];
+              this.totalItems = 0;
 
-          const key = response.message;
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
-        }
-      },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+              const key = response.message;
+              const errorMessage = this.translate.instant(key);
+              this.toastr.error(errorMessage, 'Error');
+            }
+          },
+          (error) => {
+            this.loading = false;
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
       }
-    );
+    }
   }
 
   private filterAndTransformData(headers: any[], records: any[]): any[] {
@@ -257,17 +373,23 @@ export class MasterListComponent implements AfterViewInit {
 
     const transformedRecords = records.map((record) => {
       const transformedRecord: any = {};
+
       filteredHeaders.forEach((header) => {
         const translationKey = `${header.header}`;
+
         const translatedHeader = this.translate.instant(translationKey);
-        if (header.field_type_id == '7') {
+
+        if (header.field_type_id == '5') {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
+        } else if (header.field_type_id == '7') {
+          transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
         } else {
           transformedRecord[translatedHeader] = record[header.header];
         }
       });
+
       return transformedRecord;
     });
 
@@ -291,8 +413,8 @@ export class MasterListComponent implements AfterViewInit {
           const data = response.data.records.map((key: any, index: any) => {
             return {
               field: key.field_name,
-              title: key.display_name,
-              sorting: key.is_shortable,
+              title: this.translate.instant(key.display_name),
+              sorting: key.is_sortable,
               searchable: key.is_searchable,
               enable: true,
               ...key,
@@ -336,10 +458,53 @@ export class MasterListComponent implements AfterViewInit {
     );
   }
 
+  removeDuplicateObjects(conditions: any[]) {
+    const seen = new WeakSet();
+    return conditions.filter((condition) => !seen.has(condition) && seen.add(condition));
+  }
+
+  removeDuplicateStringsOrNumbers(conditions: any[]) {
+    return [...new Set(conditions)];
+  }
+
+  removeDuplicateData(conditions: any[]) {
+    const seen = new Set<string>();
+    return conditions.filter((condition) => !seen.has(JSON.stringify(condition)) && seen.add(JSON.stringify(condition)));
+  }
+
+  formatPayloadWithPolicyConditions(payload: FetchDataParams | any) {
+    if (!this.policyData) return payload;
+
+    for (const { query_information } of this.policyData) {
+      if (!query_information) continue;
+
+      const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns'];
+
+      for (const field of fields) {
+        if (query_information[field]) {
+          payload[field] = [...(payload[field] || []), ...query_information[field]];
+        }
+      }
+    }
+
+    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions'];
+    objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
+
+    if (payload.group_by) {
+      payload.group_by = this.removeDuplicateStringsOrNumbers(payload.group_by);
+    }
+    if (payload.sort_columns) {
+      payload.sort_columns = this.removeDuplicateData(payload.sort_columns);
+    }
+
+    return payload;
+  }
+
   fetchData(params: FetchDataParams) {
     params.limit_range = this.resultsPerPage;
-
-    this.gridApiService.getAllRecords(params).subscribe(
+    const payload = this.formatPayloadWithPolicyConditions(params);
+    console.log('payload', payload);
+    this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           if (response.data.headers) {
@@ -424,8 +589,12 @@ export class MasterListComponent implements AfterViewInit {
             this.items = response.data.records.map((item: any, index: any) => {
               const formattedItem = { ...item };
               for (const key in formattedItem) {
-                if (formattedItem.hasOwnProperty(key) && key.toLowerCase().includes('date') && this.isDate(formattedItem[key])) {
-                  const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd');
+                if (
+                  formattedItem.hasOwnProperty(key) &&
+                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
+                  this.isDate(formattedItem[key])
+                ) {
+                  const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd HH:mm:ss');
                   if (transformedDate) {
                     formattedItem[key] = transformedDate;
                   }
@@ -444,15 +613,17 @@ export class MasterListComponent implements AfterViewInit {
                 Action: index + 1,
               };
             });
-
             this.totalItems = response.data.total_records;
+            this.gridloading = false;
           } else {
             this.items = [];
             this.totalItems = 0;
+            this.gridloading = false;
           }
         } else {
           this.items = [];
           this.totalItems = 0;
+          this.gridloading = false;
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
@@ -462,6 +633,7 @@ export class MasterListComponent implements AfterViewInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
+        this.gridloading = false;
       }
     );
   }
@@ -533,16 +705,20 @@ export class MasterListComponent implements AfterViewInit {
               // Cleanup
               document.body.removeChild(link);
               window.URL.revokeObjectURL(url);
+              this.loading = false;
             } else if (item.type === 'pdf') {
               // Convert Excel to PDF
               this.convertExcelToPDF(blob, response.fileName.replace('.xlsx', '.pdf'));
+              this.loading = false;
             }
           } catch (err) {
+            this.loading = false;
             console.error('Download error:', err);
             this.toastr.error('Error downloading file');
           }
         },
         error: (error) => {
+          this.loading = false;
           console.error('Export error:', error);
           this.toastr.error('Error exporting data');
         },
@@ -592,7 +768,7 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   recordExport(item: any) {
-    console.log(item);
+    this.loading = true;
 
     if (this.masterInfo.children.record_export) {
       this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, item.id).subscribe({
@@ -615,20 +791,30 @@ export class MasterListComponent implements AfterViewInit {
             // Cleanup
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
+            this.loading = false;
           } catch (err) {
             console.error('Download error:', err);
             this.toastr.error('Error downloading file');
+            this.loading = false;
           }
         },
         error: (error) => {
           console.error('Export error:', error);
           this.toastr.error('Error exporting data');
+          this.loading = false;
         },
       });
     }
   }
   commonTranslate(msg: any) {
     return this.translate.instant(msg);
+  }
+
+  printItem(item: any) {
+    if (this.masterInfo.children.print) {
+      const targetRoute = this.masterInfo.children.print.target.replace(':id', item.uuid);
+      this.router.navigate([targetRoute]);
+    }
   }
 
   directDeleteItem(item: any) {
@@ -662,11 +848,43 @@ export class MasterListComponent implements AfterViewInit {
     });
   }
 
+  emailResendItem(item: any) {
+    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Resend Mail?',
+        text: 'are you sure, you want to resend mail?',
+        showCancelButton: true,
+        confirmButtonText: 'Resend',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          try {
+            const jobResponse = await this.localStorageService.getMasterEntity({
+              record_info: item,
+              entity_name: this.masterInfo.children.email_resend.entity_name,
+              entity_type: this.masterInfo.children.email_resend.component_class_name,
+            });
+
+            if (jobResponse) {
+              await this.executeJob({ ...jobResponse, record_info: item });
+              Swal.fire({ title: 'Mail resent request initiated!', text: 'Mail resent request has been initiated.', icon: 'success' });
+              this.fetchData(this.listQuery);
+            }
+          } catch (error: any) {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, error.message);
+          }
+        }
+      });
+    }
+  }
+
   deleteItem(item: any) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
-
         this.commonService.procedureCall(procedureParams).subscribe({
           next: (response: { code: number; status: boolean; data: any; message: string }) => {
             if (response.code === 200 && response.status && response.data) {
@@ -715,7 +933,6 @@ export class MasterListComponent implements AfterViewInit {
               const key = 'error';
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
-              console.log(response.message);
             }
           },
           error: (error) => {
