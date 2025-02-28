@@ -220,17 +220,45 @@
             <label for="is_send_mail" class="required-mark mb-2 block font-medium">{{ 'form_label_is_sendmail' | translate }}</label>
             <div class="flex items-center space-x-4">
               <label class="flex cursor-pointer items-center">
-                <input type="radio" [value]="true" formControlName="is_send_mail" class="form-radio" appDynamicFontSize="body" />
+                <input
+                  type="radio"
+                  [value]="true"
+                  formControlName="is_send_mail"
+                  class="form-radio"
+                  appDynamicFontSize="body"
+                  (change)="toggleEmailProcessSlug(true)"
+                />
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
               </label>
 
               <label class="flex cursor-pointer items-center">
-                <input type="radio" [value]="false" formControlName="is_send_mail" class="form-radio" appDynamicFontSize="body" />
+                <input
+                  type="radio"
+                  [value]="false"
+                  formControlName="is_send_mail"
+                  class="form-radio"
+                  appDynamicFontSize="body"
+                  (change)="toggleEmailProcessSlug(false)"
+                />
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
               </label>
             </div>
             <div *ngIf="isFieldInvalid('is_send_mail')" class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('is_send_mail') }}
+            </div>
+          </div>
+
+          <div class="mt-0" *ngIf="showEmailProcessSlug">
+            <label for="email_process_slug" class="required-mark mb-2 block font-medium">{{ 'form_label_email_process_slug' | translate }}</label>
+
+            <select id="email_process_slug" formControlName="email_process_slug" class="form-select block sm:text-sm">
+              <option disabled selected value="">Select Email Process</option>
+
+              <option *ngFor="let row of emailprocesslist" [value]="row.slug">{{ row.name }}</option>
+            </select>
+
+            <div *ngIf="isFieldInvalid('email_process_slug')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('email_process_slug') }}
             </div>
           </div>
         </div>
