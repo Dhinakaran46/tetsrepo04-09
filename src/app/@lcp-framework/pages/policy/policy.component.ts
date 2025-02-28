@@ -36,7 +36,6 @@ export class PolicyComponent implements OnInit {
   store: any;
   loading = false;
   unique_id!: string | null;
-  entityList: any[] = [];
   title: any = '';
 
   editorOptions = { theme: 'vs-dark', language: 'sql', tabSize: 1, insertSpaces: true };
@@ -65,19 +64,14 @@ export class PolicyComponent implements OnInit {
     this.userData = JSON.parse(this.localStorageService.getData('user_data'))?.main || {};
     this.policyForm = this.fb.group({
       policy_id: [''],
-      policy_name: ['', [Validators.required]],
+      policy_name: ['', [Validators.required, Validators.maxLength(75)]],
       policy_description: ['', [Validators.required]],
-      entity_id: ['', [Validators.required]],
-      entity_name: [{ value: '', disabled: true }, [Validators.required]],
-      entity_type: [{ value: '', disabled: true }, [Validators.required]],
-      primary_table: [{ value: '', disabled: true }, [Validators.required]],
+      slug: [{ value: '', disabled: true }],
       query_information: [''],
       status_id: [1],
     });
     if (this.unique_id) {
       this.getPolicyData();
-    } else {
-      this.getEntityList();
     }
   }
 
@@ -112,124 +106,10 @@ export class PolicyComponent implements OnInit {
       policy_id: '',
       policy_name: '',
       policy_description: '',
-      entity_id: '',
-      entity_type: '',
-      entity_name: '',
-      primary_table: '',
+      slug: '',
       query_information: '',
       status_id: 1,
     });
-  }
-
-  getEntityList() {
-    const payload = {
-      includes: [],
-      company_id: 1,
-      search_all: [
-        {
-          value: '1',
-          operator: '=',
-          column_name: 'master_entities.status_id',
-        },
-        {
-          value: 'grid_builder_module',
-          operator: '=',
-          column_name: 'master_entities.entity_type',
-        },
-      ],
-      limit_range: 1000,
-      print_query: true,
-      start_index: 0,
-      sort_columns: [['master_entities.name', 'asc']],
-      primary_table: 'master_entities',
-      select_columns: [
-        ['master_entities.id', 'value'],
-        ['master_entities.name', 'label'],
-      ],
-    };
-    this.loading = true;
-    this.commonService.getCommonList(payload).subscribe({
-      next: (response: any) => {
-        if (response.code === 200 && response.status) {
-          this.entityList = response.data.records;
-          this.loading = false;
-        } else {
-          this.loading = false;
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching URL details:', error);
-        this.loading = false;
-      },
-    });
-  }
-
-  getEntityData() {
-    const entityId = this.policyForm.get('entity_id')?.value || null;
-    if (entityId || this.unique_id) {
-      const payload = {
-        group_by: ['master_entities.id', 'master_entities.primary_table', 'master_entities.name', 'master_entities.entity_type'],
-        includes: [],
-        company_id: 1,
-        search_all: [
-          {
-            value: Number(entityId),
-            operator: '=',
-            column_name: 'master_entities.id',
-          },
-          {
-            value: '1',
-            operator: '=',
-            column_name: 'master_entities.status_id',
-          },
-        ],
-        limit_range: 1,
-        print_query: true,
-        start_index: 0,
-        sort_columns: [['master_entities.id', 'asc']],
-        primary_table: 'master_entities',
-        select_columns: [
-          ['master_entities.id', 'entity_id'],
-          ['master_entities.name', 'entity_name'],
-          ['master_entities.primary_table', 'primary_table'],
-          ['master_entities.entity_type', 'entity_type'],
-        ],
-      };
-      this.loading = true;
-      this.commonService.getCommonList(payload).subscribe({
-        next: (response: any) => {
-          if (response.code === 200 && response.status) {
-            this.loading = false;
-            if (response.data.records) {
-              this.policyForm.patchValue({
-                entity_id: response.data.records[0].entity_id,
-                entity_name: response.data.records[0].entity_name,
-                primary_table: response.data.records[0].primary_table,
-                entity_type: this.translate.instant(response.data.records[0].entity_type),
-              });
-            } else {
-              const key = 'failed_to_fetch_the_entity_details';
-              const errorMessage = this.translate.instant(key);
-              this.toastr.error(errorMessage, 'Error');
-            }
-          } else {
-            this.loading = false;
-          }
-        },
-        error: (error) => {
-          this.loading = false;
-          console.error('Error fetching URL details:', error);
-        },
-      });
-    } else {
-      this.loading = false;
-      this.policyForm.patchValue({
-        entity_id: '',
-        entity_name: '',
-        primary_table: '',
-        entity_type: '',
-      });
-    }
   }
 
   prepareJSON(data: any): string {
@@ -243,14 +123,8 @@ export class PolicyComponent implements OnInit {
   getPolicyData() {
     if (this.unique_id) {
       const payload = {
-        group_by: ['policies.id', 'master_entities.primary_table', 'master_entities.name', 'master_entities.entity_type'],
-        includes: [
-          {
-            join_type: 'LEFT',
-            table_name: 'master_entities',
-            join_condition: 'master_entities.id = policies.entity_id',
-          },
-        ],
+        group_by: ['policies.id'],
+        includes: [],
         company_id: 1,
         search_all: [
           {
@@ -272,13 +146,10 @@ export class PolicyComponent implements OnInit {
         select_columns: [
           ['policies.id', 'policy_id'],
           ['policies.name', 'policy_name'],
+          ['policies.slug', 'slug'],
           ['policies.description', 'policy_description'],
-          ['policies.entity_id', 'entity_id'],
           ['policies.status_id', 'status_id'],
           ['policies.query_information', 'query_information'],
-          ['master_entities.name', 'entity_name'],
-          ['master_entities.primary_table', 'primary_table'],
-          ['master_entities.entity_type', 'entity_type'],
         ],
       };
       this.loading = true;
@@ -293,10 +164,7 @@ export class PolicyComponent implements OnInit {
                 policy_name: data.policy_name,
                 policy_description: data.policy_description,
                 query_information: data?.query_information ? this.prettyJSON(data.query_information) : '',
-                entity_id: data.entity_id,
-                entity_name: data.entity_name,
-                entity_type: this.translate.instant(data?.entity_type || ''),
-                primary_table: data.primary_table,
+                slug: data.slug,
                 status_id: data.status_id,
               });
             } else {
@@ -321,13 +189,17 @@ export class PolicyComponent implements OnInit {
     }
   }
 
+  generateSlug(data: any) {
+    return this.localStorageService.generateSlugWithTimestamp(data.policy_name);
+  }
+
   upsertPolicy() {
     const policyData = this.policyForm.getRawValue();
 
     const policyPayload = {
       name: policyData.policy_name?.trim(),
       description: policyData.policy_description?.length ? policyData.policy_description : null,
-      entity_id: Number(policyData.entity_id),
+      slug: this.unique_id ? policyData.slug : this.generateSlug(policyData),
       query_information: policyData?.query_information ? this.prepareJSON(policyData.query_information) : null,
       status_id: Number(policyData.status_id) || 1,
       ...(!this.unique_id && {

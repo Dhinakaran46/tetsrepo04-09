@@ -175,4 +175,8 @@ export class GridApiService {
   getIndividualImportFields(uuid: any): Observable<any> {
     return this.http.get(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplatedetails}/${uuid}`);
   }
+
+  getAttachedPolicies(data: any): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.attachedpolicies}/${data.entity_name}`);
+  }
 }

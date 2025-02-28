@@ -79,7 +79,6 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
 
   updateFileAccept(type: string) {
     if (type?.length) {
-      console.log('type', type);
       type.split(',').map((value) => {
         let format = '';
         switch (value.trim().toLowerCase()) {
@@ -167,7 +166,6 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
     } else {
       this.acceptFormat = ['image/*'];
     }
-    console.log('this.acceptFormat', this.acceptFormat);
     return this.acceptFormat.join(',');
   }
 
