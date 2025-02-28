@@ -562,6 +562,15 @@ export class FormBuilderComponent implements OnInit {
     return pathSegments.reduce((acc, part) => acc && acc[part], obj);
   }
 
+  private parseJSONField(value: any) {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch (error) {
+      console.error('JSON Parsing Error:', error);
+      return value;
+    }
+  }
+
   private resetForm() {
     const listParams = {
       company_id: 1,
@@ -581,7 +590,13 @@ export class FormBuilderComponent implements OnInit {
     this.gridApiService.getAllList(listParams).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
-          this.formEntity = response.data.records[0];
+          let formEntity = response.data.records[0];
+          formEntity.query_information = this.parseJSONField(formEntity.query_information);
+          formEntity.form_information = this.parseJSONField(formEntity.form_information);
+          formEntity.add_query_information = this.parseJSONField(formEntity.add_query_information);
+          formEntity.edit_query_information = this.parseJSONField(formEntity.edit_query_information);
+          formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
+          this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
           this.transParam = this.entity_type === 'add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
@@ -638,7 +653,7 @@ export class FormBuilderComponent implements OnInit {
           }
           this.applyAvailableDataToForm(fieldsJson, formControl);
         } else if (!response.status) {
-          this.toastr.error('Invalid entity details given2.');
+          this.toastr.error('Invalid entity details given.');
           this.router.navigate(['/dashboard']);
         }
       },
