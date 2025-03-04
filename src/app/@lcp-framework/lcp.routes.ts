@@ -16,6 +16,7 @@ import { ImportMasterComponent } from './pages/import-master/import-master.compo
 import { DocumentationComponent } from './pages/documentation/documentation.component';
 import { ImportConfirmDeactivateGuard } from './guards/impotrt-confirm-deactivate.guard';
 import { ExampleClientDatatableComponent } from './pages/example-client-datatable/example-client-datatable.component';
+import { EmailTemplateAssignmentComponent } from './pages/email-template-assignment/email-template-assignment.component';
 export const routes: Routes = [
   {
     path: 'not-found',
@@ -72,6 +73,14 @@ export const routes: Routes = [
         path: 'access-denied',
         component: AccessDeniedComponent,
         title: 'Access Denied',
+        data: {
+          defaultPermission: true,
+        },
+      },
+      {
+        path: 'email-temp/assign/:uuid',
+        component: EmailTemplateAssignmentComponent,
+        title: 'Template Assingnment',
         data: {
           defaultPermission: true,
         },

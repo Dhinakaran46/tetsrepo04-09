@@ -1,0 +1,189 @@
+<!-- <div class="container bg-white p-4">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <formly-form [form]="form" [fields]="fields" [model]="model"></formly-form>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div> -->
+
+<div class="panel">
+  <div class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+    <h5 class="text-lg font-semibold dark:text-white-light">
+      Email template assignment
+      <!-- {{ 'policy_add_edit_form' | translate }} -->
+    </h5>
+    <div class="align-center flex gap-3">
+      <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+        back
+        <!-- {{ 'back' | translate }} -->
+      </button>
+      <button type="submit" class="btn btn-primary" (click)="submit()">Submit</button>
+    </div>
+  </div>
+
+  <div>
+    <form [formGroup]="form">
+      <div formGroupName="email_template_process" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+        <div class="min-w-200-p">
+          <div class="form-group">
+            <label for="email_template_process_id">Email Template Process</label>
+            <select
+              formControlName="email_template_process_id"
+              class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+              required
+            >
+              <option value="">Please select</option>
+              @for(process of emailTemplateProcessDetail; track process; let i = $index) {
+              <option [value]="process.id">{{ process.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <button
+          (click)="addEmailTemplateAssignment()"
+          class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark flex w-40 flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+
+      <div formArrayName="email_template_assignments">
+        @for(assignment of getTemplateAssignmentList(); track assignment; let i = $index) {
+        <div [formGroupName]="i" class="my-4">
+          <div class="grid grid-cols-4 gap-3">
+            <div class="form-group">
+              <label>Recipient Type</label>
+              <select
+                formControlName="recipient_type"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+              >
+                <option value="tag">Tag</option>
+                <option value="user_id">User</option>
+                <option value="custom">Custom Mail</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
+              <label>Email Tag</label>
+              <select
+                formControlName="email_to"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+              >
+                @for(tag of recipientTags; track tag; let i = $index) {
+                <option [value]="tag.id">{{ tag.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
+              <label>User Email</label>
+              <input type="text" formControlName="email_to" class="form-control" placeholder="Search user email" required />
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'custom'">
+              <label>Email</label>
+              <input type="email" formControlName="email_to" class="form-control" placeholder="Enter email address" required />
+            </div>
+
+            <div class="form-group">
+              <label>Email Template</label>
+              <select
+                formControlName="template_id"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+              >
+                @for(template of templateList; track template; let i = $index) {
+                <option [value]="template.value">{{ template.label }}</option>
+                }
+              </select>
+            </div>
+
+            @if(i > 0) {
+            <button
+              appDynamicFontSize="body"
+              type="button"
+              class="hover:bg-danger-dark dark:bg-danger-dark dark:focus:ring-danger-dark w-25 mt-5 flex flex-row items-center justify-center gap-8 rounded-md bg-danger px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 dark:text-white"
+              (click)="removeEmailTemplateAssignment(i)"
+            >
+              Remove Recipient
+            </button>
+            }
+          </div>
+
+          <div formArrayName="cc_bcc" class="grid grid-cols-1">
+            @for(ccBcc of getCcBccControls(i); track ccBcc; let j = $index) {
+            <div [formGroupName]="j" class="mt-4 grid grid-cols-4 gap-3">
+              <div class="form-group">
+                <label>Send Type</label>
+                <select
+                  formControlName="send_type"
+                  class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                  required
+                >
+                  <option value="cc">CC</option>
+                  <option value="bcc">BCC</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Recipient Type</label>
+                <select
+                  formControlName="recipient_type"
+                  class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                  required
+                >
+                  <option value="tag">Tag</option>
+                  <option value="user_id">User</option>
+                  <option value="custom">Custom Mail</option>
+                </select>
+              </div>
+
+              <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'tag'">
+                <label>Email Tag</label>
+                <select
+                  formControlName="email_to"
+                  class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                  required
+                >
+                  @for(tag of recipientTags; track tag; let i = $index) {
+                  <option [value]="tag.id">{{ tag.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'user_id'">
+                <label>User Email</label>
+                <input type="text" formControlName="email_to" class="form-control" placeholder="Search user email" required />
+              </div>
+
+              <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'custom'">
+                <label>Email</label>
+                <input type="email" formControlName="email_to" class="form-control" placeholder="Enter email address" required />
+              </div>
+
+              <button
+                type="button"
+                class="hover:bg-danger-dark dark:bg-danger-dark dark:focus:ring-danger-dark mt-5 flex w-20 flex-row items-center justify-center gap-8 rounded-md bg-danger px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 dark:text-white"
+                (click)="removeCcBccGroup(i, j)"
+              >
+                Remove
+              </button>
+            </div>
+            }
+          </div>
+          <button
+            type="button"
+            class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark mt-5 flex flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
+            (click)="addCcBccGroup(i)"
+          >
+            Add CC/BCC
+          </button>
+        </div>
+        }
+      </div>
+    </form>
+  </div>
+</div>

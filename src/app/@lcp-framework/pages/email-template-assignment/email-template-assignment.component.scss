@@ -1,0 +1,40 @@
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.grid-cols-1 {
+  grid-template-columns: 1fr;
+}
+
+.md\:grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.email-template-assignments {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.email-template-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.email-template-group {
+  flex: 1;
+}
+
+.email-template-cc-bcc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.min-w-200-p {
+  min-width: 200px;
+}
