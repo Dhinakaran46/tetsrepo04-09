@@ -15,13 +15,14 @@
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
               <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div class="flex flex-col">
-                  <label for="policy_name">{{ 'policy_name' | translate }} <span class="text-danger">*</span></label>
+                  <label for="policy_name" class="required-mark mb-2 block font-medium">{{ 'policy_name' | translate }}</label>
                   <input
                     autocomplete="off"
                     appDynamicFontSize="body"
                     formControlName="policy_name"
                     id="policy_name"
                     type="text"
+                    maxlength="75"
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                     [required]="true"
                   />
@@ -31,9 +32,12 @@
                   >
                     {{ 'policy_name_is_required' | translate }}
                   </div>
+                  <div *ngIf="policyForm.get('policy_name')?.errors?.['maxlength']" class="invalid-feedback mt-1 text-danger">
+                    Policy name cannot exceed 75 characters.
+                  </div>
                 </div>
                 <div class="flex flex-col">
-                  <label for="policy_description">{{ 'policy_description' | translate }} <span class="text-danger">*</span></label>
+                  <label for="policy_description" class="required-mark mb-2 block font-medium">{{ 'policy_description' | translate }}</label>
                   <input
                     autocomplete="off"
                     appDynamicFontSize="body"
@@ -53,86 +57,41 @@
                     {{ 'policy_description_is_required' | translate }}
                   </div>
                 </div>
-                <div class="align-center inline-contents relative justify-center" *ngIf="!unique_id">
-                  <label for="entity_id">{{ 'entity_name' | translate }} <span class="text-danger">*</span></label>
-                  <select
-                    appDynamicFontSize="body"
-                    id="entity_id"
-                    class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
-                    formControlName="entity_id"
-                    (change)="getEntityData()"
-                    [required]="true"
-                  >
-                    <option value>{{ 'Select the entity' }}</option>
-                    <option *ngFor="let entity of entityList" [value]="entity.value">{{ entity.label | translate }}</option>
-                  </select>
-                  <div
-                    *ngIf="policyForm.get('entity_id')?.invalid && (policyForm.get('entity_id')?.touched || policyForm.get('entity_id')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
-                    {{ 'entity_is_required' | translate }}
+                <div class="flex flex-col">
+                  <label class="required-mark mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
+                  <div class="flex items-center space-x-4">
+                    <label for="1" class="flex cursor-pointer items-center">
+                      <input id="1" type="radio" [value]="1" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                      <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+                    </label>
+
+                    <label for="2" class="flex cursor-pointer items-center">
+                      <input id="2" type="radio" [value]="2" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                      <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+                    </label>
                   </div>
-                </div>
-                <div class="flex flex-col" *ngIf="unique_id">
-                  <label for="entity_name">{{ 'entity_name' | translate }} <span class="text-danger">*</span></label>
-                  <input
-                    autocomplete="off"
-                    appDynamicFontSize="body"
-                    formControlName="entity_name"
-                    id="entity_name"
-                    type="text"
-                    readonly
-                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
-                    [required]="true"
-                  />
                   <div
-                    *ngIf="policyForm.get('entity_id')?.invalid && (policyForm.get('entity_id')?.touched || policyForm.get('entity_id')?.dirty)"
+                    *ngIf="policyForm.get('status_id')?.invalid && (policyForm.get('status_id')?.touched || policyForm.get('status_id')?.dirty)"
                     class="invalid-feedback mt-1 text-danger"
                   >
-                    {{ 'entity_is_required' | translate }}
+                    {{ 'status_is_required' | translate }}
                   </div>
                 </div>
               </div>
             </div>
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
               <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div class="flex flex-col">
-                  <label for="entity_type">{{ 'entity_type' | translate }}</label>
+                <div *ngIf="unique_id" class="flex flex-col">
+                  <label for="slug">{{ 'slug' | translate }}</label>
                   <input
                     autocomplete="off"
                     appDynamicFontSize="body"
-                    formControlName="entity_type"
-                    id="entity_type"
+                    formControlName="slug"
+                    id="slug"
                     type="text"
                     readonly
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                   />
-                </div>
-                <div class="flex flex-col">
-                  <label for="primary_table">{{ 'primary_table' | translate }}</label>
-                  <input
-                    autocomplete="off"
-                    appDynamicFontSize="body"
-                    formControlName="primary_table"
-                    id="primary_table"
-                    type="text"
-                    readonly
-                    class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
-                  />
-                </div>
-                <div class="flex flex-col">
-                  <label for="status_id" class="required-mark mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
-                  <div class="flex items-center space-x-4">
-                    <label class="flex cursor-pointer items-center">
-                      <input type="radio" [value]="1" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
-                      <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
-                    </label>
-
-                    <label class="flex cursor-pointer items-center">
-                      <input type="radio" [value]="2" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
-                      <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
-                    </label>
-                  </div>
                 </div>
               </div>
             </div>
@@ -142,7 +101,7 @@
     </div>
     <div class="grid grid-cols-1">
       <div class="mb-5 p-2">
-        <label for="query_information" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+        <label class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
         <div class="monaco-editor-container" appDynamicFontSize="body">
           <ngx-monaco-editor
             monacoEditor
@@ -151,12 +110,6 @@
             formControlName="query_information"
             class="monaco-editor !h-96"
           ></ngx-monaco-editor>
-        </div>
-        <div
-          *ngIf="policyForm.get('query_information')?.invalid && (policyForm.get('query_information')?.touched || policyForm.get('query_information')?.dirty)"
-          class="invalid-feedback mt-1 text-danger"
-        >
-          {{ 'query_information_is_invalid' | translate }}
         </div>
       </div>
     </div>

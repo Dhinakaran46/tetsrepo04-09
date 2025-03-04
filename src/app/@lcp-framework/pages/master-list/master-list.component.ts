@@ -85,6 +85,7 @@ export class MasterListComponent implements AfterViewInit {
   user_info: any;
   grid_records_delete: any;
   config: any;
+  attachedPolicies: any[] = [];
 
   constructor(
     private toastr: ToastrService,
@@ -140,7 +141,7 @@ export class MasterListComponent implements AfterViewInit {
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
-        this.policyData = this.user_info.main?.policies[pageInfo.ListQuery.entity_name.trim()] || null;
+        this.policyData = this.user_info.main?.policies || null;
       }
       this.masterInfo = pageInfo;
       if (this.masterInfo.ListQuery.entity_name == 'user') {
@@ -158,8 +159,7 @@ export class MasterListComponent implements AfterViewInit {
       this.defaultQuery = masterListConfig.ListQuery;
       this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
       this.listQuery.start_index = 0;
-      this.fetchColumns(this.listQuery);
-      this.fetchData(this.listQuery);
+      this.fetchAttachedPolicies(this.listQuery);
     } else {
       this.title = 'Default Title';
       this.headercolumns = [];
@@ -335,35 +335,43 @@ export class MasterListComponent implements AfterViewInit {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
-        this.gridApiService.getAllRecords(this.formatPayloadWithPolicyConditions(query)).subscribe(
-          (response) => {
-            if (response.status && response.code === 200) {
-              if (response.data.records && response.data.headers) {
-                const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
-                if (item.type == 'pdf') {
-                  this.exportService.exportToPDF(filteredData, export_download);
-                } else {
-                  this.exportService.exportToExcel(filteredData, export_download);
+        this.gridApiService
+          .getAllRecords(
+            this.localStorageService.replaceUniqueId(
+              this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
+              '$user_id',
+              this.user_info.main.id
+            )
+          )
+          .subscribe(
+            (response) => {
+              if (response.status && response.code === 200) {
+                if (response.data.records && response.data.headers) {
+                  const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
+                  if (item.type == 'pdf') {
+                    this.exportService.exportToPDF(filteredData, export_download);
+                  } else {
+                    this.exportService.exportToExcel(filteredData, export_download);
+                  }
+                  this.loading = false;
                 }
+              } else {
                 this.loading = false;
-              }
-            } else {
-              this.loading = false;
-              this.items = [];
-              this.totalItems = 0;
+                this.items = [];
+                this.totalItems = 0;
 
-              const key = response.message;
+                const key = response.message;
+                const errorMessage = this.translate.instant(key);
+                this.toastr.error(errorMessage, 'Error');
+              }
+            },
+            (error) => {
+              this.loading = false;
+              const key = 'error';
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
             }
-          },
-          (error) => {
-            this.loading = false;
-            const key = 'error';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
-          }
-        );
+          );
       }
     }
   }
@@ -404,6 +412,25 @@ export class MasterListComponent implements AfterViewInit {
     } else {
       return this.translate.instant('table_status_val_2');
     }
+  }
+
+  fetchAttachedPolicies(params: FetchDataParams) {
+    this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          this.attachedPolicies = response.data.attached_policies || [];
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      },
+      () => {
+        this.fetchColumns(this.listQuery);
+        this.fetchData(this.listQuery);
+      }
+    );
   }
 
   fetchColumns(params: FetchDataParams) {
@@ -458,52 +485,13 @@ export class MasterListComponent implements AfterViewInit {
     );
   }
 
-  removeDuplicateObjects(conditions: any[]) {
-    const seen = new WeakSet();
-    return conditions.filter((condition) => !seen.has(condition) && seen.add(condition));
-  }
-
-  removeDuplicateStringsOrNumbers(conditions: any[]) {
-    return [...new Set(conditions)];
-  }
-
-  removeDuplicateData(conditions: any[]) {
-    const seen = new Set<string>();
-    return conditions.filter((condition) => !seen.has(JSON.stringify(condition)) && seen.add(JSON.stringify(condition)));
-  }
-
-  formatPayloadWithPolicyConditions(payload: FetchDataParams | any) {
-    if (!this.policyData) return payload;
-
-    for (const { query_information } of this.policyData) {
-      if (!query_information) continue;
-
-      const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns'];
-
-      for (const field of fields) {
-        if (query_information[field]) {
-          payload[field] = [...(payload[field] || []), ...query_information[field]];
-        }
-      }
-    }
-
-    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions'];
-    objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
-
-    if (payload.group_by) {
-      payload.group_by = this.removeDuplicateStringsOrNumbers(payload.group_by);
-    }
-    if (payload.sort_columns) {
-      payload.sort_columns = this.removeDuplicateData(payload.sort_columns);
-    }
-
-    return payload;
-  }
-
   fetchData(params: FetchDataParams) {
     params.limit_range = this.resultsPerPage;
-    const payload = this.formatPayloadWithPolicyConditions(params);
-    console.log('payload', payload);
+    const payload = this.localStorageService.replaceUniqueId(
+      this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
+      '$user_id',
+      this.user_info.main.id
+    );
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
