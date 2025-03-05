@@ -77,14 +77,6 @@ export const routes: Routes = [
           defaultPermission: true,
         },
       },
-      {
-        path: 'email-temp/assign/:uuid',
-        component: EmailTemplateAssignmentComponent,
-        title: 'Template Assingnment',
-        data: {
-          defaultPermission: true,
-        },
-      },
       // {
       //   path: 'import',
       //   component: ImportMasterComponent,

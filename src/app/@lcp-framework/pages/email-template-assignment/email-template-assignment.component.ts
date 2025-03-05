@@ -10,11 +10,12 @@ import { Router } from '@angular/router';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
+import { CommonSharedModule } from '../../shared/common/common.module';
 
 @Component({
   selector: 'app-email-template-assignment',
   standalone: true,
-  imports: [FormlyModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, CommonModule],
+  imports: [FormlyModule, CommonSharedModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, CommonModule],
   templateUrl: './email-template-assignment.component.html',
   styleUrl: './email-template-assignment.component.scss',
 })
@@ -330,8 +331,8 @@ export class EmailTemplateAssignmentComponent implements OnInit {
       this.fb.group({
         id: [0],
         recipient_type: ['tag', Validators.required],
-        email_to: ['', Validators.required],
-        email_template_id: ['', Validators.required],
+        email_to: [null, Validators.required],
+        template_id: [null, Validators.required],
         email_template_assignment_id: [0],
         cc_bcc: this.fb.array([]),
       })
@@ -395,14 +396,16 @@ export class EmailTemplateAssignmentComponent implements OnInit {
       // add data for template assignment
       for (let templates of lineItemsArray.controls) {
         no_of_tables++;
-        payload.data['table' + no_of_tables] = {
-          email_to: templates.controls['email_to'].value,
-          created_at: true,
-          created_by: true,
-          template_id: templates.controls['template_id'].value,
-          recipient_type: templates.controls['recipient_type'].value,
-          email_template_process_id: '@table1.id',
-        };
+        payload.data['table' + no_of_tables] = [
+          {
+            email_to: templates.controls['email_to'].value,
+            created_at: true,
+            created_by: true,
+            template_id: templates.controls['template_id'].value,
+            recipient_type: templates.controls['recipient_type'].value,
+            email_template_process_id: '@table1.id',
+          },
+        ];
 
         // add action for template assignment
         payload.action.push('insert');
@@ -416,16 +419,19 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         let ccBccLineItems: any = templates.controls['cc_bcc'] as FormArray;
 
         // add data for cc bcc template
+        let parent_table = no_of_tables;
         for (let ccBccTemplates of ccBccLineItems.controls) {
           no_of_child_tables = no_of_tables + 1;
-          payload.data['table' + no_of_child_tables] = {
-            email_to: ccBccTemplates.controls['email_to'].value,
-            created_at: true,
-            created_by: true,
-            recipient_type: ccBccTemplates.controls['recipient_type'].value,
-            send_type: ccBccTemplates.controls['send_type'].value,
-            email_template_assignment_id: ccBccTemplates.controls['eta_id'].value,
-          };
+          payload.data['table' + no_of_child_tables] = [
+            {
+              email_to: ccBccTemplates.controls['email_to'].value,
+              created_at: true,
+              created_by: true,
+              recipient_type: ccBccTemplates.controls['recipient_type'].value,
+              send_type: ccBccTemplates.controls['send_type'].value,
+              email_template_assignment_id: '@table' + parent_table + '.id',
+            },
+          ];
 
           // add action for template assignment
           payload.action.push('insert');
@@ -435,7 +441,6 @@ export class EmailTemplateAssignmentComponent implements OnInit {
 
           // table for template assignment
           payload.table.push('email_template_cc_bcc');
-
           no_of_tables = no_of_child_tables;
         }
       }
@@ -444,6 +449,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         next: (response: any) => {
           this.loading = false;
           if (response.code === 200 && response.status) {
+            this.toastr.success('Record updated successfully', 'Success');
           }
         },
       });

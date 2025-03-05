@@ -1,22 +1,14 @@
-<!-- <div class="container bg-white p-4">
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <formly-form [form]="form" [fields]="fields" [model]="model"></formly-form>
-    <button type="submit" class="btn btn-primary">Submit</button>
-  </form>
-</div> -->
-
 <div class="panel">
   <div class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
     <h5 class="text-lg font-semibold dark:text-white-light">
-      Email template assignment
-      <!-- {{ 'policy_add_edit_form' | translate }} -->
+      <!-- Email template assignment -->
+      {{ 'email_template_assignment_form' | translate }}
     </h5>
     <div class="align-center flex gap-3">
       <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
-        back
-        <!-- {{ 'back' | translate }} -->
+        {{ 'back' | translate }}
       </button>
-      <button type="submit" class="btn btn-primary" (click)="submit()">Submit</button>
+      <button type="submit" class="btn btn-outline-secondary ng-tns-c3247919129-2 text-xs ltr:rounded-r rtl:rounded-l" (click)="submit()">Submit</button>
     </div>
   </div>
 
@@ -25,7 +17,7 @@
       <div formGroupName="email_template_process" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
         <div class="min-w-200-p">
           <div class="form-group">
-            <label for="email_template_process_id">Email Template Process</label>
+            <label for="email_template_process_id">{{ 'email_template_process' | translate }}</label>
             <select
               formControlName="email_template_process_id"
               class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -53,7 +45,7 @@
         <div [formGroupName]="i" class="my-4">
           <div class="grid grid-cols-4 gap-3">
             <div class="form-group">
-              <label>Recipient Type</label>
+              <label>{{ 'recipient_type' | translate }}</label>
               <select
                 formControlName="recipient_type"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -66,7 +58,7 @@
             </div>
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
-              <label>Email Tag</label>
+              <label>{{ 'email_tag' | translate }}</label>
               <select
                 formControlName="email_to"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -79,17 +71,29 @@
             </div>
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
-              <label>User Email</label>
-              <input type="text" formControlName="email_to" class="form-control" placeholder="Search user email" required />
+              <label>{{ 'user_email' | translate }}</label>
+              <input
+                type="text"
+                class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                formControlName="email_to"
+                placeholder="Search user email"
+                required
+              />
             </div>
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'custom'">
-              <label>Email</label>
-              <input type="email" formControlName="email_to" class="form-control" placeholder="Enter email address" required />
+              <label>{{ 'email' | translate }}</label>
+              <input
+                type="email"
+                class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                formControlName="email_to"
+                placeholder="Enter email address"
+                required
+              />
             </div>
 
             <div class="form-group">
-              <label>Email Template</label>
+              <label>{{ 'email_template' | translate }}</label>
               <select
                 formControlName="template_id"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -108,7 +112,7 @@
               class="hover:bg-danger-dark dark:bg-danger-dark dark:focus:ring-danger-dark w-25 mt-5 flex flex-row items-center justify-center gap-8 rounded-md bg-danger px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 dark:text-white"
               (click)="removeEmailTemplateAssignment(i)"
             >
-              Remove Recipient
+              {{ 'remove_recipient' | translate }}
             </button>
             }
           </div>
@@ -117,7 +121,7 @@
             @for(ccBcc of getCcBccControls(i); track ccBcc; let j = $index) {
             <div [formGroupName]="j" class="mt-4 grid grid-cols-4 gap-3">
               <div class="form-group">
-                <label>Send Type</label>
+                <label>{{ 'send_type' | translate }}</label>
                 <select
                   formControlName="send_type"
                   class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -129,7 +133,7 @@
               </div>
 
               <div class="form-group">
-                <label>Recipient Type</label>
+                <label>{{ 'recipient_type' | translate }}</label>
                 <select
                   formControlName="recipient_type"
                   class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -142,7 +146,7 @@
               </div>
 
               <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'tag'">
-                <label>Email Tag</label>
+                <label>{{ 'email_tag' | translate }}</label>
                 <select
                   formControlName="email_to"
                   class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -155,13 +159,25 @@
               </div>
 
               <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'user_id'">
-                <label>User Email</label>
-                <input type="text" formControlName="email_to" class="form-control" placeholder="Search user email" required />
+                <label>{{ 'user_email' | translate }}</label>
+                <input
+                  type="text"
+                  class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  formControlName="email_to"
+                  placeholder="Search user email"
+                  required
+                />
               </div>
 
               <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'custom'">
-                <label>Email</label>
-                <input type="email" formControlName="email_to" class="form-control" placeholder="Enter email address" required />
+                <label>{{ 'email' | translate }}</label>
+                <input
+                  type="email"
+                  class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  formControlName="email_to"
+                  placeholder="Enter email address"
+                  required
+                />
               </div>
 
               <button
@@ -169,7 +185,7 @@
                 class="hover:bg-danger-dark dark:bg-danger-dark dark:focus:ring-danger-dark mt-5 flex w-20 flex-row items-center justify-center gap-8 rounded-md bg-danger px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 dark:text-white"
                 (click)="removeCcBccGroup(i, j)"
               >
-                Remove
+                {{ 'remove' | translate }}
               </button>
             </div>
             }
@@ -179,7 +195,7 @@
             class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark mt-5 flex flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
             (click)="addCcBccGroup(i)"
           >
-            Add CC/BCC
+            {{ 'add_cc_bcc' | translate }}
           </button>
         </div>
         }
