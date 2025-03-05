@@ -17,7 +17,7 @@
       <div formGroupName="email_template_process" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
         <div class="min-w-200-p">
           <div class="form-group">
-            <label for="email_template_process_id">{{ 'email_template_process' | translate }}</label>
+            <label for="email_template_process_id">{{ 'email_template_process' | translate }} <span class="text-danger">*</span></label>
             <select
               formControlName="email_template_process_id"
               class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -45,7 +45,7 @@
         <div [formGroupName]="i" class="my-4">
           <div class="grid grid-cols-4 gap-3">
             <div class="form-group">
-              <label>{{ 'recipient_type' | translate }}</label>
+              <label>{{ 'recipient_type' | translate }} <span class="text-danger">*</span></label>
               <select
                 formControlName="recipient_type"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -58,7 +58,7 @@
             </div>
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
-              <label>{{ 'email_tag' | translate }}</label>
+              <label>{{ 'email_tag' | translate }} <span class="text-danger">*</span></label>
               <select
                 formControlName="email_to"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -68,10 +68,16 @@
                 <option [value]="tag.id">{{ tag.name }}</option>
                 }
               </select>
+              <div
+                *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'email_tag_is_required' | translate }}
+              </div>
             </div>
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
-              <label>{{ 'user_email' | translate }}</label>
+              <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
               <input
                 type="text"
                 class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
@@ -79,10 +85,16 @@
                 placeholder="Search user email"
                 required
               />
+              <div
+                *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'user_email_is_required' | translate }}
+              </div>
             </div>
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'custom'">
-              <label>{{ 'email' | translate }}</label>
+              <label>{{ 'email' | translate }} <span class="text-danger">*</span></label>
               <input
                 type="email"
                 class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
@@ -90,10 +102,16 @@
                 placeholder="Enter email address"
                 required
               />
+              <div
+                *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'email_is_required' | translate }}
+              </div>
             </div>
 
             <div class="form-group">
-              <label>{{ 'email_template' | translate }}</label>
+              <label>{{ 'email_template' | translate }} <span class="text-danger">*</span></label>
               <select
                 formControlName="template_id"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -103,6 +121,12 @@
                 <option [value]="template.value">{{ template.label }}</option>
                 }
               </select>
+              <div
+                *ngIf="assignment.get('template_id')?.invalid && (assignment.get('template_id')?.touched || assignment.get('template_id')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'email_template_is_required' | translate }}
+              </div>
             </div>
 
             @if(i > 0) {
@@ -121,7 +145,7 @@
             @for(ccBcc of getCcBccControls(i); track ccBcc; let j = $index) {
             <div [formGroupName]="j" class="mt-4 grid grid-cols-4 gap-3">
               <div class="form-group">
-                <label>{{ 'send_type' | translate }}</label>
+                <label>{{ 'send_type' | translate }} <span class="text-danger">*</span></label>
                 <select
                   formControlName="send_type"
                   class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -130,10 +154,16 @@
                   <option value="cc">CC</option>
                   <option value="bcc">BCC</option>
                 </select>
+                <div
+                  *ngIf="ccBcc.get('send_type')?.invalid && (ccBcc.get('send_type')?.touched || ccBcc.get('send_type')?.dirty)"
+                  class="invalid-feedback mt-1 text-danger"
+                >
+                  {{ 'send_type_is_required' | translate }}
+                </div>
               </div>
 
               <div class="form-group">
-                <label>{{ 'recipient_type' | translate }}</label>
+                <label>{{ 'recipient_type' | translate }} <span class="text-danger">*</span></label>
                 <select
                   formControlName="recipient_type"
                   class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -143,10 +173,16 @@
                   <option value="user_id">User</option>
                   <option value="custom">Custom Mail</option>
                 </select>
+                <div
+                  *ngIf="ccBcc.get('recipient_type')?.invalid && (ccBcc.get('recipient_type')?.touched || ccBcc.get('recipient_type')?.dirty)"
+                  class="invalid-feedback mt-1 text-danger"
+                >
+                  {{ 'recipient_type_is_required' | translate }}
+                </div>
               </div>
 
               <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'tag'">
-                <label>{{ 'email_tag' | translate }}</label>
+                <label>{{ 'email_tag' | translate }} <span class="text-danger">*</span></label>
                 <select
                   formControlName="email_to"
                   class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
@@ -156,10 +192,16 @@
                   <option [value]="tag.id">{{ tag.name }}</option>
                   }
                 </select>
+                <div
+                  *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
+                  class="invalid-feedback mt-1 text-danger"
+                >
+                  {{ 'email_tag_is_required' | translate }}
+                </div>
               </div>
 
               <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'user_id'">
-                <label>{{ 'user_email' | translate }}</label>
+                <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
@@ -167,10 +209,16 @@
                   placeholder="Search user email"
                   required
                 />
+                <div
+                  *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
+                  class="invalid-feedback mt-1 text-danger"
+                >
+                  {{ 'user_email_is_required' | translate }}
+                </div>
               </div>
 
               <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'custom'">
-                <label>{{ 'email' | translate }}</label>
+                <label>{{ 'email' | translate }} <span class="text-danger">*</span></label>
                 <input
                   type="email"
                   class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
@@ -178,6 +226,12 @@
                   placeholder="Enter email address"
                   required
                 />
+                <div
+                  *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
+                  class="invalid-feedback mt-1 text-danger"
+                >
+                  {{ 'email_is_required' | translate }}
+                </div>
               </div>
 
               <button

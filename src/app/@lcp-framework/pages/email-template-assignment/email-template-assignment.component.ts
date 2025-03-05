@@ -367,6 +367,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   }
 
   submit(): void {
+    this.form.markAllAsTouched();
     if (this.form.valid) {
       let no_of_tables: number = 2;
       let no_of_child_tables: number = 2;
