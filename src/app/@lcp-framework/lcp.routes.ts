@@ -16,6 +16,7 @@ import { ImportMasterComponent } from './pages/import-master/import-master.compo
 import { DocumentationComponent } from './pages/documentation/documentation.component';
 import { ImportConfirmDeactivateGuard } from './guards/impotrt-confirm-deactivate.guard';
 import { ExampleClientDatatableComponent } from './pages/example-client-datatable/example-client-datatable.component';
+import { EmailTemplateAssignmentComponent } from './pages/email-template-assignment/email-template-assignment.component';
 export const routes: Routes = [
   {
     path: 'not-found',

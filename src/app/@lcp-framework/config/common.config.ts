@@ -61,6 +61,7 @@ export const commonConfig: any = {
     IMPORT_JOB_DETAIL_MODULE: 'import_job_detail_module',
     POLICY_ADD_EDIT_MODULE: 'policy_add_edit_module',
     USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
+    EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -87,6 +88,7 @@ export const commonConfig: any = {
     import_job_detail_module: 'importjobdetail',
     policy_add_edit_module: 'policyaddedit',
     user_role_policy_module: 'userrolepolicy',
+    email_template_assignment_module: 'emailtemplateassignment',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -178,6 +180,7 @@ export const commonConfig: any = {
     { label: 'Export Template Module', value: 'export_template_module' },
     { label: 'Policy Add Edit Module', value: 'policy_add_edit_module' },
     { label: 'User/Role Policy Module', value: 'user_role_policy_module' },
+    { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

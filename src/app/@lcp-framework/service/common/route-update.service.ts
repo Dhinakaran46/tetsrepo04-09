@@ -20,6 +20,7 @@ import { ExportTemplateComponent } from '../../pages/export-template/export-temp
 import { ImportJobDetailsComponent } from '../../pages/import-job-details/import-job-details.component';
 import { PolicyComponent } from '../../pages/policy/policy.component';
 import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
+import { EmailTemplateAssignmentComponent } from '../../pages/email-template-assignment/email-template-assignment.component';
 
 @Injectable({
   providedIn: 'root',
@@ -154,6 +155,7 @@ export class RouteUpdateService {
                 import_job_detail_module: ImportJobDetailsComponent,
                 policy_add_edit_module: PolicyComponent,
                 user_role_policy_module: UserRolePolicyComponent,
+                email_template_assignment_module: EmailTemplateAssignmentComponent,
               };
 
               const route: Route = {
