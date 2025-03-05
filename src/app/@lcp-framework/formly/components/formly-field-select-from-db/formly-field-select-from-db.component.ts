@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GridApiService } from '../../../service/common/grid.service';
 import { FormControl, FormGroup } from '@angular/forms';
+import { LocalStorageService } from '../../../service/common/local-storage.service';
 
 @Component({
   selector: 'app-formly-field-select-from-db',
@@ -13,12 +14,18 @@ import { FormControl, FormGroup } from '@angular/forms';
 export class FormlyFieldSelectFromDbComponent extends FieldType implements OnInit {
   options$: Observable<{ value: any; label: string }[]> | undefined;
   labelControl: FormControl | undefined;
+  policyData: any = null;
+  user_info: any = null;
 
-  constructor(private gridApiService: GridApiService) {
+  constructor(private gridApiService: GridApiService, private localStorageService: LocalStorageService) {
     super();
   }
 
   ngOnInit() {
+    this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
+    if (this.user_info.main?.policies) {
+      this.policyData = this.user_info.main?.policies || null;
+    }
     this.initOptions();
     this.initOnchanges(this);
     this.createLabelControl();
@@ -79,7 +86,6 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     const labelColumn = this.props['labelColumn'];
 
     if (tableName && labelColumn && valueColumn) {
-      // console.log('this.form', this.field.parent?.parent?.parent?.model?.unique_id);
       const updatedSearchAll = this.props['search_all']
         ? JSON.parse(JSON.stringify(this.props['search_all']))
         : [
@@ -91,27 +97,34 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
           ];
 
       const search_all = this.evaluateDynamicValues(updatedSearchAll, this);
-      // console.log('Updated search_all:', updatedSearchAll, this.props['search_all']);
 
       const limit_range = this.props['limit_range'] ? this.props['limit_range'] : 1000;
       const print_query = this.props['print_query'] ? this.props['print_query'] : false;
       const sort_columns = this.props['sort_columns'] ? this.props['sort_columns'] : [[labelColumn, 'asc']];
       const includes = this.props['includes'] ? this.props['includes'] : [];
 
-      const listParams = {
-        company_id: 1,
-        search_all,
-        limit_range,
-        print_query,
-        start_index: 0,
-        sort_columns,
-        primary_table: tableName,
-        select_columns: [
-          [valueColumn, 'value'],
-          [labelColumn, 'label'],
-        ],
-        includes,
-      };
+      const listParams = this.localStorageService.replaceUniqueId(
+        this.localStorageService.formatPayloadWithPolicyConditions(
+          {
+            company_id: 1,
+            search_all,
+            limit_range,
+            print_query,
+            start_index: 0,
+            sort_columns,
+            primary_table: tableName,
+            select_columns: [
+              [valueColumn, 'value'],
+              [labelColumn, 'label'],
+            ],
+            includes,
+          },
+          this.policyData,
+          (this.field as any)?.attached_policies || []
+        ),
+        '$user_id',
+        this.user_info.main.id
+      );
 
       let hasSetFirstValue = false;
       this.options$ = this.gridApiService.getAllList(listParams).pipe(

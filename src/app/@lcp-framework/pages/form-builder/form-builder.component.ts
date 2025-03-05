@@ -13,6 +13,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 @Component({
   selector: 'app-form-builder',
@@ -39,6 +40,8 @@ export class FormBuilderComponent implements OnInit {
   uploadedFiles: string[] = [];
   oldUploadedFiles: string[] = []; // after edit completion old fils should removed
   pageInfo: any;
+  policyData: any = null;
+  user_info: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -49,7 +52,8 @@ export class FormBuilderComponent implements OnInit {
     private cdRef: ChangeDetectorRef,
     public location: Location,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private localStorageService: LocalStorageService
   ) {
     this.store$ = this.store.pipe(select('index'));
   }
@@ -64,7 +68,10 @@ export class FormBuilderComponent implements OnInit {
       this.entity_name = this.pageInfo.fullEntity;
       this.entity_type = this.pageInfo.action_slug;
     });
-
+    this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
+    if (this.user_info.main?.policies) {
+      this.policyData = this.user_info.main?.policies || null;
+    }
     if (this.entity_type !== 'add' && !this.unique_id) {
       this.toastr.error('Invalid entity details given.');
       this.router.navigate(['/dashboard']);
@@ -136,14 +143,22 @@ export class FormBuilderComponent implements OnInit {
     };
   }
 
-  fetchList(field: FormlyFieldConfig, key: string, reset: boolean = false) {
+  fetchList(field: FormlyFieldConfig | any, key: string, reset: boolean = false) {
     if (!reset && key && this.listDatas[key]) {
       if (field && field.props) {
         field.props.options = this.listDatas[key];
       }
     } else if (key && this.listParams[key]) {
       const required = false;
-      const listParams = this.replacePlaceholders(this.listParams[key], this.model, required);
+      const listParams = this.localStorageService.replaceUniqueId(
+        this.localStorageService.formatPayloadWithPolicyConditions(
+          this.replacePlaceholders(this.listParams[key], this.model, required),
+          this.policyData,
+          field?.attached_policies || []
+        ),
+        '$user_id',
+        this.user_info.main.id
+      );
       this.gridApiService.getAllList(listParams).subscribe(
         (response) => {
           if (response.status && response.code === 200) {
@@ -547,6 +562,15 @@ export class FormBuilderComponent implements OnInit {
     return pathSegments.reduce((acc, part) => acc && acc[part], obj);
   }
 
+  private parseJSONField(value: any) {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch (error) {
+      console.error('JSON Parsing Error:', error);
+      return value;
+    }
+  }
+
   private resetForm() {
     const listParams = {
       company_id: 1,
@@ -566,7 +590,13 @@ export class FormBuilderComponent implements OnInit {
     this.gridApiService.getAllList(listParams).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
-          this.formEntity = response.data.records[0];
+          let formEntity = response.data.records[0];
+          formEntity.query_information = this.parseJSONField(formEntity.query_information);
+          formEntity.form_information = this.parseJSONField(formEntity.form_information);
+          formEntity.add_query_information = this.parseJSONField(formEntity.add_query_information);
+          formEntity.edit_query_information = this.parseJSONField(formEntity.edit_query_information);
+          formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
+          this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
           this.transParam = this.entity_type === 'add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
@@ -623,7 +653,7 @@ export class FormBuilderComponent implements OnInit {
           }
           this.applyAvailableDataToForm(fieldsJson, formControl);
         } else if (!response.status) {
-          this.toastr.error('Invalid entity details given2.');
+          this.toastr.error('Invalid entity details given.');
           this.router.navigate(['/dashboard']);
         }
       },

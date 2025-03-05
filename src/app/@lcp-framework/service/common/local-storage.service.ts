@@ -220,4 +220,44 @@ export class LocalStorageService implements OnInit {
     // If it's neither a string, array, or object, return it as is
     return jsonObject;
   }
+
+  removeDuplicateObjects(conditions: any[]) {
+    const seen = new WeakSet();
+    return conditions.filter((condition) => !seen.has(condition) && seen.add(condition));
+  }
+
+  removeDuplicateStringsOrNumbers(conditions: any[]) {
+    return [...new Set(conditions)];
+  }
+
+  removeDuplicateData(conditions: any[]) {
+    const seen = new Set<string>();
+    return conditions.filter((condition) => !seen.has(JSON.stringify(condition)) && seen.add(JSON.stringify(condition)));
+  }
+
+  formatPayloadWithPolicyConditions(payload: any, data: any, attachedPolicies: any[]) {
+    if (!data || !attachedPolicies.length) return payload;
+    for (let policy of attachedPolicies) {
+      if (!data[policy]) continue;
+      const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns'];
+
+      for (const field of fields) {
+        if (data[policy]?.query_information[field]) {
+          payload[field] = [...(payload[field] || []), ...data[policy]?.query_information[field]];
+        }
+      }
+    }
+
+    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions'];
+    objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
+
+    if (payload.group_by) {
+      payload.group_by = this.removeDuplicateStringsOrNumbers(payload.group_by);
+    }
+    if (payload.sort_columns) {
+      payload.sort_columns = this.removeDuplicateData(payload.sort_columns);
+    }
+
+    return payload;
+  }
 }

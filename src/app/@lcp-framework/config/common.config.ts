@@ -34,6 +34,7 @@ export const commonConfig: any = {
     getLanguageContent: 'common/language-content',
     importtemplatedeletefile: 'common/import-template/remove',
     importtemplateuploaddata: 'common/import-template/upload',
+    attachedpolicies: 'common/attached-policies',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',

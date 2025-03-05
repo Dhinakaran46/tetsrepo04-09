@@ -124,6 +124,8 @@ export class ImportTemplateComponent implements OnInit {
   private _originalItems: any[] = [];
   private _originalQueries: any[] = [];
 
+  emailprocesslist: any = [];
+
   insert_json_schema: any = {
     // it will be removed
     action: ['insert', 'insert', 'insert'],
@@ -258,6 +260,8 @@ export class ImportTemplateComponent implements OnInit {
     },
   };
 
+  showEmailProcessSlug = false;
+
   constructor(
     private fb: FormBuilder,
     private gridApiService: GridApiService,
@@ -275,6 +279,7 @@ export class ImportTemplateComponent implements OnInit {
 
   ngOnInit() {
     this.id = this.route.snapshot.params['id'] || null;
+    this.getEmailTemplateProcessList();
     this.initForm();
     //this.constructRedirectUrl();
 
@@ -293,6 +298,36 @@ export class ImportTemplateComponent implements OnInit {
       this.loadData(this.id);
     }
     this.titleChange();
+  }
+
+  toggleEmailProcessSlug(value: boolean) {
+    this.showEmailProcessSlug = value;
+  }
+
+  getEmailTemplateProcessList() {
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'email_templates',
+      start_index: 0,
+      limit_range: 1,
+      sort_columns: [['email_templates.id', 'asc']],
+      select_columns: [['email_templates.*']],
+    };
+
+    this.gridApiService.getAllList(params).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          console.log(response);
+          this.emailprocesslist = response.data.records;
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   async initStore() {
@@ -527,6 +562,7 @@ export class ImportTemplateComponent implements OnInit {
       is_admin_module: [false],
       ignore_error_rows: [false],
       is_send_mail: [false],
+      email_process_slug: ['mail-import'],
       status_id: [1],
       job_type: ['direct'],
       batch_process_count: [50],
@@ -675,10 +711,14 @@ export class ImportTemplateComponent implements OnInit {
             ignore_error_rows: entity.ignore_error_rows,
             is_admin_module: entity.is_admin_module,
             is_send_mail: entity.is_send_mail,
+            email_process_slug: entity.email_process_slug,
             job_type: entity.job_type,
             batch_process_count: entity.batch_process_count,
             status_id: entity.status_id,
           });
+          if (entity.is_send_mail) {
+            this.showEmailProcessSlug = true;
+          }
 
           const items = this.form.get('items') as FormArray;
 
@@ -753,6 +793,7 @@ export class ImportTemplateComponent implements OnInit {
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
         is_send_mail: formData.is_send_mail,
+        email_process_slug: formData.email_process_slug,
         job_type: formData.job_type,
         batch_process_count: formData.batch_process_count,
       },
@@ -818,6 +859,7 @@ export class ImportTemplateComponent implements OnInit {
         ignore_error_rows: formData.ignore_error_rows,
         is_admin_module: formData.is_admin_module,
         is_send_mail: formData.is_send_mail,
+        email_process_slug: formData.email_process_slug,
         job_type: formData.job_type,
         batch_process_count: formData.batch_process_count,
       },

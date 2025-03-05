@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { OrderByControlPipe } from '../../pipes/order-by-control/order-by-control.pipe';
@@ -79,10 +79,8 @@ export class UserRolePolicyComponent {
       { key: 'isChecked', label: '', sortable: false, searchable: false, type: 'checkbox' },
       { key: 'id', label: 'ID', sortable: false, searchable: false, isHtmlValue: true, colFilterHide: true },
       { key: 'policyName', label: 'Policy Name', sortable: true, searchable: true, isHtmlValue: true },
+      { key: 'slug', label: 'Slug', sortable: true, searchable: true, isHtmlValue: true },
       { key: 'policyDescription', label: 'Policy Description', sortable: true, searchable: true, isHtmlValue: true },
-      { key: 'entityName', label: 'Entity Name', sortable: true, searchable: true, isHtmlValue: true },
-      { key: 'entityType', label: 'Entity Type', sortable: true, searchable: true, isHtmlValue: true },
-      { key: 'primaryTable', label: 'Primary Table', sortable: true, searchable: true, isHtmlValue: true },
       { key: 'updatedBy', label: 'Updated By', sortable: true, searchable: true, isHtmlValue: true },
       { key: 'updatedAt', label: 'Updated At', sortable: true, searchable: true, isHtmlValue: true },
     ],
@@ -162,20 +160,12 @@ export class UserRolePolicyComponent {
       sort_columns: [['policies.name', 'asc']],
       group_by: [
         'policies.id',
-        'master_entities.primary_table',
-        'master_entities.entity_type',
-        'master_entities.name',
         'user_details.first_name',
         'user_details.last_name',
         ...(role_id && ['role_policies.role_id']),
         ...(user_id && ['user_policies.user_id']),
       ],
       includes: [
-        {
-          join_type: 'LEFT',
-          table_name: 'master_entities',
-          join_condition: 'master_entities.id = policies.entity_id AND master_entities.status_id = 1',
-        },
         {
           join_type: 'LEFT',
           table_name: 'user_details',
@@ -194,12 +184,10 @@ export class UserRolePolicyComponent {
         ['policies.id'],
         ['policies.name'],
         ['policies.uuid'],
+        ['policies.slug'],
         ['policies.description'],
         ["CONCAT(user_details.first_name, ' ', user_details.last_name)", 'updated_by'],
         ['policies.updated_at'],
-        ['master_entities.name', 'entity_name'],
-        ['master_entities.primary_table', 'pirmary_table'],
-        ['master_entities.entity_type', 'entity_type'],
         ...(role_id && [['role_policies.role_id']]),
         ...(user_id && [['user_policies.user_id']]),
       ],
@@ -214,9 +202,7 @@ export class UserRolePolicyComponent {
               policyUUID: record.uuid,
               policyName: record.name,
               policyDescription: record?.description ?? '-',
-              entityName: this.translate.instant(record.entity_name),
-              primaryTable: record.pirmary_table,
-              entityType: this.translate.instant(record.entity_type),
+              slug: record.slug,
               updatedBy: record.updated_by,
               updatedAt: this.formatDateTime(record.updated_at),
             };
