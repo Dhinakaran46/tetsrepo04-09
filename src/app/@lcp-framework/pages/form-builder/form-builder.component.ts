@@ -690,8 +690,30 @@ export class FormBuilderComponent implements OnInit {
               this.options.resetModel(this.model);
             }
           } else if (control) {
-            this.model[formControl][key] = updateData[key];
-            control.patchValue(updateData[key]);
+            if (Array.isArray(control?.value) && !Array.isArray(updateData[key])) {
+              let parsedArray = [];
+              if (updateData[key] && typeof updateData[key] === 'string') {
+                try {
+                  // Attempt to parse the input as JSON
+                  const parsed = JSON.parse(updateData[key]);
+                  // Ensure the parsed result is an array
+                  parsedArray = Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                  // If JSON parsing fails, treat it as a comma-separated string
+                  parsedArray = updateData[key].split(',').map((item: string) => {
+                    // Remove any surrounding brackets or quotes and trim whitespace
+                    const trimmed = item.replace(/[\[\]"]/g, '').trim();
+                    // Convert to number if possible, otherwise keep as string
+                    return trimmed;
+                  });
+                }
+              }
+              this.model[formControl][key] = parsedArray;
+              control.patchValue(parsedArray);
+            } else {
+              this.model[formControl][key] = updateData[key];
+              control.patchValue(updateData[key]);
+            }
           }
         } else {
           const control = this.form.get(key);
