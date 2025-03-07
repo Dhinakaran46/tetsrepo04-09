@@ -177,14 +177,14 @@ export class UserRolePermissionComponent {
         ['wizard_group.id', 'id'],
         ['wizard_group.name', 'name'],
         [
-          `CASE 
-            WHEN COUNT(subquery.id) = 0 THEN null 
+          `CASE
+            WHEN COUNT(subquery.id) = 0 THEN null
             ELSE COALESCE(
                 Json_agg(
                     subquery.jsonb_object
                     ORDER BY subquery.order_no
                 )
-            ) 
+            )
         END`,
           'cards',
         ],
@@ -192,9 +192,9 @@ export class UserRolePermissionComponent {
       includes: [
         {
           table_name: `LATERAL (
-              SELECT 
-                DISTINCT ON (master_entities.id) 
-                master_entities.id, 
+              SELECT
+                DISTINCT ON (master_entities.id)
+                master_entities.id,
                 jsonb_build_object(
                   'id', master_entities.id,
                   'title', master_entities.name,
@@ -202,13 +202,13 @@ export class UserRolePermissionComponent {
                   'order_no', master_entities.dashboard_wizard_order_no,
                   'entity_name', master_entities.entity_name,
                   'permission_id', permissions.id,
-                  'has_permission',  
-                    CASE 
+                  'has_permission',
+                    CASE
                       WHEN '${permission_type}' = 'user' THEN
                         CASE
                           WHEN EXISTS (
-                            SELECT 1 
-                            FROM user_permissions 
+                            SELECT 1
+                            FROM user_permissions
                             WHERE user_permissions.permission_id = permissions.id
                             AND user_permissions.user_id = ${user_id}
                           ) THEN true
@@ -217,8 +217,8 @@ export class UserRolePermissionComponent {
                       WHEN '${permission_type}' = 'role' THEN
                         CASE
                           WHEN EXISTS (
-                            SELECT 1 
-                            FROM role_permissions 
+                            SELECT 1
+                            FROM role_permissions
                             WHERE role_permissions.permission_id = permissions.id
                             AND role_permissions.role_id = ${role_id}
                           ) THEN true
@@ -228,13 +228,13 @@ export class UserRolePermissionComponent {
                     END
                 ) AS jsonb_object,
                 master_entities.dashboard_wizard_order_no AS order_no
-              FROM 
-                master_entities 
-              LEFT JOIN 
-                permissions ON permissions.entity_id = master_entities.id  
-              WHERE 
+              FROM
+                master_entities
+              LEFT JOIN
+                permissions ON permissions.entity_id = master_entities.id
+              WHERE
                 master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1
-              ORDER BY 
+              ORDER BY
                 master_entities.id, master_entities.dashboard_wizard_order_no
             ) AS subquery`,
           join_type: 'LEFT',
@@ -579,6 +579,7 @@ export class UserRolePermissionComponent {
     const hierarchy: IPermission[] = [];
 
     permissions.forEach((permission) => {
+      permission.permissions = typeof permission.permissions === 'string' ? JSON.parse(permission.permissions) : permission.permissions;
       permission.children = [];
       permissionMap[permission.id] = permission;
     });
@@ -593,7 +594,6 @@ export class UserRolePermissionComponent {
         }
       }
     });
-
     return hierarchy;
   }
 
