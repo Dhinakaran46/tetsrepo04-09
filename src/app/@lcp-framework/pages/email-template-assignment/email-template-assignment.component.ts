@@ -11,6 +11,7 @@ import { MenuMapService } from '../../service/common/menu-map.service';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonSharedModule } from '../../shared/common/common.module';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 @Component({
   selector: 'app-email-template-assignment',
@@ -29,6 +30,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
     name: string;
   }[] = [];
   templateList: { label: string; value: number }[] = [];
+  userId: number = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -37,7 +39,8 @@ export class EmailTemplateAssignmentComponent implements OnInit {
     public router: Router,
     public commonService: MenuMapService,
     private gridApiService: GridApiService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    public localStorageService: LocalStorageService
   ) {
     this.form = this.fb.group({
       email_template_process: this.fb.group({
@@ -63,6 +66,8 @@ export class EmailTemplateAssignmentComponent implements OnInit {
 
     // get process and assignment details
     await this.getTemplateAssignment();
+
+    this.userId = this.localStorageService.getData('user_data') && JSON.parse(this.localStorageService.getData('user_data')).main.id;
   }
 
   async getEmailTemplateTag() {
@@ -172,7 +177,6 @@ export class EmailTemplateAssignmentComponent implements OnInit {
               id: response.data.records[0].id,
               name: response.data.records[0].slug,
             });
-            console.log('this.emailTemplateProcessDetail : ', this.emailTemplateProcessDetail);
             this.form.controls['email_template_process'].setValue({ email_template_process_id: response.data.records[0].id });
           }
         }
@@ -222,7 +226,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           this.loading = false;
           if (response.data.records) {
             if (response.data.records.length) {
-              const lineItemsArray = this.form.get('email_template_assignments') as FormArray;
+              const lineItemsArray: any = this.form.get('email_template_assignments') as FormArray;
               let temp_assgn_ids: number[] = [];
               for (let each of response.data.records) {
                 lineItemsArray.push(
@@ -233,8 +237,12 @@ export class EmailTemplateAssignmentComponent implements OnInit {
                     template_id: [each.template_id, Validators.required],
                     email_template_assignment_id: [each.eta_id, Validators.required],
                     cc_bcc: this.fb.array([]),
+                    email_tag_mail: [null],
                   })
                 );
+                if (each.recipient_type === 'tag') {
+                  this.getTemplateAssignmentTags(each.email_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+                }
                 temp_assgn_ids.push(each.eta_id);
               }
               this.getCcBccAssignments(temp_assgn_ids);
@@ -296,16 +304,20 @@ export class EmailTemplateAssignmentComponent implements OnInit {
             lineItemsArray.controls.forEach((eachTemp: any) => {
               for (let ccBcc of response.data.records) {
                 if (ccBcc.eta_id === eachTemp.controls['email_template_assignment_id'].value) {
-                  console.log('eachTemp : ', eachTemp.controls['email_template_assignment_id'].value);
-                  const lineItemsArray = eachTemp.get('cc_bcc') as FormArray;
+                  const lineItemsArray: any = eachTemp.get('cc_bcc') as FormArray;
                   lineItemsArray.push(
                     this.fb.group({
                       eta_id: eachTemp.controls['email_template_assignment_id'].value,
                       send_type: [ccBcc.send_type, Validators.required],
                       recipient_type: [ccBcc.recipient_type, Validators.required],
                       email_to: [ccBcc.email_to, Validators.required],
+                      email_tag_mail: [null],
                     })
                   );
+
+                  if (ccBcc.recipient_type === 'tag') {
+                    this.getTemplateAssignmentTags(ccBcc.email_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+                  }
                 }
               }
             });
@@ -335,6 +347,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         template_id: [null, Validators.required],
         email_template_assignment_id: [0],
         cc_bcc: this.fb.array([]),
+        email_tag_mail: [null],
       })
     );
   }
@@ -357,6 +370,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         send_type: ['cc', Validators.required],
         recipient_type: ['tag', Validators.required],
         email_to: ['', Validators.required],
+        email_tag_mail: [null],
       })
     );
   }
@@ -364,6 +378,67 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   removeCcBccGroup(i: number, j: number): void {
     const lineItemsArray = this.form.get('email_template_assignments.' + i + '.cc_bcc') as FormArray;
     lineItemsArray.removeAt(j);
+  }
+
+  clearUserTagValues(formGroup: any) {
+    formGroup.controls['email_to'].reset();
+    formGroup.controls['email_tag_mail'].reset();
+  }
+
+  getTemplateAssignmentTags(tagId: number, formGroup: any) {
+    let payload: any = {
+      company_id: 1,
+      search_all: [
+        {
+          value: '3',
+          operator: '!=',
+          column_name: 'email_template_recipient_tags.status_id',
+        },
+        {
+          value: tagId,
+          operator: '=',
+          column_name: 'email_template_recipient_tags.id',
+        },
+      ],
+      search_any: [],
+      limit_range: 1,
+      print_query: true,
+      start_index: 0,
+      primary_table: 'email_template_recipient_tags',
+      select_columns: [['email_template_recipient_tags.id'], ['email_template_recipient_tags.slug'], ['email_template_recipient_tags.query_information']],
+    };
+    this.commonService.getCommonList(payload).subscribe({
+      next: (response: any) => {
+        if (response.code === 200 && response.status) {
+          if (response.data.records.length) {
+            const query_information_string = response.data.records[0].query_information;
+            const query_information = JSON.parse(query_information_string);
+            if (query_information.search_all.length) {
+              query_information.search_all.forEach((each: any) => {
+                if (each.value === '@process.user_id') {
+                  each.value = this.userId;
+                }
+              });
+            }
+            this.commonService.getCommonList(query_information).subscribe({
+              next: (response: any) => {
+                if (response.data.records) {
+                  let emailName = '';
+                  if (response.data.records.length) {
+                    for (let each of response.data.records) {
+                      emailName = emailName ? emailName + ', ' + each.email : each.email;
+                      formGroup.get('email_tag_mail')?.setValue(emailName);
+                    }
+                  } else {
+                    formGroup.get('email_tag_mail')?.setValue('No email id is present');
+                  }
+                }
+              },
+            });
+          }
+        }
+      },
+    });
   }
 
   submit(): void {
@@ -454,7 +529,6 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           }
         },
       });
-      console.log('payload : ', payload);
     } else {
       this.toastr.error('Enter all required fields', 'Error');
     }
