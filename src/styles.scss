@@ -43,3 +43,8 @@ html.login-page > body {
   content: ' \002A';
   color: red;
 }
+
+.et-ng-select .ng-select-container {
+  min-height: 25px;
+  height: 25px !important;
+}
