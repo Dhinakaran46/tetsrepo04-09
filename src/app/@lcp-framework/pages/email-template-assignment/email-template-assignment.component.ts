@@ -12,11 +12,12 @@ import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { LocalStorageService } from '../../service/common/local-storage.service';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-email-template-assignment',
   standalone: true,
-  imports: [FormlyModule, CommonSharedModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, CommonModule],
+  imports: [FormlyModule, CommonSharedModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, CommonModule, NgSelectModule],
   templateUrl: './email-template-assignment.component.html',
   styleUrl: './email-template-assignment.component.scss',
 })
@@ -31,6 +32,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   }[] = [];
   templateList: { label: string; value: number }[] = [];
   userId: number = 0;
+  options: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -238,10 +240,14 @@ export class EmailTemplateAssignmentComponent implements OnInit {
                     email_template_assignment_id: [each.eta_id, Validators.required],
                     cc_bcc: this.fb.array([]),
                     email_tag_mail: [null],
+                    user_list: [null],
                   })
                 );
                 if (each.recipient_type === 'tag') {
                   this.getTemplateAssignmentTags(each.email_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+                }
+                if (each.recipient_type === 'user_id') {
+                  this.getUsers(lineItemsArray.controls[lineItemsArray.length - 1], '');
                 }
                 temp_assgn_ids.push(each.eta_id);
               }
@@ -312,11 +318,16 @@ export class EmailTemplateAssignmentComponent implements OnInit {
                       recipient_type: [ccBcc.recipient_type, Validators.required],
                       email_to: [ccBcc.email_to, Validators.required],
                       email_tag_mail: [null],
+                      user_list: [null],
                     })
                   );
 
                   if (ccBcc.recipient_type === 'tag') {
                     this.getTemplateAssignmentTags(ccBcc.email_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+                  }
+
+                  if (ccBcc.recipient_type === 'user_id') {
+                    this.getUsers(lineItemsArray.controls[lineItemsArray.length - 1], '');
                   }
                 }
               }
@@ -348,6 +359,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         email_template_assignment_id: [0],
         cc_bcc: this.fb.array([]),
         email_tag_mail: [null],
+        user_list: [null],
       })
     );
   }
@@ -371,6 +383,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         recipient_type: ['tag', Validators.required],
         email_to: ['', Validators.required],
         email_tag_mail: [null],
+        user_list: [null],
       })
     );
   }
@@ -435,6 +448,44 @@ export class EmailTemplateAssignmentComponent implements OnInit {
                 }
               },
             });
+          }
+        }
+      },
+    });
+  }
+
+  getUsers(formGroup: any, uname?: string) {
+    let payload = {
+      company_id: 1,
+      search_all: [
+        {
+          value: '1',
+          operator: '=',
+          column_name: 'status_id',
+        },
+      ],
+      limit_range: 25,
+      print_query: false,
+      start_index: 0,
+      sort_columns: [['email', 'asc']],
+      primary_table: 'users',
+      select_columns: [
+        ['email', 'value'],
+        ['email', 'label'],
+      ],
+    };
+    if (uname) {
+      payload.search_all.push({
+        value: '%' + uname + '%',
+        operator: 'ILIKE',
+        column_name: 'email',
+      });
+    }
+    this.commonService.getCommonList(payload).subscribe({
+      next: (response: any) => {
+        if (response.code === 200 && response.status) {
+          if (response.data.records.length) {
+            formGroup.get('user_list')?.setValue(response.data.records);
           }
         }
       },

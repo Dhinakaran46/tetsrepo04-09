@@ -100,13 +100,21 @@
 
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
               <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
-              <input
-                type="text"
-                class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+              <ng-select
+                bindLabel="label"
+                bindValue="value"
                 formControlName="email_to"
-                placeholder="Search user email"
-                required
-              />
+                [clearable]="true"
+                [searchable]="true"
+                placeholder="Select User"
+                class="custom-multiselect et-ng-select"
+                (search)="getUsers(assignment, $event.term || '')"
+                (clear)="getUsers(assignment, '')"
+              >
+                @for(user of assignment.get('user_list')?.value; track user; let i = $index) {
+                <ng-option [value]="user.value">{{ user.label }}</ng-option>
+                }
+              </ng-select>
               <div
                 *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
@@ -203,13 +211,21 @@
 
                 <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'user_id'">
                   <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
-                  <input
-                    type="text"
-                    class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                  <ng-select
+                    bindLabel="label"
+                    bindValue="value"
                     formControlName="email_to"
-                    placeholder="Search user email"
-                    required
-                  />
+                    [clearable]="true"
+                    [searchable]="true"
+                    placeholder="Select User"
+                    class="custom-multiselect et-ng-select"
+                    (search)="getUsers(ccBcc, $event.term || '')"
+                    (clear)="getUsers(ccBcc, '')"
+                  >
+                    @for(user of ccBcc.get('user_list')?.value; track user; let i = $index) {
+                    <ng-option [value]="user.value">{{ user.label }}</ng-option>
+                    }
+                  </ng-select>
                   <div
                     *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
                     class="invalid-feedback mt-1 text-danger"
