@@ -132,7 +132,7 @@
                 placeholder="Enter email address"
                 required
               />
-              <div class="mt-5">Note : Can add multiple emails as comma seperated values</div>
+              <div class="mt-5">Note : Can add multiple emails as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
               <div
                 *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
@@ -249,6 +249,7 @@
                   >
                     {{ 'email_is_required' | translate }}
                   </div>
+                  <div class="mt-5">Note : Can add multiple emails as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
                 </div>
 
                 <i class="fa-solid fa-xmark mt-5 text-xl" (click)="removeCcBccGroup(i, j)"> </i>
