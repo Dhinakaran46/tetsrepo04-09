@@ -396,6 +396,10 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   clearUserTagValues(formGroup: any) {
     formGroup.controls['email_to'].reset();
     formGroup.controls['email_tag_mail'].reset();
+
+    if (formGroup.controls['recipient_type'].value === 'user_id') {
+      this.getUsers(formGroup, '');
+    }
   }
 
   getTemplateAssignmentTags(tagId: number, formGroup: any) {
