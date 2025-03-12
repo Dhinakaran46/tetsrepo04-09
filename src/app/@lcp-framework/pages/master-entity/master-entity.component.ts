@@ -569,12 +569,12 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.statusId && { status_id: formData.statusId }),
         ...(formData.isAdminModule && { is_admin_module: formData.isAdminModule ? formData.isAdminModule : false }),
 
-        ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable) }),
-        ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation) }),
-        ...(formData.formInformation && { form_information: this.prepareJSON(formData.formInformation) }),
-        ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation) }),
-        ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation) }),
-        ...(formData.presetQueryInformation && { preset_query_information: this.prepareJSON(formData.presetQueryInformation) }),
+        ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true) }),
+        ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true) }),
+        ...(formData.formInformation && { form_information: this.prepareJSON(formData.formInformation, true) }),
+        ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation, true) }),
+        ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation, true) }),
+        ...(formData.presetQueryInformation && { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true) }),
         ...(formData.staticPageContent && { static_page_content: formData.staticPageContent }),
         ...(formData.wizardType && { dashboard_wizard_type: formData.wizardType }),
         ...(formData.wizardGroup && { dashboard_wizard_group_id: formData.wizardGroup }),
@@ -583,7 +583,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_rows && { dashboard_wizard_rows: formData.dashboard_wizard_rows }),
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
-        ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options) }),
+        ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
       },
     ];
 
@@ -625,13 +625,15 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
         ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
 
-        ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable) } : { associated_tables: null }),
-        ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation) } : { query_information: null }),
-        ...(formData.formInformation ? { form_information: this.prepareJSON(formData.formInformation) } : { form_information: null }),
-        ...(formData.addQueryInformation ? { add_query_information: this.prepareJSON(formData.addQueryInformation) } : { add_query_information: null }),
-        ...(formData.editQueryInformation ? { edit_query_information: this.prepareJSON(formData.editQueryInformation) } : { edit_query_information: null }),
+        ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true) } : { associated_tables: null }),
+        ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation, true) } : { query_information: null }),
+        ...(formData.formInformation ? { form_information: this.prepareJSON(formData.formInformation, true) } : { form_information: null }),
+        ...(formData.addQueryInformation ? { add_query_information: this.prepareJSON(formData.addQueryInformation, true) } : { add_query_information: null }),
+        ...(formData.editQueryInformation
+          ? { edit_query_information: this.prepareJSON(formData.editQueryInformation, true) }
+          : { edit_query_information: null }),
         ...(formData.presetQueryInformation
-          ? { preset_query_information: this.prepareJSON(formData.presetQueryInformation) }
+          ? { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true) }
           : { preset_query_information: null }),
         ...(formData.staticPageContent ? { static_page_content: formData.staticPageContent } : { static_page_content: null }),
         ...(formData.wizardType ? { dashboard_wizard_type: formData.wizardType } : { dashboard_wizard_type: null }),
@@ -642,7 +644,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
         ...(formData.dashboard_wizard_options
-          ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options) }
+          ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
           : { dashboard_wizard_options: null }),
       },
     ];
@@ -694,12 +696,34 @@ export class MasterEntityComponent implements OnInit {
     return this.update_json_schema;
   }
 
-  prepareJSON(data: any): string {
-    return JSON.stringify(JSON.parse(data));
+  // prepareJSON(data: any): string {
+  //   return JSON.stringify(JSON.parse(data));
+  // }
+  prepareJSON(data: any, replace_param: boolean = false): string {
+    try {
+      // Parse the input data into a JavaScript object
+      const parsedData = JSON.parse(data);
+
+      // Convert the object back to a JSON string
+      let jsonString = JSON.stringify(parsedData);
+
+      // Perform replacements if replace_param is true
+      if (replace_param) {
+        jsonString = jsonString
+          .replace(/@table/g, '##table')
+          .replace(/{{{/g, '{#{') // Replace {{{ with {#{
+          .replace(/}}}/g, '}#}'); // Replace }}} with }#}
+      }
+
+      return jsonString;
+    } catch (error) {
+      console.error('Error preparing JSON:', error);
+      throw new Error('Invalid JSON input');
+    }
   }
 
   prettyJSON(data: any) {
-    return JSON.stringify(JSON.parse(JSON.stringify(data).replace(/@table(\w+)/g, '##table$1')), null, 2);
+    return JSON.stringify(JSON.parse(JSON.stringify(data)), null, 2);
   }
 
   onSubmit() {
