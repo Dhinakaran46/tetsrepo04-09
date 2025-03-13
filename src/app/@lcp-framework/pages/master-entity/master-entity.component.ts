@@ -65,6 +65,7 @@ export class MasterEntityComponent implements OnInit {
   field_types: any[] = [];
   tables_list: any = [];
   wizard_type_list: any[] = [];
+  report_type_list: any[] = [];
   id: number | null = null;
   editTitle = false;
   submitted = false;
@@ -144,6 +145,7 @@ export class MasterEntityComponent implements OnInit {
     this.entity_types = this.commonConfig.entity_types;
     this.action_types = this.commonConfig.action_types;
     this.wizard_type_list = this.commonConfig.wizard_type;
+    this.report_type_list = this.commonConfig.report_type;
     this.fetchAllTables();
 
     // To listen "entityType" on value change
@@ -240,12 +242,14 @@ export class MasterEntityComponent implements OnInit {
       isAdminModule: [false],
       associateTable: [''],
       wizardType: [''],
+      reportType: [this.commonConfig.REPORT_TYPES.LCP],
       wizardGroup: [''],
       export_template_id: [''],
       dashboard_wizard_rows: [''],
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
       queryInformation: [''],
+      reportInformation: [''],
       dashboard_wizard_options: [''],
       formInformation: [''],
       addQueryInformation: [''],
@@ -506,12 +510,14 @@ export class MasterEntityComponent implements OnInit {
             isAdminModule: entity.is_admin_module,
             entityType: entity.entity_type,
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
+            reportInformation: entity.report_information ? this.prettyJSON(entity.report_information) : '',
             formInformation: entity.form_information ? this.prettyJSON(entity.form_information) : '',
             addQueryInformation: entity.add_query_information ? this.prettyJSON(entity.add_query_information) : '',
             editQueryInformation: entity.edit_query_information ? this.prettyJSON(entity.edit_query_information) : '',
             presetQueryInformation: entity.preset_query_information ? this.prettyJSON(entity.preset_query_information) : '',
             staticPageContent: entity.static_page_content,
             wizardType: entity.dashboard_wizard_type,
+            reportType: entity?.report_type || this.commonConfig.REPORT_TYPES.LCP,
             wizardGroup: entity.dashboard_wizard_group_id,
             export_template_id: entity.export_template_id,
             dashboard_wizard_rows: entity.dashboard_wizard_rows,
@@ -571,12 +577,14 @@ export class MasterEntityComponent implements OnInit {
 
         ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable) }),
         ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation) }),
+        ...(formData.reportInformation && { report_information: this.prepareJSON(formData.reportInformation) }),
         ...(formData.formInformation && { form_information: this.prepareJSON(formData.formInformation) }),
         ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation) }),
         ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation) }),
         ...(formData.presetQueryInformation && { preset_query_information: this.prepareJSON(formData.presetQueryInformation) }),
         ...(formData.staticPageContent && { static_page_content: formData.staticPageContent }),
         ...(formData.wizardType && { dashboard_wizard_type: formData.wizardType }),
+        ...(formData.reportType && { report_type: formData.reportType }),
         ...(formData.wizardGroup && { dashboard_wizard_group_id: formData.wizardGroup }),
 
         ...(formData.export_template_id && { export_template_id: formData.export_template_id }),
@@ -627,6 +635,7 @@ export class MasterEntityComponent implements OnInit {
 
         ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable) } : { associated_tables: null }),
         ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation) } : { query_information: null }),
+        ...(formData.reportInformation ? { report_information: this.prepareJSON(formData.reportInformation) } : { report_information: null }),
         ...(formData.formInformation ? { form_information: this.prepareJSON(formData.formInformation) } : { form_information: null }),
         ...(formData.addQueryInformation ? { add_query_information: this.prepareJSON(formData.addQueryInformation) } : { add_query_information: null }),
         ...(formData.editQueryInformation ? { edit_query_information: this.prepareJSON(formData.editQueryInformation) } : { edit_query_information: null }),
@@ -635,6 +644,7 @@ export class MasterEntityComponent implements OnInit {
           : { preset_query_information: null }),
         ...(formData.staticPageContent ? { static_page_content: formData.staticPageContent } : { static_page_content: null }),
         ...(formData.wizardType ? { dashboard_wizard_type: formData.wizardType } : { dashboard_wizard_type: null }),
+        ...(formData?.reportType ? { report_type: formData.reportType } : { report_type: this.commonConfig.REPORT_TYPES.LCP }),
         ...(formData.wizardGroup ? { dashboard_wizard_group_id: formData.wizardGroup } : { dashboard_wizard_group_id: null }),
 
         ...(formData.export_template_id ? { export_template_id: formData.export_template_id } : { export_template_id: null }),

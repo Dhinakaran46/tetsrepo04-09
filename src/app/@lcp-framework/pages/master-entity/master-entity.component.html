@@ -196,6 +196,26 @@
 
           <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE">
             <div class="mt-0">
+              <label for="" class="required-mark mb-2 block font-medium">{{ 'form_label_report_type' | translate }}</label>
+              <select
+                id="reportType"
+                formControlName="reportType"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('reportType') }"
+                appDynamicFontSize="body"
+              >
+                <!-- <option value>{{ 'form_label_report_type_dropdown' | translate }}</option> -->
+                <ng-container *ngFor="let item of report_type_list">
+                  <option [value]="item.value">{{ item.label | translate }}</option>
+                </ng-container>
+              </select>
+
+              <div *ngIf="isFieldInvalid('reportType')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('reportType') }}
+              </div>
+            </div>
+
+            <div class="mt-0" *ngIf="form.get('reportType')?.value === commonConfig.REPORT_TYPES.LCP">
               <label for="wizardType" class="required-mark mb-2 block font-medium">{{ 'form_label_wizard_type' | translate }}</label>
               <select
                 id="wizardType"
@@ -223,7 +243,7 @@
                   id="wizardGroup"
                   formControlName="wizardGroup"
                   appDynamicFontSize="body"
-                  class="custom-multiselect min-w-[200px] flex-grow"
+                  class="custom-multiselect min-w-[90px] flex-grow"
                   [clearable]="false"
                   placeholder="{{ 'select_wizard_group' | translate }}"
                   [ngClass]="{ 'is-invalid': isFieldInvalid('wizardGroup') }"
@@ -364,9 +384,9 @@
 
         <ng-container
           *ngIf="
-            [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE, commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE].includes(
-              form.get('entityType')?.value
-            )
+            commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE === form.get('entityType')?.value ||
+            (commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE === form.get('entityType')?.value &&
+              form.get('reportType')?.value === commonConfig.REPORT_TYPES.LCP)
           "
         >
           <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -428,6 +448,31 @@
               </div>
               <div *ngIf="isFieldInvalid('staticPageContent')" class="invalid-feedback mt-1 text-danger">
                 {{ getErrorMessage('staticPageContent') }}
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container
+          *ngIf="
+            commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE === form.get('entityType')?.value &&
+            form.get('reportType')?.value === commonConfig.REPORT_TYPES.POWERBI
+          "
+        >
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-1">
+            <div class="mt-3">
+              <label for="reportInformation" class="mb-2 block font-medium">{{ 'form_label_report_information' | translate }}</label>
+              <div class="monaco-editor-container" appDynamicFontSize="body">
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="editorOptions"
+                  id="reportInformation"
+                  formControlName="reportInformation"
+                  class="monaco-editor"
+                ></ngx-monaco-editor>
+              </div>
+              <div *ngIf="isFieldInvalid('reportInformation')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('reportInformation') }}
               </div>
             </div>
           </div>

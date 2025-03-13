@@ -341,4 +341,18 @@ export const commonConfig: any = {
     CHART: 'chart',
     STATIC: 'static',
   },
+  report_type: [
+    {
+      label: 'LCP',
+      value: 'lcp',
+    },
+    {
+      label: 'Power Bi',
+      value: 'powerbi',
+    },
+  ],
+  REPORT_TYPES: {
+    LCP: 'lcp',
+    POWERBI: 'powerbi',
+  },
 };

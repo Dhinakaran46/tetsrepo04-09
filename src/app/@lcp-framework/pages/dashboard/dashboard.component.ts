@@ -32,6 +32,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 import { environment } from '../../../../environments/environment';
+import { IdleService } from '../../service/common/idle.service';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -109,10 +110,11 @@ export class DashboardComponent implements AfterViewInit {
     private menuLoadService: MenuLoadService,
     private gridApiService: GridApiService,
     private toastr: ToastrService,
-    public translate: TranslateService
+    public translate: TranslateService,
+    public idleService: IdleService
   ) {
     this.initStore();
-
+    this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
   }
 
