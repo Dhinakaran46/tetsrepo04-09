@@ -1,13 +1,74 @@
 <div>
-  <div class="toolbar" *ngIf="to['html-editor'] || false">
-    <button type="button" (click)="toggleHtmlEdit()" class="btn btn-sm"
-      [ngClass]="{'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode}">{{(isHtmlMode)?'BACK':'EDIT HTML'}}</button>
+  <div class="toolbar">
+    <button
+      *ngIf="to['preview'] || false"
+      type="button"
+      (click)="showPreview()"
+      class="btn btn-sm"
+      [ngClass]="{ 'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode }"
+    >
+      {{ 'PREVIEW' }}
+    </button>
+    <button
+      *ngIf="to['html-editor'] || false"
+      type="button"
+      (click)="toggleHtmlEdit()"
+      class="btn btn-sm"
+      [ngClass]="{ 'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode }"
+    >
+      {{ isHtmlMode ? 'BACK' : 'EDIT HTML' }}
+    </button>
   </div>
-  <quill-editor *ngIf="!isHtmlMode" #quillEditor [formControl]="formControl" [formlyAttributes]="field"
-    [modules]="to['modules'] || modules" [placeholder]="to['placeholder'] || 'Enter text...'"
-    [readOnly]="to['readonly'] || false" [style.height.px]="to['rows'] ? to['rows'] * 24 : 200">
+  <quill-editor
+    *ngIf="!isHtmlMode"
+    #quillEditor
+    [formControl]="formControl"
+    [formlyAttributes]="field"
+    [modules]="to['modules'] || modules"
+    [placeholder]="to['placeholder'] || 'Enter text...'"
+    [readOnly]="to['readonly'] || false"
+    [style.height.px]="to['rows'] ? to['rows'] * 24 : 200"
+  >
   </quill-editor>
-  <ngx-monaco-editor *ngIf="isHtmlMode" #htmlEditor [options]="editorOptions"
-    [style.height.px]="(to['rows'] ? to['rows'] * 24 : 200) + 50" class="monaco-editor" [formControl]="formControl">
+  <ngx-monaco-editor
+    *ngIf="isHtmlMode"
+    #htmlEditor
+    [options]="editorOptions"
+    [style.height.px]="(to['rows'] ? to['rows'] * 24 : 200) + 50"
+    class="monaco-editor"
+    [formControl]="formControl"
+  >
   </ngx-monaco-editor>
+</div>
+
+<!--Preview Modal-->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="preview">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-10/12 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800 sm:w-8/12"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <div class="flex gap-4">
+            <p class="text-md font-bold" appDynamicFontSize="body">{{ 'Preview' }}</p>
+          </div>
+          <button class="close-btn" (click)="hidePreview()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
+        <!--preview-->
+        <div [innerHTML]="formControl.value | safeHtml"></div>
+      </div>
+    </div>
+  </div>
 </div>

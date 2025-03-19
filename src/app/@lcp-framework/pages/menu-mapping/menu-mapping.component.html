@@ -1,368 +1,299 @@
 <div>
-    <form class="space-y-5 dark:text-white"
-        [formGroup]="menuForm" (ngSubmit)="onSubmit()">
-        <div class="grid grid-cols-1 gap-6 pt-5 lg:grid-cols-2">
-            <div class="panel">
-                <div
-                    class="mb-5 flex flex-col lg:flex-row items-start lg:items-center justify-between">
-                    <h5 class="text-lg font-semibold dark:text-white-light"> {{
-                        'menu_mapping' | translate }}
-                    </h5>
-                    <select id="menu_type" formControlName="menu_type"
-                        class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2 mt-4 lg:mt-0"
-                        (change)="onMenuTypeChange($event)">
-                        <option
-                            value>{{'form_label_menu_dropdown' |
-                            translate}}</option>
-                        <option
-                            *ngFor="let option of menuTypes"
-                            [value]="option.id">
-                            {{ option.name | translate }} ({{ option.menu_type
-                            === 1 ? 'Web'
-                            : 'Mobile' | translate }})
-                        </option>
-                    </select>
-                </div>
-
-                <div class="mb-5 flex items-center justify-between">
-
-                    <p class="text-sm font-semibold dark:text-white-light"> {{
-                        selectedOptionName || '' | translate }}
-                    </p>
-                    <button type="button"
-                        class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-                        (click)="addMenuItem()" *ngIf="menu_id">
-                        <i
-                            class="fa-solid fa-plus shrink-0 ltr:mr-1.5 rtl:ml-1.5"></i>
-                        {{ 'button_add_menu_item' | translate }}
-                    </button>
-
-                </div>
-                <div class="mt-5">
-                    <ul class="font-semibold">
-                        <app-menu-item *ngFor="let item of menu" [item]="item"
-                            [treeview]="treeview1"></app-menu-item>
-                    </ul>
-                </div>
-            </div>
-            <ng-container *ngIf="showForm">
-                <div class="panel">
-                    <div class="mb-5 flex items-center justify-between">
-                        <h5 class="text-lg font-semibold dark:text-white-light">
-                            {{ (editMode ? 'title_edit_menu_item' :
-                            'title_add_menu_item') | translate }}
-                        </h5>
-                        <button type="button"
-                            class="btn-warning flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-                            (click)="closeForm()">
-                            <i
-                                class="fa-solid fa-xmark shrink-0 ltr:mr-1.5 rtl:ml-1.5"></i>
-                            &nbsp;
-                            {{ 'form_button_close' | translate}}
-                        </button>
-                    </div>
-                    <div class="mb-5">
-                        <div class="mb-5">
-                            <label for="name">{{ 'form_label_menu_link_name' |
-                                translate}} <span
-                                    class="text-danger">*</span></label>
-                            <div class="relative text-white-dark">
-                                <input autocomplete="off"
-                                    formControlName="name" id="name"
-                                    type="text" placeholder="Menu Name"
-                                    class="form-input py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                    [class.is-invalid]="isSubmitted && menuForm.controls['name'].invalid"
-                                    (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })" />
-
-                            </div>
-                            <div
-                                *ngIf="isSubmitted && menuForm.controls['name'].hasError('required')"
-                                class="text-danger">{{
-                                'form_label_menu_link_name_req' | translate
-                                }}
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label for="menuIcon"> {{ 'form_label_menu_icon'|
-                                translate}} </label>
-                            <div class="relative text-white-dark">
-
-                                <ng-select [items]="iconClasses"
-                                    class="py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                    formControlName="menuIcon"
-                                    bindLabel="icon"
-                                    bindValue="icon"
-                                    placeholder="Select an icon"
-                                    [addTag]="true"
-                                    [clearable]="false"
-                                    (change)="handleManualInput($event)">
-
-                                    <!-- Option template -->
-                                    <ng-template ng-option-tmp let-item="item">
-                                        <i
-                                            [ngClass]="'fa-solid ' + item.icon"></i>
-                                        {{ item.icon }}
-                                    </ng-template>
-
-                                    <!-- Selected item template -->
-                                    <ng-template ng-select-tmp let-item="item">
-                                        <i
-                                            [ngClass]="'fa-solid ' + item.icon"></i>
-                                        {{ item.icon }}
-                                    </ng-template>
-
-                                    <!-- Allow user to enter custom values -->
-                                    <ng-template ng-add-option-tmp>
-                                        <input type="text"
-                                            (blur)="handleManualInput($event)" />
-                                    </ng-template>
-
-                                </ng-select>
-
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label for="link_type">{{
-                                'form_label_menu_link_type'|
-                                translate}}</label>
-                            <select id="link_type" formControlName="link_type"
-                                class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                (change)="onActionTypeChange($event)">
-
-                                <option
-                                    *ngFor="let option of linkTypes"
-                                    [value]="option.value">{{option.label |
-                                    translate}}</option>
-                            </select>
-                            <div
-                                *ngIf="isSubmitted && menuForm.controls['link_type'].hasError('required')"
-                                class="text-danger">{{
-                                'form_label_menu_link_type_req' | translate
-                                }}
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label for="parent">{{
-                                'form_label_parent_menu'|
-                                translate}}</label>
-                            <select id="parent"
-                                formControlName="parent"
-                                class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                (change)="onParentMenuChange($event)">
-                                <option
-                                    value>{{'form_label_parent_menu_dropdown' |
-                                    translate}}</option>
-                                <option
-                                    *ngFor="let menuItem of flatMenu"
-                                    [value]="menuItem.id">
-                                    {{ menuItem.indentedName | translate}}
-                                </option>
-                            </select>
-                        </div>
-                        <ng-container
-                            *ngIf="getActionItem && parentActionList.length > 0">
-                            <div class="mb-5">
-                                <label
-                                    for="parentActionItem">{{'form_label_action_types'
-                                    | translate}}</label>
-                                <select id="parentActionItem"
-                                    formControlName="parentActionItem"
-                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2">
-                                    <option value>{{'form_label_action_types'
-                                        | translate}}</option>
-                                    <option
-                                        *ngFor="let actionList of parentActionList"
-                                        [value]="actionList.id">
-                                        {{ actionList.name | uppercase |
-                                        translate}}
-                                    </option>
-                                </select>
-                            </div>
-                        </ng-container>
-                        <div class="mb-5">
-                            <label for="url">{{
-                                'form_label_target_url'| translate}}</label>
-                            <div class="relative text-white-dark">
-                                <input type="url" id="url"
-                                    formControlName="url"
-                                    placeholder="{{
-                                        'form_label_target_url_placeholder' |
-                                        translate}}"
-                                    class="form-input py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2" />
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label for="order_no">{{'form_label_order_no' |
-                                translate }}</label>
-                            <div class="relative text-white-dark">
-                                <input type="number" id="order_no"
-                                    formControlName="order_no"
-                                    placeholder="{{'form_label_order_no_placeholder' |
-                                    translate }}"
-                                    class="form-input py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2" />
-                            </div>
-                            <div
-                                *ngIf="menuForm.get('order_no')?.invalid && menuForm.get('order_no')?.touched">
-                                <span class="text-danger"
-                                    *ngIf="menuForm.get('order_no')?.errors?.['decimalInvalid']">
-                                    {{'form_label_order_no_validation' |
-                                    translate}}
-                                </span>
-                            </div>
-                        </div>
-                        <ng-container *ngIf="entityElement">
-                            <div class="mb-5">
-                                <label
-                                    for="entityType">{{'form_label_entity_type'
-                                    | translate}}</label>
-                                <select id="entityType"
-                                    formControlName="entityType"
-                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                    (change)="onSelectionChange($event)">
-                                    <option
-                                        value>{{'form_label_entity_type_dropdown'
-                                        | translate}}</option>
-                                    <option
-                                        *ngFor="let option of entityOptions"
-                                        [value]="option.value">{{ option.label |
-                                        translate
-                                        }}</option>
-                                </select>
-                                <div
-                                    *ngIf="isSubmitted && menuForm.controls['entityType'].hasError('required')"
-                                    class="text-danger">{{
-                                    'Entity type is required. Select one entity type'
-                                    | translate
-                                    }}
-                                </div>
-                            </div>
-                            <div class="mb-5">
-                                <label for="module">{{'form_label_module'|
-                                    translate}}</label>
-                                <select id="module" formControlName="module"
-                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                    (change)="onModuleChange($event)">
-                                    <option value>{{'form_label_module_dropdown'
-                                        | translate}}</option>
-                                    <option
-                                        *ngFor="let option of entityModules"
-                                        [value]="option.id">{{option.name |
-                                        translate}}</option>
-                                </select>
-                            </div>
-                        </ng-container>
-                        <div class="mb-5">
-                            <label for="menu_status">{{'form_label_menu_status'
-                                |
-                                translate }}</label>
-                            <div class="relative text-white-dark">
-                                <select id="menu_status"
-                                    formControlName="menu_status"
-                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2">
-                                    <option
-                                        *ngFor="let statusList of menuStatusTypes"
-                                        [value]="statusList.value">
-                                        {{ statusList.label | uppercase |
-                                        translate}}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                        <button type="submit"
-                            class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                            {{(editMode ? 'update' : 'submit') | translate}}
-                        </button>
-                    </div>
-                </div>
-            </ng-container>
-            <ng-container *ngIf="showTypeForm">
-                <div class="panel">
-                    <div class="mb-5 flex items-center justify-between">
-                        <h5 class="text-lg font-semibold dark:text-white-light">
-                            {{'title_add_menu_type' | translate}}
-                        </h5>
-                        <button type="button"
-                            class="btn-warning flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-                            (click)="closeMenuTypForm()">
-                            <i
-                                class="fa-solid fa-xmark shrink-0 ltr:mr-1.5 rtl:ml-1.5"></i>
-                            &nbsp;
-                            {{ 'form_button_close' | translate}}
-                        </button>
-                    </div>
-                    <div class="mb-5">
-                        <div class="mb-5">
-                            <label for="MenuTypeName">{{
-                                'form_label_menu_type_name' |
-                                translate}} <span
-                                    class="text-danger">*</span></label>
-                            <div class="relative text-white-dark">
-                                <input autocomplete="off"
-                                    formControlName="MenuTypeName"
-                                    id="MenuTypeName"
-                                    type="text" placeholder="MenuTypeName"
-                                    class="form-input py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                    [class.is-invalid]="isSubmitted && menuForm.controls['name'].invalid"
-                                    (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })" />
-                                <span
-                                    class="absolute start-4 top-1/2 -translate-y-1/2">
-                                    <i class="fa-solid fa-square-pen"></i>
-                                </span>
-                            </div>
-                            <div
-                                *ngIf="isSubmitted && menuForm.controls['MenuTypeName'].hasError('required')"
-                                class="text-danger">{{
-                                'form_label_menu_type_name_req' | translate
-                                }}
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label for="menuTypeSlug">{{
-                                'form_label_menu_type_slug'|
-                                translate}}</label>
-                            <div class="relative text-white-dark">
-                                <input autocomplete="off"
-                                    formControlName="menuTypeSlug"
-                                    id="menuTypeSlug"
-                                    type="text" placeholder="menuTypeSlug"
-                                    class="form-input py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2"
-                                    [class.is-invalid]="isSubmitted && menuForm.controls['name'].invalid"
-                                    (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })" />
-                                <span
-                                    class="absolute start-4 top-1/2 -translate-y-1/2">
-                                    <i class="fa-solid fa-square-pen"></i>
-                                </span>
-                            </div>
-                            <div
-                                *ngIf="isSubmitted && menuForm.controls['menuTypeSlug'].hasError('required')"
-                                class="text-danger">{{
-                                'form_label_menu_type_slug_req' | translate
-                                }}
-                            </div>
-                        </div>
-                        <div class="mb-5">
-                            <label for="menuDevice">{{
-                                'form_label_menu_device'|
-                                translate}}</label>
-                            <div class="relative text-white-dark">
-                                <select id="menuDevice"
-                                    formControlName="menuDevice"
-                                    class="form-select py-1.5 text-xs placeholder:text-white-dark w-full lg:w-1/2">
-                                    <option
-                                        *ngFor="let option of menuDeviceTypes"
-                                        [value]="option.value">{{option.label |
-                                        translate}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button type="submit" (click)="onMenuTypeSubmit()"
-                            class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                            {{'submit' | translate}}
-                        </button>
-                    </div>
-                </div>
-            </ng-container>
+  <form class="space-y-5 dark:text-white" [formGroup]="menuForm" (ngSubmit)="onSubmit()">
+    <div class="grid grid-cols-1 gap-6 pt-5 lg:grid-cols-2">
+      <div class="panel">
+        <div class="mb-5 flex flex-col items-start justify-between lg:flex-row lg:items-center">
+          <h5 class="text-lg font-semibold dark:text-white-light">{{ 'menu_mapping' | translate }}</h5>
+          <select
+            id="menu_type"
+            formControlName="menu_type"
+            class="form-select mt-4 w-full py-1.5 text-xs placeholder:text-white-dark lg:mt-0 lg:w-1/2"
+            (change)="onMenuTypeChange($event)"
+          >
+            <option value>{{ 'form_label_menu_dropdown' | translate }}</option>
+            <option *ngFor="let option of menuTypes" [value]="option.id">
+              {{ option.name | translate }} ({{ option.menu_type === 1 ? 'Web' : ('Mobile' | translate) }})
+            </option>
+          </select>
         </div>
-    </form>
+
+        <div class="mb-5 flex items-center justify-between">
+          <p class="text-sm font-semibold dark:text-white-light">{{ selectedOptionName || '' | translate }}</p>
+          <button
+            type="button"
+            class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            (click)="addMenuItem()"
+            *ngIf="menu_id"
+          >
+            <i class="fa-solid fa-plus shrink-0 ltr:mr-1.5 rtl:ml-1.5"></i>
+            {{ 'button_add_menu_item' | translate }}
+          </button>
+        </div>
+        <div class="mt-5">
+          <ul class="font-semibold">
+            <app-menu-item *ngFor="let item of menu" [item]="item" [treeview]="treeview1"></app-menu-item>
+          </ul>
+        </div>
+      </div>
+      <ng-container *ngIf="showForm">
+        <div class="panel">
+          <div class="mb-5 flex items-center justify-between">
+            <h5 class="text-lg font-semibold dark:text-white-light">
+              {{ (editMode ? 'title_edit_menu_item' : 'title_add_menu_item') | translate }}
+            </h5>
+            <button
+              type="button"
+              class="btn-warning flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              (click)="closeForm()"
+            >
+              <i class="fa-solid fa-xmark shrink-0 ltr:mr-1.5 rtl:ml-1.5"></i>
+              &nbsp;
+              {{ 'form_button_close' | translate }}
+            </button>
+          </div>
+          <div class="mb-5">
+            <div class="mb-5">
+              <label for="name">{{ 'form_label_menu_link_name' | translate }} <span class="text-danger">*</span></label>
+              <div class="relative text-white-dark">
+                <input
+                  autocomplete="off"
+                  formControlName="name"
+                  id="name"
+                  type="text"
+                  placeholder="Menu Name"
+                  class="form-input w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                  [class.is-invalid]="isSubmitted && menuForm.controls['name'].invalid"
+                  (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                />
+              </div>
+              <div *ngIf="isSubmitted && menuForm.controls['name'].hasError('required')" class="text-danger">
+                {{ 'form_label_menu_link_name_req' | translate }}
+              </div>
+            </div>
+            <div class="mb-5">
+              <label for="menuIcon"> {{ 'form_label_menu_icon' | translate }} </label>
+              <div class="relative text-white-dark">
+                <ng-select
+                  [items]="iconClasses"
+                  class="w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                  formControlName="menuIcon"
+                  bindLabel="icon"
+                  bindValue="icon"
+                  placeholder="Select an icon"
+                  [addTag]="true"
+                  [clearable]="false"
+                  (change)="handleManualInput($event)"
+                >
+                  <!-- Option template -->
+                  <ng-template ng-option-tmp let-item="item">
+                    <i [ngClass]="'fa-solid ' + item.icon"></i>
+                    {{ item.icon }}
+                  </ng-template>
+
+                  <!-- Selected item template -->
+                  <ng-template ng-select-tmp let-item="item">
+                    <i [ngClass]="'fa-solid ' + item.icon"></i>
+                    {{ item.icon }}
+                  </ng-template>
+
+                  <!-- Allow user to enter custom values -->
+                  <ng-template ng-add-option-tmp>
+                    <input type="text" (blur)="handleManualInput($event)" />
+                  </ng-template>
+                </ng-select>
+              </div>
+            </div>
+            <div class="mb-5">
+              <label for="link_type">{{ 'form_label_menu_link_type' | translate }}</label>
+              <select
+                id="link_type"
+                formControlName="link_type"
+                class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                (change)="onActionTypeChange($event)"
+              >
+                <option *ngFor="let option of linkTypes" [value]="option.value">{{ option.label | translate }}</option>
+              </select>
+              <div *ngIf="isSubmitted && menuForm.controls['link_type'].hasError('required')" class="text-danger">
+                {{ 'form_label_menu_link_type_req' | translate }}
+              </div>
+            </div>
+            <div class="mb-5">
+              <label for="parent">{{ 'form_label_parent_menu' | translate }}</label>
+              <select
+                id="parent"
+                formControlName="parent"
+                class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                (change)="onParentMenuChange($event)"
+              >
+                <option value>{{ 'form_label_parent_menu_dropdown' | translate }}</option>
+                <option *ngFor="let menuItem of flatMenu" [value]="menuItem.id">
+                  {{ menuItem.indentedName | translate }}
+                </option>
+              </select>
+            </div>
+            <ng-container *ngIf="getActionItem && parentActionList.length > 0">
+              <div class="mb-5">
+                <label for="parentActionItem">{{ 'form_label_action_types' | translate }}</label>
+                <select id="parentActionItem" formControlName="parentActionItem" class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2">
+                  <option value>{{ 'form_label_action_types' | translate }}</option>
+                  <option *ngFor="let actionList of parentActionList" [value]="actionList.id">
+                    {{ actionList.name | uppercase | translate }}
+                  </option>
+                </select>
+              </div>
+            </ng-container>
+            <div class="mb-5">
+              <label for="url">{{ 'form_label_target_url' | translate }}</label>
+              <div class="relative text-white-dark">
+                <input
+                  type="url"
+                  id="url"
+                  formControlName="url"
+                  placeholder="{{ 'form_label_target_url_placeholder' | translate }}"
+                  class="form-input w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                />
+              </div>
+            </div>
+            <div class="mb-5">
+              <label for="order_no">{{ 'form_label_order_no' | translate }}</label>
+              <div class="relative text-white-dark">
+                <input
+                  type="number"
+                  id="order_no"
+                  formControlName="order_no"
+                  placeholder="{{ 'form_label_order_no_placeholder' | translate }}"
+                  class="form-input w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                />
+              </div>
+              <div *ngIf="menuForm.get('order_no')?.invalid && menuForm.get('order_no')?.touched">
+                <span class="text-danger" *ngIf="menuForm.get('order_no')?.errors?.['decimalInvalid']">
+                  {{ 'form_label_order_no_validation' | translate }}
+                </span>
+              </div>
+            </div>
+            <ng-container *ngIf="entityElement">
+              <div class="mb-5">
+                <label for="entityType">{{ 'form_label_entity_type' | translate }}</label>
+                <select
+                  id="entityType"
+                  formControlName="entityType"
+                  class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                  (change)="onSelectionChange($event)"
+                >
+                  <option value>{{ 'form_label_entity_type_dropdown' | translate }}</option>
+                  <option *ngFor="let option of entityOptions" [value]="option.value">{{ option.label | translate }}</option>
+                </select>
+                <div *ngIf="isSubmitted && menuForm.controls['entityType'].hasError('required')" class="text-danger">
+                  {{ 'Entity type is required. Select one entity type' | translate }}
+                </div>
+              </div>
+              <div class="mb-5">
+                <label for="module">{{ 'form_label_module' | translate }}</label>
+                <select
+                  id="module"
+                  formControlName="module"
+                  class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                  (change)="onModuleChange($event)"
+                >
+                  <option value>{{ 'form_label_module_dropdown' | translate }}</option>
+                  <option *ngFor="let option of entityModules" [value]="option.id">{{ option.name | translate }}</option>
+                </select>
+              </div>
+            </ng-container>
+            <div class="mb-5">
+              <label for="menu_status">{{ 'form_label_menu_status' | translate }}</label>
+              <div class="relative text-white-dark">
+                <select id="menu_status" formControlName="menu_status" class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2">
+                  <option *ngFor="let statusList of menuStatusTypes" [value]="statusList.value">
+                    {{ statusList.label | uppercase | translate }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+              {{ (editMode ? 'update' : 'submit') | translate }}
+            </button>
+          </div>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="showTypeForm">
+        <div class="panel">
+          <div class="mb-5 flex items-center justify-between">
+            <h5 class="text-lg font-semibold dark:text-white-light">
+              {{ 'title_add_menu_type' | translate }}
+            </h5>
+            <button
+              type="button"
+              class="btn-warning flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              (click)="closeMenuTypForm()"
+            >
+              <i class="fa-solid fa-xmark shrink-0 ltr:mr-1.5 rtl:ml-1.5"></i>
+              &nbsp;
+              {{ 'form_button_close' | translate }}
+            </button>
+          </div>
+          <div class="mb-5">
+            <div class="mb-5">
+              <label for="MenuTypeName">{{ 'form_label_menu_type_name' | translate }} <span class="text-danger">*</span></label>
+              <div class="relative text-white-dark">
+                <input
+                  autocomplete="off"
+                  formControlName="MenuTypeName"
+                  id="MenuTypeName"
+                  type="text"
+                  placeholder="MenuTypeName"
+                  class="form-input w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                  [class.is-invalid]="isSubmitted && menuForm.controls['name'].invalid"
+                  (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                />
+                <span class="absolute start-4 top-1/2 -translate-y-1/2">
+                  <i class="fa-solid fa-square-pen"></i>
+                </span>
+              </div>
+              <div *ngIf="isSubmitted && menuForm.controls['MenuTypeName'].hasError('required')" class="text-danger">
+                {{ 'form_label_menu_type_name_req' | translate }}
+              </div>
+            </div>
+            <div class="mb-5">
+              <label for="menuTypeSlug">{{ 'form_label_menu_type_slug' | translate }}</label>
+              <div class="relative text-white-dark">
+                <input
+                  autocomplete="off"
+                  formControlName="menuTypeSlug"
+                  id="menuTypeSlug"
+                  type="text"
+                  placeholder="menuTypeSlug"
+                  class="form-input w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                  [class.is-invalid]="isSubmitted && menuForm.controls['name'].invalid"
+                  (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                />
+                <span class="absolute start-4 top-1/2 -translate-y-1/2">
+                  <i class="fa-solid fa-square-pen"></i>
+                </span>
+              </div>
+              <div *ngIf="isSubmitted && menuForm.controls['menuTypeSlug'].hasError('required')" class="text-danger">
+                {{ 'form_label_menu_type_slug_req' | translate }}
+              </div>
+            </div>
+            <div class="mb-5">
+              <label for="menuDevice">{{ 'form_label_menu_device' | translate }}</label>
+              <div class="relative text-white-dark">
+                <select id="menuDevice" formControlName="menuDevice" class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2">
+                  <option *ngFor="let option of menuDeviceTypes" [value]="option.value">{{ option.label | translate }}</option>
+                </select>
+              </div>
+            </div>
+            <button
+              type="submit"
+              (click)="onMenuTypeSubmit()"
+              class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]"
+            >
+              {{ 'submit' | translate }}
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </form>
 </div>
 <app-loader *ngIf="loading"></app-loader>

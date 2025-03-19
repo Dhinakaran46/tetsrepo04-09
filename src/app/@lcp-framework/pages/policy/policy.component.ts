@@ -43,6 +43,56 @@ export class PolicyComponent implements OnInit {
   isDarkTheme = true; // Default theme
   @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
 
+  isInfoModalOpen: boolean = false;
+  infoContents: any = {
+    queryInfo: {
+      header: 'Sample Policy Information',
+      comments: [],
+      data: {
+        sort_columns: [['users.id', 'desc']],
+        search_all: [
+          {
+            column_name: 'users.deleted_at',
+            value: null,
+            operator: 'IS',
+          },
+        ],
+        search_any: [
+          {
+            column_name: 'users.deleted_at',
+            value: null,
+            operator: 'IS',
+          },
+        ],
+        includes: [
+          {
+            table_name: 'user_details',
+            join_type: 'INNER',
+            join_condition: 'users.id = user_details.user_id',
+          },
+        ],
+        group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+        having_conditions: [
+          {
+            column_name: 'users.deleted_at',
+            value: null,
+            operator: 'IS',
+          },
+        ],
+        having_any_conditions: [
+          {
+            value: '%Mukesh%',
+            operator: 'ILIKE',
+            column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+          },
+        ],
+      },
+    },
+  };
+  popupInformation: any = null;
+  popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
+  copied = false;
+
   constructor(
     public fb: FormBuilder,
     public router: Router,
@@ -260,5 +310,29 @@ export class PolicyComponent implements OnInit {
         this.toastr.error(errorMessage, 'Error');
       },
     });
+  }
+
+  openInfoPopUp(popup: string) {
+    this.isInfoModalOpen = true;
+    this.popupInformation = {
+      ...this.infoContents[popup],
+      data: JSON.stringify(this.infoContents[popup].data, null, 2),
+    };
+  }
+
+  closeInfoPopUp() {
+    this.isInfoModalOpen = false;
+    this.popupInformation = null;
+  }
+
+  // Copy content from Monaco Editor
+  copyToClipboard() {
+    navigator.clipboard
+      .writeText(this.popupInformation.data)
+      .then(() => {
+        this.copied = true;
+        setTimeout(() => (this.copied = false), 3000);
+      })
+      .catch((err) => console.error('Failed to copy:', err));
   }
 }

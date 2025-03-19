@@ -68,7 +68,7 @@ export class UserRolePermissionComponent {
   userList: any[] = [];
   user_info: any;
 
-  order_permissions = ['view', 'add', 'edit', 'details', 'delete', 'export', 'assign'];
+  order_permissions = ['view', 'add', 'edit', 'details', 'delete', 'export_excel', 'assign'];
 
   constructor(
     public fb: FormBuilder,

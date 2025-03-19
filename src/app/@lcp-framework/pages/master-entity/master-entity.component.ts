@@ -115,6 +115,967 @@ export class MasterEntityComponent implements OnInit {
   showWizardGroupModal: boolean = false;
   newWizardGroupName: string = '';
   wizardGroupForm!: FormGroup;
+  isInfoModalOpen: boolean = false;
+  infoContents: any = {
+    reportInfo: {
+      header: 'sample_report_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: ['background_settings', 'layout_types'],
+          data: {
+            groupId: 'power_bi_group_id',
+            reportId: 'power_bi_report_id',
+            settings: {
+              background: 1,
+              barsHidden: true,
+              layoutType: 1,
+              filterPaneEnabled: false,
+              navContentPaneEnabled: false,
+            },
+          },
+        },
+      ],
+    },
+    queryInfo: {
+      header: 'sample_query_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            company_id: 1,
+            print_query: false,
+            primary_table: 'users',
+            start_index: 0,
+            limit_range: 15,
+            attached_policies: ['user_filer1'],
+            sort_columns: [['users.id', 'desc']],
+            search_all: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            search_any: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            select_columns: [['users.id'], ['users.email', 'user_mail'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'full_name']],
+            includes: [
+              {
+                table_name: 'user_details',
+                join_type: 'INNER',
+                join_condition: 'users.id = user_details.user_id',
+              },
+            ],
+            group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+            having_conditions: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            having_any_conditions: [
+              {
+                value: '%Mukesh%',
+                operator: 'ILIKE',
+                column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+              },
+            ],
+          },
+        },
+      ],
+    },
+    formQueryInfo: {
+      header: 'sample_query_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            department_id: {
+              company_id: 1,
+              search_all: [
+                {
+                  value: '1',
+                  operator: '=',
+                  column_name: 'departments.status_id',
+                },
+              ],
+              limit_range: 1000,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['departments.name', 'asc']],
+              primary_table: 'departments',
+              select_columns: [
+                ['id', 'value'],
+                ['name', 'label'],
+              ],
+            },
+            designation_id: {
+              company_id: 1,
+              search_all: [
+                {
+                  value: '1',
+                  operator: '=',
+                  column_name: 'designations.status_id',
+                },
+              ],
+              limit_range: 1000,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['designations.name', 'asc']],
+              primary_table: 'designations',
+              select_columns: [
+                ['id', 'value'],
+                ['name', 'label'],
+              ],
+            },
+          },
+        },
+      ],
+    },
+    jobBuilderQueryInfo: {
+      header: 'sample_query_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            data: {
+              table1: [
+                {
+                  deleted_at: true,
+                  deleted_by: true,
+                },
+              ],
+            },
+            table: ['users'],
+            action: ['delete'],
+            conditions: {
+              table1: [
+                {
+                  id: '$unique_id',
+                },
+              ],
+            },
+            reset_unique: {
+              table1: [
+                {
+                  column_name: 'email',
+                  column_length: 100,
+                },
+                {
+                  column_name: 'username',
+                  column_length: 100,
+                },
+              ],
+            },
+            table_mapping: ['table1'],
+          },
+        },
+      ],
+    },
+    associatedTableInfo: {
+      header: 'sample_associated_table_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: [
+            {
+              table: 'user_details',
+              where_clause: 'user_id = $1',
+            },
+          ],
+        },
+      ],
+    },
+    addQueryInfo: {
+      header: 'sample_add_json_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            data: {
+              table1: [
+                {
+                  role: '$users.role',
+                  email: '$users.email',
+                  username: '$users.username',
+                  status_id: '$users.status_id',
+                  created_at: true,
+                  created_by: true,
+                  updated_at: true,
+                  updated_by: true,
+                },
+              ],
+              table2: [
+                {
+                  dob: '$user_details.dob',
+                  code: '$user_details.code',
+                  gender: '$user_details.gender',
+                  address: '$user_details.address',
+                  culture: '$user_details.culture',
+                  user_id: '@table1.id',
+                  last_name: '$user_details.last_name',
+                  created_at: true,
+                  created_by: true,
+                  first_name: '$user_details.first_name',
+                  updated_at: true,
+                  updated_by: true,
+                  profile_pic: '$user_details.profile_pic',
+                  phone_number: '$user_details.phone_number',
+                  department_id: '$user_details.department_id',
+                  designation_id: '$user_details.designation_id',
+                },
+              ],
+              table3: [
+                {
+                  role_id: '$user_roles.role_id',
+                  user_id: '@table1.id',
+                },
+              ],
+              table4: [
+                {
+                  user_id: '@table1.id',
+                  unique_id: '@table1.id',
+                  created_at: true,
+                  created_by: true,
+                  prefill_data: '$model',
+                  email_template_process_slug: 'user-created',
+                },
+              ],
+            },
+            table: ['users', 'user_details', 'user_roles', 'email_process_jobs'],
+            action: ['insert', 'insert', 'insert', 'insert'],
+            table_mapping: ['table1', 'table2', 'table3', 'table4'],
+          },
+        },
+      ],
+    },
+    editQueryInfo: {
+      header: 'sample_edit_json_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            data: {
+              table1: [
+                {
+                  email: '$users.email',
+                  username: '$users.username',
+                  status_id: '$users.status_id',
+                  updated_at: true,
+                  updated_by: true,
+                },
+              ],
+              table2: [
+                {
+                  dob: '$user_details.dob',
+                  code: '$user_details.code',
+                  gender: '$user_details.gender',
+                  address: '$user_details.address',
+                  culture: '$user_details.culture',
+                  last_name: '$user_details.last_name',
+                  first_name: '$user_details.first_name',
+                  updated_at: true,
+                  updated_by: true,
+                  profile_pic: '$user_details.profile_pic',
+                  phone_number: '$user_details.phone_number',
+                  department_id: '$user_details.department_id',
+                  designation_id: '$user_details.designation_id',
+                },
+              ],
+              table4: [
+                {
+                  role_id: '$user_roles.role_id',
+                  user_id: '@table1.id',
+                },
+              ],
+            },
+            table: ['users', 'user_details', 'user_roles', 'user_roles'],
+            action: ['update', 'update', 'hard_delete', 'insert'],
+            conditions: {
+              table1: [
+                {
+                  uuid: '$unique_id',
+                },
+              ],
+              table2: [
+                {
+                  user_id: '@table1.id',
+                },
+              ],
+              table3: [
+                {
+                  user_id: '@table1.id',
+                },
+              ],
+            },
+            table_mapping: ['table1', 'table2', 'table3', 'table4'],
+          },
+        },
+      ],
+    },
+    formInfo: {
+      header: 'sample_from_information',
+      examples: [
+        {
+          name: 'normal_form_example',
+          comments: [],
+          data: {
+            model: {
+              users: {
+                role: 'admin',
+                email: null,
+                role_id: null,
+                username: null,
+                status_id: 1,
+              },
+              user_roles: {
+                role_id: [],
+              },
+              user_details: {
+                dob: null,
+                code: null,
+                gender: 'male',
+                address: null,
+                culture: null,
+                last_name: null,
+                first_name: null,
+                profile_pic: null,
+                phone_number: null,
+                department_id: null,
+                designation_id: null,
+              },
+            },
+            fields: [
+              {
+                key: 'users',
+                wrappers: ['form-field'],
+                fieldGroup: [
+                  {
+                    key: 'username',
+                    type: 'input',
+                    props: {
+                      label: 'Username',
+                      required: true,
+                      placeholder: 'Enter username',
+                    },
+                  },
+                  {
+                    key: 'email',
+                    type: 'input',
+                    props: {
+                      type: 'email',
+                      label: 'Email',
+                      required: true,
+                      placeholder: 'Enter email',
+                    },
+                  },
+                  {
+                    type: '#status',
+                  },
+                ],
+                fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+              },
+              {
+                key: 'user_details',
+                wrappers: ['form-field'],
+                fieldGroup: [
+                  {
+                    key: 'code',
+                    type: 'input',
+                    props: {
+                      label: 'Code',
+                      required: true,
+                      placeholder: 'Enter code',
+                    },
+                  },
+                  {
+                    key: 'first_name',
+                    type: 'input',
+                    props: {
+                      label: 'First Name',
+                      required: true,
+                      placeholder: 'Enter first name',
+                    },
+                  },
+                  {
+                    key: 'last_name',
+                    type: 'input',
+                    props: {
+                      label: 'Last Name',
+                      placeholder: 'Enter last name',
+                    },
+                  },
+                  {
+                    key: 'department_id',
+                    type: 'select',
+                    hooks: {
+                      onInit: true,
+                    },
+                    props: {
+                      label: 'Department',
+                    },
+                    attached_policies: ['filterdepartmentstartswithe'],
+                  },
+                  {
+                    key: 'designation_id',
+                    type: 'select',
+                    hooks: {
+                      onInit: true,
+                    },
+                    props: {
+                      label: 'Designation',
+                    },
+                  },
+                  {
+                    key: 'dob',
+                    type: 'input',
+                    props: {
+                      type: 'date',
+                      label: 'Date of Birth',
+                      placeholder: 'Enter date of birth',
+                    },
+                  },
+                  {
+                    key: 'phone_number',
+                    type: 'input',
+                    props: {
+                      label: 'Phone Number',
+                      placeholder: 'Enter phone number',
+                    },
+                  },
+                  {
+                    key: 'gender',
+                    type: 'radio',
+                    props: {
+                      label: 'Gender',
+                      options: [
+                        {
+                          label: 'Male',
+                          value: 'male',
+                        },
+                        {
+                          label: 'Female',
+                          value: 'female',
+                        },
+                        {
+                          label: 'Others',
+                          value: 'others',
+                        },
+                      ],
+                      required: true,
+                    },
+                  },
+                  {
+                    key: 'culture',
+                    type: 'input',
+                    props: {
+                      label: 'Culture',
+                      placeholder: 'Enter culture',
+                    },
+                  },
+                  {
+                    key: 'address',
+                    type: 'textarea',
+                    props: {
+                      rows: 3,
+                      label: 'Address',
+                      placeholder: 'Enter address',
+                    },
+                  },
+                  {
+                    key: 'profile_pic',
+                    type: 'input',
+                    props: {
+                      type: 'hidden',
+                    },
+                    className: 'hidden',
+                  },
+                  {
+                    key: 'profile_pic_file',
+                    type: 'file',
+                    props: {
+                      label: 'Profile Picture',
+                      accept: 'png',
+                      max_size: '1mb',
+                    },
+                  },
+                ],
+                fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+              },
+              {
+                key: 'user_roles',
+                wrappers: ['form-field'],
+                fieldGroup: [
+                  {
+                    key: 'role_id',
+                    type: 'select-from-db',
+                    templateOptions: {
+                      label: 'Role',
+                      table: 'roles',
+                      multiple: true,
+                      required: true,
+                      labelColumn: 'name',
+                      placeholder: 'Please select',
+                      valueColumn: 'id',
+                    },
+                    attached_policies: ['filterrolesstartswiths'],
+                  },
+                ],
+                fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+              },
+            ],
+            options: {},
+          },
+        },
+        {
+          name: 'dynamic_form_example',
+          comments: [],
+          data: {
+            model: {
+              items: {
+                sku: null,
+                name: null,
+                team_id: null,
+                parent_id: null,
+                status_id: 1,
+                description: null,
+                item_type_id: null,
+                department_id: null,
+                active_passive: 1,
+                manufacturer_id: null,
+                item_images_limit: 2048,
+                enable_zain_tag_tracking: false,
+                enable_serial_number_tracking: false,
+                enable_sequential_lot_tracking: false,
+              },
+              item_uoms: [],
+              item_images: [],
+            },
+            fields: [
+              {
+                key: 'items',
+                wrappers: ['form-field'],
+                fieldGroup: [
+                  {
+                    key: 'parent_id',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Parent Item',
+                      table: 'items',
+                      labelColumn: 'name',
+                      placeholder: 'Select Parent Item',
+                      valueColumn: 'id',
+                    },
+                  },
+                  {
+                    key: 'sku',
+                    type: 'input',
+                    props: {
+                      label: 'SKU',
+                      required: true,
+                      placeholder: 'Enter SKU',
+                    },
+                  },
+                  {
+                    key: 'name',
+                    type: 'input',
+                    props: {
+                      label: 'Name',
+                      required: true,
+                      placeholder: 'Enter Name',
+                    },
+                  },
+                  {
+                    key: 'description',
+                    type: 'textarea',
+                    props: {
+                      label: 'Description',
+                      placeholder: 'Enter Description',
+                    },
+                  },
+                  {
+                    key: 'manufacturer_id',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Manufacturer',
+                      table: 'manufacturers',
+                      labelColumn: 'name',
+                      placeholder: 'Select Manufacturer',
+                      valueColumn: 'id',
+                    },
+                  },
+                  {
+                    key: 'department_id',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Department',
+                      table: 'departments',
+                      labelColumn: 'name',
+                      placeholder: 'Select Department',
+                      valueColumn: 'id',
+                    },
+                  },
+                  {
+                    key: 'team_id',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Team',
+                      table: 'teams',
+                      labelColumn: 'name',
+                      placeholder: 'Select Team',
+                      valueColumn: 'id',
+                    },
+                  },
+                  {
+                    key: 'item_type_id',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Item Type',
+                      table: 'item_types',
+                      labelColumn: 'name',
+                      placeholder: 'Select Item Type',
+                      valueColumn: 'id',
+                    },
+                  },
+                  {
+                    key: 'active_passive',
+                    type: 'select',
+                    props: {
+                      label: 'Active/Passive',
+                      options: [
+                        {
+                          label: 'Active',
+                          value: 1,
+                        },
+                        {
+                          label: 'Passive',
+                          value: 2,
+                        },
+                      ],
+                      required: true,
+                    },
+                  },
+                  {
+                    key: 'enable_serial_number_tracking',
+                    type: 'checkbox',
+                    props: {
+                      label: 'Enable Serial Number Tracking',
+                    },
+                  },
+                  {
+                    key: 'enable_zain_tag_tracking',
+                    type: 'checkbox',
+                    props: {
+                      label: 'Enable Zain Tag Tracking',
+                    },
+                  },
+                  {
+                    key: 'enable_sequential_lot_tracking',
+                    type: 'checkbox',
+                    props: {
+                      label: 'Enable Sequential Lot Tracking',
+                    },
+                  },
+                ],
+                fieldGroupClassName: 'grid grid-cols-1 gap-4 md:grid-cols-4',
+              },
+              {
+                template: "<h2 class='text-lg font-bold text-gray-800 border-b pb-2 mb-4'>Item Images</h2>",
+              },
+              {
+                key: 'item_images',
+                type: 'repeat-table',
+                props: {
+                  limit: 10,
+                  required: false,
+                },
+                wrappers: ['form-field'],
+                fieldArray: {
+                  fieldGroup: [
+                    {
+                      key: 'image_path',
+                      type: 'input',
+                      props: {
+                        type: 'hidden',
+                      },
+                      className: 'hidden',
+                    },
+                    {
+                      key: 'image_path_file',
+                      type: 'image',
+                      props: {
+                        label: 'Item Image',
+                        required: false,
+                      },
+                      className: 'flex-1',
+                    },
+                    {
+                      key: 'image_name',
+                      type: 'input',
+                      props: {
+                        label: 'Image Name',
+                        required: true,
+                        placeholder: 'Enter Image Name',
+                      },
+                      className: 'flex-1',
+                    },
+                    {
+                      key: 'description',
+                      type: 'textarea',
+                      props: {
+                        label: 'Image Description',
+                        placeholder: 'Enter Image Description',
+                      },
+                      className: 'flex-1',
+                    },
+                  ],
+                  fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-4',
+                },
+              },
+              {
+                template: "<h2 class='text-lg font-bold text-gray-800 border-b pb-2 mb-4'>Item UOMs</h2>",
+              },
+              {
+                key: 'item_uoms',
+                type: 'repeat-table',
+                props: {
+                  limit: 5,
+                  required: true,
+                },
+                wrappers: ['form-field'],
+                fieldArray: {
+                  fieldGroup: [
+                    {
+                      key: 'uom_id',
+                      type: 'select-from-db',
+                      hooks: {
+                        onInit: true,
+                      },
+                      props: {
+                        label: 'UOM',
+                        table: 'units_of_measure',
+                        required: true,
+                        uniqueRow: true,
+                        labelColumn: 'name',
+                        placeholder: 'Select UOM',
+                        valueColumn: 'id',
+                      },
+                    },
+                    {
+                      key: 'conversion_factor',
+                      type: 'number',
+                      props: {
+                        label: 'Conversion Factor',
+                        required: true,
+                        placeholder: 'Enter Conversion Factor',
+                      },
+                    },
+                    {
+                      key: 'af_sqm_ops',
+                      type: 'input',
+                      props: {
+                        label: 'AF SQM OPS',
+                        placeholder: 'Enter AF SQM OPS',
+                      },
+                    },
+                    {
+                      key: 'af_sqm_st',
+                      type: 'input',
+                      props: {
+                        label: 'AF SQM ST',
+                        placeholder: 'Enter AF SQM ST',
+                      },
+                    },
+                    {
+                      key: 'length',
+                      type: 'number',
+                      props: {
+                        label: 'Length',
+                        required: false,
+                        placeholder: 'Enter Length',
+                      },
+                    },
+                    {
+                      key: 'height',
+                      type: 'number',
+                      props: {
+                        label: 'Height',
+                        required: false,
+                        placeholder: 'Enter Height',
+                      },
+                    },
+                    {
+                      key: 'width',
+                      type: 'number',
+                      props: {
+                        label: 'Width',
+                        required: false,
+                        placeholder: 'Enter Width',
+                      },
+                    },
+                    {
+                      key: 'level',
+                      type: 'select',
+                      props: {
+                        label: 'Level',
+                        options: [
+                          {
+                            label: '1',
+                            value: '1',
+                          },
+                          {
+                            label: '2',
+                            value: '2',
+                          },
+                          {
+                            label: '3',
+                            value: '3',
+                          },
+                        ],
+                        required: true,
+                        uniqueRow: true,
+                      },
+                    },
+                    {
+                      key: 'is_base_uom',
+                      type: 'checkbox',
+                      props: {
+                        label: 'Is Base UOM',
+                        uniqueRow: true,
+                      },
+                      defaultValue: false,
+                    },
+                  ],
+                  fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-3',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+    presetQueryInfo: {
+      header: 'sample_preset_json_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            users: {
+              company_id: 1,
+              search_all: [
+                {
+                  value: '$unique_id',
+                  operator: '=',
+                  column_name: 'users.uuid',
+                },
+                {
+                  value: '3',
+                  operator: '!=',
+                  column_name: 'users.status_id',
+                },
+              ],
+              limit_range: 1,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['users.id', 'asc']],
+              primary_table: 'users',
+              select_columns: [['email'], ['username'], ['role'], ['status_id']],
+            },
+            user_roles: {
+              group_by: ['user_roles.user_id'],
+              includes: [
+                {
+                  join_type: 'INNER',
+                  table_name: 'users',
+                  join_condition: 'users.id = user_roles.user_id',
+                },
+              ],
+              company_id: 1,
+              search_all: [
+                {
+                  value: '$unique_id',
+                  operator: '=',
+                  column_name: 'users.uuid',
+                },
+                {
+                  value: '3',
+                  operator: '!=',
+                  column_name: 'users.status_id',
+                },
+              ],
+              limit_range: 15,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['user_roles.user_id', 'desc']],
+              primary_table: 'user_roles',
+              select_columns: [['json_agg(user_roles.role_id::int)', 'role_id']],
+            },
+            user_details: {
+              includes: [
+                {
+                  join_type: 'INNER',
+                  table_name: 'user_details',
+                  join_condition: 'users.id = user_details.user_id',
+                },
+              ],
+              company_id: 1,
+              search_all: [
+                {
+                  value: '$unique_id',
+                  operator: '=',
+                  column_name: 'users.uuid',
+                },
+                {
+                  value: '3',
+                  operator: '!=',
+                  column_name: 'users.status_id',
+                },
+              ],
+              limit_range: 1,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['users.id', 'asc']],
+              primary_table: 'users',
+              select_columns: [
+                ['user_details.code'],
+                ['user_details.first_name'],
+                ['user_details.last_name'],
+                ['user_details.designation_id'],
+                ['user_details.department_id'],
+                ['user_details.dob'],
+                ['user_details.phone_number'],
+                ['user_details.country_code'],
+                ['user_details.gender'],
+                ['user_details.user_time_zone'],
+                ['user_details.address'],
+                ['user_details.culture'],
+                ['user_details.profile_pic'],
+              ],
+            },
+          },
+        },
+      ],
+    },
+  };
+  selectedInfoTab: number = 0;
+  popupInformation: any = null;
+  popupName: string = 'reportInfo';
+  popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
+  copied = false;
 
   constructor(
     private fb: FormBuilder,
@@ -827,5 +1788,41 @@ export class MasterEntityComponent implements OnInit {
       }
     }
     return '';
+  }
+
+  openInfoPopUp(popup: string) {
+    this.isInfoModalOpen = true;
+    this.popupName = popup;
+    this.selectedInfoTab = 0;
+    this.popupInformation = {
+      header: this.infoContents[this.popupName].header,
+      tabNames: this.infoContents[this.popupName].examples.map((example: any) => example.name),
+      data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
+    };
+  }
+
+  closeInfoPopUp() {
+    this.isInfoModalOpen = false;
+    this.popupInformation = null;
+  }
+
+  // Copy content from Monaco Editor
+  copyToClipboard() {
+    navigator.clipboard
+      .writeText(this.popupInformation.data)
+      .then(() => {
+        this.copied = true;
+        setTimeout(() => (this.copied = false), 3000);
+      })
+      .catch((err) => console.error('Failed to copy:', err));
+  }
+
+  // Function to switch tabs
+  selectTab(index: number) {
+    this.selectedInfoTab = index;
+    this.popupInformation = {
+      ...this.popupInformation,
+      data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
+    };
   }
 }

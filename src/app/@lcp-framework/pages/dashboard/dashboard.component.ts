@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy } from '@angular/core';
 
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import {
@@ -28,11 +28,13 @@ import { GridApiService } from '../../service/common/grid.service';
 import { commonConfig } from '../../config/common.config';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 import { environment } from '../../../../environments/environment';
 import { IdleService } from '../../service/common/idle.service';
+import * as pbi from 'powerbi-client';
+import { AuthService } from '../../service/common/auth.service';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -51,6 +53,10 @@ export type format = {
   labels?: any;
 };
 
+enum ReportType {
+  lcp,
+  powerbi,
+}
 interface BaseCard {
   id: number;
   cols: number;
@@ -58,6 +64,8 @@ interface BaseCard {
   type: any;
   order_no?: number;
   query_information?: any;
+  report_information?: any;
+  report_type: ReportType;
   permissions: any;
 }
 
@@ -83,15 +91,17 @@ interface DashboardTab {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent implements AfterViewInit {
+export class DashboardComponent implements AfterViewInit, OnDestroy {
   commonConfig = commonConfig;
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
-
+  @ViewChildren('powerBiContainer') powerBiContainers!: QueryList<ElementRef>;
   isDark: any = 'light';
   isRtl: any = false;
-
+  powerBiReportInstances: pbi.Report[] = [];
+  powerbiService: pbi.service.Service = new pbi.service.Service(pbi.factories.hpmFactory, pbi.factories.wpmpFactory, pbi.factories.routerFactory);
   dashboardTabs: DashboardTab[] = [];
+  private powerBiSubscription!: Subscription;
 
   activeTabId: string = '1';
 
@@ -111,11 +121,48 @@ export class DashboardComponent implements AfterViewInit {
     private gridApiService: GridApiService,
     private toastr: ToastrService,
     public translate: TranslateService,
-    public idleService: IdleService
+    public idleService: IdleService,
+    public authService: AuthService
   ) {
     this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
+  }
+
+  removePowerBiInstances() {
+    this.powerBiReportInstances.map((instance, index) => {
+      if (instance) {
+        instance.off('loaded'); // Remove event listeners
+        instance.off('error');
+        instance.off('ready');
+        instance.off('viewChange');
+        instance.off('selectionChanged');
+        instance.off('interactivityChanged');
+        instance.off('pageChanged');
+        instance.off('dataChanged');
+        instance.off('viewModeChanged');
+        instance.off('scroll');
+        instance.off('resize');
+        instance.off('viewUpdated');
+        instance.off('viewModeChanging');
+        instance.off('viewModeChanged');
+        this.powerbiService.reset(instance.element);
+        if (instance.element) {
+          instance.element.remove(); // Removes the element from the DOM
+        } else {
+          console.log(`Element at index ${index} not found`);
+        }
+      }
+    });
+    if (this.powerBiSubscription) {
+      this.powerBiSubscription.unsubscribe(); // Unsubscribe when the component is destroyed
+      // console.log('Unsubscribed from powerBiContainers changes');
+    }
+    this.powerBiReportInstances = [];
+  }
+
+  ngOnDestroy(): void {
+    this.removePowerBiInstances();
   }
 
   ngAfterViewInit(): void {
@@ -131,7 +178,6 @@ export class DashboardComponent implements AfterViewInit {
       this.companyId = parsedData.main?.company_id;
     }
     this.loadDashboardWizards();
-
     //this.menuLoadService.fetchMenuData(this.companyId);
   }
 
@@ -150,7 +196,7 @@ export class DashboardComponent implements AfterViewInit {
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
             [
-              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.query_information AS query_information, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
+              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
               'cards',
             ],
           ],
@@ -211,6 +257,8 @@ export class DashboardComponent implements AfterViewInit {
                       'cols', master_entities.dashboard_wizard_columns,
                       'order_no', master_entities.dashboard_wizard_order_no,
                       'query_information', master_entities.query_information,
+                      'report_information', master_entities.report_information,
+                      'report_type', master_entities.report_type,
                       'entity_name',master_entities.entity_name
                     ) AS jsonb_object,
                     master_entities.dashboard_wizard_order_no AS order_no
@@ -266,9 +314,8 @@ export class DashboardComponent implements AfterViewInit {
               return mainElem;
             })
           );
-
           // Set the first tab as the active tab and initialize its cards
-          this.setActiveTab(this.dashboardTabs[0].id);
+          await this.setActiveTab(this.dashboardTabs[0].id);
         }
       },
       (error) => {
@@ -298,69 +345,131 @@ export class DashboardComponent implements AfterViewInit {
     }
   }
 
-  setActiveTab(tabId: any) {
+  async setActiveTab(tabId: any) {
     this.activeTabId = tabId;
     const activeTab = this.dashboardTabs.find((tab) => tab.id === tabId);
     //if (activeTab && activeTab.cards.some((card) => card.data.length === 0)) {
     if (activeTab) {
-      this.initializeDashboardCards(activeTab.cards);
-
+      this.removePowerBiInstances();
+      await this.initializeDashboardCards(activeTab.cards);
       this.cdr.detectChanges();
+    }
+  }
+
+  loadPowerBIReport(index: number, reportInformation: any) {
+    try {
+      // Your logic for loading the Power BI report into the specific container
+      this.authService
+        .generatePowerBiEmbedToken({
+          reportId: reportInformation.reportId,
+          groupId: reportInformation.groupId,
+        })
+        .subscribe(
+          (response: any) => {
+            if (response.status && response.code === 200) {
+              const embedConfig = {
+                type: 'report',
+                embedUrl: `https://app.powerbi.com/reportEmbed?reportId=${reportInformation.reportId}&groupId=${reportInformation.groupId}&wsauth=true`,
+                accessToken: response.data,
+                tokenType: pbi.models.TokenType.Embed,
+                settings: {
+                  filterPaneEnabled: false,
+                  navContentPaneEnabled: false,
+                  layoutType: pbi.models.LayoutType.Custom,
+                  background: pbi.models.BackgroundType.Transparent,
+                  barsHidden: true,
+                  ...(reportInformation?.settings && reportInformation.settings),
+                },
+              };
+              if (this.powerBiContainers.get(index)) {
+                this.powerBiReportInstances.push(this.powerbiService.embed(this.powerBiContainers.get(index)?.nativeElement, embedConfig) as pbi.Report);
+                this.powerBiReportInstances[index]?.on('loaded', function () {
+                  // console.log('Power BI report loaded successfully');
+                });
+
+                this.powerBiReportInstances[index]?.on('error', function (event) {
+                  console.error('Power BI error:', event);
+                });
+              }
+            } else {
+              const key = 'failed_to_load';
+              const errorMessage = this.translate.instant(key);
+              this.toastr.error(errorMessage, 'Error');
+            }
+          },
+          (error) => {
+            const key = 'failed_to_load';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
+    } catch (error: any) {
+      console.error(`Error loading Power BI report - ${index}:`, error);
+      return;
     }
   }
 
   private async initializeDashboardCards(cards: Card[]): Promise<void> {
     if (cards) {
       await Promise.all(
-        cards.map(async (card) => {
-          if (card.query_information) {
-            card.data = await this.getQueryInfo(card.query_information);
-          }
+        cards.map(async (card, i) => {
+          // console.log('card', card);
+          if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
+            if (card.query_information) {
+              card.data = await this.getQueryInfo(card.query_information);
+            }
 
-          if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
-            card.format = this.compileStaticContent(card.format, card.data);
-          }
+            if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
+              card.format = this.compileStaticContent(card.format, card.data);
+            }
 
-          if (card.type === commonConfig.WIZARD_TYPES.CHART) {
-            card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
+            if (card.type === commonConfig.WIZARD_TYPES.CHART) {
+              card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
 
-            if (card.chart_format[0]) {
-              if (card.chart_format[0].tooltip.y.formatter) {
-                if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
-                  card.chart_format[0].tooltip.y.formatter = new Function(
-                    'number',
-                    card.chart_format[0].tooltip.y.formatter.substring(
-                      card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                      card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
-                    )
-                  );
+              if (card.chart_format[0]) {
+                if (card.chart_format[0].tooltip.y.formatter) {
+                  if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
+                    card.chart_format[0].tooltip.y.formatter = new Function(
+                      'number',
+                      card.chart_format[0].tooltip.y.formatter.substring(
+                        card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
+                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+                      )
+                    );
+                  }
                 }
               }
-            }
-            if (card.data.length > 0) {
-              const dataMap: any = {};
-              const labels: any[] = [];
+              if (card.data.length > 0) {
+                const dataMap: any = {};
+                const labels: any[] = [];
 
-              card.data.forEach((record: any) => {
-                labels.push(record.labels);
+                card.data.forEach((record: any) => {
+                  labels.push(record.labels);
 
-                Object.keys(record).forEach((key) => {
-                  if (key !== 'labels') {
-                    dataMap[key] = dataMap[key] || [];
-                    dataMap[key].push(record[key]);
-                  }
+                  Object.keys(record).forEach((key) => {
+                    if (key !== 'labels') {
+                      dataMap[key] = dataMap[key] || [];
+                      dataMap[key].push(record[key]);
+                    }
+                  });
                 });
-              });
 
-              card.chart_format[0].series = Object.keys(dataMap).map((key) => ({
-                name: key.charAt(0).toUpperCase() + key.slice(1),
-                data: dataMap[key],
-              }));
+                card.chart_format[0].series = Object.keys(dataMap).map((key) => ({
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
+                  data: dataMap[key],
+                }));
 
-              card.chart_format[0].labels = labels;
+                card.chart_format[0].labels = labels;
 
-              card.chart_format[0].xaxis.categories = labels;
+                card.chart_format[0].xaxis.categories = labels;
+              }
             }
+          } else {
+            this.powerBiSubscription = this.powerBiContainers.changes.subscribe((response: any) => {
+              if (response.length && response.toArray()[i]) {
+                this.loadPowerBIReport(i, card.report_information);
+              }
+            });
           }
         })
       );
