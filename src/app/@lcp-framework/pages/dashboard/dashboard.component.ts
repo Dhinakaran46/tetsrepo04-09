@@ -411,9 +411,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   private async initializeDashboardCards(cards: Card[]): Promise<void> {
     if (cards) {
+      let pbiIndex = 0;
       await Promise.all(
         cards.map(async (card, i) => {
-          // console.log('card', card);
           if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
             if (card.query_information) {
               card.data = await this.getQueryInfo(card.query_information);
@@ -466,8 +466,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             }
           } else {
             this.powerBiSubscription = this.powerBiContainers.changes.subscribe((response: any) => {
-              if (response.length && response.toArray()[i]) {
-                this.loadPowerBIReport(i, card.report_information);
+              if (response.length && response.toArray()[pbiIndex]) {
+                this.loadPowerBIReport(pbiIndex, card.report_information);
+                pbiIndex++;
               }
             });
           }
