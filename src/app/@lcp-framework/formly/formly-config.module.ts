@@ -18,6 +18,7 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormlyDisplayListComponent } from './components/formly-display-list/formly-display-list.component';
 import { FormlyVsCodeComponent } from './components/formly-vs-code/formly-vs-code.component';
 import { FormlyRepeatTableFieldComponent } from './components/formly-repeat-table-field/formly-repeat-table-field.component';
+import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
   if (field.props) return `Should have at least ${field.props.minLength} characters`;
@@ -62,6 +63,7 @@ export const search_conditions: any = commonConfig.search_conditions;
     ReactiveFormsModule,
     FormlyBootstrapModule,
     FormlyPresetModule,
+    SafeHtmlPipe,
     FormlyModule.forRoot({
       validationMessages: [
         { name: 'required', message: 'This field is required' },

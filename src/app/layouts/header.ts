@@ -21,6 +21,7 @@ import { IconMenuDashboardComponent } from '../@lcp-framework/shared/icon/menu/i
 import { NgComponentOutlet } from '@angular/common';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
+import { IdleService } from '../@lcp-framework/service/common/idle.service';
 
 interface MenuItem {
   id: number;
@@ -134,7 +135,8 @@ export class HeaderComponent implements OnInit {
     private authService: AuthService,
     private localstore: LocalStorageService,
     private languageService: LanguageService,
-    private menuLoadService: MenuLoadService
+    private menuLoadService: MenuLoadService,
+    private idleService: IdleService
   ) {
     this.initStore();
   }
@@ -328,17 +330,22 @@ export class HeaderComponent implements OnInit {
   }
 
   logout() {
-    this.authService.logout().subscribe({
-      next: (response) => {
-        if (response) {
-          this.localstore.logout();
-          this.router.navigate(['/login']); // Redirect to login page after successful logout
-        }
-      },
-      error: (error) => {
-        console.error('Logout failed', error);
-        // Handle logout error as per your requirement (e.g., show an alert)
-      },
-    });
+    try {
+      this.authService.logout().subscribe({
+        next: (response) => {
+          if (response) {
+            this.idleService.stopIdleTimer();
+            this.localstore.logout();
+            this.router.navigate(['/login']); // Redirect to login page after successful logout
+          }
+        },
+        error: (error) => {
+          console.error('Logout failed', error);
+          // Handle logout error as per your requirement (e.g., show an alert)
+        },
+      });
+    } catch (error: any) {
+      console.log('Logout Error: ', error);
+    }
   }
 }

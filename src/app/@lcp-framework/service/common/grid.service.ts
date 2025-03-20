@@ -56,7 +56,7 @@ export class GridApiService {
 
           const blob = response.body; // response.body is already a Blob due to responseType: 'blob'
           const contentDisposition = response.headers.get('Content-Disposition');
-          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_${new Date().getTime()}.xlsx`;
+          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_excel_${new Date().getTime()}.xlsx`;
 
           return {
             blob, // This is guaranteed to be a Blob
@@ -88,7 +88,7 @@ export class GridApiService {
 
           const blob = response.body; // response.body is already a Blob due to responseType: 'blob'
           const contentDisposition = response.headers.get('Content-Disposition');
-          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_${new Date().getTime()}.xlsx`;
+          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_excel_${new Date().getTime()}.xlsx`;
 
           return {
             blob, // This is guaranteed to be a Blob

@@ -327,9 +327,9 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   exportTable(item: any) {
-    if (this.masterInfo.permissions.export) {
+    if (this.masterInfo.permissions.export_excel) {
       this.loading = true;
-      if (this.masterInfo.children.export && this.masterInfo.children.export.component_class_name == 'export_module') {
+      if (this.masterInfo.children.export_excel && this.masterInfo.children.export_excel.component_class_name == 'export_module') {
         this.exportItem(item);
       } else {
         const query = { ...this.listQuery };
@@ -504,11 +504,13 @@ export class MasterListComponent implements AfterViewInit {
                   column_width: '40px',
                 }));
 
-              // Check if only 'view' or 'view' + 'export' are enabled
+              // Check if only 'view' or 'view' + 'export_excel' are enabled
               const isOnlyViewOrViewExport =
-                (!this.masterInfo.permissions.export || this.masterInfo.permissions.export === true) &&
+                (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
                 (!this.masterInfo.permissions.create || this.masterInfo.permissions.create === true) &&
-                Object.keys(this.masterInfo.permissions).every((key) => key === 'export' || key === 'create' || this.masterInfo.permissions[key] === false);
+                Object.keys(this.masterInfo.permissions).every(
+                  (key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false
+                );
 
               // Include serial number column if enabled in config
               if (this.config.grid_show_serial_number == 'true') {
@@ -671,8 +673,8 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   exportItem(item: any) {
-    if (this.masterInfo.children.export) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export.id).subscribe({
+    if (this.masterInfo.children.export_excel) {
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {

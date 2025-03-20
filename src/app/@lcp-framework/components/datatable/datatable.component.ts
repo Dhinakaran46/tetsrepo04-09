@@ -529,10 +529,10 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   get gridColumnCount(): number {
-    return this.headercolumns.filter((column) => column.is_grid_column === 'true').length;
+    return this.headercolumns.filter((column) => column.is_grid_column == 'true').length;
   }
   sortColumn(column: any) {
-    if (column.is_grid_column) {
+    if (column.is_grid_column == 'true' && column.is_sortable == 'true') {
       column.sortDirection = column.sortDirection === 'asc' ? 'desc' : 'asc';
       this.columnSort.emit(column);
     }
