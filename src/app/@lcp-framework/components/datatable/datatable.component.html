@@ -155,8 +155,7 @@
                 </ng-container>
               </ul>
             </div>
-
-            <div class="flex" *ngIf="this.masterInfo?.permissions.export">
+            <div class="flex" *ngIf="this.masterInfo?.permissions.export_excel">
               <div hlMenu class="dropdown mb-2 md:mb-0">
                 <button
                   type="button"
@@ -208,7 +207,7 @@
               <ng-container *ngFor="let col of headercolumns; let last = last">
                 <th
                   scope="col"
-                  class="max-w-150 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
+                  class="max-w-140 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
                   [ngClass]="[last ? 'sticky right-0 z-10 bg-gray-50' : '']"
                   appDynamicFontSize="body"
                   (click)="sortColumn(col)"

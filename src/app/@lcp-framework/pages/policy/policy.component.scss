@@ -1,0 +1,37 @@
+.monaco-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 50vh; /* Initial height */
+  resize: vertical; /* Allow vertical resizing only */
+  min-height: 60vh; /* Set a minimum height to prevent collapsing */
+  max-height: 100vh; /* Prevent the container from exceeding the viewport height */
+}
+
+.monaco-editor {
+  flex: 1;
+  width: 100%;
+}
+
+.editor-container {
+  position: relative;
+}
+
+.editor-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  cursor: pointer !important;
+  background: transparent;
+  pointer-events: none;
+}
+
+.monaco-editor {
+  cursor: pointer !important;
+}
+
+.monaco-editor .view-line {
+  cursor: pointer !important;
+}

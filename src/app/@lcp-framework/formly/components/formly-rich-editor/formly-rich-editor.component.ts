@@ -9,8 +9,8 @@ import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 export class FormlyRichEditorComponent extends FieldType<FieldTypeConfig> {
   @ViewChild('quillEditor', { static: false }) quillEditor!: ElementRef;
   @ViewChild('htmlEditor', { static: false }) htmlEditor!: ElementRef;
-
   isHtmlMode = false;
+  preview = false;
   // htmlContent = this.formControl.value;
   editorOptions = {
     theme: 'vs-dark',
@@ -52,5 +52,13 @@ export class FormlyRichEditorComponent extends FieldType<FieldTypeConfig> {
 
   toggleHtmlEdit() {
     this.isHtmlMode = !this.isHtmlMode;
+  }
+
+  showPreview() {
+    this.preview = true;
+  }
+
+  hidePreview() {
+    this.preview = false;
   }
 }

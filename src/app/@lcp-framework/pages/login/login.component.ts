@@ -269,8 +269,6 @@ export class CoverLoginComponent {
           // Store the user data along with permissions and menu lists
           const conf: any = localStorage.getItem('config');
           const enc_config: any = JSON.parse(conf);
-          // console.log(enc_config);
-          console.log('response.data', response.data);
           if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
             this.localstore.storeDataEncrypted(
               'user_data',
@@ -312,6 +310,7 @@ export class CoverLoginComponent {
           ]).subscribe({
             next: ([configData]) => {
               this.router.navigate(['/dashboard']);
+              window.location.reload();
             },
             error: (error) => {
               console.error('Error during login:', error);

@@ -101,14 +101,17 @@
     </div>
     <div class="grid grid-cols-1">
       <div class="mb-5 p-2">
-        <label class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+        <div class="flex flex-row gap-3">
+          <label for="queryInformation" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+          <i (click)="openInfoPopUp('queryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+        </div>
         <div class="monaco-editor-container" appDynamicFontSize="body">
           <ngx-monaco-editor
             monacoEditor
             [options]="editorOptions"
             id="query_information"
             formControlName="query_information"
-            class="monaco-editor !h-96"
+            class="monaco-editor"
           ></ngx-monaco-editor>
         </div>
       </div>
@@ -122,6 +125,69 @@
       >
         Submit
       </button>
+    </div>
+  </div>
+</div>
+
+<!--Modal for Copy sample content-->
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isInfoModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-10/12 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800 sm:w-8/12"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <div class="flex gap-4">
+            <p class="text-md font-bold" appDynamicFontSize="body">{{ popupInformation.header | translate }}</p>
+          </div>
+          <button class="close-btn" (click)="closeInfoPopUp()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
+        <!-- Copy Button (Top Left Corner) -->
+        <!-- <button
+          *ngIf="!copied"
+          class="absolute bottom-6 right-10 z-50 rounded bg-transparent px-3 py-1 text-sm text-white hover:bg-gray-700"
+          (click)="copyToClipboard()"
+        >
+          📋
+        </button> -->
+        <div class="px-4 sm:px-6">
+          <ul class="flex list-disc flex-col gap-3">
+            <li *ngFor="let item of popupInformation.comments">
+              <div class="flex items-center gap-2">
+                <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="relative">
+          <p *ngIf="copied" class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
+          <div class="monaco-editor-container .editor-container mt-3 rounded border border-gray-300">
+            <!-- Monaco Editor -->
+            <ngx-monaco-editor
+              monacoEditor
+              (click)="copyToClipboard()"
+              [options]="popupInfoEditorOptions"
+              id="popupInformation"
+              [(ngModel)]="popupInformation.data"
+              class="monaco-editor"
+            ></ngx-monaco-editor>
+            <div class="editor-overlay" (click)="copyToClipboard()"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

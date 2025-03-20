@@ -33,6 +33,7 @@ import { LocalStorageTranslateLoader } from './service/common/local-storage-tran
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { QuillModule } from 'ngx-quill';
 import { provideHighlightOptions } from 'ngx-highlightjs';
+import { BnNgIdleService } from 'bn-ng-idle';
 
 export function initializeApp(routeUpdateService: RouteUpdateService): () => Promise<void> {
   return () =>
@@ -91,6 +92,7 @@ export const lcpAppConfig: ApplicationConfig = {
     ),
     AppService,
     Title,
+    BnNgIdleService,
     { provide: ErrorHandler, useClass: GlobalErrorHandlerService },
     provideHttpClient(withInterceptors([authInterceptor, HttpErrorInterceptor])),
     { provide: LocationStrategy, useClass: HashLocationStrategy }, // Add this line

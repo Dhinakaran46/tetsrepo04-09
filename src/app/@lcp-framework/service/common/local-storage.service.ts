@@ -49,9 +49,13 @@ export class LocalStorageService implements OnInit {
   }
 
   public logout(): void {
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('config');
-    localStorage.removeItem('menu_id');
+    try {
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('config');
+      localStorage.removeItem('menu_id');
+    } catch (error: any) {
+      console.log('Logout Error: ', error);
+    }
   }
 
   public removeData(key: string): void {
@@ -197,7 +201,7 @@ export class LocalStorageService implements OnInit {
     // Base case: if the jsonObject is a string, replace the placeholder with the value
     if (typeof jsonObject === 'string') {
       const replacedString = jsonObject.replace(placeholderRegex, uniqueIdValue);
-      console.log('Replaced:', jsonObject, 'with:', replacedString);
+      // console.log('Replaced:', jsonObject, 'with:', replacedString);
       return replacedString;
     }
 

@@ -78,7 +78,7 @@ export class RouteUpdateService {
               const createPermissionKey = `add_${routeData.entity_name}`;
               const editPermissionKey = `edit_${routeData.entity_name}`;
               const deletePermissionKey = `delete_${routeData.entity_name}`;
-              const exportPermissionKey = `export_${routeData.entity_name}`;
+              const exportExcelPermissionKey = `export_excel_${routeData.entity_name}`;
               const detailsPermissionKey = `details_${routeData.entity_name}`;
               const assignPermissionKey = `assign_${routeData.entity_name}`;
               const printPermissionKey = `print_${routeData.entity_name}`;
@@ -184,7 +184,7 @@ export class RouteUpdateService {
                       create: permissionListJSON[createPermissionKey] || false,
                       edit: permissionListJSON[editPermissionKey] || false,
                       delete: permissionListJSON[deletePermissionKey] || false,
-                      export: permissionListJSON[exportPermissionKey] || false,
+                      export_excel: permissionListJSON[exportExcelPermissionKey] || false,
                       details: permissionListJSON[detailsPermissionKey] || false,
                       assign: permissionListJSON[assignPermissionKey] || false,
                       print: permissionListJSON[printPermissionKey] || false,

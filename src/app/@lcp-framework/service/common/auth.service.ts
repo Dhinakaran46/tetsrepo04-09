@@ -29,4 +29,10 @@ export class AuthService {
   languageList(data: any): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getLanguageContent}`, data);
   }
+
+  generatePowerBiEmbedToken(data: any): Observable<any> {
+    return this.http.get<any>(
+      `${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generatePowerBiEmbedToken}?reportId=${data.reportId}&groupId=${data.groupId}`
+    );
+  }
 }
