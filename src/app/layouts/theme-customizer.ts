@@ -2,6 +2,7 @@
 import { Store } from '@ngrx/store';
 import { Router } from '@angular/router';
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
+import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 
 @Component({
   selector: 'setting',
@@ -13,8 +14,10 @@ import { CommonSharedModule } from '../@lcp-framework/shared/common/common.modul
 export class ThemeCustomizerComponent {
   store: any;
   showCustomizer = false;
-  constructor(public storeData: Store<any>, public router: Router) {
+  versionInfo: any = null;
+  constructor(public storeData: Store<any>, public router: Router, private localStore: LocalStorageService) {
     this.initStore();
+    this.versionInfo = JSON.parse(this.localStore.getData('version_info'));
   }
   async initStore() {
     this.storeData
