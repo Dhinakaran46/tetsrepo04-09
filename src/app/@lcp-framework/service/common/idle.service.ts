@@ -19,7 +19,7 @@ export class IdleService {
 
   public startIdleWatcher(): void {
     if (this.config?.enable_idle_timeout === true || this.config?.enable_idle_timeout === 'true') {
-      this.timeout = Number(this.config?.idle_timeout_in_minutes || '8') * 6;
+      this.timeout = Number(this.config?.idle_timeout_in_minutes || '8') * 60;
       const observer = this.bnIdle.startWatching(this.timeout);
 
       console.log('Observer:', observer);
