@@ -1,26 +1,26 @@
 import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { Router, Route, Routes } from '@angular/router';
-import { MasterListComponent } from '../../pages/master-list/master-list.component';
-import { MenuMappingComponent } from '../../pages/menu-mapping/menu-mapping.component';
-import { StaticPageComponent } from '../../pages/static-page/static-page.component';
-import { JobPageComponent } from '../../pages/job-page/job-page.component';
-import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
+// import { MasterListComponent } from '../../pages/master-list/master-list.component';
+// import { MenuMappingComponent } from '../../pages/menu-mapping/menu-mapping.component';
+// import { StaticPageComponent } from '../../pages/static-page/static-page.component';
+// import { JobPageComponent } from '../../pages/job-page/job-page.component';
+// import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
 
 import { LocalStorageService } from './local-storage.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
-import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
-import { DocumentationComponent } from '../../pages/documentation/documentation.component';
-import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
+// import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
+// import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
+// import { DocumentationComponent } from '../../pages/documentation/documentation.component';
+// import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
 import { environment } from '../../../../environments/environment';
-import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
-import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
-import { ImportTemplateComponent } from '../../pages/import-template/import-template.component';
-import { ExportTemplateComponent } from '../../pages/export-template/export-template.component';
-import { ImportJobDetailsComponent } from '../../pages/import-job-details/import-job-details.component';
-import { PolicyComponent } from '../../pages/policy/policy.component';
-import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
-import { EmailTemplateAssignmentComponent } from '../../pages/email-template-assignment/email-template-assignment.component';
+// import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
+// import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
+// import { ImportTemplateComponent } from '../../pages/import-template/import-template.component';
+// import { ExportTemplateComponent } from '../../pages/export-template/export-template.component';
+// import { ImportJobDetailsComponent } from '../../pages/import-job-details/import-job-details.component';
+// import { PolicyComponent } from '../../pages/policy/policy.component';
+// import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
+// import { EmailTemplateAssignmentComponent } from '../../pages/email-template-assignment/email-template-assignment.component';
 
 @Injectable({
   providedIn: 'root',
@@ -136,31 +136,55 @@ export class RouteUpdateService {
                 }
                 return acc;
               }, {});
-              const componentMap: any = {
-                grid_builder_module: MasterListComponent,
-                menu_module: MenuMappingComponent,
-                static_page_builder_module: StaticPageComponent,
-                form_builder_module: FormBuilderComponent,
+              // const componentMap: any = {
+              //   grid_builder_module: MasterListComponent,
+              //   menu_module: MenuMappingComponent,
+              //   static_page_builder_module: StaticPageComponent,
+              //   form_builder_module: FormBuilderComponent,
 
-                entity_user_role_map_module: UserRolePermissionComponent,
-                entity_form_module: MasterEntityComponent,
-                language_contents_module: LanguageMappingComponent,
-                job_builder_module: JobPageComponent,
-                export_module: JobPageComponent,
-                help_page_module: DocumentationComponent,
-                configurations_module: ConfigurationComponent,
-                import_module: ImportMasterComponent,
-                import_template_module: ImportTemplateComponent,
-                export_template_module: ExportTemplateComponent,
-                import_job_detail_module: ImportJobDetailsComponent,
-                policy_add_edit_module: PolicyComponent,
-                user_role_policy_module: UserRolePolicyComponent,
-                email_template_assignment_module: EmailTemplateAssignmentComponent,
+              //   entity_user_role_map_module: UserRolePermissionComponent,
+              //   entity_form_module: MasterEntityComponent,
+              //   language_contents_module: LanguageMappingComponent,
+              //   job_builder_module: JobPageComponent,
+              //   export_module: JobPageComponent,
+              //   help_page_module: DocumentationComponent,
+              //   configurations_module: ConfigurationComponent,
+              //   import_module: ImportMasterComponent,
+              //   import_template_module: ImportTemplateComponent,
+              //   export_template_module: ExportTemplateComponent,
+              //   import_job_detail_module: ImportJobDetailsComponent,
+              //   policy_add_edit_module: PolicyComponent,
+              //   user_role_policy_module: UserRolePolicyComponent,
+              //   email_template_assignment_module: EmailTemplateAssignmentComponent,
+              // };
+
+              const componentMap: any = {
+                grid_builder_module: () => import('../../pages/master-list/master-list.component').then((m) => m.MasterListComponent),
+                menu_module: () => import('../../pages/menu-mapping/menu-mapping.component').then((m) => m.MenuMappingComponent),
+                static_page_builder_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
+                form_builder_module: () => import('../../pages/form-builder/form-builder.component').then((m) => m.FormBuilderComponent),
+                entity_user_role_map_module: () =>
+                  import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
+                entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
+                language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
+                job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
+                export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
+                help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
+                configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
+                import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
+                import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
+                export_template_module: () => import('../../pages/export-template/export-template.component').then((m) => m.ExportTemplateComponent),
+                import_job_detail_module: () => import('../../pages/import-job-details/import-job-details.component').then((m) => m.ImportJobDetailsComponent),
+                policy_add_edit_module: () => import('../../pages/policy/policy.component').then((m) => m.PolicyComponent),
+                user_role_policy_module: () => import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
+                email_template_assignment_module: () =>
+                  import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
               };
 
               const route: Route = {
                 path: targetPath,
-                component: componentMap[routeData.component_class_name],
+                // component: componentMap[routeData.component_class_name],
+                loadComponent: componentMap[routeData.component_class_name] || null,
                 title: routeData.entity_name,
                 data: {
                   pageInfo: {

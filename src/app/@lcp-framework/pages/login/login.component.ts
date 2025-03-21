@@ -269,6 +269,7 @@ export class CoverLoginComponent {
           // Store the user data along with permissions and menu lists
           const conf: any = localStorage.getItem('config');
           const enc_config: any = JSON.parse(conf);
+          this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
           if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
             this.localstore.storeDataEncrypted(
               'user_data',
