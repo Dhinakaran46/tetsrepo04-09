@@ -1,0 +1,170 @@
+<div class="panel">
+  <div class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+    <h5 class="text-lg font-semibold dark:text-white-light">
+      <!-- Email template assignment -->
+      {{ 'approval_workflow_assignment_form' | translate }}
+    </h5>
+    <div class="align-center flex gap-3">
+      <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+        {{ 'back' | translate }}
+      </button>
+      <button type="submit" class="btn btn-outline-secondary ng-tns-c3247919129-2 text-xs ltr:rounded-r rtl:rounded-l" (click)="submit()">Submit</button>
+    </div>
+  </div>
+
+  <div>
+    <form [formGroup]="form">
+      <div formGroupName="approvalWorkflow" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+        <div class="min-w-200-p">
+          <div class="form-group">
+            <label for="name">{{ 'approval_workflow' | translate }} <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+              formControlName="name"
+              placeholder="Approval Workflow"
+              required
+            />
+          </div>
+        </div>
+
+        <button
+          (click)="addApproverAssignment()"
+          class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark flex w-40 flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+
+      <div formArrayName="approvalWorkflowAssignments">
+        @for(assignment of getApproverAssignmentList(); track assignment; let i = $index) {
+        <div [formGroupName]="i" class="my-4">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="form-group">
+              <label>{{ 'approver_type' | translate }} <span class="text-danger">*</span></label>
+              <!-- <select
+                formControlName="approver_type"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+                (change)="clearUserRoleTagValues(assignment)"
+              >
+                <option value="tag">Tag</option>
+                <option value="role_id">Role</option>
+                <option value="user_id">User</option>
+              </select> -->
+              <ng-select
+                bindLabel="label"
+                bindValue="value"
+                formControlName="approver_type"
+                [clearable]="true"
+                [searchable]="true"
+                placeholder="Select Approver Type"
+                class="custom-multiselect multi-ng-select"
+                (change)="clearUserRoleTagValues(assignment)"
+              >
+                @for(type of approverTypes; track type; let i = $index) {
+                <ng-option [value]="type.value">{{ type.label }}</ng-option>
+                }
+              </ng-select>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'tag'">
+              <label>{{ 'approver_tag' | translate }} <span class="text-danger">*</span></label>
+              <!-- (change)="getTemplateAssignmentTags(assignment.get('tag')?.value, assignment)" -->
+              <ng-select
+                bindLabel="label"
+                bindValue="value"
+                formControlName="tag"
+                [clearable]="true"
+                [searchable]="true"
+                placeholder="Select Tag"
+                class="custom-multiselect multi-ng-select"
+                (search)="getTags(assignment, $event.term || '')"
+                (clear)="getTags(assignment, '')"
+              >
+                @for(tag of assignment.get('tag_list')?.value; track tag; let i = $index) {
+                <ng-option [value]="tag.value">{{ tag.label }}</ng-option>
+                }
+              </ng-select>
+              <!-- <select
+                formControlName="tag"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+              >
+                <option value disabled>{{ 'Select the Tag' }}</option>
+                @for(tag of approverTags; track tag; let i = $index) {
+                <option [value]="tag.id">{{ tag.name }}</option>
+                }
+              </select> -->
+              <div
+                *ngIf="assignment.get('tag')?.invalid && (assignment.get('tag')?.touched || assignment.get('tag')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'approver_tag_is_required' | translate }}
+              </div>
+              <!-- <div *ngIf="assignment.get('email_tag_mail')?.value" class="mt-5">sends to : {{ assignment.get('email_tag_mail')?.value }}</div> -->
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'user_id'">
+              <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
+              <ng-select
+                bindLabel="label"
+                bindValue="value"
+                formControlName="users"
+                [multiple]="true"
+                [clearable]="true"
+                [searchable]="true"
+                placeholder="Select Users"
+                class="custom-multiselect multi-ng-select"
+                (search)="getUsers(assignment, $event.term || '')"
+                (clear)="getUsers(assignment, '')"
+              >
+                @for(user of assignment.get('user_list')?.value; track user; let i = $index) {
+                <ng-option [value]="user.value">{{ user.label }}</ng-option>
+                }
+              </ng-select>
+              <div
+                *ngIf="assignment.get('users')?.invalid && (assignment.get('users')?.touched || assignment.get('users')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'user_email_is_required' | translate }}
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'role_id'">
+              <label>{{ 'role' | translate }} <span class="text-danger">*</span></label>
+              <ng-select
+                bindLabel="label"
+                bindValue="value"
+                formControlName="roles"
+                [multiple]="true"
+                [clearable]="true"
+                [searchable]="true"
+                placeholder="Select Roles"
+                class="custom-multiselect multi-ng-select"
+                (search)="getRoles(assignment, $event.term || '')"
+                (clear)="getRoles(assignment, '')"
+              >
+                @for(role of assignment.get('role_list')?.value; track role; let i = $index) {
+                <ng-option [value]="role.value">{{ role.label }}</ng-option>
+                }
+              </ng-select>
+              <div
+                *ngIf="assignment.get('roles')?.invalid && (assignment.get('roles')?.touched || assignment.get('roles')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'role_is_required' | translate }}
+              </div>
+            </div>
+
+            @if(i > 0) {
+            <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeEmailTemplateAssignment(i)"></i>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </form>
+  </div>
+</div>

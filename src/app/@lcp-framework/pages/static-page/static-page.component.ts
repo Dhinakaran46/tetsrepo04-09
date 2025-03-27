@@ -209,7 +209,6 @@ export class StaticPageComponent {
           // If it's JSON, pretty-print it with 2-space indentation
           formattedData[key] = JSON.stringify(JSON.parse(value), null, 2);
         }
-        console.log('json no');
       }
     }
 
