@@ -37,6 +37,9 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     { label: 'User', value: 'user_id' },
     { label: 'Role', value: 'role_id' },
   ];
+  userList: any[] = [];
+  roleList: any[] = [];
+  tagList: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -63,66 +66,16 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   }
 
   async ngOnInit() {
-    // // get email template details
-    // await this.getEmailTemplates();
-
     // get approval workflow details
     await this.getApprovalWorkflowDetail();
 
-    // // get process and assignment details
-    // await this.getTemplateAssignment();
-
     this.userId = this.localStorageService.getData('user_data') && JSON.parse(this.localStorageService.getData('user_data')).main.id;
-  }
-
-  async getEmailTemplates() {
-    const payload = {
-      includes: [
-        {
-          join_type: 'INNER',
-          table_name: 'email_template_process',
-          join_condition: 'email_template_process.id = email_templates.email_template_process_id',
-        },
-      ],
-      company_id: 1,
-      search_all: [
-        {
-          value: '1',
-          operator: '=',
-          column_name: 'email_templates.status_id',
-        },
-        {
-          value: this.uniqueId,
-          operator: '=',
-          column_name: 'email_template_process.uuid',
-        },
-      ],
-      limit_range: 1000,
-      print_query: false,
-      start_index: 0,
-      sort_columns: [['email_templates.name', 'asc']],
-      primary_table: 'email_templates',
-      select_columns: [
-        ['email_templates.id', 'value'],
-        ['email_templates.name', 'label'],
-      ],
-    };
-    this.commonService.getCommonList(payload).subscribe({
-      next: (response: any) => {
-        if (response.code === 200 && response.status) {
-          if (response.data.records.length) {
-            for (let each of response.data.records) {
-              this.templateList.push({ label: each.label, value: each.value });
-            }
-          }
-        }
-      },
-    });
   }
 
   async getApprovalWorkflowDetail() {
     const payload = {
       company_id: 1,
+      group_by: ['approval_workflows.id', 'approval_workflows.name', 'approval_workflows.slug'],
       search_all: [
         {
           value: '3',
@@ -135,119 +88,102 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           column_name: 'approval_workflows.uuid',
         },
       ],
+      includes: [
+        {
+          join_type: 'LEFT',
+          table_name: 'approval_workflow_assignments',
+          join_condition: 'approval_workflow_assignments.approval_workflow_id = approval_workflows.id AND approval_workflow_assignments.status_id != 3',
+        },
+      ],
       limit_range: 1,
       print_query: true,
       start_index: 0,
       primary_table: 'approval_workflows',
-      select_columns: [['approval_workflows.id'], ['approval_workflows.slug'], ['approval_workflows.name']],
+      select_columns: [
+        ['approval_workflows.id'],
+        ['approval_workflows.slug'],
+        ['approval_workflows.name'],
+        [
+          `COALESCE(JSON_AGG(
+              DISTINCT JSONB_BUILD_OBJECT(
+              'id', approval_workflow_assignments.id, 
+              'approver_order_no', approval_workflow_assignments.approver_order_no, 
+              'approver_type', approval_workflow_assignments.approver_type,
+              'approver', approval_workflow_assignments.approver
+              )
+          ) FILTER (WHERE approval_workflow_assignments.id IS NOT NULL), '[]')`,
+          'approval_assignments',
+        ],
+      ],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           if (response.data.records.length) {
             this.form.controls['approvalWorkflow'].patchValue({
-              ...response.data.records[0],
+              id: response.data.records[0].id,
+              slug: response.data.records[0].slug,
+              name: response.data.records[0].name,
             });
-          }
-        }
-      },
-    });
-  }
-
-  async getTemplateAssignment() {
-    const payload = {
-      company_id: 1,
-      includes: [
-        {
-          join_type: 'INNER',
-          table_name: 'email_template_assignments',
-          join_condition: 'email_template_process.id = email_template_assignments.email_template_process_id',
-        },
-      ],
-      search_all: [
-        {
-          value: this.uniqueId,
-          operator: '=',
-          column_name: 'email_template_process.uuid',
-        },
-        {
-          value: '3',
-          operator: '!=',
-          column_name: 'email_template_process.status_id',
-        },
-      ],
-      limit_range: 1,
-      print_query: true,
-      start_index: 0,
-      primary_table: 'email_template_process',
-      select_columns: [
-        ['email_template_process.id'],
-        ['email_template_process.slug'],
-        ['email_template_assignments.id', 'eta_id'],
-        ['email_template_assignments.template_id'],
-        ['email_template_assignments.recipient_type'],
-        ['email_template_assignments.email_to'],
-      ],
-    };
-    this.loading = true;
-    this.commonService.getCommonList(payload).subscribe({
-      next: (response: any) => {
-        if (response.code === 200 && response.status) {
-          this.loading = false;
-          if (response.data.records) {
-            if (response.data.records.length) {
-              const lineItemsArray: any = this.form.get('email_template_assignments') as FormArray;
-              let temp_assgn_ids: number[] = [];
-              for (let each of response.data.records) {
-                lineItemsArray.push(
-                  this.fb.group({
-                    id: each.eta_id,
-                    recipient_type: [each.recipient_type, Validators.required],
-                    email_to: [each.email_to, Validators.required],
-                    template_id: [each.template_id, Validators.required],
-                    email_template_assignment_id: [each.eta_id, Validators.required],
-                    cc_bcc: this.fb.array([]),
-                    email_tag_mail: [null],
-                    user_list: [null],
-                  })
-                );
-                if (each.approver_type === 'tag') {
-                  this.getTags(each.email_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+            if (response.data.records[0]?.approval_assignments.length) {
+              const lineItemsArray: any = this.form.get('approvalWorkflowAssignments') as FormArray;
+              response.data.records[0]?.approval_assignments.map(
+                (each: { id: any; approver_type: string; approver_order_no: any; approver: any }, index: any) => {
+                  lineItemsArray.push(
+                    this.fb.group({
+                      id: [each.id],
+                      approver_type: [each.approver_type || 'tag', Validators.required],
+                      approver_order_no: [each.approver_order_no, Validators.required],
+                      approver: [each.approver, Validators.required],
+                      approval_workflow_id: [response.data.records[0].id, Validators.required],
+                      user_list: [null],
+                      role_list: [null],
+                      tag_list: [null],
+                      tag: [each.approver_type === 'tag' ? each.approver : null],
+                      users: [
+                        each.approver_type === 'user_id'
+                          ? each.approver
+                              ?.split(',')
+                              .map(Number)
+                              .filter((n: number) => !isNaN(n))
+                          : null,
+                      ],
+                      roles: [
+                        each.approver_type === 'role_id'
+                          ? each.approver
+                              ?.split(',')
+                              .map(Number)
+                              .filter((n: number) => !isNaN(n))
+                          : null,
+                      ],
+                    })
+                  );
+                  if (each.approver_type === 'tag') {
+                    this.getTags(lineItemsArray.controls[lineItemsArray.length - 1], index, '');
+                  }
+                  if (each.approver_type === 'user_id') {
+                    this.getUsers(lineItemsArray.controls[lineItemsArray.length - 1], index, '');
+                  }
+                  if (each.approver_type === 'role_id') {
+                    this.getRoles(lineItemsArray.controls[lineItemsArray.length - 1], index, '');
+                  }
                 }
-                if (each.approver_type === 'user_id') {
-                  this.getUsers(lineItemsArray.controls[lineItemsArray.length - 1], '');
-                }
-                if (each.approver_type === 'role_id') {
-                  this.getRoles(lineItemsArray.controls[lineItemsArray.length - 1], '');
-                }
-                temp_assgn_ids.push(each.eta_id);
-              }
+              );
             } else {
               this.addApproverAssignment();
             }
-          } else {
-            const key = 'failed_to_fetch_the_entity_details';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
           }
-        } else {
-          this.loading = false;
         }
       },
-      error: (error) => {
-        this.loading = false;
-        console.error('Error fetching URL details:', error);
-      },
     });
-  }
-
-  get emailTemplateAssignments() {
-    const emailRecpArray = this.form.get('email_template_assignments') as FormArray;
-    return emailRecpArray?.controls?.length ? emailRecpArray.controls : [];
   }
 
   get approvalWorkflow() {
     return this.form.get('approvalWorkflow')?.getRawValue();
+  }
+
+  get approvalWorkflowAssignments() {
+    return this.form.get('approvalWorkflowAssignments')?.getRawValue();
   }
 
   getApproverAssignmentList() {
@@ -260,14 +196,15 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     const newFormGroup = this.fb.group({
       id: [0],
       approver_type: ['tag', Validators.required],
-      approval_order_no: [null, Validators.required],
+      approver_order_no: [null, Validators.required],
       approver: [null, Validators.required],
+      approval_workflow_id: [0, Validators.required],
       user_list: [null],
       role_list: [null],
       tag_list: [null],
-      tag: [null, Validators.required],
-      users: [null, Validators.required],
-      roles: [null, Validators.required],
+      tag: [null],
+      users: [null],
+      roles: [null],
     });
 
     // Push the new form group
@@ -277,82 +214,66 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     this.clearUserRoleTagValues(newFormGroup);
   }
 
-  removeEmailTemplateAssignment(index: number): void {
-    const lineItemsArray = this.form.get('email_template_assignments') as FormArray;
+  removeApprovalWorkflowAssignment(index: number): void {
+    const lineItemsArray = this.form.get('approvalWorkflowAssignments') as FormArray;
     lineItemsArray.removeAt(index);
+    // Update `approver_order_no` for remaining items
+    lineItemsArray.controls.forEach((control, idx) => {
+      control.patchValue({ approver_order_no: idx + 1 }); // Set order as sequential
+    });
   }
 
-  clearUserRoleTagValues(formGroup: any) {
-    // console.log('formGroup', formGroup.controls['approver_type']);
+  clearUserRoleTagValues(formGroup: any, index?: number) {
+    formGroup.get('approver')?.setValue(null);
     switch (formGroup.controls['approver_type'].value) {
       case 'role_id':
-        this.getRoles(formGroup, '');
+        this.getRoles(formGroup, index || this.approvalWorkflowAssignments.length - 1, '');
         break;
       case 'user_id':
-        this.getUsers(formGroup, '');
+        this.getUsers(formGroup, index || this.approvalWorkflowAssignments.length - 1, '');
         break;
       default:
-        this.getTags(formGroup, '');
+        this.getTags(formGroup, index || this.approvalWorkflowAssignments.length - 1, '');
     }
   }
 
-  // getTemplateAssignmentTags(tagId: number, formGroup: any) {
-  //   let payload: any = {
-  //     company_id: 1,
-  //     search_all: [
-  //       {
-  //         value: '3',
-  //         operator: '!=',
-  //         column_name: 'email_template_recipient_tags.status_id',
-  //       },
-  //       {
-  //         value: tagId,
-  //         operator: '=',
-  //         column_name: 'email_template_recipient_tags.id',
-  //       },
-  //     ],
-  //     search_any: [],
-  //     limit_range: 1,
-  //     print_query: true,
-  //     start_index: 0,
-  //     primary_table: 'email_template_recipient_tags',
-  //     select_columns: [['email_template_recipient_tags.id'], ['email_template_recipient_tags.slug'], ['email_template_recipient_tags.query_information']],
-  //   };
-  //   this.commonService.getCommonList(payload).subscribe({
-  //     next: (response: any) => {
-  //       if (response.code === 200 && response.status) {
-  //         if (response.data.records.length) {
-  //           const query_information_string = response.data.records[0].query_information;
-  //           const query_information = JSON.parse(query_information_string);
-  //           if (query_information.search_all.length) {
-  //             query_information.search_all.forEach((each: any) => {
-  //               if (each.value === '@process.user_id') {
-  //                 each.value = this.userId;
-  //               }
-  //             });
-  //           }
-  //           this.commonService.getCommonList(query_information).subscribe({
-  //             next: (response: any) => {
-  //               if (response.data.records) {
-  //                 let emailName = '';
-  //                 if (response.data.records.length) {
-  //                   for (let each of response.data.records) {
-  //                     emailName = emailName ? emailName + ', ' + each.email : each.email;
-  //                     formGroup.get('email_tag_mail')?.setValue(emailName);
-  //                   }
-  //                 } else {
-  //                   formGroup.get('email_tag_mail')?.setValue('No email id is present');
-  //                 }
-  //               }
-  //             },
-  //           });
-  //         }
-  //       }
-  //     },
-  //   });
-  // }
+  updateApprovers(formGroup: any, index?: number) {
+    switch (formGroup.controls['approver_type'].value) {
+      case 'role_id':
+        formGroup?.patchValue({
+          approver: formGroup.controls['roles'].value.join(','),
+          users: null,
+          tag: null,
+        });
+        break;
+      case 'user_id':
+        formGroup?.patchValue({
+          approver: formGroup.controls['users'].value.join(','),
+          roles: null,
+          tag: null,
+        });
+        break;
+      default:
+        formGroup?.patchValue({
+          approver: formGroup.controls['tag'].value,
+          users: null,
+          roles: null,
+        });
+    }
+  }
 
-  getUsers(formGroup: any, uname?: string) {
+  fetchMappedData(key: string, index: number) {
+    let ids: any[] = [];
+    this.approvalWorkflowAssignments.map((each: any, i: number) => {
+      if (index !== i && each[key]?.length)
+        if (key === 'tag') ids.push(each[key]);
+        else ids = [...ids, ...each[key]];
+    });
+    return ids;
+  }
+
+  getUsers(formGroup: any, index: number, uname?: string) {
+    // const mappedUsers = this.fetchMappedData('users', index);
     let payload = {
       company_id: 1,
       search_all: [
@@ -361,6 +282,15 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           operator: '=',
           column_name: 'status_id',
         },
+        // ...(mappedUsers.length > 0
+        //   ? [
+        //       {
+        //         value: mappedUsers,
+        //         operator: 'NOT IN',
+        //         column_name: 'id',
+        //       },
+        //     ]
+        //   : []),
       ],
       limit_range: 25,
       print_query: false,
@@ -368,7 +298,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       sort_columns: [['email', 'asc']],
       primary_table: 'users',
       select_columns: [
-        ['email', 'value'],
+        ['id', 'value'],
         ['email', 'label'],
       ],
     };
@@ -390,7 +320,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     });
   }
 
-  getRoles(formGroup: any, role_name?: string) {
+  getRoles(formGroup: any, index: number, role_name?: string) {
+    // const mappedRoles = this.fetchMappedData('roles', index);
     let payload = {
       company_id: 1,
       search_all: [
@@ -399,6 +330,15 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           operator: '=',
           column_name: 'status_id',
         },
+        // ...(mappedRoles.length > 0
+        //   ? [
+        //       {
+        //         value: mappedRoles,
+        //         operator: 'NOT IN',
+        //         column_name: 'id',
+        //       },
+        //     ]
+        //   : []),
       ],
       limit_range: 25,
       print_query: false,
@@ -406,7 +346,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       sort_columns: [['name', 'asc']],
       primary_table: 'roles',
       select_columns: [
-        ['name', 'value'],
+        ['id', 'value'],
         ['name', 'label'],
       ],
     };
@@ -428,7 +368,9 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     });
   }
 
-  getTags(formGroup: any, tag_name?: string) {
+  getTags(formGroup: any, index: number, tag_name?: string) {
+    // const mappedTags = this.fetchMappedData('tag', index);
+    // console.log('tag', formGroup.getRawValue(), mappedTags);
     let payload = {
       company_id: 1,
       search_all: [
@@ -437,6 +379,15 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           operator: '=',
           column_name: 'status_id',
         },
+        // ...(mappedTags.length > 0
+        //   ? [
+        //       {
+        //         value: mappedTags,
+        //         operator: 'NOT IN',
+        //         column_name: 'slug',
+        //       },
+        //     ]
+        //   : []),
       ],
       limit_range: 25,
       print_query: false,
@@ -467,84 +418,35 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   }
 
   submit(): void {
-    this.form.markAllAsTouched();
+    console.log(this.form.getRawValue(), this.form.errors, this.form.valid);
     if (this.form.valid) {
-      let no_of_tables: number = 2;
-      let no_of_child_tables: number = 2;
       const payload: any = {
-        data: {},
-        table: ['email_template_process', 'email_template_assignments'],
-        action: ['select', 'hard_delete'],
-        columns: {
-          table1: ['id'],
+        data: {
+          table2: this.approvalWorkflowAssignments.map((each: any) => {
+            return {
+              approver_order_no: each.approver_order_no,
+              approval_workflow_id: each.approval_workflow_id,
+              approver_type: each.approver_type,
+              approver: each.approver,
+              created_by: true,
+              updated_by: true,
+              status_id: 1,
+              created_at: true,
+              updated_at: true,
+            };
+          }),
         },
+        table: ['approval_workflow_assignments', 'approval_workflow_assignments'],
+        action: ['hard_delete', 'insert'],
         conditions: {
           table1: [
             {
-              id: this.approvalWorkflow.id,
-            },
-          ],
-          table2: [
-            {
-              email_template_process_id: '@table1.id',
+              approval_workflow_id: this.approvalWorkflow.id,
             },
           ],
         },
         table_mapping: ['table1', 'table2'],
       };
-      const lineItemsArray: any = this.form.get('email_template_assignments') as FormArray;
-
-      // add data for template assignment
-      for (let templates of lineItemsArray.controls) {
-        no_of_tables++;
-        payload.data['table' + no_of_tables] = [
-          {
-            email_to: templates.controls['email_to'].value,
-            created_at: true,
-            created_by: true,
-            template_id: templates.controls['template_id'].value,
-            recipient_type: templates.controls['recipient_type'].value,
-            email_template_process_id: '@table1.id',
-          },
-        ];
-
-        // add action for template assignment
-        payload.action.push('insert');
-
-        // table mapping for template assignment
-        payload.table_mapping.push('table' + no_of_tables);
-
-        // table for template assignment
-        payload.table.push('email_template_assignments');
-
-        let ccBccLineItems: any = templates.controls['cc_bcc'] as FormArray;
-
-        // add data for cc bcc template
-        let parent_table = no_of_tables;
-        for (let ccBccTemplates of ccBccLineItems.controls) {
-          no_of_child_tables = no_of_tables + 1;
-          payload.data['table' + no_of_child_tables] = [
-            {
-              email_to: ccBccTemplates.controls['email_to'].value,
-              created_at: true,
-              created_by: true,
-              recipient_type: ccBccTemplates.controls['recipient_type'].value,
-              send_type: ccBccTemplates.controls['send_type'].value,
-              email_template_assignment_id: '@table' + parent_table + '.id',
-            },
-          ];
-
-          // add action for template assignment
-          payload.action.push('insert');
-
-          // table mapping for template assignment
-          payload.table_mapping.push('table' + no_of_child_tables);
-
-          // table for template assignment
-          payload.table.push('email_template_cc_bcc');
-          no_of_tables = no_of_child_tables;
-        }
-      }
 
       this.gridApiService.executeRecords(payload).subscribe({
         next: (response: any) => {
