@@ -166,6 +166,7 @@ export class RouteUpdateService {
                 entity_user_role_map_module: () =>
                   import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
                 entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
+                about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
                 language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
                 job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
