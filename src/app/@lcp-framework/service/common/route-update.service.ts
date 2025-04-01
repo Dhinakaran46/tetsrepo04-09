@@ -181,6 +181,7 @@ export class RouteUpdateService {
                   import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
                 approval_workflow_assignment_module: () =>
                   import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
+                approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
               };
 
               const route: Route = {

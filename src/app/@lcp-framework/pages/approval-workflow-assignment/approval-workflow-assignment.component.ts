@@ -139,7 +139,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                       user_list: [null],
                       role_list: [null],
                       tag_list: [null],
-                      tag: [each.approver_type === 'tag' ? each.approver : null],
+                      tag: [each.approver_type === 'tag' ? each.approver?.split(',') : null],
                       users: [
                         each.approver_type === 'user_id'
                           ? each.approver
@@ -255,7 +255,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
         break;
       default:
         formGroup?.patchValue({
-          approver: formGroup.controls['tag'].value,
+          approver: formGroup.controls['tag'].value.join(','),
           users: null,
           roles: null,
         });
@@ -265,9 +265,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   fetchMappedData(key: string, index: number) {
     let ids: any[] = [];
     this.approvalWorkflowAssignments.map((each: any, i: number) => {
-      if (index !== i && each[key]?.length)
-        if (key === 'tag') ids.push(each[key]);
-        else ids = [...ids, ...each[key]];
+      if (index !== i && each[key]?.length) ids = [...ids, ...each[key]];
     });
     return ids;
   }
@@ -425,7 +423,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           table2: this.approvalWorkflowAssignments.map((each: any) => {
             return {
               approver_order_no: each.approver_order_no,
-              approval_workflow_id: each.approval_workflow_id,
+              approval_workflow_id: each.approval_workflow_id || this.approvalWorkflow.id,
               approver_type: each.approver_type,
               approver: each.approver,
               created_by: true,

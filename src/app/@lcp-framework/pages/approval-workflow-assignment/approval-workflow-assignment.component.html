@@ -67,6 +67,7 @@
                 formControlName="tag"
                 [clearable]="true"
                 [searchable]="true"
+                [multiple]="true"
                 placeholder="Select Tag"
                 class="custom-multiselect multi-ng-select"
                 (search)="getTags(assignment, i, $event.term || '')"

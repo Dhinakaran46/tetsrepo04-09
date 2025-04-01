@@ -1,8 +1,8 @@
 import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -13,7 +13,6 @@ import { CommonSharedModule } from '../../shared/common/common.module';
 import { Store } from '@ngrx/store';
 import Swal from 'sweetalert2';
 import { ExportService } from '../../service/common/export.service';
-import { commonConfig } from '../../config/common.config';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
@@ -21,7 +20,6 @@ import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
-import { ProfileApiService } from '../../service/user/profile-api.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -30,6 +28,7 @@ export interface ExportResponse {
 
 interface FetchDataParams {
   entity_name: any;
+  primary_table: any;
   start_index: number;
   limit_range: number;
   sort_columns: any;
@@ -42,10 +41,11 @@ interface FetchDataParams {
 }
 
 @Component({
+  selector: 'app-approval-requests',
   standalone: true,
   imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
-
-  templateUrl: './master-list.component.html',
+  templateUrl: './approval-requests.component.html',
+  styleUrl: './approval-requests.component.scss',
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -54,21 +54,90 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements AfterViewInit {
+export class ApprovalRequestsComponent implements AfterViewInit {
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
   user_id: any;
-  isItemModalOpen = false;
-  changePasswordForm: FormGroup;
   column: any = '';
   query: any = '';
 
-  allowPasswordModal: any = false;
   selectcolumns: any[] = [];
   headercolumns: any[] = [];
+  headerColumnData: any[] = [
+    {
+      header: 'id',
+      clause_type: 'where',
+      field_value: 'approval_process_job_workflow_users.id',
+      is_sortable: 'false',
+      column_order: '0.00',
+      column_width: '0.00',
+      is_searchable: 'false',
+      is_grid_column: 'false',
+    },
+    {
+      header: 'uuid',
+      clause_type: 'where',
+      field_value: 'approval_process_job_workflow_users.uuid',
+      is_sortable: 'false',
+      column_order: '0.00',
+      column_width: '0.00',
+      is_searchable: 'false',
+      is_grid_column: 'false',
+    },
+    {
+      header: 'code',
+      clause_type: 'where',
+      field_value: 'approval_process_job_workflows.approval_process_job_name',
+      is_sortable: 'true',
+      column_order: '1.00',
+      column_width: '1.00',
+      is_searchable: 'true',
+      is_grid_column: 'true',
+    },
+    {
+      header: 'name',
+      clause_type: 'where',
+      field_value: "concat(user_details.first_name, ' ', user_details.last_name)",
+      is_sortable: 'true',
+      column_order: '2.00',
+      column_width: '2.00',
+      is_searchable: 'true',
+      is_grid_column: 'true',
+    },
+    {
+      header: 'email',
+      clause_type: 'where',
+      field_value: 'users.email',
+      is_sortable: 'true',
+      column_order: '3.00',
+      column_width: '3.00',
+      is_searchable: 'true',
+      is_grid_column: 'true',
+    },
+    {
+      header: 'code',
+      clause_type: 'where',
+      field_value: 'approval_process_job_workflows.approval_status',
+      is_sortable: 'true',
+      column_order: '1.00',
+      column_width: '1.00',
+      is_searchable: 'true',
+      is_grid_column: 'true',
+    },
+    {
+      header: 'status',
+      clause_type: 'where',
+      field_value: 'users.status_id',
+      is_sortable: 'true',
+      column_order: '5.00',
+      column_width: '5.00',
+      is_searchable: 'false',
+      is_grid_column: 'true',
+    },
+  ];
   items: any[] = [];
   totalItems: number = 0;
   currentPage: number = 1;
@@ -90,8 +159,6 @@ export class MasterListComponent implements AfterViewInit {
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
-    private apiService: ProfileApiService,
-    private http: HttpClient,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private datepipe: DatePipe,
@@ -102,35 +169,9 @@ export class MasterListComponent implements AfterViewInit {
     private translate: TranslateService,
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
-    private titleService: Title,
-    private formBuilder: FormBuilder
+    private titleService: Title
   ) {
     this.initStore();
-
-    this.changePasswordForm = this.formBuilder.group(
-      {
-        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
-        confirm_new_password: ['', Validators.required],
-      },
-      { validators: this.passwordMatchValidator }
-    );
-  }
-
-  passwordValidator(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
-    if (!value) {
-      return null;
-    }
-    const hasUpperCase = /[A-Z]/.test(value);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const isValid = hasUpperCase && hasSpecialChar;
-    return !isValid ? { passwordInvalid: true } : null;
-  }
-
-  passwordMatchValidator(group: FormGroup): ValidationErrors | null {
-    const newPassword = group.get('new_password')?.value;
-    const confirmNewPassword = group.get('confirm_new_password')?.value;
-    return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
   ngAfterViewInit() {
@@ -144,9 +185,6 @@ export class MasterListComponent implements AfterViewInit {
         this.policyData = this.user_info.main?.policies || null;
       }
       this.masterInfo = pageInfo;
-      if (this.masterInfo.ListQuery.entity_name == 'user') {
-        this.allowPasswordModal = true;
-      }
 
       const masterListConfig = pageInfo;
 
@@ -156,9 +194,53 @@ export class MasterListComponent implements AfterViewInit {
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
 
       this.title = masterListConfig.fullEntity;
-      this.defaultQuery = masterListConfig.ListQuery;
+      this.defaultQuery = {
+        print_query: true,
+        company_id: 1,
+        primary_table: 'approval_process_job_workflow_users',
+        start_index: 0,
+        limit_range: 10,
+        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        group_by: [
+          'approval_process_job_workflow_users.id',
+          'approval_process_job_workflows.approval_process_job_name',
+          'user_details.first_name',
+          'user_details.last_name',
+          'users.email',
+          'approval_process_job_workflows.approval_status',
+          'users.status_id',
+        ],
+        includes: [
+          {
+            join_type: 'LEFT',
+            table_name: 'approval_process_job_workflows',
+            join_condition:
+              'approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id AND approval_process_job_workflows.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users',
+            join_condition: 'users.id = approval_process_job_workflows.user_id AND users.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details',
+            join_condition: 'user_details.user_id = users.id',
+          },
+        ],
+        // having_conditions: null,
+        // having_any_conditions: null,
+        search_all: [
+          {
+            column_name: 'approval_process_job_workflow_users.status_id',
+            value: 3,
+            operator: '!=',
+          },
+        ],
+        search_any: [],
+        select_columns: [...this.headercolumns.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+      };
       this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
-      console.log('listQuery', this.listQuery);
       this.listQuery.start_index = 0;
       this.fetchAttachedPolicies(this.listQuery);
     } else {
@@ -177,49 +259,6 @@ export class MasterListComponent implements AfterViewInit {
       });
   }
 
-  onChangePassword() {
-    if (this.changePasswordForm && this.changePasswordForm.errors && this.changePasswordForm.errors['passwordsMismatch']) {
-      const key = 'passwords_do_not_match';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
-      return;
-    }
-
-    if (this.changePasswordForm.invalid) {
-      this.markAllAsTouched();
-      return;
-    }
-
-    const formData = {
-      uuid: this.user_id,
-      password: this.changePasswordForm.get('new_password')?.value,
-    };
-
-    this.apiService.resetPasswordAnyUser(formData).subscribe(
-      (response) => {
-        const key = 'password_resetted_successfully';
-        const successMessage = this.translate.instant(key);
-        this.toastr.success(successMessage);
-        this.changePasswordForm.reset();
-        this.isItemModalOpen = false;
-        this.fetchData(this.listQuery);
-      },
-      (error) => {
-        const key = 'error_resetting_password';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage + error, 'Error');
-        this.isItemModalOpen = false;
-        // Handle error response
-      }
-    );
-  }
-
-  private markAllAsTouched() {
-    Object.values(this.changePasswordForm.controls).forEach((control) => {
-      control.markAsTouched();
-    });
-  }
-
   sortColumn(column: any) {
     this.column = column;
 
@@ -229,15 +268,6 @@ export class MasterListComponent implements AfterViewInit {
     this.fetchData(this.listQuery);
   }
 
-  passwordModal(item: any) {
-    //return;
-    this.isItemModalOpen = true;
-    this.user_id = item.uuid;
-  }
-  cancelResetPwd() {
-    this.changePasswordForm.reset();
-    this.isItemModalOpen = false;
-  }
   advancedSearchData(data: any) {
     interface QueryItem {
       isAggregate: boolean;
@@ -416,7 +446,7 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
-    this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
+    this.gridApiService.getAttachedPolicies({ entity_name: params.primary_table }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           this.attachedPolicies = response.data.attached_policies || [];
@@ -428,63 +458,95 @@ export class MasterListComponent implements AfterViewInit {
         this.toastr.error(errorMessage, 'Error');
       },
       () => {
-        this.fetchColumns(this.listQuery);
+        this.fetchColumns();
         this.fetchData(this.listQuery);
       }
     );
   }
 
-  fetchColumns(params: FetchDataParams) {
-    this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-          console.log('enter', response);
-          const data = response.data.records.map((key: any, index: any) => {
-            return {
-              field: key.field_name,
-              title: this.translate.instant(key.display_name),
-              sorting: key.is_sortable,
-              searchable: key.is_searchable,
-              enable: true,
-              ...key,
-            };
-          });
-
-          this.selectcolumns = [
-            {
-              field: 'S.No',
-              title: 'S.No',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 1,
-            },
-            ...data,
-            {
-              field: 'Status',
-              title: 'Status',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 1,
-            },
-            {
-              field: 'Action',
-              title: 'Action',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 0,
-            },
-          ];
-        }
+  fetchColumns() {
+    const data = [
+      {
+        order_no: 3,
+        status_id: 1,
+        company_id: 1,
+        field: 'approval_process_job_workflows.approval_process_job_name',
+        clause_type: 'where',
+        sorting: true,
+        title: this.translate.instant('job_name'),
+        field_type_id: 3,
+        searchable: true,
+        is_grid_column: true,
+        enable: true,
       },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-      }
-    );
+      {
+        order_no: 2,
+        status_id: 1,
+        company_id: 1,
+        field: "concat(user_details.first_name, ' ', user_details.last_name)",
+        clause_type: 'where',
+        sorting: true,
+        title: this.translate.instant('requested_user_name'),
+        field_type_id: 3,
+        searchable: true,
+        is_grid_column: true,
+        enable: true,
+      },
+      {
+        order_no: 3,
+        status_id: 1,
+        company_id: 1,
+        field: 'users.email',
+        clause_type: 'where',
+        sorting: true,
+        title: this.translate.instant('requested_user_email'),
+        field_type_id: 3,
+        searchable: true,
+        is_grid_column: true,
+        enable: true,
+      },
+      {
+        order_no: 3,
+        status_id: 1,
+        company_id: 1,
+        field: 'approval_process_job_workflows.approval_status',
+        clause_type: 'where',
+        sorting: true,
+        title: this.translate.instant('approval_status'),
+        field_type_id: 3,
+        searchable: true,
+        is_grid_column: true,
+        enable: true,
+      },
+    ];
+
+    this.selectcolumns = [
+      {
+        field: 'S.No',
+        title: 'S.No',
+        sorting: false,
+        searchable: false,
+        enable: false,
+        field_type_id: 1,
+      },
+      ...data,
+      {
+        field: 'Status',
+        title: 'Status',
+        sorting: false,
+        searchable: false,
+        enable: false,
+        field_type_id: 1,
+      },
+      {
+        field: 'Action',
+        title: 'Action',
+        sorting: false,
+        searchable: false,
+        enable: false,
+        field_type_id: 0,
+      },
+    ];
   }
 
   fetchData(params: FetchDataParams) {
@@ -494,87 +556,80 @@ export class MasterListComponent implements AfterViewInit {
       '$user_id',
       this.user_info.main.id
     );
-    this.gridApiService.getAllRecords(payload).subscribe(
+    this.commonService.getCommonList(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          if (response.data.headers) {
-            if (this.headercolumns.length == 0) {
-              const data = response.data.headers
-                .filter((key: any) => key.is_grid_column == 'true')
-                .map((key: any) => ({
-                  ...key,
-                  column_width: '40px',
-                }));
+          const data = this.headerColumnData
+            .filter((key: any) => key.is_grid_column == 'true')
+            .map((key: any) => ({
+              ...key,
+              column_width: '40px',
+            }));
+          // Check if only 'view' or 'view' + 'export_excel' are enabled
+          const isOnlyViewOrViewExport =
+            (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
+            (!this.masterInfo.permissions.create || this.masterInfo.permissions.create === true) &&
+            Object.keys(this.masterInfo.permissions).every((key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false);
 
-              // Check if only 'view' or 'view' + 'export_excel' are enabled
-              const isOnlyViewOrViewExport =
-                (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
-                (!this.masterInfo.permissions.create || this.masterInfo.permissions.create === true) &&
-                Object.keys(this.masterInfo.permissions).every(
-                  (key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false
-                );
+          // Include serial number column if enabled in config
+          if (this.config.grid_show_serial_number == 'true') {
+            this.headercolumns = [
+              {
+                header: 'table_column_sno',
+                field_value: 'S.No',
+                is_sortable: 'false',
+                column_order: '0.00',
+                column_width: '40px',
+                is_searchable: 'false',
+                is_grid_column: 'true',
+              },
+              ...data,
+            ];
 
-              // Include serial number column if enabled in config
-              if (this.config.grid_show_serial_number == 'true') {
-                this.headercolumns = [
-                  {
-                    header: 'table_column_sno',
-                    field_value: 'S.No',
-                    is_sortable: 'false',
-                    column_order: '0.00',
-                    column_width: '40px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                  },
-                  ...data,
-                ];
-
-                // Add 'Action' column if permissions are not limited to view/export
-                if (!isOnlyViewOrViewExport) {
-                  this.headercolumns.push({
-                    header: 'table_column_action',
-                    field_value: 'Action',
-                    is_sortable: 'false',
-                    column_order: '0.00',
-                    column_width: '50px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                  });
-                }
-              } else {
-                this.headercolumns = [...data];
-
-                if (!isOnlyViewOrViewExport) {
-                  this.headercolumns.push({
-                    header: 'table_column_action',
-                    field_value: 'Action',
-                    is_sortable: 'false',
-                    column_order: '0.00',
-                    column_width: '50px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                  });
-                }
-              }
+            // Add 'Action' column if permissions are not limited to view/export
+            if (!isOnlyViewOrViewExport) {
+              this.headercolumns.push({
+                header: 'table_column_action',
+                field_value: 'Action',
+                is_sortable: 'false',
+                column_order: '0.00',
+                column_width: '50px',
+                is_searchable: 'false',
+                is_grid_column: 'true',
+              });
             }
+          } else {
+            this.headercolumns = [...data];
 
-            // Adding custom templates
-            this.headercolumns = this.headercolumns.map((item: any) => {
-              if (item.header === 'status') {
-                return {
-                  ...item,
-                  customTemplate: this.statusTemplate,
-                };
-              } else if (item.header === 'table_column_action') {
-                return {
-                  ...item,
-                  customTemplate: this.actionTemplate,
-                };
-              } else {
-                return { ...item };
-              }
-            });
+            if (!isOnlyViewOrViewExport) {
+              this.headercolumns.push({
+                header: 'table_column_action',
+                field_value: 'Action',
+                is_sortable: 'false',
+                column_order: '0.00',
+                column_width: '50px',
+                is_searchable: 'false',
+                is_grid_column: 'true',
+              });
+            }
           }
+
+          // Adding custom templates
+          this.headercolumns = this.headercolumns.map((item: any) => {
+            if (item.header === 'status') {
+              return {
+                ...item,
+                customTemplate: this.statusTemplate,
+              };
+            } else if (item.header === 'table_column_action') {
+              return {
+                ...item,
+                customTemplate: this.actionTemplate,
+              };
+            } else {
+              return { ...item };
+            }
+          });
 
           // Processing records
           if (response.data.records) {
@@ -657,20 +712,9 @@ export class MasterListComponent implements AfterViewInit {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
-  deleteItems(items: any[]) {
-    this.items = this.items.filter((item) => !items.includes(item));
-  }
-
   handleCustomAction(action: string) {
     if (action === 'addNew' && this.masterInfo.children.add) {
       this.router.navigate([`${this.masterInfo.children.add.target}`]);
-    }
-  }
-
-  editItem(item: any) {
-    if (this.masterInfo.children.edit) {
-      const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
-      this.router.navigate([targetRoute]);
     }
   }
 
@@ -752,13 +796,6 @@ export class MasterListComponent implements AfterViewInit {
     reader.readAsArrayBuffer(blob);
   }
 
-  assignItem(item: any) {
-    if (this.masterInfo.children.assign) {
-      const targetRoute = this.masterInfo.children.assign.target.replace(':id', item.uuid);
-      this.router.navigate([targetRoute]);
-    }
-  }
-
   recordExport(item: any) {
     this.loading = true;
 
@@ -800,145 +837,6 @@ export class MasterListComponent implements AfterViewInit {
   }
   commonTranslate(msg: any) {
     return this.translate.instant(msg);
-  }
-
-  printItem(item: any) {
-    if (this.masterInfo.children.print) {
-      const targetRoute = this.masterInfo.children.print.target.replace(':id', item.uuid);
-      this.router.navigate([targetRoute]);
-    }
-  }
-
-  directDeleteItem(item: any) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      showCancelButton: true,
-      confirmButtonText: 'Delete',
-      padding: '2em',
-    }).then(async (result) => {
-      if (result.value) {
-        try {
-          const jobResponse = await this.localStorageService.getMasterEntity({
-            record_info: item,
-            entity_name: this.masterInfo.children.delete.entity_name,
-            entity_type: this.masterInfo.children.delete.component_class_name,
-          });
-
-          if (jobResponse) {
-            await this.executeJob({ ...jobResponse, record_info: item });
-            Swal.fire({ title: 'Deleted!', text: 'Your file has been deleted.', icon: 'success' });
-            this.fetchData(this.listQuery);
-          }
-        } catch (error: any) {
-          const key = 'error';
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, error.message);
-        }
-      }
-    });
-  }
-
-  emailResendItem(item: any) {
-    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
-      Swal.fire({
-        icon: 'info',
-        title: 'Resend Mail?',
-        text: 'are you sure, you want to resend mail?',
-        showCancelButton: true,
-        confirmButtonText: 'Resend',
-        padding: '2em',
-      }).then(async (result) => {
-        if (result.value) {
-          try {
-            const jobResponse = await this.localStorageService.getMasterEntity({
-              record_info: item,
-              entity_name: this.masterInfo.children.email_resend.entity_name,
-              entity_type: this.masterInfo.children.email_resend.component_class_name,
-            });
-
-            if (jobResponse) {
-              await this.executeJob({ ...jobResponse, record_info: item });
-              Swal.fire({ title: 'Mail resent request initiated!', text: 'Mail resent request has been initiated.', icon: 'success' });
-              this.fetchData(this.listQuery);
-            }
-          } catch (error: any) {
-            const key = 'error';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, error.message);
-          }
-        }
-      });
-    }
-  }
-
-  deleteItem(item: any) {
-    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
-      if (this.grid_records_delete == 'true') {
-        const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
-        this.commonService.procedureCall(procedureParams).subscribe({
-          next: (response: { code: number; status: boolean; data: any; message: string }) => {
-            if (response.code === 200 && response.status && response.data) {
-              const res = response.data?.[0]?.result || [];
-
-              if (Object.keys(res).length > 0) {
-                let htmlInput =
-                  `
-  <span>` +
-                  this.commonTranslate('config_delete_msg_0') +
-                  `</span><br><br>
-  <table style="width: 100%; text-align: center; border-collapse: collapse;">
-  <thead>
-    <tr>
-      <th style="border: 1px solid #ddd; padding: 8px;">` +
-                  this.commonTranslate('config_delete_msg_1') +
-                  `</th>
-      <th style="border: 1px solid #ddd; padding: 8px;">` +
-                  this.commonTranslate('config_delete_msg_2') +
-                  `</th>
-    </tr> </thead><tbody>
-`;
-
-                Object.entries(res).forEach(([key, value]) => {
-                  htmlInput += `
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px;">${key}</td>
-      <td style="border: 1px solid #ddd; padding: 8px;">${value}</td>
-    </tr>
-  `;
-                });
-
-                htmlInput += `</tbody></table>`;
-
-                Swal.fire({
-                  title: `<span style="color: orange;">` + this.commonTranslate('config_delete_msg_3') + `!</span>`,
-                  html: htmlInput,
-                  customClass: {
-                    title: 'swal-title',
-                  },
-                });
-              } else {
-                this.directDeleteItem(item);
-              }
-            } else {
-              const key = 'error';
-              const errorMessage = this.translate.instant(key);
-              this.toastr.error(errorMessage, 'Error');
-            }
-          },
-          error: (error) => {
-            console.error('Error fetching data:', error);
-            //this.loading = false;
-          },
-          complete: () => {
-            //this.loading = false;
-          },
-        });
-      } else {
-        this.directDeleteItem(item);
-      }
-    }
   }
 
   viewItem(item: any) {

@@ -58,6 +58,7 @@ export const commonConfig: any = {
     USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
     APPROVAL_WORKFLOW_ASSIGNMENT_MODULE: 'approval_workflow_assignment_module',
+    APPROVAL_REQUESTS_MODULE: 'approval_requests_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -80,6 +81,7 @@ export const commonConfig: any = {
     user_role_policy_module: 'userrolepolicy',
     email_template_assignment_module: 'emailtemplateassignment',
     approval_workflow_assignment_module: 'approvalworkflowassignment',
+    approval_requests_module: 'approvalrequests',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -167,6 +169,7 @@ export const commonConfig: any = {
     { label: 'User/Role Policy Module', value: 'user_role_policy_module' },
     { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
     { label: 'Approval Workflow Assignment Module', value: 'approval_workflow_assignment_module' },
+    { label: 'Approval Requests Module', value: 'approval_requests_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
