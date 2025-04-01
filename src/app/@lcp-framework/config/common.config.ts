@@ -57,6 +57,7 @@ export const commonConfig: any = {
     POLICY_ADD_EDIT_MODULE: 'policy_add_edit_module',
     USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
+    ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -78,6 +79,7 @@ export const commonConfig: any = {
     policy_add_edit_module: 'policyaddedit',
     user_role_policy_module: 'userrolepolicy',
     email_template_assignment_module: 'emailtemplateassignment',
+    about_lcp_form_module: 'aboutlcpformmodule',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -164,6 +166,7 @@ export const commonConfig: any = {
     { label: 'Policy Add Edit Module', value: 'policy_add_edit_module' },
     { label: 'User/Role Policy Module', value: 'user_role_policy_module' },
     { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
+    { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
