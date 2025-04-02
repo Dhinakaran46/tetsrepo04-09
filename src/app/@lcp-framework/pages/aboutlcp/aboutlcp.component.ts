@@ -85,6 +85,7 @@ export class AboutlcpComponent implements OnInit {
 
   initForm() {
     this.form = this.fb.group({
+      type: ['', [Validators.required]],
       name: ['', [Validators.required]],
       description: [''],
       documentation_video_url: [''],
@@ -97,6 +98,20 @@ export class AboutlcpComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
+      const validPdfTypes = ['application/pdf'];
+      const validWordTypes = [
+        'application/msword', // .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      ];
+
+      // Validate file type
+      if ((type === 'pdf' && !validPdfTypes.includes(file.type)) || (type === 'word' && !validWordTypes.includes(file.type))) {
+        this.toastr.warning(this.translate.instant('invalid_file_type'), 'Warning');
+        input.value = ''; // Reset file input
+        return;
+      }
+
+      // Proceed with upload if file type is valid
       this.gridApiService.uploadConfigPicture(file).subscribe({
         next: (response: any) => {
           if (response?.body?.status) {
@@ -120,7 +135,6 @@ export class AboutlcpComponent implements OnInit {
     }
   }
 
-
   clearFile(type: 'pdf' | 'word') {
     if (type === 'pdf') {
       this.fileNamePdf = '';
@@ -133,7 +147,6 @@ export class AboutlcpComponent implements OnInit {
     }
   }
 
-  
   onSubmit() {
     if (this.form.invalid) {
       this.toastr.error(this.translate.instant('required_message'), 'Error');
@@ -146,6 +159,7 @@ export class AboutlcpComponent implements OnInit {
       this.update_json_schema.data['table1'] = [
         {
           uuid: this.aboutLcpId, // Using the id for updating the record
+          type: this.form.value.type,
           name: this.form.value.name,
           description: this.form.value.description || '',
           documentation_video_url: this.form.value.documentation_video_url || '',
@@ -172,6 +186,7 @@ export class AboutlcpComponent implements OnInit {
       // Insert scenario
       this.insert_json_schema.data['table1'] = [
         {
+          type: this.form.value.type,
           name: this.form.value.name,
           description: this.form.value.description || '',
           documentation_video_url: this.form.value.documentation_video_url || '',
@@ -227,6 +242,7 @@ export class AboutlcpComponent implements OnInit {
         if (response.code === 200 && response.status) {
           const data = response.data.records[0];
           this.form.patchValue({
+            type: data.type,
             name: data.name,
             description: data.description,
             documentation_video_url: data.documentation_video_url,

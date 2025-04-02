@@ -1,89 +1,108 @@
 <div [formGroup]="form" class="rounded bg-white p-6 shadow">
-  <h2 class="mb-4 text-xl font-semibold">{{ isEditMode ? ('title_edit_about_lcp'
-    | translate) : ('title_add_about_lcp' | translate) }}</h2>
+  <h2 class="mb-4 text-xl font-semibold">
+    {{ isEditMode ? ('title_edit_about_lcp' | translate) :
+    ('title_add_about_lcp' | translate) }}
+  </h2>
 
-  <div class="mb-4">
-    <label class="required-mark mb-1 block font-medium">{{ 'topic' | translate
-      }}</label>
-    <input type="text" formControlName="name" class="form-input w-full" />
-  </div>
+  <div class="grid grid-cols-2 gap-4 mt-4">
+    <div>
+      <label class="required-mark mb-1 block font-medium">{{ 'type' | translate
+        }}</label>
+      <select formControlName="type" class="form-select w-full">
+        <option value>Select Type</option>
+        <option value="lcp">LCP</option>
+        <option value="project">Project</option>
+      </select>
+    </div>
 
-  <div class="mb-4">
-    <label class="mb-1 block font-medium">{{ 'description' | translate
-      }}</label>
-    <textarea rows="3" formControlName="description"
-      class="form-input w-full"></textarea>
-  </div>
-
-  <div class="mb-4">
-    <label class="mb-1 block font-medium">{{ 'documentation_video_url' |
-      translate }}</label>
-    <input type="text" formControlName="documentation_video_url"
-      class="form-input w-full" />
-  </div>
-
-  <!-- PDF Upload -->
-  <div class="mb-4">
-    <label class="mb-1 block font-medium">{{ 'documentation_pdf' | translate
-      }}</label>
-    <div
-      class="relative flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white px-4 py-6 text-center hover:bg-gray-50"
-      (click)="pdfInput.click()">
-      <ng-container *ngIf="!fileNamePdf; else showPdfFile">
-        <div>
-          <i class="fa-solid fa-cloud-arrow-up text-2xl text-blue-500"></i>
-          <p class="mt-2 text-sm text-gray-600">{{ 'click_or_drag_file' |
-            translate }}</p>
-        </div>
-      </ng-container>
-      <ng-template #showPdfFile>
-        <div class="flex w-full items-center justify-between">
-          <span class="truncate text-sm text-gray-700">{{ fileNamePdf }}</span>
-          <button type="button" class="ml-2 text-red-500"
-            (click)="clearFile('pdf')">
-            <i class="fa-solid fa-times-circle"></i>
-          </button>
-        </div>
-      </ng-template>
-      <input #pdfInput type="file" class="hidden"
-        (change)="onFileChange($event, 'pdf')" />
+    <div>
+      <label class="required-mark mb-1 block font-medium">{{ 'topic' | translate
+        }}</label>
+      <input type="text" formControlName="name" class="form-input w-full" />
     </div>
   </div>
 
-  <!-- Word Upload -->
-  <div class="mb-4">
-    <label class="mb-1 block font-medium">{{ 'documentation_word'
-      | translate }}</label>
-    <div
-      class="relative flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white px-4 py-6 text-center hover:bg-gray-50"
-      (click)="wordInput.click()">
-      <ng-container *ngIf="!fileNameWord; else showWordFile">
-        <div>
-          <i class="fa-solid fa-cloud-arrow-up text-2xl text-blue-500"></i>
-          <p class="mt-2 text-sm text-gray-600">{{ 'click_or_drag_file' |
-            translate }}</p>
-        </div>
-      </ng-container>
-      <ng-template #showWordFile>
-        <div class="flex w-full items-center justify-between">
-          <span class="truncate text-sm text-gray-700">{{ fileNameWord }}</span>
-          <button type="button" class="ml-2 text-red-500"
-            (click)="clearFile('word')">
-            <i class="fa-solid fa-times-circle"></i>
-          </button>
-        </div>
-      </ng-template>
-      <input #wordInput type="file" class="hidden"
-        (change)="onFileChange($event, 'word')" />
+  <div class="grid grid-cols-2 gap-4 mt-4">
+    <div>
+      <label class="mb-1 block font-medium">{{ 'description' | translate
+        }}</label>
+      <textarea rows="3" formControlName="description"
+        class="form-input w-full"></textarea>
+    </div>
+
+    <div>
+      <label class="mb-1 block font-medium">{{ 'documentation_video_url' |
+        translate }}</label>
+      <input type="text" formControlName="documentation_video_url"
+        class="form-input w-full" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 mt-4">
+
+    <div>
+      <label class="mb-1 block font-medium">{{ 'documentation_pdf' | translate
+        }}</label>
+      <div
+        class="relative flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white px-4 py-6 text-center hover:bg-gray-50"
+        (click)="pdfInput.click()">
+        <ng-container *ngIf="!fileNamePdf; else showPdfFile">
+          <div>
+            <i class="fa-solid fa-cloud-arrow-up text-2xl text-blue-500"></i>
+            <p class="mt-2 text-sm text-gray-600">{{ 'click_or_drag_file' |
+              translate }}</p>
+          </div>
+        </ng-container>
+        <ng-template #showPdfFile>
+          <div class="flex w-full items-center justify-between">
+            <span class="truncate text-sm text-gray-700">{{ fileNamePdf
+              }}</span>
+            <button type="button" class="ml-2 text-red-500"
+              (click)="clearFile('pdf')">
+              <i class="fa-solid fa-times-circle"></i>
+            </button>
+          </div>
+        </ng-template>
+        <input #pdfInput type="file" class="hidden" accept="application/pdf"
+          (change)="onFileChange($event, 'pdf')" />
+      </div>
+    </div>
+
+    <div>
+      <label class="mb-1 block font-medium">{{ 'documentation_word' |
+        translate
+        }}</label>
+      <div
+        class="relative flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white px-4 py-6 text-center hover:bg-gray-50"
+        (click)="wordInput.click()">
+        <ng-container *ngIf="!fileNameWord; else showWordFile">
+          <div>
+            <i class="fa-solid fa-cloud-arrow-up text-2xl text-blue-500"></i>
+            <p class="mt-2 text-sm text-gray-600">{{ 'click_or_drag_file' |
+              translate }}</p>
+          </div>
+        </ng-container>
+        <ng-template #showWordFile>
+          <div class="flex w-full items-center justify-between">
+            <span class="truncate text-sm text-gray-700">{{ fileNameWord
+              }}</span>
+            <button type="button" class="ml-2 text-red-500"
+              (click)="clearFile('word')">
+              <i class="fa-solid fa-times-circle"></i>
+            </button>
+          </div>
+        </ng-template>
+        <input #wordInput type="file" class="hidden" accept=".doc,.docx"
+          (change)="onFileChange($event, 'word')" />
+      </div>
     </div>
   </div>
 
   <div class="mt-6 flex gap-4">
-    <button type="button" (click)="goBack()" class="btn btn-danger">{{ 'back' |
+    <button type="button" (click)="goBack()" class="btn btn-danger">{{ 'back'
+      |
       translate }}</button>
     <button type="button" (click)="onSubmit()" class="btn btn-primary"
-      [disabled]="form.invalid">
-      {{ 'submit' | translate }}
-    </button>
+      [disabled]="form.invalid">{{ 'submit' | translate }}</button>
   </div>
 </div>
