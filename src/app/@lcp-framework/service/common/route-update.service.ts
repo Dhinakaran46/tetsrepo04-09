@@ -172,6 +172,7 @@ export class RouteUpdateService {
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
                 configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
+                cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
                 import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
                 import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
                 export_template_module: () => import('../../pages/export-template/export-template.component').then((m) => m.ExportTemplateComponent),

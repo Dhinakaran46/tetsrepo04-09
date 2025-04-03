@@ -1,0 +1,23 @@
+<div class="flex justify-between">
+  <div class="mt-1 mx-2">
+    <h1 appdynamicfontsize="title" class="font-bold dark:text-white-light text-base">
+      {{ 'Cron Job Settings' | translate }}
+    </h1>
+  </div>
+
+  <div>
+    <button (click)="stopCronJobs()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mx-2">
+      <i class="fa-solid fa-ban"></i>
+      <span class="ml-2">{{ 'Stop Cron Jobs' | translate }}</span>
+    </button>
+    <button (click)="restartCronJobs()"
+      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
+      <i class="fa-solid fa-refresh"></i>
+      <span class="ml-2">{{ 'Restart Cron Jobs' | translate }}</span>
+    </button>
+  </div>
+</div>
+
+<div class="mt-6">
+  <app-client-datatable [data]="listItems" [config]="itemsTableConfig"></app-client-datatable>
+</div>

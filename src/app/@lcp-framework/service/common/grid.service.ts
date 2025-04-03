@@ -179,4 +179,32 @@ export class GridApiService {
   getAttachedPolicies(data: any): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.attachedpolicies}/${data.entity_name}`);
   }
+
+  getCronJobs(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.get_cron_jobs}`);
+  }
+
+  stopCronJobs(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.stop_cron_jobs}`);
+  }
+
+  stopCronJob(id: number): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.stop_cron_job}/${id}`);
+  }
+
+  startCronJob(id: number): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.start_cron_job}/${id}`);
+  }
+
+  restartCronJobs(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.restart_cron_jobs}`);
+  }
+
+  editCronJob(id: number, postData: any): Observable<any> {
+    return this.http.put<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.edit_cron_job}/${id}`, postData);
+  }
+
+  deleteCronJob(id: number): Observable<any> {
+    return this.http.delete<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.delete_cron_jobs}/${id}`);
+  }
 }
