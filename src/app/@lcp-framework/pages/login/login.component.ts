@@ -332,7 +332,10 @@ export class CoverLoginComponent {
       },
       error: (error) => {
         const key = 'error';
-        const errorMessage = this.translate.instant(key);
+        let errorMessage = this.translate.instant(key);
+        if (error.code === 429) {
+          errorMessage = error.message;
+        }
         this.toastr.error(errorMessage, 'Error');
         this.loading = false;
         console.error(error);
