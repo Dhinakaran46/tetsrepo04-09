@@ -497,7 +497,13 @@ export class FormBuilderComponent implements OnInit {
           if (placeholder === 'model') {
             value = context;
           } else {
-            value = this.getNestedProperty(placeholder, context);
+            if (placeholder === 'user_id') {
+              value = this.user_info.main.id;
+            } else if (placeholder === 'unique_id') {
+              value = this.unique_id;
+            } else {
+              value = this.getNestedProperty(placeholder, context);
+            }
           }
           value = typeof value === 'string' ? value?.trim() : value;
           return value !== undefined ? value : required ? match[0] + placeholder : null;

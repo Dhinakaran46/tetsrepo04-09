@@ -88,9 +88,9 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       is_grid_column: 'false',
     },
     {
-      header: 'code',
+      header: 'description',
       clause_type: 'where',
-      field_value: 'approval_process_job_workflows.approval_process_job_name',
+      field_value: 'approval_process_job_workflows.approval_process_job_description',
       is_sortable: 'true',
       column_order: '1.00',
       column_width: '1.00',
@@ -118,7 +118,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       is_grid_column: 'true',
     },
     {
-      header: 'code',
+      header: 'approval_status',
       clause_type: 'where',
       field_value: 'approval_process_job_workflows.approval_status',
       is_sortable: 'true',
@@ -203,7 +203,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
         group_by: [
           'approval_process_job_workflow_users.id',
-          'approval_process_job_workflows.approval_process_job_name',
+          'approval_process_job_workflows.approval_process_job_description',
           'user_details.first_name',
           'user_details.last_name',
           'users.email',
@@ -238,7 +238,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
           },
         ],
         search_any: [],
-        select_columns: [...this.headercolumns.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+        select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
       };
       this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
       this.listQuery.start_index = 0;
@@ -470,10 +470,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         order_no: 3,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.approval_process_job_name',
+        field: 'approval_process_job_workflows.approval_process_job_description',
         clause_type: 'where',
         sorting: true,
-        title: this.translate.instant('job_name'),
+        title: this.translate.instant('job_description'),
         field_type_id: 3,
         searchable: true,
         is_grid_column: true,
