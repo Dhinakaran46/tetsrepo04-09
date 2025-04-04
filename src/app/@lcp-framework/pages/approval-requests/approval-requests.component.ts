@@ -21,6 +21,11 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 
+enum Tabs {
+  pending_on = 'pending_on',
+  pending = 'pending',
+  completed = 'completed',
+}
 export interface ExportResponse {
   blob: Blob;
   fileName: string;
@@ -58,86 +63,22 @@ export class ApprovalRequestsComponent implements AfterViewInit {
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
+  @ViewChild('approvalStatusTemplate') approvalStatusTemplate!: TemplateRef<any>;
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
   user_id: any;
   column: any = '';
   query: any = '';
 
+  activeTab = Tabs.pending_on;
   selectcolumns: any[] = [];
   headercolumns: any[] = [];
-  headerColumnData: any[] = [
-    {
-      header: 'id',
-      clause_type: 'where',
-      field_value: 'approval_process_job_workflow_users.id',
-      is_sortable: 'false',
-      column_order: '0.00',
-      column_width: '0.00',
-      is_searchable: 'false',
-      is_grid_column: 'false',
-    },
-    {
-      header: 'uuid',
-      clause_type: 'where',
-      field_value: 'approval_process_job_workflow_users.uuid',
-      is_sortable: 'false',
-      column_order: '0.00',
-      column_width: '0.00',
-      is_searchable: 'false',
-      is_grid_column: 'false',
-    },
-    {
-      header: 'description',
-      clause_type: 'where',
-      field_value: 'approval_process_job_workflows.approval_process_job_description',
-      is_sortable: 'true',
-      column_order: '1.00',
-      column_width: '1.00',
-      is_searchable: 'true',
-      is_grid_column: 'true',
-    },
-    {
-      header: 'name',
-      clause_type: 'where',
-      field_value: "concat(user_details.first_name, ' ', user_details.last_name)",
-      is_sortable: 'true',
-      column_order: '2.00',
-      column_width: '2.00',
-      is_searchable: 'true',
-      is_grid_column: 'true',
-    },
-    {
-      header: 'email',
-      clause_type: 'where',
-      field_value: 'users.email',
-      is_sortable: 'true',
-      column_order: '3.00',
-      column_width: '3.00',
-      is_searchable: 'true',
-      is_grid_column: 'true',
-    },
-    {
-      header: 'approval_status',
-      clause_type: 'where',
-      field_value: 'approval_process_job_workflows.approval_status',
-      is_sortable: 'true',
-      column_order: '1.00',
-      column_width: '1.00',
-      is_searchable: 'true',
-      is_grid_column: 'true',
-    },
-    {
-      header: 'status',
-      clause_type: 'where',
-      field_value: 'users.status_id',
-      is_sortable: 'true',
-      column_order: '5.00',
-      column_width: '5.00',
-      is_searchable: 'false',
-      is_grid_column: 'true',
-    },
-  ];
+  approvalStatusData: any = {
+    pending_on: ['approval_needed'],
+    pending: ['pending'],
+    completed: ['approval_completed', 'approval_rejected'],
+  };
+  headerColumnData: any[] = [];
   items: any[] = [];
   totalItems: number = 0;
   currentPage: number = 1;
@@ -155,6 +96,17 @@ export class ApprovalRequestsComponent implements AfterViewInit {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
+  requestTabs: any[] = [
+    {
+      name: Tabs.pending_on,
+    },
+    {
+      name: Tabs.pending,
+    },
+    {
+      name: Tabs.completed,
+    },
+  ];
 
   constructor(
     private toastr: ToastrService,
@@ -194,53 +146,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
 
       this.title = masterListConfig.fullEntity;
-      this.defaultQuery = {
-        print_query: true,
-        company_id: 1,
-        primary_table: 'approval_process_job_workflow_users',
-        start_index: 0,
-        limit_range: 10,
-        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
-        group_by: [
-          'approval_process_job_workflow_users.id',
-          'approval_process_job_workflows.approval_process_job_description',
-          'user_details.first_name',
-          'user_details.last_name',
-          'users.email',
-          'approval_process_job_workflows.approval_status',
-          'users.status_id',
-        ],
-        includes: [
-          {
-            join_type: 'LEFT',
-            table_name: 'approval_process_job_workflows',
-            join_condition:
-              'approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id AND approval_process_job_workflows.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users',
-            join_condition: 'users.id = approval_process_job_workflows.user_id AND users.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'user_details',
-            join_condition: 'user_details.user_id = users.id',
-          },
-        ],
-        // having_conditions: null,
-        // having_any_conditions: null,
-        search_all: [
-          {
-            column_name: 'approval_process_job_workflow_users.status_id',
-            value: 3,
-            operator: '!=',
-          },
-        ],
-        search_any: [],
-        select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
-      };
-      this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+      this.setHeader();
+      this.setDefaultQuery();
       this.listQuery.start_index = 0;
       this.fetchAttachedPolicies(this.listQuery);
     } else {
@@ -248,6 +155,203 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       this.headercolumns = [];
       this.items = [];
     }
+    this.cdr.detectChanges();
+  }
+
+  setHeader() {
+    this.headerColumnData = [
+      {
+        header: 'id',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflow_users.id',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
+      {
+        header: 'uuid',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflow_users.uuid',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
+      {
+        header: 'description',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.approval_process_job_description',
+        is_sortable: 'true',
+        column_order: '1.00',
+        column_width: '1.00',
+        is_searchable: 'true',
+        is_grid_column: 'true',
+      },
+      {
+        header: 'approver_type',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.approver_type',
+        is_sortable: 'true',
+        column_order: '2.00',
+        column_width: '1.00',
+        is_searchable: 'true',
+        is_grid_column: 'true',
+      },
+      {
+        header: 'approval_level',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.approver_order_no',
+        is_sortable: 'true',
+        column_order: '3.00',
+        column_width: '1.00',
+        is_searchable: 'true',
+        is_grid_column: 'true',
+      },
+      // {
+      //   header: 'name',
+      //   clause_type: 'where',
+      //   field_value: "concat(ud1.first_name, ' ', ud1.last_name)",
+      //   is_sortable: 'true',
+      //   column_order: '2.00',
+      //   column_width: '2.00',
+      //   is_searchable: 'true',
+      //   is_grid_column: 'true',
+      // },
+      {
+        header: 'requested_by',
+        clause_type: 'where',
+        field_value: 'u1.email',
+        is_sortable: 'true',
+        column_order: '4.00',
+        column_width: '3.00',
+        is_searchable: 'true',
+        is_grid_column: 'true',
+      },
+      ...(this.activeTab === Tabs.completed
+        ? [
+            {
+              header: 'reason',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflows.reason',
+              is_sortable: 'true',
+              column_order: '5.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'approval_status',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflows.approval_status',
+              is_sortable: 'true',
+              column_order: '6.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'approved_by',
+              clause_type: 'where',
+              field_value: 'u2.email',
+              is_sortable: 'true',
+              column_order: '7.00',
+              column_width: '3.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+          ]
+        : []),
+      {
+        header: 'status',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflow_users.status_id',
+        is_sortable: 'true',
+        column_order: '8.00',
+        column_width: '5.00',
+        is_searchable: 'false',
+        is_grid_column: 'true',
+      },
+    ];
+  }
+
+  setDefaultQuery() {
+    this.defaultQuery = {
+      print_query: true,
+      company_id: 1,
+      primary_table: 'approval_process_job_workflow_users',
+      start_index: 0,
+      limit_range: 10,
+      sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+      group_by: [
+        'approval_process_job_workflow_users.id',
+        'approval_process_job_workflows.approval_process_job_description',
+        'ud1.first_name',
+        'ud1.last_name',
+        'u1.email',
+        'u2.email',
+        'approval_process_job_workflows.approval_status',
+        'approval_process_job_workflows.approver_type',
+        'approval_process_job_workflows.approver_order_no',
+        'approval_process_job_workflows.reason',
+        'approval_process_job_workflow_users.status_id',
+      ],
+      includes: [
+        {
+          join_type: 'INNER',
+          table_name: 'approval_process_job_workflows',
+          join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+            AND approval_process_job_workflows.approval_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
+            AND approval_process_job_workflows.status_id != 3`,
+        },
+        {
+          join_type: 'LEFT',
+          table_name: 'users u1',
+          join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+        },
+        {
+          join_type: 'LEFT',
+          table_name: 'user_details ud1',
+          join_condition: 'ud1.user_id = u1.id',
+        },
+        {
+          join_type: 'LEFT',
+          table_name: 'users u2',
+          join_condition: 'u2.id = approval_process_job_workflows.approved_by AND u2.status_id != 3',
+        },
+        {
+          join_type: 'LEFT',
+          table_name: 'user_details ud2',
+          join_condition: 'ud2.user_id = u1.id',
+        },
+      ],
+      // having_conditions: null,
+      // having_any_conditions: null,
+      search_all: [
+        {
+          column_name: 'approval_process_job_workflow_users.status_id',
+          value: 3,
+          operator: '!=',
+        },
+        {
+          column_name: 'approval_process_job_workflow_users.user_id',
+          value: this.user_info.main.id,
+          operator: '=',
+        },
+      ],
+      search_any: [],
+      select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+    };
+    this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+  }
+
+  async setActiveTab(tab: Tabs) {
+    this.activeTab = tab;
+    this.setHeader();
+    this.setDefaultQuery();
+    this.fetchData(this.listQuery);
     this.cdr.detectChanges();
   }
 
@@ -467,7 +571,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
   fetchColumns() {
     const data = [
       {
-        order_no: 3,
+        order_no: 2,
         status_id: 1,
         company_id: 1,
         field: 'approval_process_job_workflows.approval_process_job_description',
@@ -480,43 +584,126 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         enable: true,
       },
       {
-        order_no: 2,
+        order_no: 3,
         status_id: 1,
         company_id: 1,
-        field: "concat(user_details.first_name, ' ', user_details.last_name)",
+        field: 'approval_process_job_workflows.approver_type',
         clause_type: 'where',
         sorting: true,
-        title: this.translate.instant('requested_user_name'),
+        title: this.translate.instant('approver_type'),
+        field_type_id: 3,
+        searchable: false,
+        is_grid_column: true,
+        enable: true,
+      },
+      {
+        order_no: 4,
+        status_id: 1,
+        company_id: 1,
+        field: 'approval_process_job_workflows.approver_order_no',
+        clause_type: 'where',
+        sorting: true,
+        title: this.translate.instant('approval_level'),
+        field_type_id: 1,
+        searchable: true,
+        is_grid_column: true,
+        enable: true,
+      },
+      // {
+      //   order_no: 2,
+      //   status_id: 1,
+      //   company_id: 1,
+      //   field: "concat(ud1.first_name, ' ', ud1.last_name)",
+      //   clause_type: 'where',
+      //   sorting: true,
+      //   title: this.translate.instant('requested_user_name'),
+      //   field_type_id: 3,
+      //   searchable: true,
+      //   is_grid_column: true,
+      //   enable: true,
+      // },
+      {
+        order_no: 5,
+        status_id: 1,
+        company_id: 1,
+        field: 'u1.email',
+        clause_type: 'where',
+        sorting: true,
+        title: this.translate.instant('requested_by'),
         field_type_id: 3,
         searchable: true,
         is_grid_column: true,
         enable: true,
       },
+      ...(this.activeTab === Tabs.completed
+        ? [
+            {
+              order_no: 6,
+              status_id: 1,
+              company_id: 1,
+              field: 'approval_process_job_workflows.reason',
+              clause_type: 'where',
+              sorting: true,
+              title: this.translate.instant('reason'),
+              field_type_id: 3,
+              searchable: true,
+              is_grid_column: true,
+              enable: true,
+            },
+            {
+              order_no: 7,
+              status_id: 1,
+              company_id: 1,
+              field: 'approval_process_job_workflows.approval_status',
+              clause_type: 'where',
+              sorting: true,
+              title: this.translate.instant('approval_status'),
+              field_type_id: 3,
+              searchable: true,
+              is_grid_column: true,
+              enable: true,
+            },
+            {
+              order_no: 8,
+              status_id: 1,
+              company_id: 1,
+              field: 'u2.email',
+              clause_type: 'where',
+              sorting: true,
+              title: this.translate.instant('approved_by'),
+              field_type_id: 3,
+              searchable: true,
+              is_grid_column: true,
+              enable: true,
+            },
+            // {
+            //   order_no: 2,
+            //   status_id: 1,
+            //   company_id: 1,
+            //   field: "concat(ud2.first_name, ' ', ud2.last_name)",
+            //   clause_type: 'where',
+            //   sorting: true,
+            //   title: this.translate.instant('requested_user_name'),
+            //   field_type_id: 3,
+            //   searchable: true,
+            //   is_grid_column: true,
+            //   enable: true,
+            // },
+          ]
+        : []),
+
       {
-        order_no: 3,
-        status_id: 1,
-        company_id: 1,
-        field: 'users.email',
-        clause_type: 'where',
-        sorting: true,
-        title: this.translate.instant('requested_user_email'),
-        field_type_id: 3,
-        searchable: true,
-        is_grid_column: true,
-        enable: true,
-      },
-      {
-        order_no: 3,
+        order_no: 9,
         status_id: 1,
         company_id: 1,
         field: 'approval_process_job_workflows.approval_status',
         clause_type: 'where',
-        sorting: true,
+        sorting: false,
         title: this.translate.instant('approval_status'),
         field_type_id: 3,
-        searchable: true,
+        searchable: false,
         is_grid_column: true,
-        enable: true,
+        enable: false,
       },
     ];
 
@@ -621,6 +808,11 @@ export class ApprovalRequestsComponent implements AfterViewInit {
                 ...item,
                 customTemplate: this.statusTemplate,
               };
+            } else if (item.header === 'approval_status') {
+              return {
+                ...item,
+                customTemplate: this.approvalStatusTemplate,
+              };
             } else if (item.header === 'table_column_action') {
               return {
                 ...item,
@@ -657,6 +849,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               }
               return {
                 ...formattedItem,
+                approver_type: this.translate.instant(item.approver_type),
                 Action: index + 1,
               };
             });

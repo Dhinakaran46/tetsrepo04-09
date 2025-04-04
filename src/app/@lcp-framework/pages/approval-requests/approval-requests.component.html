@@ -1,4 +1,15 @@
-<div>
+<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
+  <ng-container *ngFor="let tab of requestTabs">
+    <button
+      class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
+      [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTab == tab.name }"
+      (click)="setActiveTab(tab.name)"
+    >
+      {{ tab.name | translate }}
+    </button>
+  </ng-container>
+</div>
+<div class="flex-1 p-3 pt-6">
   <app-datatable
     [loading]="gridloading"
     [masterInfo]="masterInfo"
@@ -59,6 +70,25 @@
     >
       {{
         item.status == '1' ? ('table_status_val_0' | translate) : item.status == '2' ? ('table_status_val_1' | translate) : ('table_status_val_2' | translate)
+      }}
+    </span>
+  </ng-template>
+  <ng-template #approvalStatusTemplate let-item>
+    <span
+      class="badge"
+      [ngClass]="[
+        store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
+        item.approval_status === 'approval_completed' ? 'badge-outline-success' : 'badge-outline-danger'
+      ]"
+    >
+      {{
+        item.approval_status == 'pending'
+          ? ('table_status_val_pending' | translate)
+          : item.approval_status == 'approval_needed'
+          ? ('table_status_val_approval_needed' | translate)
+          : item.approval_status == 'approval_completed'
+          ? ('table_status_val_approval_completed' | translate)
+          : ('table_status_val_approval_rejected' | translate)
       }}
     </span>
   </ng-template>
