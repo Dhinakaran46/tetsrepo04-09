@@ -1,12 +1,14 @@
 <div class="flex justify-between">
   <div class="mt-1 mx-2">
-    <h1 appdynamicfontsize="title" class="font-bold dark:text-white-light text-base">
+    <h1 appdynamicfontsize="title"
+      class="font-bold dark:text-white-light text-base">
       {{ 'Cron Job Settings' | translate }}
     </h1>
   </div>
 
   <div>
-    <button (click)="stopCronJobs()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mx-2">
+    <button (click)="stopCronJobs()"
+      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mx-2">
       <i class="fa-solid fa-ban"></i>
       <span class="ml-2">{{ 'Stop Cron Jobs' | translate }}</span>
     </button>
@@ -19,5 +21,77 @@
 </div>
 
 <div class="mt-6">
-  <app-client-datatable [data]="listItems" [config]="itemsTableConfig"></app-client-datatable>
+  <app-client-datatable [data]="listItems"
+    [config]="itemsTableConfig"></app-client-datatable>
+</div>
+
+<div *ngIf="showModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md">
+    <!-- Header remains the same -->
+
+    <div class="p-4">
+      <h2 class="mb-4 text-xl font-semibold">{{ editMode ? ('Edit Cron Job' |
+        translate) : ('Add New Cron Job' |
+        translate) }}</h2>
+      <form [formGroup]="cronForm" (ngSubmit)="onCronFormSubmit()">
+        <!-- Timing Field -->
+        <div class="mb-4">
+          <label class="block text-gray-700 dark:text-gray-300 mb-2"
+            for="timing">
+            {{ 'Cron Timing' | translate }} ({{
+            'Minute, Hour, Day, Month, Weekday' | translate }})(* * * * *)
+            <span class="text-red-500">*</span>
+          </label>
+          <input id="timing" type="text" formControlName="timing"
+            class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            [class.border-red-500]="cronForm.get('timing')?.invalid && cronForm.get('timing')?.touched">
+          <div
+            *ngIf="cronForm.get('timing')?.invalid && cronForm.get('timing')?.touched"
+            class="text-red-500 text-sm mt-1">
+            {{ 'Cron Timing is required' | translate }}
+          </div>
+        </div>
+
+        <!-- Cron URL Field -->
+        <div class="mb-4">
+          <label class="block text-gray-700 dark:text-gray-300 mb-2"
+            for="cron_url">
+            {{ 'Cron URL' | translate }} <span class="text-red-500">*</span>
+          </label>
+          <input id="cron_url" type="text" formControlName="cron_url"
+            class="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            [class.border-red-500]="cronForm.get('cron_url')?.invalid && cronForm.get('cron_url')?.touched">
+          <div
+            *ngIf="cronForm.get('cron_url')?.invalid && cronForm.get('cron_url')?.touched"
+            class="text-red-500 text-sm mt-1">
+            {{ 'Cron URL is required' | translate }}
+          </div>
+        </div>
+
+        <!-- Concat Base URL Field -->
+        <div class="mb-4">
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="concat_base_url"
+              formControlName="concat_base_url"
+              class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
+            <span class="text-gray-700 dark:text-gray-300">{{ 'Concat base url'
+              | translate }}</span>
+          </label>
+        </div>
+
+        <!-- Buttons remain the same -->
+        <div class="flex justify-end space-x-2 mt-4">
+          <button type="button" (click)="showModal = false"
+            class="px-4 py-2 border rounded text-gray-700 dark:text-gray-300">
+            {{ 'Cancel' | translate }}
+          </button>
+          <button type="submit"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            {{ 'Save' | translate }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

@@ -36,6 +36,7 @@ export const commonConfig: any = {
     importtemplateuploaddata: 'common/import-template/upload',
     attachedpolicies: 'common/attached-policies',
     generatePowerBiEmbedToken: 'auth/powerbi/report/generate-embed-token',
+    create_cron_jobs: 'common/create-cron-jobs',
     get_cron_jobs: 'common/get-cron-jobs',
     stop_cron_jobs: 'common/stop-cron-jobs',
     stop_cron_job: 'common/stop-cron-job',

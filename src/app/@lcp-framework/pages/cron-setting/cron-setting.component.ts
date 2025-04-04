@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ClientDatatableComponent, TableConfig } from '../../components/client-datatable/client-datatable.component';
-import { FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
 import { LocalStorageService } from '../../service/common/local-storage.service';
@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-cron-setting',
   standalone: true,
-  imports: [ClientDatatableComponent, CommonSharedModule],
+  imports: [ClientDatatableComponent, CommonSharedModule, ReactiveFormsModule],
   templateUrl: './cron-setting.component.html',
   styleUrl: './cron-setting.component.scss',
 })
@@ -24,6 +24,12 @@ export class CronSettingComponent {
 
   isRunning: boolean = false;
   cronStatus: any;
+
+  showModal: boolean = false;
+  cronForm: FormGroup;
+
+  editMode = false;
+  currentJobId: number | null = null;
 
   itemsTableConfig: TableConfig = {
     columns: [
@@ -64,7 +70,7 @@ export class CronSettingComponent {
       },
     ],
     pageSizes: [5, 10, 25, 50],
-    defaultPageSize: 5,
+    defaultPageSize: 10,
     searchable: true,
     headerConfig: {
       title: 'Cron Job List',
@@ -103,6 +109,12 @@ export class CronSettingComponent {
       name: ['', Validators.required],
       description: [''],
     });
+
+    this.cronForm = this.fb.group({
+      timing: ['', Validators.required],
+      cron_url: ['', Validators.required],
+      concat_base_url: [false],
+    });
   }
 
   ngOnInit() {
@@ -125,7 +137,16 @@ export class CronSettingComponent {
     this.formSubmitted = false;
   }
 
-  initNewLineItem() {}
+  initNewLineItem() {
+    this.editMode = false;
+    this.currentJobId = null;
+    this.cronForm.reset({
+      timing: '',
+      cron_url: '',
+      concat_base_url: false,
+    });
+    this.showModal = true;
+  }
 
   getCronJobs() {
     this.gridApiService.getCronJobs().subscribe((response: any) => {
@@ -192,15 +213,26 @@ export class CronSettingComponent {
   }
 
   editItem(item: any) {
-    if (this.myForm.valid) {
-      this.gridApiService.editCronJob(item.id, this.myForm.valid).subscribe((response: any) => {
-        if (response.status) {
-          this.cronStatus = response.data.cron_status?.jobs || {};
-          this.isRunning = response.data.cron_status?.isRunning;
-          this.listItems = this.getTableData(response.data.cron_list);
-        }
-      });
-    }
+    this.editMode = true;
+    this.currentJobId = item.id;
+
+    this.cronForm.patchValue({
+      timing: item.timing,
+      cron_url: item.cron_url,
+      concat_base_url: item.concat_base_url,
+    });
+
+    this.showModal = true;
+
+    // if (this.myForm.valid) {
+    //   this.gridApiService.editCronJob(item.id, this.myForm.valid).subscribe((response: any) => {
+    //     if (response.status) {
+    //       this.cronStatus = response.data.cron_status?.jobs || {};
+    //       this.isRunning = response.data.cron_status?.isRunning;
+    //       this.listItems = this.getTableData(response.data.cron_list);
+    //     }
+    //   });
+    // }
   }
   removeItem(item: any) {
     Swal.fire({
@@ -219,6 +251,70 @@ export class CronSettingComponent {
             this.listItems = this.getTableData(response.data.cron_list);
           }
         });
+      }
+    });
+  }
+
+  onCronFormSubmit() {
+    if (this.cronForm.invalid) {
+      this.markFormGroupTouched(this.cronForm);
+      return;
+    }
+
+    const formData = this.cronForm.value;
+
+    if (this.editMode && this.currentJobId) {
+      // Update existing job
+      this.updateCronJob(this.currentJobId, formData);
+    } else {
+      // Create new job
+      this.createCronJob(formData);
+    }
+  }
+
+  createCronJob(data: any) {
+    this.gridApiService.createCronJobs(data).subscribe({
+      next: (response) => {
+        this.toastr.success('Cron job created successfully');
+        this.resetForm();
+        this.getCronJobs(); // Refresh your list
+      },
+      error: (err) => {
+        this.toastr.error('Failed to create cron job');
+      },
+    });
+  }
+
+  updateCronJob(id: number, data: any) {
+    this.gridApiService.editCronJob(id, data).subscribe({
+      next: (response) => {
+        this.cronStatus = response.data.cron_status?.jobs || {};
+        this.isRunning = response.data.cron_status?.isRunning;
+        this.listItems = this.getTableData(response.data.cron_list);
+        this.toastr.success('Cron job updated successfully');
+        this.resetForm();
+        this.getCronJobs(); // Refresh your list
+      },
+      error: (err) => {
+        this.toastr.error('Failed to update cron job');
+      },
+    });
+  }
+
+  resetForm() {
+    this.cronForm.reset();
+    this.editMode = false;
+    this.currentJobId = null;
+    this.showModal = false;
+  }
+
+  // Helper method to mark all fields as touched
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach((control) => {
+      control.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
       }
     });
   }

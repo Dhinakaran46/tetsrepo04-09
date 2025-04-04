@@ -180,6 +180,9 @@ export class GridApiService {
     return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.attachedpolicies}/${data.entity_name}`);
   }
 
+  createCronJobs(data: any): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.create_cron_jobs}`, data);
+  }
   getCronJobs(): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.get_cron_jobs}`);
   }
