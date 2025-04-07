@@ -15,28 +15,33 @@ export class LocalStorageService implements OnInit {
 
   ngOnInit() {}
 
+  private getScopedKey(key: string): string {
+    const scope = window.location.port || window.location.hostname;
+    return `${scope}_${key}`;
+  }
+
   public storeData(key: string, value: string | any): void {
-    localStorage.setItem(key, value);
+    localStorage.setItem(this.getScopedKey(key), value);
   }
 
   public getData(key: string): any {
-    const conf: any = localStorage.getItem('config');
+    const conf: any = localStorage.getItem(this.getScopedKey('config'));
     const config: any = JSON.parse(conf);
 
-    if (localStorage.getItem('user_data') && key == 'user_data' && config?.encrypt_local_storage == 'true') {
+    if (localStorage.getItem(this.getScopedKey('user_data')) && key == 'user_data' && config?.encrypt_local_storage == 'true') {
       return this.getDataDecrypted(key);
     }
-    this.returnData = localStorage.getItem(key);
+    this.returnData = localStorage.getItem(this.getScopedKey(key));
     return this.returnData;
   }
 
   public storeDataEncrypted(key: string, value: string | any): void {
     const encryptedInfo: string = CryptoJS.AES.encrypt(value, key).toString();
-    localStorage.setItem(key, encryptedInfo);
+    localStorage.setItem(this.getScopedKey(key), encryptedInfo);
   }
 
   public getDataDecrypted(key: string): any {
-    const value: any = localStorage.getItem(key);
+    const value: any = localStorage.getItem(this.getScopedKey(key));
 
     const bytes = CryptoJS.AES.decrypt(value, key);
 
@@ -44,32 +49,40 @@ export class LocalStorageService implements OnInit {
   }
 
   static isAccessible(key: string): any {
-    const data = JSON.parse(localStorage.getItem('user_data') || '{}');
+    const scope = window.location.port || window.location.hostname;
+    const data = JSON.parse(localStorage.getItem(`${scope}_user_data`) || '{}');
     return data?.permissions && data.permissions[key] ? data.permissions[key] : false;
   }
 
   public logout(): void {
     try {
-      localStorage.removeItem('user_data');
-      localStorage.removeItem('config');
-      localStorage.removeItem('menu_id');
+      localStorage.removeItem(this.getScopedKey('user_data'));
+      localStorage.removeItem(this.getScopedKey('config'));
+      localStorage.removeItem(this.getScopedKey('menu_id'));
     } catch (error: any) {
       console.log('Logout Error: ', error);
     }
   }
 
   public removeData(key: string): void {
-    localStorage.removeItem(key);
+    localStorage.removeItem(this.getScopedKey(key));
   }
 
   public clearStorage(): void {
-    localStorage.setItem('logout-event', 'logout' + Math.random());
-    localStorage.clear();
+    /*localStorage.setItem('logout-event', 'logout' + Math.random());
+    localStorage.clear();*/
+    localStorage.setItem(this.getScopedKey('logout-event'), 'logout' + Math.random());
+    const scope = window.location.port || window.location.hostname;
+    for (let key in localStorage) {
+      if (key.startsWith(`${scope}_`)) {
+        localStorage.removeItem(key);
+      }
+    }
   }
 
   public storeUser(user: any): void {
     const encryptCurrentuser: string = this.encryptkey(JSON.stringify(user));
-    localStorage.setItem('currentUser', encryptCurrentuser);
+    localStorage.setItem(this.getScopedKey('currentUser'), encryptCurrentuser);
 
     this.storeLanguageContent();
   }
@@ -89,7 +102,8 @@ export class LocalStorageService implements OnInit {
       const bytes = CryptoJS.AES.decrypt(data, key);
       return bytes.toString(CryptoJS.enc.Utf8);
     } catch (error) {
-      localStorage.clear();
+      //localStorage.clear();
+      this.clearStorage();
       this.router.navigate(['login']);
       return false;
     }
@@ -107,8 +121,10 @@ export class LocalStorageService implements OnInit {
   public async storeLanguageContent() {
     let enLanguageContent = await this.http.getLanguageContent('en');
     let arLanguageContent = await this.http.getLanguageContent('ar');
-    localStorage.setItem('enLanguageContent', JSON.stringify(enLanguageContent));
-    localStorage.setItem('arLanguageContent', JSON.stringify(arLanguageContent));
+    //localStorage.setItem('enLanguageContent', JSON.stringify(enLanguageContent));
+    //localStorage.setItem('arLanguageContent', JSON.stringify(arLanguageContent));
+    localStorage.setItem(this.getScopedKey('enLanguageContent'), JSON.stringify(enLanguageContent));
+    localStorage.setItem(this.getScopedKey('arLanguageContent'), JSON.stringify(arLanguageContent));
   }
 
   public getAppLanguage(): Promise<any> {
@@ -117,7 +133,7 @@ export class LocalStorageService implements OnInit {
       if (appLanguage) {
         resolve(appLanguage);
       } else {
-        localStorage.setItem('appLanguage', 'en');
+        localStorage.setItem(this.getScopedKey('appLanguage'), 'en');
         resolve('en');
       }
     });
@@ -125,7 +141,7 @@ export class LocalStorageService implements OnInit {
 
   public setAppLanguage(lang: any): Promise<any> {
     return new Promise(async (resolve, reject) => {
-      localStorage.setItem('appLanguage', lang);
+      localStorage.setItem(this.getScopedKey('appLanguage'), lang);
       setTimeout(() => {
         resolve(lang);
       }, 1000);
