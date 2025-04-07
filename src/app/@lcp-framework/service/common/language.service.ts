@@ -30,9 +30,10 @@ export class LanguageService {
     const languageId = this.getLanguageId(languageCode);
     this.fetchLanguageData(companyId, languageId);
 
-    localStorage.setItem('languageCode', languageCode);
-    if (!localStorage.getItem('languageReload')) {
-      localStorage.setItem('languageReload', 'true');
+    this.localstore.storeData('languageCode', languageCode);
+    //localStorage.setItem('languageCode', languageCode);
+    if (!this.localstore.getData('languageReload')) {
+      this.localstore.storeData('languageReload', 'true');
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -62,15 +63,18 @@ export class LanguageService {
   }
 
   public checkReloadFlag() {
-    const languageReload = localStorage.getItem('languageReload');
+    //const languageReload = localStorage.getItem('languageReload');
+    const languageReload = this.localstore.getData('languageReload');
     if (languageReload === 'true') {
-      localStorage.removeItem('languageReload');
+      //localStorage.removeItem('languageReload');
+      this.localstore.removeData('languageReload');
       return true;
     }
     return false;
   }
 
   public getSavedLanguageCode(): string {
-    return localStorage.getItem('languageCode') || 'en'; // Default to 'en'
+    return this.localstore.getData('languageReload') || 'en'; // Default to 'en'
+    //return localStorage.getItem('languageCode') || 'en'; // Default to 'en'
   }
 }
