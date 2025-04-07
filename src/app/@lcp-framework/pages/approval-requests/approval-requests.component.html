@@ -50,12 +50,27 @@
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.record_export"
-        (click)="this.recordExport(item)"
+        (click)="this.navigateToDetailPage(item)"
+        *ngIf="this.activeTab === 'pending_on'"
         ngxTippy
-        data-tippy-content="Record Export"
+        data-tippy-content="View Requested Information"
       >
-        <i class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        <i
+          class="fa-solid fa-arrow-up-right-from-square {{
+            store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5'
+          }}"
+        ></i>
+      </a>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        appDynamicFontSize="body"
+        (click)="this.openApprovalProcessPopup(item)"
+        *ngIf="this.activeTab === 'pending_on'"
+        ngxTippy
+        data-tippy-content="Approval Process"
+      >
+        <i class="fa-regular fa-thumbs-up {{ store.fontsize === 'large' ? 'h-6.5 w-6.5' : store.fontsize === 'medium' ? 'h-5.5 w-5.5' : 'h-4.5 w-4.5' }}"></i>
       </a>
     </div>
   </ng-template>
@@ -92,6 +107,66 @@
       }}
     </span>
   </ng-template>
+</div>
+
+<!--Modal for Copy sample content-->
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isInfoModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-10/12 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800 sm:w-8/12"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <div class="flex gap-4">
+            <p class="text-md font-bold" appDynamicFontSize="body">{{ 'approval_process' | translate }}</p>
+          </div>
+          <button class="close-btn" (click)="closeApprovalProcessPopup()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
+        <form [formGroup]="approvalForm" (ngSubmit)="onSubmit()">
+          <div class="mt-1">
+            <label for="approval_status" class="required-mark mb-2 block font-medium">{{ 'approval_status' | translate }}</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="'approval_completed'" formControlName="approval_status" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_approval_completed' | translate }}</span>
+              </label>
+
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="'approval_rejected'" formControlName="approval_status" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_approval_rejected' | translate }}</span>
+              </label>
+            </div>
+            <div *ngIf="isFieldInvalid('approval_status')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('approval_status') | translate }}
+            </div>
+          </div>
+          <div class="mt-1">
+            <label for="reason" class="required-mark mb-2 block font-medium">{{ 'approval_status' | translate }}</label>
+            <textarea id="reason" formControlName="reason" rows="4" class="form-textarea"></textarea>
+            <div *ngIf="isFieldInvalid('reason')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('reason') | translate }}
+            </div>
+          </div>
+          <div class="mt-1 flex justify-end">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <app-loader *ngIf="loading"></app-loader>

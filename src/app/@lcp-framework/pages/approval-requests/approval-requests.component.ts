@@ -1,5 +1,5 @@
 import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
 import { HttpClientModule } from '@angular/common/http';
@@ -107,6 +107,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       name: Tabs.completed,
     },
   ];
+  isInfoModalOpen: boolean = false;
+  approvalForm!: FormGroup;
+  submitted = false;
+  selectedRequest: any = null;
 
   constructor(
     private toastr: ToastrService,
@@ -121,7 +125,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     private translate: TranslateService,
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
-    private titleService: Title
+    private titleService: Title,
+    private fb: FormBuilder
   ) {
     this.initStore();
   }
@@ -132,6 +137,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+    this.approvalForm = this.fb.group({
+      approval_status: ['approval_completed', Validators.required],
+      reason: ['', Validators.required],
+    });
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
@@ -274,6 +283,46 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         is_searchable: 'false',
         is_grid_column: 'true',
       },
+      {
+        header: 'screen_id',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.screen_id',
+        is_sortable: 'false',
+        column_order: '9.00',
+        column_width: '1.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
+      {
+        header: 'url',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.url',
+        is_sortable: 'false',
+        column_order: '10.00',
+        column_width: '1.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
+      {
+        header: 'approval_process_job_workflow_id',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflow_users.approval_process_job_workflow_id',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
+      {
+        header: 'approval_process_job_id',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.approval_process_job_id',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
     ];
   }
 
@@ -297,6 +346,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         'approval_process_job_workflows.approver_order_no',
         'approval_process_job_workflows.reason',
         'approval_process_job_workflow_users.status_id',
+        'approval_process_job_workflows.screen_id',
+        'approval_process_job_workflows.url',
+        'approval_process_job_workflow_users.approval_process_job_workflow_id',
+        'approval_process_job_workflows.approval_process_job_id',
       ],
       includes: [
         {
@@ -989,45 +1042,6 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     reader.readAsArrayBuffer(blob);
   }
 
-  recordExport(item: any) {
-    this.loading = true;
-
-    if (this.masterInfo.children.record_export) {
-      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, item.id).subscribe({
-        next: (response: ExportResponse) => {
-          try {
-            const blob = new Blob([response.blob], {
-              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            });
-
-            // Excel case
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = response.fileName;
-
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-
-            // Cleanup
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            this.loading = false;
-          } catch (err) {
-            console.error('Download error:', err);
-            this.toastr.error('Error downloading file');
-            this.loading = false;
-          }
-        },
-        error: (error) => {
-          console.error('Export error:', error);
-          this.toastr.error('Error exporting data');
-          this.loading = false;
-        },
-      });
-    }
-  }
   commonTranslate(msg: any) {
     return this.translate.instant(msg);
   }
@@ -1037,6 +1051,11 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       const targetRoute = this.masterInfo.children.details.target.replace(':uuid', item.uuid);
       this.router.navigate([targetRoute]);
     }
+  }
+
+  navigateToDetailPage(item: any) {
+    const fullUrl = `${item.url}${item.screen_id}`;
+    window.open(fullUrl, '_blank');
   }
 
   onPageChange(event: { page: number; start_index: number }) {
@@ -1052,5 +1071,78 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
+  }
+
+  openApprovalProcessPopup(item: any) {
+    this.isInfoModalOpen = true;
+    this.selectedRequest = item;
+  }
+
+  closeApprovalProcessPopup() {
+    this.isInfoModalOpen = false;
+    this.selectedRequest = null;
+  }
+
+  onSubmit() {
+    this.submitted = true;
+    if (this.approvalForm.invalid) {
+      this.approvalForm.markAllAsTouched();
+      return;
+    }
+
+    console.log('Form Submitted:', this.approvalForm.value, this.selectedRequest);
+    // const payload: any = {
+    //   data: {
+    //     table1: [
+    //       {
+    //         reason:
+    //       },
+    //     ],
+    //   },
+    //   table: ['approval_process_job_workflows'],
+    //   action: ['update', 'insert'],
+    //   conditions: {
+    //     table1: [
+    //       {
+    //         id: this.selectedRequest.approval_process_job_workflow_id,
+    //       },
+    //     ],
+    //   },
+    //   table_mapping: ['table1', 'table2'],
+    // };
+
+    // this.gridApiService.executeRecords(payload).subscribe({
+    //   next: (response: any) => {
+    //     this.loading = false;
+    //     if (response.code === 200 && response.status) {
+    //       this.toastr.success('Record updated successfully', 'Success');
+    //     }
+    //   },
+    // });
+    this.selectedRequest = null;
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.approvalForm.get(fieldName);
+    return field ? field.invalid && (field.touched || this.submitted) : false;
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const field = this.approvalForm.get(fieldName);
+    if (field) {
+      if (field.hasError('required')) {
+        return 'required_message';
+      }
+      if (field.hasError('maxlength')) {
+        return `Maximum length exceeded (${field.errors?.['maxlength'].requiredLength} characters allowed)`;
+      }
+      if (field.hasError('min')) {
+        return `Minimum value is ${field.errors?.['min'].min}`;
+      }
+      if (field.hasError('viewMandatory')) {
+        return '"view" option is mandatory';
+      }
+    }
+    return '';
   }
 }
