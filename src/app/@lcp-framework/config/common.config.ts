@@ -67,6 +67,7 @@ export const commonConfig: any = {
     USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
+    AI_PLAYGROUND_MODULE: 'ai_playground_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -90,6 +91,7 @@ export const commonConfig: any = {
     user_role_policy_module: 'userrolepolicy',
     email_template_assignment_module: 'emailtemplateassignment',
     about_lcp_form_module: 'aboutlcpformmodule',
+    ai_playground_module: 'aiplayground',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -178,6 +180,7 @@ export const commonConfig: any = {
     { label: 'User/Role Policy Module', value: 'user_role_policy_module' },
     { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
+    { label: 'AI Playground Module', value: 'ai_playground_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
