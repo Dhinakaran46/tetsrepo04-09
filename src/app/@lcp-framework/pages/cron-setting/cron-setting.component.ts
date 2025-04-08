@@ -18,6 +18,7 @@ import Swal from 'sweetalert2';
 })
 export class CronSettingComponent {
   listItems: any = [];
+  configData: any;
   userData: any;
   myForm: any;
   formSubmitted: boolean = false;
@@ -98,6 +99,7 @@ export class CronSettingComponent {
     private localstore: LocalStorageService,
     private fb: FormBuilder
   ) {
+    this.configData = JSON.parse(this.localstore.getData('config'));
     this.userData = JSON.parse(this.localstore.getData('user_data'));
     this.myForm = this.fb.group({
       import_template: ['', Validators.required],
@@ -109,6 +111,8 @@ export class CronSettingComponent {
       name: ['', Validators.required],
       description: [''],
     });
+
+    console.log('this.configData', this.configData.base_api_url);
 
     this.cronForm = this.fb.group({
       timing: ['', Validators.required],

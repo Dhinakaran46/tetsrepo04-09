@@ -76,7 +76,8 @@
               formControlName="concat_base_url"
               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
             <span class="text-gray-700 dark:text-gray-300">{{ 'Concat base url'
-              | translate }}</span>
+              | translate }} {{ '( Base URL : '+this.configData.base_api_url +
+              ' )'}} </span>
           </label>
         </div>
 
