@@ -51,7 +51,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         (click)="this.navigateToDetailPage(item)"
-        *ngIf="this.activeTab === 'pending_on'"
+        *ngIf="this.activeTab === 'pending_on_me'"
         ngxTippy
         data-tippy-content="View Requested Information"
       >
@@ -66,7 +66,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         (click)="this.openApprovalProcessPopup(item)"
-        *ngIf="this.activeTab === 'pending_on'"
+        *ngIf="this.activeTab === 'pending_on_me'"
         ngxTippy
         data-tippy-content="Approval Process"
       >
@@ -93,15 +93,15 @@
       class="badge"
       [ngClass]="[
         store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
-        item.approval_status === 'approval_completed' ? 'badge-outline-success' : 'badge-outline-danger'
+        item.review_status === 'approval_completed' ? 'badge-outline-success' : 'badge-outline-danger'
       ]"
     >
       {{
-        item.approval_status == 'pending'
+        item.review_status == 'pending'
           ? ('table_status_val_pending' | translate)
-          : item.approval_status == 'approval_needed'
+          : item.review_status == 'approval_needed'
           ? ('table_status_val_approval_needed' | translate)
-          : item.approval_status == 'approval_completed'
+          : item.review_status == 'approval_completed'
           ? ('table_status_val_approval_completed' | translate)
           : ('table_status_val_approval_rejected' | translate)
       }}
@@ -137,24 +137,24 @@
       <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
         <form [formGroup]="approvalForm" (ngSubmit)="onSubmit()">
           <div class="mt-1">
-            <label for="approval_status" class="required-mark mb-2 block font-medium">{{ 'approval_status' | translate }}</label>
+            <label for="review_status" class="required-mark mb-2 block font-medium">{{ 'review_status' | translate }}</label>
             <div class="flex items-center space-x-4">
               <label class="flex cursor-pointer items-center">
-                <input type="radio" [value]="'approval_completed'" formControlName="approval_status" class="form-radio" appDynamicFontSize="body" />
+                <input type="radio" [value]="'approval_completed'" formControlName="review_status" class="form-radio" appDynamicFontSize="body" />
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_approval_completed' | translate }}</span>
               </label>
 
               <label class="flex cursor-pointer items-center">
-                <input type="radio" [value]="'approval_rejected'" formControlName="approval_status" class="form-radio" appDynamicFontSize="body" />
+                <input type="radio" [value]="'approval_rejected'" formControlName="review_status" class="form-radio" appDynamicFontSize="body" />
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_approval_rejected' | translate }}</span>
               </label>
             </div>
-            <div *ngIf="isFieldInvalid('approval_status')" class="invalid-feedback mt-1 text-danger">
-              {{ getErrorMessage('approval_status') | translate }}
+            <div *ngIf="isFieldInvalid('review_status')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('review_status') | translate }}
             </div>
           </div>
           <div class="mt-1">
-            <label for="reason" class="required-mark mb-2 block font-medium">{{ 'approval_status' | translate }}</label>
+            <label for="reason" class="required-mark mb-2 block font-medium">{{ 'reason' | translate }}</label>
             <textarea id="reason" formControlName="reason" rows="4" class="form-textarea"></textarea>
             <div *ngIf="isFieldInvalid('reason')" class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('reason') | translate }}

@@ -39,138 +39,211 @@
 
       <div formArrayName="approvalWorkflowAssignments">
         @for(assignment of getApproverAssignmentList(); track assignment; let i = $index) {
-        <div [formGroupName]="i" class="my-4">
-          <div class="grid grid-cols-4 gap-3">
-            <div class="form-group">
-              <label>{{ 'approver_type' | translate }} <span class="text-danger">*</span></label>
-              <ng-select
-                bindLabel="label"
-                bindValue="value"
-                formControlName="approver_type"
-                [clearable]="true"
-                [searchable]="true"
-                placeholder="Select Approver Type"
-                class="custom-multiselect multi-ng-select"
-                (change)="clearUserRoleTagValues(assignment)"
-              >
-                @for(type of approverTypes; track type; let i = $index) {
-                <ng-option [value]="type.value">{{ type.label }}</ng-option>
-                }
-              </ng-select>
-            </div>
-
-            <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'tag'">
-              <label>{{ 'approver_tag' | translate }} <span class="text-danger">*</span></label>
-              <ng-select
-                bindLabel="label"
-                bindValue="value"
-                formControlName="tag"
-                [clearable]="true"
-                [searchable]="true"
-                [multiple]="true"
-                placeholder="Select Tag"
-                class="custom-multiselect multi-ng-select"
-                (search)="getTags(assignment, i, $event.term || '')"
-                (clear)="getTags(assignment, i, '')"
-                (change)="updateApprovers(assignment, i)"
-              >
-                @for(tag of assignment.get('tag_list')?.value; track tag; let i = $index) {
-                <ng-option [value]="tag.value">{{ tag.label }}</ng-option>
-                }
-              </ng-select>
-              <!-- <select
-                formControlName="tag"
-                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
-                required
-              >
-                <option value disabled>{{ 'Select the Tag' }}</option>
-                @for(tag of approverTags; track tag; let i = $index) {
-                <option [value]="tag.id">{{ tag.name }}</option>
-                }
-              </select> -->
-              <div
-                *ngIf="assignment.get('tag')?.invalid && (assignment.get('tag')?.touched || assignment.get('tag')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
-                {{ 'approver_tag_is_required' | translate }}
+        <div [formGroupName]="i" class="my-4 space-y-2 font-semibold">
+          <div class="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]">
+            <button
+              [ngClass]="{ '!text-primary': assignment.get('accordian')?.value }"
+              (click)="updateAccordianState(assignment)"
+              type="button"
+              class="flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b]"
+            >
+              {{ 'approver - ' + (i + 1) }}
+              <div class="ltr:ml-auto rtl:mr-auto" [ngClass]="{ 'rotate-180': assignment.get('accordian')?.value }">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4">
+                  <path d="M19 9L12 15L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
               </div>
-              <!-- <div *ngIf="assignment.get('email_tag_mail')?.value" class="mt-5">sends to : {{ assignment.get('email_tag_mail')?.value }}</div> -->
-            </div>
+            </button>
+            <div [@slideDownUp]="assignment.get('accordian')?.value?.toString()" class="accordion-content">
+              <div class="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] dark:border-[#1b2e4b]">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-1 md:grid-cols-4">
+                  <div class="form-group">
+                    <label>{{ 'approver_type' | translate }} <span class="text-danger">*</span></label>
+                    <ng-select
+                      bindLabel="label"
+                      bindValue="value"
+                      formControlName="approver_type"
+                      [clearable]="true"
+                      [searchable]="true"
+                      placeholder="Select Approver Type"
+                      class="custom-multiselect multi-ng-select"
+                      (change)="clearUserRoleTagValues(assignment)"
+                    >
+                      @for(type of approverTypes; track type; let i = $index) {
+                      <ng-option [value]="type.value">{{ type.label }}</ng-option>
+                      }
+                    </ng-select>
+                  </div>
 
-            <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'user_id'">
-              <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
-              <ng-select
-                bindLabel="label"
-                bindValue="value"
-                formControlName="users"
-                [multiple]="true"
-                [clearable]="true"
-                [searchable]="true"
-                placeholder="Select Users"
-                class="custom-multiselect multi-ng-select"
-                (search)="getUsers(assignment, i, $event.term || '')"
-                (clear)="getUsers(assignment, i, '')"
-                (change)="updateApprovers(assignment, i)"
-              >
-                @for(user of assignment.get('user_list')?.value; track user; let i = $index) {
-                <ng-option [value]="user.value">{{ user.label }}</ng-option>
-                }
-              </ng-select>
-              <div
-                *ngIf="assignment.get('users')?.invalid && (assignment.get('users')?.touched || assignment.get('users')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
-                {{ 'user_email_is_required' | translate }}
+                  <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'tag'">
+                    <label>{{ 'approver_tag' | translate }} <span class="text-danger">*</span></label>
+                    <ng-select
+                      bindLabel="label"
+                      bindValue="value"
+                      formControlName="tag"
+                      [clearable]="true"
+                      [searchable]="true"
+                      [multiple]="true"
+                      placeholder="Select Tag"
+                      class="custom-multiselect multi-ng-select"
+                      (search)="getTags(assignment, i, $event.term || '')"
+                      (clear)="getTags(assignment, i, '')"
+                      (change)="updateApprovers(assignment, i)"
+                    >
+                      @for(tag of assignment.get('tag_list')?.value; track tag; let i = $index) {
+                      <ng-option [value]="tag.value">{{ tag.label }}</ng-option>
+                      }
+                    </ng-select>
+                    <!-- <select
+                        formControlName="tag"
+                        class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                        required
+                      >
+                        <option value disabled>{{ 'Select the Tag' }}</option>
+                        @for(tag of approverTags; track tag; let i = $index) {
+                        <option [value]="tag.id">{{ tag.name }}</option>
+                        }
+                      </select> -->
+                    <div
+                      *ngIf="assignment.get('tag')?.invalid && (assignment.get('tag')?.touched || assignment.get('tag')?.dirty)"
+                      class="invalid-feedback mt-1 text-danger"
+                    >
+                      {{ 'approver_tag_is_required' | translate }}
+                    </div>
+                    <!-- <div *ngIf="assignment.get('email_tag_mail')?.value" class="mt-5">sends to : {{ assignment.get('email_tag_mail')?.value }}</div> -->
+                  </div>
+
+                  <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'user_id'">
+                    <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
+                    <ng-select
+                      bindLabel="label"
+                      bindValue="value"
+                      formControlName="users"
+                      [multiple]="true"
+                      [clearable]="true"
+                      [searchable]="true"
+                      placeholder="Select Users"
+                      class="custom-multiselect multi-ng-select"
+                      (search)="getUsers(assignment, i, $event.term || '')"
+                      (clear)="getUsers(assignment, i, '')"
+                      (change)="updateApprovers(assignment, i)"
+                    >
+                      @for(user of assignment.get('user_list')?.value; track user; let i = $index) {
+                      <ng-option [value]="user.value">{{ user.label }}</ng-option>
+                      }
+                    </ng-select>
+                    <div
+                      *ngIf="assignment.get('users')?.invalid && (assignment.get('users')?.touched || assignment.get('users')?.dirty)"
+                      class="invalid-feedback mt-1 text-danger"
+                    >
+                      {{ 'user_email_is_required' | translate }}
+                    </div>
+                  </div>
+
+                  <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'role_id'">
+                    <label>{{ 'role' | translate }} <span class="text-danger">*</span></label>
+                    <ng-select
+                      bindLabel="label"
+                      bindValue="value"
+                      formControlName="roles"
+                      [multiple]="true"
+                      [clearable]="true"
+                      [searchable]="true"
+                      placeholder="Select Roles"
+                      class="custom-multiselect multi-ng-select"
+                      (search)="getRoles(assignment, i, $event.term || '')"
+                      (clear)="getRoles(assignment, i, '')"
+                      (change)="updateApprovers(assignment, i)"
+                    >
+                      @for(role of assignment.get('role_list')?.value; track role; let i = $index) {
+                      <ng-option [value]="role.value">{{ role.label }}</ng-option>
+                      }
+                    </ng-select>
+                    <div
+                      *ngIf="assignment.get('roles')?.invalid && (assignment.get('roles')?.touched || assignment.get('roles')?.dirty)"
+                      class="invalid-feedback mt-1 text-danger"
+                    >
+                      {{ 'role_is_required' | translate }}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'Approver Order' | translate }} <span class="text-danger">*</span></label>
+                    <input
+                      type="number"
+                      class="form-control form-input w-full rounded-[4px] border border-gray-300 py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                      formControlName="approver_order_no"
+                      placeholder="Approver Order"
+                    />
+                    <div
+                      *ngIf="
+                        assignment.get('approver_order_no')?.invalid &&
+                        (assignment.get('approver_order_no')?.touched || assignment.get('approver_order_no')?.dirty)
+                      "
+                      class="invalid-feedback mt-1 text-danger"
+                    >
+                      {{ 'approver_order_is_required' | translate }}
+                    </div>
+                  </div>
+
+                  @if(i > 0) {
+                  <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeApprovalWorkflowAssignment(i)"></i>
+                  }
+                </div>
+                <div class="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+                  <!-- Approve Query -->
+                  <div class="p-2">
+                    <div class="mb-2 flex items-center gap-2">
+                      <label for="approve_query_information" class="font-medium">{{ 'approve_query_information' | translate }}</label>
+                      <i (click)="openInfoPopUp('approve_query_information')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+                    </div>
+                    <div class="monaco-editor-container" appDynamicFontSize="body">
+                      <ngx-monaco-editor
+                        monacoEditor
+                        [options]="editorOptions"
+                        id="approve_query_information"
+                        formControlName="approve_query_information"
+                        class="monaco-editor"
+                      ></ngx-monaco-editor>
+                    </div>
+                    <div
+                      *ngIf="
+                        assignment.get('approve_query_information')?.invalid &&
+                        (assignment.get('approve_query_information')?.touched || assignment.get('approve_query_information')?.dirty)
+                      "
+                      class="invalid-feedback mt-1 text-danger"
+                    >
+                      {{ 'approve_query_information_is_required' | translate }}
+                    </div>
+                  </div>
+
+                  <!-- Reject Query -->
+                  <div class="p-2">
+                    <div class="mb-2 flex items-center gap-2">
+                      <label for="reject_query_information" class="font-medium">{{ 'reject_query_information' | translate }}</label>
+                      <i (click)="openInfoPopUp('reject_query_information')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+                    </div>
+                    <div class="monaco-editor-container" appDynamicFontSize="body">
+                      <ngx-monaco-editor
+                        monacoEditor
+                        [options]="editorOptions"
+                        id="reject_query_information"
+                        formControlName="reject_query_information"
+                        class="monaco-editor"
+                      ></ngx-monaco-editor>
+                    </div>
+                    <div
+                      *ngIf="
+                        assignment.get('reject_query_information')?.invalid &&
+                        (assignment.get('reject_query_information')?.touched || assignment.get('reject_query_information')?.dirty)
+                      "
+                      class="invalid-feedback mt-1 text-danger"
+                    >
+                      {{ 'reject_query_information_is_required' | translate }}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'role_id'">
-              <label>{{ 'role' | translate }} <span class="text-danger">*</span></label>
-              <ng-select
-                bindLabel="label"
-                bindValue="value"
-                formControlName="roles"
-                [multiple]="true"
-                [clearable]="true"
-                [searchable]="true"
-                placeholder="Select Roles"
-                class="custom-multiselect multi-ng-select"
-                (search)="getRoles(assignment, i, $event.term || '')"
-                (clear)="getRoles(assignment, i, '')"
-                (change)="updateApprovers(assignment, i)"
-              >
-                @for(role of assignment.get('role_list')?.value; track role; let i = $index) {
-                <ng-option [value]="role.value">{{ role.label }}</ng-option>
-                }
-              </ng-select>
-              <div
-                *ngIf="assignment.get('roles')?.invalid && (assignment.get('roles')?.touched || assignment.get('roles')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
-                {{ 'role_is_required' | translate }}
-              </div>
-            </div>
-            <div class="form-group">
-              <label>{{ 'Approver Order' | translate }} <span class="text-danger">*</span></label>
-              <input
-                type="number"
-                class="form-control form-input w-full rounded-[4px] border border-gray-300 py-1 text-xs text-gray-600 placeholder:text-white-dark"
-                formControlName="approver_order_no"
-                placeholder="Approval Workflow"
-              />
-              <div
-                *ngIf="
-                  assignment.get('approver_order_no')?.invalid && (assignment.get('approver_order_no')?.touched || assignment.get('approver_order_no')?.dirty)
-                "
-                class="invalid-feedback mt-1 text-danger"
-              >
-                {{ 'approver_order_is_required' | translate }}
-              </div>
-            </div>
-
-            @if(i > 0) {
-            <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeApprovalWorkflowAssignment(i)"></i>
-            }
           </div>
         </div>
         }
@@ -178,3 +251,68 @@
     </form>
   </div>
 </div>
+
+<!--Modal for Copy sample content-->
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isInfoModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-10/12 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800 sm:w-8/12"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <div class="flex gap-4">
+            <p class="text-md font-bold" appDynamicFontSize="body">{{ popupInformation.header | translate }}</p>
+          </div>
+          <button class="close-btn" (click)="closeInfoPopUp()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
+        <!-- Copy Button (Top Left Corner) -->
+        <!-- <button
+          *ngIf="!copied"
+          class="absolute bottom-6 right-10 z-50 rounded bg-transparent px-3 py-1 text-sm text-white hover:bg-gray-700"
+          (click)="copyToClipboard()"
+        >
+          📋
+        </button> -->
+        <div class="px-4 sm:px-6">
+          <ul class="flex list-disc flex-col gap-3">
+            <li *ngFor="let item of popupInformation.comments">
+              <div class="flex items-center gap-2">
+                <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="relative">
+          <p *ngIf="copied" class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
+          <div class="monaco-editor-container .editor-container mt-3 rounded border border-gray-300">
+            <!-- Monaco Editor -->
+            <ngx-monaco-editor
+              monacoEditor
+              (click)="copyToClipboard()"
+              [options]="popupInfoEditorOptions"
+              id="popupInformation"
+              [(ngModel)]="popupInformation.data"
+              class="monaco-editor"
+            ></ngx-monaco-editor>
+            <div class="editor-overlay" (click)="copyToClipboard()"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-loader *ngIf="loading"></app-loader>

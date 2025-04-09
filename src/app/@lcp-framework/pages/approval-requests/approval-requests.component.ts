@@ -22,7 +22,7 @@ import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 
 enum Tabs {
-  pending_on = 'pending_on',
+  pending_on_me = 'pending_on_me',
   pending = 'pending',
   completed = 'completed',
 }
@@ -70,11 +70,11 @@ export class ApprovalRequestsComponent implements AfterViewInit {
   column: any = '';
   query: any = '';
 
-  activeTab = Tabs.pending_on;
+  activeTab = Tabs.pending_on_me;
   selectcolumns: any[] = [];
   headercolumns: any[] = [];
   approvalStatusData: any = {
-    pending_on: ['approval_needed'],
+    pending_on_me: ['approval_needed'],
     pending: ['pending'],
     completed: ['approval_completed', 'approval_rejected'],
   };
@@ -98,7 +98,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
   attachedPolicies: any[] = [];
   requestTabs: any[] = [
     {
-      name: Tabs.pending_on,
+      name: Tabs.pending_on_me,
     },
     {
       name: Tabs.pending,
@@ -138,9 +138,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
     this.approvalForm = this.fb.group({
-      approval_status: ['approval_completed', Validators.required],
+      review_status: ['approval_completed', Validators.required],
       reason: ['', Validators.required],
     });
+    this.user_id = this.user_info.main?.id;
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
@@ -252,9 +253,9 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               is_grid_column: 'true',
             },
             {
-              header: 'approval_status',
+              header: 'review_status',
               clause_type: 'where',
-              field_value: 'approval_process_job_workflows.approval_status',
+              field_value: 'approval_process_job_workflows.review_status',
               is_sortable: 'true',
               column_order: '6.00',
               column_width: '1.00',
@@ -262,7 +263,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               is_grid_column: 'true',
             },
             {
-              header: 'approved_by',
+              header: 'reviewed_by',
               clause_type: 'where',
               field_value: 'u2.email',
               is_sortable: 'true',
@@ -341,7 +342,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         'ud1.last_name',
         'u1.email',
         'u2.email',
-        'approval_process_job_workflows.approval_status',
+        'approval_process_job_workflows.review_status',
         'approval_process_job_workflows.approver_type',
         'approval_process_job_workflows.approver_order_no',
         'approval_process_job_workflows.reason',
@@ -356,7 +357,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
           join_type: 'INNER',
           table_name: 'approval_process_job_workflows',
           join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
-            AND approval_process_job_workflows.approval_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
+            AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
             AND approval_process_job_workflows.status_id != 3`,
         },
         {
@@ -372,7 +373,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         {
           join_type: 'LEFT',
           table_name: 'users u2',
-          join_condition: 'u2.id = approval_process_job_workflows.approved_by AND u2.status_id != 3',
+          join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
         },
         {
           join_type: 'LEFT',
@@ -707,10 +708,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               order_no: 7,
               status_id: 1,
               company_id: 1,
-              field: 'approval_process_job_workflows.approval_status',
+              field: 'approval_process_job_workflows.review_status',
               clause_type: 'where',
               sorting: true,
-              title: this.translate.instant('approval_status'),
+              title: this.translate.instant('review_status'),
               field_type_id: 3,
               searchable: true,
               is_grid_column: true,
@@ -723,7 +724,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               field: 'u2.email',
               clause_type: 'where',
               sorting: true,
-              title: this.translate.instant('approved_by'),
+              title: this.translate.instant('reviewed_by'),
               field_type_id: 3,
               searchable: true,
               is_grid_column: true,
@@ -749,10 +750,10 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         order_no: 9,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.approval_status',
+        field: 'approval_process_job_workflows.review_status',
         clause_type: 'where',
         sorting: false,
-        title: this.translate.instant('approval_status'),
+        title: this.translate.instant('review_status'),
         field_type_id: 3,
         searchable: false,
         is_grid_column: true,
@@ -841,17 +842,17 @@ export class ApprovalRequestsComponent implements AfterViewInit {
           } else {
             this.headercolumns = [...data];
 
-            if (!isOnlyViewOrViewExport) {
-              this.headercolumns.push({
-                header: 'table_column_action',
-                field_value: 'Action',
-                is_sortable: 'false',
-                column_order: '0.00',
-                column_width: '50px',
-                is_searchable: 'false',
-                is_grid_column: 'true',
-              });
-            }
+            this.headercolumns.push({
+              header: 'table_column_action',
+              field_value: 'Action',
+              is_sortable: 'false',
+              column_order: '0.00',
+              column_width: '50px',
+              is_searchable: 'false',
+              is_grid_column: 'true',
+            });
+            // if (!isOnlyViewOrViewExport) {
+            // }
           }
 
           // Adding custom templates
@@ -861,7 +862,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
                 ...item,
                 customTemplate: this.statusTemplate,
               };
-            } else if (item.header === 'approval_status') {
+            } else if (item.header === 'review_status') {
               return {
                 ...item,
                 customTemplate: this.approvalStatusTemplate,
@@ -1090,36 +1091,44 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       return;
     }
 
-    console.log('Form Submitted:', this.approvalForm.value, this.selectedRequest);
-    // const payload: any = {
-    //   data: {
-    //     table1: [
-    //       {
-    //         reason:
-    //       },
-    //     ],
-    //   },
-    //   table: ['approval_process_job_workflows'],
-    //   action: ['update', 'insert'],
-    //   conditions: {
-    //     table1: [
-    //       {
-    //         id: this.selectedRequest.approval_process_job_workflow_id,
-    //       },
-    //     ],
-    //   },
-    //   table_mapping: ['table1', 'table2'],
-    // };
-
-    // this.gridApiService.executeRecords(payload).subscribe({
-    //   next: (response: any) => {
-    //     this.loading = false;
-    //     if (response.code === 200 && response.status) {
-    //       this.toastr.success('Record updated successfully', 'Success');
-    //     }
-    //   },
-    // });
-    this.selectedRequest = null;
+    const payload: any = {
+      data: {
+        table1: [
+          {
+            reason: this.approvalForm.value.reason,
+            review_status: this.approvalForm.value.review_status,
+            reviewed_by: this.user_id,
+          },
+        ],
+      },
+      table: ['approval_process_job_workflows'],
+      action: ['update'],
+      conditions: {
+        table1: [
+          {
+            id: this.selectedRequest.approval_process_job_workflow_id,
+          },
+        ],
+      },
+      table_mapping: ['table1'],
+    };
+    this.loading = true;
+    this.gridApiService.executeRecords(payload).subscribe({
+      next: (response: any) => {
+        this.loading = false;
+        if (response.code === 200 && response.status) {
+          this.toastr.success('Record updated successfully', 'Success');
+          this.setActiveTab(Tabs.pending_on_me);
+        } else {
+          this.toastr.error('Error updating record', 'Error');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        this.toastr.error('Error updating record', 'Error');
+      },
+    });
+    this.closeApprovalProcessPopup();
   }
 
   isFieldInvalid(fieldName: string): boolean {

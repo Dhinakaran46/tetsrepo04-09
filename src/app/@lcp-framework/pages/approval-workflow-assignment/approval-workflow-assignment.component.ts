@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
@@ -13,13 +13,35 @@ import { ToastrService } from 'ngx-toastr';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
+import { EditorComponent } from 'ngx-monaco-editor-v2';
+import { animate, state, style, transition, trigger } from '@angular/animations';
+import { LoaderComponent } from '../../components/loader/loader.component';
 
 @Component({
   selector: 'app-approval-workflow-assignment',
   standalone: true,
-  imports: [FormlyModule, CommonSharedModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, CommonModule, NgSelectModule],
+  imports: [
+    FormlyModule,
+    CommonSharedModule,
+    LoaderComponent,
+    FormlyBootstrapModule,
+    ReactiveFormsModule,
+    FormlyConfigModule,
+    MonacoEditorModule,
+    FormsModule,
+    CommonModule,
+    NgSelectModule,
+  ],
   templateUrl: './approval-workflow-assignment.component.html',
   styleUrl: './approval-workflow-assignment.component.scss',
+  animations: [
+    trigger('slideDownUp', [
+      state('true', style({ height: '*', opacity: 1 })),
+      state('false', style({ height: '0px', opacity: 0 })),
+      transition('false <=> true', animate('300ms ease-in-out')),
+    ]),
+  ],
 })
 export class ApprovalWorkflowAssignmentComponent implements OnInit {
   form: FormGroup;
@@ -40,6 +62,27 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   userList: any[] = [];
   roleList: any[] = [];
   tagList: any[] = [];
+
+  editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 1, insertSpaces: true };
+  isDarkTheme = true; // Default theme
+  @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
+
+  isInfoModalOpen: boolean = false;
+  infoContents: any = {
+    approve_query_information: {
+      header: 'Approve Query Information',
+      comments: [],
+      data: ['select * from users limit 1', 'select * from user_details limit 1'],
+    },
+    reject_query_information: {
+      header: 'Reject Query Information',
+      comments: [],
+      data: ['select * from users limit 1', 'select * from user_details limit 1'],
+    },
+  };
+  popupInformation: any = null;
+  popupInfoEditorOptions = { ...this.editorOptions, cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
+  copied = false;
 
   constructor(
     private fb: FormBuilder,
@@ -106,10 +149,12 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
         [
           `COALESCE(JSON_AGG(
               DISTINCT JSONB_BUILD_OBJECT(
-              'id', approval_workflow_assignments.id, 
-              'approver_order_no', approval_workflow_assignments.approver_order_no, 
-              'approver_type', approval_workflow_assignments.approver_type,
-              'approver', approval_workflow_assignments.approver
+                'id', approval_workflow_assignments.id, 
+                'approver_order_no', approval_workflow_assignments.approver_order_no, 
+                'approver_type', approval_workflow_assignments.approver_type,
+                'approver', approval_workflow_assignments.approver,
+                'approve_query_information', approval_workflow_assignments.approve_query_information,
+                'reject_query_information', approval_workflow_assignments.reject_query_information
               )
           ) FILTER (WHERE approval_workflow_assignments.id IS NOT NULL), '[]')`,
           'approval_assignments',
@@ -128,7 +173,17 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
             if (response.data.records[0]?.approval_assignments.length) {
               const lineItemsArray: any = this.form.get('approvalWorkflowAssignments') as FormArray;
               response.data.records[0]?.approval_assignments.map(
-                (each: { id: any; approver_type: string; approver_order_no: any; approver: any }, index: any) => {
+                (
+                  each: {
+                    id: any;
+                    approver_type: string;
+                    approver_order_no: any;
+                    approver: any;
+                    approve_query_information: any[];
+                    reject_query_information: any[];
+                  },
+                  index: any
+                ) => {
                   lineItemsArray.push(
                     this.fb.group({
                       id: [each.id],
@@ -136,6 +191,9 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                       approver_order_no: [each.approver_order_no, Validators.required],
                       approver: [each.approver, Validators.required],
                       approval_workflow_id: [response.data.records[0].id, Validators.required],
+                      approve_query_information: [this.prettyJSON(each.approve_query_information || []), Validators.required],
+                      reject_query_information: [this.prettyJSON(each.reject_query_information || []), Validators.required],
+                      accordian: false,
                       user_list: [null],
                       role_list: [null],
                       tag_list: [null],
@@ -199,6 +257,9 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       approver_order_no: [null, Validators.required],
       approver: [null, Validators.required],
       approval_workflow_id: [0, Validators.required],
+      approve_query_information: ['[]', Validators.required],
+      reject_query_information: ['[]', Validators.required],
+      accordian: false,
       user_list: [null],
       role_list: [null],
       tag_list: [null],
@@ -426,6 +487,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
               approval_workflow_id: each.approval_workflow_id || this.approvalWorkflow.id,
               approver_type: each.approver_type,
               approver: each.approver,
+              approve_query_information: this.parseJSON(each.approve_query_information || '[]'),
+              reject_query_information: this.parseJSON(each.reject_query_information || '[]'),
               created_by: true,
               updated_by: true,
               status_id: 1,
@@ -445,7 +508,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
         },
         table_mapping: ['table1', 'table2'],
       };
-
+      this.loading = true;
       this.gridApiService.executeRecords(payload).subscribe({
         next: (response: any) => {
           this.loading = false;
@@ -453,9 +516,54 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
             this.toastr.success('Record updated successfully', 'Success');
           }
         },
+        error: (err: any) => {
+          this.toastr.error('Failed to update record', 'Error');
+          this.loading = false;
+        },
       });
     } else {
+      this.loading = false;
       this.toastr.error('Enter all required fields', 'Error');
     }
+  }
+
+  updateAccordianState(formGroup: any) {
+    formGroup.get('accordian')?.setValue(!formGroup.get('accordian')?.value);
+  }
+
+  prepareJSON(data: any): string {
+    return JSON.stringify(JSON.parse(data));
+  }
+
+  parseJSON(data: string): any {
+    return JSON.parse(data);
+  }
+
+  prettyJSON(data: any) {
+    return JSON.stringify(data, null, 2);
+  }
+
+  openInfoPopUp(popup: string) {
+    this.isInfoModalOpen = true;
+    this.popupInformation = {
+      ...this.infoContents[popup],
+      data: JSON.stringify(this.infoContents[popup].data, null, 2),
+    };
+  }
+
+  closeInfoPopUp() {
+    this.isInfoModalOpen = false;
+    this.popupInformation = null;
+  }
+
+  // Copy content from Monaco Editor
+  copyToClipboard() {
+    navigator.clipboard
+      .writeText(this.popupInformation.data)
+      .then(() => {
+        this.copied = true;
+        setTimeout(() => (this.copied = false), 3000);
+      })
+      .catch((err) => console.error('Failed to copy:', err));
   }
 }
