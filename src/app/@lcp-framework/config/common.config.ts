@@ -44,6 +44,9 @@ export const commonConfig: any = {
     restart_cron_jobs: 'common/restart-cron-jobs',
     edit_cron_job: 'common/edit-cron-job',
     delete_cron_jobs: 'common/delete-cron-job',
+
+    syncTableSchema: 'openai/generate-schema-chunks',
+    generateAiQuery: 'openai/generate-query',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
