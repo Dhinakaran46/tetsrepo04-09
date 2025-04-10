@@ -17,7 +17,7 @@ export class LocalStorageService implements OnInit {
 
   private getScopedKey(key: string): string {
     //const scope = window.location.port || window.location.hostname;
-    const scope = window.location.port || window.location.hostname + '' + window.location.pathname;
+    const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
     return `${scope}_${key}`;
   }
 
@@ -51,7 +51,7 @@ export class LocalStorageService implements OnInit {
 
   static isAccessible(key: string): any {
     //const scope = window.location.port || window.location.hostname;
-    const scope = window.location.port || window.location.hostname + '' + window.location.pathname;
+    const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
     const data = JSON.parse(localStorage.getItem(`${scope}_user_data`) || '{}');
     return data?.permissions && data.permissions[key] ? data.permissions[key] : false;
   }
@@ -75,7 +75,7 @@ export class LocalStorageService implements OnInit {
     localStorage.clear();*/
     localStorage.setItem(this.getScopedKey('logout-event'), 'logout' + Math.random());
     //const scope = window.location.port || window.location.hostname;
-    const scope = window.location.port || window.location.hostname + '' + window.location.pathname;
+    const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
     for (let key in localStorage) {
       if (key.startsWith(`${scope}_`)) {
         localStorage.removeItem(key);
