@@ -665,6 +665,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
 
   async setActiveTab(tab: Tabs) {
     this.activeTab = tab;
+    this.query = '';
     this.setHeader();
     this.setDefaultQuery();
     this.fetchData(this.listQuery);
@@ -705,7 +706,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
 
     //const clonedListQuery = JSON.parse(JSON.stringify(this.masterInfo.ListQuery));
     const clonedListQuery = this.listQuery;
-    const orgListQuery = this.defaultQuery;
+    const orgListQuery = this.defaultQuery[this.activeTab];
     if (whereConditions.length == 0 && havingConditions.length == 0) {
       if (condition == 'AND') {
         clonedListQuery.search_all = [...orgListQuery.search_all];
@@ -752,7 +753,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       const query = input.where.data;
       const search = input.where.search;
       if (search == '') {
-        const orgListQuery = this.defaultQuery;
+        const orgListQuery = this.defaultQuery[this.activeTab];
 
         clonedListQuery.search_any = [];
         clonedListQuery.search_any = [...orgListQuery.search_any];
@@ -890,7 +891,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         order_no: 2,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.approval_process_job_description',
+        field: 'apjw.approval_process_job_description',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('job_description'),
@@ -903,7 +904,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         order_no: 3,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.approver_type',
+        field: 'apjw.approver_type',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('approver_type'),
@@ -916,7 +917,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         order_no: 4,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.approver_order_no',
+        field: 'apjw.approver_order_no',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('approval_level'),
@@ -957,7 +958,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               order_no: 6,
               status_id: 1,
               company_id: 1,
-              field: 'approval_process_job_workflows.reason',
+              field: 'apjw.reason',
               clause_type: 'where',
               sorting: true,
               title: this.translate.instant('reason'),
@@ -970,7 +971,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               order_no: 7,
               status_id: 1,
               company_id: 1,
-              field: 'approval_process_job_workflows.review_status',
+              field: 'apjw.review_status',
               clause_type: 'where',
               sorting: true,
               title: this.translate.instant('review_status'),
@@ -1012,7 +1013,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         order_no: 9,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.review_status',
+        field: 'apjw.review_status',
         clause_type: 'where',
         sorting: false,
         title: this.translate.instant('review_status'),

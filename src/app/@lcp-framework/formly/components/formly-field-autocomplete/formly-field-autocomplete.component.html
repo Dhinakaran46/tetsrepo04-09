@@ -1,4 +1,15 @@
-<ng-select bindLabel="label" bindValue="value" [formControl]="formControl" [formlyAttributes]="field"
-  [items]="options$ | async" [multiple]="to['multiple'] || false" [clearable]="true" [searchable]="true"
-  placeholder="{{ to.placeholder || 'Select an option' }}" class="custom-multiselect" [typeahead]="searchSubject">
+<ng-select
+  bindLabel="label"
+  bindValue="value"
+  [formControl]="formControl"
+  [formlyAttributes]="field"
+  [items]="options$ | async"
+  [multiple]="to['multiple'] || false"
+  [clearable]="true"
+  [searchable]="true"
+  [placeholder]="to.placeholder || 'Select an option'"
+  class="custom-multiselect"
+  [typeahead]="searchSubject"
+  [ngClass]="{ 'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted) }"
+>
 </ng-select>
