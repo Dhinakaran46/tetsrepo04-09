@@ -64,6 +64,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   @ViewChild('approvalStatusTemplate') approvalStatusTemplate!: TemplateRef<any>;
+  @ViewChild('approverListTemplate') approverListTemplate!: TemplateRef<any>;
+  @ViewChild('pendingApproverListTemplate') pendingApproverListTemplate!: TemplateRef<any>;
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
   user_id: any;
@@ -193,7 +195,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       {
         header: 'description',
         clause_type: 'where',
-        field_value: 'approval_process_job_workflows.approval_process_job_description',
+        field_value: 'apjw.approval_process_job_description',
         is_sortable: 'true',
         column_order: '1.00',
         column_width: '1.00',
@@ -203,7 +205,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       {
         header: 'approver_type',
         clause_type: 'where',
-        field_value: 'approval_process_job_workflows.approver_type',
+        field_value: 'apjw.approver_type',
         is_sortable: 'true',
         column_order: '2.00',
         column_width: '1.00',
@@ -213,7 +215,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       {
         header: 'approval_level',
         clause_type: 'where',
-        field_value: 'approval_process_job_workflows.approver_order_no',
+        field_value: 'apjw.approver_order_no',
         is_sortable: 'true',
         column_order: '3.00',
         column_width: '1.00',
@@ -240,12 +242,46 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         is_searchable: 'true',
         is_grid_column: 'true',
       },
+      ...(this.activeTab === Tabs.pending
+        ? [
+            {
+              header: 'pending_with',
+              clause_type: 'where',
+              field_value: 'pending.approver_type',
+              is_sortable: 'true',
+              column_order: '5.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'pending_level',
+              clause_type: 'where',
+              field_value: 'pending.approver_order_no',
+              is_sortable: 'true',
+              column_order: '6.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'pending_approvers',
+              clause_type: 'where',
+              field_value: 'pending.pending_approvers',
+              is_sortable: 'false',
+              column_order: '0.00',
+              column_width: '0.00',
+              is_searchable: 'false',
+              is_grid_column: 'false',
+            },
+          ]
+        : []),
       ...(this.activeTab === Tabs.completed
         ? [
             {
               header: 'reason',
               clause_type: 'where',
-              field_value: 'approval_process_job_workflows.reason',
+              field_value: 'apjw.reason',
               is_sortable: 'true',
               column_order: '5.00',
               column_width: '1.00',
@@ -255,7 +291,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
             {
               header: 'review_status',
               clause_type: 'where',
-              field_value: 'approval_process_job_workflows.review_status',
+              field_value: 'apjw.review_status',
               is_sortable: 'true',
               column_order: '6.00',
               column_width: '1.00',
@@ -287,7 +323,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       {
         header: 'screen_id',
         clause_type: 'where',
-        field_value: 'approval_process_job_workflows.screen_id',
+        field_value: 'apjw.screen_id',
         is_sortable: 'false',
         column_order: '9.00',
         column_width: '1.00',
@@ -297,7 +333,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       {
         header: 'url',
         clause_type: 'where',
-        field_value: 'approval_process_job_workflows.url',
+        field_value: 'apjw.url',
         is_sortable: 'false',
         column_order: '10.00',
         column_width: '1.00',
@@ -317,7 +353,26 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       {
         header: 'approval_process_job_id',
         clause_type: 'where',
-        field_value: 'approval_process_job_workflows.approval_process_job_id',
+        field_value: 'apjw.approval_process_job_id',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
+      {
+        header: 'approvers',
+        clause_type: 'where',
+        field_value: `(
+          SELECT string_agg(u3.email, ', ')
+          FROM users u3
+          WHERE u3.id IN (
+            SELECT apjwu1.user_id 
+            FROM approval_process_job_workflow_users apjwu1 
+            WHERE apjwu1.approval_process_job_workflow_id = approval_process_job_workflow_users.approval_process_job_workflow_id
+              AND apjwu1.status_id != 3
+          )
+        )`,
         is_sortable: 'false',
         column_order: '0.00',
         column_width: '0.00',
@@ -329,76 +384,283 @@ export class ApprovalRequestsComponent implements AfterViewInit {
 
   setDefaultQuery() {
     this.defaultQuery = {
-      print_query: true,
-      company_id: 1,
-      primary_table: 'approval_process_job_workflow_users',
-      start_index: 0,
-      limit_range: 10,
-      sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
-      group_by: [
-        'approval_process_job_workflow_users.id',
-        'approval_process_job_workflows.approval_process_job_description',
-        'ud1.first_name',
-        'ud1.last_name',
-        'u1.email',
-        'u2.email',
-        'approval_process_job_workflows.review_status',
-        'approval_process_job_workflows.approver_type',
-        'approval_process_job_workflows.approver_order_no',
-        'approval_process_job_workflows.reason',
-        'approval_process_job_workflow_users.status_id',
-        'approval_process_job_workflows.screen_id',
-        'approval_process_job_workflows.url',
-        'approval_process_job_workflow_users.approval_process_job_workflow_id',
-        'approval_process_job_workflows.approval_process_job_id',
-      ],
-      includes: [
-        {
-          join_type: 'INNER',
-          table_name: 'approval_process_job_workflows',
-          join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
-            AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
-            AND approval_process_job_workflows.status_id != 3`,
-        },
-        {
-          join_type: 'LEFT',
-          table_name: 'users u1',
-          join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
-        },
-        {
-          join_type: 'LEFT',
-          table_name: 'user_details ud1',
-          join_condition: 'ud1.user_id = u1.id',
-        },
-        {
-          join_type: 'LEFT',
-          table_name: 'users u2',
-          join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-        },
-        {
-          join_type: 'LEFT',
-          table_name: 'user_details ud2',
-          join_condition: 'ud2.user_id = u1.id',
-        },
-      ],
-      // having_conditions: null,
-      // having_any_conditions: null,
-      search_all: [
-        {
-          column_name: 'approval_process_job_workflow_users.status_id',
-          value: 3,
-          operator: '!=',
-        },
-        {
-          column_name: 'approval_process_job_workflow_users.user_id',
-          value: this.user_info.main.id,
-          operator: '=',
-        },
-      ],
-      search_any: [],
-      select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+      pending_on_me: {
+        print_query: true,
+        company_id: 1,
+        primary_table: 'approval_process_job_workflow_users',
+        start_index: 0,
+        limit_range: 10,
+        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        group_by: [
+          'approval_process_job_workflow_users.id',
+          'apjw.approval_process_job_description',
+          'ud1.first_name',
+          'ud1.last_name',
+          'u1.email',
+          'u2.email',
+          'apjw.review_status',
+          'apjw.approver_type',
+          'apjw.approver_order_no',
+          'apjw.reason',
+          'approval_process_job_workflow_users.status_id',
+          'apjw.screen_id',
+          'apjw.url',
+          'approval_process_job_workflow_users.approval_process_job_workflow_id',
+          'apjw.approval_process_job_id',
+        ],
+        includes: [
+          {
+            join_type: 'INNER',
+            table_name: 'approval_process_job_workflows apjw',
+            join_condition: `apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+              AND apjw.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
+              AND apjw.status_id != 3`,
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u1',
+            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud1',
+            join_condition: 'ud1.user_id = u1.id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u2',
+            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud2',
+            join_condition: 'ud2.user_id = u2.id',
+          },
+        ],
+        // having_conditions: null,
+        // having_any_conditions: null,
+        search_all: [
+          {
+            column_name: 'approval_process_job_workflow_users.status_id',
+            value: 3,
+            operator: '!=',
+          },
+          {
+            column_name: 'approval_process_job_workflow_users.user_id',
+            value: this.user_info.main.id,
+            operator: '=',
+          },
+        ],
+        search_any: [],
+        select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+      },
+      pending: {
+        print_query: true,
+        company_id: 1,
+        primary_table: 'approval_process_job_workflow_users',
+        start_index: 0,
+        limit_range: 10,
+        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        group_by: [
+          'approval_process_job_workflow_users.id',
+          'apjw.approval_process_job_description',
+          'ud1.first_name',
+          'ud1.last_name',
+          'u1.email',
+          'u2.email',
+          'apjw.review_status',
+          'apjw.approver_type',
+          'apjw.approver_order_no',
+          'apjw.reason',
+          'approval_process_job_workflow_users.status_id',
+          'apjw.screen_id',
+          'apjw.url',
+          'approval_process_job_workflow_users.approval_process_job_workflow_id',
+          'apjw.approval_process_job_id',
+          'pending.approver_type',
+          'pending.approver_order_no',
+          'pending.pending_approvers',
+        ],
+        includes: [
+          {
+            join_type: 'INNER',
+            table_name: 'approval_process_job_workflows apjw',
+            join_condition: `apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+              AND (
+                SELECT COUNT(*)
+                FROM approval_process_job_workflows apjw1
+                WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
+                  AND apjw1.review_status = 'approval_needed'
+                  AND apjw1.status_id != 3
+                  AND apjw1.company_id = approval_process_job_workflow_users.company_id
+              ) = 1
+              AND apjw.status_id != 3`,
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u1',
+            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud1',
+            join_condition: 'ud1.user_id = u1.id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u2',
+            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud2',
+            join_condition: 'ud2.user_id = u2.id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: `LATERAL (
+              SELECT awf.approver_type, awf.approver_order_no, (
+                  SELECT string_agg(u4.email, ', ')
+                  FROM users u4
+                  WHERE u4.id IN (
+                    SELECT apjwu1.user_id
+                    FROM approval_process_job_workflow_users apjwu1
+                    WHERE apjwu1.approval_process_job_workflow_id = awf.id
+                      AND apjwu1.status_id != 3
+                  )
+                ) AS pending_approvers
+              FROM approval_process_job_workflows awf
+              WHERE awf.approval_process_job_id = apjw.approval_process_job_id
+                AND awf.review_status = 'approval_needed'
+                AND awf.status_id != 3
+                AND awf.company_id = approval_process_job_workflow_users.company_id
+              ORDER BY awf.approver_order_no ASC
+              LIMIT 1
+            ) pending`,
+            join_condition: 'true',
+          },
+        ],
+        // having_conditions: null,
+        // having_any_conditions: null,
+        search_all: [
+          {
+            column_name: 'approval_process_job_workflow_users.status_id',
+            value: 3,
+            operator: '!=',
+          },
+          {
+            column_name: 'approval_process_job_workflow_users.user_id',
+            value: this.user_info.main.id,
+            operator: '=',
+          },
+        ],
+        search_any: [],
+        select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+      },
+      completed: {
+        print_query: true,
+        company_id: 1,
+        primary_table: 'approval_process_job_workflow_users',
+        start_index: 0,
+        limit_range: 10,
+        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        group_by: [
+          'approval_process_job_workflow_users.id',
+          'apjw.approval_process_job_description',
+          'ud1.first_name',
+          'ud1.last_name',
+          'u1.email',
+          'u2.email',
+          'apjw.review_status',
+          'apjw.approver_type',
+          'apjw.approver_order_no',
+          'apjw.reason',
+          'approval_process_job_workflow_users.status_id',
+          'apjw.screen_id',
+          'apjw.url',
+          'approval_process_job_workflow_users.approval_process_job_workflow_id',
+          'apjw.approval_process_job_id',
+        ],
+        includes: [
+          {
+            join_type: 'INNER',
+            table_name: 'approval_process_job_workflows apjw',
+            join_condition: `apjw.status_id != 3
+              AND (
+                -- Case 1: Exactly one rejected
+                (
+                  (SELECT COUNT(*)
+                  FROM approval_process_job_workflows apjw1
+                  WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
+                    AND apjw1.review_status = 'approval_rejected'
+                    AND apjw1.status_id != 3
+                    AND apjw1.company_id = approval_process_job_workflow_users.company_id) = 1
+                  AND apjw.review_status = 'approval_rejected'
+                )
+                OR
+                -- Case 2: All steps completed and current row is the last one
+                (
+                  (SELECT COUNT(*)
+                  FROM approval_process_job_workflows apjw1
+                  WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
+                    AND apjw1.review_status = 'approval_completed'
+                    AND apjw1.status_id != 3
+                    AND apjw1.company_id = approval_process_job_workflow_users.company_id) =
+                  (SELECT COUNT(*)
+                  FROM approval_process_job_workflows apjw1
+                  WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
+                    AND apjw1.status_id != 3
+                    AND apjw1.company_id = approval_process_job_workflow_users.company_id)
+                  AND apjw.approver_order_no = (
+                    SELECT MAX(approver_order_no)
+                    FROM approval_process_job_workflows apjw2
+                    WHERE apjw2.approval_process_job_id = apjw.approval_process_job_id
+                      AND apjw2.status_id != 3
+                      AND apjw2.company_id = approval_process_job_workflow_users.company_id
+                  )
+                )
+              )`,
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u1',
+            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud1',
+            join_condition: 'ud1.user_id = u1.id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u2',
+            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud2',
+            join_condition: 'ud2.user_id = u2.id',
+          },
+        ],
+        // having_conditions: null,
+        // having_any_conditions: null,
+        search_all: [
+          {
+            column_name: 'approval_process_job_workflow_users.status_id',
+            value: 3,
+            operator: '!=',
+          },
+          {
+            column_name: 'approval_process_job_workflow_users.user_id',
+            value: this.user_info.main.id,
+            operator: '=',
+          },
+        ],
+        search_any: [],
+        select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+      },
     };
-    this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+    this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery[this.activeTab]));
   }
 
   async setActiveTab(tab: Tabs) {
@@ -872,6 +1134,16 @@ export class ApprovalRequestsComponent implements AfterViewInit {
                 ...item,
                 customTemplate: this.actionTemplate,
               };
+            } else if (item.header === 'approver_type') {
+              return {
+                ...item,
+                customTemplate: this.approverListTemplate,
+              };
+            } else if (item.header === 'pending_with') {
+              return {
+                ...item,
+                customTemplate: this.pendingApproverListTemplate,
+              };
             } else {
               return { ...item };
             }
@@ -903,7 +1175,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               }
               return {
                 ...formattedItem,
-                approver_type: this.translate.instant(item.approver_type),
+                // approver_type: this.translate.instant(item.approver_type),
+                // ...(this.activeTab === Tabs.pending && { pending_with: this.translate.instant(item.pending_with) }),
                 Action: index + 1,
               };
             });

@@ -51,7 +51,6 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         (click)="this.navigateToDetailPage(item)"
-        *ngIf="this.activeTab === 'pending_on_me'"
         ngxTippy
         data-tippy-content="View Requested Information"
       >
@@ -88,6 +87,29 @@
       }}
     </span>
   </ng-template>
+
+  <ng-template #approverListTemplate let-item>
+    <span
+      class="text-blue-600"
+      ngxTippy
+      [attr.data-tippy-content]="item.approvers"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
+    >
+      {{ item.approver_type | translate }}
+    </span>
+  </ng-template>
+
+  <ng-template #pendingApproverListTemplate let-item>
+    <span
+      class="text-blue-600"
+      ngxTippy
+      [attr.data-tippy-content]="item.pending_approvers"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
+    >
+      {{ item.pending_with | translate }}
+    </span>
+  </ng-template>
+
   <ng-template #approvalStatusTemplate let-item>
     <span
       class="badge"
