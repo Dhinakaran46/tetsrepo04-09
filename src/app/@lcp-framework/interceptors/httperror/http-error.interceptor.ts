@@ -50,7 +50,7 @@ export const HttpErrorInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, n
         errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
       }
       console.error(errorMessage);
-      return throwError(() => new Error(errorMessage));
+      return throwError(error.error);
     })
   );
 };

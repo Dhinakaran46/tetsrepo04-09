@@ -152,6 +152,46 @@
       }}
     </span>
   </ng-template>
+
+  <ng-template #linkDownloadVideoURLTemplate let-item>
+    <a
+      [href]="item.documentation_video_url"
+      target="_blank"
+      rel="noopener noreferrer"
+      *ngIf="item.documentation_video_url"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
+      class="flex items-center gap-2 text-blue-600 hover:underline"
+    >
+      <i class="fa-solid fa-up-right-from-square"></i>
+      {{ item.documentation_video_url }}
+    </a>
+  </ng-template>
+  <ng-template #linkDownloadPdfURLTemplate let-item>
+    <a
+      [href]="apiUrl + '/' + item.documentation_pdf"
+      target="_blank"
+      rel="noopener noreferrer"
+      *ngIf="item.documentation_pdf"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
+      class="flex items-center gap-2 text-blue-600 hover:underline"
+    >
+      <i class="fa-solid fa-download"></i>
+      {{ item.documentation_pdf }}
+    </a>
+  </ng-template>
+  <ng-template #linkDownloadWordURLTemplate let-item>
+    <a
+      [href]="apiUrl + '/' + item.documentation_word"
+      target="_blank"
+      rel="noopener noreferrer"
+      *ngIf="item.documentation_word"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
+      class="flex items-center gap-2 text-blue-600 hover:underline"
+    >
+      <i class="fa-solid fa-download"></i>
+      {{ item.documentation_word }}
+    </a>
+  </ng-template>
 </div>
 
 <app-loader *ngIf="loading"></app-loader>

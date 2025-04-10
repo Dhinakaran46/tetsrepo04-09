@@ -36,6 +36,14 @@ export const commonConfig: any = {
     importtemplateuploaddata: 'common/import-template/upload',
     attachedpolicies: 'common/attached-policies',
     generatePowerBiEmbedToken: 'auth/powerbi/report/generate-embed-token',
+    create_cron_jobs: 'common/create-cron-jobs',
+    get_cron_jobs: 'common/get-cron-jobs',
+    stop_cron_jobs: 'common/stop-cron-jobs',
+    stop_cron_job: 'common/stop-cron-job',
+    start_cron_job: 'common/start-cron-job',
+    restart_cron_jobs: 'common/restart-cron-jobs',
+    edit_cron_job: 'common/edit-cron-job',
+    delete_cron_jobs: 'common/delete-cron-job',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -51,6 +59,7 @@ export const commonConfig: any = {
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
+    CRON_SETTING_MODULE: 'cron_setting_module',
     IMPORT_TEMPLATE_MODULE: 'import_template_module',
     EXPORT_TEMPLATE_MODULE: 'export_template_module',
     IMPORT_JOB_DETAIL_MODULE: 'import_job_detail_module',
@@ -59,6 +68,7 @@ export const commonConfig: any = {
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
     APPROVAL_WORKFLOW_ASSIGNMENT_MODULE: 'approval_workflow_assignment_module',
     APPROVAL_REQUESTS_MODULE: 'approval_requests_module',
+    ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -74,6 +84,7 @@ export const commonConfig: any = {
     entity_form_module: 'entityform',
     language_contents_module: 'lang',
     configurations_module: 'config',
+    cron_setting_module: 'cronsetting',
     import_template_module: 'importtemplate',
     export_template_module: 'exporttemplate',
     import_job_detail_module: 'importjobdetail',
@@ -82,6 +93,7 @@ export const commonConfig: any = {
     email_template_assignment_module: 'emailtemplateassignment',
     approval_workflow_assignment_module: 'approvalworkflowassignment',
     approval_requests_module: 'approvalrequests',
+    about_lcp_form_module: 'aboutlcpformmodule',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -161,6 +173,7 @@ export const commonConfig: any = {
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
+    { label: 'Cron Setting Module', value: 'cron_setting_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
     { label: 'Import Job Detail Module', value: 'import_job_detail_module' },
 
@@ -170,6 +183,7 @@ export const commonConfig: any = {
     { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
     { label: 'Approval Workflow Assignment Module', value: 'approval_workflow_assignment_module' },
     { label: 'Approval Requests Module', value: 'approval_requests_module' },
+    { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

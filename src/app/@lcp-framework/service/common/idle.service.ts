@@ -14,7 +14,8 @@ export class IdleService {
 
   constructor(private bnIdle: BnNgIdleService, private router: Router, private localstore: LocalStorageService, public translate: TranslateService) {
     // Store the user data along with permissions and menu lists
-    this.config = JSON.parse(localStorage.getItem('config') || '{}');
+    //this.config = JSON.parse(localStorage.getItem('config') || '{}');
+    this.config = JSON.parse(this.localstore.getData('config') || '{}');
   }
 
   public startIdleWatcher(): void {

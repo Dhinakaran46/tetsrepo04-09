@@ -12,6 +12,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { MenuMapService } from '../@lcp-framework/service/common/menu-map.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../environments/environment';
+import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 
 @Component({
   selector: 'app-root',
@@ -43,7 +44,8 @@ export class AuthLayout {
     private appSetting: AppService,
     public storeData: Store<any>,
     private service: AppService,
-    public translate: TranslateService
+    public translate: TranslateService,
+    private localstore: LocalStorageService
   ) {
     this.initStore();
   }
@@ -88,7 +90,8 @@ export class AuthLayout {
             this.logo = res.logo;
             this.company = res.company_name;
             this.copyrightContent = res.footer_content;
-            localStorage.setItem('config', JSON.stringify(res));
+            this.localstore.storeData('config', JSON.stringify(res));
+            //localStorage.setItem('config', JSON.stringify(res));
           }
         } else {
           const key = 'error';

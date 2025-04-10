@@ -22,6 +22,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { ProfileApiService } from '../../service/user/profile-api.service';
+import { environment } from '../../../../environments/environment';
 
 export interface ExportResponse {
   blob: Blob;
@@ -58,6 +59,10 @@ export class MasterListComponent implements AfterViewInit {
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
+  @ViewChild('linkDownloadVideoURLTemplate') linkDownloadVideoURLTemplate!: TemplateRef<any>;
+  @ViewChild('linkDownloadPdfURLTemplate') linkDownloadPdfURLTemplate!: TemplateRef<any>;
+  @ViewChild('linkDownloadWordURLTemplate') linkDownloadWordURLTemplate!: TemplateRef<any>;
+
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
   user_id: any;
@@ -86,6 +91,7 @@ export class MasterListComponent implements AfterViewInit {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
+  apiUrl = environment.apiUrl;
 
   constructor(
     private toastr: ToastrService,
@@ -569,6 +575,21 @@ export class MasterListComponent implements AfterViewInit {
                 return {
                   ...item,
                   customTemplate: this.actionTemplate,
+                };
+              } else if (item.header === 'documentation_video_url') {
+                return {
+                  ...item,
+                  customTemplate: this.linkDownloadVideoURLTemplate,
+                };
+              } else if (item.header === 'documentation_pdf') {
+                return {
+                  ...item,
+                  customTemplate: this.linkDownloadPdfURLTemplate,
+                };
+              } else if (item.header === 'documentation_word') {
+                return {
+                  ...item,
+                  customTemplate: this.linkDownloadWordURLTemplate,
                 };
               } else {
                 return { ...item };
