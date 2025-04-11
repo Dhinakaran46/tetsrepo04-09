@@ -9,11 +9,61 @@
         {{ 'sync_table_schema' | translate }}
       </button>
     </div>
+
+    @if(queryList.length) {
     <div class="mb-3 grid grid-cols-1">
-      <div class="flex flex-col gap-2">
-        <label>{{ 'prompt' | translate }}</label>
-        <textarea class="h-200 form-input w-full p-1 text-xs text-gray-600 placeholder:text-white-dark" formControlName="prompt"></textarea>
+      <div class="justify-content-between flex flex-wrap items-end gap-5">
+        <app-autocomplete
+          [items]="queryList"
+          fieldName="query_id"
+          [label]="'previous_queries'"
+          placeholder="Select previous query"
+          (itemSelected)="onQuerySelected($event)"
+          [value]="form.controls['query_id'].value"
+          [width]="'800px'"
+        ></app-autocomplete>
+
+        <div class="flex items-center gap-2">
+          <a
+            href="javascript:void(0);"
+            class="btn-par hover:text-primary"
+            [ngClass]="{ 'disabled-input': !selectedPrompt }"
+            (click)="deleteQuery()"
+            ngxTippy
+            data-tippy-content="Delete Query"
+          >
+            <i class="fa fa-trash text-red-500"></i>
+          </a>
+
+          <a
+            href="javascript:void(0);"
+            class="btn-par hover:text-primary"
+            [ngClass]="{ 'disabled-input': !selectedPrompt }"
+            (click)="editQuery()"
+            ngxTippy
+            data-tippy-content="Edit Query"
+          >
+            <i class="fa fa-pen-to-square fa-regular"></i>
+          </a>
+
+          <a
+            href="javascript:void(0);"
+            class="btn-par hover:text-primary"
+            [ngClass]="{ 'disabled-input': !selectedPrompt }"
+            (click)="executeQuery()"
+            ngxTippy
+            data-tippy-content="Execute Query"
+          >
+            <i class="fa fa-arrows-rotate fa-solid"></i>
+          </a>
+        </div>
       </div>
+    </div>
+    }
+
+    <div class="mb-3 grid grid-cols-1">
+      <label>{{ 'prompt' | translate }}</label>
+      <textarea class="h-200 form-input w-full p-1 text-xs text-gray-600 placeholder:text-white-dark" formControlName="prompt"></textarea>
     </div>
     <div class="mb-3">
       <button type="submit" class="w-30 btn btn-success text-xs" (click)="submit()">

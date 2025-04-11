@@ -47,6 +47,7 @@ export const commonConfig: any = {
 
     syncTableSchema: 'openai/generate-schema-chunks',
     generateAiQuery: 'openai/generate-query',
+    getResultFromQuery: 'openai/get-response-from-sql',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',

@@ -27,4 +27,8 @@ export class OpenaiService {
   generateAiQuery(data: IAiQuery): Observable<ApiResponce> {
     return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiQuery}`, data);
   }
+
+  getResultFromQuery(data: any): Observable<ApiResponce> {
+    return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getResultFromQuery}`, data);
+  }
 }
