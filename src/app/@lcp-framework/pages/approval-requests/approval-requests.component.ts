@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -14,17 +14,18 @@ import { Store } from '@ngrx/store';
 import Swal from 'sweetalert2';
 import { ExportService } from '../../service/common/export.service';
 import { LocalStorageService } from '../../service/common/local-storage.service';
-import { lastValueFrom } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
+import { Subscription } from 'rxjs';
 
 enum Tabs {
   pending_on_me = 'pending_on_me',
   pending = 'pending',
   completed = 'completed',
+  delegated_on_me = 'delegated_on_me',
 }
 export interface ExportResponse {
   blob: Blob;
@@ -59,7 +60,7 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class ApprovalRequestsComponent implements AfterViewInit {
+export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
@@ -79,6 +80,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     pending_on_me: ['approval_needed'],
     pending: ['pending'],
     completed: ['approval_completed', 'approval_rejected'],
+    delegated_on_me: ['approval_needed'],
   };
   headerColumnData: any[] = [];
   items: any[] = [];
@@ -108,11 +110,15 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     {
       name: Tabs.completed,
     },
+    {
+      name: Tabs.delegated_on_me,
+    },
   ];
   isInfoModalOpen: boolean = false;
   approvalForm!: FormGroup;
   submitted = false;
   selectedRequest: any = null;
+  reviewStatusSub!: Subscription;
 
   constructor(
     private toastr: ToastrService,
@@ -141,8 +147,20 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
     this.approvalForm = this.fb.group({
       review_status: ['approval_completed', Validators.required],
-      reason: ['', Validators.required],
+      reason: [''],
     });
+    this.reviewStatusSub = this.approvalForm.get('review_status')?.valueChanges.subscribe((status) => {
+      const reasonControl = this.approvalForm.get('reason');
+
+      if (status === 'approval_rejected') {
+        reasonControl?.setValidators([Validators.required]);
+      } else {
+        reasonControl?.clearValidators();
+      }
+
+      reasonControl?.updateValueAndValidity();
+    })!;
+
     this.user_id = this.user_info.main?.id;
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
@@ -168,6 +186,12 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       this.items = [];
     }
     this.cdr.detectChanges();
+  }
+
+  ngOnDestroy(): void {
+    if (this.reviewStatusSub) {
+      this.reviewStatusSub.unsubscribe();
+    }
   }
 
   setHeader() {
@@ -222,6 +246,40 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         is_searchable: 'true',
         is_grid_column: 'true',
       },
+      ...(this.activeTab === Tabs.delegated_on_me
+        ? [
+            {
+              header: 'delegated_by',
+              clause_type: 'where',
+              field_value: `u_delegator.email`,
+              is_sortable: 'true',
+              column_order: '4.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'start_date',
+              clause_type: 'where',
+              field_value: `d.start_date`,
+              is_sortable: 'true',
+              column_order: '5.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'end_date',
+              clause_type: 'where',
+              field_value: `d.end_date`,
+              is_sortable: 'true',
+              column_order: '6.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+          ]
+        : []),
       // {
       //   header: 'name',
       //   clause_type: 'where',
@@ -237,8 +295,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         clause_type: 'where',
         field_value: 'u1.email',
         is_sortable: 'true',
-        column_order: '4.00',
-        column_width: '3.00',
+        column_order: '7.00',
+        column_width: '1.00',
         is_searchable: 'true',
         is_grid_column: 'true',
       },
@@ -249,7 +307,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               clause_type: 'where',
               field_value: 'pending.approver_type',
               is_sortable: 'true',
-              column_order: '5.00',
+              column_order: '8.00',
               column_width: '1.00',
               is_searchable: 'true',
               is_grid_column: 'true',
@@ -259,7 +317,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               clause_type: 'where',
               field_value: 'pending.approver_order_no',
               is_sortable: 'true',
-              column_order: '6.00',
+              column_order: '9.00',
               column_width: '1.00',
               is_searchable: 'true',
               is_grid_column: 'true',
@@ -279,12 +337,12 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       ...(this.activeTab === Tabs.completed
         ? [
             {
-              header: 'reason',
+              header: 'reviewed_by',
               clause_type: 'where',
-              field_value: 'apjw.reason',
+              field_value: 'u2.email',
               is_sortable: 'true',
-              column_order: '5.00',
-              column_width: '1.00',
+              column_order: '10.00',
+              column_width: '3.00',
               is_searchable: 'true',
               is_grid_column: 'true',
             },
@@ -293,18 +351,18 @@ export class ApprovalRequestsComponent implements AfterViewInit {
               clause_type: 'where',
               field_value: 'apjw.review_status',
               is_sortable: 'true',
-              column_order: '6.00',
+              column_order: '11.00',
               column_width: '1.00',
               is_searchable: 'true',
               is_grid_column: 'true',
             },
             {
-              header: 'reviewed_by',
+              header: 'reason',
               clause_type: 'where',
-              field_value: 'u2.email',
+              field_value: 'apjw.reason',
               is_sortable: 'true',
-              column_order: '7.00',
-              column_width: '3.00',
+              column_order: '12.00',
+              column_width: '1.00',
               is_searchable: 'true',
               is_grid_column: 'true',
             },
@@ -315,8 +373,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         clause_type: 'where',
         field_value: 'approval_process_job_workflow_users.status_id',
         is_sortable: 'true',
-        column_order: '8.00',
-        column_width: '5.00',
+        column_order: '13.00',
+        column_width: '1.00',
         is_searchable: 'false',
         is_grid_column: 'true',
       },
@@ -325,8 +383,8 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         clause_type: 'where',
         field_value: 'apjw.screen_id',
         is_sortable: 'false',
-        column_order: '9.00',
-        column_width: '1.00',
+        column_order: '0.00',
+        column_width: '0.00',
         is_searchable: 'false',
         is_grid_column: 'false',
       },
@@ -335,7 +393,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         clause_type: 'where',
         field_value: 'apjw.url',
         is_sortable: 'false',
-        column_order: '10.00',
+        column_order: '16.00',
         column_width: '1.00',
         is_searchable: 'false',
         is_grid_column: 'false',
@@ -654,6 +712,88 @@ export class ApprovalRequestsComponent implements AfterViewInit {
             column_name: 'approval_process_job_workflow_users.user_id',
             value: this.user_info.main.id,
             operator: '=',
+          },
+        ],
+        search_any: [],
+        select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
+      },
+      delegated_on_me: {
+        print_query: true,
+        company_id: 1,
+        primary_table: 'approval_process_job_workflow_users',
+        start_index: 0,
+        limit_range: 10,
+        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        group_by: [
+          'approval_process_job_workflow_users.id',
+          'apjw.approval_process_job_description',
+          'ud1.first_name',
+          'ud1.last_name',
+          'u1.email',
+          'u2.email',
+          'apjw.review_status',
+          'apjw.approver_type',
+          'apjw.approver_order_no',
+          'apjw.reason',
+          'approval_process_job_workflow_users.status_id',
+          'apjw.screen_id',
+          'apjw.url',
+          'approval_process_job_workflow_users.approval_process_job_workflow_id',
+          'apjw.approval_process_job_id',
+          'u_delegator.email',
+          'd.start_date',
+          'd.end_date',
+        ],
+        includes: [
+          {
+            join_type: 'INNER',
+            table_name: 'delegations d',
+            join_condition: `D.delegated_user_id = ${this.user_info.main?.id} 
+            AND d.status_id != 3 
+            AND d.company_id = approval_process_job_workflow_users.company_id
+            AND NOW() BETWEEN d.start_date AND d.end_date
+            AND approval_process_job_workflow_users.user_id = d.user_id`,
+          },
+          {
+            join_type: 'INNER',
+            table_name: 'approval_process_job_workflows apjw',
+            join_condition: `apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+              AND apjw.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
+              AND apjw.status_id != 3`,
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u1',
+            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud1',
+            join_condition: 'ud1.user_id = u1.id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u2',
+            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'user_details ud2',
+            join_condition: 'ud2.user_id = u2.id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'users u_delegator',
+            join_condition: 'u_delegator.id = d.user_id',
+          },
+        ],
+        // having_conditions: null,
+        // having_any_conditions: null,
+        search_all: [
+          {
+            column_name: 'approval_process_job_workflow_users.status_id',
+            value: 3,
+            operator: '!=',
           },
         ],
         search_any: [],
@@ -1206,20 +1346,6 @@ export class ApprovalRequestsComponent implements AfterViewInit {
     );
   }
 
-  private async executeJob(inputObject: any): Promise<void> {
-    if (inputObject.record_info.id) {
-      const job_query_information = this.localStorageService.replaceUniqueId(inputObject.query_information, '$unique_id', inputObject.record_info.id);
-      try {
-        const response = await lastValueFrom(this.gridApiService.executeTransaction(job_query_information));
-        if (!response.status) {
-          throw new Error(response.message);
-        }
-      } catch (error: any) {
-        throw error;
-      }
-    }
-  }
-
   isDate(value: any): boolean {
     // Check if the value is a valid date
     return !isNaN(Date.parse(value));
@@ -1364,6 +1490,17 @@ export class ApprovalRequestsComponent implements AfterViewInit {
       this.approvalForm.markAllAsTouched();
       return;
     }
+    if (this.activeTab === Tabs.delegated_on_me) {
+      const nowUtc = new Date().toISOString();
+
+      const startUtc = new Date(this.selectedRequest.start_date).toISOString();
+      const endUtc = new Date(this.selectedRequest.end_date).toISOString();
+
+      const isWithinRange = nowUtc >= startUtc && nowUtc <= endUtc;
+
+      console.log('isWithinRange', nowUtc, isWithinRange, startUtc, endUtc);
+      if (!isWithinRange) return;
+    }
 
     const payload: any = {
       data: {
@@ -1371,6 +1508,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
           {
             reason: this.approvalForm.value.reason,
             review_status: this.approvalForm.value.review_status,
+            processed_at: new Date(),
             reviewed_by: this.user_id,
           },
         ],
@@ -1381,6 +1519,7 @@ export class ApprovalRequestsComponent implements AfterViewInit {
         table1: [
           {
             id: this.selectedRequest.approval_process_job_workflow_id,
+            approval_status: 'approval_needed',
           },
         ],
       },

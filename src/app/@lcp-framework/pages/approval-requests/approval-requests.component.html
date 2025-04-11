@@ -65,7 +65,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         (click)="this.openApprovalProcessPopup(item)"
-        *ngIf="this.activeTab === 'pending_on_me'"
+        *ngIf="['pending_on_me', 'delegated_on_me'].includes(this.activeTab)"
         ngxTippy
         data-tippy-content="Approval Process"
       >
@@ -176,7 +176,12 @@
             </div>
           </div>
           <div class="mt-1">
-            <label for="reason" class="required-mark mb-2 block font-medium">{{ 'reason' | translate }}</label>
+            <label
+              for="reason"
+              class="mb-2 block font-medium"
+              [ngClass]="[approvalForm.get('review_status')?.value === 'approval_rejected' ? 'required-mark' : '']"
+              >{{ 'reason' | translate }}</label
+            >
             <textarea id="reason" formControlName="reason" rows="4" class="form-textarea"></textarea>
             <div *ngIf="isFieldInvalid('reason')" class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('reason') | translate }}
