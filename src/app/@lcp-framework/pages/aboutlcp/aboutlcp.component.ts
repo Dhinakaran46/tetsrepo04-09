@@ -8,6 +8,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../environments/environment';
 import { LocalStorageService } from '../../service/common/local-storage.service';
+import { create } from 'handlebars';
 
 @Component({
   selector: 'app-aboutlcp',
@@ -61,10 +62,18 @@ export class AboutlcpComponent implements OnInit {
     private route: ActivatedRoute,
     private translate: TranslateService,
     public localStorageService: LocalStorageService
-  ) {}
+  ) {
+    this.form = this.fb.group({
+      type: ['', [Validators.required]],
+      name: ['', [Validators.required]],
+      description: [''],
+      documentation_video_url: [''],
+      documentation_pdf: [null],
+      documentation_word: [null],
+    });
+  }
 
   ngOnInit(): void {
-    this.initForm();
     const userData = this.localStorageService.getData('user_data');
     if (userData) {
       const parsedData = JSON.parse(userData);
@@ -80,17 +89,6 @@ export class AboutlcpComponent implements OnInit {
       } else {
         this.isEditMode = false;
       }
-    });
-  }
-
-  initForm() {
-    this.form = this.fb.group({
-      type: ['', [Validators.required]],
-      name: ['', [Validators.required]],
-      description: [''],
-      documentation_video_url: [''],
-      documentation_pdf: [null],
-      documentation_word: [null],
     });
   }
 
@@ -148,8 +146,10 @@ export class AboutlcpComponent implements OnInit {
   }
 
   onSubmit() {
+    console.log('this.form.invalid', this.form.invalid);
+
     if (this.form.invalid) {
-      this.toastr.error(this.translate.instant('required_message'), 'Error');
+      this.markFormGroupTouched(this.form);
       return;
     }
 
@@ -165,6 +165,8 @@ export class AboutlcpComponent implements OnInit {
           documentation_video_url: this.form.value.documentation_video_url || '',
           documentation_pdf: this.form.value.documentation_pdf || '',
           documentation_word: this.form.value.documentation_word || '',
+          updated_by: true,
+          updated_at: true,
         },
       ];
       this.update_json_schema.conditions['table1'] = [{ uuid: this.aboutLcpId }];
@@ -184,6 +186,7 @@ export class AboutlcpComponent implements OnInit {
       );
     } else {
       // Insert scenario
+
       this.insert_json_schema.data['table1'] = [
         {
           type: this.form.value.type,
@@ -192,6 +195,8 @@ export class AboutlcpComponent implements OnInit {
           documentation_video_url: this.form.value.documentation_video_url || '',
           documentation_pdf: this.form.value.documentation_pdf || '',
           documentation_word: this.form.value.documentation_word || '',
+          created_by: true,
+          created_at: true,
         },
       ];
 
@@ -265,5 +270,15 @@ export class AboutlcpComponent implements OnInit {
 
   goBack() {
     this.location.back();
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach((control) => {
+      control.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
 }

@@ -112,7 +112,7 @@ export class CronSettingComponent {
       description: [''],
     });
 
-    console.log('this.configData', this.configData.base_api_url);
+    // console.log('this.configData', this.configData.base_api_url);
 
     this.cronForm = this.fb.group({
       timing: ['', Validators.required],
