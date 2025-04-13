@@ -48,3 +48,8 @@ html.login-page > body {
   min-height: 25px;
   height: 25px !important;
 }
+
+.disabled-input {
+  pointer-events: none;
+  opacity: 0.5;
+}
