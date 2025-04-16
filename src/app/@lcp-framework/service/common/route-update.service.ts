@@ -84,6 +84,7 @@ export class RouteUpdateService {
               const printPermissionKey = `print_${routeData.entity_name}`;
               const recordExportPermissionKey = `record_export_${routeData.entity_name}`;
               const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
+              const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -217,6 +218,7 @@ export class RouteUpdateService {
                       print: permissionListJSON[printPermissionKey] || false,
                       record_export: permissionListJSON[recordExportPermissionKey] || false,
                       email_resend: permissionListJSON[emailResendPermissionKey] || false,
+                      generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
                     },
                     children: children,
                   },

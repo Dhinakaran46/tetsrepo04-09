@@ -859,6 +859,23 @@ export class MasterListComponent implements AfterViewInit {
     });
   }
 
+  generateVector(item: any) {
+    if (this.masterInfo.permissions.generate_vector) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Generate Vector?',
+        text: 'are you sure, you want to generate vector?',
+        showCancelButton: true,
+        confirmButtonText: 'Generate',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          console.log('item : ', item);
+        }
+      });
+    }
+  }
+
   emailResendItem(item: any) {
     if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       Swal.fire({
