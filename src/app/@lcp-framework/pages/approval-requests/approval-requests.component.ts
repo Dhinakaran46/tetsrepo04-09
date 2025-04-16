@@ -120,6 +120,29 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
   selectedRequest: any = null;
   reviewStatusSub!: Subscription;
 
+  statuses: any = {
+    1: {
+      value: 'table_status_val_0',
+      border_color: 'badge-outline-success',
+    },
+    2: {
+      value: 'table_status_val_1',
+      border_color: 'badge-outline-danger',
+    },
+    3: {
+      value: 'table_status_val_2',
+      border_color: 'badge-outline-secondary',
+    },
+    4: {
+      value: 'table_status_val_3',
+      border_color: 'badge-outline-dark',
+    },
+    5: {
+      value: 'table_status_val_4',
+      border_color: 'badge-outline-warning',
+    },
+  };
+
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
@@ -997,13 +1020,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
   }
 
   private getStatusTranslation(status: string): string {
-    if (status == '1') {
-      return this.translate.instant('table_status_val_0');
-    } else if (status == '2') {
-      return this.translate.instant('table_status_val_1');
-    } else {
-      return this.translate.instant('table_status_val_2');
-    }
+    return this.translate.instant(this.statuses[status].value);
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
@@ -1519,7 +1536,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         table1: [
           {
             id: this.selectedRequest.approval_process_job_workflow_id,
-            approval_status: 'approval_needed',
+            review_status: 'approval_needed',
           },
         ],
       },

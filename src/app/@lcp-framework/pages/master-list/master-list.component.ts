@@ -92,6 +92,28 @@ export class MasterListComponent implements AfterViewInit {
   config: any;
   attachedPolicies: any[] = [];
   apiUrl = environment.apiUrl;
+  statuses: any = {
+    1: {
+      value: 'table_status_val_0',
+      border_color: 'badge-outline-success',
+    },
+    2: {
+      value: 'table_status_val_1',
+      border_color: 'badge-outline-danger',
+    },
+    3: {
+      value: 'table_status_val_2',
+      border_color: 'badge-outline-secondary',
+    },
+    4: {
+      value: 'table_status_val_3',
+      border_color: 'badge-outline-dark',
+    },
+    5: {
+      value: 'table_status_val_4',
+      border_color: 'badge-outline-warning',
+    },
+  };
 
   constructor(
     private toastr: ToastrService,
@@ -164,7 +186,6 @@ export class MasterListComponent implements AfterViewInit {
       this.title = masterListConfig.fullEntity;
       this.defaultQuery = masterListConfig.ListQuery;
       this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
-      console.log('listQuery', this.listQuery);
       this.listQuery.start_index = 0;
       this.fetchAttachedPolicies(this.listQuery);
     } else {
@@ -412,13 +433,7 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   private getStatusTranslation(status: string): string {
-    if (status == '1') {
-      return this.translate.instant('table_status_val_0');
-    } else if (status == '2') {
-      return this.translate.instant('table_status_val_1');
-    } else {
-      return this.translate.instant('table_status_val_2');
-    }
+    return this.translate.instant(this.statuses[status].value);
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
@@ -444,7 +459,6 @@ export class MasterListComponent implements AfterViewInit {
     this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          console.log('enter', response);
           const data = response.data.records.map((key: any, index: any) => {
             return {
               field: key.field_name,

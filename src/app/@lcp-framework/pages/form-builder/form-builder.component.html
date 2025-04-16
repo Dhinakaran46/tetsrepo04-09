@@ -18,6 +18,7 @@
             type="submit"
             class="btn-primary mx-auto flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             *ngIf="entity_type !== 'details'"
+            [disabled]="isDisabled"
           >
             {{ 'submit' | translate }}
           </button>

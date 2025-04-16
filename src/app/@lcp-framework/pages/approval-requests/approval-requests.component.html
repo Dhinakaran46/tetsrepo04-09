@@ -77,14 +77,9 @@
   <ng-template #statusTemplate let-item>
     <span
       class="badge"
-      [ngClass]="[
-        store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
-        item.status ? 'badge-outline-success' : 'badge-outline-danger'
-      ]"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color]"
     >
-      {{
-        item.status == '1' ? ('table_status_val_0' | translate) : item.status == '2' ? ('table_status_val_1' | translate) : ('table_status_val_2' | translate)
-      }}
+      {{ statuses[item.status].value | translate }}
     </span>
   </ng-template>
 

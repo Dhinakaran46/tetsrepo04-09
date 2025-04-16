@@ -184,6 +184,8 @@ export class RouteUpdateService {
                 approval_workflow_assignment_module: () =>
                   import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
                 approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
+                approval_requests_tracking_module: () =>
+                  import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
               };
 
               const route: Route = {
@@ -198,6 +200,7 @@ export class RouteUpdateService {
                     title: routeData.entity_name,
                     Listname: routeData.entity_name,
                     action_slug: routeData.action_slug,
+                    draft_mode: routeData.draft_mode,
                     ListQuery: {
                       print_query: true,
                       company_id: 0,

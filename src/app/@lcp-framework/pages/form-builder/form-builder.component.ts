@@ -42,6 +42,7 @@ export class FormBuilderComponent implements OnInit {
   pageInfo: any;
   policyData: any = null;
   user_info: any;
+  draftMode = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -67,6 +68,7 @@ export class FormBuilderComponent implements OnInit {
       this.pageInfo = data['pageInfo'];
       this.entity_name = this.pageInfo.fullEntity;
       this.entity_type = this.pageInfo.action_slug;
+      this.draftMode = this.pageInfo.draft_mode;
     });
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     if (this.user_info.main?.policies) {
@@ -82,6 +84,7 @@ export class FormBuilderComponent implements OnInit {
       formState: {
         componentInstance: this, // 'this' is the actual component reference
         submitted: false,
+        isDraftMode: this.draftMode,
       },
     };
 
@@ -240,6 +243,7 @@ export class FormBuilderComponent implements OnInit {
   private executeTransaction() {
     // this.model = { ...this.model, ...this.form.value };
     // console.log(this.model);
+    console.log(this.form);
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false);
     transParam = this.replacePlaceholders(transParam, this.model);
     this.gridApiService.executeTransaction(transParam).subscribe(
@@ -893,5 +897,11 @@ export class FormBuilderComponent implements OnInit {
       console.error('Error creating function from string:', fnString, error);
       return () => null;
     }
+  }
+
+  get isDisabled(): boolean {
+    const flatten = (obj: any): any => Object.values(obj).reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
+    const rawValue = flatten(this.form.getRawValue());
+    return rawValue?.status_id === 5;
   }
 }

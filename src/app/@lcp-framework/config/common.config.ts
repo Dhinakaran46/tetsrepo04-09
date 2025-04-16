@@ -68,6 +68,7 @@ export const commonConfig: any = {
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
     APPROVAL_WORKFLOW_ASSIGNMENT_MODULE: 'approval_workflow_assignment_module',
     APPROVAL_REQUESTS_MODULE: 'approval_requests_module',
+    APPROVAL_REQUESTS_TRACKING_MODULE: 'approval_requests_tracking_module',
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
   },
   PREFIX_SHORTCODE: {
@@ -93,6 +94,7 @@ export const commonConfig: any = {
     email_template_assignment_module: 'emailtemplateassignment',
     approval_workflow_assignment_module: 'approvalworkflowassignment',
     approval_requests_module: 'approvalrequests',
+    approval_requests_tracking_module: 'approvalrequeststracking',
     about_lcp_form_module: 'aboutlcpformmodule',
   },
   MENU_LINK_TYPE: {
@@ -183,6 +185,7 @@ export const commonConfig: any = {
     { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
     { label: 'Approval Workflow Assignment Module', value: 'approval_workflow_assignment_module' },
     { label: 'Approval Requests Module', value: 'approval_requests_module' },
+    { label: 'Approval Requests Tracking Module', value: 'approval_requests_tracking_module' },
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
   ],
   keypress_config: {

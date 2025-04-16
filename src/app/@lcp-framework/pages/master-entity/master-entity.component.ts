@@ -1201,6 +1201,7 @@ export class MasterEntityComponent implements OnInit {
       primaryTable: [''],
       statusId: [1],
       isAdminModule: [false],
+      draftMode: [false],
       associateTable: [''],
       wizardType: [''],
       reportType: [this.commonConfig.REPORT_TYPES.LCP],
@@ -1469,6 +1470,7 @@ export class MasterEntityComponent implements OnInit {
             primaryTable: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
             statusId: entity.status_id,
             isAdminModule: entity.is_admin_module,
+            draftMode: entity.draft_mode || false,
             entityType: entity.entity_type,
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
             reportInformation: entity.report_information ? this.prettyJSON(entity.report_information) : '',
@@ -1535,7 +1537,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.primaryTable && { primary_table: formData.primaryTable }),
         ...(formData.statusId && { status_id: formData.statusId }),
         ...(formData.isAdminModule && { is_admin_module: formData.isAdminModule ? formData.isAdminModule : false }),
-
+        ...(formData.draftMode && { draft_mode: formData.draftMode ? formData.draftMode : false }),
         ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true) }),
         ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true) }),
         ...(formData.reportInformation && { report_information: this.prepareJSON(formData.reportInformation, true) }),
@@ -1593,7 +1595,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
         ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
-
+        ...(formData.draftMode ? { draft_mode: formData.draftMode } : { draft_mode: false }),
         ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true) } : { associated_tables: null }),
         ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation, true) } : { query_information: null }),
         ...(formData.reportInformation ? { report_information: this.prepareJSON(formData.reportInformation, true) } : { report_information: null }),
