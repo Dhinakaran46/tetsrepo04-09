@@ -59,6 +59,7 @@ export class MasterListComponent implements AfterViewInit {
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
+  @ViewChild('processStatusTemplate') processStatusTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadVideoURLTemplate') linkDownloadVideoURLTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadPdfURLTemplate') linkDownloadPdfURLTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadWordURLTemplate') linkDownloadWordURLTemplate!: TemplateRef<any>;
@@ -105,12 +106,23 @@ export class MasterListComponent implements AfterViewInit {
       value: 'table_status_val_2',
       border_color: 'badge-outline-secondary',
     },
-    4: {
-      value: 'table_status_val_3',
-      border_color: 'badge-outline-dark',
+  };
+
+  processStatuses: any = {
+    submitted: {
+      value: 'table_process_status_val_0',
+      border_color: 'badge-outline-success',
     },
-    5: {
-      value: 'table_status_val_4',
+    approved: {
+      value: 'table_process_status_val_1',
+      border_color: 'badge-outline-success',
+    },
+    rejected: {
+      value: 'table_process_status_val_2',
+      border_color: 'badge-outline-secondary',
+    },
+    under_approval: {
+      value: 'table_process_status_val_3',
       border_color: 'badge-outline-warning',
     },
   };
@@ -421,6 +433,8 @@ export class MasterListComponent implements AfterViewInit {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
+        } else if (header.header == 'process_status') {
+          transformedRecord[translatedHeader] = this.getProcessStatusTranslation(record[header.header]);
         } else {
           transformedRecord[translatedHeader] = record[header.header];
         }
@@ -434,6 +448,10 @@ export class MasterListComponent implements AfterViewInit {
 
   private getStatusTranslation(status: string): string {
     return this.translate.instant(this.statuses[status].value);
+  }
+
+  private getProcessStatusTranslation(status: string): string {
+    return this.translate.instant(this.processStatuses[status].value);
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
@@ -584,6 +602,11 @@ export class MasterListComponent implements AfterViewInit {
                 return {
                   ...item,
                   customTemplate: this.statusTemplate,
+                };
+              } else if (item.header === 'process_status') {
+                return {
+                  ...item,
+                  customTemplate: this.processStatusTemplate,
                 };
               } else if (item.header === 'table_column_action') {
                 return {

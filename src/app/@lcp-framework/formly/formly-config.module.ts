@@ -84,16 +84,10 @@ export const search_conditions: any = commonConfig.search_conditions;
             },
             expressionProperties: {
               'props.options': (model: any, formState: any) => {
-                if (model?.status_id === 5) {
-                  return [{ value: 5, label: 'Under Approval', class: 'inline-flex' }];
-                }
                 const opts = [
                   { value: 1, label: 'Active', class: 'inline-flex' },
                   { value: 2, label: 'In Active', class: 'inline-flex' },
                 ];
-                if (formState?.isDraftMode) {
-                  opts.push({ value: 4, label: 'Draft', class: 'inline-flex' });
-                }
                 return opts;
               },
             },

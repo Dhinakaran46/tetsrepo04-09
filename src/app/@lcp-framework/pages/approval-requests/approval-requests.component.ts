@@ -133,14 +133,6 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       value: 'table_status_val_2',
       border_color: 'badge-outline-secondary',
     },
-    4: {
-      value: 'table_status_val_3',
-      border_color: 'badge-outline-dark',
-    },
-    5: {
-      value: 'table_status_val_4',
-      border_color: 'badge-outline-warning',
-    },
   };
 
   constructor(
@@ -670,12 +662,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               AND (
                 -- Case 1: Exactly one rejected
                 (
-                  (SELECT COUNT(*)
-                  FROM approval_process_job_workflows apjw1
-                  WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
-                    AND apjw1.review_status = 'approval_rejected'
-                    AND apjw1.status_id != 3
-                    AND apjw1.company_id = approval_process_job_workflow_users.company_id) = 1
+                  apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id
                   AND apjw.review_status = 'approval_rejected'
                 )
                 OR

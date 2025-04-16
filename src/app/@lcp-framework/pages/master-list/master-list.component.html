@@ -148,6 +148,18 @@
     </span>
   </ng-template>
 
+  <ng-template #processStatusTemplate let-item>
+    <span
+      class="badge"
+      [ngClass]="[
+        store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
+        processStatuses[item.process_status]?.border_color
+      ]"
+    >
+      {{ processStatuses[item.process_status].value | translate }}
+    </span>
+  </ng-template>
+
   <ng-template #linkDownloadVideoURLTemplate let-item>
     <a
       [href]="item.documentation_video_url"

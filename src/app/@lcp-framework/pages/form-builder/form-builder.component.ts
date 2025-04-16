@@ -23,7 +23,7 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
   styleUrls: ['./form-builder.component.scss'],
 })
 export class FormBuilderComponent implements OnInit {
-  store$: Observable<any>;
+  store: any;
   formEntity: any;
   form = new FormGroup({});
   options: FormlyFormOptions = {};
@@ -43,21 +43,40 @@ export class FormBuilderComponent implements OnInit {
   policyData: any = null;
   user_info: any;
   draftMode = false;
+  isDrafted = false;
+  processStatus: any = 'submitted';
+
+  processStatuses: any = {
+    submitted: {
+      value: 'table_process_status_val_0',
+      border_color: 'badge-outline-success',
+    },
+    approved: {
+      value: 'table_process_status_val_1',
+      border_color: 'badge-outline-success',
+    },
+    rejected: {
+      value: 'table_process_status_val_2',
+      border_color: 'badge-outline-secondary',
+    },
+    under_approval: {
+      value: 'table_process_status_val_3',
+      border_color: 'badge-outline-warning',
+    },
+  };
 
   constructor(
     private route: ActivatedRoute,
     public router: Router,
     private gridApiService: GridApiService,
     private toastr: ToastrService,
-    private store: Store<any>,
+    public storeData: Store<any>,
     private cdRef: ChangeDetectorRef,
     public location: Location,
     private translate: TranslateService,
     private titleService: Title,
     private localStorageService: LocalStorageService
-  ) {
-    this.store$ = this.store.pipe(select('index'));
-  }
+  ) {}
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
@@ -90,12 +109,20 @@ export class FormBuilderComponent implements OnInit {
 
     this.initStore();
     this.resetForm();
+
+    this.form.valueChanges.subscribe((val) => {
+      const rawValue = this.flatten(val);
+      this.processStatus = rawValue?.process_status || 'submitted';
+      this.isDrafted = rawValue?.is_drafted || false;
+    });
   }
 
   private initStore() {
-    this.store$.subscribe((store) => {
-      // Handle store changes
-    });
+    this.storeData
+      .select((d) => d.index)
+      .subscribe((d) => {
+        this.store = d;
+      });
   }
 
   uniqueValidator(key: string): AsyncValidatorFn {
@@ -200,7 +227,7 @@ export class FormBuilderComponent implements OnInit {
     });
   }
 
-  onSubmit() {
+  onSubmit(draft_mode: boolean = false) {
     this.options.formState.submitted = true;
     // Trim all form values before validation
     if (this.form.invalid) {
@@ -219,11 +246,11 @@ export class FormBuilderComponent implements OnInit {
     const uploadObservables = this.collectFileUploadObservables();
     if (uploadObservables.length === 0) {
       // If there are no files to upload, directly proceed with the transaction
-      this.executeTransaction();
+      this.executeTransaction(draft_mode);
     } else {
       forkJoin(uploadObservables).subscribe({
         next: () => {
-          this.executeTransaction();
+          this.executeTransaction(draft_mode);
         },
         error: (error) => {
           this.toastr.error('Error uploading files: ' + error.message);
@@ -240,11 +267,11 @@ export class FormBuilderComponent implements OnInit {
     });
   }
 
-  private executeTransaction() {
+  private executeTransaction(draft_mode: boolean) {
     // this.model = { ...this.model, ...this.form.value };
     // console.log(this.model);
     console.log(this.form);
-    let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false);
+    let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false, draft_mode);
     transParam = this.replacePlaceholders(transParam, this.model);
     this.gridApiService.executeTransaction(transParam).subscribe(
       (response) => {
@@ -478,7 +505,7 @@ export class FormBuilderComponent implements OnInit {
     this.titleService.setTitle(translateTitle);
   }
 
-  private replaceDataPlaceholders(obj: any, model: any, required: boolean = true): any {
+  private replaceDataPlaceholders(obj: any, model: any, required: boolean = true, draft_mode: boolean): any {
     const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
     // const placeholderPattern = /\$(.+)/;
     const placeholderPattern = /^\$(.+)/;
@@ -489,7 +516,7 @@ export class FormBuilderComponent implements OnInit {
       } else if (typeof item === 'object' && item !== null) {
         for (const key in item) {
           if (item.hasOwnProperty(key)) {
-            item[key] = replaceInObject(item[key], context);
+            item[key] = key === 'is_drafted' ? draft_mode : replaceInObject(item[key], context);
           }
         }
         return item;
@@ -899,9 +926,19 @@ export class FormBuilderComponent implements OnInit {
     }
   }
 
+  flatten(obj: any): any {
+    return Object.keys(obj).reduce((acc: any, key) => {
+      const value = obj[key];
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        Object.assign(acc, this.flatten(value));
+      } else {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+  }
+
   get isDisabled(): boolean {
-    const flatten = (obj: any): any => Object.values(obj).reduce((acc: any, cur: any) => ({ ...acc, ...cur }), {});
-    const rawValue = flatten(this.form.getRawValue());
-    return rawValue?.status_id === 5;
+    return this.processStatus === 'under_approval';
   }
 }
