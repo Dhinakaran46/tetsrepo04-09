@@ -46,8 +46,10 @@ export const commonConfig: any = {
     delete_cron_jobs: 'common/delete-cron-job',
 
     syncTableSchema: 'openai/generate-schema-chunks',
+    generateVector: 'openai/generate-vector',
     generateAiQuery: 'openai/generate-query',
     getResultFromQuery: 'openai/get-response-from-sql',
+    generateVectorForTable: 'openai/generate-vector-for-table',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -130,6 +132,7 @@ export const commonConfig: any = {
     Print: 'print',
     RECORD_EXPORT: 'record_export',
     EMAIL_RESEND: 'email_resend',
+    GENERATE_VECTOR: 'generate_vector',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -160,6 +163,7 @@ export const commonConfig: any = {
     { label: 'Print', value: 'print' },
     { label: 'Record Export', value: 'record_export' },
     { label: 'Resend Email', value: 'email_resend' },
+    { label: 'Generate Vector', value: 'generate_vector' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
