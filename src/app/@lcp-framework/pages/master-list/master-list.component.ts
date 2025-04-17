@@ -84,7 +84,6 @@ export class MasterListComponent implements AfterViewInit {
   policyData: any = null;
   loading: boolean = false;
   gridloading: boolean = true;
-  isSchemaChunks: boolean = false;
 
   title: any = '';
   listQuery: any = '';
@@ -155,10 +154,6 @@ export class MasterListComponent implements AfterViewInit {
       this.masterInfo = pageInfo;
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
-      }
-
-      if (this.masterInfo.fullEntity === 'schema_chunks') {
-        this.isSchemaChunks = true;
       }
 
       const masterListConfig = pageInfo;
@@ -862,33 +857,6 @@ export class MasterListComponent implements AfterViewInit {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, error.message);
         }
-      }
-    });
-  }
-
-  syncTableSchema() {
-    this.loading = true;
-    this.openaiService.syncTableSchema().subscribe((res) => {
-      this.loading = false;
-      if (res.status) {
-        this.toastr.success('Table schema synced successfully', 'Success');
-        this.setPageReload();
-      } else {
-        this.toastr.error('Failed to sync table schema', 'Error');
-      }
-    });
-  }
-
-  generateVectorForAllTable() {
-    this.toastr.info('Syncing table schema..., it may take few minutes', 'Info');
-    this.loading = true;
-    this.openaiService.generateVectorForAllTable().subscribe((res) => {
-      this.loading = false;
-      if (res.status) {
-        this.toastr.success('Table schema synced successfully', 'Success');
-        this.setPageReload();
-      } else {
-        this.toastr.error('Failed to sync table schema', 'Error');
       }
     });
   }

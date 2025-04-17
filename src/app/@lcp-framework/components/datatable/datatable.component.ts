@@ -13,6 +13,7 @@ import { commonConfig } from '../../config/common.config';
 
 import { DatePipe } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
+import { OpenaiService } from '../../service/common/openai.service';
 
 interface SearchCondition {
   id: string;
@@ -88,6 +89,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   field_types = commonConfig.field_types;
   inputTypes: InputTypes = commonConfig.field_type;
   searchConditions: SearchConditions = commonConfig.search_conditions;
+  isSchemaChunks: boolean = false;
 
   mapConditionToSQL = (condition: any) => {
     switch (condition) {
@@ -148,7 +150,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     private toastr: ToastrService,
     public storeData: Store<any>,
     public datePipe: DatePipe,
-    private localstore: LocalStorageService
+    private localstore: LocalStorageService,
+    private openaiService: OpenaiService
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -363,6 +366,10 @@ export class DataTableComponent implements OnInit, OnChanges {
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
+
+      if (this.masterInfo.fullEntity === 'schema_chunks') {
+        this.isSchemaChunks = true;
+      }
 
       this.translate.get(translationKeys).subscribe((translations) => {
         this.filteredColumns = this.selectcolumns
@@ -634,5 +641,38 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.totalPages = Math.ceil(this.totalItems / this.resultsPerPage);
 
     return this.totalPages;
+  }
+
+  syncTableSchema() {
+    this.loading = true;
+    this.openaiService.syncTableSchema().subscribe((res) => {
+      this.loading = false;
+      if (res.status) {
+        this.toastr.success('Table schema synced successfully', 'Success');
+        this.setPageReload();
+      } else {
+        this.toastr.error('Failed to sync table schema', 'Error');
+      }
+    });
+  }
+
+  generateVectorForAllTable() {
+    this.toastr.info('Syncing table schema..., it may take few minutes', 'Info');
+    this.loading = true;
+    this.openaiService.generateVectorForAllTable().subscribe((res) => {
+      this.loading = false;
+      if (res.status) {
+        this.toastr.success('Table schema synced successfully', 'Success');
+        this.setPageReload();
+      } else {
+        this.toastr.error('Failed to sync table schema', 'Error');
+      }
+    });
+  }
+
+  setPageReload() {
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 }
