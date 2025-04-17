@@ -1,18 +1,4 @@
 <div>
-  @if(isSchemaChunks) {
-  <div class="p-3">
-    <div class="align-items-center mb-3 flex justify-end gap-3">
-      <button type="button" class="btn btn-primary text-xs" (click)="syncTableSchema()">
-        {{ 'sync_table_schema' | translate }}
-      </button>
-
-      <button type="button" class="btn btn-primary text-xs" (click)="generateVectorForAllTable()">
-        {{ 'generate_vector_for_all_table' | translate }}
-      </button>
-    </div>
-  </div>
-  }
-
   <app-datatable
     [loading]="gridloading"
     [masterInfo]="masterInfo"
