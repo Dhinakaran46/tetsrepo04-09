@@ -23,6 +23,7 @@ import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
+import { OpenaiService } from '../../service/common/openai.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -83,6 +84,7 @@ export class MasterListComponent implements AfterViewInit {
   policyData: any = null;
   loading: boolean = false;
   gridloading: boolean = true;
+  isSchemaChunks: boolean = false;
 
   title: any = '';
   listQuery: any = '';
@@ -109,7 +111,8 @@ export class MasterListComponent implements AfterViewInit {
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
     private titleService: Title,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private openaiService: OpenaiService
   ) {
     this.initStore();
 
@@ -152,6 +155,10 @@ export class MasterListComponent implements AfterViewInit {
       this.masterInfo = pageInfo;
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
+      }
+
+      if (this.masterInfo.fullEntity === 'schema_chunks') {
+        this.isSchemaChunks = true;
       }
 
       const masterListConfig = pageInfo;
@@ -859,6 +866,33 @@ export class MasterListComponent implements AfterViewInit {
     });
   }
 
+  syncTableSchema() {
+    this.loading = true;
+    this.openaiService.syncTableSchema().subscribe((res) => {
+      this.loading = false;
+      if (res.status) {
+        this.toastr.success('Table schema synced successfully', 'Success');
+        this.setPageReload();
+      } else {
+        this.toastr.error('Failed to sync table schema', 'Error');
+      }
+    });
+  }
+
+  generateVectorForAllTable() {
+    this.toastr.info('Syncing table schema..., it may take few minutes', 'Info');
+    this.loading = true;
+    this.openaiService.generateVectorForAllTable().subscribe((res) => {
+      this.loading = false;
+      if (res.status) {
+        this.toastr.success('Table schema synced successfully', 'Success');
+        this.setPageReload();
+      } else {
+        this.toastr.error('Failed to sync table schema', 'Error');
+      }
+    });
+  }
+
   generateVector(item: any) {
     if (this.masterInfo.permissions.generate_vector) {
       Swal.fire({
@@ -870,10 +904,25 @@ export class MasterListComponent implements AfterViewInit {
         padding: '2em',
       }).then(async (result) => {
         if (result.value) {
-          console.log('item : ', item);
+          this.loading = true;
+          this.openaiService.generateVectorForTable({ uuid: item.uuid }).subscribe((res) => {
+            this.loading = false;
+            if (res.status) {
+              this.toastr.success('Vector generated successfully', 'Success');
+              this.setPageReload();
+            } else {
+              this.toastr.error('Failed to generate vector', 'Error');
+            }
+          });
         }
       });
     }
+  }
+
+  setPageReload() {
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 
   emailResendItem(item: any) {

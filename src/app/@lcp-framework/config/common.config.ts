@@ -46,8 +46,10 @@ export const commonConfig: any = {
     delete_cron_jobs: 'common/delete-cron-job',
 
     syncTableSchema: 'openai/generate-schema-chunks',
+    generateVector: 'openai/generate-vector',
     generateAiQuery: 'openai/generate-query',
     getResultFromQuery: 'openai/get-response-from-sql',
+    generateVectorForTable: 'openai/generate-vector-for-table',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',

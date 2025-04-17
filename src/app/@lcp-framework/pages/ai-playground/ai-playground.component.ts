@@ -189,19 +189,6 @@ export class AiPlaygroundComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.populateTableSchema(res.data);
-        //   if (res.status && res.data.length) {
-        //     let firstColumn = res.data[0];
-        //   this.aiResultTableConfig.columns = Object.keys(firstColumn).map((key) => ({
-        //     key: key,
-        //     label: key,
-        //     sortable: true,
-        //     searchable: true,
-        //   }));
-        // }
-        //   this.tableResponse = [];
-        //   this.tableResponse = res.data;
-        //   this.tempTableResponse = this.tableResponse;
-        //   this.isTableShow = true;
       },
       error: (err) => {
         this.loading = false;
@@ -245,19 +232,6 @@ export class AiPlaygroundComponent implements OnInit {
     this.tableResponse = result;
     this.tempTableResponse = this.tableResponse;
     this.isTableShow = true;
-  }
-
-  syncTableSchema() {
-    this.toastr.info('Syncing table schema..., it may take few minutes', 'Info');
-    this.loading = true;
-    this.openaiService.syncTableSchema().subscribe((res) => {
-      this.loading = false;
-      if (res.status) {
-        this.toastr.success('Table schema synced successfully', 'Success');
-      } else {
-        this.toastr.error('Failed to sync table schema', 'Error');
-      }
-    });
   }
 
   onQueryDataChange(data: any[]) {
