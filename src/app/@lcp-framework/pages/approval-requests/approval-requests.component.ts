@@ -687,7 +687,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
                   AND apjw1.status_id != 3
                   AND (
                     apjwu1.id IS NOT NULL                          -- directly assigned
-                    OR (apjw1.reviewed_by = 8 AND d.id IS NOT NULL) -- acted as delegate
+                    OR (apjw1.reviewed_by = ${this.user_info.main.id} AND d.id IS NOT NULL) -- acted as delegate
                   )
               )
               AND (
