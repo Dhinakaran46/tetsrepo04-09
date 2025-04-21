@@ -111,7 +111,7 @@ export class MasterListComponent implements AfterViewInit {
   processStatuses: any = {
     submitted: {
       value: 'table_process_status_val_0',
-      border_color: 'badge-outline-success',
+      border_color: 'badge-outline-primary',
     },
     approved: {
       value: 'table_process_status_val_1',
@@ -119,7 +119,7 @@ export class MasterListComponent implements AfterViewInit {
     },
     rejected: {
       value: 'table_process_status_val_2',
-      border_color: 'badge-outline-secondary',
+      border_color: 'badge-outline-danger',
     },
     under_approval: {
       value: 'table_process_status_val_3',

@@ -211,56 +211,64 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
 
   setHeader() {
     this.headerColumnData = [
-      {
-        header: 'id',
-        clause_type: 'where',
-        field_value: 'approval_process_job_workflow_users.id',
-        is_sortable: 'false',
-        column_order: '0.00',
-        column_width: '0.00',
-        is_searchable: 'false',
-        is_grid_column: 'false',
-      },
-      {
-        header: 'uuid',
-        clause_type: 'where',
-        field_value: 'approval_process_job_workflow_users.uuid',
-        is_sortable: 'false',
-        column_order: '0.00',
-        column_width: '0.00',
-        is_searchable: 'false',
-        is_grid_column: 'false',
-      },
+      ...(this.activeTab !== Tabs.pending
+        ? [
+            {
+              header: 'id',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflow_users.id',
+              is_sortable: 'false',
+              column_order: '0.00',
+              column_width: '0.00',
+              is_searchable: 'false',
+              is_grid_column: 'false',
+            },
+            {
+              header: 'uuid',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflow_users.uuid',
+              is_sortable: 'false',
+              column_order: '0.00',
+              column_width: '0.00',
+              is_searchable: 'false',
+              is_grid_column: 'false',
+            },
+          ]
+        : []),
       {
         header: 'description',
         clause_type: 'where',
-        field_value: 'apjw.approval_process_job_description',
+        field_value: 'approval_process_job_workflows.approval_process_job_description',
         is_sortable: 'true',
         column_order: '1.00',
         column_width: '1.00',
         is_searchable: 'true',
         is_grid_column: 'true',
       },
-      {
-        header: 'approver_type',
-        clause_type: 'where',
-        field_value: 'apjw.approver_type',
-        is_sortable: 'true',
-        column_order: '2.00',
-        column_width: '1.00',
-        is_searchable: 'true',
-        is_grid_column: 'true',
-      },
-      {
-        header: 'approval_level',
-        clause_type: 'where',
-        field_value: 'apjw.approver_order_no',
-        is_sortable: 'true',
-        column_order: '3.00',
-        column_width: '1.00',
-        is_searchable: 'true',
-        is_grid_column: 'true',
-      },
+      ...(this.activeTab !== Tabs.pending
+        ? [
+            {
+              header: 'approver_type',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflows.approver_type',
+              is_sortable: 'true',
+              column_order: '2.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'approval_level',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflows.approver_order_no',
+              is_sortable: 'true',
+              column_order: '3.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+          ]
+        : []),
       ...(this.activeTab === Tabs.delegated_on_me
         ? [
             {
@@ -364,7 +372,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             {
               header: 'review_status',
               clause_type: 'where',
-              field_value: 'apjw.review_status',
+              field_value: 'approval_process_job_workflows.review_status',
               is_sortable: 'true',
               column_order: '11.00',
               column_width: '1.00',
@@ -374,7 +382,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             {
               header: 'reason',
               clause_type: 'where',
-              field_value: 'apjw.reason',
+              field_value: 'approval_process_job_workflows.reason',
               is_sortable: 'true',
               column_order: '12.00',
               column_width: '1.00',
@@ -383,20 +391,20 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             },
           ]
         : []),
-      {
-        header: 'status',
-        clause_type: 'where',
-        field_value: 'approval_process_job_workflow_users.status_id',
-        is_sortable: 'true',
-        column_order: '13.00',
-        column_width: '1.00',
-        is_searchable: 'false',
-        is_grid_column: 'true',
-      },
+      // {
+      //   header: 'status',
+      //   clause_type: 'where',
+      //   field_value: 'approval_process_job_workflow_users.status_id',
+      //   is_sortable: 'true',
+      //   column_order: '13.00',
+      //   column_width: '1.00',
+      //   is_searchable: 'false',
+      //   is_grid_column: 'true',
+      // },
       {
         header: 'screen_id',
         clause_type: 'where',
-        field_value: 'apjw.screen_id',
+        field_value: 'approval_process_job_workflows.screen_id',
         is_sortable: 'false',
         column_order: '0.00',
         column_width: '0.00',
@@ -406,52 +414,60 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       {
         header: 'url',
         clause_type: 'where',
-        field_value: 'apjw.url',
+        field_value: 'approval_process_job_workflows.url',
         is_sortable: 'false',
         column_order: '16.00',
         column_width: '1.00',
         is_searchable: 'false',
         is_grid_column: 'false',
       },
-      {
-        header: 'approval_process_job_workflow_id',
-        clause_type: 'where',
-        field_value: 'approval_process_job_workflow_users.approval_process_job_workflow_id',
-        is_sortable: 'false',
-        column_order: '0.00',
-        column_width: '0.00',
-        is_searchable: 'false',
-        is_grid_column: 'false',
-      },
+      ...(this.activeTab !== Tabs.pending
+        ? [
+            {
+              header: 'approval_process_job_workflow_id',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflow_users.approval_process_job_workflow_id',
+              is_sortable: 'false',
+              column_order: '0.00',
+              column_width: '0.00',
+              is_searchable: 'false',
+              is_grid_column: 'false',
+            },
+          ]
+        : []),
       {
         header: 'approval_process_job_id',
         clause_type: 'where',
-        field_value: 'apjw.approval_process_job_id',
+        field_value: 'approval_process_job_workflows.approval_process_job_id',
         is_sortable: 'false',
         column_order: '0.00',
         column_width: '0.00',
         is_searchable: 'false',
         is_grid_column: 'false',
       },
-      {
-        header: 'approvers',
-        clause_type: 'where',
-        field_value: `(
-          SELECT string_agg(u3.email, ', ')
-          FROM users u3
-          WHERE u3.id IN (
-            SELECT apjwu1.user_id 
-            FROM approval_process_job_workflow_users apjwu1 
-            WHERE apjwu1.approval_process_job_workflow_id = approval_process_job_workflow_users.approval_process_job_workflow_id
-              AND apjwu1.status_id != 3
-          )
-        )`,
-        is_sortable: 'false',
-        column_order: '0.00',
-        column_width: '0.00',
-        is_searchable: 'false',
-        is_grid_column: 'false',
-      },
+      ...(this.activeTab !== Tabs.pending
+        ? [
+            {
+              header: 'approvers',
+              clause_type: 'where',
+              field_value: `(
+            SELECT string_agg(u3.email, ', ')
+            FROM users u3
+            WHERE u3.id IN (
+              SELECT apjwu1.user_id 
+              FROM approval_process_job_workflow_users apjwu1 
+              WHERE apjwu1.approval_process_job_workflow_id = approval_process_job_workflow_users.approval_process_job_workflow_id
+                AND apjwu1.status_id != 3
+            )
+          )`,
+              is_sortable: 'false',
+              column_order: '0.00',
+              column_width: '0.00',
+              is_searchable: 'false',
+              is_grid_column: 'false',
+            },
+          ]
+        : []),
     ];
   }
 
@@ -463,36 +479,37 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         primary_table: 'approval_process_job_workflow_users',
         start_index: 0,
         limit_range: 10,
-        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        sort_columns: [['approval_process_job_workflows.id', 'desc']],
         group_by: [
+          'approval_process_job_workflows.id',
           'approval_process_job_workflow_users.id',
-          'apjw.approval_process_job_description',
+          'approval_process_job_workflows.approval_process_job_description',
           'ud1.first_name',
           'ud1.last_name',
           'u1.email',
           'u2.email',
-          'apjw.review_status',
-          'apjw.approver_type',
-          'apjw.approver_order_no',
-          'apjw.reason',
+          'approval_process_job_workflows.review_status',
+          'approval_process_job_workflows.approver_type',
+          'approval_process_job_workflows.approver_order_no',
+          'approval_process_job_workflows.reason',
           'approval_process_job_workflow_users.status_id',
-          'apjw.screen_id',
-          'apjw.url',
+          'approval_process_job_workflows.screen_id',
+          'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
-          'apjw.approval_process_job_id',
+          'approval_process_job_workflows.approval_process_job_id',
         ],
         includes: [
           {
             join_type: 'INNER',
-            table_name: 'approval_process_job_workflows apjw',
-            join_condition: `apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
-              AND apjw.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
-              AND apjw.status_id != 3`,
+            table_name: 'approval_process_job_workflows',
+            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+              AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
+              AND approval_process_job_workflows.status_id != 3`,
           },
           {
             join_type: 'LEFT',
             table_name: 'users u1',
-            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -502,7 +519,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'LEFT',
             table_name: 'users u2',
-            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -530,26 +547,21 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       pending: {
         print_query: true,
         company_id: 1,
-        primary_table: 'approval_process_job_workflow_users',
+        primary_table: 'approval_process_job_workflows',
         start_index: 0,
         limit_range: 10,
-        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        sort_columns: [['approval_process_job_workflows.id', 'desc']],
         group_by: [
-          'approval_process_job_workflow_users.id',
-          'apjw.approval_process_job_description',
+          'approval_process_job_workflows.id',
+          'approval_process_job_workflows.approval_process_job_description',
           'ud1.first_name',
           'ud1.last_name',
           'u1.email',
           'u2.email',
-          'apjw.review_status',
-          'apjw.approver_type',
-          'apjw.approver_order_no',
-          'apjw.reason',
-          'approval_process_job_workflow_users.status_id',
-          'apjw.screen_id',
-          'apjw.url',
-          'approval_process_job_workflow_users.approval_process_job_workflow_id',
-          'apjw.approval_process_job_id',
+          'approval_process_job_workflows.reason',
+          'approval_process_job_workflows.screen_id',
+          'approval_process_job_workflows.url',
+          'approval_process_job_workflows.approval_process_job_id',
           'pending.approver_type',
           'pending.approver_order_no',
           'pending.pending_approvers',
@@ -557,22 +569,26 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         includes: [
           {
             join_type: 'INNER',
-            table_name: 'approval_process_job_workflows apjw',
-            join_condition: `apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
-              AND (
-                SELECT COUNT(*)
-                FROM approval_process_job_workflows apjw1
-                WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
-                  AND apjw1.review_status = 'approval_needed'
-                  AND apjw1.status_id != 3
-                  AND apjw1.company_id = approval_process_job_workflow_users.company_id
-              ) = 1
-              AND apjw.status_id != 3`,
+            table_name: `(
+              SELECT DISTINCT
+                apjw_inner.approval_process_job_id,
+                apjw_inner.company_id
+                FROM approval_process_job_workflow_users apjwu
+                INNER JOIN approval_process_job_workflows apjw_inner
+                  ON apjwu.company_id = apjw_inner.company_id
+                AND apjwu.approval_process_job_workflow_id = apjw_inner.id
+                WHERE apjwu.user_id = ${this.user_info.main?.id}
+                  AND apjwu.status_id !=3
+                  AND apjwu.company_id = 1
+              ) user_jobs`,
+            join_condition: `approval_process_job_workflows.approval_process_job_id = user_jobs.approval_process_job_id 
+              AND approval_process_job_workflows.company_id = user_jobs.company_id
+              AND approval_process_job_workflows.status_id != 3`,
           },
           {
             join_type: 'LEFT',
             table_name: 'users u1',
-            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -582,7 +598,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'LEFT',
             table_name: 'users u2',
-            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -601,14 +617,13 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
                     WHERE apjwu1.approval_process_job_workflow_id = awf.id
                       AND apjwu1.status_id != 3
                   )
-                ) AS pending_approvers
+                ) pending_approvers
               FROM approval_process_job_workflows awf
-              WHERE awf.approval_process_job_id = apjw.approval_process_job_id
+              WHERE awf.approval_process_job_id = approval_process_job_workflows.approval_process_job_id
                 AND awf.review_status = 'approval_needed'
                 AND awf.status_id != 3
-                AND awf.company_id = approval_process_job_workflow_users.company_id
+                AND awf.company_id = approval_process_job_workflows.company_id
               ORDER BY awf.approver_order_no ASC
-              LIMIT 1
             ) pending`,
             join_condition: 'true',
           },
@@ -617,13 +632,18 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         // having_any_conditions: null,
         search_all: [
           {
-            column_name: 'approval_process_job_workflow_users.status_id',
+            column_name: 'approval_process_job_workflows.review_status',
+            value: 'approval_needed',
+            operator: '=',
+          },
+          {
+            column_name: 'approval_process_job_workflows.status_id',
             value: 3,
             operator: '!=',
           },
           {
-            column_name: 'approval_process_job_workflow_users.user_id',
-            value: this.user_info.main.id,
+            column_name: 'approval_process_job_workflows.company_id',
+            value: 1,
             operator: '=',
           },
         ],
@@ -636,63 +656,87 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         primary_table: 'approval_process_job_workflow_users',
         start_index: 0,
         limit_range: 10,
-        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        sort_columns: [['approval_process_job_workflows.id', 'desc']],
         group_by: [
+          'approval_process_job_workflows.id',
           'approval_process_job_workflow_users.id',
-          'apjw.approval_process_job_description',
+          'approval_process_job_workflows.approval_process_job_description',
           'ud1.first_name',
           'ud1.last_name',
           'u1.email',
           'u2.email',
-          'apjw.review_status',
-          'apjw.approver_type',
-          'apjw.approver_order_no',
-          'apjw.reason',
+          'approval_process_job_workflows.review_status',
+          'approval_process_job_workflows.approver_type',
+          'approval_process_job_workflows.approver_order_no',
+          'approval_process_job_workflows.reason',
           'approval_process_job_workflow_users.status_id',
-          'apjw.screen_id',
-          'apjw.url',
+          'approval_process_job_workflows.screen_id',
+          'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
-          'apjw.approval_process_job_id',
+          'approval_process_job_workflows.approval_process_job_id',
         ],
         includes: [
           {
             join_type: 'INNER',
-            table_name: 'approval_process_job_workflows apjw',
-            join_condition: `apjw.status_id != 3
+            table_name: 'approval_process_job_workflows',
+            join_condition: `
+              approval_process_job_workflows.company_id = approval_process_job_workflow_users.company_id 
+              AND approval_process_job_workflows.status_id != 3
+              AND approval_process_job_workflows.approval_process_job_id IN (
+                select
+                  apjw1.approval_process_job_id
+                FROM
+                  approval_process_job_workflow_users apjwu1
+                  INNER JOIN approval_process_job_workflows apjw1 ON apjw1.id = apjwu1.approval_process_job_workflow_id
+                WHERE
+                  apjwu1.user_id = ${this.user_info.main.id}
+                  AND apjwu1.status_id != 3
+                  AND apjwu1.company_id = approval_process_job_workflow_users.company_id
+              )
               AND (
-                -- Case 1: Exactly one rejected
-                (
-                  apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id
-                  AND apjw.review_status = 'approval_rejected'
-                )
-                OR
-                -- Case 2: All steps completed and current row is the last one
-                (
-                  (SELECT COUNT(*)
-                  FROM approval_process_job_workflows apjw1
-                  WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
-                    AND apjw1.review_status = 'approval_completed'
-                    AND apjw1.status_id != 3
-                    AND apjw1.company_id = approval_process_job_workflow_users.company_id) =
-                  (SELECT COUNT(*)
-                  FROM approval_process_job_workflows apjw1
-                  WHERE apjw1.approval_process_job_id = apjw.approval_process_job_id
-                    AND apjw1.status_id != 3
-                    AND apjw1.company_id = approval_process_job_workflow_users.company_id)
-                  AND apjw.approver_order_no = (
-                    SELECT MAX(approver_order_no)
-                    FROM approval_process_job_workflows apjw2
-                    WHERE apjw2.approval_process_job_id = apjw.approval_process_job_id
+                approval_process_job_workflows.review_status = 'approval_rejected'
+                OR (
+                  approval_process_job_workflows.review_status = 'approval_completed'
+                  AND approval_process_job_workflows.approver_order_no = (
+                    SELECT
+                      MAX(approver_order_no)
+                    FROM
+                      approval_process_job_workflows apjw2
+                    WHERE
+                      apjw2.approval_process_job_id = approval_process_job_workflows.approval_process_job_id
                       AND apjw2.status_id != 3
                       AND apjw2.company_id = approval_process_job_workflow_users.company_id
                   )
+                  AND (
+                    SELECT
+                      COUNT(*)
+                    FROM
+                      approval_process_job_workflows apjw3
+                    WHERE
+                      apjw3.approval_process_job_id = approval_process_job_workflows.approval_process_job_id
+                      AND apjw3.status_id != 3
+                      AND apjw3.company_id = approval_process_job_workflow_users.company_id
+                      AND apjw3.review_status = 'approval_completed'
+                  ) = (
+                    SELECT
+                      COUNT(*)
+                    FROM
+                      approval_process_job_workflows apjw4
+                    WHERE
+                      apjw4.approval_process_job_id = approval_process_job_workflows.approval_process_job_id
+                      AND apjw4.status_id != 3
+                      AND apjw4.company_id = approval_process_job_workflow_users.company_id
+                  )
                 )
-              )`,
+              )
+              AND approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id
+              AND approval_process_job_workflows.reviewed_by = approval_process_job_workflow_users.user_id
+            `,
           },
           {
             join_type: 'LEFT',
             table_name: 'users u1',
-            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -702,7 +746,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'LEFT',
             table_name: 'users u2',
-            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -715,12 +759,12 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         search_all: [
           {
             column_name: 'approval_process_job_workflow_users.status_id',
-            value: 3,
-            operator: '!=',
+            value: 1,
+            operator: '=',
           },
           {
-            column_name: 'approval_process_job_workflow_users.user_id',
-            value: this.user_info.main.id,
+            column_name: 'approval_process_job_workflow_users.company_id',
+            value: 1,
             operator: '=',
           },
         ],
@@ -733,23 +777,24 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         primary_table: 'approval_process_job_workflow_users',
         start_index: 0,
         limit_range: 10,
-        sort_columns: [['approval_process_job_workflow_users.id', 'desc']],
+        sort_columns: [['approval_process_job_workflows.id', 'desc']],
         group_by: [
+          'approval_process_job_workflows.id',
           'approval_process_job_workflow_users.id',
-          'apjw.approval_process_job_description',
+          'approval_process_job_workflows.approval_process_job_description',
           'ud1.first_name',
           'ud1.last_name',
           'u1.email',
           'u2.email',
-          'apjw.review_status',
-          'apjw.approver_type',
-          'apjw.approver_order_no',
-          'apjw.reason',
+          'approval_process_job_workflows.review_status',
+          'approval_process_job_workflows.approver_type',
+          'approval_process_job_workflows.approver_order_no',
+          'approval_process_job_workflows.reason',
           'approval_process_job_workflow_users.status_id',
-          'apjw.screen_id',
-          'apjw.url',
+          'approval_process_job_workflows.screen_id',
+          'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
-          'apjw.approval_process_job_id',
+          'approval_process_job_workflows.approval_process_job_id',
           'u_delegator.email',
           'd.start_date',
           'd.end_date',
@@ -766,15 +811,15 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'INNER',
-            table_name: 'approval_process_job_workflows apjw',
-            join_condition: `apjw.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
-              AND apjw.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
-              AND apjw.status_id != 3`,
+            table_name: 'approval_process_job_workflows',
+            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+              AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
+              AND approval_process_job_workflows.status_id != 3`,
           },
           {
             join_type: 'LEFT',
             table_name: 'users u1',
-            join_condition: 'u1.id = apjw.user_id AND u1.status_id != 3',
+            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -784,7 +829,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'LEFT',
             table_name: 'users u2',
-            join_condition: 'u2.id = apjw.reviewed_by AND u2.status_id != 3',
+            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
           },
           {
             join_type: 'LEFT',
@@ -1035,7 +1080,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 2,
         status_id: 1,
         company_id: 1,
-        field: 'apjw.approval_process_job_description',
+        field: 'approval_process_job_workflows.approval_process_job_description',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('job_description'),
@@ -1048,7 +1093,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 3,
         status_id: 1,
         company_id: 1,
-        field: 'apjw.approver_type',
+        field: 'approval_process_job_workflows.approver_type',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('approver_type'),
@@ -1061,7 +1106,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 4,
         status_id: 1,
         company_id: 1,
-        field: 'apjw.approver_order_no',
+        field: 'approval_process_job_workflows.approver_order_no',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('approval_level'),
@@ -1102,7 +1147,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               order_no: 6,
               status_id: 1,
               company_id: 1,
-              field: 'apjw.reason',
+              field: 'approval_process_job_workflows.reason',
               clause_type: 'where',
               sorting: true,
               title: this.translate.instant('reason'),
@@ -1115,7 +1160,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               order_no: 7,
               status_id: 1,
               company_id: 1,
-              field: 'apjw.review_status',
+              field: 'approval_process_job_workflows.review_status',
               clause_type: 'where',
               sorting: true,
               title: this.translate.instant('review_status'),
@@ -1157,7 +1202,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 9,
         status_id: 1,
         company_id: 1,
-        field: 'apjw.review_status',
+        field: 'approval_process_job_workflows.review_status',
         clause_type: 'where',
         sorting: false,
         title: this.translate.instant('review_status'),
@@ -1453,7 +1498,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
 
   viewItem(item: any) {
     if (this.masterInfo.children.details) {
-      const targetRoute = this.masterInfo.children.details.target.replace(':uuid', item.uuid);
+      const targetRoute = this.masterInfo.children.details.target.replace(':uuid', item.approval_process_job_id);
       this.router.navigate([targetRoute]);
     }
   }
@@ -1502,7 +1547,6 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
 
       const isWithinRange = nowUtc >= startUtc && nowUtc <= endUtc;
 
-      console.log('isWithinRange', nowUtc, isWithinRange, startUtc, endUtc);
       if (!isWithinRange) return;
     }
 

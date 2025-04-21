@@ -49,7 +49,7 @@ export class FormBuilderComponent implements OnInit {
   processStatuses: any = {
     submitted: {
       value: 'table_process_status_val_0',
-      border_color: 'badge-outline-success',
+      border_color: 'badge-outline-primary',
     },
     approved: {
       value: 'table_process_status_val_1',
@@ -57,7 +57,7 @@ export class FormBuilderComponent implements OnInit {
     },
     rejected: {
       value: 'table_process_status_val_2',
-      border_color: 'badge-outline-secondary',
+      border_color: 'badge-outline-danger',
     },
     under_approval: {
       value: 'table_process_status_val_3',

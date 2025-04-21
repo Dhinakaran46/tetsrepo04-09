@@ -429,7 +429,6 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
 
   getTags(formGroup: any, index: number, tag_name?: string) {
     // const mappedTags = this.fetchMappedData('tag', index);
-    // console.log('tag', formGroup.getRawValue(), mappedTags);
     let payload = {
       company_id: 1,
       search_all: [
@@ -477,7 +476,6 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   }
 
   submit(): void {
-    console.log(this.form.getRawValue(), this.form.errors, this.form.valid);
     if (this.form.valid) {
       const payload: any = {
         data: {
