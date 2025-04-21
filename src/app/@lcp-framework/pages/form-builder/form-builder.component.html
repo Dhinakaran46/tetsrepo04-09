@@ -5,22 +5,53 @@
         <h5 class="text-lg font-semibold dark:text-white-light">{{ formEntity?.entity_name | translate }}</h5>
         <button
           type="button"
-          class="btn-danger mr-5 rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
+          class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
           (click)="location.back()"
         >
           {{ 'back' | translate }}
         </button>
       </div>
       <div class="mb-5">
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <form [formGroup]="form" (ngSubmit)="onSubmit(false)" novalidate>
+          <div class="mb-5 flex flex-wrap items-center justify-end gap-2">
+            <span
+              class="badge badge-outline-secondary"
+              *ngIf="isDrafted"
+              [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
+            >
+              {{ 'draft' | translate }}
+            </span>
+            <span
+              class="badge"
+              [ngClass]="[
+                store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
+                processStatuses[processStatus]?.border_color
+              ]"
+              *ngIf="processStatus && processStatus != 'submitted'"
+            >
+              {{ processStatuses[processStatus].value | translate }}
+            </span>
+          </div>
           <formly-form [form]="form" [fields]="fields" [options]="options" [model]="model"></formly-form>
-          <button
-            type="submit"
-            class="btn-primary mx-auto flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-            *ngIf="entity_type !== 'details'"
-          >
-            {{ 'submit' | translate }}
-          </button>
+          <div class="flex flex-wrap justify-center gap-5">
+            <button
+              type="button"
+              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              *ngIf="entity_type !== 'details' && draftMode"
+              [disabled]="isDisabled"
+              (click)="onSubmit(true)"
+            >
+              {{ 'save_as_draft' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              *ngIf="entity_type !== 'details'"
+              [disabled]="isDisabled"
+            >
+              {{ 'submit' | translate }}
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -81,10 +81,15 @@ export const search_conditions: any = commonConfig.search_conditions;
             props: {
               label: 'Status',
               required: true,
-              options: [
-                { value: 1, label: 'Active', class: 'inline-flex' },
-                { value: 2, label: 'In Active', class: 'inline-flex' },
-              ],
+            },
+            expressionProperties: {
+              'props.options': (model: any, formState: any) => {
+                const opts = [
+                  { value: 1, label: 'Active', class: 'inline-flex' },
+                  { value: 2, label: 'In Active', class: 'inline-flex' },
+                ];
+                return opts;
+              },
             },
           },
         },
