@@ -12,9 +12,15 @@
   </div>
   <div class="max-w mx-auto flex flex-col gap-4 p-4">
     <div class="flex flex-col gap-2">
-      <p class="text-sm text-gray-600"><span class="text-base font-medium text-black">Name : </span>{{ approvalSteps[0]?.name || 'N/A' }}</p>
-      <p class="text-sm text-gray-600"><span class="text-base font-medium text-black">Description : </span>{{ approvalSteps[0]?.description || 'N/A' }}</p>
-      <p class="text-sm text-gray-600"><span class="text-base font-medium text-black">Requested By : </span>{{ approvalSteps[0]?.requested_by || 'N/A' }}</p>
+      <p class="text-sm text-gray-600" appDynamicFontSize="body">
+        <span appDynamicFontSize="body" class="text-base font-medium text-black">Name : </span>{{ approvalSteps[0]?.name || 'N/A' }}
+      </p>
+      <p class="text-sm text-gray-600" appDynamicFontSize="body">
+        <span appDynamicFontSize="body" class="text-base font-medium text-black">Description : </span>{{ approvalSteps[0]?.description || 'N/A' }}
+      </p>
+      <p class="text-sm text-gray-600" appDynamicFontSize="body">
+        <span appDynamicFontSize="body" class="text-base font-medium text-black">Requested By : </span>{{ approvalSteps[0]?.requested_by || 'N/A' }}
+      </p>
     </div>
     <div class="flex justify-center p-5">
       <div class="relative flex w-full max-w-3xl flex-col">
@@ -40,9 +46,10 @@
             <!-- Content -->
             <div class="flex-1 space-y-1">
               <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <p class="text-base font-medium">Approver {{ step.approver_order_no }}</p>
+                <p class="text-base font-medium" appDynamicFontSize="body">Approver {{ step.approver_order_no }}</p>
                 <div>
                   <span
+                    appDynamicFontSize="body"
                     class="inline-block rounded px-3 py-1 text-xs font-semibold"
                     [ngClass]="{
                       'bg-green-100 text-green-800': step.review_status === 'approval_completed',
@@ -56,11 +63,11 @@
                   </span>
                 </div>
               </div>
-              <p class="text-sm text-gray-600">Type: {{ approverTypes[step.approver_type] }}</p>
-              <p class="text-sm text-gray-600">Assigned At: {{ step?.assigned_at || 'N/A' }}</p>
-              <p class="text-sm text-gray-600">Processed At: {{ step?.processed_at || 'N/A' }}</p>
-              <p class="text-sm text-gray-600">Reviewed By: {{ step?.reviewed_by || 'N/A' }}</p>
-              <p class="text-sm text-gray-600">Reason: {{ step?.reason || 'N/A' }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Type: {{ approverTypes[step.approver_type] }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Assigned At: {{ step?.assigned_at || 'N/A' }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Processed At: {{ step?.processed_at || 'N/A' }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Reviewed By: {{ step?.reviewed_by || 'N/A' }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Reason: {{ step?.reason || 'N/A' }}</p>
             </div>
           </div>
         </ng-container>
