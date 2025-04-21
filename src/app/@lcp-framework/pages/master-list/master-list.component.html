@@ -115,6 +115,17 @@
       >
         <i class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        appDynamicFontSize="body"
+        *ngIf="this.masterInfo.permissions.generate_vector"
+        (click)="this.generateVector(item)"
+        ngxTippy
+        data-tippy-content="Generate Vector"
+      >
+        <i class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
 
       <a
         href="javascript:void(0);"
@@ -142,14 +153,21 @@
   <ng-template #statusTemplate let-item>
     <span
       class="badge"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color]"
+    >
+      {{ statuses[item.status].value | translate }}
+    </span>
+  </ng-template>
+
+  <ng-template #processStatusTemplate let-item>
+    <span
+      class="badge"
       [ngClass]="[
         store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
-        item.status ? 'badge-outline-success' : 'badge-outline-danger'
+        processStatuses[item.process_status]?.border_color
       ]"
     >
-      {{
-        item.status == '1' ? ('table_status_val_0' | translate) : item.status == '2' ? ('table_status_val_1' | translate) : ('table_status_val_2' | translate)
-      }}
+      {{ processStatuses[item.process_status].value | translate }}
     </span>
   </ng-template>
 

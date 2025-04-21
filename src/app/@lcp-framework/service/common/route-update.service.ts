@@ -84,6 +84,7 @@ export class RouteUpdateService {
               const printPermissionKey = `print_${routeData.entity_name}`;
               const recordExportPermissionKey = `record_export_${routeData.entity_name}`;
               const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
+              const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -167,6 +168,7 @@ export class RouteUpdateService {
                   import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
                 entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
                 about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
+                ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
                 language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
                 job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
@@ -181,6 +183,11 @@ export class RouteUpdateService {
                 user_role_policy_module: () => import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
                 email_template_assignment_module: () =>
                   import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
+                approval_workflow_assignment_module: () =>
+                  import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
+                approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
+                approval_requests_tracking_module: () =>
+                  import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
               };
 
               const route: Route = {
@@ -195,6 +202,7 @@ export class RouteUpdateService {
                     title: routeData.entity_name,
                     Listname: routeData.entity_name,
                     action_slug: routeData.action_slug,
+                    draft_mode: routeData.draft_mode,
                     ListQuery: {
                       print_query: true,
                       company_id: 0,
@@ -216,6 +224,7 @@ export class RouteUpdateService {
                       print: permissionListJSON[printPermissionKey] || false,
                       record_export: permissionListJSON[recordExportPermissionKey] || false,
                       email_resend: permissionListJSON[emailResendPermissionKey] || false,
+                      generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
                     },
                     children: children,
                   },

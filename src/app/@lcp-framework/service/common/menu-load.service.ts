@@ -160,6 +160,7 @@ export class MenuLoadService {
         ['master_entities.primary_table'],
         ['master_entities.entity_type', 'component_class_name'],
         ['master_entities.entity_name'],
+        ['master_entities.draft_mode'],
         ['master_entities.static_page_content'],
         ['permissions.name', 'action_slug'],
       ],

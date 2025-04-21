@@ -23,6 +23,7 @@ import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
+import { OpenaiService } from '../../service/common/openai.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -59,6 +60,7 @@ export class MasterListComponent implements AfterViewInit {
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
+  @ViewChild('processStatusTemplate') processStatusTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadVideoURLTemplate') linkDownloadVideoURLTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadPdfURLTemplate') linkDownloadPdfURLTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadWordURLTemplate') linkDownloadWordURLTemplate!: TemplateRef<any>;
@@ -92,6 +94,39 @@ export class MasterListComponent implements AfterViewInit {
   config: any;
   attachedPolicies: any[] = [];
   apiUrl = environment.apiUrl;
+  statuses: any = {
+    1: {
+      value: 'table_status_val_0',
+      border_color: 'badge-outline-success',
+    },
+    2: {
+      value: 'table_status_val_1',
+      border_color: 'badge-outline-danger',
+    },
+    3: {
+      value: 'table_status_val_2',
+      border_color: 'badge-outline-secondary',
+    },
+  };
+
+  processStatuses: any = {
+    submitted: {
+      value: 'table_process_status_val_0',
+      border_color: 'badge-outline-primary',
+    },
+    approved: {
+      value: 'table_process_status_val_1',
+      border_color: 'badge-outline-success',
+    },
+    rejected: {
+      value: 'table_process_status_val_2',
+      border_color: 'badge-outline-danger',
+    },
+    under_approval: {
+      value: 'table_process_status_val_3',
+      border_color: 'badge-outline-warning',
+    },
+  };
 
   constructor(
     private toastr: ToastrService,
@@ -109,7 +144,8 @@ export class MasterListComponent implements AfterViewInit {
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
     private titleService: Title,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private openaiService: OpenaiService
   ) {
     this.initStore();
 
@@ -399,6 +435,8 @@ export class MasterListComponent implements AfterViewInit {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
+        } else if (header.header == 'process_status') {
+          transformedRecord[translatedHeader] = this.getProcessStatusTranslation(record[header.header]);
         } else {
           transformedRecord[translatedHeader] = record[header.header];
         }
@@ -411,13 +449,11 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   private getStatusTranslation(status: string): string {
-    if (status == '1') {
-      return this.translate.instant('table_status_val_0');
-    } else if (status == '2') {
-      return this.translate.instant('table_status_val_1');
-    } else {
-      return this.translate.instant('table_status_val_2');
-    }
+    return this.translate.instant(this.statuses[status].value);
+  }
+
+  private getProcessStatusTranslation(status: string): string {
+    return this.translate.instant(this.processStatuses[status].value);
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
@@ -568,6 +604,11 @@ export class MasterListComponent implements AfterViewInit {
                 return {
                   ...item,
                   customTemplate: this.statusTemplate,
+                };
+              } else if (item.header === 'process_status') {
+                return {
+                  ...item,
+                  customTemplate: this.processStatusTemplate,
                 };
               } else if (item.header === 'table_column_action') {
                 return {
@@ -857,6 +898,38 @@ export class MasterListComponent implements AfterViewInit {
         }
       }
     });
+  }
+
+  generateVector(item: any) {
+    if (this.masterInfo.permissions.generate_vector) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Generate Vector?',
+        text: 'are you sure, you want to generate vector?',
+        showCancelButton: true,
+        confirmButtonText: 'Generate',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          this.loading = true;
+          this.openaiService.generateVectorForTable({ uuid: item.uuid }).subscribe((res) => {
+            this.loading = false;
+            if (res.status) {
+              this.toastr.success('Vector generated successfully', 'Success');
+              this.setPageReload();
+            } else {
+              this.toastr.error('Failed to generate vector', 'Error');
+            }
+          });
+        }
+      });
+    }
+  }
+
+  setPageReload() {
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 
   emailResendItem(item: any) {

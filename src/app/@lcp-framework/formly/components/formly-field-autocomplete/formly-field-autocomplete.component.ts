@@ -20,7 +20,34 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
 
   ngOnInit() {
     this.initializeOptions();
+    this.initOnchanges(this);
     this.searchSubject.next(''); // Trigger initial search to load default options
+  }
+
+  initOnchanges(context: any) {
+    const refreshKeys: string[] = Array.isArray(this.props['refresh']) ? this.props['refresh'] : [this.props['refresh']];
+
+    if (refreshKeys.length) {
+      refreshKeys.forEach((refreshKey) => {
+        if (refreshKey) {
+          try {
+            // Safely evaluate the expression passed in 'refresh' key
+            const getControlFunction = new Function('context', `with(context) { return ${refreshKey.replace(/this\./g, 'context.')}; }`);
+
+            // Evaluate 'refresh' field string in the context of the current class
+            const parentFormControl = getControlFunction(this) as FormControl | undefined;
+
+            if (parentFormControl) {
+              parentFormControl.valueChanges?.subscribe((newValue) => {
+                this.initializeOptions(); // Refresh options when any value changes
+              });
+            }
+          } catch (error) {
+            console.error(`Error evaluating 'refresh' field string for '${refreshKey}':`, error);
+          }
+        }
+      });
+    }
   }
 
   private initializeOptions() {
@@ -53,9 +80,10 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
     if (!tableName || !labelColumn || !valueColumn || !searchTerm || !searchTerm.length) {
       return of([]); // Return early if essential properties are missing
     }
-
     const searchCriteria = this.buildSearchCriteria(searchTerm, valueColumn, labelColumn);
-    const listParams = this.buildListParams(tableName, valueColumn, labelColumn, searchCriteria);
+    let searchConditions = this.props['search_all'] ? JSON.parse(JSON.stringify(this.props['search_all'])) : [];
+    searchConditions = this.evaluateDynamicValues([...searchConditions, searchCriteria], this);
+    const listParams = this.buildListParams(tableName, valueColumn, labelColumn, searchConditions);
 
     return this.gridApiService.getAllList(listParams).pipe(
       map((response) => this.transformResponse(response, valueColumn, labelColumn)),
@@ -65,15 +93,19 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
 
   private buildSearchCriteria(searchTerm: string | any[], valueColumn: string, labelColumn: string) {
     const split = valueColumn.split('::');
-    return typeof searchTerm === 'string'
-      ? { value: `%${searchTerm}%`, operator: 'ILIKE', column_name: labelColumn }
-      : { value: searchTerm, operator: 'IN', column_name: split[0] };
+    let searchValue: any = [];
+    if (typeof searchTerm !== 'string') {
+      searchValue = searchTerm.filter((item) => item);
+    }
+    return searchValue.length
+      ? { value: searchValue, operator: 'IN', column_name: split[0] }
+      : { value: `%${searchTerm || ''}%`, operator: 'ILIKE', column_name: labelColumn };
   }
 
-  private buildListParams(tableName: string, valueColumn: string, labelColumn: string, searchCriteria: any) {
+  private buildListParams(tableName: string, valueColumn: string, labelColumn: string, searchConditions: any) {
     return {
       company_id: 1,
-      search_all: [{ value: '1', operator: '=', column_name: 'status_id' }, searchCriteria],
+      search_all: [{ value: '1', operator: '=', column_name: 'status_id' }, ...searchConditions],
       limit_range: 25,
       print_query: false,
       start_index: 0,
@@ -98,5 +130,30 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
 
   override get formControl(): FormControl {
     return this.form.get(this.field.key as string) as FormControl;
+  }
+
+  evaluateDynamicValues(search_all: any[], context: any): any[] {
+    return search_all.map((item) => {
+      if (typeof item.value === 'string' && item.value.startsWith('this.')) {
+        try {
+          // Safely evaluate the expression and catch undefined properties
+          const dynamicValue = new Function(
+            'context',
+            `with(context) { try { return ${item.value.replace(/this\./g, 'context.')}; } catch (e) { return null; } }`
+          );
+          const evaluatedValue = dynamicValue(context);
+
+          if (evaluatedValue !== undefined) {
+            item.value = evaluatedValue; // Replace value with the dynamically evaluated result
+          } else {
+            console.log('undefined evaluatedValue', item.value);
+            item.value = null;
+          }
+        } catch (error) {
+          console.error(`Error evaluating value: ${item.value}`, error);
+        }
+      }
+      return item;
+    });
   }
 }

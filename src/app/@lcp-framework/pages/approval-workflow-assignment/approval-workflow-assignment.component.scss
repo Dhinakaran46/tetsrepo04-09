@@ -1,0 +1,78 @@
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.grid-cols-1 {
+  grid-template-columns: 1fr;
+}
+
+.md\:grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.email-template-assignments {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.email-template-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.email-template-group {
+  flex: 1;
+}
+
+.email-template-cc-bcc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.min-w-200-p {
+  min-width: 200px;
+}
+
+.monaco-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 50vh; /* Initial height */
+  resize: vertical; /* Allow vertical resizing only */
+  min-height: 60vh; /* Set a minimum height to prevent collapsing */
+  max-height: 100vh; /* Prevent the container from exceeding the viewport height */
+}
+
+.monaco-editor {
+  flex: 1;
+  width: 100%;
+}
+
+.editor-container {
+  position: relative;
+}
+
+.editor-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  cursor: pointer !important;
+  background: transparent;
+  pointer-events: none;
+}
+
+.monaco-editor {
+  cursor: pointer !important;
+}
+
+.monaco-editor .view-line {
+  cursor: pointer !important;
+}

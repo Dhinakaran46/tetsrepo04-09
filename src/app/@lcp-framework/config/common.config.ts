@@ -44,6 +44,12 @@ export const commonConfig: any = {
     restart_cron_jobs: 'common/restart-cron-jobs',
     edit_cron_job: 'common/edit-cron-job',
     delete_cron_jobs: 'common/delete-cron-job',
+
+    syncTableSchema: 'openai/generate-schema-chunks',
+    generateVector: 'openai/generate-vector',
+    generateAiQuery: 'openai/generate-query',
+    getResultFromQuery: 'openai/get-response-from-sql',
+    generateVectorForTable: 'openai/generate-vector-for-table',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -66,7 +72,11 @@ export const commonConfig: any = {
     POLICY_ADD_EDIT_MODULE: 'policy_add_edit_module',
     USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
+    APPROVAL_WORKFLOW_ASSIGNMENT_MODULE: 'approval_workflow_assignment_module',
+    APPROVAL_REQUESTS_MODULE: 'approval_requests_module',
+    APPROVAL_REQUESTS_TRACKING_MODULE: 'approval_requests_tracking_module',
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
+    AI_PLAYGROUND_MODULE: 'ai_playground_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -89,7 +99,11 @@ export const commonConfig: any = {
     policy_add_edit_module: 'policyaddedit',
     user_role_policy_module: 'userrolepolicy',
     email_template_assignment_module: 'emailtemplateassignment',
+    approval_workflow_assignment_module: 'approvalworkflowassignment',
+    approval_requests_module: 'approvalrequests',
+    approval_requests_tracking_module: 'approvalrequeststracking',
     about_lcp_form_module: 'aboutlcpformmodule',
+    ai_playground_module: 'aiplayground',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -124,6 +138,7 @@ export const commonConfig: any = {
     Print: 'print',
     RECORD_EXPORT: 'record_export',
     EMAIL_RESEND: 'email_resend',
+    GENERATE_VECTOR: 'generate_vector',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -154,6 +169,7 @@ export const commonConfig: any = {
     { label: 'Print', value: 'print' },
     { label: 'Record Export', value: 'record_export' },
     { label: 'Resend Email', value: 'email_resend' },
+    { label: 'Generate Vector', value: 'generate_vector' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -177,7 +193,11 @@ export const commonConfig: any = {
     { label: 'Policy Add Edit Module', value: 'policy_add_edit_module' },
     { label: 'User/Role Policy Module', value: 'user_role_policy_module' },
     { label: 'Email Template Assignment Module', value: 'email_template_assignment_module' },
+    { label: 'Approval Workflow Assignment Module', value: 'approval_workflow_assignment_module' },
+    { label: 'Approval Requests Module', value: 'approval_requests_module' },
+    { label: 'Approval Requests Tracking Module', value: 'approval_requests_tracking_module' },
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
+    { label: 'AI Playground Module', value: 'ai_playground_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
