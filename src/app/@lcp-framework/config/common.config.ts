@@ -44,6 +44,12 @@ export const commonConfig: any = {
     restart_cron_jobs: 'common/restart-cron-jobs',
     edit_cron_job: 'common/edit-cron-job',
     delete_cron_jobs: 'common/delete-cron-job',
+
+    syncTableSchema: 'openai/generate-schema-chunks',
+    generateVector: 'openai/generate-vector',
+    generateAiQuery: 'openai/generate-query',
+    getResultFromQuery: 'openai/get-response-from-sql',
+    generateVectorForTable: 'openai/generate-vector-for-table',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -70,6 +76,7 @@ export const commonConfig: any = {
     APPROVAL_REQUESTS_MODULE: 'approval_requests_module',
     APPROVAL_REQUESTS_TRACKING_MODULE: 'approval_requests_tracking_module',
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
+    AI_PLAYGROUND_MODULE: 'ai_playground_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -96,6 +103,7 @@ export const commonConfig: any = {
     approval_requests_module: 'approvalrequests',
     approval_requests_tracking_module: 'approvalrequeststracking',
     about_lcp_form_module: 'aboutlcpformmodule',
+    ai_playground_module: 'aiplayground',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -130,6 +138,7 @@ export const commonConfig: any = {
     Print: 'print',
     RECORD_EXPORT: 'record_export',
     EMAIL_RESEND: 'email_resend',
+    GENERATE_VECTOR: 'generate_vector',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -160,6 +169,7 @@ export const commonConfig: any = {
     { label: 'Print', value: 'print' },
     { label: 'Record Export', value: 'record_export' },
     { label: 'Resend Email', value: 'email_resend' },
+    { label: 'Generate Vector', value: 'generate_vector' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -187,6 +197,7 @@ export const commonConfig: any = {
     { label: 'Approval Requests Module', value: 'approval_requests_module' },
     { label: 'Approval Requests Tracking Module', value: 'approval_requests_tracking_module' },
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
+    { label: 'AI Playground Module', value: 'ai_playground_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

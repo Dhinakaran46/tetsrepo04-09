@@ -23,6 +23,7 @@ import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
+import { OpenaiService } from '../../service/common/openai.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -143,7 +144,8 @@ export class MasterListComponent implements AfterViewInit {
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
     private titleService: Title,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private openaiService: OpenaiService
   ) {
     this.initStore();
 
@@ -896,6 +898,38 @@ export class MasterListComponent implements AfterViewInit {
         }
       }
     });
+  }
+
+  generateVector(item: any) {
+    if (this.masterInfo.permissions.generate_vector) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Generate Vector?',
+        text: 'are you sure, you want to generate vector?',
+        showCancelButton: true,
+        confirmButtonText: 'Generate',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          this.loading = true;
+          this.openaiService.generateVectorForTable({ uuid: item.uuid }).subscribe((res) => {
+            this.loading = false;
+            if (res.status) {
+              this.toastr.success('Vector generated successfully', 'Success');
+              this.setPageReload();
+            } else {
+              this.toastr.error('Failed to generate vector', 'Error');
+            }
+          });
+        }
+      });
+    }
+  }
+
+  setPageReload() {
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 
   emailResendItem(item: any) {

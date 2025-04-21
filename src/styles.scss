@@ -53,3 +53,12 @@ html.login-page > body {
   min-height: 25px;
   height: auto !important;
 }
+
+.disabled-input {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.textarea-lg textarea {
+  height: 300px;
+}

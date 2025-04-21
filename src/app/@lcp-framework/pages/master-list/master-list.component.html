@@ -115,6 +115,17 @@
       >
         <i class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        appDynamicFontSize="body"
+        *ngIf="this.masterInfo.permissions.generate_vector"
+        (click)="this.generateVector(item)"
+        ngxTippy
+        data-tippy-content="Generate Vector"
+      >
+        <i class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
 
       <a
         href="javascript:void(0);"

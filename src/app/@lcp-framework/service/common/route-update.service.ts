@@ -84,6 +84,7 @@ export class RouteUpdateService {
               const printPermissionKey = `print_${routeData.entity_name}`;
               const recordExportPermissionKey = `record_export_${routeData.entity_name}`;
               const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
+              const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -167,6 +168,7 @@ export class RouteUpdateService {
                   import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
                 entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
                 about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
+                ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
                 language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
                 job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
@@ -222,6 +224,7 @@ export class RouteUpdateService {
                       print: permissionListJSON[printPermissionKey] || false,
                       record_export: permissionListJSON[recordExportPermissionKey] || false,
                       email_resend: permissionListJSON[emailResendPermissionKey] || false,
+                      generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
                     },
                     children: children,
                   },
