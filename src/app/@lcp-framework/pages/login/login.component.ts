@@ -150,7 +150,7 @@ export class CoverLoginComponent {
   }
 
   ngOnInit() {
-    document.documentElement.classList.add('login-page');
+    // document.documentElement.classList.add('login-page');
     this.loginForm.controls['email'].statusChanges.subscribe((status) => {
       if (this.isSubmitted) {
         this.loginForm.controls['email'].markAsTouched();
