@@ -1,5 +1,4 @@
 <div
-  style="height: 100%"
   class="main-section relative font-nunito text-sm font-normal antialiased"
   [ngClass]="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass]"
 >
@@ -19,7 +18,7 @@
     </svg>
   </div>
 
-  <div style="height: 100%" class="text-black dark:text-white-dark">
+  <div class="text-black dark:text-white-dark">
     <div *ngIf="showTopButton" class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
       <button
         type="button"
@@ -42,27 +41,47 @@
       </button>
     </div>
 
-    <div style="height: 100%" class="login-app">
+    <div>
       <div class="absolute inset-0">
-        <img src="assets/images/auth/bg-gradient.png" alt="image" class="h-full w-full object-cover" />
+        <img src="/assets/images/auth/bg-gradient.png" alt="image" class="h-full w-full object-cover" />
       </div>
       <div
-        style="height: 100%"
-        class="relative flex min-h-96 flex-col items-center justify-center bg-[url(../../assets/images/auth/map.png)] bg-cover bg-center bg-no-repeat px-6 py-10 dark:bg-[#060818] sm:px-16"
+        class="relative flex min-h-screen items-center justify-center bg-[url(/assets/images/auth/map.png)] bg-cover bg-center bg-no-repeat px-6 py-10 dark:bg-[#060818] sm:px-16"
       >
-        <img src="assets/images/auth/coming-soon-object1.png" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
-        <img src="assets/images/auth/coming-soon-object3.png" alt="image" class="absolute right-0 top-0 h-[300px]" />
+        <img src="/assets/images/auth/coming-soon-object1.png" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
+        <img src="/assets/images/auth/coming-soon-object2.png" alt="image" class="absolute left-24 top-0 h-40 md:left-[30%]" />
+        <img src="/assets/images/auth/coming-soon-object3.png" alt="image" class="absolute right-0 top-0 h-[300px]" />
+        <img src="/assets/images/auth/polygon-object.svg" alt="image" class="absolute bottom-0 end-[28%]" />
         <div
-          class="relative w-full max-w-[1502px] justify-center overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[100%] lg:flex-row lg:gap-10 xl:gap-0"
+          class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[758px] lg:flex-row lg:gap-10 xl:gap-0"
         >
-          <div class="mt-3 flex w-full items-center justify-between p-4 px-6">
-            <!-- Left Side: Logo -->
-            <div class="flex flex-shrink-0 items-center">
-              <img [src]="apiUrl+'/'+ this.logo" alt="Logo" class="max-h-14" />
-              <p class="ml-2 text-base font-bold">{{this.company}}</p>
+          <div
+            class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(239,18,98,1)_0%,rgba(67,97,238,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] xl:-ms-28 ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
+          >
+            <div
+              class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent xl:w-16 ltr:-right-10 ltr:bg-gradient-to-r ltr:xl:-right-20 rtl:-left-10 rtl:bg-gradient-to-l rtl:xl:-left-20"
+            ></div>
+            <div class="ltr:xl:-skew-x-[0deg] rtl:xl:skew-x-[0deg]">
+              <div class="fixed left-3 top-3 z-50 flex items-center gap-2">
+                <a routerLink="/" class="flex items-center gap-2">
+                  <img [src]="apiUrl + '/' + this.logo" alt="Logo" class="max-h-14" />
+
+                  <span class="text-2xl font-bold text-white">{{ this.company }}</span>
+                </a>
+              </div>
+
+              <div class="relative flex min-h-screen items-center justify-center">
+                <img *ngIf="authentication_banner" [src]="apiUrl + '/' + this.authentication_banner" alt="Cover Image" class="h-full w-full object-cover" />
+                <img *ngIf="!authentication_banner" src="/assets/images/auth/login.svg" alt="Cover Image" class="h-full w-full object-cover" />
+              </div>
             </div>
-            <!-- Right Side: Full-width Dropdown -->
-            <div class="w-full max-w-md">
+          </div>
+
+          <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
+            <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
+              <a routerLink="/" class="block w-8 lg:hidden">
+                <img src="/assets/images/logo.svg" alt="Logo" class="mx-auto w-10" />
+              </a>
               <div class="dropdown ms-auto w-max">
                 <div hlMenu>
                   <button
@@ -71,11 +90,11 @@
                     class="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark hover:border-primary hover:text-primary dark:bg-black"
                   >
                     <div>
-                      <img [src]="'assets/images/flags/' + store.locale.toUpperCase() + '.svg'" alt="image" class="h-5 w-5 rounded-full object-cover" />
+                      <img [src]="'/assets/images/flags/' + store.locale.toUpperCase() + '.svg'" alt="image" class="h-5 w-5 rounded-full object-cover" />
                     </div>
                     <div class="text-base font-bold uppercase">{{ store.locale }}</div>
                     <span class="shrink-0">
-                      <i class="fa-solid fa-angle-down"></i>
+                      <icon-caret-down />
                     </span>
                   </button>
                   <ul
@@ -91,7 +110,7 @@
                         [ngClass]="{ 'bg-primary/10 text-primary': translate.currentLang === item.code }"
                         (click)="changeLanguage(item)"
                       >
-                        <img class="h-5 w-5 rounded-full object-cover" [src]="'assets/images/flags/' + item.code.toUpperCase() + '.svg'" alt />
+                        <img class="h-5 w-5 rounded-full object-cover" [src]="'/assets/images/flags/' + item.code.toUpperCase() + '.svg'" alt="" />
                         <span class="ltr:ml-3 rtl:mr-3">{{ item.name }}</span>
                       </button>
                     </li>
@@ -99,14 +118,11 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6">
-            <div class="w-full max-w-[440px] lg:mt-12">
+            <div class="w-full max-w-[440px] lg:mt-16">
               <router-outlet></router-outlet>
             </div>
+            <p class="absolute bottom-6 w-full text-center dark:text-white">© {{ currYear }}.{{ copyrightContent }}</p>
           </div>
-
-          <p class="bottom-6 w-full text-center dark:text-white md:absolute">© {{ currYear }}.{{ copyrightContent }}</p>
         </div>
       </div>
     </div>

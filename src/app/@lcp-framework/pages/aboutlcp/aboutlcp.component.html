@@ -4,7 +4,7 @@
     ('title_add_about_lcp' | translate) }}
   </h2>
 
-  <div class="grid grid-cols-2 gap-4 mt-4">
+  <div class="grid grid-cols-3 gap-4 mt-4">
     <div>
       <label class="required-mark mb-1 block font-medium">{{ 'type' | translate
         }}</label>
@@ -20,9 +20,16 @@
         }}</label>
       <input type="text" formControlName="name" class="form-input w-full" />
     </div>
+
+    <div>
+      <label class="mb-1 block font-medium">{{ 'order_no' | translate
+        }}</label>
+      <input type="number" formControlName="order_no"
+        class="form-input w-full" />
+    </div>
   </div>
 
-  <div class="grid grid-cols-2 gap-4 mt-4">
+  <div class="grid grid-cols-3 gap-4 mt-4">
     <div>
       <label class="mb-1 block font-medium">{{ 'description' | translate
         }}</label>
@@ -30,7 +37,7 @@
         class="form-input w-full"></textarea>
     </div>
 
-    <div>
+    <div class="col-span-2">
       <label class="mb-1 block font-medium">{{ 'documentation_video_url' |
         translate }}</label>
       <input type="text" formControlName="documentation_video_url"
