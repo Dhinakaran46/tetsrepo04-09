@@ -66,6 +66,7 @@ export class AboutlcpComponent implements OnInit {
     this.form = this.fb.group({
       type: ['', [Validators.required]],
       name: ['', [Validators.required]],
+      order_no: [''],
       description: [''],
       documentation_video_url: [''],
       documentation_pdf: [null],
@@ -161,6 +162,7 @@ export class AboutlcpComponent implements OnInit {
           uuid: this.aboutLcpId, // Using the id for updating the record
           type: this.form.value.type,
           name: this.form.value.name,
+          order_no: this.form.value.order_no || 0.0,
           description: this.form.value.description || '',
           documentation_video_url: this.form.value.documentation_video_url || '',
           documentation_pdf: this.form.value.documentation_pdf || '',
@@ -191,6 +193,7 @@ export class AboutlcpComponent implements OnInit {
         {
           type: this.form.value.type,
           name: this.form.value.name,
+          order_no: this.form.value.order_no || 0.0,
           description: this.form.value.description || '',
           documentation_video_url: this.form.value.documentation_video_url || '',
           documentation_pdf: this.form.value.documentation_pdf || '',
@@ -249,6 +252,7 @@ export class AboutlcpComponent implements OnInit {
           this.form.patchValue({
             type: data.type,
             name: data.name,
+            order_no: data.order_no,
             description: data.description,
             documentation_video_url: data.documentation_video_url,
             documentation_pdf: data.documentation_pdf,
