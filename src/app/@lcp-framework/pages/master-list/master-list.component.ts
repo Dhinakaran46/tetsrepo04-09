@@ -127,6 +127,7 @@ export class MasterListComponent implements AfterViewInit {
       border_color: 'badge-outline-warning',
     },
   };
+  uniqueId!: string | null;
 
   constructor(
     private toastr: ToastrService,
@@ -148,6 +149,9 @@ export class MasterListComponent implements AfterViewInit {
     private openaiService: OpenaiService
   ) {
     this.initStore();
+    this.route.paramMap.subscribe((params) => {
+      this.uniqueId = params.get('uuid');
+    });
 
     this.changePasswordForm = this.formBuilder.group(
       {
@@ -377,43 +381,41 @@ export class MasterListComponent implements AfterViewInit {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
-        this.gridApiService
-          .getAllRecords(
-            this.localStorageService.replaceUniqueId(
-              this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
-              '$user_id',
-              this.user_info.main.id
-            )
-          )
-          .subscribe(
-            (response) => {
-              if (response.status && response.code === 200) {
-                if (response.data.records && response.data.headers) {
-                  const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
-                  if (item.type == 'pdf') {
-                    this.exportService.exportToPDF(filteredData, export_download);
-                  } else {
-                    this.exportService.exportToExcel(filteredData, export_download);
-                  }
-                  this.loading = false;
+        let listParams = this.localStorageService.replaceUniqueId(
+          this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
+          '$session_user_id',
+          this.user_info.main.id
+        );
+        listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
+        this.gridApiService.getAllRecords(listParams).subscribe(
+          (response) => {
+            if (response.status && response.code === 200) {
+              if (response.data.records && response.data.headers) {
+                const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
+                if (item.type == 'pdf') {
+                  this.exportService.exportToPDF(filteredData, export_download);
+                } else {
+                  this.exportService.exportToExcel(filteredData, export_download);
                 }
-              } else {
                 this.loading = false;
-                this.items = [];
-                this.totalItems = 0;
-
-                const key = response.message;
-                const errorMessage = this.translate.instant(key);
-                this.toastr.error(errorMessage, 'Error');
               }
-            },
-            (error) => {
+            } else {
               this.loading = false;
-              const key = 'error';
+              this.items = [];
+              this.totalItems = 0;
+
+              const key = response.message;
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
             }
-          );
+          },
+          (error) => {
+            this.loading = false;
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
       }
     }
   }
@@ -529,11 +531,12 @@ export class MasterListComponent implements AfterViewInit {
 
   fetchData(params: FetchDataParams) {
     params.limit_range = this.resultsPerPage;
-    const payload = this.localStorageService.replaceUniqueId(
+    let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
-      '$user_id',
+      '$session_user_id',
       this.user_info.main.id
     );
+    payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {

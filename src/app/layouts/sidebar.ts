@@ -68,7 +68,7 @@ export class SidebarComponent {
       .select((d) => d.index)
       .subscribe((d) => {
         this.store = d;
-        console.log(this.store);
+        // console.log(this.store);
         if (this.store.menu == 'horizontal') {
           this.showssmenu = true;
         } else {
