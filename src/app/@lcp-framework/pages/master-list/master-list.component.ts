@@ -151,7 +151,6 @@ export class MasterListComponent implements AfterViewInit {
     this.initStore();
     this.route.paramMap.subscribe((params) => {
       this.uniqueId = params.get('uuid');
-      this.uniqueId = 'c8a088af-f994-4715-aa42-4165a4619e60';
     });
 
     this.changePasswordForm = this.formBuilder.group(
@@ -384,7 +383,7 @@ export class MasterListComponent implements AfterViewInit {
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
         let listParams = this.localStorageService.replaceUniqueId(
           this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
-          '$user_id',
+          '$session_user_id',
           this.user_info.main.id
         );
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
@@ -534,7 +533,7 @@ export class MasterListComponent implements AfterViewInit {
     params.limit_range = this.resultsPerPage;
     let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
-      '$user_id',
+      '$session_user_id',
       this.user_info.main.id
     );
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');

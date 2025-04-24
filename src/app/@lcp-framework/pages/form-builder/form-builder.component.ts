@@ -186,7 +186,7 @@ export class FormBuilderComponent implements OnInit {
           this.policyData,
           field?.attached_policies || []
         ),
-        '$user_id',
+        '$session_user_id',
         this.user_info.main.id
       );
       listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');

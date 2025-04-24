@@ -122,7 +122,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
           this.policyData,
           (this.field as any)?.attached_policies || []
         ),
-        '$user_id',
+        '$session_user_id',
         this.user_info.main.id
       );
 
