@@ -180,15 +180,16 @@ export class FormBuilderComponent implements OnInit {
       }
     } else if (key && this.listParams[key]) {
       const required = false;
-      const listParams = this.localStorageService.replaceUniqueId(
+      let listParams = this.localStorageService.replaceUniqueId(
         this.localStorageService.formatPayloadWithPolicyConditions(
           this.replacePlaceholders(this.listParams[key], this.model, required),
           this.policyData,
           field?.attached_policies || []
         ),
-        '$user_id',
+        '$session_user_id',
         this.user_info.main.id
       );
+      listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
       this.gridApiService.getAllList(listParams).subscribe(
         (response) => {
           if (response.status && response.code === 200) {
@@ -270,7 +271,7 @@ export class FormBuilderComponent implements OnInit {
   private executeTransaction(draft_mode: boolean) {
     // this.model = { ...this.model, ...this.form.value };
     // console.log(this.model);
-    console.log(this.form);
+
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false, draft_mode);
     transParam = this.replacePlaceholders(transParam, this.model);
     this.gridApiService.executeTransaction(transParam).subscribe(

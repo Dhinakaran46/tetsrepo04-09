@@ -13,12 +13,13 @@ import { MenuMapService } from '../@lcp-framework/service/common/menu-map.servic
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
+import { IconCaretDownComponent } from '../@lcp-framework/shared/icon/icon-caret-down';
 
 @Component({
   selector: 'app-root',
   templateUrl: './auth-layout.html',
   standalone: true,
-  imports: [CommonSharedModule, RouterModule, LoaderComponent, CopyrightComponent],
+  imports: [CommonSharedModule, RouterModule, LoaderComponent, CopyrightComponent, IconCaretDownComponent],
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -34,6 +35,7 @@ export class AuthLayout {
   showTopButton = false;
   apiUrl = environment.apiUrl;
   logo: any;
+  authentication_banner: any;
   company: any;
   copyrightContent: any;
   constructor(
@@ -88,6 +90,7 @@ export class AuthLayout {
           if (Object.keys(res).length > 0) {
             this.changeFavicon(this.apiUrl + '/' + res.favicon);
             this.logo = res.logo;
+            this.authentication_banner = res.authentication_banner;
             this.company = res.company_name;
             this.copyrightContent = res.footer_content;
             this.localstore.storeData('config', JSON.stringify(res));
