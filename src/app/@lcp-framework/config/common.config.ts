@@ -50,6 +50,7 @@ export const commonConfig: any = {
     generateAiQuery: 'openai/generate-query',
     getResultFromQuery: 'openai/get-response-from-sql',
     generateVectorForTable: 'openai/generate-vector-for-table',
+    execute_child_process: 'common/execute-child-process',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -77,6 +78,7 @@ export const commonConfig: any = {
     APPROVAL_REQUESTS_TRACKING_MODULE: 'approval_requests_tracking_module',
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
     AI_PLAYGROUND_MODULE: 'ai_playground_module',
+    CHILD_PROCESS_SETTING_MODULE: 'child_process_setting_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -104,6 +106,7 @@ export const commonConfig: any = {
     approval_requests_tracking_module: 'approvalrequeststracking',
     about_lcp_form_module: 'aboutlcpformmodule',
     ai_playground_module: 'aiplayground',
+    child_process_setting_module: 'childprocesssetting',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -198,6 +201,7 @@ export const commonConfig: any = {
     { label: 'Approval Requests Tracking Module', value: 'approval_requests_tracking_module' },
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
     { label: 'AI Playground Module', value: 'ai_playground_module' },
+    { label: 'Child Process Setting Module', value: 'child_process_setting_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

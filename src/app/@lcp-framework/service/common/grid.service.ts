@@ -210,4 +210,8 @@ export class GridApiService {
   deleteCronJob(id: number): Observable<any> {
     return this.http.delete<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.delete_cron_jobs}/${id}`);
   }
+
+  executeChildProcess(id: number): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.execute_child_process}/${id}`, {});
+  }
 }
