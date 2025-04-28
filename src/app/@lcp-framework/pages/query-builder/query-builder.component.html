@@ -7,7 +7,7 @@
       </div>
       <ul class="max-h-tl space-y-1">
         <div class="my-3">
-          <input type="text" formControlName="search" (input)="searchTable()" class="form-input w-full" />
+          <input type="text" formControlName="search" (input)="searchTable()" class="form-input w-full" placeholder="Search Tables" />
         </div>
         @if(filteredTableList.length) { @for(table of filteredTableList; track table) {
         <li class="align-items-center flex cursor-pointer flex-wrap justify-between gap-2 rounded p-2 hover:bg-gray-100">
