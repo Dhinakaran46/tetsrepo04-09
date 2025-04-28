@@ -1,0 +1,62 @@
+<form [formGroup]="form">
+  <div class="flex">
+    <div class="mb-3 flex w-1/4 flex-col border-r bg-white p-4">
+      <div class="align-items-center mb-4 flex justify-between">
+        <h2 class="h-20p mb-2 text-lg font-bold">{{ 'tables' | translate }}</h2>
+        <button class="w-30 btn btn-primary text-xs">{{ 'export_database' | translate }}</button>
+      </div>
+      <ul class="max-h-tl space-y-1">
+        <div class="my-3">
+          <input type="text" formControlName="search" (input)="searchTable()" class="form-input w-full" placeholder="Search Tables" />
+        </div>
+        @if(filteredTableList.length) { @for(table of filteredTableList; track table) {
+        <li class="align-items-center flex cursor-pointer flex-wrap justify-between gap-2 rounded p-2 hover:bg-gray-100">
+          <div class="w-3/4" (click)="insertTextAtCursor(queryTextarea, table)">{{ table }}</div>
+          <i class="fa-solid fa-play" (click)="setQuery(table)"></i>
+        </li>
+        } } @else {
+        <div class="align-items-center flex justify-center">
+          <p>No table's were found</p>
+        </div>
+        }
+      </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-1 flex-col space-y-4 overflow-auto px-4">
+      <div class="panel mb-3">
+        <div class="mb-3 flex items-start justify-between gap-2 lg:flex-row lg:items-center">
+          <h5 class="text-lg font-semibold dark:text-white-light">
+            {{ 'query_builder_form' | translate }}
+          </h5>
+        </div>
+        <div class="mb-3 grid grid-cols-1">
+          <label>{{ 'enter_query' | translate }}</label>
+          <textarea class="h-150p form-input w-full p-1 text-xs text-gray-600 placeholder:text-white-dark" #queryTextarea formControlName="query"></textarea>
+        </div>
+        <div class="mb-3 flex justify-end gap-3">
+          <button type="submit" class="w-30 btn btn-success text-xs" (click)="validateQuery()">
+            {{ 'submit' | translate }}
+          </button>
+        </div>
+      </div>
+      <div class="panel mt-3">
+        <div class="panel-body">
+          @if(isTableShow) {
+          <app-client-datatable
+            [data]="tempTableResponse"
+            [config]="aiResultTableConfig"
+            (dataChange)="onQueryDataChange($event)"
+            (sortChange)="onQuerySortChange($event)"
+          ></app-client-datatable>
+          } @else if(responseMessage) {
+          <div class="p-3" [ngClass]="{ 'text-danger': isTableError }">
+            {{ responseMessage }}
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+<app-loader *ngIf="loading"></app-loader>

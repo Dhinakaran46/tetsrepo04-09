@@ -18,6 +18,11 @@ export interface IGenerateVectorForTable {
   uuid: string;
 }
 
+export interface IGetResponseFromQuery {
+  sql: string;
+  is_query_tool?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -32,7 +37,7 @@ export class OpenaiService {
     return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiQuery}`, data);
   }
 
-  getResultFromQuery(data: any): Observable<ApiResponce> {
+  getResultFromQuery(data: IGetResponseFromQuery): Observable<ApiResponce> {
     return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getResultFromQuery}`, data);
   }
 
