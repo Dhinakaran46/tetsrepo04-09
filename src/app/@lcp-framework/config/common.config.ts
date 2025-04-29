@@ -79,6 +79,7 @@ export const commonConfig: any = {
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
     AI_PLAYGROUND_MODULE: 'ai_playground_module',
     CHILD_PROCESS_SETTING_MODULE: 'child_process_setting_module',
+    QUERY_BUILDER_MODULE: 'query_builder_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -107,6 +108,7 @@ export const commonConfig: any = {
     about_lcp_form_module: 'aboutlcpformmodule',
     ai_playground_module: 'aiplayground',
     child_process_setting_module: 'childprocesssetting',
+    query_builder_module: 'querybuilder',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -202,6 +204,7 @@ export const commonConfig: any = {
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
     { label: 'AI Playground Module', value: 'ai_playground_module' },
     { label: 'Child Process Setting Module', value: 'child_process_setting_module' },
+    { label: 'Query Builder Module', value: 'query_builder_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
