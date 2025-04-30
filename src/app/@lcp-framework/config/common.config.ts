@@ -78,6 +78,7 @@ export const commonConfig: any = {
     APPROVAL_REQUESTS_TRACKING_MODULE: 'approval_requests_tracking_module',
     ABOUT_LCP_FORM_MODULE: 'about_lcp_form_module',
     AI_PLAYGROUND_MODULE: 'ai_playground_module',
+    QUERY_BUILDER_MODULE: 'query_builder_module',
     CAROUSEL_MODULE: 'carousel_module',
   },
   PREFIX_SHORTCODE: {
@@ -106,6 +107,7 @@ export const commonConfig: any = {
     approval_requests_tracking_module: 'approvalrequeststracking',
     about_lcp_form_module: 'aboutlcpformmodule',
     ai_playground_module: 'aiplayground',
+    query_builder_module: 'querybuilder',
     carousel_module: 'carouselmodule',
   },
   MENU_LINK_TYPE: {
@@ -201,6 +203,7 @@ export const commonConfig: any = {
     { label: 'Approval Requests Tracking Module', value: 'approval_requests_tracking_module' },
     { label: 'About Lcp Form Module', value: 'about_lcp_form_module' },
     { label: 'AI Playground Module', value: 'ai_playground_module' },
+    { label: 'Query Builder Module', value: 'query_builder_module' },
     { label: 'Carousel Module', value: 'carousel_module' },
   ],
   keypress_config: {

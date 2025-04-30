@@ -980,7 +980,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           .getAllRecords(
             this.localStorageService.replaceUniqueId(
               this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
-              '$user_id',
+              '$session_user_id',
               this.user_info.main.id
             )
           )
@@ -1240,7 +1240,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     params.limit_range = this.resultsPerPage;
     const payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
-      '$user_id',
+      '$session_user_id',
       this.user_info.main.id
     );
     this.commonService.getCommonList(payload).subscribe(
