@@ -45,32 +45,154 @@
       <div class="absolute inset-0">
         <img src="assets/images/auth/bg-gradient.png" alt="image" class="h-full w-full object-cover" />
       </div>
+
       <div
-        class="relative flex min-h-screen items-center justify-center bg-[url(/assets/images/auth/map.png)] bg-cover bg-center bg-no-repeat px-6 py-10 dark:bg-[#060818] sm:px-16"
+        class="relative flex min-h-screen items-center justify-center bg-[url(/assets/images/auth/map.png)] bg-cover bg-center bg-no-repeat px-4 py-4 dark:bg-[#060818]"
       >
-        <img src="assets/images/auth/coming-soon-object1.png" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
+        <!--  <img src="assets/images/auth/coming-soon-object1.png" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
         <img src="assets/images/auth/coming-soon-object2.png" alt="image" class="absolute left-24 top-0 h-40 md:left-[30%]" />
         <img src="assets/images/auth/coming-soon-object3.png" alt="image" class="absolute right-0 top-0 h-[300px]" />
-        <img src="assets/images/auth/polygon-object.svg" alt="image" class="absolute bottom-0 end-[28%]" />
+        <img src="assets/images/auth/polygon-object.svg" alt="image" class="absolute bottom-0 end-[28%]" />-->
         <div
-          class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[758px] lg:flex-row lg:gap-10 xl:gap-0"
+          class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[658px] lg:flex-row lg:gap-10 xl:gap-0"
         >
+          <!-- linear-gradient(225deg, rgb(29 254 199) 0%, rgb(110 126 214) 100%) -->
           <div
-            class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(239,18,98,1)_0%,rgba(67,97,238,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] xl:-ms-28 ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
+            class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(244,210,222)_0%,rgba(200,209,252)_100%)] p-5 lg:inline-flex lg:max-w-[835px] ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
           >
-            <div
+            <!--<div
+            class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(239,18,98,1)_0%,rgba(67,97,238,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
+          >-->
+            <!--<div
               class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent xl:w-16 ltr:-right-10 ltr:bg-gradient-to-r ltr:xl:-right-20 rtl:-left-10 rtl:bg-gradient-to-l rtl:xl:-left-20"
-            ></div>
-            <div class="ltr:xl:-skew-x-[0deg] rtl:xl:skew-x-[0deg]">
-              <div class="fixed left-3 top-3 z-50 flex items-center gap-2">
-                <a routerLink="/" class="flex items-center gap-2">
-                  <img [src]="apiUrl + '/' + this.logo" alt="Logo" class="max-h-14" />
+            ></div>-->
 
-                  <span class="text-2xl font-bold text-white">{{ this.company }}</span>
-                </a>
+            <!-- Title and Description above Carousel -->
+
+            <div class="ltr:xl:-skew-x-[0deg] rtl:xl:skew-x-[0deg]">
+              <div class="relative mx-auto w-full max-w-[835px]" *ngIf="mediaItems?.length">
+                <!-- Title and Description Above Carousel -->
+                <div class="mb-6 text-center">
+                  <!--<h1 class="mb-2 text-3xl font-bold">Create, Translate, and Personalize <span class="text-primary">Videos in Minutes</span></h1>-->
+                  <h1 class="mb-2 text-3xl font-bold">{{mediaItems[activeIndex].name}}</h1>
+                  <p class="text-lg opacity-80">{{mediaItems[activeIndex].description}}</p>
+                </div>
+                <!-- Carousel Images / Videos -->
+                <div class="carousel-container">
+                  <div class="relative">
+                    <!-- Display Media (Image or Video) -->
+                    <div *ngIf="!mediaItems[activeIndex].video_url" class="w-full">
+                      <!-- Check if clickable_link exists, then wrap image in anchor tag -->
+                      <a *ngIf="mediaItems[activeIndex].clickable_link" [href]="mediaItems[activeIndex].clickable_link" target="_blank">
+                        <img
+                          [src]="mediaItems[activeIndex].image_url"
+                          alt="Carousel Image"
+                          class="h-[422px] w-full rounded-xl object-scale-down"
+                          style="border-radius: 12px"
+                        />
+                      </a>
+                      <div *ngIf="!mediaItems[activeIndex].clickable_link">
+                        <img
+                          [src]="mediaItems[activeIndex].image_url"
+                          alt="Carousel Image"
+                          class="h-[422px] w-full rounded-xl object-scale-down"
+                          style="border-radius: 12px"
+                        />
+                      </div>
+                    </div>
+
+                    <div *ngIf="mediaItems[activeIndex].video_url" class="w-full">
+                      <!-- Check if clickable_link exists, then wrap video in anchor tag -->
+                      <a *ngIf="mediaItems[activeIndex].clickable_link" [href]="mediaItems[activeIndex].clickable_link" target="_blank">
+                        <video
+                          [src]="mediaItems[activeIndex].video_url"
+                          preload="auto"
+                          muted
+                          autoplay
+                          playsinline
+                          controls
+                          class="h-[422px] w-full rounded-xl object-scale-down"
+                          style="height: 100%; border-radius: 12px"
+                        ></video>
+                      </a>
+                      <!--  [poster]="apiUrl + '/' + this.authentication_banner"
+                      loop  
+                      -->
+                      <div *ngIf="!mediaItems[activeIndex].clickable_link">
+                        <video
+                          [src]="mediaItems[activeIndex].video_url"
+                          preload="auto"
+                          muted
+                          autoplay
+                          playsinline
+                          controls
+                          class="h-[422px] w-full rounded-xl object-scale-down"
+                          style="height: 100%; border-radius: 12px"
+                        ></video>
+                      </div>
+                    </div>
+
+                    <!-- Carousel Navigation Arrows -->
+                    <!--<button (click)="prevItem()" class="absolute left-0 top-1/2 -translate-y-1/2 transform text-4xl text-white">
+                      <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <button (click)="nextItem()" class="absolute right-0 top-1/2 -translate-y-1/2 transform text-4xl text-white">
+                      <i class="fa fa-arrow-right"></i>
+                    </button>-->
+                  </div>
+                </div>
+
+                <!-- Carousel Indicators -->
+                <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
+                  <span
+                    *ngFor="let item of mediaItems; let i = index"
+                    [ngClass]="{
+                      'bg-primary': i === activeIndex,
+                      'bg-white dark:bg-black': i !== activeIndex
+                    }"
+                    class="h-2.5 w-2.5 cursor-pointer rounded-full"
+                    (click)="activeIndex = i"
+                  ></span>
+                </div>
               </div>
 
-              <div class="relative flex min-h-screen items-center justify-center">
+              <div class="relative mx-auto w-full max-w-[835px]" *ngIf="mediaItems?.length == 0">
+                <!-- Title and Description Above Carousel -->
+                <div class="mb-6 text-center">
+                  <!--<h1 class="mb-2 text-3xl font-bold">Create, Translate, and Personalize <span class="text-primary">Videos in Minutes</span></h1>-->
+                  <h1 class="mb-2 text-3xl font-bold">LCP</h1>
+                  <p class="text-lg opacity-80">Low code platform</p>
+                </div>
+                <!-- Carousel Images / Videos -->
+                <div class="carousel-container">
+                  <div class="relative">
+                    <!-- Display Media (Image or Video) -->
+                    <div class="w-full">
+                      <img
+                        [src]="apiUrl + '/' + this.authentication_banner"
+                        alt="Carousel Image"
+                        class="h-[422px] w-full rounded-xl object-scale-down"
+                        style="border-radius: 12px"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Carousel Indicators -->
+                <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
+                  <span
+                    *ngFor="let item of mediaItems; let i = index"
+                    [ngClass]="{
+                      'bg-primary': i === activeIndex,
+                      'bg-white dark:bg-black': i !== activeIndex
+                    }"
+                    class="h-2.5 w-2.5 cursor-pointer rounded-full"
+                    (click)="activeIndex = i"
+                  ></span>
+                </div>
+              </div>
+
+              <!--<div class="relative flex min-h-screen items-center justify-center">
                 <img
                   *ngIf="authentication_banner"
                   [src]="apiUrl + '/' + this.authentication_banner"
@@ -78,7 +200,7 @@
                   class="h-[522px] w-[522px] object-contain"
                 />
                 <img *ngIf="!authentication_banner" src="assets/images/auth/login.svg" alt="Cover Image" class="h-[522px] w-[522px] object-contain" />
-              </div>
+              </div>-->
 
               <!--<div class="relative flex min-h-screen items-center justify-center">
                 <img *ngIf="authentication_banner" [src]="apiUrl + '/' + this.authentication_banner" alt="Cover Image" class="h-full w-full object-cover" />
@@ -88,10 +210,14 @@
           </div>
 
           <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
-            <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
-              <a routerLink="/" class="block w-8 lg:hidden">
-                <img src="assets/images/logo.svg" alt="Logo" class="mx-auto w-10" />
+            <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:start-20 lg:top-6 lg:max-w-full">
+              <a routerLink="/" class="flex items-center gap-2">
+                <img [src]="apiUrl + '/' + this.logo" alt="Logo" class="max-h-14" />
+
+                <span class="text-2xl font-bold text-primary">{{ this.company }}</span>
               </a>
+            </div>
+            <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
               <div class="dropdown ms-auto w-max">
                 <div hlMenu>
                   <button
@@ -128,7 +254,7 @@
                 </div>
               </div>
             </div>
-            <div class="w-full max-w-[440px] lg:mt-16">
+            <div class="w-full max-w-[440px]">
               <router-outlet></router-outlet>
             </div>
             <p class="absolute bottom-6 w-full text-center dark:text-white">© {{ currYear }}.{{ copyrightContent }}</p>

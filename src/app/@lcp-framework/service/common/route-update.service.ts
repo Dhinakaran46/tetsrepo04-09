@@ -188,6 +188,7 @@ export class RouteUpdateService {
                 approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
                 approval_requests_tracking_module: () =>
                   import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
+                carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
               };
 
               const route: Route = {
