@@ -39,6 +39,8 @@ export class AuthLayout {
   apiUrl = environment.apiUrl;
   logo: any;
   authentication_banner: any;
+  authentication_background_1: any;
+  authentication_background_2: any;
   company: any;
   copyrightContent: any;
   mediaItems: any = [];
@@ -166,6 +168,8 @@ export class AuthLayout {
             this.changeFavicon(this.apiUrl + '/' + res.favicon);
             this.logo = res.logo;
             this.authentication_banner = res.authentication_banner;
+            this.authentication_background_1 = res.authentication_background_1;
+            this.authentication_background_2 = res.authentication_background_2;
             this.company = res.company_name;
             this.copyrightContent = res.footer_content;
             this.localstore.storeData('config', JSON.stringify(res));

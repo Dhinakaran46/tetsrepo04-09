@@ -4,12 +4,12 @@
 @import 'highlight.js/styles/androidstudio.css';
 
 .btn-gradient {
-  --tw-gradient-from: #fbb3cd var(--tw-gradient-from-position);
-  --tw-gradient-to: #b0bdf8 var(--tw-gradient-to-position);
+  --tw-gradient-from: #fe7caa var(--tw-gradient-from-position);
+  --tw-gradient-to: #8097fb var(--tw-gradient-to-position);
 }
 
 .btn-gradient:hover {
-  --tw-gradient-from: #b0bdf8 var(--tw-gradient-from-position);
+  --tw-gradient-from: #8097fb var(--tw-gradient-from-position);
 
-  --tw-gradient-to: #fbb3cd var(--tw-gradient-to-position);
+  --tw-gradient-to: #fe7caa var(--tw-gradient-to-position);
 }
