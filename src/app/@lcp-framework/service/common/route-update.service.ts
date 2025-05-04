@@ -191,6 +191,7 @@ export class RouteUpdateService {
                   import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
                 child_process_setting_module: () =>
                   import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
+                carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
               };
 
               const route: Route = {

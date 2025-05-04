@@ -1,0 +1,229 @@
+<div [formGroup]="form">
+  <div class="panel">
+    <div class="flex flex-wrap justify-between">
+      <div class="text-md font-bold uppercase">
+        {{ editTitle ? ('title_edit_carousel_template' | translate) : ('title_add_carousel_template' | translate) }}
+      </div>
+      <div class="relative inline-flex align-middle">
+        <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+          {{ 'back' | translate }}
+        </button>
+        <button
+          appDynamicFontSize="body"
+          type="button"
+          [disabled]="form.invalid"
+          class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l"
+          (click)="onSubmit()"
+        >
+          {{ 'submit' | translate }}
+        </button>
+      </div>
+    </div>
+    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+    <div class="mt-2">
+      <div class="flex flex-col justify-between">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div class="mt-0">
+            <label for="name" class="required-mark mb-2 block font-medium">{{ 'form_label_name' | translate }}</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_name_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
+            />
+            <div *ngIf="isFieldInvalid('name')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('name') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="slug" class="required-mark mb-2 block font-medium">{{ 'form_label_slug' | translate }}</label>
+            <input
+              id="slug"
+              type="text"
+              formControlName="slug"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_slug_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('slug') }"
+            />
+            <div *ngIf="isFieldInvalid('slug')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('slug') }}
+            </div>
+          </div>
+
+          <div class="mt-0">
+            <label for="description" class="required-mark mb-2 block font-medium">{{ 'form_label_description' | translate }}</label>
+            <input
+              id="description"
+              type="text"
+              formControlName="description"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_description_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('description') }"
+            />
+            <div *ngIf="isFieldInvalid('description')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('description') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel mt-5">
+    <!-- Line Items Table -->
+    <app-client-datatable [data]="itemsData" [config]="itemsTableConfig" (dataChange)="onItemsDataChange($event)"></app-client-datatable>
+  </div>
+</div>
+
+<!-- Line Items Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
+            {{ editingItemIndex !== -1 ? ('title_edit_carousel_template_line_item' | translate) : ('title_add_carousel_template_line_item' | translate) }}
+          </h3>
+          <button
+            type="button"
+            class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
+            (click)="cancelLineItemEdit()"
+          >
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Line Items Modal Content Section -->
+      <div class="px-4 py-4 sm:px-6">
+        <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()" class="space-y-6">
+          <!-- Basic Information Fields -->
+          <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Name -->
+            <div class="col-span-1">
+              <label for="name" class="required-mark form-label">
+                {{ 'form_label_name' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="name"
+                  type="text"
+                  formControlName="name"
+                  class="form-input w-full"
+                  [ngClass]="{ 'border-red-500': isLineItemFieldInvalid('name') }"
+                />
+                <div *ngIf="isLineItemFieldInvalid('name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {{ getLineItemErrorMessage('name') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="col-span-1">
+              <label for="description" class="form-label">
+                {{ 'form_label_description' | translate }}
+              </label>
+              <div class="mt-1">
+                <input id="description" type="text" formControlName="description" class="form-input w-full" />
+              </div>
+            </div>
+
+            <div class="col-span-1">
+              <label for="slug" class="required-mark form-label">
+                {{ 'form_label_slug' | translate }}
+              </label>
+              <div class="mt-1">
+                <input
+                  id="slug"
+                  type="text"
+                  formControlName="slug"
+                  class="form-input w-full"
+                  [ngClass]="{ 'border-red-500': isLineItemFieldInvalid('slug') }"
+                />
+                <div *ngIf="isLineItemFieldInvalid('slug')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {{ getLineItemErrorMessage('slug') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Order Number -->
+            <div class="col-span-1">
+              <label for="order_no" class="required-mark form-label">
+                {{ 'form_label_order_no' | translate }}
+              </label>
+              <div class="mt-1">
+                <input id="order_no" type="number" formControlName="order_no" class="form-input w-full" />
+              </div>
+            </div>
+
+            <!-- Image URL (File Upload) -->
+            <div class="col-span-1">
+              <label for="image_url" class="form-label">
+                {{ 'carousel_label_image_url' | translate }}
+              </label>
+              <div class="mt-1">
+                <!-- Show file input for editing or when there’s no existing image -->
+                <input id="image_url" type="file" class="form-input w-full" accept="image/*" (change)="onImageChange($event)" />
+              </div>
+
+              <!-- Image Preview -->
+              <div *ngIf="previewImageUrl || lineItemForm.get('image_url')?.value" class="mt-2">
+                <label for="image_preview" class="form-label">Image Preview</label>
+                <img [src]="previewImageUrl || lineItemForm.get('image_url')?.value" alt="Image Preview" class="mt-2 h-32 w-32 object-cover" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Video URL -->
+          <div class="col-span-1">
+            <label for="video_url" class="form-label">
+              {{ 'carousel_label_video_url' | translate }}
+            </label>
+            <div class="mt-1">
+              <input id="video_url" type="text" formControlName="video_url" class="form-input w-full" />
+            </div>
+          </div>
+
+          <!-- Clickable Link -->
+          <div class="col-span-1">
+            <label for="clickable_link" class="form-label">
+              {{ 'carousel_label_clickable_link' | translate }}
+            </label>
+            <div class="mt-1">
+              <input id="clickable_link" type="text" formControlName="clickable_link" class="form-input w-full" />
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              class="btn rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              (click)="cancelLineItemEdit()"
+            >
+              {{ 'cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              [disabled]="lineItemForm.invalid"
+            >
+              {{ editingItemIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

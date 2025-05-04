@@ -26,6 +26,10 @@ export class GridApiService {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, data);
   }
 
+  getAllUnAuthList(data: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.unauthcommonlistdata}`, data);
+  }
+
   getAllColumns(data: any): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}/${data.entity_name}`);
   }
