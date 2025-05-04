@@ -145,7 +145,7 @@ export class AuthLayout {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
           this.mediaItems = entity.items;
-          this.mediaItems.sort((a:any, b:any) => a.order - b.order);
+          this.mediaItems.sort((a: any, b: any) => a.order - b.order);
           console.log(this.mediaItems);
         }
       },
@@ -162,6 +162,7 @@ export class AuthLayout {
 
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
+        console.log('response', response);
         if (response.code === 200 && response.status && response.data) {
           const res = response.data?.[0]?.result || [];
 
