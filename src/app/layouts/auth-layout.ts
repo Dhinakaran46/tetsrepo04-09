@@ -162,7 +162,6 @@ export class AuthLayout {
 
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
-        console.log('response', response);
         if (response.code === 200 && response.status && response.data) {
           const res = response.data?.[0]?.result || [];
 
