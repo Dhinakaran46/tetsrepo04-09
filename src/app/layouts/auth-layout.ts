@@ -145,7 +145,7 @@ export class AuthLayout {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
           this.mediaItems = entity.items;
-          this.mediaItems.sort((a:any, b:any) => a.order - b.order);
+          this.mediaItems.sort((a: any, b: any) => a.order - b.order);
           console.log(this.mediaItems);
         }
       },
