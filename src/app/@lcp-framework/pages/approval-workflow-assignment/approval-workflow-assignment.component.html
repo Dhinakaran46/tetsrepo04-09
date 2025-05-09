@@ -185,6 +185,44 @@
                     </div>
                   </div>
 
+                  <div class="min-w-200-p">
+                    <div class="form-group">
+                      <label for="name">{{ 'accept_email_template' | translate }}</label>
+                      <ng-select
+                        bindLabel="label"
+                        bindValue="value"
+                        formControlName="accept_email"
+                        [clearable]="true"
+                        [searchable]="true"
+                        placeholder="Select Template"
+                        class="custom-multiselect multi-ng-select"
+                      >
+                        @for(template of emailTemplateList; track template; let i = $index) {
+                        <ng-option [value]="template.id">{{ template.name }}</ng-option>
+                        }
+                      </ng-select>
+                    </div>
+                  </div>
+
+                  <div class="min-w-200-p">
+                    <div class="form-group">
+                      <label for="name">{{ 'reject_email_template' | translate }}</label>
+                      <ng-select
+                        bindLabel="label"
+                        bindValue="value"
+                        formControlName="reject_email"
+                        [clearable]="true"
+                        [searchable]="true"
+                        placeholder="Select Template"
+                        class="custom-multiselect multi-ng-select"
+                      >
+                        @for(template of emailTemplateList; track template; let i = $index) {
+                        <ng-option [value]="template.id">{{ template.name }}</ng-option>
+                        }
+                      </ng-select>
+                    </div>
+                  </div>
+
                   @if(i > 0) {
                   <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeApprovalWorkflowAssignment(i)"></i>
                   }
