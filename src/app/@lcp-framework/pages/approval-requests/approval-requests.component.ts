@@ -1301,7 +1301,6 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               column_width: '40px',
             }));
 
-          console.log('data : ', data);
           // Check if only 'view' or 'view' + 'export_excel' are enabled
           const isOnlyViewOrViewExport =
             (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
