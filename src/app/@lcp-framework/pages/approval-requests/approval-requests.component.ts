@@ -223,20 +223,30 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       },
       ...(this.activeTab !== Tabs.pending
         ? [
+            // {
+            //   header: 'approver_type',
+            //   clause_type: 'where',
+            //   field_value: 'approval_process_job_workflows.approver_type',
+            //   is_sortable: 'true',
+            //   column_order: '2.00',
+            //   column_width: '1.00',
+            //   is_searchable: 'true',
+            //   is_grid_column: 'true',
+            // },
+            // {
+            //   header: 'approval_level',
+            //   clause_type: 'where',
+            //   field_value: 'approval_process_job_workflows.approver_order_no',
+            //   is_sortable: 'true',
+            //   column_order: '3.00',
+            //   column_width: '1.00',
+            //   is_searchable: 'true',
+            //   is_grid_column: 'true',
+            // },
             {
-              header: 'approver_type',
+              header: 'details',
               clause_type: 'where',
-              field_value: 'approval_process_job_workflows.approver_type',
-              is_sortable: 'true',
-              column_order: '2.00',
-              column_width: '1.00',
-              is_searchable: 'true',
-              is_grid_column: 'true',
-            },
-            {
-              header: 'approval_level',
-              clause_type: 'where',
-              field_value: 'approval_process_job_workflows.approver_order_no',
+              field_value: 'approval_process_job_workflows.details',
               is_sortable: 'true',
               column_order: '3.00',
               column_width: '1.00',
@@ -244,7 +254,18 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               is_grid_column: 'true',
             },
           ]
-        : []),
+        : [
+            {
+              header: 'details',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflows.details',
+              is_sortable: 'true',
+              column_order: '3.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+          ]),
       ...(this.activeTab === Tabs.delegated_on_me
         ? [
             {
@@ -273,6 +294,16 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               field_value: `d.end_date`,
               is_sortable: 'true',
               column_order: '6.00',
+              column_width: '1.00',
+              is_searchable: 'true',
+              is_grid_column: 'true',
+            },
+            {
+              header: 'details',
+              clause_type: 'where',
+              field_value: 'approval_process_job_workflows.details',
+              is_sortable: 'true',
+              column_order: '3.00',
               column_width: '1.00',
               is_searchable: 'true',
               is_grid_column: 'true',
@@ -471,6 +502,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.details',
         ],
         includes: [
           {
@@ -539,6 +571,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'pending.approver_type',
           'pending.approver_order_no',
           'pending.pending_approvers',
+          'approval_process_job_workflows.details',
         ],
         includes: [
           {
@@ -660,6 +693,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.details',
         ],
         includes: [
           {
@@ -792,6 +826,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'u_delegator.email',
           'd.start_date',
           'd.end_date',
+          'approval_process_job_workflows.details',
         ],
         includes: [
           {
@@ -1087,28 +1122,41 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 3,
         status_id: 1,
         company_id: 1,
-        field: 'approval_process_job_workflows.approver_type',
+        field: 'approval_process_job_workflows.details',
         clause_type: 'where',
         sorting: true,
-        title: this.translate.instant('approver_type'),
+        title: this.translate.instant('details'),
         field_type_id: 3,
         searchable: false,
         is_grid_column: true,
         enable: true,
       },
-      {
-        order_no: 4,
-        status_id: 1,
-        company_id: 1,
-        field: 'approval_process_job_workflows.approver_order_no',
-        clause_type: 'where',
-        sorting: true,
-        title: this.translate.instant('approval_level'),
-        field_type_id: 1,
-        searchable: true,
-        is_grid_column: true,
-        enable: true,
-      },
+      // {
+      //   order_no: 3,
+      //   status_id: 1,
+      //   company_id: 1,
+      //   field: 'approval_process_job_workflows.approver_type',
+      //   clause_type: 'where',
+      //   sorting: true,
+      //   title: this.translate.instant('approver_type'),
+      //   field_type_id: 3,
+      //   searchable: false,
+      //   is_grid_column: true,
+      //   enable: true,
+      // },
+      // {
+      //   order_no: 4,
+      //   status_id: 1,
+      //   company_id: 1,
+      //   field: 'approval_process_job_workflows.approver_order_no',
+      //   clause_type: 'where',
+      //   sorting: true,
+      //   title: this.translate.instant('approval_level'),
+      //   field_type_id: 1,
+      //   searchable: true,
+      //   is_grid_column: true,
+      //   enable: true,
+      // },
       // {
       //   order_no: 2,
       //   status_id: 1,
@@ -1252,6 +1300,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               ...key,
               column_width: '40px',
             }));
+
+          console.log('data : ', data);
           // Check if only 'view' or 'view' + 'export_excel' are enabled
           const isOnlyViewOrViewExport =
             (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
@@ -1499,7 +1549,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
 
   navigateToDetailPage(item: any) {
     const fullUrl = `${item.url}${item.screen_id}`;
-    window.open(fullUrl, '_blank');
+    this.router.navigate([fullUrl]);
   }
 
   onPageChange(event: { page: number; start_index: number }) {
@@ -1517,9 +1567,10 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     this.fetchData(this.listQuery);
   }
 
-  openApprovalProcessPopup(item: any) {
+  openApprovalProcessPopup(item: any, status: 'approval_completed' | 'approval_rejected') {
     this.isInfoModalOpen = true;
     this.selectedRequest = item;
+    this.approvalForm.controls['review_status'].setValue(status);
   }
 
   closeApprovalProcessPopup() {

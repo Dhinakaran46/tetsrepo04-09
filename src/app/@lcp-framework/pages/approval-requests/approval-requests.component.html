@@ -60,7 +60,11 @@
           }}"
         ></i>
       </a>
-      <a
+      @if(['pending_on_me', 'delegated_on_me'].includes(this.activeTab)) {
+      <button class="w-30 btn btn-success text-xs" (click)="this.openApprovalProcessPopup(item, 'approval_completed')">{{ 'approve' | translate }}</button>
+      <button class="w-30 btn btn-danger text-xs" (click)="this.openApprovalProcessPopup(item, 'approval_rejected')">{{ 'reject' | translate }}</button>
+      }
+      <!-- <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
@@ -70,7 +74,7 @@
         data-tippy-content="Approval Process"
       >
         <i class="fa-regular fa-thumbs-up {{ store.fontsize === 'large' ? 'h-6.5 w-6.5' : store.fontsize === 'medium' ? 'h-5.5 w-5.5' : 'h-4.5 w-4.5' }}"></i>
-      </a>
+      </a> -->
     </div>
   </ng-template>
 
@@ -156,12 +160,12 @@
           <div class="mt-1">
             <label for="review_status" class="required-mark mb-2 block font-medium">{{ 'review_status' | translate }}</label>
             <div class="flex items-center space-x-4">
-              <label class="flex cursor-pointer items-center">
+              <label class="disabled-input flex cursor-pointer items-center">
                 <input type="radio" [value]="'approval_completed'" formControlName="review_status" class="form-radio" appDynamicFontSize="body" />
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_approval_completed' | translate }}</span>
               </label>
 
-              <label class="flex cursor-pointer items-center">
+              <label class="disabled-input flex cursor-pointer items-center">
                 <input type="radio" [value]="'approval_rejected'" formControlName="review_status" class="form-radio" appDynamicFontSize="body" />
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_approval_rejected' | translate }}</span>
               </label>
