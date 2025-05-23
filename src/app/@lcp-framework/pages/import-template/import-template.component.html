@@ -544,7 +544,8 @@
                 />
                 <label for="is_unique" class="form-label">{{ 'form_label_is_unique' | translate }}</label>
               </div>
-              <div *ngIf="lineItemForm.get('is_unique')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
+              <!-- <div *ngIf="lineItemForm.get('is_unique')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1"> -->
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
                 <div class="col-span-1">
                   <label for="unique_query" class="form-label">
                     {{ 'form_label_unique_query' | translate }}

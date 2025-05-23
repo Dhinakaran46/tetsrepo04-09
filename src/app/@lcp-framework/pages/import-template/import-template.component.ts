@@ -406,14 +406,14 @@ export class ImportTemplateComponent implements OnInit {
       }
     });
 
-    this.lineItemForm.get('is_unique')?.valueChanges.subscribe((value) => {
+    /*this.lineItemForm.get('is_unique')?.valueChanges.subscribe((value) => {
       const uniqueQueryControl = this.lineItemForm.get('unique_query');
       if (value) {
         uniqueQueryControl?.enable();
       } else {
         uniqueQueryControl?.disable();
       }
-    });
+    });*/
   }
 
   initNewLineItem() {
@@ -820,7 +820,8 @@ export class ImportTemplateComponent implements OnInit {
         foreign_column: item.is_foreign ? (item.foreign_column ? item.foreign_column : null) : null,
         foreign_can_create: item.is_foreign ? (item.foreign_can_create ? item.foreign_can_create : false) : false,
         foreign_query: item.is_foreign ? (item.foreign_query ? item.foreign_query : null) : null,
-        unique_query: item.is_unique ? (item.unique_query ? item.unique_query : null) : null,
+        //unique_query: item.is_unique ? (item.unique_query ? item.unique_query : null) : null,
+        unique_query: item.unique_query,
 
         field_type_id: item.field_type_id,
       }));
@@ -892,7 +893,8 @@ export class ImportTemplateComponent implements OnInit {
         foreign_column: item.is_foreign ? (item.foreign_column ? item.foreign_column : null) : null,
         foreign_can_create: item.is_foreign ? (item.foreign_can_create ? item.foreign_can_create : false) : false,
         foreign_query: item.is_foreign ? (item.foreign_query ? item.foreign_query : null) : null,
-        unique_query: item.is_unique ? (item.unique_query ? item.unique_query : null) : null,
+        //unique_query: item.is_unique ? (item.unique_query ? item.unique_query : null) : null,
+        unique_query: item.unique_query,
         field_type_id: item.field_type_id,
       }));
 
