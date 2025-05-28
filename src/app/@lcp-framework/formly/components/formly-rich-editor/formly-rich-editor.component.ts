@@ -13,18 +13,29 @@ export class FormlyRichEditorComponent extends FieldType<FieldTypeConfig> {
   preview = false;
   // htmlContent = this.formControl.value;
   editorOptions = {
-    theme: 'vs-dark',
-    language: 'html',
-    automaticLayout: true,
-    minimap: { enabled: false }, // Disable the minimap
+    language: 'json', // Enable JSON syntax highlighting
+    theme: 'vs-dark', // or 'vs', 'hc-black'
+    automaticLayout: true, // Auto-resize with container
+    minimap: { enabled: false }, // Disable minimap for simplicity
+    scrollBeyondLastLine: false,
+    fontSize: 14,
+    lineNumbers: 'on', // or 'off'
+    folding: true, // Enable code folding
+    lineDecorationsWidth: 10,
+    overviewRulerBorder: false,
     scrollbar: {
-      vertical: 'hidden', // Hide vertical scrollbar
-      horizontal: 'auto', // Hide horizontal scrollbar
+      verticalScrollbarSize: 8,
+      horizontalScrollbarSize: 8,
     },
-    overviewRulerLanes: 0, // Disable the overview ruler on the right side
-    lineNumbers: 'on', // Show line numbers
-    wordWrap: 'on', // Enable word wrap
-    wordWrapColumn: 80, // Optional: Set a specific column width for wrapping
+    // JSON-specific features
+    formatOnPaste: true,
+    formatOnType: true,
+    suggest: {
+      showWords: false, // Disable word suggestions (focus on JSON keys)
+    },
+    // Validation & Hover
+    hover: { enabled: true },
+    validate: true, // Enable JSON validation
   };
   modules = {
     toolbar: [

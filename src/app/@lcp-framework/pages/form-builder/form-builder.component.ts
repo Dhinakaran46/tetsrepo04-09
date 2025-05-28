@@ -629,6 +629,7 @@ export class FormBuilderComponent implements OnInit {
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
           let formEntity = response.data.records[0];
+          console.log('formEntity  : ', formEntity);
           formEntity.query_information = this.parseJSONField(formEntity.query_information);
           formEntity.form_information = this.parseJSONField(formEntity.form_information);
           formEntity.add_query_information = this.parseJSONField(formEntity.add_query_information);
@@ -636,11 +637,13 @@ export class FormBuilderComponent implements OnInit {
           formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
+          console.log('formEntity.query_information : ', formEntity.query_information);
           this.transParam = this.entity_type === 'add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
+          console.log('defaultDataParam : ', this.defaultDataParam);
           this.setDefaultData();
           this.titleChange();
         } else {
