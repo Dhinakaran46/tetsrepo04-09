@@ -1,3 +1,4 @@
-<ngx-monaco-editor [options]="editorOptions" [style.height.px]="(to['rows'] ? to['rows'] * 24 : 200) + 50"
-  class="monaco-editor" [formControl]="formControl">
-</ngx-monaco-editor>
+<div class="monaco-editor-container" appDynamicFontSize="body">
+  <ngx-monaco-editor monacoEditor [options]="editorOptions" [formControl]="formControl" (onInit)="onEditorInit($event)" class="monaco-editor">
+  </ngx-monaco-editor>
+</div>
