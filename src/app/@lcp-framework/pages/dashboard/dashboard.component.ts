@@ -416,6 +416,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         cards.map(async (card, i) => {
           if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
             if (card.query_information) {
+              let queryString = JSON.stringify(card.query_information);
+              queryString = queryString.replace(/\$session_user_id/g, this.userId);
+              card.query_information = JSON.parse(queryString);
               card.data = await this.getQueryInfo(card.query_information);
             }
 
