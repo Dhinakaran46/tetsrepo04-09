@@ -4,6 +4,16 @@
       {{ 'entity_user_role_map_page' | translate }}
     </div>
 
+    <label class="flex items-center text-sm">
+      <input
+        type="checkbox"
+        [checked]="areAllEntitiesChecked()"
+        (change)="toggleAllEntities($event)"
+        class="form-checkbox ml-2 h-4 w-4 rounded border-gray-300 text-primary"
+      />
+      <span class="ml-1">All</span>
+    </label>
+
     <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
       <div class="flex flex-col gap-2 md:flex-row md:items-center">
         <div class="relative mb-2 flex-grow md:mb-0" appDynamicFontSize="body">
@@ -71,6 +81,17 @@
               <i class="fas" [ngClass]="entityGroup.get('menu_img')?.value"></i>
               <span class="ml-2" appDynamicFontSize="title">{{ entityGroup.get('name')?.value | translate }}</span>
               <i class="fas ml-4" [ngClass]="entityGroup.get('expanded')?.value ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+
+              <!-- All checkbox placed right after arrow icon -->
+              <label class="ml-4 flex items-center text-sm" (click)="$event.stopPropagation()">
+                <input
+                  type="checkbox"
+                  [checked]="isAllChecked(entityGroup)"
+                  (change)="toggleAllRightsO(entityGroup, getCheckboxChecked($event))"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
+                />
+                <span class="ml-1">All</span>
+              </label>
             </button>
 
             <ng-container *ngIf="entityGroup.get('expanded')?.value">
@@ -78,6 +99,17 @@
               <ng-container *ngIf="getSortedRightsControls(entityGroup).length > 0">
                 <i class="fas fa-arrow-right mx-2"></i>
               </ng-container>
+
+              <label class="ml-4 flex items-center text-sm" *ngIf="getSortedRightsControls(entityGroup).length > 0">
+                <input
+                  type="checkbox"
+                  [checked]="isAllChecked(entityGroup)"
+                  (change)="toggleAllRights(entityGroup, getCheckboxChecked($event))"
+                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
+                />
+                <span class="ml-1">All</span>
+              </label>
+
               <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
                 <ng-container *ngFor="let rightGroup of getSortedRightsControls(entityGroup); let j = index" [formGroupName]="j">
                   <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
@@ -110,6 +142,16 @@
                       <ng-container *ngIf="getSortedRightsControls(childGroup).length > 0">
                         <i class="fas fa-arrow-right mx-2"></i>
                       </ng-container>
+
+                      <label class="ml-4 flex items-center text-sm" *ngIf="getSortedRightsControls(childGroup).length > 0">
+                        <input
+                          type="checkbox"
+                          [checked]="isAllChecked(childGroup)"
+                          (change)="toggleAllRights(childGroup, getCheckboxChecked($event))"
+                          class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
+                        />
+                        <span class="ml-1">All</span>
+                      </label>
 
                       <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
                         <ng-container *ngFor="let rightGroup of getSortedRightsControls(childGroup); let l = index" [formGroupName]="l">
@@ -144,6 +186,17 @@
                               <ng-container *ngIf="getSortedRightsControls(grandchildGroup).length > 0">
                                 <i class="fas fa-arrow-right mx-2"></i>
                               </ng-container>
+
+                              <label class="ml-4 flex items-center text-sm" *ngIf="getSortedRightsControls(grandchildGroup).length > 0">
+                                <input
+                                  type="checkbox"
+                                  [checked]="isAllChecked(grandchildGroup)"
+                                  (change)="toggleAllRights(grandchildGroup, getCheckboxChecked($event))"
+                                  class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
+                                />
+                                <span class="ml-1">All</span>
+                              </label>
+
                               <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
                                 <ng-container *ngFor="let rightGroup of getSortedRightsControls(grandchildGroup); let n = index" [formGroupName]="n">
                                   <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">

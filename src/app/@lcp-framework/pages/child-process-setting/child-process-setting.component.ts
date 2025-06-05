@@ -229,6 +229,16 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         is_searchable: 'false',
         is_grid_column: 'true',
       },
+      {
+        header: 'created_at',
+        clause_type: 'where',
+        field_value: 'child_processes.created_at',
+        is_sortable: 'true',
+        column_order: '6.00',
+        column_width: '1.00',
+        is_searchable: 'false',
+        is_grid_column: 'true',
+      },
     ];
   }
 
@@ -240,7 +250,14 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       start_index: 0,
       limit_range: 10,
       sort_columns: [['child_processes.id', 'desc']],
-      group_by: ['child_processes.name', 'child_processes.slug', 'child_processes.description', 'child_processes.command', 'child_processes.id'],
+      group_by: [
+        'child_processes.name',
+        'child_processes.slug',
+        'child_processes.description',
+        'child_processes.command',
+        'child_processes.id',
+        'child_processes.created_at',
+      ],
       includes: [],
       // having_conditions: null,
       // having_any_conditions: null,
