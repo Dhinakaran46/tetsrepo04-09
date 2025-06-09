@@ -219,6 +219,15 @@
             </div>
           </div>
           } -->
+
+          <button
+            *ngIf="unique_id && true"
+            type="button"
+            class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
+            (click)="location.back()"
+          >
+            {{ 'back' | translate }}
+          </button>
         </div>
       </div>
     </div>

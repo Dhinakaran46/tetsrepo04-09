@@ -117,6 +117,11 @@ export class FormBuilderComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit() {
+    const pageInfo = this.route.snapshot.data['pageInfo'] || '';
+    console.log(pageInfo);
+  }
+
   private initStore() {
     this.storeData
       .select((d) => d.index)

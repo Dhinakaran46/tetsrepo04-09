@@ -19,12 +19,6 @@ import { ExampleClientDatatableComponent } from './pages/example-client-datatabl
 import { EmailTemplateAssignmentComponent } from './pages/email-template-assignment/email-template-assignment.component';
 export const routes: Routes = [
   {
-    path: 'not-found',
-    component: NotFoundComponent,
-    title: 'Not Found',
-  },
-
-  {
     path: 'documentation',
     component: DocumentationComponent,
     canActivate: [authGuard],
@@ -37,6 +31,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canActivateChild: [permissionGuardFactory()],
     children: [
+      {
+        path: 'not-found',
+        component: NotFoundComponent,
+        title: 'Not Found',
+      },
       {
         path: '',
         component: DashboardComponent,

@@ -182,6 +182,7 @@ export class MasterListComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
+    console.log(pageInfo);
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
@@ -536,7 +537,13 @@ export class MasterListComponent implements AfterViewInit {
       '$session_user_id',
       this.user_info.main.id
     );
+    console.log(this.uniqueId);
+    if (this.uniqueId) {
+      payload.unique_id = this.uniqueId;
+    }
+
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
+    console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
