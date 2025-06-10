@@ -11,7 +11,7 @@ import { CommonSharedModule } from '../../shared/common/common.module';
 import { Store } from '@ngrx/store';
 import { commonConfig } from '../../config/common.config';
 
-import { DatePipe } from '@angular/common';
+import { DatePipe, Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
 
@@ -42,6 +42,7 @@ interface InputTypes {
   ],
 })
 export class DataTableComponent implements OnInit, OnChanges {
+  @Input() unique_id: any;
   @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
   store: any;
@@ -151,7 +152,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     public storeData: Store<any>,
     public datePipe: DatePipe,
     private localstore: LocalStorageService,
-    private openaiService: OpenaiService
+    private openaiService: OpenaiService,
+    public location: Location
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -160,6 +162,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
+    console.log(this.unique_id);
     this.headercolumns.forEach((col) => {
       col.sortDirection = '';
       col.colFilterHide = false;

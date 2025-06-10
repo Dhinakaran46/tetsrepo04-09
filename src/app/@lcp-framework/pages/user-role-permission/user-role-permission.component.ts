@@ -777,4 +777,64 @@ export class UserRolePermissionComponent {
       }
     );
   }
+
+  isAllChecked(group: FormGroup): boolean {
+    const rightsArray = group.get('rights') as FormArray;
+    return rightsArray && rightsArray.length > 0 && rightsArray.controls.every((control) => control.get('selected')?.value);
+  }
+
+  toggleAllRights(group: FormGroup, checked: boolean): void {
+    const rightsArray = group.get('rights') as FormArray;
+    rightsArray.controls.forEach((control: AbstractControl) => {
+      control.get('selected')?.setValue(checked);
+    });
+
+    // Optionally, ensure "view" is always selected when any other is selected
+    if (checked) {
+      const viewControl = rightsArray.controls.find((c) => c.get('name')?.value === 'view');
+      if (viewControl) {
+        viewControl.get('selected')?.setValue(true);
+      }
+    }
+  }
+
+  getCheckboxChecked(event: Event): boolean {
+    return (event.target as HTMLInputElement).checked;
+  }
+
+  areAllEntitiesChecked(): boolean {
+    const entities = this.getEntitiesControls();
+    return entities.length > 0 && entities.every((entity) => this.isAllChecked(entity));
+  }
+
+  toggleAllEntities(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const entities = this.getEntitiesControls();
+    entities.forEach((entity) => this.toggleAllRightsO(entity, checked));
+  }
+
+  toggleAllRightsO(group: FormGroup, checked: boolean): void {
+    // Toggle rights in this group
+    const rightsArray = group.get('rights') as FormArray;
+    if (rightsArray) {
+      rightsArray.controls.forEach((control: AbstractControl) => {
+        control.get('selected')?.setValue(checked);
+      });
+
+      if (checked) {
+        const viewControl = rightsArray.controls.find((c) => c.get('name')?.value === 'view');
+        if (viewControl) {
+          viewControl.get('selected')?.setValue(true);
+        }
+      }
+    }
+
+    // Recursively toggle all children (and grandchildren, etc.)
+    const childrenArray = group.get('children') as FormArray;
+    if (childrenArray) {
+      childrenArray.controls.forEach((child: AbstractControl) => {
+        this.toggleAllRightsO(child as FormGroup, checked);
+      });
+    }
+  }
 }

@@ -169,6 +169,7 @@ export class RouteUpdateService {
                 entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
                 about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
                 ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
+                query_builder_module: () => import('../../pages/query-builder/query-builder.component').then((m) => m.QueryBuilderComponent),
                 language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
                 job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
@@ -188,6 +189,9 @@ export class RouteUpdateService {
                 approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
                 approval_requests_tracking_module: () =>
                   import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
+                child_process_setting_module: () =>
+                  import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
+                carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
               };
 
               const route: Route = {

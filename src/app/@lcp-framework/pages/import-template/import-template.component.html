@@ -544,7 +544,8 @@
                 />
                 <label for="is_unique" class="form-label">{{ 'form_label_is_unique' | translate }}</label>
               </div>
-              <div *ngIf="lineItemForm.get('is_unique')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
+              <!-- <div *ngIf="lineItemForm.get('is_unique')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1"> -->
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
                 <div class="col-span-1">
                   <label for="unique_query" class="form-label">
                     {{ 'form_label_unique_query' | translate }}
@@ -553,6 +554,24 @@
                     <textarea id="unique_query" formControlName="unique_query" class="form-textarea block sm:text-sm"></textarea>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="col-span-full">
+                <label class="form-label">Expression Rules</label>
+
+                <div formArrayName="expression_rules" *ngIf="expressionRules && expressionRules.length > 0">
+                  <div *ngFor="let rule of expressionRules.controls; let i = index" [formGroupName]="i" class="mb-3 grid grid-cols-2 gap-4">
+                    <input type="text" formControlName="expression" class="form-input" placeholder="Expression" />
+                    <input type="text" formControlName="message" class="form-input" placeholder="Validation message" />
+                    <div class="col-span-2 text-right">
+                      <button type="button" class="text-sm text-red-600" (click)="removeExpressionRule(i)">Remove</button>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-sm bg-green-600 text-white" (click)="addExpressionRule()">+ Add Expression Rule</button>
               </div>
             </div>
           </div>

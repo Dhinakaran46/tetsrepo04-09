@@ -37,12 +37,19 @@ export class CronSettingComponent {
       { key: 'timing', label: 'Cron timing', sortable: true, searchable: true },
       { key: 'cron_url', label: 'Cron url', sortable: true, searchable: true },
       { key: 'concat_base_url', label: 'Concat base url', sortable: true, searchable: false },
+      { key: 'description', label: 'Description', sortable: true, searchable: false },
       { key: 'status', label: 'Cron status', sortable: true, searchable: true },
       {
         key: 'actions',
         label: 'Actions',
         type: 'button',
         actions: [
+          {
+            icon: 'fa-solid fa-eye ',
+            onClick: (item: any) => this.detailCronJob(item.uuid),
+            class: '  ',
+            tooltip: 'Details Cron',
+          },
           {
             icon: 'fa-solid fa-play text-success',
             onClick: (item: any) => this.startCronJob(item.id),
@@ -118,6 +125,7 @@ export class CronSettingComponent {
       timing: ['', Validators.required],
       cron_url: ['', Validators.required],
       concat_base_url: [false],
+      description: [''],
     });
   }
 
@@ -148,6 +156,7 @@ export class CronSettingComponent {
       timing: '',
       cron_url: '',
       concat_base_url: false,
+      description: '',
     });
     this.showModal = true;
   }
@@ -182,6 +191,10 @@ export class CronSettingComponent {
     });
   }
 
+  detailCronJob(uuid: any) {
+    this.router.navigate(['/cron-setup/details', uuid]);
+  }
+
   startCronJob(id: number) {
     this.gridApiService.startCronJob(id).subscribe((response: any) => {
       if (response.status) {
@@ -207,9 +220,11 @@ export class CronSettingComponent {
     cron_list.forEach((item: any) => {
       result.push({
         id: item.id,
+        uuid: item.uuid,
         timing: item.timing,
         cron_url: item.cron_url,
         concat_base_url: item.concat_base_url,
+        description: item.description,
         status: this.cronStatus[item.id]?.status || 'stopped',
       });
     });
@@ -224,6 +239,7 @@ export class CronSettingComponent {
       timing: item.timing,
       cron_url: item.cron_url,
       concat_base_url: item.concat_base_url,
+      description: item.description,
     });
 
     this.showModal = true;
@@ -277,6 +293,40 @@ export class CronSettingComponent {
   }
 
   createCronJob(data: any) {
+    /*let param: any = {
+      action: ['insert'],
+      table: ['scheduled_jobs'],
+      table_mapping: ['table1'],
+
+      data: {
+        table1: [
+          {
+            timing: data.timing,
+            cron_url: data.cron_url,
+            concat_base_url: data.concat_base_url,
+            description: data.description,
+          },
+        ],
+      },
+    };
+    this.gridApiService.executeTransaction(param).subscribe(
+      (response: any) => {
+        if (response.status) {
+          this.toastr.success('Cron job created successfully');
+          this.resetForm();
+          this.getCronJobs(); // Refresh your list
+        } else if (!response.status) {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+        }
+      },
+      (error: any) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );*/
     this.gridApiService.createCronJobs(data).subscribe({
       next: (response) => {
         this.toastr.success('Cron job created successfully');

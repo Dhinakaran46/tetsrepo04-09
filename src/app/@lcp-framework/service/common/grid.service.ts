@@ -26,6 +26,10 @@ export class GridApiService {
     return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, data);
   }
 
+  getAllUnAuthList(data: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.unauthcommonlistdata}`, data);
+  }
+
   getAllColumns(data: any): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}/${data.entity_name}`);
   }
@@ -209,5 +213,9 @@ export class GridApiService {
 
   deleteCronJob(id: number): Observable<any> {
     return this.http.delete<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.delete_cron_jobs}/${id}`);
+  }
+
+  executeChildProcess(id: number): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.execute_child_process}/${id}`, {});
   }
 }

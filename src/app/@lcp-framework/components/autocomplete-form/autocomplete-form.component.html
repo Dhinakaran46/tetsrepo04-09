@@ -1,0 +1,24 @@
+<div class="relative flex flex-col gap-1">
+  @if(!hidelabel) {
+  <label [ngClass]="{ 'required-mark mb-2 block font-medium': required }">{{ label | translate }}</label>
+  }
+  <input
+    type="text"
+    [style.width]="width"
+    class="w-250 form-input w-full rounded border border-gray-300 py-1 text-xs text-gray-600 placeholder:text-white-dark focus:outline-none focus:ring-2 focus:ring-blue-500"
+    (focus)="showDropdowndisp()"
+    (blur)="hideDropdown()"
+    [placeholder]="placeholder"
+    (input)="filterItems($event)"
+    [value]="dispLabel"
+  />
+
+  <ul
+    *ngIf="showDropdown && filteredItems.length"
+    class="absolute top-full z-10 mt-1 max-h-60 w-full overflow-y-auto rounded border border-gray-300 bg-white text-xs shadow"
+  >
+    <li *ngFor="let item of filteredItems" (mousedown)="selectItem(item)" class="cursor-pointer px-3 py-1 hover:bg-blue-100">
+      {{ item.name }}
+    </li>
+  </ul>
+</div>

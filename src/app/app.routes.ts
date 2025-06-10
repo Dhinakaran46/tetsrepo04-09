@@ -1,3 +1,5 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [{ path: '**', redirectTo: '/not-found', pathMatch: 'full' }];
+export const routes: Routes = [
+  //   { path: '**', redirectTo: '/not-found', pathMatch: 'full' }
+];

@@ -17,6 +17,7 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { EditorComponent } from 'ngx-monaco-editor-v2';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { LoaderComponent } from '../../components/loader/loader.component';
+import { AutocompleteFormComponent } from '../../components/autocomplete-form/autocomplete-form.component';
 
 @Component({
   selector: 'app-approval-workflow-assignment',
@@ -32,6 +33,7 @@ import { LoaderComponent } from '../../components/loader/loader.component';
     FormsModule,
     CommonModule,
     NgSelectModule,
+    AutocompleteFormComponent,
   ],
   templateUrl: './approval-workflow-assignment.component.html',
   styleUrl: './approval-workflow-assignment.component.scss',
@@ -62,6 +64,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   userList: any[] = [];
   roleList: any[] = [];
   tagList: any[] = [];
+  emailTemplateList: { id: number; name: string }[] = [];
 
   editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 1, insertSpaces: true };
   isDarkTheme = true; // Default theme
@@ -109,6 +112,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   }
 
   async ngOnInit() {
+    await this.getEmailTemplateList();
+
     // get approval workflow details
     await this.getApprovalWorkflowDetail();
 
@@ -154,7 +159,9 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                 'approver_type', approval_workflow_assignments.approver_type,
                 'approver', approval_workflow_assignments.approver,
                 'approve_query_information', approval_workflow_assignments.approve_query_information,
-                'reject_query_information', approval_workflow_assignments.reject_query_information
+                'reject_query_information', approval_workflow_assignments.reject_query_information,
+                'approved_mail', approval_workflow_assignments.approve_mail_id,
+                'reject_mail', approval_workflow_assignments.reject_mail_id
               )
           ) FILTER (WHERE approval_workflow_assignments.id IS NOT NULL), '[]')`,
           'approval_assignments',
@@ -165,10 +172,13 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           if (response.data.records.length) {
+            console.log(' response.data.records[0] : ', response.data.records[0]);
             this.form.controls['approvalWorkflow'].patchValue({
               id: response.data.records[0].id,
               slug: response.data.records[0].slug,
               name: response.data.records[0].name,
+              accept_email: response.data.records[0].approved_mail,
+              reject_email: response.data.records[0].reject_mail,
             });
             if (response.data.records[0]?.approval_assignments.length) {
               const lineItemsArray: any = this.form.get('approvalWorkflowAssignments') as FormArray;
@@ -181,6 +191,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                     approver: any;
                     approve_query_information: any[];
                     reject_query_information: any[];
+                    approved_mail: number | null;
+                    reject_mail: number | null;
                   },
                   index: any
                 ) => {
@@ -197,6 +209,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                       user_list: [null],
                       role_list: [null],
                       tag_list: [null],
+                      accept_email: each.approved_mail,
+                      reject_email: each.reject_mail,
                       tag: [each.approver_type === 'tag' ? each.approver?.split(',') : null],
                       users: [
                         each.approver_type === 'user_id'
@@ -230,11 +244,49 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
             } else {
               this.addApproverAssignment();
             }
+            console.log('form : ', this.form);
           }
         }
       },
     });
   }
+
+  async getEmailTemplateList() {
+    const payload = {
+      company_id: 1,
+      group_by: ['email_templates.id', 'email_templates.name'],
+      search_all: [
+        {
+          value: '3',
+          operator: '!=',
+          column_name: 'email_templates.status_id',
+        },
+      ],
+      limit_range: 1,
+      print_query: true,
+      start_index: 0,
+      primary_table: 'email_templates',
+      select_columns: [['email_templates.id'], ['email_templates.name']],
+    };
+    this.commonService.getCommonList(payload).subscribe({
+      next: (response: any) => {
+        if (response.status) {
+          this.emailTemplateList = response.data.records;
+        }
+      },
+    });
+  }
+
+  // onAcceptMailSelected(item: any) {
+  //   console.log('item : ', item);
+  //   const fg = this.form.controls['approvalWorkflow'] as FormGroup;
+  //   fg.controls['accept_email'].setValue(item.id);
+  // }
+
+  // onRejectMailSelected(item: any) {
+  //   const fg = this.form.controls['approvalWorkflow'] as FormGroup;
+  //   fg.controls['reject_email'].setValue(item.id);
+  // }
 
   get approvalWorkflow() {
     return this.form.get('approvalWorkflow')?.getRawValue();
@@ -266,6 +318,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       tag: [null],
       users: [null],
       roles: [null],
+      accept_email: [null],
+      reject_email: [null],
     });
 
     // Push the new form group
@@ -492,6 +546,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
               status_id: 1,
               created_at: true,
               updated_at: true,
+              approve_mail_id: each.accept_email,
+              reject_mail_id: each.reject_email,
             };
           }),
         },

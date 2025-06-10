@@ -14,6 +14,7 @@ import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { IconCaretDownComponent } from '../@lcp-framework/shared/icon/icon-caret-down';
+import { GridApiService } from '../@lcp-framework/service/common/grid.service';
 
 @Component({
   selector: 'app-root',
@@ -28,6 +29,8 @@ import { IconCaretDownComponent } from '../@lcp-framework/shared/icon/icon-caret
   ],
 })
 export class AuthLayout {
+  slideInterval: any;
+
   currYear: number = new Date().getFullYear();
   companyId: number = 1;
   loading = false;
@@ -36,8 +39,11 @@ export class AuthLayout {
   apiUrl = environment.apiUrl;
   logo: any;
   authentication_banner: any;
+  authentication_background_1: any;
+  authentication_background_2: any;
   company: any;
   copyrightContent: any;
+  mediaItems: any = [];
   constructor(
     private renderer: Renderer2,
     private toastr: ToastrService,
@@ -47,11 +53,33 @@ export class AuthLayout {
     public storeData: Store<any>,
     private service: AppService,
     public translate: TranslateService,
-    private localstore: LocalStorageService
+    private localstore: LocalStorageService,
+    private gridApiService: GridApiService
   ) {
     this.initStore();
   }
+
+  // Auto-slide function
+  startAutoSlide() {
+    this.slideInterval = setInterval(() => {
+      this.nextItem();
+    }, 1200000000000); // Change the slide every 12 seconds
+  }
+
+  activeIndex: number = 0;
+
+  // Move to the next item
+  nextItem() {
+    this.activeIndex = (this.activeIndex + 1) % this.mediaItems.length;
+  }
+
+  // Move to the previous item
+  prevItem() {
+    this.activeIndex = (this.activeIndex - 1 + this.mediaItems.length) % this.mediaItems.length;
+  }
+
   headerClass = '';
+
   ngOnInit() {
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
@@ -72,11 +100,61 @@ export class AuthLayout {
       }
     });
     this.getconfig();
+    this.loadDataCarousel();
   }
 
   changeFavicon(url: any): void {
     const favicon = this.renderer.selectRootElement('#common-favicon', true);
     this.renderer.setAttribute(favicon, 'href', url);
+  }
+
+  loadDataCarousel() {
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'carousel_templates',
+      start_index: 0,
+      limit_range: 1,
+      sort_columns: [['carousel_templates.id', 'desc']],
+      search_all: [
+        {
+          column_name: 'carousel_templates.slug',
+          value: 'authentication_layout',
+          operator: '=',
+        },
+      ],
+      select_columns: [
+        ['carousel_templates.*'],
+        [
+          "CASE WHEN COUNT(carousel_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('name', carousel_template_line_items.name, 'description', carousel_template_line_items.description, 'image_url', carousel_template_line_items.image_url, 'video_url', carousel_template_line_items.video_url, 'clickable_link', carousel_template_line_items.clickable_link, 'order_no', carousel_template_line_items.order_no))) END",
+          'items',
+        ],
+      ],
+      includes: [
+        {
+          table_name: 'carousel_template_line_items',
+          join_type: 'LEFT',
+          join_condition: `carousel_templates.id = carousel_template_line_items.carousel_template_id`,
+        },
+      ],
+      group_by: ['carousel_templates.id'],
+    };
+
+    this.gridApiService.getAllUnAuthList(params).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          const entity = response.data.records[0];
+          this.mediaItems = entity.items;
+          this.mediaItems.sort((a: any, b: any) => a.order - b.order);
+          console.log(this.mediaItems);
+        }
+      },
+      (error) => {
+        this.toastr.error('Error loading carousel template data', 'Error');
+      }
+    );
+
+    this.startAutoSlide(); // Start auto-sliding when the component is initialized
   }
 
   getconfig() {
@@ -91,6 +169,8 @@ export class AuthLayout {
             this.changeFavicon(this.apiUrl + '/' + res.favicon);
             this.logo = res.logo;
             this.authentication_banner = res.authentication_banner;
+            this.authentication_background_1 = res.authentication_background_1;
+            this.authentication_background_2 = res.authentication_background_2;
             this.company = res.company_name;
             this.copyrightContent = res.footer_content;
             this.localstore.storeData('config', JSON.stringify(res));
@@ -133,6 +213,10 @@ export class AuthLayout {
   }
 
   ngOnDestroy() {
+    // Stop auto-slide when the component is destroyed
+    if (this.slideInterval) {
+      clearInterval(this.slideInterval);
+    }
     window.removeEventListener('scroll', () => {});
   }
 

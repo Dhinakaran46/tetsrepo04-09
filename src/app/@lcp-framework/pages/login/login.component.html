@@ -1,5 +1,5 @@
 <div class="mb-10">
-  <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">{{ this.title_key | translate }}</h1>
+  <h1 class="text-3xl uppercase !leading-snug md:text-4xl">{{ this.title_key | translate }}</h1>
   <!--<p class="text-base font-bold leading-normal text-white-dark">{{ 'form_label_login_description' | translate }}</p>-->
 </div>
 <form class="space-y-5 dark:text-white" [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off">

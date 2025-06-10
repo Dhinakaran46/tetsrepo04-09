@@ -2,3 +2,14 @@
 @import 'tippy.js/dist/tippy.css';
 @import '@ng-select/ng-select/themes/default.theme.css';
 @import 'highlight.js/styles/androidstudio.css';
+
+.btn-gradient {
+  --tw-gradient-from: #fe7caa var(--tw-gradient-from-position);
+  --tw-gradient-to: #8097fb var(--tw-gradient-to-position);
+}
+
+.btn-gradient:hover {
+  --tw-gradient-from: #8097fb var(--tw-gradient-from-position);
+
+  --tw-gradient-to: #fe7caa var(--tw-gradient-to-position);
+}

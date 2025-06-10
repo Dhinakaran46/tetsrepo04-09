@@ -181,18 +181,55 @@ export class StaticPageComponent {
     );
   }
 
+  // Helper function to replace <render-html> tags with inner HTML content
+  replaceRenderHtmlTags(html: string): string {
+    // Create a temporary DOM element to parse HTML string safely
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    // Find all <render-html> elements inside tempDiv
+    const renderHtmlElems = tempDiv.querySelectorAll('render-html');
+
+    renderHtmlElems.forEach((elem) => {
+      // Replace <render-html> node with its innerHTML content
+      const parent = elem.parentNode;
+      if (parent) {
+        // Insert a new span element with innerHTML of <render-html>
+        const fragment = document.createRange().createContextualFragment(elem.innerHTML);
+        parent.replaceChild(fragment, elem);
+      }
+    });
+
+    return tempDiv.innerHTML;
+  }
+
   compileStaticContent(staticContent: string, data: any): string {
     // Escape HTML in code blocks
     staticContent = staticContent.replace(/<code class="xml">([\s\S]*?)<\/code>/g, (match, p1) => {
       return `<code class="xml">${this.escapeHtml(p1)}</code>`;
     });
-
     // Pretty-print JSON if data contains JSON fields
     const formattedData = this.prettifyJsonFields(data);
 
     // Compile the static content using Handlebars
     const compiledTemplate = Handlebars.compile(staticContent);
-    return compiledTemplate(formattedData);
+    let rendered = compiledTemplate(formattedData);
+    rendered = this.escapeRenderIntoHtml(rendered);
+
+    // Replace all <render-html>...</render-html> tags with their inner HTML content unescaped
+    rendered = this.replaceRenderHtmlTags(rendered);
+    return rendered;
+  }
+
+  escapeRenderIntoHtml(html: string): string {
+    return html
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'")
+      .replace(/&#123;/g, '{')
+      .replace(/&#125;/g, '}');
   }
 
   // Utility function to prettify JSON fields in the data object
