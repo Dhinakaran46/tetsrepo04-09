@@ -244,7 +244,7 @@ export class MasterEntityComponent implements OnInit {
     jobBuilderQueryInfo: {
       header: 'sample_query_information',
       examples: [
-        {
+        /*{
           name: 'example_1',
           comments: [],
           data: {
@@ -278,6 +278,50 @@ export class MasterEntityComponent implements OnInit {
               ],
             },
             table_mapping: ['table1'],
+          },
+        },*/
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            department_id: {
+              company_id: 1,
+              search_all: [
+                {
+                  value: '1',
+                  operator: '=',
+                  column_name: 'departments.status_id',
+                },
+              ],
+              limit_range: 1000,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['departments.name', 'asc']],
+              primary_table: 'departments',
+              select_columns: [
+                ['id', 'value'],
+                ['name', 'label'],
+              ],
+            },
+            designation_id: {
+              company_id: 1,
+              search_all: [
+                {
+                  value: '1',
+                  operator: '=',
+                  column_name: 'designations.status_id',
+                },
+              ],
+              limit_range: 1000,
+              print_query: false,
+              start_index: 0,
+              sort_columns: [['designations.name', 'asc']],
+              primary_table: 'designations',
+              select_columns: [
+                ['id', 'value'],
+                ['name', 'label'],
+              ],
+            },
           },
         },
       ],
