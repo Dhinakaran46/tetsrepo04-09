@@ -131,7 +131,7 @@ export class MenuLoadService {
     const userData = this.localStorageService.getData('user_data');
     this.user_info = userData ? JSON.parse(userData) : null;
     if (this.user_info && this.user_info.main && this.user_info.main.role) {
-      if (this.user_info.main.role !== 'super_admin' && this.user_info.main.role !== 'company_admin') {
+      if (this.user_info.main.role !== 'super_admin') {
         this.menu_id = [1];
       } else {
         this.menu_id = [1, 2, 5];
