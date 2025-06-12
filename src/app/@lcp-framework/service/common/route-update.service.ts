@@ -213,7 +213,7 @@ export class RouteUpdateService {
                       entity_name: routeData.entity_name,
                       start_index: 0,
                       limit_range: 10,
-                      sort_columns: sortCol,
+                      //sort_columns: sortCol,
                       search_all: finalAllCol,
                       search_any: [],
                     },
