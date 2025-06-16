@@ -274,8 +274,6 @@
                   </span>
                 </th>
               </ng-container>
-
-              <th *ngIf="this.masterInfo?.permissions.child_details"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
@@ -321,25 +319,7 @@
                       </ng-container>
                     </td>
                   </ng-container>
-
-                  <td *ngIf="this.masterInfo?.permissions.child_details" (click)="toggleRow(item['uuid'])">
-                    <button class="expand-collapse-btn">
-                      <i class="fa" [ngClass]="expandedItem === item['uuid'] ? 'fa-minus' : 'fa-plus'"></i>
-                    </button>
-                  </td>
                 </tr>
-
-                <ng-container *ngFor="let item of items">
-                  <tr *ngIf="expandedItem === item['uuid'] && this.masterInfo?.permissions.child_details">
-                    <td>
-                      <app-child-datatable
-                        [uuid]="item['uuid']"
-                        [entity_name]="this.masterInfo?.children.child_details.entity_name"
-                        (onRowClick)="handleRowClick($event)"
-                      ></app-child-datatable>
-                    </td>
-                  </tr>
-                </ng-container>
               </ng-container>
               <ng-template #noRecords>
                 <tr>

@@ -1,7 +1,6 @@
 import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { DataTableComponent } from '../../components/datatable/datatable.component';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +24,7 @@ import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
 import { OpenaiService } from '../../service/common/openai.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
+import { DataTableChildrenComponent } from '../../components/datatable-children/datatable-children.component';
 
 export interface ExportResponse {
   blob: Blob;
@@ -46,10 +46,10 @@ interface FetchDataParams {
 
 @Component({
   standalone: true,
-  selector: 'master-list',
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
+  selector: 'master-list-children',
+  imports: [CommonSharedModule, HttpClientModule, DataTableChildrenComponent, LoaderComponent, ReactiveFormsModule],
 
-  templateUrl: './master-list.component.html',
+  templateUrl: './master-list-children.component.html',
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -58,7 +58,7 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements AfterViewInit {
+export class MasterListChildrenComponent implements AfterViewInit {
   @Input() uuid: any = null; // Receive UUID from child component
   @Input() entity_name: any = ''; // Receive entity_name from child component
 
@@ -189,11 +189,16 @@ export class MasterListComponent implements AfterViewInit {
     this.config = JSON.parse(this.localStorageService.getData('config'));
 
     let pageInfo: any;
+    console.log(this.uuid);
+    console.log(this.entity_name);
     if (this.uuid && this.entity_name) {
-      this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
+      const val = this.routeUpdateService.getPageInfo(this.entity_name);
+      console.log(val);
+      pageInfo = val[0].data.pageInfo;
+      /*this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
         pageInfo = val;
         console.log('Fetched PageInfo:', pageInfo);
-      });
+      });*/
     } else {
       pageInfo = this.route.snapshot.data['pageInfo'] || '';
       console.log(pageInfo);
