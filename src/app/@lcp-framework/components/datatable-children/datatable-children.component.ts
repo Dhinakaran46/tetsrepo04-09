@@ -30,11 +30,11 @@ interface InputTypes {
 }
 
 @Component({
-  selector: 'app-datatable',
+  selector: 'app-datatable-children',
   standalone: true,
   imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent],
-  templateUrl: './datatable.component.html',
-  styleUrl: './datatable.component.scss',
+  templateUrl: './datatable-children.component.html',
+  styleUrl: './datatable-children.component.scss',
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -42,8 +42,7 @@ interface InputTypes {
     ]),
   ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
-  expandedItem: any = null;
+export class DataTableChildrenComponent implements OnInit, OnChanges {
   @Input() unique_id: any;
   @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
@@ -148,8 +147,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   user_info: any;
   config: any;
 
-  @Output() onRowClick = new EventEmitter<any>();
-
   constructor(
     private translate: TranslateService,
     private toastr: ToastrService,
@@ -163,19 +160,6 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
-  }
-
-  toggleRow(item: any) {
-    console.log(item);
-    if (this.expandedItem === item) {
-      this.expandedItem = null;
-    } else {
-      this.expandedItem = item;
-    }
-    console.log(this.expandedItem);
-  }
-  handleRowClick(rowData: any) {
-    this.onRowClick.emit(rowData); // Emit to parent (if needed)
   }
 
   ngOnInit() {
@@ -385,7 +369,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(this.masterInfo);
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
