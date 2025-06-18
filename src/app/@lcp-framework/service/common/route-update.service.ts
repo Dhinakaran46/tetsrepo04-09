@@ -184,6 +184,8 @@ export class RouteUpdateService {
                 user_role_policy_module: () => import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
                 email_template_assignment_module: () =>
                   import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
+                whatsapp_template_assignment_module: () =>
+                  import('../../pages/whatsapp-template-assignment/whatsapp-template-assignment.component').then((m) => m.WhatsappTemplateAssignmentComponent),
                 approval_workflow_assignment_module: () =>
                   import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
                 approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
