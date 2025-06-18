@@ -63,6 +63,14 @@ export class FormBuilderComponent implements OnInit {
       value: 'table_process_status_val_3',
       border_color: 'badge-outline-warning',
     },
+    created: {
+      value: 'table_process_status_val_4',
+      border_color: 'badge-outline-success',
+    },
+    not_appear: {
+      value: 'table_process_status_val_5',
+      border_color: 'badge-outline-danger',
+    },
   };
 
   constructor(

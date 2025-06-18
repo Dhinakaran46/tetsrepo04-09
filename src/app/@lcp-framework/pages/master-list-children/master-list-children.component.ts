@@ -131,6 +131,14 @@ export class MasterListChildrenComponent implements AfterViewInit {
       value: 'table_process_status_val_3',
       border_color: 'badge-outline-warning',
     },
+    created: {
+      value: 'table_process_status_val_4',
+      border_color: 'badge-outline-success',
+    },
+    not_appear: {
+      value: 'table_process_status_val_5',
+      border_color: 'badge-outline-danger',
+    },
   };
   uniqueId!: string | null;
 
@@ -561,6 +569,9 @@ export class MasterListChildrenComponent implements AfterViewInit {
     console.log(this.uniqueId);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
+    }
+    if (this.uuid) {
+      payload.unique_id = this.uuid;
     }
 
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
