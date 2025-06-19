@@ -4,11 +4,16 @@
       <div class="mb-5 flex items-center justify-between">
         <h5 class="text-lg font-semibold dark:text-white-light">{{ formEntity?.entity_name | translate }}</h5>
         <button
+          *ngIf="this.entityName"
           type="button"
           class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
           (click)="location.back()"
         >
           {{ 'back' | translate }}
+        </button>
+
+        <button *ngIf="this.entityName && isModal" (click)="closeModal.emit()" class="absolute right-3 top-3 text-gray-500 hover:text-red-500">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <div class="mb-5">

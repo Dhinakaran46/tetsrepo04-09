@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
@@ -73,6 +73,11 @@ export class FormBuilderComponent implements OnInit {
     },
   };
 
+  @Input() uuid!: string | null;
+  @Input() entityName!: string;
+  @Input() isModal: boolean = false;
+  @Output() closeModal = new EventEmitter<void>();
+
   constructor(
     private route: ActivatedRoute,
     public router: Router,
@@ -87,16 +92,32 @@ export class FormBuilderComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.paramMap.subscribe((params) => {
-      this.unique_id = params.get('id');
-    });
+    if (!this.uuid) {
+      this.route.paramMap.subscribe((params) => {
+        this.unique_id = params.get('id');
+      });
+    }
 
-    this.route.data.subscribe((data) => {
-      this.pageInfo = data['pageInfo'];
-      this.entity_name = this.pageInfo.fullEntity;
-      this.entity_type = this.pageInfo.action_slug;
-      this.draftMode = this.pageInfo.draft_mode;
-    });
+    if (this.uuid) {
+      this.unique_id = this.uuid;
+    }
+    if (!this.entityName) {
+      this.route.data.subscribe((data) => {
+        this.pageInfo = data['pageInfo'];
+        this.entity_name = this.pageInfo.fullEntity;
+        this.entity_type = this.pageInfo.action_slug;
+        this.draftMode = this.pageInfo.draft_mode;
+      });
+    }
+    if (this.entityName) {
+      this.entity_name = this.entityName;
+      const translateTitle = this.translate.instant(this.entity_name);
+      this.titleService.setTitle(translateTitle);
+    }
+
+    console.log(this.entity_name);
+    console.log(this.unique_id);
+
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     if (this.user_info.main?.policies) {
       this.policyData = this.user_info.main?.policies || null;

@@ -7,7 +7,7 @@ import { Router, Route, Routes } from '@angular/router';
 // import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
 
 import { LocalStorageService } from './local-storage.service';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 // import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
 // import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
 // import { DocumentationComponent } from '../../pages/documentation/documentation.component';
@@ -86,6 +86,9 @@ export class RouteUpdateService {
               const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
               const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
               const childDetailsPermissionKey = `child_details_${routeData.entity_name}`;
+              const popupCreatePermissionKey = `popup_add_${routeData.entity_name}`;
+              const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
+              const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -195,6 +198,7 @@ export class RouteUpdateService {
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
               };
 
+              console.log(permissionListJSON);
               const route: Route = {
                 path: targetPath,
                 // component: componentMap[routeData.component_class_name],
@@ -231,6 +235,9 @@ export class RouteUpdateService {
                       email_resend: permissionListJSON[emailResendPermissionKey] || false,
                       generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
                       child_details: permissionListJSON[childDetailsPermissionKey] || false,
+                      popup_create: permissionListJSON[popupCreatePermissionKey] || false,
+                      popup_edit: permissionListJSON[popupEditPermissionKey] || false,
+                      popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
                     },
                     children: children,
                   },
@@ -251,14 +258,23 @@ export class RouteUpdateService {
     });
   }
 
-  getPageInfo(entity_name: any): any {
-    const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
-    const routeDataArray = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
+  async getPageInfo(entity_name: any): Promise<any> {
+    const user_data_raw = this.localStore.getData('user_data');
+    if (!user_data_raw || user_data_raw === 'undefined') return null;
+
+    const user_data = JSON.parse(user_data_raw);
+    const routeDataArray = user_data?.unorgmenuList || [];
+
+    const permissionListJSON = await firstValueFrom(this.getPermissionListJSON());
+    if (!permissionListJSON || !routeDataArray.length) return null;
+
+    //const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
+    //const routeDataArray = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
 
     console.log(routeDataArray);
     console.log(entity_name);
-    const permissionListJSON: any = this.getPermissionListJSON(); // Use a synchronous method for permissions
-
+    //const permissionListJSON = await this.getPermissionListJSON().toPromise();
+    console.log(permissionListJSON);
     if (permissionListJSON && routeDataArray) {
       const dynamicRoutes = routeDataArray
         .filter((routeData: any) => routeData.entity_name === entity_name && routeData.component_class_name)
@@ -275,6 +291,9 @@ export class RouteUpdateService {
           const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
           const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
           const childDetailsPermissionKey = `child_details_${routeData.entity_name}`;
+          const popupCreatePermissionKey = `popup_add_${routeData.entity_name}`;
+          const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
+          const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
 
           const idColumn = `${routeData.primary_table}.id`;
           const deletedAtColumn = `${routeData.primary_table}.status_id`;
@@ -362,6 +381,9 @@ export class RouteUpdateService {
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
           };
 
+          console.log(permissionListJSON);
+          console.log(popupDetailsPermissionKey);
+          console.log(permissionListJSON[popupDetailsPermissionKey]);
           const route: Route = {
             path: targetPath,
             loadComponent: componentMap[routeData.component_class_name] || null,
@@ -396,6 +418,9 @@ export class RouteUpdateService {
                   email_resend: permissionListJSON[emailResendPermissionKey] || false,
                   generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
                   child_details: permissionListJSON[childDetailsPermissionKey] || false,
+                  popup_create: permissionListJSON[popupCreatePermissionKey] || false,
+                  popup_edit: permissionListJSON[popupEditPermissionKey] || false,
+                  popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
                 },
                 children: children,
               },
@@ -409,6 +434,7 @@ export class RouteUpdateService {
 
       return dynamicRoutes;
     }
+    return null;
   }
 
   addDynamicRoutes() {

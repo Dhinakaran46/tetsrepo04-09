@@ -25,6 +25,7 @@ import { environment } from '../../../../environments/environment';
 import { OpenaiService } from '../../service/common/openai.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { DataTableChildrenComponent } from '../../components/datatable-children/datatable-children.component';
+import { StaticPageComponent } from '../static-page/static-page.component';
 
 export interface ExportResponse {
   blob: Blob;
@@ -47,7 +48,7 @@ interface FetchDataParams {
 @Component({
   standalone: true,
   selector: 'master-list-children',
-  imports: [CommonSharedModule, HttpClientModule, DataTableChildrenComponent, LoaderComponent, ReactiveFormsModule],
+  imports: [CommonSharedModule, HttpClientModule, DataTableChildrenComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent],
 
   templateUrl: './master-list-children.component.html',
   animations: [
@@ -142,6 +143,10 @@ export class MasterListChildrenComponent implements AfterViewInit {
   };
   uniqueId!: string | null;
 
+  isViewPopupOpen = false;
+  selectedItemUuid: string | null = null;
+  popupEntityName: any;
+
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
@@ -193,39 +198,37 @@ export class MasterListChildrenComponent implements AfterViewInit {
     return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
-  ngAfterViewInit() {
+  async ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
 
-    let pageInfo: any;
-    console.log(this.uuid);
-    console.log(this.entity_name);
     if (this.uuid && this.entity_name) {
-      const val = this.routeUpdateService.getPageInfo(this.entity_name);
-      console.log(val);
-      pageInfo = val[0].data.pageInfo;
-      /*this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
-        pageInfo = val;
-        console.log('Fetched PageInfo:', pageInfo);
-      });*/
+      const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
+      const pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
+      this.setupPageInfo(pageInfo);
     } else {
-      pageInfo = this.route.snapshot.data['pageInfo'] || '';
-      console.log(pageInfo);
+      const pageInfo = this.route.snapshot.data['pageInfo'] || '';
+      this.setupPageInfo(pageInfo);
     }
 
+    this.cdr.detectChanges();
+  }
+
+  setupPageInfo(pageInfo: any) {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
       }
       this.masterInfo = pageInfo;
+
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
       }
 
       const masterListConfig = pageInfo;
-
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
 
@@ -241,7 +244,6 @@ export class MasterListChildrenComponent implements AfterViewInit {
       this.headercolumns = [];
       this.items = [];
     }
-    this.cdr.detectChanges();
   }
 
   async initStore() {
@@ -763,12 +765,6 @@ export class MasterListChildrenComponent implements AfterViewInit {
     this.items = this.items.filter((item) => !items.includes(item));
   }
 
-  handleCustomAction(action: string) {
-    if (action === 'addNew' && this.masterInfo.children.add) {
-      this.router.navigate([`${this.masterInfo.children.add.target}`]);
-    }
-  }
-
   editItem(item: any) {
     if (this.masterInfo.children.edit) {
       const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
@@ -1080,6 +1076,33 @@ export class MasterListChildrenComponent implements AfterViewInit {
       const targetRoute = this.masterInfo.children.details.target.replace(':uuid', item.uuid);
       this.router.navigate([targetRoute]);
     }
+  }
+
+  handleCustomAction(action: string) {
+    if (action === 'addNew' && this.masterInfo.children.add) {
+      this.router.navigate([`${this.masterInfo.children.add.target}`]);
+    }
+
+    if (action === 'addNew' && this.masterInfo.children.popup_add) {
+      this.selectedItemUuid = null;
+      this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
+      this.isViewPopupOpen = true;
+    }
+  }
+
+  editPopupItem(item: any) {
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = this.masterInfo.children.popup_edit.entity_name;
+    this.isViewPopupOpen = true;
+  }
+  viewPopupItem(item: any) {
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = this.masterInfo.children.popup_details.entity_name;
+    this.isViewPopupOpen = true;
+  }
+  closeViewPopup() {
+    this.isViewPopupOpen = false;
+    this.selectedItemUuid = null;
   }
 
   onPageChange(event: { page: number; start_index: number }) {

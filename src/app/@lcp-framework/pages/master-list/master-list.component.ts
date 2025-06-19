@@ -197,15 +197,15 @@ export class MasterListComponent implements AfterViewInit {
     this.config = JSON.parse(this.localStorageService.getData('config'));
 
     let pageInfo: any;
-    if (this.uuid && this.entity_name) {
+    /*if (this.uuid && this.entity_name) {
       this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
         pageInfo = val;
         console.log('Fetched PageInfo:', pageInfo);
       });
-    } else {
-      pageInfo = this.route.snapshot.data['pageInfo'] || '';
-      console.log(pageInfo);
-    }
+    } else {*/
+    pageInfo = this.route.snapshot.data['pageInfo'] || '';
+    console.log(pageInfo);
+    /*}*/
 
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
