@@ -4,7 +4,7 @@
       <div class="mb-5 flex items-center justify-between">
         <h5 class="text-lg font-semibold dark:text-white-light">{{ formEntity?.entity_name | translate }}</h5>
         <button
-          *ngIf="this.entityName"
+          *ngIf="!this.entityName"
           type="button"
           class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
           (click)="location.back()"

@@ -33,7 +33,7 @@ export class FormBuilderComponent implements OnInit {
   listDatas: any = {};
   transParam: any;
   entity_name!: string | null;
-  entity_type!: string | null;
+  entity_type!: any;
   unique_id!: string | null;
   defaultData: any = {};
   defaultDataParam!: any;
@@ -111,6 +111,12 @@ export class FormBuilderComponent implements OnInit {
     }
     if (this.entityName) {
       this.entity_name = this.entityName;
+      if (this.unique_id) {
+        this.entity_type = 'popup_edit';
+      } else {
+        this.entity_type = 'popup_add';
+      }
+
       const translateTitle = this.translate.instant(this.entity_name);
       this.titleService.setTitle(translateTitle);
     }
@@ -122,7 +128,9 @@ export class FormBuilderComponent implements OnInit {
     if (this.user_info.main?.policies) {
       this.policyData = this.user_info.main?.policies || null;
     }
-    if (this.entity_type !== 'add' && !this.unique_id) {
+
+    if (this.entity_type !== 'add' && this.entity_type !== 'popup_add' && !this.unique_id) {
+      console.log('coming');
       this.toastr.error('Invalid entity details given.');
       this.router.navigate(['/dashboard']);
       return;
@@ -672,13 +680,17 @@ export class FormBuilderComponent implements OnInit {
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
           console.log('formEntity.query_information : ', formEntity.query_information);
-          this.transParam = this.entity_type === 'add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
+          this.transParam =
+            this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
           console.log('defaultDataParam : ', this.defaultDataParam);
+          console.log(this.transParam);
+
           this.setDefaultData();
+
           this.titleChange();
         } else {
           this.toastr.error('Invalid entity details given.');
@@ -695,7 +707,9 @@ export class FormBuilderComponent implements OnInit {
   }
 
   setDefaultData() {
-    if (this.entity_type !== 'add' && this.defaultDataParam) {
+    console.log(this.entity_type);
+    if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
+      console.log(this.entity_type);
       if (this.defaultDataParam.primary_table) {
         this.processDefaultParam(this.defaultDataParam);
       } else {

@@ -336,13 +336,26 @@
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
 
   <!-- Modal Content -->
-  <div class="flex min-h-screen items-center justify-center p-4">
+  <div class="flex min-h-screen items-center justify-center p-6 sm:p-8">
     <div
-      class="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      class="relative w-full max-w-screen-xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
     >
       <!-- Modal Body -->
-      <div class="max-h-[80vh] overflow-y-auto p-4">
-        <app-static-page [uuid]="selectedItemUuid" [entityName]="popupEntityName" [isModal]="true" (closeModal)="closeViewPopup()"></app-static-page>
+      <div class="max-h-[85vh] overflow-y-auto p-8 sm:px-12 sm:py-8">
+        <app-static-page
+          *ngIf="popupName == 'popup_details'"
+          [uuid]="selectedItemUuid"
+          [entityName]="popupEntityName"
+          [isModal]="true"
+          (closeModal)="closeViewPopup()"
+        ></app-static-page>
+        <app-form-builder
+          *ngIf="popupName == 'popup_add' || popupName == 'popup_edit'"
+          [uuid]="selectedItemUuid"
+          [entityName]="popupEntityName"
+          [isModal]="true"
+          (closeModal)="closeViewPopup()"
+        ></app-form-builder>
       </div>
     </div>
   </div>

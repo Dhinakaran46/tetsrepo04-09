@@ -26,6 +26,7 @@ import { OpenaiService } from '../../service/common/openai.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { DataTableChildrenComponent } from '../../components/datatable-children/datatable-children.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
+import { FormBuilderComponent } from '../form-builder/form-builder.component';
 
 export interface ExportResponse {
   blob: Blob;
@@ -48,7 +49,7 @@ interface FetchDataParams {
 @Component({
   standalone: true,
   selector: 'master-list-children',
-  imports: [CommonSharedModule, HttpClientModule, DataTableChildrenComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent],
+  imports: [CommonSharedModule, HttpClientModule, DataTableChildrenComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent, FormBuilderComponent],
 
   templateUrl: './master-list-children.component.html',
   animations: [
@@ -90,6 +91,7 @@ export class MasterListChildrenComponent implements AfterViewInit {
   masterInfo: any;
   policyData: any = null;
   loading: boolean = false;
+  loadingpopup: boolean = false;
   gridloading: boolean = true;
 
   title: any = '';
@@ -146,6 +148,7 @@ export class MasterListChildrenComponent implements AfterViewInit {
   isViewPopupOpen = false;
   selectedItemUuid: string | null = null;
   popupEntityName: any;
+  popupName: any;
 
   constructor(
     private toastr: ToastrService,
@@ -1079,26 +1082,46 @@ export class MasterListChildrenComponent implements AfterViewInit {
   }
 
   handleCustomAction(action: string) {
+    console.log(action);
+    console.log(this.masterInfo);
     if (action === 'addNew' && this.masterInfo.children.add) {
       this.router.navigate([`${this.masterInfo.children.add.target}`]);
     }
 
     if (action === 'addNew' && this.masterInfo.children.popup_add) {
+      this.loadingpopup = true;
+      console.log('coming');
+      this.popupName = 'popup_add';
       this.selectedItemUuid = null;
       this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
       this.isViewPopupOpen = true;
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
     }
   }
-
   editPopupItem(item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_edit';
+    console.log(this.popupName);
+    console.log(this.masterInfo);
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = this.masterInfo.children.popup_edit.entity_name;
     this.isViewPopupOpen = true;
+
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
   }
   viewPopupItem(item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_details';
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = this.masterInfo.children.popup_details.entity_name;
     this.isViewPopupOpen = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
   }
   closeViewPopup() {
     this.isViewPopupOpen = false;
