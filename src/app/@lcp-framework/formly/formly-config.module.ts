@@ -19,6 +19,7 @@ import { FormlyDisplayListComponent } from './components/formly-display-list/for
 import { FormlyVsCodeComponent } from './components/formly-vs-code/formly-vs-code.component';
 import { FormlyRepeatTableFieldComponent } from './components/formly-repeat-table-field/formly-repeat-table-field.component';
 import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
+import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.component';
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
   if (field.props) return `Should have at least ${field.props.minLength} characters`;
@@ -60,6 +61,7 @@ export const search_conditions: any = commonConfig.search_conditions;
     MonacoEditorModule,
     CommonModule,
     NgSelectModule,
+    WhatsappTagsComponent,
     ReactiveFormsModule,
     FormlyBootstrapModule,
     FormlyPresetModule,
@@ -154,6 +156,7 @@ export const search_conditions: any = commonConfig.search_conditions;
         { name: 'async-select-from-db', component: FormlyFieldAutocompleteComponent, wrappers: ['form-field'] },
         { name: 'rich-editor', component: FormlyRichEditorComponent, wrappers: ['form-field'] },
         { name: 'email-tags', component: FormlyDisplayListComponent, wrappers: ['form-field'] },
+        { name: 'whatsapp-tags', component: WhatsappTagsComponent, wrappers: ['form-field'] },
         { name: 'vs-code', component: FormlyVsCodeComponent, wrappers: ['form-field'] },
         { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
       ],
