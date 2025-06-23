@@ -1460,6 +1460,7 @@ export class MasterEntityComponent implements OnInit {
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
+    console.log(items);
   }
 
   removeItem(index: number) {
@@ -1621,21 +1622,37 @@ export class MasterEntityComponent implements OnInit {
       status_id: commonConfig.STATUS.ACTIVE,
     }));
 
-    if (formData.items && formData.items.length > 0) {
-      const items = formData.items.map((item: any) => ({
-        master_grid_id: '@table1.id',
-        field_name: item.fieldName,
-        display_name: item.displayName,
-        order_no: item.orderNo,
-        is_grid_column: item.isGridColumn,
-        is_searchable: item.isSearchable,
-        clause_type: item?.clauseType || 'where',
-        is_sortable: item.isSortable,
-        field_type_id: item.fieldType,
-        link_type: item.linkType,
-        link_action: item.linkAction,
-        link_mode: item.linkMode,
-      }));
+    // Use FormArray controls to get linkMode dynamically
+    const itemsArray = this.form.get('items') as FormArray;
+    if (itemsArray && itemsArray.length > 0) {
+      const items = itemsArray.controls.map((control: any) => {
+        const linkActionValue = control.value.linkAction;
+        let link_mode = 'none';
+        if (control.value.linkType === 'component') {
+          const entity = this.masterEntities.find((e: any) => e.value === linkActionValue);
+          if (entity) {
+            if (entity.entity_type === 'static_page_builder_module') {
+              link_mode = 'popup_details';
+            } else if (entity.entity_type === 'form_builder_module') {
+              link_mode = 'popup_edit';
+            }
+          }
+        }
+        return {
+          master_grid_id: '@table1.id',
+          field_name: control.value.fieldName,
+          display_name: control.value.displayName,
+          order_no: control.value.orderNo,
+          is_grid_column: control.value.isGridColumn,
+          is_searchable: control.value.isSearchable,
+          clause_type: control.value.clauseType || 'where',
+          is_sortable: control.value.isSortable,
+          field_type_id: control.value.fieldType,
+          link_type: control.value.linkType,
+          link_action: control.value.linkAction,
+          link_mode,
+        };
+      });
       this.insert_json_schema.data['table3'] = items;
     }
 
@@ -1685,22 +1702,37 @@ export class MasterEntityComponent implements OnInit {
 
     this.update_json_schema.conditions['table2'] = [{ master_grid_id: '@table1.id' }];
 
-    if (formData.items && formData.items.length > 0) {
-      const items = formData.items.map((item: any) => ({
-        master_grid_id: '@table1.id',
-        field_name: item.fieldName,
-        display_name: item.displayName,
-        order_no: item.orderNo,
-        is_grid_column: item.isGridColumn,
-        is_searchable: item.isSearchable,
-        clause_type: item?.clauseType || 'where',
-        is_sortable: item.isSortable,
-        field_type_id: item.fieldType,
-        link_type: item.linkType,
-        link_action: item.linkAction,
-        link_mode: item.linkMode,
-      }));
-
+    // Use FormArray controls to get linkMode dynamically
+    const itemsArray = this.form.get('items') as FormArray;
+    if (itemsArray && itemsArray.length > 0) {
+      const items = itemsArray.controls.map((control: any) => {
+        const linkActionValue = control.value.linkAction;
+        let link_mode = 'none';
+        if (control.value.linkType === 'component') {
+          const entity = this.masterEntities.find((e: any) => e.value === linkActionValue);
+          if (entity) {
+            if (entity.entity_type === 'static_page_builder_module') {
+              link_mode = 'popup_details';
+            } else if (entity.entity_type === 'form_builder_module') {
+              link_mode = 'popup_edit';
+            }
+          }
+        }
+        return {
+          master_grid_id: '@table1.id',
+          field_name: control.value.fieldName,
+          display_name: control.value.displayName,
+          order_no: control.value.orderNo,
+          is_grid_column: control.value.isGridColumn,
+          is_searchable: control.value.isSearchable,
+          clause_type: control.value.clauseType || 'where',
+          is_sortable: control.value.isSortable,
+          field_type_id: control.value.fieldType,
+          link_type: control.value.linkType,
+          link_action: control.value.linkAction,
+          link_mode,
+        };
+      });
       this.update_json_schema.data['table3'] = items;
     }
 
@@ -1929,6 +1961,7 @@ export class MasterEntityComponent implements OnInit {
     // Helper to set linkMode
     const setLinkMode = (entityName: string) => {
       const entity = this.masterEntities.find((e: any) => e.value === entityName);
+      console.log(entity)
       if (entity) {
         if (entity.entity_type === 'static_page_builder_module') {
           (group as any)._linkMode = 'popup_details';
