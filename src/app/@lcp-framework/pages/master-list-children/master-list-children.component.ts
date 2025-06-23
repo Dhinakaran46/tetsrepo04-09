@@ -1,8 +1,7 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { DataTableComponent } from '../../components/datatable/datatable.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -13,14 +12,19 @@ import { CommonSharedModule } from '../../shared/common/common.module';
 import { Store } from '@ngrx/store';
 import Swal from 'sweetalert2';
 import { ExportService } from '../../service/common/export.service';
+import { commonConfig } from '../../config/common.config';
 import { LocalStorageService } from '../../service/common/local-storage.service';
+import { lastValueFrom } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
-import { lastValueFrom, Subscription } from 'rxjs';
-import { commonConfig } from '../../config/common.config';
+import { ProfileApiService } from '../../service/user/profile-api.service';
+import { environment } from '../../../../environments/environment';
+import { OpenaiService } from '../../service/common/openai.service';
+import { RouteUpdateService } from '../../service/common/route-update.service';
+import { DataTableChildrenComponent } from '../../components/datatable-children/datatable-children.component';
 
 export interface ExportResponse {
   blob: Blob;
@@ -29,7 +33,6 @@ export interface ExportResponse {
 
 interface FetchDataParams {
   entity_name: any;
-  primary_table: any;
   start_index: number;
   limit_range: number;
   sort_columns: any;
@@ -42,11 +45,11 @@ interface FetchDataParams {
 }
 
 @Component({
-  selector: 'app-child-process-setting',
   standalone: true,
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
-  templateUrl: './child-process-setting.component.html',
-  styleUrl: './child-process-setting.component.scss',
+  selector: 'master-list-children',
+  imports: [CommonSharedModule, HttpClientModule, DataTableChildrenComponent, LoaderComponent, ReactiveFormsModule],
+
+  templateUrl: './master-list-children.component.html',
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -55,18 +58,29 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
+export class MasterListChildrenComponent implements AfterViewInit {
+  @Input() uuid: any = null; // Receive UUID from child component
+  @Input() entity_name: any = ''; // Receive entity_name from child component
+
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
+  @ViewChild('processStatusTemplate') processStatusTemplate!: TemplateRef<any>;
+  @ViewChild('linkDownloadVideoURLTemplate') linkDownloadVideoURLTemplate!: TemplateRef<any>;
+  @ViewChild('linkDownloadPdfURLTemplate') linkDownloadPdfURLTemplate!: TemplateRef<any>;
+  @ViewChild('linkDownloadWordURLTemplate') linkDownloadWordURLTemplate!: TemplateRef<any>;
+
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
   user_id: any;
+  isItemModalOpen = false;
+  changePasswordForm: FormGroup;
   column: any = '';
   query: any = '';
+
+  allowPasswordModal: any = false;
   selectcolumns: any[] = [];
   headercolumns: any[] = [];
-  headerColumnData: any[] = [];
   items: any[] = [];
   totalItems: number = 0;
   currentPage: number = 1;
@@ -84,9 +98,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
-  submitted = false;
-  selectedProcess: any = null;
-
+  apiUrl = environment.apiUrl;
   statuses: any = {
     1: {
       value: 'table_status_val_0',
@@ -102,9 +114,39 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     },
   };
 
+  processStatuses: any = {
+    submitted: {
+      value: 'table_process_status_val_0',
+      border_color: 'badge-outline-primary',
+    },
+    approved: {
+      value: 'table_process_status_val_1',
+      border_color: 'badge-outline-success',
+    },
+    rejected: {
+      value: 'table_process_status_val_2',
+      border_color: 'badge-outline-danger',
+    },
+    under_approval: {
+      value: 'table_process_status_val_3',
+      border_color: 'badge-outline-warning',
+    },
+    created: {
+      value: 'table_process_status_val_4',
+      border_color: 'badge-outline-success',
+    },
+    not_appear: {
+      value: 'table_process_status_val_5',
+      border_color: 'badge-outline-danger',
+    },
+  };
+  uniqueId!: string | null;
+
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
+    private apiService: ProfileApiService,
+    private http: HttpClient,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private datepipe: DatePipe,
@@ -116,25 +158,71 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
     private titleService: Title,
-    private fb: FormBuilder
+    private formBuilder: FormBuilder,
+    private openaiService: OpenaiService,
+    private routeUpdateService: RouteUpdateService
   ) {
     this.initStore();
+    this.route.paramMap.subscribe((params) => {
+      this.uniqueId = params.get('uuid');
+    });
+
+    this.changePasswordForm = this.formBuilder.group(
+      {
+        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+        confirm_new_password: ['', Validators.required],
+      },
+      { validators: this.passwordMatchValidator }
+    );
+  }
+
+  passwordValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    const isValid = hasUpperCase && hasSpecialChar;
+    return !isValid ? { passwordInvalid: true } : null;
+  }
+
+  passwordMatchValidator(group: FormGroup): ValidationErrors | null {
+    const newPassword = group.get('new_password')?.value;
+    const confirmNewPassword = group.get('confirm_new_password')?.value;
+    return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
-    const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    console.log(pageInfo);
+
+    let pageInfo: any;
+    console.log(this.uuid);
+    console.log(this.entity_name);
+    if (this.uuid && this.entity_name) {
+      const val = this.routeUpdateService.getPageInfo(this.entity_name);
+      console.log(val);
+      pageInfo = val[0].data.pageInfo;
+      /*this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
+        pageInfo = val;
+        console.log('Fetched PageInfo:', pageInfo);
+      });*/
+    } else {
+      pageInfo = this.route.snapshot.data['pageInfo'] || '';
+      console.log(pageInfo);
+    }
+
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
-
-    this.user_id = this.user_info.main?.id;
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
       }
       this.masterInfo = pageInfo;
+      if (this.masterInfo.ListQuery.entity_name == 'user') {
+        this.allowPasswordModal = true;
+      }
 
       const masterListConfig = pageInfo;
 
@@ -144,8 +232,8 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
 
       this.title = masterListConfig.fullEntity;
-      this.setHeader();
-      this.setDefaultQuery();
+      this.defaultQuery = masterListConfig.ListQuery;
+      this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
       this.listQuery.start_index = 0;
       this.fetchAttachedPolicies(this.listQuery);
     } else {
@@ -153,133 +241,6 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       this.headercolumns = [];
       this.items = [];
     }
-    this.cdr.detectChanges();
-  }
-
-  ngOnDestroy(): void {}
-
-  setHeader() {
-    this.headerColumnData = [
-      {
-        header: 'id',
-        clause_type: 'where',
-        field_value: 'child_processes.id',
-        is_sortable: 'false',
-        column_order: '0.00',
-        column_width: '1.00',
-        is_searchable: 'false',
-        is_grid_column: 'false',
-      },
-      {
-        header: 'uuid',
-        clause_type: 'where',
-        field_value: 'child_processes.uuid',
-        is_sortable: 'false',
-        column_order: '0.00',
-        column_width: '1.00',
-        is_searchable: 'false',
-        is_grid_column: 'false',
-      },
-      {
-        header: 'name',
-        clause_type: 'where',
-        field_value: 'child_processes.name',
-        is_sortable: 'true',
-        column_order: '1.00',
-        column_width: '1.00',
-        is_searchable: 'true',
-        is_grid_column: 'true',
-      },
-      {
-        header: 'slug',
-        clause_type: 'where',
-        field_value: 'child_processes.slug',
-        is_sortable: 'true',
-        column_order: '2.00',
-        column_width: '2.00',
-        is_searchable: 'true',
-        is_grid_column: 'true',
-      },
-      {
-        header: 'description',
-        clause_type: 'where',
-        field_value: 'child_processes.description',
-        is_sortable: 'true',
-        column_order: '3.00',
-        column_width: '1.00',
-        is_searchable: 'true',
-        is_grid_column: 'true',
-      },
-      {
-        header: 'command',
-        clause_type: 'where',
-        field_value: 'child_processes.command',
-        is_sortable: 'true',
-        column_order: '4.00',
-        column_width: '1.00',
-        is_searchable: 'true',
-        is_grid_column: 'true',
-      },
-      {
-        header: 'status',
-        clause_type: 'where',
-        field_value: 'child_processes.status_id',
-        is_sortable: 'true',
-        column_order: '5.00',
-        column_width: '1.00',
-        is_searchable: 'false',
-        is_grid_column: 'true',
-      },
-      {
-        header: 'created_at',
-        clause_type: 'where',
-        field_value: 'child_processes.created_at',
-        is_sortable: 'true',
-        column_order: '6.00',
-        column_width: '1.00',
-        is_searchable: 'false',
-        is_grid_column: 'true',
-      },
-    ];
-  }
-
-  setDefaultQuery() {
-    this.defaultQuery = {
-      print_query: true,
-      company_id: 1,
-      primary_table: 'child_processes',
-      start_index: 0,
-      limit_range: 10,
-      sort_columns: [['child_processes.id', 'desc']],
-      group_by: [
-        'child_processes.name',
-        'child_processes.slug',
-        'child_processes.description',
-        'child_processes.command',
-        'child_processes.id',
-        'child_processes.created_at',
-      ],
-      includes: [],
-      // having_conditions: null,
-      // having_any_conditions: null,
-      search_all: [
-        {
-          column_name: 'child_processes.status_id',
-          value: 3,
-          operator: '!=',
-        },
-      ],
-      search_any: [],
-      select_columns: [...this.headerColumnData.map((column: { field_value: any; header: any }) => [column.field_value, column.header])],
-    };
-    this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
-  }
-
-  async setActiveTab() {
-    this.query = '';
-    this.setHeader();
-    this.setDefaultQuery();
-    this.fetchData(this.listQuery);
     this.cdr.detectChanges();
   }
 
@@ -291,15 +252,67 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       });
   }
 
+  onChangePassword() {
+    if (this.changePasswordForm && this.changePasswordForm.errors && this.changePasswordForm.errors['passwordsMismatch']) {
+      const key = 'passwords_do_not_match';
+      const errorMessage = this.translate.instant(key);
+      this.toastr.error(errorMessage, 'Error');
+      return;
+    }
+
+    if (this.changePasswordForm.invalid) {
+      this.markAllAsTouched();
+      return;
+    }
+
+    const formData = {
+      uuid: this.user_id,
+      password: this.changePasswordForm.get('new_password')?.value,
+    };
+
+    this.apiService.resetPasswordAnyUser(formData).subscribe(
+      (response) => {
+        const key = 'password_resetted_successfully';
+        const successMessage = this.translate.instant(key);
+        this.toastr.success(successMessage);
+        this.changePasswordForm.reset();
+        this.isItemModalOpen = false;
+        this.fetchData(this.listQuery);
+      },
+      (error) => {
+        const key = 'error_resetting_password';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage + error, 'Error');
+        this.isItemModalOpen = false;
+        // Handle error response
+      }
+    );
+  }
+
+  private markAllAsTouched() {
+    Object.values(this.changePasswordForm.controls).forEach((control) => {
+      control.markAsTouched();
+    });
+  }
+
   sortColumn(column: any) {
     this.column = column;
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.listQuery.sort_columns = [[this.column.field_value, this.column.sortDirection]];
+    this.listQuery.sort_columns = [[this.column.header, this.column.sortDirection]];
     this.fetchData(this.listQuery);
   }
 
+  passwordModal(item: any) {
+    //return;
+    this.isItemModalOpen = true;
+    this.user_id = item.uuid;
+  }
+  cancelResetPwd() {
+    this.changePasswordForm.reset();
+    this.isItemModalOpen = false;
+  }
   advancedSearchData(data: any) {
     interface QueryItem {
       isAggregate: boolean;
@@ -398,43 +411,41 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
-        this.gridApiService
-          .getAllRecords(
-            this.localStorageService.replaceUniqueId(
-              this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
-              '$session_user_id',
-              this.user_info.main.id
-            )
-          )
-          .subscribe(
-            (response) => {
-              if (response.status && response.code === 200) {
-                if (response.data.records && response.data.headers) {
-                  const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
-                  if (item.type == 'pdf') {
-                    this.exportService.exportToPDF(filteredData, export_download);
-                  } else {
-                    this.exportService.exportToExcel(filteredData, export_download);
-                  }
-                  this.loading = false;
+        let listParams = this.localStorageService.replaceUniqueId(
+          this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
+          '$session_user_id',
+          this.user_info.main.id
+        );
+        listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
+        this.gridApiService.getAllRecords(listParams).subscribe(
+          (response) => {
+            if (response.status && response.code === 200) {
+              if (response.data.records && response.data.headers) {
+                const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
+                if (item.type == 'pdf') {
+                  this.exportService.exportToPDF(filteredData, export_download);
+                } else {
+                  this.exportService.exportToExcel(filteredData, export_download);
                 }
-              } else {
                 this.loading = false;
-                this.items = [];
-                this.totalItems = 0;
-
-                const key = response.message;
-                const errorMessage = this.translate.instant(key);
-                this.toastr.error(errorMessage, 'Error');
               }
-            },
-            (error) => {
+            } else {
               this.loading = false;
-              const key = 'error';
+              this.items = [];
+              this.totalItems = 0;
+
+              const key = response.message;
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
             }
-          );
+          },
+          (error) => {
+            this.loading = false;
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
       }
     }
   }
@@ -456,6 +467,8 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
           transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
+        } else if (header.header == 'process_status') {
+          transformedRecord[translatedHeader] = this.getProcessStatusTranslation(record[header.header]);
         } else {
           transformedRecord[translatedHeader] = record[header.header];
         }
@@ -471,8 +484,12 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     return this.translate.instant(this.statuses[status].value);
   }
 
+  private getProcessStatusTranslation(status: string): string {
+    return this.translate.instant(this.processStatuses[status].value);
+  }
+
   fetchAttachedPolicies(params: FetchDataParams) {
-    this.gridApiService.getAttachedPolicies({ entity_name: params.primary_table }).subscribe(
+    this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           this.attachedPolicies = response.data.attached_policies || [];
@@ -484,165 +501,182 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         this.toastr.error(errorMessage, 'Error');
       },
       () => {
-        this.fetchColumns();
+        this.fetchColumns(this.listQuery);
         this.fetchData(this.listQuery);
       }
     );
   }
 
-  fetchColumns() {
-    const data = [
-      {
-        order_no: 1,
-        status_id: 1,
-        company_id: 1,
-        field: 'child_processes.name',
-        clause_type: 'where',
-        sorting: true,
-        title: this.translate.instant('name'),
-        field_type_id: 3,
-        searchable: true,
-        is_grid_column: true,
-        enable: true,
-      },
-      {
-        order_no: 2,
-        status_id: 1,
-        company_id: 1,
-        field: 'child_processes.description',
-        clause_type: 'where',
-        sorting: true,
-        title: this.translate.instant('description'),
-        field_type_id: 3,
-        searchable: true,
-        is_grid_column: true,
-        enable: true,
-      },
-      {
-        order_no: 3,
-        status_id: 1,
-        company_id: 1,
-        field: 'child_processes.command',
-        clause_type: 'where',
-        sorting: true,
-        title: this.translate.instant('command'),
-        field_type_id: 3,
-        searchable: true,
-        is_grid_column: true,
-        enable: true,
-      },
-    ];
+  fetchColumns(params: FetchDataParams) {
+    this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          const data = response.data.records.map((key: any, index: any) => {
+            return {
+              field: key.field_name,
+              title: this.translate.instant(key.display_name),
+              sorting: key.is_sortable,
+              searchable: key.is_searchable,
+              enable: true,
+              ...key,
+            };
+          });
 
-    this.selectcolumns = [
-      {
-        field: 'S.No',
-        title: 'S.No',
-        sorting: false,
-        searchable: false,
-        enable: false,
-        field_type_id: 1,
+          this.selectcolumns = [
+            {
+              field: 'S.No',
+              title: 'S.No',
+              sorting: false,
+              searchable: false,
+              enable: false,
+              field_type_id: 1,
+            },
+            ...data,
+            {
+              field: 'Status',
+              title: 'Status',
+              sorting: false,
+              searchable: false,
+              enable: false,
+              field_type_id: 1,
+            },
+            {
+              field: 'Action',
+              title: 'Action',
+              sorting: false,
+              searchable: false,
+              enable: false,
+              field_type_id: 0,
+            },
+          ];
+        }
       },
-      ...data,
-      {
-        field: 'Status',
-        title: 'Status',
-        sorting: false,
-        searchable: false,
-        enable: false,
-        field_type_id: 1,
-      },
-      {
-        field: 'Action',
-        title: 'Action',
-        sorting: false,
-        searchable: false,
-        enable: false,
-        field_type_id: 0,
-      },
-    ];
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
   }
 
   fetchData(params: FetchDataParams) {
     params.limit_range = this.resultsPerPage;
-    const payload = this.localStorageService.replaceUniqueId(
+    let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
       '$session_user_id',
       this.user_info.main.id
     );
-    this.commonService.getCommonList(payload).subscribe(
+    console.log(this.uniqueId);
+    if (this.uniqueId) {
+      payload.unique_id = this.uniqueId;
+    }
+    if (this.uuid) {
+      payload.unique_id = this.uuid;
+    }
+
+    payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
+    console.log(payload);
+    this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          const data = this.headerColumnData
-            .filter((key: any) => key.is_grid_column == 'true')
-            .map((key: any) => ({
-              ...key,
-              column_width: '40px',
-            }));
-          // Check if only 'view' or 'view' + 'export_excel' are enabled
-          const isOnlyViewOrViewExport =
-            (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
-            (!this.masterInfo.permissions.create || this.masterInfo.permissions.create === true) &&
-            Object.keys(this.masterInfo.permissions).every((key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false);
+          if (response.data.headers) {
+            if (this.headercolumns.length == 0) {
+              const data = response.data.headers
+                .filter((key: any) => key.is_grid_column == 'true')
+                .map((key: any) => ({
+                  ...key,
+                  column_width: '40px',
+                }));
 
-          // Include serial number column if enabled in config
-          if (this.config.grid_show_serial_number == 'true') {
-            this.headercolumns = [
-              {
-                header: 'table_column_sno',
-                field_value: 'S.No',
-                is_sortable: 'false',
-                column_order: '0.00',
-                column_width: '40px',
-                is_searchable: 'false',
-                is_grid_column: 'true',
-              },
-              ...data,
-            ];
+              // Check if only 'view' or 'view' + 'export_excel' are enabled
+              const isOnlyViewOrViewExport =
+                (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
+                (!this.masterInfo.permissions.create || this.masterInfo.permissions.create === true) &&
+                Object.keys(this.masterInfo.permissions).every(
+                  (key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false
+                );
 
-            // Add 'Action' column if permissions are not limited to view/export
-            if (!isOnlyViewOrViewExport) {
-              this.headercolumns.push({
-                header: 'table_column_action',
-                field_value: 'Action',
-                is_sortable: 'false',
-                column_order: '0.00',
-                column_width: '50px',
-                is_searchable: 'false',
-                is_grid_column: 'true',
-              });
+              // Include serial number column if enabled in config
+              if (this.config.grid_show_serial_number == 'true') {
+                this.headercolumns = [
+                  {
+                    header: 'table_column_sno',
+                    field_value: 'S.No',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '40px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  },
+                  ...data,
+                ];
+
+                // Add 'Action' column if permissions are not limited to view/export
+                if (!isOnlyViewOrViewExport) {
+                  this.headercolumns.push({
+                    header: 'table_column_action',
+                    field_value: 'Action',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '50px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  });
+                }
+              } else {
+                this.headercolumns = [...data];
+
+                if (!isOnlyViewOrViewExport) {
+                  this.headercolumns.push({
+                    header: 'table_column_action',
+                    field_value: 'Action',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '50px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  });
+                }
+              }
             }
-          } else {
-            this.headercolumns = [...data];
 
-            this.headercolumns.push({
-              header: 'table_column_action',
-              field_value: 'Action',
-              is_sortable: 'false',
-              column_order: '0.00',
-              column_width: '50px',
-              is_searchable: 'false',
-              is_grid_column: 'true',
+            // Adding custom templates
+            this.headercolumns = this.headercolumns.map((item: any) => {
+              if (item.header === 'status') {
+                return {
+                  ...item,
+                  customTemplate: this.statusTemplate,
+                };
+              } else if (item.header === 'process_status') {
+                return {
+                  ...item,
+                  customTemplate: this.processStatusTemplate,
+                };
+              } else if (item.header === 'table_column_action') {
+                return {
+                  ...item,
+                  customTemplate: this.actionTemplate,
+                };
+              } else if (item.header === 'documentation_video_url') {
+                return {
+                  ...item,
+                  customTemplate: this.linkDownloadVideoURLTemplate,
+                };
+              } else if (item.header === 'documentation_pdf') {
+                return {
+                  ...item,
+                  customTemplate: this.linkDownloadPdfURLTemplate,
+                };
+              } else if (item.header === 'documentation_word') {
+                return {
+                  ...item,
+                  customTemplate: this.linkDownloadWordURLTemplate,
+                };
+              } else {
+                return { ...item };
+              }
             });
-            // if (!isOnlyViewOrViewExport) {
-            // }
           }
-
-          // Adding custom templates
-          this.headercolumns = this.headercolumns.map((item: any) => {
-            if (item.header === 'status') {
-              return {
-                ...item,
-                customTemplate: this.statusTemplate,
-              };
-            } else if (item.header === 'table_column_action') {
-              return {
-                ...item,
-                customTemplate: this.actionTemplate,
-              };
-            } else {
-              return { ...item };
-            }
-          });
 
           // Processing records
           if (response.data.records) {
@@ -698,6 +732,20 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     );
   }
 
+  private async executeJob(inputObject: any): Promise<void> {
+    if (inputObject.record_info.id) {
+      const job_query_information = this.localStorageService.replaceUniqueId(inputObject.query_information, '$unique_id', inputObject.record_info.id);
+      try {
+        const response = await lastValueFrom(this.gridApiService.executeTransaction(job_query_information));
+        if (!response.status) {
+          throw new Error(response.message);
+        }
+      } catch (error: any) {
+        throw error;
+      }
+    }
+  }
+
   isDate(value: any): boolean {
     // Check if the value is a valid date
     return !isNaN(Date.parse(value));
@@ -711,9 +759,20 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
+  deleteItems(items: any[]) {
+    this.items = this.items.filter((item) => !items.includes(item));
+  }
+
   handleCustomAction(action: string) {
     if (action === 'addNew' && this.masterInfo.children.add) {
       this.router.navigate([`${this.masterInfo.children.add.target}`]);
+    }
+  }
+
+  editItem(item: any) {
+    if (this.masterInfo.children.edit) {
+      const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
+      this.router.navigate([targetRoute]);
     }
   }
 
@@ -795,8 +854,61 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     reader.readAsArrayBuffer(blob);
   }
 
+  assignItem(item: any) {
+    if (this.masterInfo.children.assign) {
+      const targetRoute = this.masterInfo.children.assign.target.replace(':id', item.uuid);
+      this.router.navigate([targetRoute]);
+    }
+  }
+
+  recordExport(item: any) {
+    this.loading = true;
+
+    if (this.masterInfo.children.record_export) {
+      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, item.id).subscribe({
+        next: (response: ExportResponse) => {
+          try {
+            const blob = new Blob([response.blob], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            // Excel case
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = response.fileName;
+
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            this.loading = false;
+          } catch (err) {
+            console.error('Download error:', err);
+            this.toastr.error('Error downloading file');
+            this.loading = false;
+          }
+        },
+        error: (error) => {
+          console.error('Export error:', error);
+          this.toastr.error('Error exporting data');
+          this.loading = false;
+        },
+      });
+    }
+  }
   commonTranslate(msg: any) {
     return this.translate.instant(msg);
+  }
+
+  printItem(item: any) {
+    if (this.masterInfo.children.print) {
+      const targetRoute = this.masterInfo.children.print.target.replace(':id', item.uuid);
+      this.router.navigate([targetRoute]);
+    }
   }
 
   directDeleteItem(item: any) {
@@ -830,6 +942,71 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  generateVector(item: any) {
+    if (this.masterInfo.permissions.generate_vector) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Generate Vector?',
+        text: 'are you sure, you want to generate vector?',
+        showCancelButton: true,
+        confirmButtonText: 'Generate',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          this.loading = true;
+          this.openaiService.generateVectorForTable({ uuid: item.uuid }).subscribe((res) => {
+            this.loading = false;
+            if (res.status) {
+              this.toastr.success('Vector generated successfully', 'Success');
+              this.setPageReload();
+            } else {
+              this.toastr.error('Failed to generate vector', 'Error');
+            }
+          });
+        }
+      });
+    }
+  }
+
+  setPageReload() {
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  }
+
+  emailResendItem(item: any) {
+    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Resend Mail?',
+        text: 'are you sure, you want to resend mail?',
+        showCancelButton: true,
+        confirmButtonText: 'Resend',
+        padding: '2em',
+      }).then(async (result) => {
+        if (result.value) {
+          try {
+            const jobResponse = await this.localStorageService.getMasterEntity({
+              record_info: item,
+              entity_name: this.masterInfo.children.email_resend.entity_name,
+              entity_type: this.masterInfo.children.email_resend.component_class_name,
+            });
+
+            if (jobResponse) {
+              await this.executeJob({ ...jobResponse, record_info: item });
+              Swal.fire({ title: 'Mail resent request initiated!', text: 'Mail resent request has been initiated.', icon: 'success' });
+              this.fetchData(this.listQuery);
+            }
+          } catch (error: any) {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, error.message);
+          }
+        }
+      });
+    }
+  }
+
   deleteItem(item: any) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       if (this.grid_records_delete == 'true') {
@@ -842,28 +1019,28 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
               if (Object.keys(res).length > 0) {
                 let htmlInput =
                   `
-                    <span>` +
+  <span>` +
                   this.commonTranslate('config_delete_msg_0') +
                   `</span><br><br>
-                    <table style="width: 100%; text-align: center; border-collapse: collapse;">
-                    <thead>
-                      <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px;">` +
+  <table style="width: 100%; text-align: center; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ddd; padding: 8px;">` +
                   this.commonTranslate('config_delete_msg_1') +
                   `</th>
-                        <th style="border: 1px solid #ddd; padding: 8px;">` +
+      <th style="border: 1px solid #ddd; padding: 8px;">` +
                   this.commonTranslate('config_delete_msg_2') +
                   `</th>
-                      </tr> </thead><tbody>
-                  `;
+    </tr> </thead><tbody>
+`;
 
                 Object.entries(res).forEach(([key, value]) => {
                   htmlInput += `
-                      <tr>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${key}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${value}</td>
-                      </tr>
-                    `;
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px;">${key}</td>
+      <td style="border: 1px solid #ddd; padding: 8px;">${value}</td>
+    </tr>
+  `;
                 });
 
                 htmlInput += `</tbody></table>`;
@@ -898,37 +1075,11 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async executeJob(inputObject: any): Promise<void> {
-    if (inputObject.record_info.id) {
-      const job_query_information = this.localStorageService.replaceUniqueId(inputObject.query_information, '$unique_id', inputObject.record_info.id);
-      try {
-        const response = await lastValueFrom(this.gridApiService.executeTransaction(job_query_information));
-        if (!response.status) {
-          throw new Error(response.message);
-        }
-      } catch (error: any) {
-        throw error;
-      }
-    }
-  }
-
   viewItem(item: any) {
     if (this.masterInfo.children.details) {
       const targetRoute = this.masterInfo.children.details.target.replace(':uuid', item.uuid);
       this.router.navigate([targetRoute]);
     }
-  }
-
-  editItem(item: any) {
-    if (this.masterInfo.children.edit) {
-      const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
-      this.router.navigate([targetRoute]);
-    }
-  }
-
-  navigateToDetailPage(item: any) {
-    const fullUrl = `${item.url}${item.screen_id}`;
-    window.open(fullUrl, '_blank');
   }
 
   onPageChange(event: { page: number; start_index: number }) {
@@ -944,28 +1095,5 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
-  }
-
-  executeChildProcess(item: any) {
-    this.loading = true;
-    this.gridApiService.executeChildProcess(item.id).subscribe(
-      (response: any) => {
-        this.loading = false;
-        if (response.status) {
-          // console.log('Response:', response);
-          this.toastr.success(response.message, 'Success');
-        } else {
-          console.error('Error: Operation failed with response:', response);
-          this.toastr.error(response.message, 'Error');
-        }
-      },
-      (error) => {
-        this.loading = false;
-        console.error('Error executing child process:', error);
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-      }
-    );
   }
 }

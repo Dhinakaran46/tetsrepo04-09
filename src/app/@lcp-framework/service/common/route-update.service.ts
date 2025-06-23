@@ -85,6 +85,7 @@ export class RouteUpdateService {
               const recordExportPermissionKey = `record_export_${routeData.entity_name}`;
               const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
               const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
+              const childDetailsPermissionKey = `child_details_${routeData.entity_name}`;
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -215,7 +216,7 @@ export class RouteUpdateService {
                       entity_name: routeData.entity_name,
                       start_index: 0,
                       limit_range: 10,
-                      sort_columns: sortCol,
+                      //sort_columns: sortCol,
                       search_all: finalAllCol,
                       search_any: [],
                     },
@@ -231,6 +232,7 @@ export class RouteUpdateService {
                       record_export: permissionListJSON[recordExportPermissionKey] || false,
                       email_resend: permissionListJSON[emailResendPermissionKey] || false,
                       generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
+                      child_details: permissionListJSON[childDetailsPermissionKey] || false,
                     },
                     children: children,
                   },
@@ -249,6 +251,166 @@ export class RouteUpdateService {
         }
       });
     });
+  }
+
+  getPageInfo(entity_name: any): any {
+    const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
+    const routeDataArray = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
+
+    console.log(routeDataArray);
+    console.log(entity_name);
+    const permissionListJSON: any = this.getPermissionListJSON(); // Use a synchronous method for permissions
+
+    if (permissionListJSON && routeDataArray) {
+      const dynamicRoutes = routeDataArray
+        .filter((routeData: any) => routeData.entity_name === entity_name && routeData.component_class_name)
+        .map((routeData: any) => {
+          const viewPermissionKey = `view_${routeData.entity_name}`;
+          const createPermissionKey = `add_${routeData.entity_name}`;
+          const editPermissionKey = `edit_${routeData.entity_name}`;
+          const deletePermissionKey = `delete_${routeData.entity_name}`;
+          const exportExcelPermissionKey = `export_excel_${routeData.entity_name}`;
+          const detailsPermissionKey = `details_${routeData.entity_name}`;
+          const assignPermissionKey = `assign_${routeData.entity_name}`;
+          const printPermissionKey = `print_${routeData.entity_name}`;
+          const recordExportPermissionKey = `record_export_${routeData.entity_name}`;
+          const emailResendPermissionKey = `email_resend_${routeData.entity_name}`;
+          const generateVectorPermissionKey = `generate_vector_${routeData.entity_name}`;
+          const childDetailsPermissionKey = `child_details_${routeData.entity_name}`;
+
+          const idColumn = `${routeData.primary_table}.id`;
+          const deletedAtColumn = `${routeData.primary_table}.status_id`;
+
+          const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
+
+          const sortCol = [[idColumn, 'desc']];
+          const searchAllCol = [
+            {
+              column_name: deletedAtColumn,
+              value: 3,
+              operator: '!=',
+            },
+          ];
+
+          let finalAllCol: any = searchAllCol;
+          if (routeData.entity_name == 'app_error_log') {
+            finalAllCol = [
+              ...searchAllCol,
+              {
+                column_name: 'request_logs.res_status',
+                value: false,
+                operator: '=',
+              },
+            ];
+          } else if (routeData.entity_name == 'user') {
+            finalAllCol = [
+              ...searchAllCol,
+              {
+                value: ['super_admin', 'company_admin'],
+                operator: 'NOT IN',
+                column_name: 'users.role',
+              },
+            ];
+          } else if (routeData.entity_name == 'master_entity') {
+            finalAllCol = [
+              ...searchAllCol,
+              {
+                column_name: `${routeData.primary_table}.entity_type`,
+                value: 'help_page_module',
+                operator: '!=',
+              },
+            ];
+          }
+
+          const children = routeDataArray.reduce((acc: any, childRoute: any) => {
+            if (childRoute.parent_id === routeData.id && childRoute.action_slug) {
+              acc[childRoute.action_slug] = childRoute;
+            }
+            return acc;
+          }, {});
+
+          const componentMap: any = {
+            grid_builder_module: () => import('../../pages/master-list/master-list.component').then((m) => m.MasterListComponent),
+            menu_module: () => import('../../pages/menu-mapping/menu-mapping.component').then((m) => m.MenuMappingComponent),
+            static_page_builder_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
+            form_builder_module: () => import('../../pages/form-builder/form-builder.component').then((m) => m.FormBuilderComponent),
+            entity_user_role_map_module: () =>
+              import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
+            entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
+            about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
+            ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
+            query_builder_module: () => import('../../pages/query-builder/query-builder.component').then((m) => m.QueryBuilderComponent),
+            language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
+            job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
+            export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
+            help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
+            configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
+            cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
+            import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
+            import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
+            export_template_module: () => import('../../pages/export-template/export-template.component').then((m) => m.ExportTemplateComponent),
+            import_job_detail_module: () => import('../../pages/import-job-details/import-job-details.component').then((m) => m.ImportJobDetailsComponent),
+            policy_add_edit_module: () => import('../../pages/policy/policy.component').then((m) => m.PolicyComponent),
+            user_role_policy_module: () => import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
+            email_template_assignment_module: () =>
+              import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
+            approval_workflow_assignment_module: () =>
+              import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
+            approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
+            approval_requests_tracking_module: () =>
+              import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
+            child_process_setting_module: () =>
+              import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
+            carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
+          };
+
+          const route: Route = {
+            path: targetPath,
+            loadComponent: componentMap[routeData.component_class_name] || null,
+            title: routeData.entity_name,
+            data: {
+              pageInfo: {
+                targetPath: targetPath,
+                fullEntity: routeData.entity_name,
+                title: routeData.entity_name,
+                Listname: routeData.entity_name,
+                action_slug: routeData.action_slug,
+                draft_mode: routeData.draft_mode,
+                ListQuery: {
+                  print_query: true,
+                  company_id: 0,
+                  entity_name: routeData.entity_name,
+                  start_index: 0,
+                  limit_range: 10,
+                  search_all: finalAllCol,
+                  search_any: [],
+                },
+                enable_row_checkbox: false,
+                permissions: {
+                  create: permissionListJSON[createPermissionKey] || false,
+                  edit: permissionListJSON[editPermissionKey] || false,
+                  delete: permissionListJSON[deletePermissionKey] || false,
+                  export_excel: permissionListJSON[exportExcelPermissionKey] || false,
+                  details: permissionListJSON[detailsPermissionKey] || false,
+                  assign: permissionListJSON[assignPermissionKey] || false,
+                  print: permissionListJSON[printPermissionKey] || false,
+                  record_export: permissionListJSON[recordExportPermissionKey] || false,
+                  email_resend: permissionListJSON[emailResendPermissionKey] || false,
+                  generate_vector: permissionListJSON[generateVectorPermissionKey] || false,
+                  child_details: permissionListJSON[childDetailsPermissionKey] || false,
+                },
+                children: children,
+              },
+              defaultPermission: permissionListJSON[viewPermissionKey] || false,
+              defaultKey: viewPermissionKey,
+            },
+          };
+
+          return route;
+        });
+
+      return dynamicRoutes;
+    }
   }
 
   addDynamicRoutes() {

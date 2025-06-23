@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -24,6 +24,7 @@ import { LoaderComponent } from '../../components/loader/loader.component';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
 import { OpenaiService } from '../../service/common/openai.service';
+import { RouteUpdateService } from '../../service/common/route-update.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -45,6 +46,7 @@ interface FetchDataParams {
 
 @Component({
   standalone: true,
+  selector: 'master-list',
   imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
 
   templateUrl: './master-list.component.html',
@@ -57,6 +59,9 @@ interface FetchDataParams {
   providers: [DatePipe],
 })
 export class MasterListComponent implements AfterViewInit {
+  @Input() uuid: any = null; // Receive UUID from child component
+  @Input() entity_name: any = ''; // Receive entity_name from child component
+
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
@@ -126,6 +131,14 @@ export class MasterListComponent implements AfterViewInit {
       value: 'table_process_status_val_3',
       border_color: 'badge-outline-warning',
     },
+    created: {
+      value: 'table_process_status_val_4',
+      border_color: 'badge-outline-success',
+    },
+    not_appear: {
+      value: 'table_process_status_val_5',
+      border_color: 'badge-outline-danger',
+    },
   };
   uniqueId!: string | null;
 
@@ -146,7 +159,8 @@ export class MasterListComponent implements AfterViewInit {
     private commonService: MenuMapService,
     private titleService: Title,
     private formBuilder: FormBuilder,
-    private openaiService: OpenaiService
+    private openaiService: OpenaiService,
+    private routeUpdateService: RouteUpdateService
   ) {
     this.initStore();
     this.route.paramMap.subscribe((params) => {
@@ -181,8 +195,18 @@ export class MasterListComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
-    const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    console.log(pageInfo);
+
+    let pageInfo: any;
+    if (this.uuid && this.entity_name) {
+      this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
+        pageInfo = val;
+        console.log('Fetched PageInfo:', pageInfo);
+      });
+    } else {
+      pageInfo = this.route.snapshot.data['pageInfo'] || '';
+      console.log(pageInfo);
+    }
+
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
@@ -271,7 +295,7 @@ export class MasterListComponent implements AfterViewInit {
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.listQuery.sort_columns = [[this.column.field_value, this.column.sortDirection]];
+    this.listQuery.sort_columns = [[this.column.header, this.column.sortDirection]];
     this.fetchData(this.listQuery);
   }
 
@@ -540,6 +564,9 @@ export class MasterListComponent implements AfterViewInit {
     console.log(this.uniqueId);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
+    }
+    if (this.uuid) {
+      payload.unique_id = this.uuid;
     }
 
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');

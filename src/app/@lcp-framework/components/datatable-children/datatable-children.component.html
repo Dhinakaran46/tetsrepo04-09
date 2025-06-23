@@ -1,4 +1,4 @@
-<div class="panel">
+<div class="panel" style="border-block: none; border-width: 10px">
   <div class="mb-2.5">
     <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
       <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
@@ -237,12 +237,10 @@
         <table class="table-hover relative min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th *ngIf="this.masterInfo?.permissions.child_details" class="text-left uppercase tracking-wider" appDynamicFontSize="body">
-                <!-- Expand/Collapse column header -->
-              </th>
               <th *ngIf="enableCheckBox" class="text-left uppercase tracking-wider" appDynamicFontSize="body">
                 <input type="checkbox" (change)="toggleSelectAll($event)" />
               </th>
+
               <ng-container *ngFor="let col of headercolumns; let last = last">
                 <th
                   scope="col"
@@ -293,55 +291,35 @@
 
             <ng-container *ngIf="!loading">
               <ng-container *ngIf="items && items.length > 0; else noRecords">
-                <ng-container *ngFor="let item of items">
-                  <tr>
-                    <td *ngIf="this.masterInfo?.permissions.child_details" (click)="toggleRow(item['uuid'])">
-                      <button class="expand-collapse-btn">
-                        <i class="fa" [ngClass]="expandedItem === item['uuid'] ? 'fa-minus' : 'fa-plus'"></i>
-                      </button>
+                <tr *ngFor="let item of items">
+                  <td *ngIf="enableCheckBox">
+                    <input type="checkbox" (change)="toggleSelectItem(item)" [checked]="selectedItems.includes(item)" />
+                  </td>
+                  <ng-container *ngFor="let col of headercolumns; let last = last">
+                    <td
+                      class="max-w-150 truncate whitespace-nowrap"
+                      [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
+                      *ngIf="!col.colFilterHide"
+                    >
+                      <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
+                        <span
+                          class="block truncate"
+                          *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                          ngxTippy
+                          [attr.data-tippy-content]="item[col.header]"
+                        >
+                          {{ item[col.header] | booleanStatus }}
+                        </span>
+                        <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                          {{ item[col.header] | booleanStatus }}
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="col.customTemplate">
+                        <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
+                      </ng-container>
                     </td>
-                    <td *ngIf="enableCheckBox">
-                      <input type="checkbox" (change)="toggleSelectItem(item)" [checked]="selectedItems.includes(item)" />
-                    </td>
-                    <ng-container *ngFor="let col of headercolumns; let last = last">
-                      <td
-                        class="max-w-150 truncate whitespace-nowrap"
-                        [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
-                        *ngIf="!col.colFilterHide"
-                      >
-                        <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
-                          <span
-                            class="block truncate"
-                            *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
-                            ngxTippy
-                            [attr.data-tippy-content]="item[col.header]"
-                          >
-                            {{ item[col.header] | booleanStatus }}
-                          </span>
-                          <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-                            {{ item[col.header] | booleanStatus }}
-                          </span>
-                        </ng-container>
-                        <ng-container *ngIf="col.customTemplate">
-                          <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
-                        </ng-container>
-                      </td>
-                    </ng-container>
-                  </tr>
-
-                  <!-- Child datatable row -->
-                  <tr *ngIf="expandedItem === item['uuid'] && this.masterInfo?.permissions.child_details">
-                    <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
-                      <div class="bg-gray-50 p-4">
-                        <app-child-datatable
-                          [uuid]="item['uuid']"
-                          [entity_name]="this.masterInfo?.children.child_details.entity_name"
-                          (onRowClick)="handleRowClick($event)"
-                        ></app-child-datatable>
-                      </div>
-                    </td>
-                  </tr>
-                </ng-container>
+                  </ng-container>
+                </tr>
               </ng-container>
               <ng-template #noRecords>
                 <tr>

@@ -149,6 +149,7 @@ export const commonConfig: any = {
     RECORD_EXPORT: 'record_export',
     EMAIL_RESEND: 'email_resend',
     GENERATE_VECTOR: 'generate_vector',
+    CHILD_DETAILS: 'child_details',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -180,6 +181,7 @@ export const commonConfig: any = {
     { label: 'Record Export', value: 'record_export' },
     { label: 'Resend Email', value: 'email_resend' },
     { label: 'Generate Vector', value: 'generate_vector' },
+    { label: 'Child Details', value: 'child_details' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
