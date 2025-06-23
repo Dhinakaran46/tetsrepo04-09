@@ -56,3 +56,12 @@
     </ng-container>
   </div>
 </div>
+
+<master-list
+  *ngIf="showMasterListPopup"
+  [popupConfig]="popupConfig"
+  [isViewPopupOpen]="showMasterListPopup"
+  (closeModal)="closeMasterListPopup()"
+></master-list>
+
+

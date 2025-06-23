@@ -665,26 +665,28 @@
           <table>
             <thead>
               <tr>
-                <th class="required-mark">{{ 'table_field_name' | translate }}</th>
-                <th class="required-mark">{{ 'table_display_name' | translate }}</th>
-                <th class="required-mark">{{ 'table_order_no' | translate }}</th>
-                <th>{{ 'table_is_grid_column' | translate }}</th>
-                <th>{{ 'table_is_searchable' | translate }}</th>
-                <th>{{ 'table_is_clause_type' | translate }}</th>
-                <th>{{ 'table_is_sortable' | translate }}</th>
-                <th>{{ 'table_field_type' | translate }}</th>
-                <th>{{ 'table_action' | translate }}</th>
+                <th class="required-mark w-2/12">{{ 'table_field_name' | translate }}</th>
+                <th class="required-mark w-2/12">{{ 'table_display_name' | translate }}</th>
+                <th class="required-mark w-1/16">{{ 'table_order_no' | translate }}</th>
+                <th class="w-1/16">{{ 'table_is_grid_column' | translate }}</th>
+                <th class="w-1/16">{{ 'table_is_searchable' | translate }}</th>
+                <th class="w-1/12">{{ 'table_is_clause_type' | translate }}</th>
+                <th class="w-1/16">{{ 'table_is_sortable' | translate }}</th>
+                <th class="w-1/12">{{ 'table_field_type' | translate }}</th>
+                <th class="w-2/12">{{ 'link_type' | translate }}</th>
+                <th class="w-3/12">{{ 'link_action' | translate }}</th>
+                <th class="w-1/12">{{ 'table_action' | translate }}</th>
               </tr>
             </thead>
             <tbody formArrayName="items">
               <ng-container *ngIf="itemsControls.length <= 0">
                 <tr>
-                  <td colspan="5" class="!text-center font-semibold">{{ 'no_records_found' | translate }}</td>
+                  <td colspan="11" class="!text-center font-semibold">{{ 'no_records_found' | translate }}</td>
                 </tr>
               </ng-container>
               <ng-container *ngFor="let item of itemsControls; index as i" [formGroupName]="i">
                 <tr class="align-top">
-                  <td>
+                  <td class="w-2/12">
                     <div class="mb-2">
                       <input
                         [id]="'fieldName' + i"
@@ -692,7 +694,7 @@
                         formControlName="fieldName"
                         appDynamicFontSize="body"
                         placeholder="{{ 'table_field_name_placeholder' | translate }}"
-                        class="form-input"
+                        class="form-input w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldName') }"
                       />
                       <div *ngIf="isItemFieldInvalid(i, 'fieldName')" class="invalid-feedback text-danger">
@@ -700,7 +702,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-2/16">
                     <div class="mb-2">
                       <input
                         [id]="'displayName' + i"
@@ -708,7 +710,7 @@
                         formControlName="displayName"
                         appDynamicFontSize="body"
                         placeholder="{{ 'table_display_name_placeholder' | translate }}"
-                        class="form-input"
+                        class="form-input w-full"
                         (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'displayName') }"
                       />
@@ -717,7 +719,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/12">
                     <div class="mb-2">
                       <input
                         [id]="'orderNo' + i"
@@ -725,7 +727,7 @@
                         formControlName="orderNo"
                         appDynamicFontSize="body"
                         placeholder="{{ 'table_order_no_placeholder' | translate }}"
-                        class="form-input"
+                        class="form-input w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'orderNo') }"
                       />
                       <div *ngIf="isItemFieldInvalid(i, 'orderNo')" class="invalid-feedback text-danger">
@@ -733,13 +735,13 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/12">
                     <div class="mb-2">
                       <select
                         [id]="'isGridColumn' + i"
                         formControlName="isGridColumn"
                         appDynamicFontSize="body"
-                        class="form-select"
+                        class="form-select w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isGridColumn') }"
                       >
                         <option value selected disabled>{{ 'select_any' | translate }}</option>
@@ -751,13 +753,13 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/16">
                     <div class="mb-2">
                       <select
                         [id]="'isSearchable' + i"
                         formControlName="isSearchable"
                         appDynamicFontSize="body"
-                        class="form-select"
+                        class="form-select w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSearchable') }"
                       >
                         <option value selected disabled>{{ 'select_any' | translate }}</option>
@@ -769,13 +771,13 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/12">
                     <div class="mb-2">
                       <select
                         [id]="'clauseType' + i"
                         formControlName="clauseType"
                         appDynamicFontSize="body"
-                        class="form-select"
+                        class="form-select w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'clauseType') }"
                       >
                         <option value selected disabled>{{ 'select_any' | translate }}</option>
@@ -787,13 +789,13 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/16">
                     <div class="mb-2">
                       <select
                         [id]="'isSortable' + i"
                         formControlName="isSortable"
                         appDynamicFontSize="body"
-                        class="form-select"
+                        class="form-select w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSortable') }"
                       >
                         <option value selected disabled>{{ 'select_any' | translate }}</option>
@@ -805,13 +807,13 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/12">
                     <div class="mb-2">
                       <select
                         [id]="'fieldType' + i"
                         formControlName="fieldType"
                         appDynamicFontSize="body"
-                        class="form-select"
+                        class="form-select w-full"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldType') }"
                       >
                         <option value selected disabled>{{ 'select_any' | translate }}</option>
@@ -824,7 +826,58 @@
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="w-1/16">
+                    <div class="mb-2">
+                      <select
+                        [id]="'linkType' + i"
+                        formControlName="linkType"
+                        appDynamicFontSize="body"
+                        class="form-select w-full"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkType') }"
+                      >
+                        <option value="none">{{ 'none' | translate }}</option>
+                        <option value="component">{{ 'component' | translate }}</option>
+                        <option value="url">{{ 'url' | translate }}</option>
+                      </select>
+                      <div *ngIf="isItemFieldInvalid(i, 'linkType')" class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'linkType') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="w-2/12">
+                    <div class="mb-2">
+                      <ng-container [ngSwitch]="item.get('linkType')?.value">
+                        <select
+                          *ngSwitchCase="'component'"
+                          [id]="'linkAction' + i"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-select w-full"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        >
+                          <option value="">{{ 'select_any' | translate }}</option>
+                          <ng-container *ngFor="let entity of masterEntities">
+                            <option [value]="entity.value">{{ entity.label }}</option>
+                          </ng-container>
+                        </select>
+                        <input
+                          *ngSwitchCase="'url'"
+                          [id]="'linkAction' + i"
+                          type="text"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-input w-full"
+                          placeholder="{{ 'enter_url' | translate }}"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        />
+                        <span *ngSwitchDefault>-</span>
+                      </ng-container>
+                      <div *ngIf="isItemFieldInvalid(i, 'linkAction')" class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'linkAction') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="w-1/12">
                     <button type="button" (click)="removeItem(i)"><i class="fa-solid fa-xmark text-xl"></i>&nbsp;</button>
                   </td>
                 </tr>

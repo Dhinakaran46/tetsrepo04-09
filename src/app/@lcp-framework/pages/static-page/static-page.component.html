@@ -4,8 +4,12 @@
       <div class="mb-5 flex items-center justify-between">
         <h5 appDynamicFontSize="title" class="text-lg font-semibold dark:text-white-light">{{ entity_name | translate }}</h5>
 
-        <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+        <button *ngIf="!this.uuid" appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
           {{ 'back' | translate }}
+        </button>
+
+        <button *ngIf="this.uuid && isModal" (click)="closeModal.emit()" class="absolute right-3 top-3 text-gray-500 hover:text-red-500">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <div class="mb-5">

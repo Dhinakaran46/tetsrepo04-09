@@ -206,6 +206,18 @@
             </button>
           </div>
 
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              *ngIf="this.masterInfo?.permissions.popup_create"
+              (click)="customAction.emit('addNew')"
+              ngxTippy=" {{ title | translate }}"
+              type="button"
+              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            >
+              <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
+            </button>
+          </div>
+
           <!-- @if(isSchemaChunks) {
           <div class="p-2">
             <div class="align-items-center mb-3 flex justify-end gap-2">
@@ -310,17 +322,39 @@
                         *ngIf="!col.colFilterHide"
                       >
                         <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
-                          <span
-                            class="block truncate"
-                            *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
-                            ngxTippy
-                            [attr.data-tippy-content]="item[col.header]"
-                          >
-                            {{ item[col.header] | booleanStatus }}
-                          </span>
-                          <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-                            {{ item[col.header] | booleanStatus }}
-                          </span>
+                          <ng-container *ngIf="col.link_type === 'component'; else notComponent">
+                            <span class="block truncate text-blue-600 cursor-pointer underline" (click)="onLinkComponentClick(col, item)">
+                              {{ item[col.header] | booleanStatus }}
+                            </span>
+                          </ng-container>
+                          <ng-template #notComponent>
+                            <ng-container *ngIf="col.link_type === 'url'; else defaultCell">
+                              <a *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrl"
+                                 class="block truncate text-blue-600 underline"
+                                 [routerLink]="col.link_action">
+                                {{ item[col.header] | booleanStatus }}
+                              </a>
+                              <ng-template #externalUrl>
+                                <a class="block truncate text-blue-600 underline" [href]="col.link_action" target="_blank">
+                                  {{ item[col.header] | booleanStatus }}
+                                </a>
+                              </ng-template>
+                            </ng-container>
+                            <ng-template #defaultCell>
+                              <span
+                                class="block truncate"
+                                *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                                ngxTippy
+                                [attr.data-tippy-content]="item[col.header]"
+                                [ngClass]="{'cursor-pointer text-blue-600 underline': col.link_type === 'component'}"
+                              >
+                                {{ item[col.header] | booleanStatus }}
+                              </span>
+                              <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                                {{ item[col.header] | booleanStatus }}
+                              </span>
+                            </ng-template>
+                          </ng-template>
                         </ng-container>
                         <ng-container *ngIf="col.customTemplate">
                           <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
@@ -336,7 +370,6 @@
                         <app-child-datatable
                           [uuid]="item['uuid']"
                           [entity_name]="this.masterInfo?.children.child_details.entity_name"
-                          (onRowClick)="handleRowClick($event)"
                         ></app-child-datatable>
                       </div>
                     </td>

@@ -74,6 +74,7 @@ export const commonConfig: any = {
     POLICY_ADD_EDIT_MODULE: 'policy_add_edit_module',
     USER_ROLE_POLICY_MODULE: 'user_role_policy_module',
     EMAIL_TEMPLATE_ASSIGNMENT_MODULE: 'email_template_assignment_module',
+    WHATSAPP_TEMPLATE_ASSIGNMENT_MODULE: 'whatsapp_template_assignment_module',
     APPROVAL_WORKFLOW_ASSIGNMENT_MODULE: 'approval_workflow_assignment_module',
     APPROVAL_REQUESTS_MODULE: 'approval_requests_module',
     APPROVAL_REQUESTS_TRACKING_MODULE: 'approval_requests_tracking_module',
@@ -104,6 +105,7 @@ export const commonConfig: any = {
     policy_add_edit_module: 'policyaddedit',
     user_role_policy_module: 'userrolepolicy',
     email_template_assignment_module: 'emailtemplateassignment',
+    whatsapp_template_assignment_module: 'whatsapptemplateassignment',
     approval_workflow_assignment_module: 'approvalworkflowassignment',
     approval_requests_module: 'approvalrequests',
     approval_requests_tracking_module: 'approvalrequeststracking',
@@ -148,6 +150,9 @@ export const commonConfig: any = {
     EMAIL_RESEND: 'email_resend',
     GENERATE_VECTOR: 'generate_vector',
     CHILD_DETAILS: 'child_details',
+    POPUP_ADD: 'popup_add',
+    POPUP_EDIT: 'popup_edit',
+    POPUP_DETAILS: 'popup_details',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -180,6 +185,10 @@ export const commonConfig: any = {
     { label: 'Resend Email', value: 'email_resend' },
     { label: 'Generate Vector', value: 'generate_vector' },
     { label: 'Child Details', value: 'child_details' },
+
+    { label: 'Popup Add', value: 'popup_add' },
+    { label: 'Popup Edit', value: 'popup_edit' },
+    { label: 'Popup Details', value: 'popup_details' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },

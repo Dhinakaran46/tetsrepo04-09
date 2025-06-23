@@ -35,6 +35,10 @@ import { environment } from '../../../../environments/environment';
 import { IdleService } from '../../service/common/idle.service';
 import * as pbi from 'powerbi-client';
 import { AuthService } from '../../service/common/auth.service';
+import { FormBuilderComponent } from '../form-builder/form-builder.component';
+import { StaticPageComponent } from '../static-page/static-page.component';
+import { MasterListComponent } from '../master-list/master-list.component';
+import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -87,7 +91,7 @@ interface DashboardTab {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonSharedModule, DragDropModule, NgApexchartsModule, SafeHtmlPipe],
+  imports: [CommonSharedModule, DragDropModule, NgApexchartsModule, SafeHtmlPipe, FormBuilderComponent, StaticPageComponent, MasterListComponent, MasterListChildrenComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
@@ -109,6 +113,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   companyId: any;
 
   permissionsList: any;
+
+  showMasterList = false;
+  showMasterListPopup = false;
+  selectedItemUuid: string | null = null;
+  popupEntityName: string = '';
+  popupConfig: {
+    popupName: string;
+    selectedItemUuid: string | null;
+    popupEntityName: string;
+    isViewPopupOpen: boolean;
+  } | null = null;
 
   constructor(
     public storeData: Store<any>,
@@ -178,6 +193,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       this.companyId = parsedData.main?.company_id;
     }
     this.loadDashboardWizards();
+    this.setupMasterListButtonListeners();
     //this.menuLoadService.fetchMenuData(this.companyId);
   }
 
@@ -509,16 +525,16 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   compileStaticContent(format: string[], data: any): string[] {
-    return format.map((html) => {
+    const compiled = format.map((html) => {
       const template = Handlebars.compile(html);
-
       let passData = data[0];
       if (data.length > 1) {
         passData.data_list = data;
       }
-
       return template(passData);
     });
+    setTimeout(() => this.setupMasterListButtonListeners(), 0);
+    return compiled;
   }
 
   getStaticContent(card: Card): string[] {
@@ -631,5 +647,38 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     };
 
     return baseOptions;
+  }
+
+  setupMasterListButtonListeners() {
+    setTimeout(() => {
+      const container = this.staticContentContainer?.nativeElement || document;
+      container.querySelectorAll('.open-master-list-btn').forEach((btn: Element) => {
+        btn.removeEventListener('click', this.handleMasterListButtonClick); // Remove previous
+        btn.addEventListener('click', this.handleMasterListButtonClick.bind(this));
+      });
+    }, 0);
+  }
+
+  handleMasterListButtonClick(event: Event) {
+    const target = event.currentTarget as HTMLElement;
+    const uuid = target.getAttribute('data-uuid') || '';
+    const entityName = target.getAttribute('data-entity') || '';
+    const popupName = target.getAttribute('data-popup') || '';
+    this.openMasterList(uuid, entityName, popupName);
+  }
+
+  openMasterList(uuid: string, entityName: string, popupName: string) {
+    this.popupConfig = {
+      popupName,
+      selectedItemUuid: uuid ? uuid : null,
+      popupEntityName: entityName,
+      isViewPopupOpen: true
+    };
+    this.showMasterListPopup = true;
+  }
+
+  closeMasterListPopup() {
+    this.showMasterListPopup = false;
+    this.popupConfig = null;
   }
 }

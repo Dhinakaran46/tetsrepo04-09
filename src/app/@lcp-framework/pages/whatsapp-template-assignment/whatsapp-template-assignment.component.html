@@ -1,0 +1,153 @@
+<div class="panel">
+  <div class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+    <h5 class="text-lg font-semibold dark:text-white-light">
+      <!-- Whatsapp template assignment -->
+      {{ 'whatsapp_template_assignment_form' | translate }}
+    </h5>
+    <div class="align-center flex gap-3">
+      <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+        {{ 'back' | translate }}
+      </button>
+      <button type="submit" class="btn btn-outline-secondary ng-tns-c3247919129-2 text-xs ltr:rounded-r rtl:rounded-l" (click)="submit()">Submit</button>
+    </div>
+  </div>
+
+  <div>
+    <form [formGroup]="form">
+      <div formGroupName="whatsapp_template_process" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+        <div class="min-w-200-p">
+          <div class="form-group">
+            <label for="whatsapp_template_process_id">{{ 'whatsapp_template_process' | translate }} <span class="text-danger">*</span></label>
+            <select
+              formControlName="whatsapp_template_process_id"
+              class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+              required
+            >
+              <option value="">Please select</option>
+              @for(process of whatsappTemplateProcessDetail; track process; let i = $index) {
+              <option [value]="process.id">{{ process.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <button
+          (click)="addWhatsappTemplateAssignment()"
+          class="hover:bg-primary-dark dark:bg-primary-dark dark:focus:ring-primary-dark flex w-40 flex-row items-center justify-center gap-8 rounded-md bg-primary px-6 py-2 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-white"
+          type="button"
+        >
+          Add
+        </button>
+      </div>
+
+      <div formArrayName="whatsapp_template_assignments">
+        @for(assignment of getTemplateAssignmentList(); track assignment; let i = $index) {
+        <div [formGroupName]="i" class="my-4">
+          <div class="grid grid-cols-4 gap-3">
+            <div class="form-group">
+              <label>{{ 'whatsapp_template' | translate }} <span class="text-danger">*</span></label>
+              <select
+                formControlName="template_id"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+              >
+                @for(template of templateList; track template; let i = $index) {
+                <option [value]="template.value">{{ template.label }}</option>
+                }
+              </select>
+              <div
+                *ngIf="assignment.get('template_id')?.invalid && (assignment.get('template_id')?.touched || assignment.get('template_id')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'whatsapp_template_is_required' | translate }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'recipient_type' | translate }} <span class="text-danger">*</span></label>
+              <select
+                formControlName="recipient_type"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+                (change)="clearUserTagValues(assignment)"
+              >
+                <option value="tag">Tag</option>
+                <option value="user_id">User</option>
+                <option value="custom">Custom Mail</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
+              <label>{{ 'whatsapp_tag' | translate }} <span class="text-danger">*</span></label>
+              <select
+                formControlName="whatsapp_to"
+                class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                required
+                (change)="getTemplateAssignmentTags(assignment.get('whatsapp_to')?.value, assignment)"
+              >
+                @for(tag of recipientTags; track tag; let i = $index) {
+                <option [value]="tag.id">{{ tag.name }}</option>
+                }
+              </select>
+              <div
+                *ngIf="assignment.get('whatsapp_to')?.invalid && (assignment.get('whatsapp_to')?.touched || assignment.get('whatsapp_to')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'whatsapp_tag_is_required' | translate }}
+              </div>
+              <div *ngIf="assignment.get('whatsapp_tag_number')?.value" class="mt-5">sends to : {{ assignment.get('whatsapp_tag_number')?.value }}</div>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
+              <label>{{ 'user_phoneno' | translate }} <span class="text-danger">*</span></label>
+              <ng-select
+                bindLabel="label"
+                bindValue="value"
+                formControlName="whatsapp_to"
+                [clearable]="true"
+                [searchable]="true"
+                placeholder="Select User"
+                class="custom-multiselect et-ng-select"
+                (search)="getUsers(assignment, $event.term || '')"
+                (clear)="getUsers(assignment, '')"
+              >
+                @for(user of assignment.get('user_list')?.value; track user; let i = $index) {
+                <ng-option [value]="user.value">{{ user.label }}</ng-option>
+                }
+              </ng-select>
+              <div
+                *ngIf="assignment.get('whatsapp_to')?.invalid && (assignment.get('whatsapp_to')?.touched || assignment.get('whatsapp_to')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'user_phoneno_is_required' | translate }}
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'custom'">
+              <label>{{ 'phone' | translate }} <span class="text-danger">*</span></label>
+              <input
+                type="tel"
+                class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
+                formControlName="whatsapp_to"
+                placeholder="Enter whatsapp address"
+                required
+              />
+              <div class="mt-5">Note : Can add multiple whatsapp numbers as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
+              <div
+                *ngIf="assignment.get('whatsapp_to')?.invalid && (assignment.get('whatsapp_to')?.touched || assignment.get('whatsapp_to')?.dirty)"
+                class="invalid-feedback mt-1 text-danger"
+              >
+                {{ 'whatsapp_is_required' | translate }}
+              </div>
+            </div>
+
+            @if(i > 0) {
+            <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeWhatsappTemplateAssignment(i)"></i>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </form>
+  </div>
+</div>

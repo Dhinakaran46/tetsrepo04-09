@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input } from '@angular/core';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input, SimpleChanges, OnChanges } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -25,6 +25,8 @@ import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
 import { OpenaiService } from '../../service/common/openai.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
+import { StaticPageComponent } from '../static-page/static-page.component';
+import { FormBuilderComponent } from '../form-builder/form-builder.component';
 
 export interface ExportResponse {
   blob: Blob;
@@ -38,8 +40,9 @@ interface FetchDataParams {
   sort_columns: any;
   search_any: any;
   search_all: any;
+  cte:any;
   having_conditions: any;
-  having_any_conditions: any;
+  hnditions: any;
   group_by: any;
   includes: any;
 }
@@ -47,7 +50,7 @@ interface FetchDataParams {
 @Component({
   standalone: true,
   selector: 'master-list',
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
+  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent, FormBuilderComponent],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -58,9 +61,18 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements AfterViewInit {
+export class MasterListComponent implements AfterViewInit, OnChanges {
   @Input() uuid: any = null; // Receive UUID from child component
   @Input() entity_name: any = ''; // Receive entity_name from child component
+  @Input() popupName: any = '';
+  @Input() isViewPopupOpen: boolean = false;
+  @Input() popupEntityName: any = '';
+  @Input() selectedItemUuid: string | null = null;
+  @Input() set popupConfig(config: { popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean } | null) {
+    if (config) {
+      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
+    }
+  }
 
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
@@ -89,6 +101,7 @@ export class MasterListComponent implements AfterViewInit {
   masterInfo: any;
   policyData: any = null;
   loading: boolean = false;
+  loadingpopup: boolean = false;
   gridloading: boolean = true;
 
   title: any = '';
@@ -197,15 +210,15 @@ export class MasterListComponent implements AfterViewInit {
     this.config = JSON.parse(this.localStorageService.getData('config'));
 
     let pageInfo: any;
-    if (this.uuid && this.entity_name) {
+    /*if (this.uuid && this.entity_name) {
       this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
         pageInfo = val;
         console.log('Fetched PageInfo:', pageInfo);
       });
-    } else {
-      pageInfo = this.route.snapshot.data['pageInfo'] || '';
-      console.log(pageInfo);
-    }
+    } else {*/
+    pageInfo = this.route.snapshot.data['pageInfo'] || '';
+    console.log(pageInfo);
+    /*}*/
 
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
@@ -759,9 +772,50 @@ export class MasterListComponent implements AfterViewInit {
   }
 
   handleCustomAction(action: string) {
+    console.log(action);
+    console.log(this.masterInfo);
     if (action === 'addNew' && this.masterInfo.children.add) {
       this.router.navigate([`${this.masterInfo.children.add.target}`]);
     }
+
+    if (action === 'addNew' && this.masterInfo.children.popup_add) {
+      this.loadingpopup = true;
+      console.log('coming');
+      this.popupName = 'popup_add';
+      this.selectedItemUuid = null;
+      this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
+      this.isViewPopupOpen = true;
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    }
+  }
+  editPopupItem(item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_edit';
+    console.log(this.popupName);
+    console.log(this.masterInfo);
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = this.masterInfo.children.popup_edit.entity_name;
+    this.isViewPopupOpen = true;
+
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+  viewPopupItem(item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_details';
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = this.masterInfo.children.popup_details.entity_name;
+    this.isViewPopupOpen = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+  closeViewPopup() {
+    this.isViewPopupOpen = false;
+    this.selectedItemUuid = null;
   }
 
   editItem(item: any) {
@@ -973,8 +1027,8 @@ export class MasterListComponent implements AfterViewInit {
     if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       Swal.fire({
         icon: 'info',
-        title: 'Resend Mail?',
-        text: 'are you sure, you want to resend mail?',
+        title: 'Resend Notification?',
+        text: 'are you sure, you want to resend notification?',
         showCancelButton: true,
         confirmButtonText: 'Resend',
         padding: '2em',
@@ -986,10 +1040,9 @@ export class MasterListComponent implements AfterViewInit {
               entity_name: this.masterInfo.children.email_resend.entity_name,
               entity_type: this.masterInfo.children.email_resend.component_class_name,
             });
-
             if (jobResponse) {
               await this.executeJob({ ...jobResponse, record_info: item });
-              Swal.fire({ title: 'Mail resent request initiated!', text: 'Mail resent request has been initiated.', icon: 'success' });
+              Swal.fire({ title: 'Notification resent request initiated!', text: 'Notification resent request has been initiated.', icon: 'success' });
               this.fetchData(this.listQuery);
             }
           } catch (error: any) {
@@ -1090,5 +1143,52 @@ export class MasterListComponent implements AfterViewInit {
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
+  }
+
+  openFormBuilderPopup(entityName: string, item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_details';
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = entityName;
+    this.isViewPopupOpen = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+
+  onLinkComponentClick(event: { col: any, item: any }) {
+    console.log(event.col)
+    if (event.col.link_type === 'component') {
+      const mode = event.col.link_mode || 'popup_details';
+      this.popupName = mode;
+      console.log(this.popupName)
+      this.selectedItemUuid = event.item.uuid;
+      if(mode === 'popup_add'){
+        this.selectedItemUuid = null;
+      }
+      console.log(this.selectedItemUuid)
+      this.popupEntityName = event.col.link_action;
+      console.log(this.popupEntityName)
+      this.isViewPopupOpen = true;
+      this.loadingpopup = true;
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    }
+  }
+
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
+    this.popupName = popupName;
+    this.selectedItemUuid = selectedItemUuid;
+    this.popupEntityName = popupEntityName;
+    this.isViewPopupOpen = isViewPopupOpen;
+    this.loadingpopup = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Optionally handle other input changes if needed
   }
 }

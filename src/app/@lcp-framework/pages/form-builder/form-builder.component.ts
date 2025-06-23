@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
@@ -33,7 +33,7 @@ export class FormBuilderComponent implements OnInit {
   listDatas: any = {};
   transParam: any;
   entity_name!: string | null;
-  entity_type!: string | null;
+  entity_type!: any;
   unique_id!: string | null;
   defaultData: any = {};
   defaultDataParam!: any;
@@ -45,6 +45,11 @@ export class FormBuilderComponent implements OnInit {
   draftMode = false;
   isDrafted = false;
   processStatus: any = 'submitted';
+
+  // Add properties for nested form-builder modal
+  isNestedFormModalOpen = false;
+  nestedFormEntityName: string | null = null;
+  nestedFormUuid: string | null = null;
 
   processStatuses: any = {
     submitted: {
@@ -73,6 +78,11 @@ export class FormBuilderComponent implements OnInit {
     },
   };
 
+  @Input() uuid!: string | null;
+  @Input() entityName!: string;
+  @Input() isModal: boolean = false;
+  @Output() closeModal = new EventEmitter<void>();
+
   constructor(
     private route: ActivatedRoute,
     public router: Router,
@@ -87,21 +97,45 @@ export class FormBuilderComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.paramMap.subscribe((params) => {
-      this.unique_id = params.get('id');
-    });
+    if (!this.uuid) {
+      this.route.paramMap.subscribe((params) => {
+        this.unique_id = params.get('id');
+      });
+    }
 
-    this.route.data.subscribe((data) => {
-      this.pageInfo = data['pageInfo'];
-      this.entity_name = this.pageInfo.fullEntity;
-      this.entity_type = this.pageInfo.action_slug;
-      this.draftMode = this.pageInfo.draft_mode;
-    });
+    if (this.uuid) {
+      this.unique_id = this.uuid;
+    }
+    if (!this.entityName) {
+      this.route.data.subscribe((data) => {
+        this.pageInfo = data['pageInfo'];
+        this.entity_name = this.pageInfo.fullEntity;
+        this.entity_type = this.pageInfo.action_slug;
+        this.draftMode = this.pageInfo.draft_mode;
+      });
+    }
+    if (this.entityName) {
+      this.entity_name = this.entityName;
+      if (this.unique_id) {
+        this.entity_type = 'popup_edit';
+      } else {
+        this.entity_type = 'popup_add';
+      }
+
+      const translateTitle = this.translate.instant(this.entity_name);
+      this.titleService.setTitle(translateTitle);
+    }
+
+    console.log(this.entity_name);
+    console.log(this.unique_id);
+
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     if (this.user_info.main?.policies) {
       this.policyData = this.user_info.main?.policies || null;
     }
-    if (this.entity_type !== 'add' && !this.unique_id) {
+
+    if (this.entity_type !== 'add' && this.entity_type !== 'popup_add' && !this.unique_id) {
+      console.log('coming');
       this.toastr.error('Invalid entity details given.');
       this.router.navigate(['/dashboard']);
       return;
@@ -651,13 +685,17 @@ export class FormBuilderComponent implements OnInit {
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
           console.log('formEntity.query_information : ', formEntity.query_information);
-          this.transParam = this.entity_type === 'add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
+          this.transParam =
+            this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
           console.log('defaultDataParam : ', this.defaultDataParam);
+          console.log(this.transParam);
+
           this.setDefaultData();
+
           this.titleChange();
         } else {
           this.toastr.error('Invalid entity details given.');
@@ -674,7 +712,9 @@ export class FormBuilderComponent implements OnInit {
   }
 
   setDefaultData() {
-    if (this.entity_type !== 'add' && this.defaultDataParam) {
+    console.log(this.entity_type);
+    if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
+      console.log(this.entity_type);
       if (this.defaultDataParam.primary_table) {
         this.processDefaultParam(this.defaultDataParam);
       } else {
@@ -829,11 +869,26 @@ export class FormBuilderComponent implements OnInit {
       // Recursively process fieldGroups if they exist and are arrays
       if (Array.isArray(group.fieldGroup)) {
         group.fieldGroup = this.processFields(group.fieldGroup);
+        
+        // If this group has add_edit_form, pass it down to individual fields
+        if (group.add_edit_form) {
+          console.log('Processing field group with add_edit_form:', group);
+          group.fieldGroup.forEach((field: any) => {
+            field.add_edit_form = group.add_edit_form;
+          });
+        }
       }
 
       // Process fieldArray (used in repeatable sections) if it exists and contains a fieldGroup
       if (group.fieldArray && Array.isArray(group.fieldArray.fieldGroup)) {
         group.fieldArray.fieldGroup = this.processFields(group.fieldArray.fieldGroup);
+        
+        // If this group has add_edit_form, pass it down to fieldArray fields
+        if (group.add_edit_form) {
+          group.fieldArray.fieldGroup.forEach((field: any) => {
+            field.add_edit_form = group.add_edit_form;
+          });
+        }
       } else if (group.fieldArray?.type === 'select') {
         group.fieldArray.type = 'select-from-db';
         if (group.fieldArray.props) group.fieldArray.props.placeholder = group.fieldArray.props.placeholder || 'Please select';
@@ -957,5 +1012,46 @@ export class FormBuilderComponent implements OnInit {
 
   get isDisabled(): boolean {
     return this.processStatus === 'under_approval';
+  }
+
+  // Method to open nested form-builder modal
+  openNestedFormModal(entityName: string, fieldKey?: string) {
+    this.nestedFormEntityName = entityName;
+    this.nestedFormUuid = null; // Always pass null for new records
+    this.isNestedFormModalOpen = true;
+  }
+
+  // Method to close nested form-builder modal
+  closeNestedFormModal() {
+    this.isNestedFormModalOpen = false;
+    this.nestedFormEntityName = null;
+    this.nestedFormUuid = null;
+  }
+
+  // Method to handle nested form submission
+  onNestedFormSubmitted(formData: any) {
+    // Check if the form submission was successful
+    if (formData && formData.success) {
+      console.log('Nested form submitted successfully:', formData);
+      
+      // Close the modal
+      this.closeNestedFormModal();
+      
+      // Refresh the form data to update dropdowns and other dynamic content
+      this.refreshFormData();
+    } else {
+      // If no data or unsuccessful, just close the modal
+      this.closeNestedFormModal();
+    }
+  }
+
+  // Method to refresh form data
+  private refreshFormData() {
+    // Refresh the form data to update dropdowns and other dynamic content
+    // This will reload the form configuration and fetch fresh data
+    this.resetForm();
+    
+    // Optionally show a success message
+    this.toastr.success('Record created successfully. Form data refreshed.');
   }
 }

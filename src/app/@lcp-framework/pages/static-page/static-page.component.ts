@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SafeHtmlPipe } from '../../pipes/safehtml/safe-html.pipe';
 import * as Handlebars from 'handlebars';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -33,6 +33,11 @@ export class StaticPageComponent {
   entity_type!: string | null;
   query_information!: string | null;
   static_page_content: string = '';
+
+  @Input() uuid!: string | null;
+  @Input() entityName!: string;
+  @Input() isModal: boolean = false;
+  @Output() closeModal = new EventEmitter<void>();
 
   constructor(
     private route: ActivatedRoute,
@@ -78,18 +83,32 @@ export class StaticPageComponent {
   }
 
   ngOnInit() {
-    this.route.paramMap.subscribe((params) => {
-      this.unique_id = params.get('id') || params.get('uuid');
-    });
+    if (!this.uuid) {
+      this.route.paramMap.subscribe((params) => {
+        this.unique_id = params.get('id') || params.get('uuid');
+      });
+    }
+    if (this.uuid) {
+      this.unique_id = this.uuid;
+    }
 
-    this.route.data.subscribe((data) => {
-      const pageInfo = data['pageInfo'];
-      this.entity_name = pageInfo.fullEntity;
+    if (!this.entityName) {
+      this.route.data.subscribe((data) => {
+        const pageInfo = data['pageInfo'];
+        this.entity_name = pageInfo.fullEntity;
+        const translateTitle = this.translate.instant(this.entity_name);
+        this.titleService.setTitle(translateTitle);
+        this.entity_type = pageInfo.action_slug;
+      });
+    }
+    if (this.entityName) {
+      this.entity_name = this.entityName;
       const translateTitle = this.translate.instant(this.entity_name);
       this.titleService.setTitle(translateTitle);
-      this.entity_type = pageInfo.action_slug;
-    });
+    }
 
+    console.log(this.entity_name);
+    console.log(this.unique_id);
     this.initStore();
     this.loadData();
   }

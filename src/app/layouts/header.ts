@@ -336,6 +336,7 @@ export class HeaderComponent implements OnInit {
           if (response) {
             this.idleService.stopIdleTimer();
             this.localstore.logout();
+            localStorage.setItem('logout', Date.now().toString());
             this.router.navigate(['/login']); // Redirect to login page after successful logout
           }
         },

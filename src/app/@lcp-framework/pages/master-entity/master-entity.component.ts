@@ -200,6 +200,7 @@ export class MasterEntityComponent implements OnInit {
           comments: [],
           data: {
             department_id: {
+              "cte": "WITH test_constants AS ( SELECT 1 AS dummy_id )",
               company_id: 1,
               search_all: [
                 {
@@ -285,6 +286,7 @@ export class MasterEntityComponent implements OnInit {
           comments: [],
           data: {
             department_id: {
+              "cte": "WITH test_constants AS ( SELECT 1 AS dummy_id )",
               company_id: 1,
               search_all: [
                 {
@@ -1120,6 +1122,7 @@ export class MasterEntityComponent implements OnInit {
   popupName: string = 'reportInfo';
   popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
   copied = false;
+  masterEntities: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -1166,6 +1169,7 @@ export class MasterEntityComponent implements OnInit {
       this.loadData(this.id);
     }
     this.titleChange();
+    this.fetchAllMasterEntities();
   }
 
   // ngAfterViewInit() {
@@ -1442,18 +1446,20 @@ export class MasterEntityComponent implements OnInit {
 
   addItem() {
     const items = this.form.get('items') as FormArray;
-    items.push(
-      this.fb.group({
-        fieldName: ['', [Validators.required, Validators.maxLength(100)]],
-        displayName: ['', [Validators.required, Validators.maxLength(100)]],
-        orderNo: ['', [Validators.required, Validators.min(0)]],
-        isGridColumn: ['true', Validators.required],
-        isSearchable: ['true', Validators.required],
-        clauseType: ['where', Validators.required],
-        isSortable: ['true', Validators.required],
-        fieldType: [this.commonConfig.field_types[0].value, Validators.required],
-      })
-    );
+    const group = this.fb.group({
+      fieldName: ['', [Validators.required, Validators.maxLength(100)]],
+      displayName: ['', [Validators.required, Validators.maxLength(100)]],
+      orderNo: ['', [Validators.required, Validators.min(0)]],
+      isGridColumn: ['true', Validators.required],
+      isSearchable: ['true', Validators.required],
+      clauseType: ['where', Validators.required],
+      isSortable: ['true', Validators.required],
+      fieldType: [this.commonConfig.field_types[0].value, Validators.required],
+      linkType: ['none', Validators.required],
+      linkAction: [''],
+    });
+    this.setupLinkModeAutoUpdate(group);
+    items.push(group);
   }
 
   removeItem(index: number) {
@@ -1481,7 +1487,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'order_no', master_entity_line_items.order_no,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
           'items',
         ],
       ],
@@ -1537,18 +1543,23 @@ export class MasterEntityComponent implements OnInit {
           //items.clear();
           if (entity.items && entity.items.length > 0) {
             entity.items.forEach((item: any) => {
-              items.push(
-                this.fb.group({
-                  fieldName: [item.field_name, Validators.required],
-                  displayName: [item.display_name, Validators.required],
-                  orderNo: [item.order_no, [Validators.required, Validators.min(0)]],
-                  isGridColumn: [item.is_grid_column, Validators.required],
-                  isSearchable: [item.is_searchable, Validators.required],
-                  clauseType: [item?.clause_type || 'where', Validators.required],
-                  isSortable: [item.is_sortable, Validators.required],
-                  fieldType: [item.field_type_id, Validators.required],
-                })
-              );
+              const linkType = item.link_type || 'none';
+              const linkAction = item.link_action || '';
+              // linkMode will be set by logic, not user
+              const group = this.fb.group({
+                fieldName: [item.field_name, Validators.required],
+                displayName: [item.display_name, Validators.required],
+                orderNo: [item.order_no, [Validators.required, Validators.min(0)]],
+                isGridColumn: [item.is_grid_column, Validators.required],
+                isSearchable: [item.is_searchable, Validators.required],
+                clauseType: [item?.clause_type || 'where', Validators.required],
+                isSortable: [item.is_sortable, Validators.required],
+                fieldType: [item.field_type_id, Validators.required],
+                linkType: [linkType, Validators.required],
+                linkAction: [linkAction],
+              });
+              this.setupLinkModeAutoUpdate(group, linkAction);
+              items.push(group);
             });
           }
         }
@@ -1621,6 +1632,9 @@ export class MasterEntityComponent implements OnInit {
         clause_type: item?.clauseType || 'where',
         is_sortable: item.isSortable,
         field_type_id: item.fieldType,
+        link_type: item.linkType,
+        link_action: item.linkAction,
+        link_mode: item.linkMode,
       }));
       this.insert_json_schema.data['table3'] = items;
     }
@@ -1682,6 +1696,9 @@ export class MasterEntityComponent implements OnInit {
         clause_type: item?.clauseType || 'where',
         is_sortable: item.isSortable,
         field_type_id: item.fieldType,
+        link_type: item.linkType,
+        link_action: item.linkAction,
+        link_mode: item.linkMode,
       }));
 
       this.update_json_schema.data['table3'] = items;
@@ -1870,5 +1887,79 @@ export class MasterEntityComponent implements OnInit {
       ...this.popupInformation,
       data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
     };
+  }
+
+  fetchAllMasterEntities() {
+    const params = {
+      company_id: 1,
+      print_query: false,
+      primary_table: 'master_entities',
+      start_index: 0,
+      limit_range: 1000,
+      sort_columns: [['master_entities.id', 'desc']],
+      select_columns: [
+        ['master_entities.entity_name', 'value'],
+        ['master_entities.name', 'label'],
+        ['master_entities.entity_type', 'entity_type']
+      ],
+    };
+    this.gridApiService.getAllList(params).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          // Filter for only static_page_builder_module and form_builder_module
+          this.masterEntities = response.data.records.filter((entity: any) =>
+            entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+          );
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  setupLinkModeAutoUpdate(group: FormGroup, initialLinkAction?: string) {
+    // Set linkMode based on linkAction selection
+    const linkTypeControl = group.get('linkType');
+    const linkActionControl = group.get('linkAction');
+    // Add a property to hold the current linkMode
+    (group as any)._linkMode = 'none';
+    // Helper to set linkMode
+    const setLinkMode = (entityName: string) => {
+      const entity = this.masterEntities.find((e: any) => e.value === entityName);
+      if (entity) {
+        if (entity.entity_type === 'static_page_builder_module') {
+          (group as any)._linkMode = 'popup_details';
+        } else if (entity.entity_type === 'form_builder_module') {
+          (group as any)._linkMode = 'popup_edit';
+        } else {
+          (group as any)._linkMode = 'none';
+        }
+      } else {
+        (group as any)._linkMode = 'none';
+      }
+    };
+    // Initial set if value provided
+    if (initialLinkAction) {
+      setLinkMode(initialLinkAction);
+    }
+    // Subscribe to changes
+    linkActionControl?.valueChanges.subscribe((entityName: string) => {
+      if (linkTypeControl?.value === 'component') {
+        setLinkMode(entityName);
+      } else {
+        (group as any)._linkMode = 'none';
+      }
+    });
+    // Also update on linkType change
+    linkTypeControl?.valueChanges.subscribe((type: string) => {
+      if (type !== 'component') {
+        (group as any)._linkMode = 'none';
+      } else {
+        setLinkMode(linkActionControl?.value);
+      }
+    });
   }
 }

@@ -1,15 +1,29 @@
-<ng-select
-  bindLabel="label"
-  bindValue="value"
-  [formControl]="formControl"
-  [formlyAttributes]="field"
-  [items]="options$ | async"
-  [multiple]="to['multiple'] || false"
-  [clearable]="true"
-  [searchable]="true"
-  [placeholder]="to.placeholder || 'Select an option'"
-  class="custom-multiselect"
-  [typeahead]="searchSubject"
-  [ngClass]="{ 'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted) }"
->
-</ng-select>
+<div class="flex items-center gap-2">
+  <div class="flex-1">
+    <ng-select
+      bindLabel="label"
+      bindValue="value"
+      [formControl]="formControl"
+      [formlyAttributes]="field"
+      [items]="options$ | async"
+      [multiple]="to['multiple'] || false"
+      [clearable]="true"
+      [searchable]="true"
+      [placeholder]="to.placeholder || 'Select an option'"
+      class="custom-multiselect"
+      [typeahead]="searchSubject"
+      [ngClass]="{ 'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted) }"
+    >
+    </ng-select>
+  </div>
+  <div class="flex-none" *ngIf="getAddEditForm()">
+    <button 
+      type="button" 
+      class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-3 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+      (click)="openNestedFormModal(getAddEditForm() || '', getFieldKey())"
+      [title]="'Add new ' + (getAddEditForm() || '')"
+    >
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
+</div>

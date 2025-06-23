@@ -23,6 +23,7 @@
     (searchQuery)="searchData($event)"
     (exportType)="exportTable($event)"
     (advancedSearchQuery)="advancedSearchData($event)"
+    (linkComponentClick)="onLinkComponentClick($event)"
     [unique_id]="uniqueId"
   ></app-datatable-children>
   <ng-template #actionTemplate let-item>
@@ -52,6 +53,17 @@
       </a>
       <a
         href="javascript:void(0);"
+        class="hover:text-primary"
+        *ngIf="this.masterInfo.permissions.popup_details"
+        (click)="this.viewPopupItem(item)"
+        ngxTippy
+        data-tippy-content="Details"
+        appDynamicFontSize="body"
+      >
+        <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
+      <a
+        href="javascript:void(0);"
         class="hover:text-info"
         appDynamicFontSize="body"
         *ngIf="
@@ -63,6 +75,26 @@
             : true)
         "
         (click)="this.editItem(item)"
+        ngxTippy
+        data-tippy-content="Edit"
+      >
+        <i
+          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
+        ></i>
+      </a>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-info"
+        appDynamicFontSize="body"
+        *ngIf="
+          this.masterInfo.permissions.popup_edit &&
+          (this.masterInfo?.Listname == 'mrn_grid'
+            ? item?.mrn_status != 'completed'
+            : true && this.masterInfo?.Listname == 'min_grid'
+            ? item?.min_status != 'completed'
+            : true)
+        "
+        (click)="this.editPopupItem(item)"
         ngxTippy
         data-tippy-content="Edit"
       >
@@ -294,6 +326,37 @@
             <strong>Note:</strong> Password must contain at least 8 characters, including one uppercase letter and one special character.
           </p>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Static Page Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isViewPopupOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Content -->
+  <div class="flex min-h-screen items-center justify-center p-6 sm:p-8">
+    <div
+      class="relative w-full max-w-screen-xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Body -->
+      <div class="max-h-[85vh] overflow-y-auto p-8 sm:px-12 sm:py-8">
+        <app-static-page
+          *ngIf="popupName == 'popup_details'"
+          [uuid]="selectedItemUuid"
+          [entityName]="popupEntityName"
+          [isModal]="true"
+          (closeModal)="closeViewPopup()"
+        ></app-static-page>
+        <app-form-builder
+          *ngIf="popupName == 'popup_add' || popupName == 'popup_edit'"
+          [uuid]="selectedItemUuid"
+          [entityName]="popupEntityName"
+          [isModal]="true"
+          (closeModal)="closeViewPopup()"
+        ></app-form-builder>
       </div>
     </div>
   </div>
