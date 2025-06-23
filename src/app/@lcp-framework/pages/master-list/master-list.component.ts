@@ -973,8 +973,8 @@ export class MasterListComponent implements AfterViewInit {
     if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       Swal.fire({
         icon: 'info',
-        title: 'Resend Mail?',
-        text: 'are you sure, you want to resend mail?',
+        title: 'Resend Notification?',
+        text: 'are you sure, you want to resend notification?',
         showCancelButton: true,
         confirmButtonText: 'Resend',
         padding: '2em',
@@ -986,10 +986,9 @@ export class MasterListComponent implements AfterViewInit {
               entity_name: this.masterInfo.children.email_resend.entity_name,
               entity_type: this.masterInfo.children.email_resend.component_class_name,
             });
-
             if (jobResponse) {
               await this.executeJob({ ...jobResponse, record_info: item });
-              Swal.fire({ title: 'Mail resent request initiated!', text: 'Mail resent request has been initiated.', icon: 'success' });
+              Swal.fire({ title: 'Notification resent request initiated!', text: 'Notification resent request has been initiated.', icon: 'success' });
               this.fetchData(this.listQuery);
             }
           } catch (error: any) {
