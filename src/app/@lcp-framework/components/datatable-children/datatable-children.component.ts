@@ -70,6 +70,7 @@ export class DataTableChildrenComponent implements OnInit, OnChanges {
   @Output() columnSort = new EventEmitter<any>();
   @Output() searchQuery = new EventEmitter<any>();
   @Output() advancedSearchQuery = new EventEmitter<any>();
+  @Output() linkComponentClick = new EventEmitter<{ col: any, item: any }>();
 
   search = '';
   selectedColumns: any[] = [];
@@ -689,5 +690,9 @@ export class DataTableChildrenComponent implements OnInit, OnChanges {
     setTimeout(() => {
       window.location.reload();
     }, 1000);
+  }
+
+  onLinkComponentClick(col: any, item: any) {
+    this.linkComponentClick.emit({ col, item });
   }
 }

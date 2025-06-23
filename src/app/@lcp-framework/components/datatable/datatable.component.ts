@@ -71,6 +71,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   @Output() columnSort = new EventEmitter<any>();
   @Output() searchQuery = new EventEmitter<any>();
   @Output() advancedSearchQuery = new EventEmitter<any>();
+  @Output() linkComponentClick = new EventEmitter<{ col: any, item: any }>();
 
   search = '';
   selectedColumns: any[] = [];
@@ -148,8 +149,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   user_info: any;
   config: any;
 
-  @Output() onRowClick = new EventEmitter<any>();
-
   constructor(
     private translate: TranslateService,
     private toastr: ToastrService,
@@ -173,9 +172,6 @@ export class DataTableComponent implements OnInit, OnChanges {
       this.expandedItem = item;
     }
     console.log(this.expandedItem);
-  }
-  handleRowClick(rowData: any) {
-    this.onRowClick.emit(rowData); // Emit to parent (if needed)
   }
 
   ngOnInit() {
@@ -706,5 +702,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     setTimeout(() => {
       window.location.reload();
     }, 1000);
+  }
+
+  onLinkComponentClick(col: any, item: any) {
+    this.linkComponentClick.emit({ col, item });
   }
 }

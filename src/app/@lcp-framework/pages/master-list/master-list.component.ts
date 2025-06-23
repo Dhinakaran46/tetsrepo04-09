@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input } from '@angular/core';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input, SimpleChanges, OnChanges } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -40,8 +40,9 @@ interface FetchDataParams {
   sort_columns: any;
   search_any: any;
   search_all: any;
+  cte:any;
   having_conditions: any;
-  having_any_conditions: any;
+  hnditions: any;
   group_by: any;
   includes: any;
 }
@@ -60,9 +61,18 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements AfterViewInit {
+export class MasterListComponent implements AfterViewInit, OnChanges {
   @Input() uuid: any = null; // Receive UUID from child component
   @Input() entity_name: any = ''; // Receive entity_name from child component
+  @Input() popupName: any = '';
+  @Input() isViewPopupOpen: boolean = false;
+  @Input() popupEntityName: any = '';
+  @Input() selectedItemUuid: string | null = null;
+  @Input() set popupConfig(config: { popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean } | null) {
+    if (config) {
+      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
+    }
+  }
 
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
@@ -144,11 +154,6 @@ export class MasterListComponent implements AfterViewInit {
     },
   };
   uniqueId!: string | null;
-
-  isViewPopupOpen = false;
-  selectedItemUuid: string | null = null;
-  popupEntityName: any;
-  popupName: any;
 
   constructor(
     private toastr: ToastrService,
@@ -1139,5 +1144,52 @@ export class MasterListComponent implements AfterViewInit {
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
+  }
+
+  openFormBuilderPopup(entityName: string, item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_details';
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = entityName;
+    this.isViewPopupOpen = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+
+  onLinkComponentClick(event: { col: any, item: any }) {
+    console.log(event.col)
+    if (event.col.link_type === 'component') {
+      const mode = event.col.link_mode || 'popup_details';
+      this.popupName = mode;
+      console.log(this.popupName)
+      this.selectedItemUuid = event.item.uuid;
+      if(mode === 'popup_add'){
+        this.selectedItemUuid = null;
+      }
+      console.log(this.selectedItemUuid)
+      this.popupEntityName = event.col.link_action;
+      console.log(this.popupEntityName)
+      this.isViewPopupOpen = true;
+      this.loadingpopup = true;
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    }
+  }
+
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
+    this.popupName = popupName;
+    this.selectedItemUuid = selectedItemUuid;
+    this.popupEntityName = popupEntityName;
+    this.isViewPopupOpen = isViewPopupOpen;
+    this.loadingpopup = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Optionally handle other input changes if needed
   }
 }

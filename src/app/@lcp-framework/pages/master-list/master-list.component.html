@@ -23,6 +23,7 @@
     (searchQuery)="searchData($event)"
     (exportType)="exportTable($event)"
     (advancedSearchQuery)="advancedSearchData($event)"
+    (linkComponentClick)="onLinkComponentClick($event)"
     [unique_id]="uniqueId"
   ></app-datatable>
   <ng-template #actionTemplate let-item>

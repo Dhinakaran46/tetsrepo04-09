@@ -62,3 +62,27 @@
     </div>
   </div>
 </div>
+
+<!-- Nested Form Builder Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isNestedFormModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Content -->
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Body -->
+      <div class="max-h-[80vh] overflow-y-auto p-4">
+        <app-form-builder
+          *ngIf="nestedFormEntityName"
+          [uuid]="nestedFormUuid"
+          [entityName]="nestedFormEntityName"
+          [isModal]="true"
+          (closeModal)="onNestedFormSubmitted($event)"
+        ></app-form-builder>
+      </div>
+    </div>
+  </div>
+</div>

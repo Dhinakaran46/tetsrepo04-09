@@ -63,6 +63,7 @@ interface FetchDataParams {
 export class MasterListChildrenComponent implements AfterViewInit {
   @Input() uuid: any = null; // Receive UUID from child component
   @Input() entity_name: any = ''; // Receive entity_name from child component
+  @Input() isViewPopupOpen: boolean = false;
 
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
@@ -145,7 +146,6 @@ export class MasterListChildrenComponent implements AfterViewInit {
   };
   uniqueId!: string | null;
 
-  isViewPopupOpen = false;
   selectedItemUuid: string | null = null;
   popupEntityName: any;
   popupName: any;
@@ -1141,5 +1141,35 @@ export class MasterListChildrenComponent implements AfterViewInit {
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
+  }
+
+  openFormBuilderPopup(entityName: string, item: any) {
+    this.loadingpopup = true;
+    this.popupName = 'popup_details';
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = entityName;
+    this.isViewPopupOpen = true;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+
+  onLinkComponentClick(event: { col: any, item: any }) {
+    if (event.col.link_type === 'component') {
+      const mode = event.col.link_mode || 'popup_details';
+      this.popupName = mode;
+      this.selectedItemUuid = event.item.uuid;
+      console.log(this.selectedItemUuid)
+      if(mode === 'popup_add'){
+        this.selectedItemUuid = null;
+      }
+      this.popupEntityName = event.col.link_action;
+      console.log(this.popupEntityName)
+      this.isViewPopupOpen = true;
+      this.loadingpopup = true;
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    }
   }
 }

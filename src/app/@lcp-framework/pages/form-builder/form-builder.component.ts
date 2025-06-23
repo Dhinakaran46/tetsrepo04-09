@@ -46,6 +46,11 @@ export class FormBuilderComponent implements OnInit {
   isDrafted = false;
   processStatus: any = 'submitted';
 
+  // Add properties for nested form-builder modal
+  isNestedFormModalOpen = false;
+  nestedFormEntityName: string | null = null;
+  nestedFormUuid: string | null = null;
+
   processStatuses: any = {
     submitted: {
       value: 'table_process_status_val_0',
@@ -864,11 +869,26 @@ export class FormBuilderComponent implements OnInit {
       // Recursively process fieldGroups if they exist and are arrays
       if (Array.isArray(group.fieldGroup)) {
         group.fieldGroup = this.processFields(group.fieldGroup);
+        
+        // If this group has add_edit_form, pass it down to individual fields
+        if (group.add_edit_form) {
+          console.log('Processing field group with add_edit_form:', group);
+          group.fieldGroup.forEach((field: any) => {
+            field.add_edit_form = group.add_edit_form;
+          });
+        }
       }
 
       // Process fieldArray (used in repeatable sections) if it exists and contains a fieldGroup
       if (group.fieldArray && Array.isArray(group.fieldArray.fieldGroup)) {
         group.fieldArray.fieldGroup = this.processFields(group.fieldArray.fieldGroup);
+        
+        // If this group has add_edit_form, pass it down to fieldArray fields
+        if (group.add_edit_form) {
+          group.fieldArray.fieldGroup.forEach((field: any) => {
+            field.add_edit_form = group.add_edit_form;
+          });
+        }
       } else if (group.fieldArray?.type === 'select') {
         group.fieldArray.type = 'select-from-db';
         if (group.fieldArray.props) group.fieldArray.props.placeholder = group.fieldArray.props.placeholder || 'Please select';
@@ -992,5 +1012,46 @@ export class FormBuilderComponent implements OnInit {
 
   get isDisabled(): boolean {
     return this.processStatus === 'under_approval';
+  }
+
+  // Method to open nested form-builder modal
+  openNestedFormModal(entityName: string, fieldKey?: string) {
+    this.nestedFormEntityName = entityName;
+    this.nestedFormUuid = null; // Always pass null for new records
+    this.isNestedFormModalOpen = true;
+  }
+
+  // Method to close nested form-builder modal
+  closeNestedFormModal() {
+    this.isNestedFormModalOpen = false;
+    this.nestedFormEntityName = null;
+    this.nestedFormUuid = null;
+  }
+
+  // Method to handle nested form submission
+  onNestedFormSubmitted(formData: any) {
+    // Check if the form submission was successful
+    if (formData && formData.success) {
+      console.log('Nested form submitted successfully:', formData);
+      
+      // Close the modal
+      this.closeNestedFormModal();
+      
+      // Refresh the form data to update dropdowns and other dynamic content
+      this.refreshFormData();
+    } else {
+      // If no data or unsuccessful, just close the modal
+      this.closeNestedFormModal();
+    }
+  }
+
+  // Method to refresh form data
+  private refreshFormData() {
+    // Refresh the form data to update dropdowns and other dynamic content
+    // This will reload the form configuration and fetch fresh data
+    this.resetForm();
+    
+    // Optionally show a success message
+    this.toastr.success('Record created successfully. Form data refreshed.');
   }
 }

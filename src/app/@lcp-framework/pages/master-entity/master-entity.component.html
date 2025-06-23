@@ -673,6 +673,9 @@
                 <th>{{ 'table_is_clause_type' | translate }}</th>
                 <th>{{ 'table_is_sortable' | translate }}</th>
                 <th>{{ 'table_field_type' | translate }}</th>
+                <th>{{ 'link_type' | translate }}</th>
+                <th>{{ 'link_action' | translate }}</th>
+                <th>{{ 'link_mode' | translate }}</th>
                 <th>{{ 'table_action' | translate }}</th>
               </tr>
             </thead>
@@ -821,6 +824,79 @@
                       </select>
                       <div *ngIf="isItemFieldInvalid(i, 'fieldType')" class="invalid-feedback text-danger">
                         {{ getItemErrorMessage(i, 'fieldType') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <select
+                        [id]="'linkType' + i"
+                        formControlName="linkType"
+                        appDynamicFontSize="body"
+                        class="form-select"
+                        [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkType') }"
+                      >
+                        <option value="none">{{ 'none' | translate }}</option>
+                        <option value="component">{{ 'component' | translate }}</option>
+                        <option value="url">{{ 'url' | translate }}</option>
+                      </select>
+                      <div *ngIf="isItemFieldInvalid(i, 'linkType')" class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'linkType') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <ng-container [ngSwitch]="item.get('linkType')?.value">
+                        <select
+                          *ngSwitchCase="'component'"
+                          [id]="'linkAction' + i"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-select"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        >
+                          <option value="">{{ 'select_any' | translate }}</option>
+                          <ng-container *ngFor="let entity of masterEntities">
+                            <option [value]="entity.value">{{ entity.label }}</option>
+                          </ng-container>
+                        </select>
+                        <input
+                          *ngSwitchCase="'url'"
+                          [id]="'linkAction' + i"
+                          type="text"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-input"
+                          placeholder="{{ 'enter_url' | translate }}"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        />
+                        <span *ngSwitchDefault>-</span>
+                      </ng-container>
+                      <div *ngIf="isItemFieldInvalid(i, 'linkAction')" class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'linkAction') }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="mb-2">
+                      <ng-container [ngSwitch]="item.get('linkType')?.value">
+                        <select
+                          *ngSwitchCase="'component'"
+                          [id]="'linkMode' + i"
+                          formControlName="linkMode"
+                          appDynamicFontSize="body"
+                          class="form-select"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkMode') }"
+                        >
+                          <option value="popup_details">{{ 'popup_details' | translate }}</option>
+                          <option value="popup_add">{{ 'popup_add' | translate }}</option>
+                          <option value="popup_edit">{{ 'popup_edit' | translate }}</option>
+                        </select>
+                        <span *ngSwitchDefault>-</span>
+                      </ng-container>
+                      <div *ngIf="isItemFieldInvalid(i, 'linkMode')" class="invalid-feedback text-danger">
+                        {{ getItemErrorMessage(i, 'linkMode') }}
                       </div>
                     </div>
                   </td>
