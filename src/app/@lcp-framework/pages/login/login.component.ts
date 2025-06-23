@@ -1,5 +1,5 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
@@ -98,7 +98,7 @@ function organizeMenu(menuList: MenuItem[]): MenuItem[] {
     ]),
   ],
 })
-export class CoverLoginComponent {
+export class CoverLoginComponent implements OnInit, OnDestroy {
   companyId: number = 1;
 
   email = '';
@@ -114,6 +114,8 @@ export class CoverLoginComponent {
   iconClicked = false;
 
   title_key: string = 'login';
+
+  private focusListener: any;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -162,10 +164,14 @@ export class CoverLoginComponent {
         this.loginForm.controls['password'].markAsTouched();
       }
     });
+
+    this.focusListener = () => this.checkIfLoggedIn();
+    window.addEventListener('focus', this.focusListener);
   }
 
   ngOnDestroy(): void {
     document.documentElement.classList.remove('login-page');
+    window.removeEventListener('focus', this.focusListener);
   }
 
   get formControls() {
@@ -234,6 +240,14 @@ export class CoverLoginComponent {
         console.error('Error fetching menu data during login:', error);
       },
     });
+  }
+
+  checkIfLoggedIn() {
+    // Replace with your actual logic to check if user is logged in
+    const userData = this.localstore.getData('user_data');
+    if (userData) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   onSubmit() {
@@ -306,10 +320,11 @@ export class CoverLoginComponent {
           // Add dynamic routes
 
           forkJoin([
-            //this.menuLoadService.fetchConfigData(this.companyId), // setConfig
-            this.menuLoadService.fetchMenuData(this.companyId), // onLoginSuccess
+            this.menuLoadService.fetchMenuData(this.companyId),
           ]).subscribe({
             next: ([configData]) => {
+              // Notify other tabs of login
+              localStorage.setItem('login', Date.now().toString());
               this.router.navigate(['/dashboard']);
               window.location.reload();
             },

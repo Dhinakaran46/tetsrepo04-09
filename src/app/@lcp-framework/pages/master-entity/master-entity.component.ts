@@ -1446,21 +1446,20 @@ export class MasterEntityComponent implements OnInit {
 
   addItem() {
     const items = this.form.get('items') as FormArray;
-    items.push(
-      this.fb.group({
-        fieldName: ['', [Validators.required, Validators.maxLength(100)]],
-        displayName: ['', [Validators.required, Validators.maxLength(100)]],
-        orderNo: ['', [Validators.required, Validators.min(0)]],
-        isGridColumn: ['true', Validators.required],
-        isSearchable: ['true', Validators.required],
-        clauseType: ['where', Validators.required],
-        isSortable: ['true', Validators.required],
-        fieldType: [this.commonConfig.field_types[0].value, Validators.required],
-        linkType: ['none', Validators.required],
-        linkAction: [''],
-        linkMode: ['none'],
-      })
-    );
+    const group = this.fb.group({
+      fieldName: ['', [Validators.required, Validators.maxLength(100)]],
+      displayName: ['', [Validators.required, Validators.maxLength(100)]],
+      orderNo: ['', [Validators.required, Validators.min(0)]],
+      isGridColumn: ['true', Validators.required],
+      isSearchable: ['true', Validators.required],
+      clauseType: ['where', Validators.required],
+      isSortable: ['true', Validators.required],
+      fieldType: [this.commonConfig.field_types[0].value, Validators.required],
+      linkType: ['none', Validators.required],
+      linkAction: [''],
+    });
+    this.setupLinkModeAutoUpdate(group);
+    items.push(group);
   }
 
   removeItem(index: number) {
@@ -1546,22 +1545,21 @@ export class MasterEntityComponent implements OnInit {
             entity.items.forEach((item: any) => {
               const linkType = item.link_type || 'none';
               const linkAction = item.link_action || '';
-              const linkMode = linkType === 'component' ? (item.link_mode || 'popup_details') : 'none';
-              items.push(
-                this.fb.group({
-                  fieldName: [item.field_name, Validators.required],
-                  displayName: [item.display_name, Validators.required],
-                  orderNo: [item.order_no, [Validators.required, Validators.min(0)]],
-                  isGridColumn: [item.is_grid_column, Validators.required],
-                  isSearchable: [item.is_searchable, Validators.required],
-                  clauseType: [item?.clause_type || 'where', Validators.required],
-                  isSortable: [item.is_sortable, Validators.required],
-                  fieldType: [item.field_type_id, Validators.required],
-                  linkType: [linkType, Validators.required],
-                  linkAction: [linkAction],
-                  linkMode: [linkMode],
-                })
-              );
+              // linkMode will be set by logic, not user
+              const group = this.fb.group({
+                fieldName: [item.field_name, Validators.required],
+                displayName: [item.display_name, Validators.required],
+                orderNo: [item.order_no, [Validators.required, Validators.min(0)]],
+                isGridColumn: [item.is_grid_column, Validators.required],
+                isSearchable: [item.is_searchable, Validators.required],
+                clauseType: [item?.clause_type || 'where', Validators.required],
+                isSortable: [item.is_sortable, Validators.required],
+                fieldType: [item.field_type_id, Validators.required],
+                linkType: [linkType, Validators.required],
+                linkAction: [linkAction],
+              });
+              this.setupLinkModeAutoUpdate(group, linkAction);
+              items.push(group);
             });
           }
         }
@@ -1901,13 +1899,17 @@ export class MasterEntityComponent implements OnInit {
       sort_columns: [['master_entities.id', 'desc']],
       select_columns: [
         ['master_entities.entity_name', 'value'],
-        ['master_entities.name', 'label']
+        ['master_entities.name', 'label'],
+        ['master_entities.entity_type', 'entity_type']
       ],
     };
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          this.masterEntities = response.data.records;
+          // Filter for only static_page_builder_module and form_builder_module
+          this.masterEntities = response.data.records.filter((entity: any) =>
+            entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+          );
         }
       },
       (error) => {
@@ -1916,5 +1918,48 @@ export class MasterEntityComponent implements OnInit {
         this.toastr.error(errorMessage, 'Error');
       }
     );
+  }
+
+  setupLinkModeAutoUpdate(group: FormGroup, initialLinkAction?: string) {
+    // Set linkMode based on linkAction selection
+    const linkTypeControl = group.get('linkType');
+    const linkActionControl = group.get('linkAction');
+    // Add a property to hold the current linkMode
+    (group as any)._linkMode = 'none';
+    // Helper to set linkMode
+    const setLinkMode = (entityName: string) => {
+      const entity = this.masterEntities.find((e: any) => e.value === entityName);
+      if (entity) {
+        if (entity.entity_type === 'static_page_builder_module') {
+          (group as any)._linkMode = 'popup_details';
+        } else if (entity.entity_type === 'form_builder_module') {
+          (group as any)._linkMode = 'popup_edit';
+        } else {
+          (group as any)._linkMode = 'none';
+        }
+      } else {
+        (group as any)._linkMode = 'none';
+      }
+    };
+    // Initial set if value provided
+    if (initialLinkAction) {
+      setLinkMode(initialLinkAction);
+    }
+    // Subscribe to changes
+    linkActionControl?.valueChanges.subscribe((entityName: string) => {
+      if (linkTypeControl?.value === 'component') {
+        setLinkMode(entityName);
+      } else {
+        (group as any)._linkMode = 'none';
+      }
+    });
+    // Also update on linkType change
+    linkTypeControl?.valueChanges.subscribe((type: string) => {
+      if (type !== 'component') {
+        (group as any)._linkMode = 'none';
+      } else {
+        setLinkMode(linkActionControl?.value);
+      }
+    });
   }
 }
