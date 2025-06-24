@@ -75,13 +75,19 @@
     >
       <!-- Modal Body -->
       <div class="max-h-[80vh] overflow-y-auto p-4">
-        <app-form-builder
-          *ngIf="nestedFormEntityName"
-          [uuid]="nestedFormUuid"
-          [entityName]="nestedFormEntityName"
-          [isModal]="true"
-          (closeModal)="onNestedFormSubmitted($event)"
-        ></app-form-builder>
+        <div *ngIf="noNestedFormPermission" class="flex flex-col items-center justify-center min-h-[200px]">
+          <span class="text-lg text-red-600 font-semibold mb-4">No permission to view the details</span>
+          <button class="btn btn-primary" (click)="isNestedFormModalOpen = false; noNestedFormPermission = false">Close</button>
+        </div>
+        <ng-container *ngIf="!noNestedFormPermission">
+          <app-form-builder
+            *ngIf="nestedFormEntityName"
+            [uuid]="nestedFormUuid"
+            [entityName]="nestedFormEntityName"
+            [isModal]="true"
+            (closeModal)="onNestedFormSubmitted($event)"
+          ></app-form-builder>
+        </ng-container>
       </div>
     </div>
   </div>

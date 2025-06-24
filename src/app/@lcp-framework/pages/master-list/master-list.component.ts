@@ -154,6 +154,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     },
   };
   uniqueId!: string | null;
+  noPopupPermission: boolean = false;
 
   constructor(
     private toastr: ToastrService,
@@ -779,6 +780,13 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }
 
     if (action === 'addNew' && this.masterInfo.children.popup_add) {
+      console.log(this.masterInfo)
+      // Permission check for popup_add
+      if (!this.masterInfo.permissions.popup_create || !this.masterInfo.permissions.create) {
+        this.noPopupPermission = true;
+        this.isViewPopupOpen = true;
+        return;
+      }
       this.loadingpopup = true;
       console.log('coming');
       this.popupName = 'popup_add';
@@ -791,6 +799,12 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }
   }
   editPopupItem(item: any) {
+    // Permission check for popup_edit
+    if (!this.masterInfo.permissions.popup_edit || !this.masterInfo.permissions.edit) {
+      this.noPopupPermission = true;
+      this.isViewPopupOpen = true;
+      return;
+    }
     this.loadingpopup = true;
     this.popupName = 'popup_edit';
     console.log(this.popupName);
@@ -804,6 +818,11 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }, 500);
   }
   viewPopupItem(item: any) {
+    // Permission check for popup_details
+    console.log(this.masterInfo)
+    if (this.masterInfo.permissions.popup_details || this.masterInfo.permissions.details) {
+     
+    
     this.loadingpopup = true;
     this.popupName = 'popup_details';
     this.selectedItemUuid = item.uuid;
@@ -812,10 +831,16 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     setTimeout(() => {
       this.loadingpopup = false;
     }, 500);
+  }else{
+    this.noPopupPermission = true;
+    this.isViewPopupOpen = true;
+    return;
+  }
   }
   closeViewPopup() {
     this.isViewPopupOpen = false;
     this.selectedItemUuid = null;
+    this.noPopupPermission = false;
   }
 
   editItem(item: any) {
@@ -1160,6 +1185,24 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     console.log(event.col)
     if (event.col.link_type === 'component') {
       const mode = event.col.link_mode || 'popup_details';
+      console.log(mode);
+      console.log(this.masterInfo.permissions);
+      if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details){
+        this.noPopupPermission = true;
+        this.isViewPopupOpen = true;
+        return;
+      }else if(mode == 'popup_add' && !this.masterInfo.permissions.popup_create && !this.masterInfo.permissions.create){
+        this.noPopupPermission = true;
+        this.isViewPopupOpen = true;
+        return;
+      }else if(mode == 'popup_edit' && !this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit){  
+        this.noPopupPermission = true;
+        this.isViewPopupOpen = true;
+        return;
+      
+      }
+
+
       this.popupName = mode;
       console.log(this.popupName)
       this.selectedItemUuid = event.item.uuid;
@@ -1179,6 +1222,36 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
   processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
     this.popupName = popupName;
+    // Enhanced permission check using unorgmenuList and permissions
+    const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
+    const unorgmenuList = userData?.unorgmenuList || [];
+    const permissions = userData?.permissions || {};
+    let menuPermissionId = null;
+    if (unorgmenuList && Array.isArray(unorgmenuList)) {
+      let menuItem = null;
+      if (popupName === 'popup_add') {
+        menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'add' || item.action_slug === 'popup_add'));
+      } else if (popupName === 'popup_edit') {
+        menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit'));
+      } else if (popupName === 'popup_details') {
+        menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details'));
+      }
+      if (menuItem) {
+        menuPermissionId = menuItem.permission_id;
+      }
+    }
+    console.log(menuPermissionId);
+    console.log(permissions);
+    let hasPermission = true;
+    if (menuPermissionId && userData?.main?.permissions && Array.isArray(userData.main.permissions)) {
+      const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
+      hasPermission = !!(permObj && permObj.accessible);
+    }
+    if (!hasPermission) {
+      this.noPopupPermission = true;
+      this.isViewPopupOpen = true;
+      return;
+    }
     this.selectedItemUuid = selectedItemUuid;
     this.popupEntityName = popupEntityName;
     this.isViewPopupOpen = isViewPopupOpen;
