@@ -50,6 +50,7 @@ export class FormBuilderComponent implements OnInit {
   isNestedFormModalOpen = false;
   nestedFormEntityName: string | null = null;
   nestedFormUuid: string | null = null;
+  noNestedFormPermission: boolean = false;
 
   processStatuses: any = {
     submitted: {
@@ -1016,6 +1017,27 @@ export class FormBuilderComponent implements OnInit {
 
   // Method to open nested form-builder modal
   openNestedFormModal(entityName: string, fieldKey?: string) {
+    // Permission check logic
+    this.noNestedFormPermission = false;
+    const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
+    const unorgmenuList = userData?.unorgmenuList || [];
+    let menuPermissionId = null;
+    if (unorgmenuList && Array.isArray(unorgmenuList)) {
+      const menuItem = unorgmenuList.find((item: any) => item.entity_name === entityName && (item.action_slug === 'add' || item.action_slug === 'popup_add'));
+      if (menuItem) {
+        menuPermissionId = menuItem.permission_id;
+      }
+    }
+    let hasPermission = true;
+    if (menuPermissionId && userData?.main?.permissions && Array.isArray(userData.main.permissions)) {
+      const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
+      hasPermission = !!(permObj && permObj.accessible);
+    }
+    if (!hasPermission) {
+      this.noNestedFormPermission = true;
+      this.isNestedFormModalOpen = true;
+      return;
+    }
     this.nestedFormEntityName = entityName;
     this.nestedFormUuid = null; // Always pass null for new records
     this.isNestedFormModalOpen = true;

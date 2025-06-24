@@ -345,20 +345,26 @@
       <!-- Modal Body -->
       <div class="max-h-[80vh] overflow-y-auto p-4">
         <app-loader *ngIf="loadingpopup"></app-loader>
-        <app-static-page
-          *ngIf="popupName == 'popup_details'"
-          [uuid]="selectedItemUuid"
-          [entityName]="popupEntityName"
-          [isModal]="true"
-          (closeModal)="closeViewPopup()"
-        ></app-static-page>
-        <app-form-builder
-          *ngIf="popupName == 'popup_add' || popupName == 'popup_edit'"
-          [uuid]="selectedItemUuid"
-          [entityName]="popupEntityName"
-          [isModal]="true"
-          (closeModal)="closeViewPopup()"
-        ></app-form-builder>
+        <div *ngIf="noPopupPermission" class="flex flex-col items-center justify-center min-h-[200px]">
+          <span class="text-lg text-red-600 font-semibold mb-4">No permission to view the details</span>
+          <button class="btn btn-primary" (click)="closeViewPopup()">Close</button>
+        </div>
+        <ng-container *ngIf="!noPopupPermission">
+          <app-static-page
+            *ngIf="popupName == 'popup_details'"
+            [uuid]="selectedItemUuid"
+            [entityName]="popupEntityName"
+            [isModal]="true"
+            (closeModal)="closeViewPopup()"
+          ></app-static-page>
+          <app-form-builder
+            *ngIf="popupName == 'popup_add' || popupName == 'popup_edit'"
+            [uuid]="selectedItemUuid"
+            [entityName]="popupEntityName"
+            [isModal]="true"
+            (closeModal)="closeViewPopup()"
+          ></app-form-builder>
+        </ng-container>
       </div>
     </div>
   </div>
