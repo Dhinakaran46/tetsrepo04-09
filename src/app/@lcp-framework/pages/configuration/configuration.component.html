@@ -214,6 +214,30 @@
                             class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
                           />
                         </ng-container>
+                        <ng-container *ngSwitchCase="'timezone'">
+                          <ng-select
+                            [items]="timezoneList"
+                            bindLabel="label"
+                            bindValue="name"
+                            formControlName="config_value"
+                            [searchable]="true"
+                            placeholder="Select Timezone"
+                            appDynamicFontSize="body"
+                            class="custom-multiselect"
+                          ></ng-select>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'datetimeformat'">
+                          <ng-select
+                            [items]="datetimeFormatList"
+                            bindLabel="label"
+                            bindValue="value"
+                            formControlName="config_value"
+                            [searchable]="true"
+                            placeholder="Select Datetime Format"
+                            appDynamicFontSize="body"
+                            class="custom-multiselect"
+                          ></ng-select>
+                        </ng-container>
                       </ng-container>
                     </td>
                     <td appDynamicFontSize="body" *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4">
@@ -312,7 +336,7 @@
         </select>
       </div>
 
-      <!--<div class="mb-4">
+      <div class="mb-4">
         <label for="value" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_value' | translate }}</label>
         <ng-container [ngSwitch]="newConfigForm.get('keyType')?.value">
           <ng-container *ngSwitchCase="'text'">
@@ -378,8 +402,30 @@
               class="custom-multiselect"
             ></ng-select>
           </ng-container>
+          <ng-container *ngSwitchCase="'timezone'">
+            <ng-select
+              [items]="timezoneList"
+              bindLabel="label"
+              bindValue="name"
+              formControlName="value"
+              [searchable]="true"
+              placeholder="Select Timezone"
+              class="custom-multiselect"
+            ></ng-select>
+          </ng-container>
+          <ng-container *ngSwitchCase="'datetimeformat'">
+            <ng-select
+              [items]="datetimeFormatList"
+              bindLabel="label"
+              bindValue="value"
+              formControlName="value"
+              [searchable]="true"
+              placeholder="Select Datetime Format"
+              class="custom-multiselect"
+            ></ng-select>
+          </ng-container>
         </ng-container>
-      </div>-->
+      </div>
     </ng-scrollbar>
 
     <div class="flex items-center justify-between border-t border-gray-200 p-4">

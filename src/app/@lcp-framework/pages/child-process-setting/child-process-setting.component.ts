@@ -21,6 +21,7 @@ import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { lastValueFrom, Subscription } from 'rxjs';
 import { commonConfig } from '../../config/common.config';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -116,7 +117,8 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     private localStorageService: LocalStorageService,
     private commonService: MenuMapService,
     private titleService: Title,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private timezoneService: TimezoneService
   ) {
     this.initStore();
   }
@@ -451,9 +453,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         const translatedHeader = this.translate.instant(translationKey);
 
         if (header.field_type_id == '5') {
-          transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
+          transformedRecord[translatedHeader] = this.timezoneService.transformDateOnly(record[header.header]);
         } else if (header.field_type_id == '7') {
-          transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
+          transformedRecord[translatedHeader] = this.timezoneService.transformDateTime(record[header.header]);
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
         } else {
@@ -651,10 +653,10 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
               for (const key in formattedItem) {
                 if (
                   formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
+                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('deleted_at') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
                   this.isDate(formattedItem[key])
                 ) {
-                  const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd HH:mm:ss');
+                  const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
                   if (transformedDate) {
                     formattedItem[key] = transformedDate;
                   }
@@ -704,7 +706,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   }
 
   formatDate(value: string): string | null {
-    return this.datepipe.transform(value, 'yyyy-MM-dd');
+    return this.timezoneService.transformDateOnly(value);
   }
 
   capitalizeFirstLetter(string: string) {

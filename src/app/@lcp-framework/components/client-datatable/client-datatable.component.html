@@ -248,7 +248,7 @@
                   <ng-template #defaultContent>
                     <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
                     <ng-container *ngIf="!col.isHtmlValue">
-                      {{ item[col.key] ? item[col.key] : '-' }}
+                      {{ item[col.key] ? formatDateValue(item[col.key]) : '-' }}
                     </ng-container>
                   </ng-template>
                 </ng-container>
@@ -310,28 +310,15 @@
                           (click)="openStatusModal(item)"
                           class="cursor-pointer text-blue-600"
                         >
-                          {{ item[col.key] ? item[col.key] : '-' }}
+                          {{ item[col.key] ? formatDateValue(item[col.key]) : '-' }}
                         </button>
 
                         <span *ngIf="!(config.detailStatusPopup && col.key === 'errorstatus')">
-                          {{ item[col.key] ? item[col.key] : '-' }}
+                          {{ item[col.key] ? formatDateValue(item[col.key]) : '-' }}
                         </span>
                       </ng-container>
                     </ng-template>
-
-                    <!--<ng-template #defaultContent>
-                      <div (click)="openStatusModal(item)" *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
-                      <ng-container *ngIf="!col.isHtmlValue">
-                        {{ item[col.key] ? item[col.key] : '-' }}
-                      </ng-container>
-                    </ng-template>-->
                   </ng-template>
-                  <!--<ng-template #defaultContent>
-                    <div *ngIf="col.isHtmlValue" [innerHTML]="item[col.key]"></div>
-                    <ng-container *ngIf="!col.isHtmlValue">
-                      {{ item[col.key] ? item[col.key] : '-' }}
-                    </ng-container>
-                  </ng-template>-->
                 </ng-container>
               </ng-container>
             </td>

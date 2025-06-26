@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { DatePipe, Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
 import { ChildDatatableComponent } from '../child-datatable/child-datatable.component';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 interface SearchCondition {
   id: string;
@@ -156,7 +157,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     public datePipe: DatePipe,
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
-    public location: Location
+    public location: Location,
+    private timezoneService: TimezoneService
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -250,14 +252,10 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.applyFilters();
   }
   formatDateTime(dateTime: any) {
-    const date = new Date(dateTime);
-    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd HH:mm:ss.SSSZ');
-    return formattedDate;
+    return this.timezoneService.transformDateTime(dateTime);
   }
   formatDate(dateTime: any) {
-    const date = new Date(dateTime);
-    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd');
-    return formattedDate;
+    return this.timezoneService.transformDateOnly(dateTime);
   }
 
   getConditionValue(index: number): string | null {
@@ -265,9 +263,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
       if (type === 'datetime-local') {
-        return this.datePipe.transform(value, 'yyyy-MM-ddTHH:mm:ss');
+        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm:ss');
       } else if (type === 'date') {
-        return this.datePipe.transform(value, 'yyyy-MM-dd');
+        return this.timezoneService.transformDateOnly(value);
       }
     }
     return value;
