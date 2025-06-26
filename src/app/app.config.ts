@@ -8,6 +8,7 @@ import { importProvidersFrom } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { DatePipe } from '@angular/common';
 
 // headlessui
 import { MenuModule } from 'headlessui-angular';
@@ -55,6 +56,7 @@ export const appConfig: ApplicationConfig = {
       })
     ),
     Title,
-    { provide: LocationStrategy, useClass: HashLocationStrategy }, // Add this line
+    { provide: LocationStrategy, useClass: HashLocationStrategy },
+    DatePipe,
   ],
 };

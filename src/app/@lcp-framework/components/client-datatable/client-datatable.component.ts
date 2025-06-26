@@ -8,6 +8,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import jsPDF from 'jspdf'; // For PDF export
 import * as XLSX from 'xlsx'; // For Excel export
 import { SafeHtmlPipe } from '../../pipes/safehtml/safe-html.pipe';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 export interface Column {
   key: string;
@@ -124,7 +125,7 @@ export class ClientDatatableComponent implements OnInit {
 
   // Column visibility
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef, private timezoneService: TimezoneService) {}
 
   ngOnInit() {
     this.pageSize = this.config.defaultPageSize || 10;
@@ -609,5 +610,23 @@ export class ClientDatatableComponent implements OnInit {
     this.selectAll = this.data.every((item) => item.isChecked);
     this.dataChange.emit(this.data);
     this.cdr.detectChanges();
+  }
+
+  isDateLike(value: any): boolean {
+    if (!value || typeof value !== 'string') return false;
+    // ISO, yyyy-MM-dd, yyyy-MM-ddTHH:mm:ss, etc.
+    return /\d{4}-\d{2}-\d{2}/.test(value) || !isNaN(Date.parse(value));
+  }
+
+  formatDateValue(value: any): string {
+    if (this.isDateLike(value)) {
+      // Use datetime if time is present, else date only
+      if (/\d{2}:\d{2}:\d{2}/.test(value)) {
+        return this.timezoneService.transformDateTime(value) || value;
+      } else {
+        return this.timezoneService.transformDateOnly(value) || value;
+      }
+    }
+    return value;
   }
 }

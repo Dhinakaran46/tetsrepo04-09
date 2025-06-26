@@ -13,6 +13,7 @@ import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-hel
 import { slideDownUp } from '../../shared/animations';
 import { IconArrowLeftComponent } from '../../shared/icon/icon-arrow-left';
 import { Title } from '@angular/platform-browser';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 @Component({
   selector: 'app-static-page',
@@ -47,7 +48,8 @@ export class StaticPageComponent {
     private store: Store<any>,
     public location: Location,
     public translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private timezoneService: TimezoneService
   ) {
     this.store$ = this.store.pipe(select('index'));
     this.initStore();
@@ -222,20 +224,50 @@ export class StaticPageComponent {
     return tempDiv.innerHTML;
   }
 
+  isDateLike(value: any): boolean {
+    if (!value || typeof value !== 'string') return false;
+    return /\d{4}-\d{2}-\d{2}/.test(value) || !isNaN(Date.parse(value));
+  }
+
+  formatDateValue(value: any): string {
+    if (this.isDateLike(value)) {
+      if (/\d{2}:\d{2}:\d{2}/.test(value)) {
+        return this.timezoneService.transformDateTime(value) || value;
+      } else {
+        return this.timezoneService.transformDateOnly(value) || value;
+      }
+    }
+    return value;
+  }
+
+  formatDatesInObject(obj: any): any {
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.formatDatesInObject(item));
+    } else if (obj && typeof obj === 'object') {
+      const newObj: any = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          newObj[key] = this.formatDatesInObject(obj[key]);
+        }
+      }
+      return newObj;
+    } else {
+      return this.formatDateValue(obj);
+    }
+  }
+
   compileStaticContent(staticContent: string, data: any): string {
-    // Escape HTML in code blocks
     staticContent = staticContent.replace(/<code class="xml">([\s\S]*?)<\/code>/g, (match, p1) => {
       return `<code class="xml">${this.escapeHtml(p1)}</code>`;
     });
     // Pretty-print JSON if data contains JSON fields
     const formattedData = this.prettifyJsonFields(data);
-
+    // Recursively format all date-like values
+    const dateFormattedData = this.formatDatesInObject(formattedData);
     // Compile the static content using Handlebars
     const compiledTemplate = Handlebars.compile(staticContent);
-    let rendered = compiledTemplate(formattedData);
+    let rendered = compiledTemplate(dateFormattedData);
     rendered = this.escapeRenderIntoHtml(rendered);
-
-    // Replace all <render-html>...</render-html> tags with their inner HTML content unescaped
     rendered = this.replaceRenderHtmlTags(rendered);
     return rendered;
   }

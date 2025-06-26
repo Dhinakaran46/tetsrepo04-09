@@ -14,6 +14,7 @@ import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
+import { TIMEZONE_LIST } from '../../shared/timezone/timezone-list';
 
 interface TabConfiguration {
   id: number;
@@ -33,6 +34,15 @@ interface Tab {
   category_id: any;
   configurations: TabConfiguration[];
 }
+
+const DATETIME_FORMAT_LIST = [
+  { value: 'yyyy-MM-dd HH:mm:ss', label: 'yyyy-MM-dd HH:mm:ss' },
+  { value: 'MMM dd, yyyy HH:mm', label: 'MMM dd, yyyy HH:mm' },
+  { value: 'dd/MM/yyyy HH:mm:ss', label: 'dd/MM/yyyy HH:mm:ss' },
+  { value: 'MM/dd/yyyy h:mm a', label: 'MM/dd/yyyy h:mm a' },
+  { value: "EEEE, MMMM dd, yyyy", label: "EEEE, MMMM dd, yyyy" },
+  { value: "yyyy-MM-dd'T'HH:mm:ss.SSSZ", label: "yyyy-MM-dd'T'HH:mm:ss.SSSZ" },
+];
 
 @Component({
   selector: 'app-configuration',
@@ -56,7 +66,7 @@ export class ConfigurationComponent implements OnInit {
   newConfigForm: FormGroup;
 
   gridpaginationdropdownList = ['5', '10', '15', '20', '25', '30', '40', '50', '60', '70', '80', '90', '100'];
-  fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'select', 'time'];
+  fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'select', 'time', 'timezone', 'datetimeformat'];
   valueTypeOptions = ['static'];
 
   update_json_schema: any = {
@@ -94,6 +104,9 @@ export class ConfigurationComponent implements OnInit {
 
   commonConfig = commonConfig;
   apiUrl = environment.apiUrl;
+
+  timezoneList = TIMEZONE_LIST;
+  datetimeFormatList = DATETIME_FORMAT_LIST;
 
   constructor(
     private commonService: MenuMapService,

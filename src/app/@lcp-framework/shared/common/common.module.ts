@@ -9,6 +9,8 @@ import { NgxTippyModule } from 'ngx-tippy-wrapper';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrderByPipe } from '../../pipes/order-by/order-by.pipe';
 import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
+import { DatetimePipe } from '../../pipes/datetime/datetime.pipe';
+import { DatePipe } from '../../pipes/date/date.pipe';
 
 @NgModule({
   imports: [
@@ -22,6 +24,8 @@ import { DynamicFontSizeDirective } from '../../directives/page-specific-font-si
     NgSelectModule,
     OrderByPipe,
     DynamicFontSizeDirective,
+    DatetimePipe,
+    DatePipe,
   ],
   exports: [
     CommonModule,
@@ -34,6 +38,8 @@ import { DynamicFontSizeDirective } from '../../directives/page-specific-font-si
     NgSelectModule,
     OrderByPipe,
     DynamicFontSizeDirective,
+    DatetimePipe,
+    DatePipe,
   ],
 })
 export class CommonSharedModule {}

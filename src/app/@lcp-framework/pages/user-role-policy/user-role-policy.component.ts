@@ -14,6 +14,8 @@ import { IconFolderMinusComponent } from '../../shared/icon/icon-folder-minus';
 import { Title } from '@angular/platform-browser';
 import { TableConfig, ClientDatatableComponent } from '../../components/client-datatable/client-datatable.component';
 import { DatePipe } from '@angular/common';
+import { TimezoneService } from '../../service/common/timezone.service';
+
 interface IRolePolicy {
   role_id: number;
   policy_id: number;
@@ -57,7 +59,8 @@ export class UserRolePolicyComponent {
     private commonService: MenuMapService,
     private localStorageService: LocalStorageService,
     private titleService: Title,
-    public datePipe: DatePipe
+    public datePipe: DatePipe,
+    private timezoneService: TimezoneService
   ) {
     this.mappingForm = this.fb.group({
       policy_type: ['user', Validators.required],
@@ -264,9 +267,7 @@ export class UserRolePolicyComponent {
   }
 
   formatDateTime(dateTime: any) {
-    const date = new Date(dateTime);
-    const formattedDate = this.datePipe.transform(date, 'yyyy-MM-dd HH:mm:ss');
-    return formattedDate;
+    return this.timezoneService.transformDateTime(dateTime);
   }
 
   getUserList() {

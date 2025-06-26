@@ -27,6 +27,7 @@ import { RouteUpdateService } from '../../service/common/route-update.service';
 import { DataTableChildrenComponent } from '../../components/datatable-children/datatable-children.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -168,7 +169,8 @@ export class MasterListChildrenComponent implements AfterViewInit {
     private titleService: Title,
     private formBuilder: FormBuilder,
     private openaiService: OpenaiService,
-    private routeUpdateService: RouteUpdateService
+    private routeUpdateService: RouteUpdateService,
+    private timezoneService: TimezoneService
   ) {
     this.initStore();
     this.route.paramMap.subscribe((params) => {
@@ -467,9 +469,9 @@ export class MasterListChildrenComponent implements AfterViewInit {
         const translatedHeader = this.translate.instant(translationKey);
 
         if (header.field_type_id == '5') {
-          transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-dd');
+          transformedRecord[translatedHeader] = this.timezoneService.transformDateOnly(record[header.header]);
         } else if (header.field_type_id == '7') {
-          transformedRecord[translatedHeader] = this.datePipe.transform(record[header.header], 'yyyy-MM-ddTHH:mm:ss');
+          transformedRecord[translatedHeader] = this.timezoneService.transformDateTime(record[header.header]);
         } else if (header.header == 'status') {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
         } else if (header.header == 'process_status') {
@@ -690,10 +692,10 @@ export class MasterListChildrenComponent implements AfterViewInit {
               for (const key in formattedItem) {
                 if (
                   formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
+                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('deleted_at') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
                   this.isDate(formattedItem[key])
                 ) {
-                  const transformedDate = this.datepipe.transform(new Date(formattedItem[key]), 'yyyy-MM-dd HH:mm:ss');
+                  const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
                   if (transformedDate) {
                     formattedItem[key] = transformedDate;
                   }
@@ -757,7 +759,7 @@ export class MasterListChildrenComponent implements AfterViewInit {
   }
 
   formatDate(value: string): string | null {
-    return this.datepipe.transform(value, 'yyyy-MM-dd');
+    return this.timezoneService.transformDateOnly(value);
   }
 
   capitalizeFirstLetter(string: string) {

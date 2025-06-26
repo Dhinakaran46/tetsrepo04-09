@@ -21,6 +21,7 @@ import { AuthService } from '../../service/common/auth.service';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconEyeComponent } from '../../shared/icon/icon-eye';
 import { CopyrightComponent } from '../../components/copyright/copyright.component';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 interface MenuItem {
   id: number;
@@ -130,7 +131,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     private routeUpdateService: RouteUpdateService,
     private languageService: LanguageService,
     private route: ActivatedRoute,
-    private menuLoadService: MenuLoadService
+    private menuLoadService: MenuLoadService,
+    private timezoneService: TimezoneService
   ) {
     this.initStore();
     this.loginForm = this.formBuilder.group({
@@ -235,6 +237,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     this.menuLoadService.fetchConfigData(companyId).subscribe({
       next: (res: any) => {
         console.log(res);
+        this.timezoneService.reloadConfig();
       },
       error: (error: any) => {
         console.error('Error fetching menu data during login:', error);
