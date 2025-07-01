@@ -784,7 +784,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     if (action === 'addNew' && this.masterInfo.children.popup_add) {
       console.log(this.masterInfo)
       // Permission check for popup_add
-      if (!this.masterInfo.permissions.popup_create || !this.masterInfo.permissions.create) {
+      if (!this.masterInfo.permissions.popup_create && !this.masterInfo.permissions.create) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
@@ -801,8 +801,9 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }
   }
   editPopupItem(item: any) {
+    console.log(this.masterInfo)
     // Permission check for popup_edit
-    if (!this.masterInfo.permissions.popup_edit || !this.masterInfo.permissions.edit) {
+    if (!this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit) {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
       return;

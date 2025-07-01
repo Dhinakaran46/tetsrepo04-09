@@ -61,8 +61,8 @@
         ></i>
       </a>
       @if(['pending_on_me', 'delegated_on_me'].includes(this.activeTab)) {
-      <button class="w-30 btn btn-success text-xs" (click)="this.openApprovalProcessPopup(item, 'approval_completed')">{{ 'approve' | translate }}</button>
-      <button class="w-30 btn btn-danger text-xs" (click)="this.openApprovalProcessPopup(item, 'approval_rejected')">{{ 'reject' | translate }}</button>
+      <button class=" btn btn-success " (click)="this.openApprovalProcessPopup(item, 'approval_completed')">{{ 'approve' | translate }}</button>
+      <button class=" btn btn-danger " (click)="this.openApprovalProcessPopup(item, 'approval_rejected')">{{ 'reject' | translate }}</button>
       }
       <!-- <a
         href="javascript:void(0);"
