@@ -12,7 +12,7 @@
           {{ 'back' | translate }}
         </button>
 
-        <button *ngIf="this.entityName && isModal" (click)="closeModal.emit()" class="absolute right-3 top-3 text-gray-500 hover:text-red-500">
+        <button *ngIf="this.entityName && isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -85,7 +85,10 @@
             [uuid]="nestedFormUuid"
             [entityName]="nestedFormEntityName"
             [isModal]="true"
+            [isNested]="true"
+            [fieldKey]="nestedFormFieldKey"
             (closeModal)="onNestedFormSubmitted($event)"
+            (nestedFormSuccess)="onNestedFormSuccess($event)"
           ></app-form-builder>
         </ng-container>
       </div>

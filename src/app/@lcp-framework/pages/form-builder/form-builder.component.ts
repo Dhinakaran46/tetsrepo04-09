@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChildren, QueryList, AfterViewInit } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
@@ -14,6 +14,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
 import { LocalStorageService } from '../../service/common/local-storage.service';
+import { FormlyFieldSelectFromDbComponent } from '../../formly/components/formly-field-select-from-db/formly-field-select-from-db.component';
 
 @Component({
   selector: 'app-form-builder',
@@ -22,7 +23,7 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
   templateUrl: './form-builder.component.html',
   styleUrls: ['./form-builder.component.scss'],
 })
-export class FormBuilderComponent implements OnInit {
+export class FormBuilderComponent implements OnInit, AfterViewInit {
   store: any;
   formEntity: any;
   form = new FormGroup({});
@@ -51,6 +52,7 @@ export class FormBuilderComponent implements OnInit {
   nestedFormEntityName: string | null = null;
   nestedFormUuid: string | null = null;
   noNestedFormPermission: boolean = false;
+  public nestedFormFieldKey: string | null = null;
 
   processStatuses: any = {
     submitted: {
@@ -82,7 +84,12 @@ export class FormBuilderComponent implements OnInit {
   @Input() uuid!: string | null;
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
+  @Input() isNested: boolean = false;
+  @Input() fieldKey: string | null = null;
   @Output() closeModal = new EventEmitter<void>();
+  @Output() nestedFormSuccess = new EventEmitter<any>();
+  
+  @ViewChildren(FormlyFieldSelectFromDbComponent) selectFromDbFields!: QueryList<FormlyFieldSelectFromDbComponent>;
 
   constructor(
     private route: ActivatedRoute,
@@ -118,14 +125,19 @@ export class FormBuilderComponent implements OnInit {
     if (this.entityName) {
       this.entity_name = this.entityName;
       if (this.unique_id) {
-        this.entity_type = 'popup_edit';
+        if (this.isNested) {
+          this.entity_type = 'popup_add';
+        } else {
+          this.entity_type = 'popup_edit';
+        }
       } else {
         this.entity_type = 'popup_add';
       }
 
       const translateTitle = this.translate.instant(this.entity_name);
       this.titleService.setTitle(translateTitle);
-    }
+    } 
+    console.log(this.isNestedFormModalOpen)
 
     console.log(this.entity_name);
     console.log(this.unique_id);
@@ -329,7 +341,11 @@ export class FormBuilderComponent implements OnInit {
           const key = 'transaction_successfully_executed';
           const successMessage = this.translate.instant(key);
           this.toastr.success(successMessage);
-          this.redirectToCurrentPage();
+          if (this.isNested) {
+            this.nestedFormSuccess.emit({ value: response.data?.id, fieldKey: this.fieldKey });
+          } else {
+            this.redirectToCurrentPage();
+          }
         } else {
           const key = response.message;
           const errorMessage = this.translate.instant(key);
@@ -658,6 +674,7 @@ export class FormBuilderComponent implements OnInit {
   }
 
   private resetForm() {
+    console.log(this.isNestedFormModalOpen)
     const listParams = {
       company_id: 1,
       print_query: false,
@@ -686,13 +703,16 @@ export class FormBuilderComponent implements OnInit {
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
           console.log('formEntity.query_information : ', formEntity.query_information);
+          
+          console.log(this.entity_type)
+          
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
-          console.log('defaultDataParam : ', this.defaultDataParam);
+          
           console.log(this.transParam);
 
           this.setDefaultData();
@@ -1017,7 +1037,6 @@ export class FormBuilderComponent implements OnInit {
 
   // Method to open nested form-builder modal
   openNestedFormModal(entityName: string, fieldKey?: string) {
-    // Permission check logic
     this.noNestedFormPermission = false;
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1034,13 +1053,18 @@ export class FormBuilderComponent implements OnInit {
       hasPermission = !!(permObj && permObj.accessible);
     }
     if (!hasPermission) {
+      console.log('coming here')
       this.noNestedFormPermission = true;
       this.isNestedFormModalOpen = true;
       return;
     }
+    // Always set these for nested modal to ensure add mode
     this.nestedFormEntityName = entityName;
-    this.nestedFormUuid = null; // Always pass null for new records
+    this.nestedFormUuid = null; // Always null for new records
+    this.entity_type = 'popup_add'; // Always add mode for nested
+    this.nestedFormFieldKey = fieldKey || null;
     this.isNestedFormModalOpen = true;
+    console.log("Nested form entity type set to:", this.entity_type);
   }
 
   // Method to close nested form-builder modal
@@ -1075,5 +1099,42 @@ export class FormBuilderComponent implements OnInit {
     
     // Optionally show a success message
     this.toastr.success('Record created successfully. Form data refreshed.');
+  }
+
+  public refreshSelectFromDbOptions() {
+    // Deep clone the fields array to force Angular and Formly to re-render the form
+    this.fields = JSON.parse(JSON.stringify(this.fields));
+    this.cdRef.detectChanges();
+  }
+
+  public onNestedFormSuccess(event: { value: any, fieldKey: string }) {
+    this.refreshSelectFromDbOptions();
+
+    if (event && event.value && event.fieldKey) {
+      // Always set the value immediately
+      this.model[event.fieldKey] = event.value;
+      const control = this.form.get(event.fieldKey);
+      if (control) {
+        control.setValue(event.value);
+      }
+
+      // Optionally, subscribe to the options and re-set the value if the new item appears later
+      const fieldConfig = this.fields.find(f => f.key === event.fieldKey);
+      if (fieldConfig && fieldConfig.props && fieldConfig.props.options && fieldConfig.props.options instanceof Observable) {
+        const subscription = fieldConfig.props.options.subscribe((options: any[]) => {
+          const found = options.find(opt => opt.id === event.value || opt.value === event.value);
+          if (found) {
+            this.model[event.fieldKey] = event.value;
+            if (control) {
+              control.setValue(event.value);
+            }
+            subscription.unsubscribe();
+          }
+        });
+      }
+    }
+
+    // Always close the modal after success
+    this.closeNestedFormModal();
   }
 }
