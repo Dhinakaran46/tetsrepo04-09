@@ -8,9 +8,9 @@
           {{ 'back' | translate }}
         </button>
 
-        <button *ngIf=" isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
+        <!--<button *ngIf=" isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
           <i class="fa-solid fa-xmark"></i>
-        </button>
+        </button>-->
       </div>
       <div class="mb-5">
         <div [innerHTML]="pageContent | safeHtml" appHighlight></div>

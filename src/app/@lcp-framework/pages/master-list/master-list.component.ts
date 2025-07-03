@@ -74,6 +74,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
       this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
     }
   }
+  @Input() nonGridPage: boolean = false;
 
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;

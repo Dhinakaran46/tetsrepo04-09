@@ -53,6 +53,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   nestedFormUuid: string | null = null;
   noNestedFormPermission: boolean = false;
   public nestedFormFieldKey: string | null = null;
+  public nestedFormModalConfig: any = null;
 
   processStatuses: any = {
     submitted: {
@@ -137,10 +138,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       const translateTitle = this.translate.instant(this.entity_name);
       this.titleService.setTitle(translateTitle);
     } 
-    console.log(this.isNestedFormModalOpen)
+    
 
-    console.log(this.entity_name);
-    console.log(this.unique_id);
+    
+    
 
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     if (this.user_info.main?.policies) {
@@ -148,7 +149,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     }
 
     if (this.entity_type !== 'add' && this.entity_type !== 'popup_add' && !this.unique_id) {
-      console.log('coming');
+      
       this.toastr.error('Invalid entity details given.');
       this.router.navigate(['/dashboard']);
       return;
@@ -174,7 +175,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    console.log(pageInfo);
+    
   }
 
   private initStore() {
@@ -233,41 +234,52 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     };
   }
 
-  fetchList(field: FormlyFieldConfig | any, key: string, reset: boolean = false) {
-    if (!reset && key && this.listDatas[key]) {
-      if (field && field.props) {
-        field.props.options = this.listDatas[key];
-      }
-    } else if (key && this.listParams[key]) {
-      const required = false;
-      let listParams = this.localStorageService.replaceUniqueId(
-        this.localStorageService.formatPayloadWithPolicyConditions(
-          this.replacePlaceholders(this.listParams[key], this.model, required),
-          this.policyData,
-          field?.attached_policies || []
-        ),
-        '$session_user_id',
-        this.user_info.main.id
-      );
-      listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
-      this.gridApiService.getAllList(listParams).subscribe(
-        (response) => {
-          if (response.status && response.code === 200) {
-            const records = response.data?.records || [];
-            const options = [...records]; //field && field.props?.placeholder ? [...records] : [...records];
-            this.listDatas[key] = options;
-            if (field && field.props) {
-              field.props.options = options;
-            }
-          }
-        },
-        (error) => {
-          const key = 'error';
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
+  fetchList(field: FormlyFieldConfig | any, key: string, reset: boolean = false): Observable<any> {
+    return new Observable(observer => {
+      if (!reset && key && this.listDatas[key]) {
+        if (field && field.props) {
+          field.props.options = this.listDatas[key];
         }
-      );
-    }
+        observer.next(this.listDatas[key]);
+        observer.complete();
+      } else if (key && this.listParams[key]) {
+        const required = false;
+        let listParams = this.localStorageService.replaceUniqueId(
+          this.localStorageService.formatPayloadWithPolicyConditions(
+            this.replacePlaceholders(this.listParams[key], this.model, required),
+            this.policyData,
+            field?.attached_policies || []
+          ),
+          '$session_user_id',
+          this.user_info.main.id
+        );
+        listParams.company_id = 1;
+        listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
+        this.gridApiService.getAllList(listParams).subscribe(
+          (response) => {
+            if (response.status && response.code === 200) {
+              const records = response.data?.records || [];
+              const options = [...records];
+              this.listDatas[key] = options;
+              if (field && field.props) {
+                field.props.options = options;
+              }
+              observer.next(options);
+              observer.complete();
+            } else {
+              observer.next([]);
+              observer.complete();
+            }
+          },
+          (error) => {
+            observer.error(error);
+          }
+        );
+      } else {
+        observer.next([]);
+        observer.complete();
+      }
+    });
   }
 
   trimFormValues(formGroup: FormGroup | FormArray) {
@@ -330,19 +342,23 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   private executeTransaction(draft_mode: boolean) {
     // this.model = { ...this.model, ...this.form.value };
-    // console.log(this.model);
-
+    // 
+    
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false, draft_mode);
     transParam = this.replacePlaceholders(transParam, this.model);
+    const val = transParam.data.table1[0].name;
     this.gridApiService.executeTransaction(transParam).subscribe(
       (response) => {
+        
         if (response.status) {
           if (this.oldUploadedFiles.length) this.deleteImageByName(this.oldUploadedFiles);
           const key = 'transaction_successfully_executed';
           const successMessage = this.translate.instant(key);
           this.toastr.success(successMessage);
           if (this.isNested) {
-            this.nestedFormSuccess.emit({ value: response.data?.id, fieldKey: this.fieldKey });
+            setTimeout(() => {
+            this.nestedFormSuccess.emit({ value: val, fieldKey: this.fieldKey });
+            },500);
           } else {
             this.redirectToCurrentPage();
           }
@@ -640,7 +656,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
               result.data[tableKey] = replaceInObject(result.data[tableKey]);
             }
           } else {
-            console.log('not matched');
+            
           }
         }
       }
@@ -674,7 +690,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   private resetForm() {
-    console.log(this.isNestedFormModalOpen)
+    
     const listParams = {
       company_id: 1,
       print_query: false,
@@ -694,7 +710,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
           let formEntity = response.data.records[0];
-          console.log('formEntity  : ', formEntity);
+          
           formEntity.query_information = this.parseJSONField(formEntity.query_information);
           formEntity.form_information = this.parseJSONField(formEntity.form_information);
           formEntity.add_query_information = this.parseJSONField(formEntity.add_query_information);
@@ -702,9 +718,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
-          console.log('formEntity.query_information : ', formEntity.query_information);
           
-          console.log(this.entity_type)
+          
+          
           
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
@@ -713,7 +729,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const fieldsJson = this.formEntity.form_information.fields;
           this.fields = this.processFields(fieldsJson);
           
-          console.log(this.transParam);
+          
 
           this.setDefaultData();
 
@@ -733,9 +749,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   setDefaultData() {
-    console.log(this.entity_type);
+    
     if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
-      console.log(this.entity_type);
+      
       if (this.defaultDataParam.primary_table) {
         this.processDefaultParam(this.defaultDataParam);
       } else {
@@ -867,7 +883,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       formArray.push(this.createFormGroup(item));
     });
     // Manually trigger change detection if the UI doesn't update
-    // console.log(this.model);
+    // 
     setTimeout(() => {
       if (this.options && this.options.resetModel) {
         this.options.resetModel(this.model);
@@ -886,16 +902,14 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   private processFields(fieldsJson: any[]): FormlyFieldConfig[] {
-    return fieldsJson.map((group: any) => {
+    const processedFields = fieldsJson.map((group: any) => {
       // Recursively process fieldGroups if they exist and are arrays
       if (Array.isArray(group.fieldGroup)) {
         group.fieldGroup = this.processFields(group.fieldGroup);
-        
-        // If this group has add_edit_form, pass it down to individual fields
-        if (group.add_edit_form) {
-          console.log('Processing field group with add_edit_form:', group);
+        // If this group has modal, pass it down to individual fields
+        if (group.modal) {
           group.fieldGroup.forEach((field: any) => {
-            field.add_edit_form = group.add_edit_form;
+            field.modal = group.modal;
           });
         }
       }
@@ -903,14 +917,13 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       // Process fieldArray (used in repeatable sections) if it exists and contains a fieldGroup
       if (group.fieldArray && Array.isArray(group.fieldArray.fieldGroup)) {
         group.fieldArray.fieldGroup = this.processFields(group.fieldArray.fieldGroup);
-        
-        // If this group has add_edit_form, pass it down to fieldArray fields
-        if (group.add_edit_form) {
+        // If this group has modal, pass it down to fieldArray fields
+        if (group.modal) {
           group.fieldArray.fieldGroup.forEach((field: any) => {
-            field.add_edit_form = group.add_edit_form;
+            field.modal = group.modal;
           });
         }
-      } else if (group.fieldArray?.type === 'select') {
+      } else if (group.fieldArray?.type === 'select' || group.fieldArray?.type === 'select-from-db') {
         group.fieldArray.type = 'select-from-db';
         if (group.fieldArray.props) group.fieldArray.props.placeholder = group.fieldArray.props.placeholder || 'Please select';
       }
@@ -926,6 +939,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   tap((parentValue: any) => {
                     this.form.patchValue({ [group.key]: '' });
                     if (parentValue) {
+                      
+                      
                       this.fetchList(f, group.key, true);
                     }
                   })
@@ -934,6 +949,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             }
           };
         } else {
+          
+                      
           group.hooks.onInit = (f: FormlyFieldConfig) => this.fetchList(f, group.key);
         }
       } else if (group.fieldArray?.hooks && group.fieldArray.hooks.onInit) {
@@ -947,6 +964,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   tap((parentValue: any) => {
                     this.form.patchValue({ [group.key]: '' });
                     if (parentValue) {
+                      
+                      
                       this.fetchList(f, group.key, true);
                     }
                   })
@@ -955,6 +974,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             }
           };
         } else {
+          
+                      
           group.fieldArray.hooks.onInit = (f: FormlyFieldConfig) => this.fetchList(f, group.key);
         }
       }
@@ -993,11 +1014,74 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           group.fieldArray.asyncValidators = { unique: { expression: this.uniqueValidator(uniqueKey), message: 'this_value_cannot_be_duplicate' } };
         }
       }
-
+      
       // Set default options for select fields
-      if (group.type === 'select') {
+      if (group.type === 'select' || group.type === 'select-from-db') {
         group.type = 'select-from-db';
         if (group.props) group.props.placeholder = group.props.placeholder || 'Please select';
+        
+        // Ensure options are fetched for select-from-db fields
+        this.fetchList(group, group.key, true);
+        // Fallback: if no listParams for this key, build from templateOptions
+        if (!this.listParams || !this.listParams[group.key]) {
+          const opts = group.templateOptions || group.props || {};
+          if (opts.table && opts.valueColumn && opts.labelColumn) {
+            this.listParams = this.listParams || {};
+            this.listParams[group.key] = {
+              primary_table: opts.table,
+              select_columns: [[`${opts.table}.${opts.valueColumn}`], [`${opts.table}.${opts.labelColumn}`]],
+              search_all: opts.search_all || [],
+              sort_columns: opts.sort_columns || [],
+              print_query: false,
+              start_index: 0,
+              limit_range: 1000
+            };
+            
+            this.fetchList(group, group.key, true);
+          }
+        }
+      }
+      // Also ensure options are fetched for fieldArray of type select-from-db
+      if (group.type === 'select-from-db') {
+        
+        this.fetchList(group, group.key, true);
+        // Fallback for fieldArray
+        if (!this.listParams || !this.listParams[group.key]) {
+          const opts = group.templateOptions || group.props || {};
+          if (opts.table && opts.valueColumn && opts.labelColumn) {
+            this.listParams = this.listParams || {};
+            this.listParams[group.key] = {
+              primary_table: opts.table,
+              select_columns: [[`${opts.table}.${opts.valueColumn}`], [`${opts.table}.${opts.labelColumn}`]],
+              search_all: opts.search_all || [],
+              sort_columns: opts.sort_columns || [],
+              print_query: false,
+              start_index: 0,
+              limit_range: 1000
+            };
+            this.fetchList(group, group.key, true);
+          }
+        }
+      }
+      if (group.fieldArray && group.fieldArray.type === 'select-from-db') {
+        this.fetchList(group.fieldArray, group.key, true);
+        // Fallback for fieldArray
+        if (!this.listParams || !this.listParams[group.key]) {
+          const opts = group.fieldArray.templateOptions || group.fieldArray.props || {};
+          if (opts.table && opts.valueColumn && opts.labelColumn) {
+            this.listParams = this.listParams || {};
+            this.listParams[group.key] = {
+              primary_table: opts.table,
+              select_columns: [[`${opts.table}.${opts.valueColumn}`], [`${opts.table}.${opts.labelColumn}`]],
+              search_all: opts.search_all || [],
+              sort_columns: opts.sort_columns || [],
+              print_query: false,
+              start_index: 0,
+              limit_range: 1000
+            };
+            this.fetchList(group.fieldArray, group.key, true);
+          }
+        }
       }
 
       // Disable fields in view mode
@@ -1008,6 +1092,22 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
       return group;
     });
+    // After processing all fields, ensure all select/select-from-db options are loaded
+    const selectKeys = this.collectSelectKeys(processedFields);
+    
+    selectKeys.forEach(key => {
+      const fieldConfig = this.findFieldConfigByKey(processedFields, key);
+      
+      this.fetchList(fieldConfig, key, true).subscribe({
+        next: (options) => {
+          
+        },
+        error: (err) => {
+          console.error('Error fetching options for', key, err);
+        }
+      });
+    });
+    return processedFields;
   }
 
   private stringToFunction(fnString: string): Function {
@@ -1036,7 +1136,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   // Method to open nested form-builder modal
-  openNestedFormModal(entityName: string, fieldKey?: string) {
+  openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any) {
     this.noNestedFormPermission = false;
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1053,9 +1153,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       hasPermission = !!(permObj && permObj.accessible);
     }
     if (!hasPermission) {
-      console.log('coming here')
       this.noNestedFormPermission = true;
-      this.isNestedFormModalOpen = true;
+      this.nestedFormModalConfig = { open: true, title: 'No Permission' };
       return;
     }
     // Always set these for nested modal to ensure add mode
@@ -1063,13 +1162,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.nestedFormUuid = null; // Always null for new records
     this.entity_type = 'popup_add'; // Always add mode for nested
     this.nestedFormFieldKey = fieldKey || null;
-    this.isNestedFormModalOpen = true;
-    console.log("Nested form entity type set to:", this.entity_type);
+    // Always assign a new object to trigger change detection
+    this.nestedFormModalConfig = { ...(modalConfig || {}), open: true };
   }
 
   // Method to close nested form-builder modal
   closeNestedFormModal() {
-    this.isNestedFormModalOpen = false;
+    if (this.nestedFormModalConfig) {
+      this.nestedFormModalConfig.open = false;
+    }
     this.nestedFormEntityName = null;
     this.nestedFormUuid = null;
   }
@@ -1078,7 +1179,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   onNestedFormSubmitted(formData: any) {
     // Check if the form submission was successful
     if (formData && formData.success) {
-      console.log('Nested form submitted successfully:', formData);
+      
       
       // Close the modal
       this.closeNestedFormModal();
@@ -1107,34 +1208,109 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.cdRef.detectChanges();
   }
 
-  public onNestedFormSuccess(event: { value: any, fieldKey: string }) {
-    this.refreshSelectFromDbOptions();
-
-    if (event && event.value && event.fieldKey) {
-      // Always set the value immediately
-      this.model[event.fieldKey] = event.value;
-      const control = this.form.get(event.fieldKey);
-      if (control) {
-        control.setValue(event.value);
-      }
-
-      // Optionally, subscribe to the options and re-set the value if the new item appears later
-      const fieldConfig = this.fields.find(f => f.key === event.fieldKey);
-      if (fieldConfig && fieldConfig.props && fieldConfig.props.options && fieldConfig.props.options instanceof Observable) {
-        const subscription = fieldConfig.props.options.subscribe((options: any[]) => {
-          const found = options.find(opt => opt.id === event.value || opt.value === event.value);
-          if (found) {
-            this.model[event.fieldKey] = event.value;
-            if (control) {
-              control.setValue(event.value);
-            }
-            subscription.unsubscribe();
-          }
-        });
+  // Recursive helper to find a field config by key, searching all nested fieldGroups and fieldArrays
+  private findFieldConfigByKey(fields: FormlyFieldConfig[], key: string): FormlyFieldConfig | null {
+    for (const field of fields) {
+      // Only operate on objects, not functions
+      if (typeof field === 'object' && field !== null) {
+        if (field.key === key) {
+          return field;
+        }
+        if (Array.isArray((field as any).fieldGroup)) {
+          const found = this.findFieldConfigByKey((field as any).fieldGroup, key);
+          if (found) return found;
+        }
+        if (
+          field.fieldArray &&
+          typeof field.fieldArray === 'object' &&
+          Array.isArray((field.fieldArray as any).fieldGroup)
+        ) {
+          const found = this.findFieldConfigByKey((field.fieldArray as any).fieldGroup, key);
+          if (found) return found;
+        }
       }
     }
+    return null;
+  }
 
-    // Always close the modal after success
-    this.closeNestedFormModal();
+  public onNestedFormSuccess(event: { value: any, fieldKey: string }) {
+    this.refreshSelectFromDbOptions();
+    
+    if (event && event.value && event.fieldKey) {
+      // Use recursive search for the field config
+      const fieldConfig = this.findFieldConfigByKey(this.fields, event.fieldKey);
+      // Fetch and wait for options to be available before updating value
+      this.fetchList(fieldConfig, event.fieldKey, true).subscribe(() => {
+        // Debug: log all keys and char codes
+        
+        
+        
+        Object.keys(this.listDatas).forEach(k => {
+          
+        });
+        // Normalize key by trimming whitespace
+        const normalizedKey = event.fieldKey.trim();
+        const options = this.listDatas[normalizedKey] || [];
+        
+        // Always set the value immediately
+        this.model[event.fieldKey] = event.value;
+        const control = this.form.get(event.fieldKey);
+        if (control) {
+          control.setValue(event.value);
+        }
+        const currentValue = fieldConfig?.formControl?.value;
+        if (fieldConfig?.formControl) {
+          let updatedValue: any[] = [];
+          if (Array.isArray(currentValue)) {
+            updatedValue = currentValue.includes(event.value)
+              ? currentValue
+              : [...currentValue, event.value];
+          } else if (currentValue !== undefined && currentValue !== null) {
+            updatedValue = [currentValue, event.value];
+          } else {
+            updatedValue = [event.value];
+          }
+          if (Array.isArray(options)) {
+            updatedValue = updatedValue.map(val => {
+              if (typeof val === 'string') {
+                const found = options.find(
+                  (opt: any) => opt.label === val || opt.name === val
+                );
+                if (found) {
+                  return found.id !== undefined ? found.id : found.value;
+                }
+              }
+              return val;
+            });
+          }
+          fieldConfig.formControl.setValue(updatedValue);
+        }
+        // Always close the modal after success
+        this.closeNestedFormModal();
+      });
+    }
+  }
+
+  private collectSelectKeys(fields: FormlyFieldConfig[]): string[] {
+    const selectKeys: string[] = [];
+    const collectKeys = (field: FormlyFieldConfig) => {
+      if (typeof field === 'object' && field !== null) {
+        if (field.type === 'select' || field.type === 'select-from-db') {
+          if (typeof field.key === 'string') {
+            selectKeys.push(field.key);
+          }
+        }
+        if (field.fieldArray && typeof field.fieldArray === 'object' && Array.isArray(field.fieldArray.fieldGroup)) {
+          field.fieldArray.fieldGroup.forEach(collectKeys);
+        }
+        if (Array.isArray((field as any).fieldGroup)) {
+          (field as any).fieldGroup.forEach(collectKeys);
+        }
+      }
+    };
+    fields.forEach(collectKeys);
+    return selectKeys;
   }
 }
+
+        

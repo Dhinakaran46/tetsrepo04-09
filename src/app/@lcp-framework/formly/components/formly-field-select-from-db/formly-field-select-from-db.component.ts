@@ -184,7 +184,15 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
 
   // Methods for add_edit_form functionality
   getAddEditForm(): string | null {
+    // Support both legacy add_edit_form and new modal config
+    if ((this.field as any).modal && (this.field as any).modal.add_edit_form) {
+      return (this.field as any).modal.add_edit_form;
+    }
     return (this.field as any).add_edit_form || null;
+  }
+
+  getModalConfig(): any {
+    return (this.field as any).modal || null;
   }
 
   getFieldKey(): string | undefined {
@@ -195,18 +203,11 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   }
 
   openNestedFormModal(entityName: string, fieldKey?: string) {
-    console.log('Opening nested form modal:', { entityName, fieldKey });
-    
-    // Don't open modal if entityName is empty
-    if (!entityName || entityName.trim() === '') {
-      console.warn('No entity name provided for nested form modal');
-      return;
-    }
-
+    const modalConfig = this.getModalConfig();
     // Access the parent component's method through formState
     const componentInstance = this.options?.formState?.componentInstance;
     if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {
-      componentInstance.openNestedFormModal(entityName, fieldKey);
+      componentInstance.openNestedFormModal(entityName, fieldKey, modalConfig);
     }
   }
 }

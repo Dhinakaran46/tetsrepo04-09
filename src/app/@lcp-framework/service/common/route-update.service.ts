@@ -200,7 +200,7 @@ export class RouteUpdateService {
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
               };
 
-              console.log(permissionListJSON);
+              console.log(routeData);
               const route: Route = {
                 path: targetPath,
                 // component: componentMap[routeData.component_class_name],

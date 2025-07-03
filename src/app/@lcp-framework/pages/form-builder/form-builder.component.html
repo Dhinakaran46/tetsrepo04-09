@@ -12,9 +12,9 @@
           {{ 'back' | translate }}
         </button>
 
-        <button *ngIf="this.entityName && isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
+        <!--<button *ngIf="this.entityName && isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
           <i class="fa-solid fa-xmark"></i>
-        </button>
+        </button>-->
       </div>
       <div class="mb-5">
         <form [formGroup]="form" (ngSubmit)="onSubmit(false)" novalidate>
@@ -64,20 +64,38 @@
 </div>
 
 <!-- Nested Form Builder Modal -->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isNestedFormModalOpen">
+<div
+  class="fixed inset-0 z-50 overflow-y-auto"
+  *ngIf="nestedFormModalConfig?.open"
+>
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
 
   <!-- Modal Content -->
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
-      class="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      class="relative w-full max-w-5xl transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      [ngStyle]="{ width: nestedFormModalConfig?.width, height: nestedFormModalConfig?.height }"
     >
+      <!-- Modal Title -->
+      <div *ngIf="nestedFormModalConfig?.title" class="p-4 border-b">
+        <h3 class="text-lg font-semibold">{{ nestedFormModalConfig.title }}</h3>
+      </div>
+      <!-- Corner Close Button -->
+      <button
+        *ngIf="nestedFormModalConfig?.showClose !== false"
+        type="button"
+        class="btn-xs absolute -top-5 -right-5 z-20 rounded-full bg-white shadow-lg border border-gray-200 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
+        (click)="nestedFormModalConfig.open = false; noNestedFormPermission = false"
+      >
+        <span class="sr-only">Close</span>
+        <i class="fa-solid fa-xmark text-2xl"></i>
+      </button>
       <!-- Modal Body -->
       <div class="max-h-[80vh] overflow-y-auto p-4">
         <div *ngIf="noNestedFormPermission" class="flex flex-col items-center justify-center min-h-[200px]">
           <span class="text-lg text-red-600 font-semibold mb-4">No permission to view the details</span>
-          <button class="btn btn-primary" (click)="isNestedFormModalOpen = false; noNestedFormPermission = false">Close</button>
+          <button class="btn btn-primary" (click)="nestedFormModalConfig.open = false; noNestedFormPermission = false">Close</button>
         </div>
         <ng-container *ngIf="!noNestedFormPermission">
           <app-form-builder
