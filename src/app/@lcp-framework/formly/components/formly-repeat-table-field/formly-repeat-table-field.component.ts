@@ -137,12 +137,16 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
     if (this.currentRowIndex !== null) {
       // If the row index exists, update the corresponding row
       const keys = Object.keys(this.editForm.controls);
+
       let uniqueKey = keys.filter((key) => key.endsWith('_file'))[0];
+
       if (uniqueKey?.length) uniqueKey = uniqueKey.replace('_file', '');
-      this.editForm.setValue({
-        ...this.editForm.value,
-        [uniqueKey]: this.editForm.getRawValue()[`${uniqueKey}_file`] ? null : this.editForm.getRawValue()[uniqueKey],
-      });
+      if (uniqueKey) {
+        this.editForm.setValue({
+          ...this.editForm.value,
+          [uniqueKey]: this.editForm.getRawValue()[`${uniqueKey}_file`] ? null : this.editForm.getRawValue()[uniqueKey],
+        });
+      }
       this.formArray.at(this.currentRowIndex).setValue(this.editForm.value);
     } else {
       // Logic for adding a new row
