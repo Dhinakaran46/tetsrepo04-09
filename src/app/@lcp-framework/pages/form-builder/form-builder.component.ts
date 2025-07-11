@@ -36,6 +36,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   entity_name!: string | null;
   entity_type!: any;
   unique_id!: string | null;
+  originaluid!: string | null;
   defaultData: any = {};
   defaultDataParam!: any;
   uploadedFiles: string[] = [];
@@ -54,6 +55,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   noNestedFormPermission: boolean = false;
   public nestedFormFieldKey: string | null = null;
   public nestedFormModalConfig: any = null;
+  public nestedModalEntityType: 'popup_add' | 'popup_edit' = 'popup_add';
 
   processStatuses: any = {
     submitted: {
@@ -84,6 +86,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   @Input() uuid!: string | null;
   @Input() entityName!: string;
+  @Input() entityType!: string;
   @Input() isModal: boolean = false;
   @Input() isNested: boolean = false;
   @Input() fieldKey: string | null = null;
@@ -108,13 +111,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
+        this.originaluid = params.get('id');
         this.unique_id = params.get('id');
       });
     }
-
+    console.log(this.uuid)
     if (this.uuid) {
       this.unique_id = this.uuid;
     }
+    console.log(this.unique_id)
     if (!this.entityName) {
       this.route.data.subscribe((data) => {
         this.pageInfo = data['pageInfo'];
@@ -123,18 +128,19 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         this.draftMode = this.pageInfo.draft_mode;
       });
     }
+    console.log(this.nestedModalEntityType);
     if (this.entityName) {
       this.entity_name = this.entityName;
-      if (this.unique_id) {
-        if (this.isNested) {
-          this.entity_type = 'popup_add';
-        } else {
+      if(this.entityType){
+        this.entity_type = this.entityType;
+      }else{
+        if (this.unique_id) {
           this.entity_type = 'popup_edit';
+        } else {
+          this.entity_type = 'popup_add';
         }
-      } else {
-        this.entity_type = 'popup_add';
       }
-
+      
       const translateTitle = this.translate.instant(this.entity_name);
       this.titleService.setTitle(translateTitle);
     } 
@@ -255,6 +261,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         );
         listParams.company_id = 1;
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
+        console.log(listParams)
         this.gridApiService.getAllList(listParams).subscribe(
           (response) => {
             if (response.status && response.code === 200) {
@@ -724,16 +731,17 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
+            console.log(this.transParam)
+            console.log(this.entity_type)
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
-          this.fields = this.processFields(fieldsJson);
-          
-          
-
-          this.setDefaultData();
-
-          this.titleChange();
+          const isNestedModal = !!this.nestedFormEntityName && (this.entity_type === 'popup_add' || this.entity_type === 'popup_edit');
+          if (!isNestedModal) {
+            this.fields = this.processFields(fieldsJson);
+            this.setDefaultData();
+            this.titleChange();
+          }
         } else {
           this.toastr.error('Invalid entity details given.');
           this.router.navigate(['/dashboard']);
@@ -749,7 +757,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   setDefaultData() {
-    
+      console.log(this.entity_type)
+      console.log(this.defaultDataParam)
     if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
       
       if (this.defaultDataParam.primary_table) {
@@ -1029,7 +1038,11 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams = this.listParams || {};
             this.listParams[group.key] = {
               primary_table: opts.table,
-              select_columns: [[`${opts.table}.${opts.valueColumn}`], [`${opts.table}.${opts.labelColumn}`]],
+              select_columns: [[
+                opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`
+              ], [
+                opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`
+              ]],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
@@ -1052,7 +1065,11 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams = this.listParams || {};
             this.listParams[group.key] = {
               primary_table: opts.table,
-              select_columns: [[`${opts.table}.${opts.valueColumn}`], [`${opts.table}.${opts.labelColumn}`]],
+              select_columns: [[
+                opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`
+              ], [
+                opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`
+              ]],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
@@ -1072,7 +1089,11 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams = this.listParams || {};
             this.listParams[group.key] = {
               primary_table: opts.table,
-              select_columns: [[`${opts.table}.${opts.valueColumn}`], [`${opts.table}.${opts.labelColumn}`]],
+              select_columns: [[
+                opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`
+              ], [
+                opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`
+              ]],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
@@ -1136,13 +1157,22 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   // Method to open nested form-builder modal
-  openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any) {
+  openAddNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any) {
+    this.nestedModalEntityType = 'popup_add';
+    this.openNestedFormModal(entityName, fieldKey, modalConfig, null, 'popup_add');
+  }
+
+  openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any, uuid?: string | null, mode?: 'popup_add' | 'popup_edit') {
+    console.log(entityName);
+    console.log(fieldKey);
+    console.log(uuid);
     this.noNestedFormPermission = false;
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
     let menuPermissionId = null;
     if (unorgmenuList && Array.isArray(unorgmenuList)) {
-      const menuItem = unorgmenuList.find((item: any) => item.entity_name === entityName && (item.action_slug === 'add' || item.action_slug === 'popup_add'));
+      // For edit mode, check for 'edit' or 'popup_edit' permission; for add, check 'add' or 'popup_add'
+      const menuItem = unorgmenuList.find((item: any) => item.entity_name === entityName && (uuid ? (item.action_slug === 'edit' || item.action_slug === 'popup_edit') : (item.action_slug === 'add' || item.action_slug === 'popup_add')));
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
@@ -1157,13 +1187,16 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       this.nestedFormModalConfig = { open: true, title: 'No Permission' };
       return;
     }
-    // Always set these for nested modal to ensure add mode
+    // Set these for nested modal; if uuid is provided, open in edit mode, else add mode
     this.nestedFormEntityName = entityName;
-    this.nestedFormUuid = null; // Always null for new records
-    this.entity_type = 'popup_add'; // Always add mode for nested
+    this.nestedFormUuid = uuid || null;
+    console.log(mode);
+    // Always use the mode if provided, otherwise fallback to uuid logic
+    this.nestedModalEntityType = mode ? mode : (uuid ? 'popup_edit' : 'popup_add');
+    console.log(this.nestedModalEntityType);
     this.nestedFormFieldKey = fieldKey || null;
-    // Always assign a new object to trigger change detection
     this.nestedFormModalConfig = { ...(modalConfig || {}), open: true };
+    // Do NOT call this.resetForm() here!
   }
 
   // Method to close nested form-builder modal
@@ -1173,6 +1206,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     }
     this.nestedFormEntityName = null;
     this.nestedFormUuid = null;
+    this.nestedModalEntityType = 'popup_add'; // Always reset modal mode to add
   }
 
   // Method to handle nested form submission

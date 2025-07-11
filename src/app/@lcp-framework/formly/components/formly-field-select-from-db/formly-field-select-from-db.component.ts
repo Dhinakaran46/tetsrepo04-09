@@ -109,13 +109,14 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
             company_id: 1,
             search_all,
             limit_range,
-            print_query,
+            print_query:true,
             start_index: 0,
             sort_columns,
             primary_table: tableName,
             select_columns: [
               [valueColumn, 'value'],
               [labelColumn, 'label'],
+              ["uuid", 'uuid'],
             ],
             includes,
           },
@@ -127,6 +128,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
       );
 
       let hasSetFirstValue = false;
+      console.log(listParams);
       this.options$ = this.gridApiService.getAllList(listParams).pipe(
         map((response: any) => {
           if (response.status && response.data?.records?.length > 0) {
@@ -137,6 +139,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
             return response.data.records.map((record: any) => ({
               value: record[valueColumn] || record['value'],
               label: record[labelColumn] || record['label'],
+              uuid: record['uuid'] || record['uuid'],
             }));
           }
           return [];
@@ -182,13 +185,13 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     });
   }
 
-  // Methods for add_edit_form functionality
+  // Methods for entityName functionality
   getAddEditForm(): string | null {
-    // Support both legacy add_edit_form and new modal config
-    if ((this.field as any).modal && (this.field as any).modal.add_edit_form) {
-      return (this.field as any).modal.add_edit_form;
+    // Support both legacy entityName and new modal config
+    if ((this.field as any).modal && (this.field as any).modal.entityName) {
+      return (this.field as any).modal.entityName;
     }
-    return (this.field as any).add_edit_form || null;
+    return (this.field as any).entityName || null;
   }
 
   getModalConfig(): any {
@@ -202,12 +205,31 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     return String(this.field.key);
   }
 
-  openNestedFormModal(entityName: string, fieldKey?: string) {
-    const modalConfig = this.getModalConfig();
+  openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any, uuid?: string | null) {
+    const modalCfg = modalConfig ?? this.getModalConfig();
     // Access the parent component's method through formState
     const componentInstance = this.options?.formState?.componentInstance;
     if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {
-      componentInstance.openNestedFormModal(entityName, fieldKey, modalConfig);
+      // Always send entityType as 'popup_add' from here
+      componentInstance.openNestedFormModal(entityName, fieldKey, modalCfg, uuid, 'popup_add');
+    }
+  }
+
+  onEditOption(option: any) {
+    console.log(option)
+    console.log(this.to['enable_edit'])
+    if (!this.to['enable_edit']) return;
+    const entityName = this.getAddEditForm();
+    const fieldKey = this.getFieldKey();
+    const modalConfig = this.getModalConfig();
+    console.log(entityName);
+    console.log(fieldKey);
+    console.log(modalConfig);
+    // Access the parent component's method through formState
+    const componentInstance = this.options?.formState?.componentInstance;
+    if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {
+      // Call openNestedFormModal with uuid for edit mode, entityType as 'popup_edit'
+      componentInstance.openNestedFormModal(entityName, fieldKey, modalConfig, option.uuid, 'popup_edit');
     }
   }
 }

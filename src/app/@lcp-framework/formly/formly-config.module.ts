@@ -20,6 +20,7 @@ import { FormlyVsCodeComponent } from './components/formly-vs-code/formly-vs-cod
 import { FormlyRepeatTableFieldComponent } from './components/formly-repeat-table-field/formly-repeat-table-field.component';
 import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
 import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.component';
+import { SplitLabelPipe } from '../pipes/split-label.pipe';
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
   if (field.props) return `Should have at least ${field.props.minLength} characters`;
@@ -55,6 +56,7 @@ export const search_conditions: any = commonConfig.search_conditions;
     FormlyDisplayListComponent,
     FormlyVsCodeComponent,
     FormlyRepeatTableFieldComponent,
+    SplitLabelPipe,
   ],
   imports: [
     QuillModule,
@@ -172,6 +174,7 @@ export const search_conditions: any = commonConfig.search_conditions;
     FormlyFieldSelectFromDbComponent,
     FormlyFieldAutocompleteComponent,
     NgSelectModule,
+    SplitLabelPipe,
   ],
 })
 export class FormlyConfigModule {}

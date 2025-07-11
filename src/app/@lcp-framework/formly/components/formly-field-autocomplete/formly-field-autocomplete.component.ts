@@ -157,9 +157,9 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
     });
   }
 
-  // Methods for add_edit_form functionality
+  // Methods for entityName functionality
   getAddEditForm(): string | null {
-    return (this.field as any).add_edit_form || null;
+    return (this.field as any).entityName || null;
   }
 
   getFieldKey(): string | undefined {
