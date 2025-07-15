@@ -150,6 +150,7 @@ export class MasterListChildrenComponent implements AfterViewInit {
   selectedItemUuid: string | null = null;
   popupEntityName: any;
   popupName: any;
+  isUUid:boolean = true;
 
   constructor(
     private toastr: ToastrService,
@@ -174,7 +175,15 @@ export class MasterListChildrenComponent implements AfterViewInit {
   ) {
     this.initStore();
     this.route.paramMap.subscribe((params) => {
-      this.uniqueId = params.get('uuid');
+      const id = params.get('id');
+      const uuid = params.get('uuid');
+      if(id){
+        this.isUUid = false;
+      }else{
+        this.isUUid = true
+      }
+      const value = id || uuid;
+      this.uniqueId = value;
     });
 
     this.changePasswordForm = this.formBuilder.group(
@@ -205,10 +214,13 @@ export class MasterListChildrenComponent implements AfterViewInit {
 
   async ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
-
+    console.log(this.config)
+    console.log(this.entity_name)
     if (this.uuid && this.entity_name) {
       const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
+      console.log(routes)
       const pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
+      console.log(pageInfo)
       this.setupPageInfo(pageInfo);
     } else {
       const pageInfo = this.route.snapshot.data['pageInfo'] || '';
@@ -772,7 +784,14 @@ export class MasterListChildrenComponent implements AfterViewInit {
 
   editItem(item: any) {
     if (this.masterInfo.children.edit) {
-      const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
+      let targetRoute = this.masterInfo.children.edit.target;
+      if (targetRoute.includes(':uuid') && item.uuid) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':uuid', item.uuid);
+      } else if (targetRoute.includes(':id') && item.id) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':id', item.uuid);
+      }
       this.router.navigate([targetRoute]);
     }
   }
@@ -857,7 +876,15 @@ export class MasterListChildrenComponent implements AfterViewInit {
 
   assignItem(item: any) {
     if (this.masterInfo.children.assign) {
-      const targetRoute = this.masterInfo.children.assign.target.replace(':id', item.uuid);
+      
+      let targetRoute = this.masterInfo.children.assign.target;
+      if (targetRoute.includes(':uuid') && item.uuid) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':uuid', item.uuid);
+      } else if (targetRoute.includes(':id') && item.id) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':id', item.uuid);
+      }
       this.router.navigate([targetRoute]);
     }
   }
@@ -866,7 +893,17 @@ export class MasterListChildrenComponent implements AfterViewInit {
     this.loading = true;
 
     if (this.masterInfo.children.record_export) {
-      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, item.id).subscribe({
+
+      let targetRoute = this.masterInfo.children.record_export.target;
+      let recordID = item.id;
+      if (targetRoute.includes(':uuid') && item.uuid) {
+         recordID = item.uuid;
+      }else if (targetRoute.includes(':id') && item.id) {
+         recordID = item.id;
+
+      }
+
+      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {
@@ -907,7 +944,16 @@ export class MasterListChildrenComponent implements AfterViewInit {
 
   printItem(item: any) {
     if (this.masterInfo.children.print) {
-      const targetRoute = this.masterInfo.children.print.target.replace(':id', item.uuid);
+      
+
+      let targetRoute = this.masterInfo.children.print.target;
+      if (targetRoute.includes(':uuid') && item.uuid) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':uuid', item.uuid);
+      } else if (targetRoute.includes(':id') && item.id) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':id', item.uuid);
+      }
       this.router.navigate([targetRoute]);
     }
   }
@@ -1010,6 +1056,8 @@ export class MasterListChildrenComponent implements AfterViewInit {
 
   deleteItem(item: any) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+      let targetRoute = this.masterInfo.children.delete.target;
+      
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
         this.commonService.procedureCall(procedureParams).subscribe({
@@ -1077,9 +1125,21 @@ export class MasterListChildrenComponent implements AfterViewInit {
   }
 
   viewItem(item: any) {
+    console.log(item)
     if (this.masterInfo.children.details) {
-      const targetRoute = this.masterInfo.children.details.target.replace(':uuid', item.uuid);
+    
+      
+      
+      let targetRoute = this.masterInfo.children.details.target;
+      if (targetRoute.includes(':uuid') && item.uuid) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':uuid', item.uuid);
+      } else if (targetRoute.includes(':id') && item.id) {
+        console.log('coming')
+        targetRoute = targetRoute.replace(':id', item.uuid);
+      }
       this.router.navigate([targetRoute]);
+
     }
   }
 

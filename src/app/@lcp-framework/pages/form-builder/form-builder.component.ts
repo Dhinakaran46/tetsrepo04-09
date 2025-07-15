@@ -111,8 +111,12 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
-        this.originaluid = params.get('id');
-        this.unique_id = params.get('id');
+        const id = params.get('id');
+        const uuid = params.get('uuid');
+        const value = id || uuid;
+        console.log(value)
+        this.originaluid = value;
+        this.unique_id = value;
       });
     }
     console.log(this.uuid)

@@ -322,6 +322,7 @@
                         *ngIf="!col.colFilterHide"
                       >
                         <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
+                          
                           <ng-container *ngIf="col.link_type === 'component'; else notComponent">
                             <span class="block truncate text-blue-600 cursor-pointer underline" (click)="onLinkComponentClick(col, item)">
                               {{ item[col.header] | booleanStatus }}
@@ -348,7 +349,12 @@
                                 [attr.data-tippy-content]="item[col.header]"
                                 [ngClass]="{'cursor-pointer text-blue-600 underline': col.link_type === 'component'}"
                               >
-                                {{ item[col.header] | booleanStatus }}
+                              <button class="expand-collapse-btn ml-1" style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer;"
+                                      (click)="toggleColumnChildGrid(item['uuid'], col)">
+                                <i class="fa" [ngClass]="isColumnChildGridExpanded(item['uuid'], col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                              </button>
+                              {{ item[col.header] | booleanStatus }}
+                              
                               </span>
                               <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
                                 {{ item[col.header] | booleanStatus }}
@@ -374,6 +380,19 @@
                       </div>
                     </td>
                   </tr>
+                  <!-- Add for each column child grid -->
+                  <ng-container *ngFor="let col of headercolumns">
+                    <tr *ngIf="col.link_type === 'child_grid' && isColumnChildGridExpanded(item['uuid'], col)">
+                      <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
+                        <div class="bg-gray-50 p-4">
+                          <app-child-datatable
+                            [uuid]="item['uuid']"
+                            [entity_name]="col.link_action"
+                          ></app-child-datatable>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-container>
                 </ng-container>
               </ng-container>
               <ng-template #noRecords>

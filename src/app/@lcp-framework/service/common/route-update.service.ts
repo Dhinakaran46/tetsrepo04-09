@@ -262,6 +262,7 @@ export class RouteUpdateService {
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
+    console.log(entity_name)
     const user_data_raw = this.localStore.getData('user_data');
     if (!user_data_raw || user_data_raw === 'undefined') return null;
 
@@ -385,8 +386,9 @@ export class RouteUpdateService {
           };
 
           console.log(permissionListJSON);
-          console.log(popupDetailsPermissionKey);
-          console.log(permissionListJSON[popupDetailsPermissionKey]);
+          
+          console.log(childDetailsPermissionKey)
+          console.log(permissionListJSON[childDetailsPermissionKey])
           const route: Route = {
             path: targetPath,
             loadComponent: componentMap[routeData.component_class_name] || null,

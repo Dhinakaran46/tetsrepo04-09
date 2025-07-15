@@ -45,6 +45,7 @@ interface InputTypes {
 })
 export class DataTableComponent implements OnInit, OnChanges {
   expandedItem: any = null;
+  expandedColumnChildGrid: { uuid: string, colHeader: string } | null = null;
   @Input() unique_id: any;
   @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
@@ -167,13 +168,23 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   toggleRow(item: any) {
-    console.log(item);
     if (this.expandedItem === item) {
       this.expandedItem = null;
+      // Also collapse column child grid for this row if open
+      if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === item) {
+        this.expandedColumnChildGrid = null;
+      }
     } else {
+      // Collapse any previously expanded row's column child grid if open
+      if (this.expandedItem !== null && this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === this.expandedItem) {
+        this.expandedColumnChildGrid = null;
+      }
       this.expandedItem = item;
+      // Also collapse column child grid for this row if open
+      if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === item) {
+        this.expandedColumnChildGrid = null;
+      }
     }
-    console.log(this.expandedItem);
   }
 
   ngOnInit() {
@@ -704,5 +715,25 @@ export class DataTableComponent implements OnInit, OnChanges {
 
   onLinkComponentClick(col: any, item: any) {
     this.linkComponentClick.emit({ col, item });
+  }
+
+  toggleColumnChildGrid(uuid: string, col: any) {
+    if (
+      this.expandedColumnChildGrid &&
+      this.expandedColumnChildGrid.uuid === uuid &&
+      this.expandedColumnChildGrid.colHeader === col.header
+    ) {
+      // Collapse if already open
+      this.expandedColumnChildGrid = null;
+    } else {
+      // Open this column child grid, close any other
+      this.expandedColumnChildGrid = { uuid, colHeader: col.header };
+    }
+  }
+
+  isColumnChildGridExpanded(uuid: string, col: any): boolean {
+    return !!this.expandedColumnChildGrid &&
+      this.expandedColumnChildGrid.uuid === uuid &&
+      this.expandedColumnChildGrid.colHeader === col.header;
   }
 }

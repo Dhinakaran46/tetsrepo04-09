@@ -1123,6 +1123,7 @@ export class MasterEntityComponent implements OnInit {
   popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
   copied = false;
   masterEntities: any[] = [];
+  masterEntitiesForChildProcess: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -1140,7 +1141,7 @@ export class MasterEntityComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.id = this.route.snapshot.params['id'] || null;
+    this.id = this.route.snapshot.params['id'] || this.route.snapshot.params['uuid'] || null;
     this.initForm();
     this.constructRedirectUrl();
     this.initWizardGroupForm();
@@ -1635,7 +1636,10 @@ export class MasterEntityComponent implements OnInit {
               link_mode = 'popup_details';
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
+            } else if (entity.entity_type === 'grid_builder_module') {
+              link_mode = 'child_grid';  
             }
+            
           }
         }
         return {
@@ -1715,6 +1719,8 @@ export class MasterEntityComponent implements OnInit {
               link_mode = 'popup_details';
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
+            } else if (entity.entity_type === 'grid_builder_module') {
+              link_mode = 'child_grid';  
             }
           }
         }
@@ -1938,9 +1944,13 @@ export class MasterEntityComponent implements OnInit {
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          // Filter for only static_page_builder_module and form_builder_module
+          // For 'component' linkType
           this.masterEntities = response.data.records.filter((entity: any) =>
             entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+          );
+          // For 'child_process' linkType (only grid_builder_module)
+          this.masterEntitiesForChildProcess = response.data.records.filter((entity: any) =>
+            entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
           );
         }
       },
@@ -1960,8 +1970,13 @@ export class MasterEntityComponent implements OnInit {
     (group as any)._linkMode = 'none';
     // Helper to set linkMode
     const setLinkMode = (entityName: string) => {
-      const entity = this.masterEntities.find((e: any) => e.value === entityName);
-      console.log(entity)
+      const type = linkTypeControl?.value;
+      let entity;
+      if (type === 'component') {
+        entity = this.masterEntities.find((e: any) => e.value === entityName);
+      } else if (type === 'child_grid') {
+        entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
+      }
       if (entity) {
         if (entity.entity_type === 'static_page_builder_module') {
           (group as any)._linkMode = 'popup_details';
@@ -1980,7 +1995,7 @@ export class MasterEntityComponent implements OnInit {
     }
     // Subscribe to changes
     linkActionControl?.valueChanges.subscribe((entityName: string) => {
-      if (linkTypeControl?.value === 'component') {
+      if (linkTypeControl?.value === 'component' || linkTypeControl?.value === 'child_grid') {
         setLinkMode(entityName);
       } else {
         (group as any)._linkMode = 'none';
@@ -1988,7 +2003,7 @@ export class MasterEntityComponent implements OnInit {
     });
     // Also update on linkType change
     linkTypeControl?.valueChanges.subscribe((type: string) => {
-      if (type !== 'component') {
+      if (type !== 'component' && type !== 'child_grid') {
         (group as any)._linkMode = 'none';
       } else {
         setLinkMode(linkActionControl?.value);
