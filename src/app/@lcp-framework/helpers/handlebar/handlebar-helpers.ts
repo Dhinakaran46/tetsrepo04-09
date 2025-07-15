@@ -34,6 +34,15 @@ export function registerHandlebarsHelpers(translate: TranslateService) {
     return arg1 === arg2;
   });
 
+  Handlebars.registerHelper('hbp_isArray', function (value) {
+    if (typeof value === 'object' && value !== null) {
+      // Check if it is an array-like object (with numeric keys)
+      return Object.keys(value).some((key) => !isNaN(Number(key))); // This checks if keys are numeric (e.g., "0", "1", etc.)
+    }
+    // Otherwise, return false indicating it's not an array
+    return Array.isArray(value);
+  });
+
   Handlebars.registerHelper('hbp_ifCond', function (v1: any, operator: string, v2: any, options: any) {
     const context = options.data.root; // Explicitly use the root context
 
