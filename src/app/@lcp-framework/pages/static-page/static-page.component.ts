@@ -291,11 +291,15 @@ export class StaticPageComponent {
       if (formattedData.hasOwnProperty(key)) {
         const value = formattedData[key];
 
-        // Check if the field value is a JSON string or JSON object
-
-        if (this.isValidJson(value)) {
-          // If it's JSON, pretty-print it with 2-space indentation
-          formattedData[key] = JSON.stringify(JSON.parse(value), null, 2);
+        // Only pretty-print if the value is a JSON object or array (not a primitive)
+        if (typeof value === 'string' && this.isValidJson(value)) {
+          const parsed = JSON.parse(value);
+          if (typeof parsed === 'object' && parsed !== null) {
+            formattedData[key] = JSON.stringify(parsed, null, 2);
+          } else {
+            // Leave as is for numbers, booleans, etc.
+            formattedData[key] = value;
+          }
         }
       }
     }
