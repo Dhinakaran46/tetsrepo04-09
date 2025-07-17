@@ -208,7 +208,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           column_name: 'email_template_process.status_id',
         },
       ],
-      limit_range: 1,
+      limit_range: 1000,
       print_query: true,
       start_index: 0,
       primary_table: 'email_template_process',
