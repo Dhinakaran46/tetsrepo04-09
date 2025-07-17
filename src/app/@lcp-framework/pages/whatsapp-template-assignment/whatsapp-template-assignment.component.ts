@@ -208,7 +208,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
           column_name: 'whatsapp_template_process.status_id',
         },
       ],
-      limit_range: 1,
+      limit_range: 1000,
       print_query: true,
       start_index: 0,
       primary_table: 'whatsapp_template_process',

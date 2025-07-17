@@ -65,6 +65,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   roleList: any[] = [];
   tagList: any[] = [];
   emailTemplateList: { id: number; name: string }[] = [];
+  whatsappTemplateList: { id: number; name: string }[] = [];
 
   editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 1, insertSpaces: true };
   isDarkTheme = true; // Default theme
@@ -114,6 +115,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   async ngOnInit() {
     await this.getEmailTemplateList();
 
+    await this.getWhatsappTemplateList();
+
     // get approval workflow details
     await this.getApprovalWorkflowDetail();
 
@@ -161,7 +164,9 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                 'approve_query_information', approval_workflow_assignments.approve_query_information,
                 'reject_query_information', approval_workflow_assignments.reject_query_information,
                 'approved_mail', approval_workflow_assignments.approve_mail_id,
-                'reject_mail', approval_workflow_assignments.reject_mail_id
+                'reject_mail', approval_workflow_assignments.reject_mail_id,
+                'approved_whatsapp', approval_workflow_assignments.approve_whatsapp_id,
+                'reject_whatsapp', approval_workflow_assignments.reject_whatsapp_id
               )
           ) FILTER (WHERE approval_workflow_assignments.id IS NOT NULL), '[]')`,
           'approval_assignments',
@@ -193,6 +198,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                     reject_query_information: any[];
                     approved_mail: number | null;
                     reject_mail: number | null;
+                    approved_whatsapp: number | null;
+                    reject_whatsapp: number | null;
                   },
                   index: any
                 ) => {
@@ -211,6 +218,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                       tag_list: [null],
                       accept_email: each.approved_mail,
                       reject_email: each.reject_mail,
+                      accept_whatsapp: each.approved_whatsapp,
+                      reject_whatsapp: each.reject_whatsapp,
                       tag: [each.approver_type === 'tag' ? each.approver?.split(',') : null],
                       users: [
                         each.approver_type === 'user_id'
@@ -262,7 +271,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           column_name: 'email_templates.status_id',
         },
       ],
-      limit_range: 1,
+      limit_range: 100,
       print_query: true,
       start_index: 0,
       primary_table: 'email_templates',
@@ -272,6 +281,32 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       next: (response: any) => {
         if (response.status) {
           this.emailTemplateList = response.data.records;
+        }
+      },
+    });
+  }
+
+  async getWhatsappTemplateList() {
+    const payload = {
+      company_id: 1,
+      group_by: ['whatsapp_templates.id', 'whatsapp_templates.name'],
+      search_all: [
+        {
+          value: '3',
+          operator: '!=',
+          column_name: 'whatsapp_templates.status_id',
+        },
+      ],
+      limit_range: 100,
+      print_query: true,
+      start_index: 0,
+      primary_table: 'whatsapp_templates',
+      select_columns: [['whatsapp_templates.id'], ['whatsapp_templates.name']],
+    };
+    this.commonService.getCommonList(payload).subscribe({
+      next: (response: any) => {
+        if (response.status) {
+          this.whatsappTemplateList = response.data.records;
         }
       },
     });
@@ -548,6 +583,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
               updated_at: true,
               approve_mail_id: each.accept_email,
               reject_mail_id: each.reject_email,
+              approve_whatsapp_id: each.accept_whatsapp,
+              reject_whatsapp_id: each.reject_whatsapp,
             };
           }),
         },
