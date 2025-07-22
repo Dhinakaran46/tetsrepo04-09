@@ -298,6 +298,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               JSON.stringify({
                 main: response.data,
                 permissions: permissionsObj,
+                user_id:userID
               })
             );
           } else {
@@ -306,6 +307,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               JSON.stringify({
                 main: response.data,
                 permissions: permissionsObj,
+                user_id:userID
               })
             );
           }
