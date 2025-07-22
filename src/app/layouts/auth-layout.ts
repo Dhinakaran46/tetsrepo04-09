@@ -99,7 +99,28 @@ export class AuthLayout {
         this.showTopButton = false;
       }
     });
-    this.getconfig();
+    console.log('coming')
+    // Get userId from localStorageService if available
+    let userId: number | undefined = undefined;
+    try {
+      const userDataRaw = this.localstore.getData('user_data');
+      if (userDataRaw) {
+        let userDataObj: any = {};
+        try {
+          userDataObj = JSON.parse(userDataRaw);
+        } catch (e) {
+          // If encrypted, try to decrypt
+          const decrypted = this.localstore.getDataDecrypted('user_data');
+          userDataObj = JSON.parse(decrypted);
+        }
+        if (userDataObj && userDataObj.main && userDataObj.main.id) {
+          userId = userDataObj.main.id;
+        }
+      }
+    } catch (e) {
+      userId = undefined;
+    }
+    this.getconfig(userId);
     this.loadDataCarousel();
   }
 
@@ -157,16 +178,25 @@ export class AuthLayout {
     this.startAutoSlide(); // Start auto-sliding when the component is initialized
   }
 
-  getconfig() {
-    const procedureParams = { proc_name: 'get_configurations_values', params: { '0': 'ac1', '1': 'ac2' } };
-
+  getconfig(userId?: number) {
+    console.log(userId)
+    // Prepare params for the procedure
+    const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
+    if (userId !== undefined && userId !== null) {
+      params.user_id = userId; // Add user_id if provided
+    }
+  
+    const procedureParams = { proc_name: 'get_configurations_values_v1', params };
+  
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
-          const res = response.data?.[0]?.result || [];
-
+          const res = response.data?.[0]?.result || {};
+  
           if (Object.keys(res).length > 0) {
-            this.changeFavicon(this.apiUrl + '/' + res.favicon);
+            if (res.favicon) {
+              this.changeFavicon(this.apiUrl + '/' + res.favicon);
+            }
             this.logo = res.logo;
             this.authentication_banner = res.authentication_banner;
             this.authentication_background_1 = res.authentication_background_1;

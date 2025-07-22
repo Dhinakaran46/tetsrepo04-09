@@ -1,3 +1,5 @@
+
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
@@ -46,13 +48,13 @@ const DATETIME_FORMAT_LIST = [
 ];
 
 @Component({
-  selector: 'app-configuration',
+  selector: 'app-user-configuration',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, CommonSharedModule],
-  templateUrl: './configuration.component.html',
-  styleUrls: ['./configuration.component.scss'],
+  templateUrl: './user-configuration.component.html',
+  styleUrls: ['./user-configuration.component.scss'],
 })
-export class ConfigurationComponent implements OnInit {
+export class UserConfigurationComponent implements OnInit {
   userId: number | null = null;
   companyId: number | null = null;
   tabs: Tab[] = [];
@@ -65,6 +67,8 @@ export class ConfigurationComponent implements OnInit {
 
   isMenuOpen = false;
   newConfigForm: FormGroup;
+  userList: any[] = []; // Add userList property
+  selectedUserId: number | null = null; // Track selected user
 
   gridpaginationdropdownList = ['5', '10', '15', '20', '25', '30', '40', '50', '60', '70', '80', '90', '100'];
   fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'multiselect', 'single_select', 'time', 'timezone', 'datetimeformat'];
@@ -73,7 +77,7 @@ export class ConfigurationComponent implements OnInit {
   update_json_schema: any = {
     print_query: true,
     action: ['update', 'insert'],
-    table: ['app_configurations', 'app_configurations'],
+    table: ['app_user_configurations', 'app_user_configurations'],
     table_mapping: ['table1', 'table2'],
     data: {
       table2: [],
@@ -85,7 +89,7 @@ export class ConfigurationComponent implements OnInit {
   insert_particular_schema: any = {
     print_query: true,
     action: ['insert'],
-    table: ['app_configurations'],
+    table: ['app_user_configurations'],
     table_mapping: ['table1'],
     data: {
       table1: [],
@@ -96,7 +100,7 @@ export class ConfigurationComponent implements OnInit {
   delete_json_schema: any = {
     // it will be removed
     action: ['hard_delete'],
-    table: ['app_configurations'],
+    table: ['app_user_configurations'],
     table_mapping: ['table1'],
     conditions: {
       table1: [],
@@ -144,6 +148,9 @@ export class ConfigurationComponent implements OnInit {
       config_select_json: [''], // <-- new field
     });
 
+    this.userList = [];
+    this.selectedUserId = null;
+
     this.initStore();
   }
 
@@ -155,7 +162,9 @@ export class ConfigurationComponent implements OnInit {
     if (userData) {
       const parsedData = JSON.parse(userData);
       this.userId = parsedData.main?.id;
+      this.selectedUserId = this.userId
       this.companyId = parsedData.main?.company_id;
+      
     }
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
     if (pageInfo) {
@@ -163,6 +172,7 @@ export class ConfigurationComponent implements OnInit {
     }
     this.initializeUserData();
     this.loadAllItems('act1');
+    this.getUserList(); // Fetch user list on init
   }
 
   updateValueField(keyType: string): void {
@@ -222,9 +232,26 @@ export class ConfigurationComponent implements OnInit {
   }
 
   loadAllItems(appCategoryTypeId: any) {
+    console.log(this.selectedUserId)
     if (!this.companyId) {
       console.error('Company ID is not available');
       return;
+    }
+
+    const search_all = [
+      {
+        column_name: 'app_categories.category_type_id',
+        value: appCategoryTypeId,
+        operator: '=',
+      },
+    ];
+    // If a user is selected, filter by user_id
+    if (this.selectedUserId) {
+      search_all.push({
+        column_name: 'app_user_configurations.user_id',
+        value: this.selectedUserId,
+        operator: '=',
+      });
     }
 
     const payload = {
@@ -234,25 +261,19 @@ export class ConfigurationComponent implements OnInit {
       start_index: 0,
       limit_range: 100,
       sort_columns: [['app_categories.id', 'asc']],
-      search_all: [
-        {
-          column_name: 'app_categories.category_type_id',
-          value: appCategoryTypeId,
-          operator: '=',
-        },
-      ],
+      search_all: search_all,
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type,'config_select_json',app_configurations.config_select_json))) END",
+          "CASE WHEN COUNT(app_user_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_user_configurations.id,'display_config',app_user_configurations.display_config,'order_no',app_user_configurations.order_no,'config_key', app_user_configurations.config_key,'category_id', app_user_configurations.category_id,'config_value', app_user_configurations.config_value,'config_file_value', app_user_configurations.config_file_value,'config_value_type', app_user_configurations.config_value_type,'config_field_type', app_user_configurations.config_field_type,'config_select_json',app_user_configurations.config_select_json))) END",
           'configurations',
         ],
       ],
       includes: [
         {
-          table_name: 'app_configurations',
+          table_name: 'app_user_configurations',
           join_type: 'INNER',
-          join_condition: `app_categories.category_id = app_configurations.category_id`,
+          join_condition: `app_categories.category_id = app_user_configurations.category_id`,
         },
       ],
       group_by: ['app_categories.id'],
@@ -626,6 +647,63 @@ export class ConfigurationComponent implements OnInit {
     }
   }
 
+  getUserList() {
+    const param: any = {
+      company_id: 1,
+      print_query: false,
+      primary_table: 'users',
+      start_index: 0,
+      limit_range: 1000,
+      sort_columns: [["concat(user_details.first_name, ' ', user_details.last_name)", 'asc']],
+      search_all: [
+        {
+          column_name: 'users.status_id',
+          value: '1',
+          operator: '=',
+        }
+      ],
+      includes: [
+        {
+          table_name: 'user_details',
+          join_type: 'INNER',
+          join_condition: 'users.id = user_details.user_id',
+        },
+      ],
+      select_columns: [['users.id'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'name'], ['users.uuid']],
+    };
+    this.gridApiService.getListData(param).subscribe(
+      (response: any) => {
+        if (response.status) {
+          this.userList = response.data?.records || [];
+          // Select the first user by default if available
+          if (this.userList.length > 0) {
+            //this.selectedUserId = this.userList[0].id;
+            if (typeof this.selectedUserId === 'number') {
+              this.onUserSelect(this.selectedUserId);
+            }
+          }
+        } else if (!response.status) {
+          this.userList = [];
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+        }
+      },
+      (error: any) => {
+        this.userList = [];
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  onUserSelect(userId: any) {
+    this.selectedUserId = userId;
+    // Also reload items filtered by user
+    this.loadAllItems('act1');
+  }
+
   onSubmitNewConfig() {
     const newConfig = this.newConfigForm.value;
     if ((newConfig.keyType === 'multiselect' || newConfig.keyType === 'single_select') && !this.isValidJson(newConfig.config_select_json)) {
@@ -659,6 +737,19 @@ export class ConfigurationComponent implements OnInit {
         config_value: config_value,
       },
     ];
+
+    // Add user_id to config_select_json if selected
+    if (this.selectedUserId) {
+      let configSelectJson = this.newConfigForm.get('config_select_json')?.value;
+      let parsedJson: any = {};
+      try {
+        parsedJson = configSelectJson ? JSON.parse(configSelectJson) : {};
+      } catch (e) {
+        parsedJson = {};
+      }
+      parsedJson.user_id = this.selectedUserId;
+      this.newConfigForm.get('config_select_json')?.setValue(JSON.stringify(parsedJson));
+    }
 
     this.gridApiService.executeRecords(this.insert_particular_schema).subscribe(
       (response: any) => {
@@ -778,3 +869,4 @@ export class ConfigurationComponent implements OnInit {
     this.jsonEditorOpenNew = false;
   }
 }
+

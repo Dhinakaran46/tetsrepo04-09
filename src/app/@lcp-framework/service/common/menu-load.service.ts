@@ -64,61 +64,110 @@ export class MenuLoadService {
       .sort((a, b) => a.order_no - b.order_no);
   }
 
-  fetchConfigData(companyId: number): any {
-    const payload = {
+  fetchConfigData(companyId: number, userID: any): any {
+    // 1. Try to fetch user config from app_user_configurations
+    const userConfigPayload = {
       company_id: companyId,
-      primary_table: 'app_configurations',
-      sort_columns: [['app_configurations.id', 'asc']],
+      primary_table: 'app_user_configurations',
+      sort_columns: [['app_user_configurations.id', 'asc']],
       limit_range: 1000,
       select_columns: [
-        ['app_configurations.id'],
-        ['app_configurations.config_key'],
-        ['app_configurations.category_id'],
-        ['app_configurations.config_value'],
-        ['app_configurations.config_value_type'],
-        ['app_configurations.config_field_type'],
+        ['app_user_configurations.id'],
+        ['app_user_configurations.config_key'],
+        ['app_user_configurations.category_id'],
+        ['app_user_configurations.config_value'],
+        ['app_user_configurations.config_value_type'],
+        ['app_user_configurations.config_field_type'],
       ],
       includes: [],
-      search_all: [],
+      search_all: [
+        { column_name: 'app_user_configurations.user_id', value: userID, operator: '=' },
+      ],
     };
 
-    return this.menuMapService.getCommonList(payload).pipe(
-      map((response: any) => {
-        if (response.code === 200 && response.status) {
-          const finalObject = response.data.records.reduce((acc: any, record: any) => {
+    // Helper to process config and store user_data
+    const processConfig = (finalObject: any) => {
+      const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
+      if (user_data) {
+        if (finalObject.encrypt_local_storage == 'true') {
+          this.localStorageService.storeDataEncrypted(
+            'user_data',
+            JSON.stringify({
+              ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+              user_id:userID
+            })
+          );
+        } else {
+          this.localStorageService.storeData(
+            'user_data',
+            JSON.stringify({
+              ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+              user_id:userID
+            })
+          );
+          this.localStorageService.removeData('enc_user');
+        }
+      }
+      return true;
+    };
+
+    // 2. Try user config first
+    return this.menuMapService.getCommonList(userConfigPayload).pipe(
+      map((userResponse: any) => {
+        if (userResponse.code === 200 && userResponse.status && userResponse.data.records.length > 0) {
+          const userConfig = userResponse.data.records.reduce((acc: any, record: any) => {
             acc[record.config_key] = record.config_value;
             return acc;
           }, {});
-          // Store menu data
-          const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
-          if (user_data) {
-            if (finalObject.encrypt_local_storage == 'true') {
-              this.localStorageService.storeDataEncrypted(
-                'user_data',
-                JSON.stringify({
-                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                })
-              );
-            } else {
-              this.localStorageService.storeData(
-                'user_data',
-                JSON.stringify({
-                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-                })
-              );
-              //localStorage.removeItem('enc_user');
-              this.localStorageService.removeData('enc_user');
-            }
+          // If user config has encrypt_local_storage, use it
+          if (userConfig.encrypt_local_storage !== undefined) {
+            return processConfig(userConfig);
           }
-
-          return true;
-        } else {
-          console.warn('Data fetch failed:', response);
-          return [];
         }
+        // 3. If no user config or no encrypt_local_storage, fetch default config
+        const defaultConfigPayload = {
+          company_id: companyId,
+          primary_table: 'app_configurations',
+          sort_columns: [['app_configurations.id', 'asc']],
+          limit_range: 1000,
+          select_columns: [
+            ['app_configurations.id'],
+            ['app_configurations.config_key'],
+            ['app_configurations.category_id'],
+            ['app_configurations.config_value'],
+            ['app_configurations.config_value_type'],
+            ['app_configurations.config_field_type'],
+          ],
+          includes: [],
+          search_all: [],
+        };
+        // Return an observable for chaining
+        return this.menuMapService.getCommonList(defaultConfigPayload).pipe(
+          map((response: any) => {
+            if (response.code === 200 && response.status) {
+              const finalObject = response.data.records.reduce((acc: any, record: any) => {
+                acc[record.config_key] = record.config_value;
+                return acc;
+              }, {});
+              return processConfig(finalObject);
+            } else {
+              console.warn('Data fetch failed:', response);
+              return [];
+            }
+          }),
+          catchError((error) => {
+            console.error('Error fetching data:', error);
+            return of([]);
+          })
+        );
       }),
+      // If the result is an observable (from fallback), flatten it
+      // This ensures the return type is always an observable
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      map((result: any) => (result && typeof result.subscribe === 'function' ? result : result)),
       catchError((error) => {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching user config:', error);
         return of([]);
       })
     );

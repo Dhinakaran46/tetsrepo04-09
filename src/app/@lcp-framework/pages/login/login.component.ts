@@ -22,6 +22,7 @@ import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconEyeComponent } from '../../shared/icon/icon-eye';
 import { CopyrightComponent } from '../../components/copyright/copyright.component';
 import { TimezoneService } from '../../service/common/timezone.service';
+import { MenuMapService } from '../../service/common/menu-map.service';
 
 interface MenuItem {
   id: number;
@@ -132,7 +133,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private route: ActivatedRoute,
     private menuLoadService: MenuLoadService,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
+    private commonService: MenuMapService
   ) {
     this.initStore();
     this.loginForm = this.formBuilder.group({
@@ -233,8 +235,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       },
     });
   }
-  setConfig(companyId: number): void {
-    this.menuLoadService.fetchConfigData(companyId).subscribe({
+  setConfig(companyId: number,userID:any): void {
+    this.menuLoadService.fetchConfigData(companyId,userID).subscribe({
       next: (res: any) => {
         console.log(res);
         this.timezoneService.reloadConfig();
@@ -277,7 +279,10 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
 
     this.authService.login(loginData).subscribe({
       next: async (response: any) => {
+        
         if (response.status) {
+          const userID = response.data.id;
+        
           const permissionsObj = response.data.permissions.reduce((acc: any, perm: any) => {
             acc[perm.slug] = perm.accessible;
             return acc;
@@ -317,9 +322,12 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
             this.localstore.removeData('rememberme');
           }
 
-          this.setConfig(this.companyId);
+          this.setConfig(this.companyId,userID);
+          console.log(userID);
+          this.getconfig(userID);
           this.onLoginSuccess(this.companyId);
 
+          //return;
           // Add dynamic routes
 
           forkJoin([
@@ -362,6 +370,42 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
         this.loading = false;
         console.log('Login request completed');
       },
+    });
+  }
+
+  // Copy of getconfig from AuthLayout
+  getconfig(userId?: number) {
+    console.log(userId);
+    // Prepare params for the procedure
+    const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
+    if (userId !== undefined && userId !== null) {
+      params.user_id = userId; // Add user_id if provided
+    }
+
+    const procedureParams = { proc_name: 'get_configurations_values_v1', params };
+
+    this.commonService.unAuthProcedureCall(procedureParams).subscribe({
+      next: (response: { code: number; status: boolean; data: any; message: string }) => {
+        if (response.code === 200 && response.status && response.data) {
+          const res = response.data?.[0]?.result || {};
+
+  console.log(res);
+          if (Object.keys(res).length > 0) {
+          console.log(res);
+            // Optionally handle favicon, logo, etc. here if needed
+            this.localstore.storeData('config', JSON.stringify(res));
+          }
+        } else {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          console.log(response.message);
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching data:', error);
+      },
+      complete: () => {},
     });
   }
 }
