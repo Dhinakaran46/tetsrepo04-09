@@ -349,7 +349,7 @@
                                 [attr.data-tippy-content]="item[col.header]"
                                 [ngClass]="{'cursor-pointer text-blue-600 underline': col.link_type === 'component'}"
                               >
-                              <button class="expand-collapse-btn ml-1" style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer;"
+                              <button *ngIf="col.link_type === 'child_grid'" class="expand-collapse-btn ml-1" style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer;"
                                       (click)="toggleColumnChildGrid(item['uuid'], col)">
                                 <i class="fa" [ngClass]="isColumnChildGridExpanded(item['uuid'], col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                               </button>
