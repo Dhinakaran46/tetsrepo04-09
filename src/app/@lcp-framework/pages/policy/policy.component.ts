@@ -109,7 +109,7 @@ export class PolicyComponent implements OnInit {
     public cdr: ChangeDetectorRef
   ) {
     this.route.paramMap.subscribe((params) => {
-      this.unique_id = params.get('id');
+      this.unique_id = params.get('uuid');
     });
     this.userData = JSON.parse(this.localStorageService.getData('user_data'))?.main || {};
     this.policyForm = this.fb.group({

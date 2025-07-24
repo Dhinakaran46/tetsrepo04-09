@@ -100,7 +100,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     public localStorageService: LocalStorageService
   ) {
     this.route.paramMap.subscribe((params) => {
-      this.uniqueId = params.get('id');
+      this.uniqueId = params.get('uuid');
     });
     this.form = this.fb.group({
       approvalWorkflow: this.fb.group({
