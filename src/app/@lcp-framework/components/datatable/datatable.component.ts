@@ -17,6 +17,7 @@ import { OpenaiService } from '../../service/common/openai.service';
 import { ChildDatatableComponent } from '../child-datatable/child-datatable.component';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
+import { LoaderComponent } from '../loader/loader.component';
 
 interface SearchCondition {
   id: string;
@@ -34,7 +35,7 @@ interface InputTypes {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent, MasterListComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent, MasterListComponent, LoaderComponent],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -164,7 +165,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
     public location: Location,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
+    private cdr: ChangeDetectorRef
+
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -173,6 +176,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   toggleRow(item: any) {
+    
     if (this.expandedItem === item) {
       this.expandedItem = null;
       // Also collapse column child grid for this row if open
@@ -195,12 +199,14 @@ export class DataTableComponent implements OnInit, OnChanges {
     if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) { 
       console.log("ngAfterViewCheckedngAfterViewChecked1111111111");
 
+
       setTimeout(() => {
         this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
-      }, 1000);
+        // this.cdr.detectChanges();
+      }, 500);
 
       console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
-      
+
       this.lastRenderedUuid = this.expandedItem;
     } else if (!this.expandedItem && this.childMasterListContainer) {
       this.childMasterListContainer.clear();

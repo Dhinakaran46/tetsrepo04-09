@@ -79,7 +79,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   @Input()
   set nonGridPage(value: boolean) {
     this._nonGridPage = value;
-  // this.cdr.detectChanges();
+  this.cdr.detectChanges();
   }
 
   get nonGridPage() {
