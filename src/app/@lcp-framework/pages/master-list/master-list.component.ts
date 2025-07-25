@@ -74,7 +74,17 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
       this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
     }
   }
-  @Input() nonGridPage: boolean = false;
+  private _nonGridPage = false;
+
+  @Input()
+  set nonGridPage(value: boolean) {
+    this._nonGridPage = value;
+  this.cdr.detectChanges();
+  }
+
+  get nonGridPage() {
+    return this._nonGridPage;
+  }
 
   store: any;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
@@ -253,17 +263,33 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
 
-      this.title = masterListConfig.fullEntity;
+
+      // Set the title: if entity_name is passed as input, use it as title, otherwise use default
+      if (this.entity_name) {
+        this.title = this.entity_name;
+      } else {
+        this.title = masterListConfig.fullEntity;
+      }
+      console.log('this.title.pass.from.master.list', this.title);
+
+
+      //this.title = masterListConfig.fullEntity;
       this.defaultQuery = masterListConfig.ListQuery;
       this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
       this.listQuery.start_index = 0;
+
+      //added
+      if (this.entity_name) {
+        this.listQuery.entity_name = this.entity_name;
+      }
+
       this.fetchAttachedPolicies(this.listQuery);
     } else {
       this.title = 'Default Title';
       this.headercolumns = [];
       this.items = [];
     }
-    this.cdr.detectChanges();
+   // this.cdr.detectChanges(); 
   }
 
   async initStore() {
@@ -1323,7 +1349,45 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }, 500);
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    // Optionally handle other input changes if needed
+  async ngOnChanges(changes: SimpleChanges) {
+    if (changes['entity_name'] && this.entity_name) {
+      try {
+        const pageInfo = await this.routeUpdateService.getPageInfo(this.entity_name);
+        if (pageInfo) {
+          this.masterInfo = pageInfo;
+
+          this.resultsPerPage = parseInt(this.config.grid_pagination_default);
+          this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+
+          if (this.user_info.main?.policies) {
+            this.policyData = this.user_info.main?.policies || null;
+          }
+
+          if (this.masterInfo.ListQuery.entity_name == 'user') {
+            this.allowPasswordModal = true;
+          }
+          
+          const masterListConfig = pageInfo;
+          const translateTitle = this.translate.instant(masterListConfig.fullEntity);
+          this.titleService.setTitle(translateTitle);
+          this.enableCheckBox = masterListConfig.enable_row_checkbox;
+          this.title = masterListConfig.fullEntity;
+          this.defaultQuery = masterListConfig.ListQuery;
+          this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+          this.listQuery.start_index = 0;
+          this.fetchAttachedPolicies(this.listQuery);
+        } else {
+          this.title = 'Default Title';
+          this.headercolumns = [];
+          this.items = [];
+        }
+        //this.cdr.detectChanges();
+      } catch (e) {
+        this.title = 'Default Title';
+        this.headercolumns = [];
+        this.items = [];
+        //this.cdr.detectChanges(); 
+      }
+    }
   }
 }

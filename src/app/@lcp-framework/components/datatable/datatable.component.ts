@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef, ChangeDetectorRef, ViewChildren, QueryList, ViewContainerRef, AfterViewChecked } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,6 +16,8 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
 import { OpenaiService } from '../../service/common/openai.service';
 import { ChildDatatableComponent } from '../child-datatable/child-datatable.component';
 import { TimezoneService } from '../../service/common/timezone.service';
+import { MasterListComponent } from '../../pages/master-list/master-list.component';
+import { LoaderComponent } from '../loader/loader.component';
 
 interface SearchCondition {
   id: string;
@@ -33,7 +35,7 @@ interface InputTypes {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent, MasterListComponent, LoaderComponent],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -151,6 +153,10 @@ export class DataTableComponent implements OnInit, OnChanges {
   user_info: any;
   config: any;
 
+
+  @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
+  public lastRenderedUuid: string | null = null;
+
   constructor(
     private translate: TranslateService,
     private toastr: ToastrService,
@@ -159,7 +165,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
     public location: Location,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
+    private cdr: ChangeDetectorRef
+
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -168,6 +176,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   toggleRow(item: any) {
+    
     if (this.expandedItem === item) {
       this.expandedItem = null;
       // Also collapse column child grid for this row if open
@@ -185,6 +194,25 @@ export class DataTableComponent implements OnInit, OnChanges {
         this.expandedColumnChildGrid = null;
       }
     }
+
+
+    if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) { 
+      console.log("ngAfterViewCheckedngAfterViewChecked1111111111");
+
+
+      setTimeout(() => {
+        this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
+        // this.cdr.detectChanges();
+      }, 500);
+
+      console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
+
+      this.lastRenderedUuid = this.expandedItem;
+    } else if (!this.expandedItem && this.childMasterListContainer) {
+      this.childMasterListContainer.clear();
+      this.lastRenderedUuid = null;
+    }
+
   }
 
   ngOnInit() {
@@ -735,5 +763,39 @@ export class DataTableComponent implements OnInit, OnChanges {
     return !!this.expandedColumnChildGrid &&
       this.expandedColumnChildGrid.uuid === uuid &&
       this.expandedColumnChildGrid.colHeader === col.header;
+  }
+
+  ngAfterViewInit() {
+    console.log(this.childMasterListContainer);
+  }
+
+  // ngAfterViewChecked() {
+  //   //console.log("ngAfterViewCheckedngAfterViewChecked123123");
+  //   // Dynamically create MasterListComponent when expandedItem changes and pass entity_name as input
+  //   // console.log("this.expandedItem", this.expandedItem);
+  //   // console.log("this.lastRenderedUuid", this.lastRenderedUuid);
+  //   // if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) { 
+  //   //   console.log("ngAfterViewCheckedngAfterViewChecked1111111111");
+  //   //   this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
+
+  //   //   console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
+  //   //   // this.createChildMasterList(this.expandedItem, 'child_details_user');
+  //   //   this.lastRenderedUuid = this.expandedItem;
+  //   // } else if (!this.expandedItem && this.childMasterListContainer) {
+  //   //   this.childMasterListContainer.clear();
+  //   //   this.lastRenderedUuid = null;
+  //   // }
+  // }
+
+  createChildMasterList(uuid: string, entityName: string) {
+
+    console.log("entityName", entityName);
+
+    if (!this.childMasterListContainer) return;
+    this.childMasterListContainer.clear();
+    const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.uuid = uuid;
+    componentRef.instance.entity_name = entityName;
+    componentRef.instance.nonGridPage = false;
   }
 }

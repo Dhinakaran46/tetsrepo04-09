@@ -309,7 +309,7 @@
                   <tr>
                     <td *ngIf="this.masterInfo?.permissions.child_details" (click)="toggleRow(item['uuid'])">
                       <button class="expand-collapse-btn">
-                        <i class="fa" [ngClass]="expandedItem === item['uuid'] ? 'fa-minus' : 'fa-plus'"></i>
+                        <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : (expandedItem === item['uuid'] ? 'fa-minus' : 'fa-plus')"></i>
                       </button>
                     </td>
                     <td *ngIf="enableCheckBox">
@@ -373,10 +373,21 @@
                   <tr *ngIf="expandedItem === item['uuid'] && this.masterInfo?.permissions.child_details">
                     <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                       <div class="bg-gray-50 p-4">
-                        <app-child-datatable
+                        
+                        <!-- <app-child-datatable
+                        [uuid]="item['uuid']"
+                        [entity_name]="this.masterInfo?.children.child_details.entity_name"
+                      ></app-child-datatable> -->
+
+                      <!-- <master-list
+                          #childMasterListContainer
                           [uuid]="item['uuid']"
                           [entity_name]="this.masterInfo?.children.child_details.entity_name"
-                        ></app-child-datatable>
+                          [nonGridPage]="false"
+                        ></master-list> -->
+                        
+                        <!-- Child content -->
+                        <ng-template #childMasterListContainer></ng-template>
                       </div>
                     </td>
                   </tr>
@@ -385,10 +396,10 @@
                     <tr *ngIf="col.link_type === 'child_grid' && isColumnChildGridExpanded(item['uuid'], col)">
                       <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                         <div class="bg-gray-50 p-4">
-                          <app-child-datatable
+                          <!-- <app-child-datatable
                             [uuid]="item['uuid']"
                             [entity_name]="col.link_action"
-                          ></app-child-datatable>
+                          ></app-child-datatable> -->
                         </div>
                       </td>
                     </tr>
