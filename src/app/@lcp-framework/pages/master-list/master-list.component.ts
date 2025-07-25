@@ -62,7 +62,7 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements AfterViewInit, OnChanges {
+export class MasterListComponent implements  OnChanges {
   @Input() uuid: any = null; // Receive UUID from child component
   @Input() entity_name: any = ''; // Receive entity_name from child component
   @Input() popupName: any = '';
@@ -230,7 +230,9 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
-  ngAfterViewInit() {
+  ngAfterContentInit() {
+
+
     this.config = JSON.parse(this.localStorageService.getData('config'));
 
     let pageInfo: any;
@@ -252,6 +254,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
         this.policyData = this.user_info.main?.policies || null;
       }
       this.masterInfo = pageInfo;
+      console.log("masterInfo", this.masterInfo);
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
       }
@@ -289,7 +292,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
       this.headercolumns = [];
       this.items = [];
     }
-   // this.cdr.detectChanges(); 
+  //  this.cdr.detectChanges(); 
   }
 
   async initStore() {
@@ -1381,12 +1384,12 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
           this.headercolumns = [];
           this.items = [];
         }
-        //this.cdr.detectChanges();
+        // this.cdr.detectChanges();
       } catch (e) {
         this.title = 'Default Title';
         this.headercolumns = [];
         this.items = [];
-        //this.cdr.detectChanges(); 
+        // this.cdr.detectChanges(); 
       }
     }
   }
