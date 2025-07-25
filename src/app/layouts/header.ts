@@ -123,7 +123,7 @@ export class HeaderComponent implements OnInit {
     },
   ];
   user_info: any;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
 
   constructor(
@@ -302,8 +302,9 @@ export class HeaderComponent implements OnInit {
   }
 
   getProfileInfo() {
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     let profile_pic = this.user_info.main.profile_pic;
-    profile_pic = profile_pic && profile_pic !== 'null' ? environment.apiUrl + '/' + profile_pic : 'assets/images/user.png';
+    profile_pic = profile_pic && profile_pic !== 'null' ? apiUrl + '/' + profile_pic : 'assets/images/user.png';
 
     const first_name = this.user_info.main.first_name || 'First Name';
     const last_name = this.user_info.main.last_name || 'Last Name';

@@ -23,10 +23,11 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
   }
 
   isImageUrl(fieldValue: any, key: string): boolean {
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const pathKey = this.removeSuffix(key, '_file');
     let url = '';
     if (!fieldValue[key] && fieldValue[pathKey]) {
-      url = `${environment.apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
+      url = `${apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
     } else {
       const ImageValue = fieldValue[key];
       if (typeof fieldValue === 'string') {
@@ -234,9 +235,10 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
   }
 
   getImageSrc(fieldValue: any, key: string, blob = false): string | null {
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const pathKey = this.removeSuffix(key, '_file');
     if (!fieldValue[key] && fieldValue[pathKey]) {
-      return `${environment.apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
+      return `${apiUrl}/${fieldValue[pathKey]}`; // Return null if no value
     }
     const ImageValue = fieldValue[key];
     if (typeof fieldValue === 'string') {

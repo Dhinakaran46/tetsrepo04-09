@@ -21,7 +21,7 @@ import { LocalStorageService } from '../@lcp-framework/service/common/local-stor
 export class AppLayout {
   store: any;
   showTopButton = false;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   constructor(
     private renderer: Renderer2,
     public translate: TranslateService,
@@ -34,8 +34,9 @@ export class AppLayout {
   }
   headerClass = '';
   ngOnInit() {
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const resn = JSON.parse(this.localstore.getData('config'));
-    this.changeFavicon(this.apiUrl + '/' + resn.favicon);
+    this.changeFavicon(apiUrl + '/' + resn.favicon);
     this.initAnimation();
     this.toggleLoader();
     window.addEventListener('scroll', () => {
