@@ -144,6 +144,7 @@ export class MasterEntityComponent implements OnInit {
           name: 'example_1',
           comments: [],
           data: {
+            cte: 'WITH test_constants AS ( SELECT 1 AS dummy_id )',
             company_id: 1,
             print_query: false,
             primary_table: 'users',
@@ -199,45 +200,51 @@ export class MasterEntityComponent implements OnInit {
           name: 'example_1',
           comments: [],
           data: {
-            department_id: {
-              "cte": "WITH test_constants AS ( SELECT 1 AS dummy_id )",
-              company_id: 1,
-              search_all: [
-                {
-                  value: '1',
-                  operator: '=',
-                  column_name: 'departments.status_id',
-                },
-              ],
-              limit_range: 1000,
-              print_query: false,
-              start_index: 0,
-              sort_columns: [['departments.name', 'asc']],
-              primary_table: 'departments',
-              select_columns: [
-                ['id', 'value'],
-                ['name', 'label'],
-              ],
-            },
-            designation_id: {
-              company_id: 1,
-              search_all: [
-                {
-                  value: '1',
-                  operator: '=',
-                  column_name: 'designations.status_id',
-                },
-              ],
-              limit_range: 1000,
-              print_query: false,
-              start_index: 0,
-              sort_columns: [['designations.name', 'asc']],
-              primary_table: 'designations',
-              select_columns: [
-                ['id', 'value'],
-                ['name', 'label'],
-              ],
-            },
+            cte: 'WITH test_constants AS ( SELECT 1 AS dummy_id )',
+            company_id: 1,
+            print_query: false,
+            primary_table: 'users',
+            start_index: 0,
+            limit_range: 15,
+            attached_policies: ['user_filer1'],
+            sort_columns: [['users.id', 'desc']],
+            search_all: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            search_any: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            select_columns: [['users.id'], ['users.email', 'user_mail'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'full_name']],
+            includes: [
+              {
+                table_name: 'user_details',
+                join_type: 'INNER',
+                join_condition: 'users.id = user_details.user_id',
+              },
+            ],
+            group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+            having_conditions: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            having_any_conditions: [
+              {
+                value: '%Mukesh%',
+                operator: 'ILIKE',
+                column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+              },
+            ],
           },
         },
       ],
@@ -285,45 +292,51 @@ export class MasterEntityComponent implements OnInit {
           name: 'example_1',
           comments: [],
           data: {
-            department_id: {
-              "cte": "WITH test_constants AS ( SELECT 1 AS dummy_id )",
-              company_id: 1,
-              search_all: [
-                {
-                  value: '1',
-                  operator: '=',
-                  column_name: 'departments.status_id',
-                },
-              ],
-              limit_range: 1000,
-              print_query: false,
-              start_index: 0,
-              sort_columns: [['departments.name', 'asc']],
-              primary_table: 'departments',
-              select_columns: [
-                ['id', 'value'],
-                ['name', 'label'],
-              ],
-            },
-            designation_id: {
-              company_id: 1,
-              search_all: [
-                {
-                  value: '1',
-                  operator: '=',
-                  column_name: 'designations.status_id',
-                },
-              ],
-              limit_range: 1000,
-              print_query: false,
-              start_index: 0,
-              sort_columns: [['designations.name', 'asc']],
-              primary_table: 'designations',
-              select_columns: [
-                ['id', 'value'],
-                ['name', 'label'],
-              ],
-            },
+            cte: 'WITH test_constants AS ( SELECT 1 AS dummy_id )',
+            company_id: 1,
+            print_query: false,
+            primary_table: 'users',
+            start_index: 0,
+            limit_range: 15,
+            attached_policies: ['user_filer1'],
+            sort_columns: [['users.id', 'desc']],
+            search_all: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            search_any: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            select_columns: [['users.id'], ['users.email', 'user_mail'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'full_name']],
+            includes: [
+              {
+                table_name: 'user_details',
+                join_type: 'INNER',
+                join_condition: 'users.id = user_details.user_id',
+              },
+            ],
+            group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+            having_conditions: [
+              {
+                column_name: 'users.deleted_at',
+                value: null,
+                operator: 'IS',
+              },
+            ],
+            having_any_conditions: [
+              {
+                value: '%Mukesh%',
+                operator: 'ILIKE',
+                column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+              },
+            ],
           },
         },
       ],

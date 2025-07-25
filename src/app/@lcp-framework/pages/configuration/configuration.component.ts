@@ -68,7 +68,7 @@ export class ConfigurationComponent implements OnInit {
 
   gridpaginationdropdownList = ['5', '10', '15', '20', '25', '30', '40', '50', '60', '70', '80', '90', '100'];
   fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'multiselect', 'single_select', 'time', 'timezone', 'datetimeformat'];
-  valueTypeOptions = ['static', 'single_select', 'multiselect'];
+  valueTypeOptions = ['static'];
 
   update_json_schema: any = {
     print_query: true,
@@ -240,6 +240,11 @@ export class ConfigurationComponent implements OnInit {
           value: appCategoryTypeId,
           operator: '=',
         },
+        {
+          column_name: 'app_categories.status_id',
+          value: 1,
+          operator: '=',
+        }
       ],
       select_columns: [
         ['app_categories.*'],
@@ -740,7 +745,7 @@ export class ConfigurationComponent implements OnInit {
 
   // Helper to get select options for a config FormGroup
   getSelectOptions(config: AbstractControl) {
-    return (config as any)._selectOptions || this.gridpaginationdropdownList;
+    return (config as any)._selectOptions;
   }
 
   openJsonEditor(index: number) {

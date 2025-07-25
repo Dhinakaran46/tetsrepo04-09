@@ -72,7 +72,7 @@ export class UserConfigurationComponent implements OnInit {
 
   gridpaginationdropdownList = ['5', '10', '15', '20', '25', '30', '40', '50', '60', '70', '80', '90', '100'];
   fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'multiselect', 'single_select', 'time', 'timezone', 'datetimeformat'];
-  valueTypeOptions = ['static', 'single_select', 'multiselect'];
+  valueTypeOptions = ['static'];
 
   update_json_schema: any = {
     print_query: true,
@@ -118,6 +118,7 @@ export class UserConfigurationComponent implements OnInit {
 
   // For Add New Config modal
   jsonEditorOpenNew = false;
+  selectedUserRole:any;
 
   constructor(
     private commonService: MenuMapService,
@@ -163,6 +164,7 @@ export class UserConfigurationComponent implements OnInit {
       const parsedData = JSON.parse(userData);
       this.userId = parsedData.main?.id;
       this.selectedUserId = this.userId
+      this.selectedUserRole = parsedData.main?.role;
       this.companyId = parsedData.main?.company_id;
       
     }
@@ -171,7 +173,7 @@ export class UserConfigurationComponent implements OnInit {
       this.masterInfo = pageInfo;
     }
     this.initializeUserData();
-    this.loadAllItems('act1');
+    this.loadAllItems('act5');
     this.getUserList(); // Fetch user list on init
   }
 
@@ -244,14 +246,23 @@ export class UserConfigurationComponent implements OnInit {
         value: appCategoryTypeId,
         operator: '=',
       },
+      {
+        column_name: 'app_categories.status_id',
+        value: 1,
+        operator: '=',
+      }
     ];
     // If a user is selected, filter by user_id
+    let appcondition = `app_categories.category_id = app_user_configurations.category_id`;
     if (this.selectedUserId) {
-      search_all.push({
+      appcondition += ` AND app_user_configurations.user_id = `+this.selectedUserId;
+      /*search_all.push({
         column_name: 'app_user_configurations.user_id',
         value: this.selectedUserId,
         operator: '=',
-      });
+      });*/
+      
+      
     }
 
     const payload = {
@@ -272,8 +283,8 @@ export class UserConfigurationComponent implements OnInit {
       includes: [
         {
           table_name: 'app_user_configurations',
-          join_type: 'INNER',
-          join_condition: `app_categories.category_id = app_user_configurations.category_id`,
+          join_type: 'LEFT',
+          join_condition: appcondition,
         },
       ],
       group_by: ['app_categories.id'],
@@ -286,7 +297,10 @@ export class UserConfigurationComponent implements OnInit {
 
           let commonTabs: any = [];
           this.tabs.map(function (ielem) {
-            commonTabs.push(...ielem.configurations);
+            if(ielem.configurations){
+              commonTabs.push(...ielem.configurations);
+            }
+            
           });
 
           /*const finalObject = commonTabs.reduce((acc: any, record: any) => {
@@ -311,37 +325,40 @@ export class UserConfigurationComponent implements OnInit {
           }*/
 
           this.tabs.map(function (ielem) {
-            ielem.configurations.map(function (elem: any) {
-              if (elem.config_field_type == 'multiselect' || elem.config_field_type == 'single_select') {
-                try {
-                  let options = [];
-                  if (elem.config_select_json) {
-                    // Always parse as string, since it may be a pretty-printed string
-                    options = JSON.parse(typeof elem.config_select_json === 'string' ? elem.config_select_json : JSON.stringify(elem.config_select_json));
+            if(ielem.configurations){
+              ielem.configurations.map(function (elem: any) {
+                if (elem.config_field_type == 'multiselect' || elem.config_field_type == 'single_select') {
+                  try {
+                    let options = [];
+                    if (elem.config_select_json) {
+                      // Always parse as string, since it may be a pretty-printed string
+                      options = JSON.parse(typeof elem.config_select_json === 'string' ? elem.config_select_json : JSON.stringify(elem.config_select_json));
+                    }
+                    const idType = options.length > 0 && typeof options[0].id === 'number' ? 'number' : 'string';
+                    let values = elem.config_value
+                      ? elem.config_value.split(',').map((v: string) => {
+                          if (idType === 'number') {
+                            const n = Number(v);
+                            return isNaN(n) ? v : n;
+                          }
+                          return v;
+                        })
+                      : [];
+                    if (elem.config_field_type == 'single_select') {
+                      elem.config_value = values.length > 0 ? values[0] : null;
+                    } else {
+                      elem.config_value = values;
+                    }
+                  } catch {
+                    elem.config_value = elem.config_field_type == 'multiselect' ? [] : null;
                   }
-                  const idType = options.length > 0 && typeof options[0].id === 'number' ? 'number' : 'string';
-                  let values = elem.config_value
-                    ? elem.config_value.split(',').map((v: string) => {
-                        if (idType === 'number') {
-                          const n = Number(v);
-                          return isNaN(n) ? v : n;
-                        }
-                        return v;
-                      })
-                    : [];
-                  if (elem.config_field_type == 'single_select') {
-                    elem.config_value = values.length > 0 ? values[0] : null;
-                  } else {
-                    elem.config_value = values;
-                  }
-                } catch {
-                  elem.config_value = elem.config_field_type == 'multiselect' ? [] : null;
                 }
-              }
-              if (elem.config_field_type == 'checkbox') {
-                elem.config_value = elem.config_value == 'true' && true;
-              }
-            });
+                if (elem.config_field_type == 'checkbox') {
+                  elem.config_value = elem.config_value == 'true' && true;
+                }
+              });
+            }
+            
           });
 
           if (this.tabs.length > 0) {
@@ -369,7 +386,7 @@ export class UserConfigurationComponent implements OnInit {
   }
 
   getconfig() {
-    const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories:{'0': 'ac1', '1': 'ac2'} } };
+    const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories:{'0': 'ac16', '1': 'ac17'} } };
 
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
@@ -398,6 +415,7 @@ export class UserConfigurationComponent implements OnInit {
   }
 
   initAllTabsForms() {
+    console.log('coming')
     this.tabs.forEach((tab) => {
       this.allTabsForm.addControl(
         tab.name,
@@ -412,18 +430,20 @@ export class UserConfigurationComponent implements OnInit {
   initFormForTab(tab: Tab) {
     const configurationsArray = this.allTabsForm.get(tab.name)?.get('configurations') as FormArray;
     configurationsArray.clear();
-
-    tab.configurations.forEach((config) => {
-      const fg = this.createConfigFormGroup(config);
-      // Always enable config_value for select/multiselect
-      if (
-        config.config_field_type === 'multiselect' ||
-        config.config_field_type === 'single_select'
-      ) {
-        fg.get('config_value')?.enable();
-      }
-      configurationsArray.push(fg);
-    });
+    if(tab.configurations){
+      tab.configurations.forEach((config) => {
+        const fg = this.createConfigFormGroup(config);
+        // Always enable config_value for select/multiselect
+        if (
+          config.config_field_type === 'multiselect' ||
+          config.config_field_type === 'single_select'
+        ) {
+          fg.get('config_value')?.enable();
+        }
+        configurationsArray.push(fg);
+      });
+    }
+    
     // Force change detection after form controls are updated
     this.cdr.detectChanges();
   }
@@ -548,7 +568,7 @@ export class UserConfigurationComponent implements OnInit {
           const key = 'record_deleted_successfully';
           const successMessage = this.translate.instant(key);
           this.toastr.success(successMessage);
-          this.loadAllItems('act1');
+          this.loadAllItems('act5');
         } else {
           const key = 'record_failed_deleted';
           const errorMessage = this.translate.instant(key);
@@ -629,7 +649,7 @@ export class UserConfigurationComponent implements OnInit {
             this.toastr.success(successMessage);
             //this.getconfig();
 
-            this.loadAllItems('act1');
+            this.loadAllItems('act5');
           } else {
             const key = 'record_failed_updated';
             const errorMessage = this.translate.instant(key);
@@ -648,6 +668,23 @@ export class UserConfigurationComponent implements OnInit {
   }
 
   getUserList() {
+    let search_all:any[] = [
+      {
+        column_name: 'users.status_id',
+        value: '1',
+        operator: '=',
+      }
+    ];
+    if(this.selectedUserRole != 'super_admin'){
+      search_all.push({
+        "value": [
+          "super_admin",
+          "company_admin"
+        ],
+        "operator": "NOT IN",
+        "column_name": "users.role"
+      });
+    }
     const param: any = {
       company_id: 1,
       print_query: false,
@@ -655,13 +692,7 @@ export class UserConfigurationComponent implements OnInit {
       start_index: 0,
       limit_range: 1000,
       sort_columns: [["concat(user_details.first_name, ' ', user_details.last_name)", 'asc']],
-      search_all: [
-        {
-          column_name: 'users.status_id',
-          value: '1',
-          operator: '=',
-        }
-      ],
+      search_all: search_all,
       includes: [
         {
           table_name: 'user_details',
@@ -701,7 +732,7 @@ export class UserConfigurationComponent implements OnInit {
   onUserSelect(userId: any) {
     this.selectedUserId = userId;
     // Also reload items filtered by user
-    this.loadAllItems('act1');
+    this.loadAllItems('act5');
   }
 
   onSubmitNewConfig() {
@@ -735,6 +766,7 @@ export class UserConfigurationComponent implements OnInit {
         display_config: newConfig.display_config,
         config_select_json: config_select_json,
         config_value: config_value,
+        user_id:this.selectedUserId
       },
     ];
 
@@ -760,7 +792,7 @@ export class UserConfigurationComponent implements OnInit {
 
           this.newConfigForm.reset();
           this.toggleMenu();
-          this.loadAllItems('act1');
+          this.loadAllItems('act5');
         } else {
           const key = 'record_failed_updated';
           const errorMessage = this.translate.instant(key);
@@ -831,7 +863,7 @@ export class UserConfigurationComponent implements OnInit {
 
   // Helper to get select options for a config FormGroup
   getSelectOptions(config: AbstractControl) {
-    return (config as any)._selectOptions || this.gridpaginationdropdownList;
+    return (config as any)._selectOptions;
   }
 
   openJsonEditor(index: number) {

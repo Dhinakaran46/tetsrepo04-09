@@ -347,6 +347,7 @@
           <label for="valueType" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_categorytype' | translate }}</label>
           <select
             id="valueType"
+            [disabled]=true
             formControlName="valueType"
             class="form-select mt-1 block w-10/12 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
           >
@@ -449,7 +450,7 @@
               <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px;">
                 <ng-container *ngIf="!jsonEditorOpenNew">
                   <ng-select
-                    [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value) || gridpaginationdropdownList"
+                    [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
                     [multiple]="false"
                     bindLabel="name"
                     bindValue="id"
@@ -482,7 +483,7 @@
               <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px;">
                 <ng-container *ngIf="!jsonEditorOpenNew">
                   <ng-select
-                    [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value) || gridpaginationdropdownList"
+                    [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
                     [multiple]="true"
                     bindLabel="name"
                     bindValue="id"
