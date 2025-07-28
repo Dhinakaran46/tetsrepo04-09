@@ -155,7 +155,9 @@ export class DataTableComponent implements OnInit, OnChanges {
 
 
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
+  @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
   public lastRenderedUuid: string | null = null;
+  public lastRenderedColumnChildUuid: string | null = null;
 
   constructor(
     private translate: TranslateService,
@@ -203,7 +205,7 @@ export class DataTableComponent implements OnInit, OnChanges {
       setTimeout(() => {
         this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
         // this.cdr.detectChanges();
-      }, 500);
+      }, 100);
 
       console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
 
@@ -753,9 +755,23 @@ export class DataTableComponent implements OnInit, OnChanges {
     ) {
       // Collapse if already open
       this.expandedColumnChildGrid = null;
+      if (this.columnChildMasterListContainer) {
+        this.columnChildMasterListContainer.clear();
+        this.lastRenderedColumnChildUuid = null;
+      }
     } else {
       // Open this column child grid, close any other
       this.expandedColumnChildGrid = { uuid, colHeader: col.header };
+      
+      // Create child datatable if not already rendered for this combination
+      const currentKey = `${uuid}-${col.header}`;
+      if (this.lastRenderedColumnChildUuid !== currentKey) {
+        setTimeout(() => {
+          this.createColumnChildMasterList(uuid, col.link_action);
+          this.lastRenderedColumnChildUuid = currentKey;
+          console.log("lastRenderedColumnChildUuid",this.lastRenderedColumnChildUuid)
+        }, 100);
+      }
     }
   }
 
@@ -769,31 +785,26 @@ export class DataTableComponent implements OnInit, OnChanges {
     console.log(this.childMasterListContainer);
   }
 
-  // ngAfterViewChecked() {
-  //   //console.log("ngAfterViewCheckedngAfterViewChecked123123");
-  //   // Dynamically create MasterListComponent when expandedItem changes and pass entity_name as input
-  //   // console.log("this.expandedItem", this.expandedItem);
-  //   // console.log("this.lastRenderedUuid", this.lastRenderedUuid);
-  //   // if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) { 
-  //   //   console.log("ngAfterViewCheckedngAfterViewChecked1111111111");
-  //   //   this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
-
-  //   //   console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
-  //   //   // this.createChildMasterList(this.expandedItem, 'child_details_user');
-  //   //   this.lastRenderedUuid = this.expandedItem;
-  //   // } else if (!this.expandedItem && this.childMasterListContainer) {
-  //   //   this.childMasterListContainer.clear();
-  //   //   this.lastRenderedUuid = null;
-  //   // }
-  // }
-
   createChildMasterList(uuid: string, entityName: string) {
 
     console.log("entityName", entityName);
+    console.log("uuid", uuid);
 
     if (!this.childMasterListContainer) return;
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.uuid = uuid;
+    componentRef.instance.entity_name = entityName;
+    componentRef.instance.nonGridPage = false;
+  }
+
+  createColumnChildMasterList(uuid: string, entityName: string) {
+    console.log("column entityName", entityName);
+    console.log("column uuid", uuid);
+
+    if (!this.columnChildMasterListContainer) return;
+    this.columnChildMasterListContainer.clear();
+    const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.uuid = uuid;
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;

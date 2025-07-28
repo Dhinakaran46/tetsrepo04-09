@@ -378,13 +378,6 @@
                         [uuid]="item['uuid']"
                         [entity_name]="this.masterInfo?.children.child_details.entity_name"
                       ></app-child-datatable> -->
-
-                      <!-- <master-list
-                          #childMasterListContainer
-                          [uuid]="item['uuid']"
-                          [entity_name]="this.masterInfo?.children.child_details.entity_name"
-                          [nonGridPage]="false"
-                        ></master-list> -->
                         
                         <!-- Child content -->
                         <ng-template #childMasterListContainer></ng-template>
@@ -400,6 +393,9 @@
                             [uuid]="item['uuid']"
                             [entity_name]="col.link_action"
                           ></app-child-datatable> -->
+
+                          <!-- Column child content -->
+                          <ng-template #columnChildMasterListContainer></ng-template>
                         </div>
                       </td>
                     </tr>
