@@ -75,7 +75,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any, item: any }>();
 
-  search = '';
+  search:any = '';
   selectedColumns: any[] = [];
   selectedColumn = '';
   searchCondition: string = 'contains';

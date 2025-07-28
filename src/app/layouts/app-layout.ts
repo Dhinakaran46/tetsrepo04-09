@@ -35,7 +35,9 @@ export class AppLayout {
   headerClass = '';
   ngOnInit() {
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+    console.log(apiUrl)
     const resn = JSON.parse(this.localstore.getData('config'));
+    console.log(resn)
     this.changeFavicon(apiUrl + '/' + resn.favicon);
     this.initAnimation();
     this.toggleLoader();
