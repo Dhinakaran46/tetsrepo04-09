@@ -36,7 +36,7 @@ export class AuthLayout {
   loading = false;
   store: any;
   showTopButton = false;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   logo: any;
   authentication_banner: any;
   authentication_background_1: any;
@@ -192,7 +192,7 @@ export class AuthLayout {
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
-          const res = response.data?.[0]?.result || {};
+          const res = response.data?.[0]?.result?.data || {};
   
           if (Object.keys(res).length > 0) {
             if (res.favicon) {

@@ -123,7 +123,7 @@ export class MasterListComponent implements OnChanges {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   statuses: any = {
     1: {
       value: 'table_status_val_0',
@@ -426,30 +426,43 @@ export class MasterListComponent implements OnChanges {
   }
   searchData(input: any) {
     const clonedListQuery = this.listQuery;
+
+    // Handling search in "where" conditions
     if (input.where.data.length) {
       const query = input.where.data;
-      const search = input.where.search;
-      if (search == '') {
-        const orgListQuery = this.defaultQuery;
+      let search = input.where.search;
 
-        clonedListQuery.search_any = [];
-        clonedListQuery.search_any = [...orgListQuery.search_any];
-        this.fetchData(clonedListQuery);
-        return;
+      // If search is cleared, ensure it's an empty string
+      if (search === null || search === undefined || search.trim() === '') {
+        search = ''; // Reset search to empty string if it's cleared
       }
 
-      if (query.length === 1 && query[0].column_name === '') {
-        clonedListQuery.search_any = [...clonedListQuery.search_any];
+      if (search === '') {
+        const orgListQuery = this.defaultQuery;
+        clonedListQuery.search_any = [...orgListQuery.search_any];
       } else {
-        clonedListQuery.search_any = [...query];
+        clonedListQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
       }
     }
 
+    // Handling search in "having" conditions
     if (input.having.data.length) {
       const query = input.having.data;
-      const search = input.having.search;
-      if (search.length) clonedListQuery.having_any_conditions = [...query];
+      let search = input.having.search;
+
+      // If search is cleared, ensure it's an empty string
+      if (search === null || search === undefined || search.trim() === '') {
+        search = ''; // Reset search to empty string if it's cleared
+      }
+
+      // Only update having_any_conditions if there's a non-empty search value
+      if (search && search.length) {
+        clonedListQuery.having_any_conditions = [...query];
+      } else {
+        delete clonedListQuery.having_any_conditions;
+      }
     }
+
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.fetchData(clonedListQuery);
@@ -744,10 +757,23 @@ export class MasterListComponent implements OnChanges {
                     key.toLowerCase().includes('updated_at')) &&
                   this.isDate(formattedItem[key])
                 ) {
-                  const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
-                  if (transformedDate) {
-                    formattedItem[key] = transformedDate;
-                  }
+                  this.headercolumns = this.headercolumns.map((headerItem: any) => {
+                    console.log(headerItem);
+                    if (headerItem.header === key) {
+                      if (headerItem.field_type_id == 5) {
+                        const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      } else if (headerItem.field_type_id == 7) {
+                        const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      }
+                    }
+                    return headerItem;
+                  });
                 }
               }
 

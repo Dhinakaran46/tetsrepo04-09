@@ -17,6 +17,7 @@ import { DocumentationComponent } from './pages/documentation/documentation.comp
 import { ImportConfirmDeactivateGuard } from './guards/impotrt-confirm-deactivate.guard';
 import { ExampleClientDatatableComponent } from './pages/example-client-datatable/example-client-datatable.component';
 import { EmailTemplateAssignmentComponent } from './pages/email-template-assignment/email-template-assignment.component';
+import { ApiBaseUrlComponent } from './pages/api-base-url/api-base-url.component';
 export const routes: Routes = [
   {
     path: 'documentation',
@@ -117,6 +118,11 @@ export const routes: Routes = [
         title: 'Reset password',
       },
     ],
+  },
+  {
+    path: 'api-base-url',
+    component: ApiBaseUrlComponent,
+    title: 'API BASE URL COMPONENT',
   },
   { path: '**', redirectTo: '/not-found', pathMatch: 'full' },
 ];

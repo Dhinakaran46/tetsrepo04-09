@@ -36,7 +36,7 @@ import { TranslateService } from '@ngx-translate/core';
   templateUrl: './profile.component.html',
 })
 export class ProfileComponent implements OnInit {
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   profile_pic: any;
   profileForm: FormGroup;
   countryCodes: string[] = [];

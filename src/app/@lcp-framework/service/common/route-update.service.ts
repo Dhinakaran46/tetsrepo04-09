@@ -26,7 +26,7 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root',
 })
 export class RouteUpdateService {
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   private permissionsListSubject = new BehaviorSubject<any>(null);
   routeList: { path: string; component: any }[] = [];
 
