@@ -1,4 +1,20 @@
-import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef, ChangeDetectorRef, ViewChildren, QueryList, ViewContainerRef, AfterViewChecked } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  TemplateRef,
+  OnChanges,
+  SimpleChanges,
+  ViewChild,
+  ElementRef,
+  ChangeDetectorRef,
+  ViewChildren,
+  QueryList,
+  ViewContainerRef,
+  AfterViewChecked,
+} from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,7 +30,6 @@ import { commonConfig } from '../../config/common.config';
 import { DatePipe, Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
-import { ChildDatatableComponent } from '../child-datatable/child-datatable.component';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
 import { LoaderComponent } from '../loader/loader.component';
@@ -35,7 +50,7 @@ interface InputTypes {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent, MasterListComponent, LoaderComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -209,10 +224,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) {
-
       setTimeout(() => {
         this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
-      }, 100);
+      }, 250);
 
       this.lastRenderedUuid = this.expandedItem;
     } else if (!this.expandedItem && this.childMasterListContainer) {
@@ -752,11 +766,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   toggleColumnChildGrid(uuid: string, col: any) {
-    if (
-      this.expandedColumnChildGrid &&
-      this.expandedColumnChildGrid.uuid === uuid &&
-      this.expandedColumnChildGrid.colHeader === col.header
-    ) {
+    if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === uuid && this.expandedColumnChildGrid.colHeader === col.header) {
       // Collapse if already open
       this.expandedColumnChildGrid = null;
       if (this.columnChildMasterListContainer) {
@@ -791,19 +801,16 @@ export class DataTableComponent implements OnInit, OnChanges {
         setTimeout(() => {
           this.createColumnChildMasterList(uuid, col.link_action);
           this.lastRenderedColumnChildUuid = currentKey;
-        }, 100);
+        }, 250);
       }
     }
   }
 
   isColumnChildGridExpanded(uuid: string, col: any): boolean {
-    return !!this.expandedColumnChildGrid &&
-     this.expandedColumnChildGrid.uuid === uuid &&
-     this.expandedColumnChildGrid.colHeader === col.header;
+    return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === uuid && this.expandedColumnChildGrid.colHeader === col.header;
   }
 
   createChildMasterList(uuid: string, entityName: string) {
-
     if (!this.childMasterListContainer) return;
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
@@ -813,7 +820,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   createColumnChildMasterList(uuid: string, entityName: string) {
-
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
