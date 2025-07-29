@@ -307,7 +307,8 @@ export class ExportTemplateComponent implements OnInit {
   }
 
   downloadExcel(): void {
-    const fileUrl = `${environment.apiUrl}/${this.commonFile}`;
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+    const fileUrl = `${apiUrl}/${this.commonFile}`;
 
     this.http.get(fileUrl, { responseType: 'blob' }).subscribe({
       next: (blob) => {

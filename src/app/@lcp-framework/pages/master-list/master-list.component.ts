@@ -123,7 +123,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   statuses: any = {
     1: {
       value: 'table_status_val_0',
@@ -731,15 +731,26 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
             this.items = response.data.records.map((item: any, index: any) => {
               const formattedItem = { ...item };
               for (const key in formattedItem) {
-                if (
-                  formattedItem.hasOwnProperty(key) &&
+                if (formattedItem.hasOwnProperty(key) &&
                   (key.toLowerCase().includes('date') || key.toLowerCase().includes('deleted_at') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
-                  this.isDate(formattedItem[key])
-                ) {
-                  const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
-                  if (transformedDate) {
-                    formattedItem[key] = transformedDate;
-                  }
+                  this.isDate(formattedItem[key])) {
+                  this.headercolumns = this.headercolumns.map((headerItem: any) => {
+                    console.log(headerItem)
+                    if (headerItem.header === key) {
+                      if (headerItem.field_type_id == 5) {
+                        const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      } else if (headerItem.field_type_id == 7) {
+                        const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      }
+                    }
+                    return headerItem;
+                  });
                 }
               }
 

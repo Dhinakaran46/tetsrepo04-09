@@ -29,7 +29,7 @@ export class DocumentationComponent {
   currentSection: string = 'getting-started';
   config: any;
   user_info: any;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
 
   constructor(private localstore: LocalStorageService) {}
 

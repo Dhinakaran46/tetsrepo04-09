@@ -390,7 +390,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
-          const res = response.data?.[0]?.result || {};
+          const res = response.data?.[0]?.result?.data || {};
 
   console.log(res);
           if (Object.keys(res).length > 0) {

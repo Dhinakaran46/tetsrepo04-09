@@ -49,7 +49,7 @@ export class SidebarComponent {
   parentDropdown: string = '';
   user_info: any;
   COMMON_CONFIG = commonConfig;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
 
   showssmenu: boolean = true;

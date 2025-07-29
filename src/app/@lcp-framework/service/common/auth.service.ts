@@ -11,10 +11,15 @@ import { CryptoHttpService } from '../crypto-http.service';
   providedIn: 'root',
 })
 export class AuthService {
+
+  private get apiUrl() {
+    return localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+  }
+
   constructor(private http: HttpClient, private localstore: LocalStorageService, private cryptoHttp: CryptoHttpService) {}
 
   login(credentials: { email: string; password: string }): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.login}`, credentials);
+    return this.http.post<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.login}`, credentials);
   }
 
   logout(): Observable<any> {
@@ -24,16 +29,16 @@ export class AuthService {
       Accept: 'application/json',
     });
 
-    return this.http.get<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.logout}`, { headers });
+    return this.http.get<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.logout}`, { headers });
   }
 
   languageList(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getLanguageContent}`, data);
+    return this.http.post<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getLanguageContent}`, data);
   }
 
   generatePowerBiEmbedToken(data: any): Observable<any> {
     return this.http.get<any>(
-      `${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generatePowerBiEmbedToken}?reportId=${data.reportId}&groupId=${data.groupId}`
+      `${this.apiUrl}${environment.apiAddress}${commonConfig.API.generatePowerBiEmbedToken}?reportId=${data.reportId}&groupId=${data.groupId}`
     );
   }
 }
