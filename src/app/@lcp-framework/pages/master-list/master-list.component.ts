@@ -41,7 +41,7 @@ interface FetchDataParams {
   sort_columns: any;
   search_any: any;
   search_all: any;
-  cte:any;
+  cte: any;
   having_conditions: any;
   hnditions: any;
   group_by: any;
@@ -62,14 +62,14 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements AfterViewInit, OnChanges {
-  @Input() uuid: any = null; // Receive UUID from child component
-  @Input() entity_name: any = ''; // Receive entity_name from child component
+export class MasterListComponent implements OnChanges {
+  @Input() uuid: any = null;
+  @Input() entity_name: any = '';
   @Input() popupName: any = '';
   @Input() isViewPopupOpen: boolean = false;
   @Input() popupEntityName: any = '';
   @Input() selectedItemUuid: string | null = null;
-  @Input() set popupConfig(config: { popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean } | null) {
+  @Input() set popupConfig(config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean } | null) {
     if (config) {
       this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
     }
@@ -79,7 +79,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   @Input()
   set nonGridPage(value: boolean) {
     this._nonGridPage = value;
-  this.cdr.detectChanges();
+    this.cdr.detectChanges();
   }
 
   get nonGridPage() {
@@ -167,7 +167,8 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   };
   uniqueId!: string | null;
   noPopupPermission: boolean = false;
-  isUUid:boolean = true;
+  noPermission: boolean = false;
+  isUUid: boolean = true;
 
   constructor(
     private toastr: ToastrService,
@@ -194,14 +195,13 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       const uuid = params.get('uuid');
-      if(id){
+      if (id) {
         this.isUUid = false;
-      }else{
-        this.isUUid = true
+      } else {
+        this.isUUid = true;
       }
       const value = id || uuid;
       this.uniqueId = value;
-      
     });
 
     this.changePasswordForm = this.formBuilder.group(
@@ -230,23 +230,32 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
   }
 
-  ngAfterViewInit() {
+  async ngAfterContentInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
 
     let pageInfo: any;
-    /*if (this.uuid && this.entity_name) {
-      this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
-        pageInfo = val;
-        console.log('Fetched PageInfo:', pageInfo);
-      });
-    } else {*/
-    pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    console.log(pageInfo);
-    /*}*/
+    if (this.uuid && this.entity_name) {
+      const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
+      pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
+      const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
+      this.setupPageInfo(pageInfo, defaultPermission);
+    } else {
+      pageInfo = this.route.snapshot.data['pageInfo'] || '';
+      const defaultPermission = this.route.snapshot.data['defaultPermission'] || '';
+      this.setupPageInfo(pageInfo, defaultPermission);
+    }
+  }
 
+  setupPageInfo(pageInfo: any, defaultPermission: any) {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+
+    if (defaultPermission !== true) {
+      this.noPermission = true;
+      return;
+    }
+
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
@@ -263,22 +272,16 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
       this.enableCheckBox = masterListConfig.enable_row_checkbox;
 
-
-      // Set the title: if entity_name is passed as input, use it as title, otherwise use default
       if (this.entity_name) {
         this.title = this.entity_name;
       } else {
         this.title = masterListConfig.fullEntity;
       }
-      console.log('this.title.pass.from.master.list', this.title);
 
-
-      //this.title = masterListConfig.fullEntity;
       this.defaultQuery = masterListConfig.ListQuery;
       this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
       this.listQuery.start_index = 0;
 
-      //added
       if (this.entity_name) {
         this.listQuery.entity_name = this.entity_name;
       }
@@ -289,7 +292,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
       this.headercolumns = [];
       this.items = [];
     }
-   // this.cdr.detectChanges(); 
   }
 
   async initStore() {
@@ -421,17 +423,17 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   }
   searchData(input: any) {
     const clonedListQuery = this.listQuery;
-    
+
     // Handling search in "where" conditions
     if (input.where.data.length) {
       const query = input.where.data;
       let search = input.where.search;
-      
+
       // If search is cleared, ensure it's an empty string
       if (search === null || search === undefined || search.trim() === '') {
-        search = '';  // Reset search to empty string if it's cleared
+        search = ''; // Reset search to empty string if it's cleared
       }
-      
+
       if (search === '') {
         const orgListQuery = this.defaultQuery;
         clonedListQuery.search_any = [...orgListQuery.search_any];
@@ -439,17 +441,17 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
         clonedListQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
       }
     }
-  
+
     // Handling search in "having" conditions
     if (input.having.data.length) {
       const query = input.having.data;
       let search = input.having.search;
-  
+
       // If search is cleared, ensure it's an empty string
       if (search === null || search === undefined || search.trim() === '') {
-        search = '';  // Reset search to empty string if it's cleared
+        search = ''; // Reset search to empty string if it's cleared
       }
-  
+
       // Only update having_any_conditions if there's a non-empty search value
       if (search && search.length) {
         clonedListQuery.having_any_conditions = [...query];
@@ -457,12 +459,11 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
         delete clonedListQuery.having_any_conditions;
       }
     }
-  
+
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.fetchData(clonedListQuery);
   }
-  
 
   exportTable(item: any) {
     if (this.masterInfo.permissions.export_excel) {
@@ -628,7 +629,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
       '$session_user_id',
       this.user_info.main.id
     );
-    console.log(this.uniqueId);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
@@ -637,7 +637,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }
 
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
-    console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -745,11 +744,15 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
             this.items = response.data.records.map((item: any, index: any) => {
               const formattedItem = { ...item };
               for (const key in formattedItem) {
-                if (formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('deleted_at') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
-                  this.isDate(formattedItem[key])) {
+                if (
+                  formattedItem.hasOwnProperty(key) &&
+                  (key.toLowerCase().includes('date') ||
+                    key.toLowerCase().includes('deleted_at') ||
+                    key.toLowerCase().includes('created_at') ||
+                    key.toLowerCase().includes('updated_at')) &&
+                  this.isDate(formattedItem[key])
+                ) {
                   this.headercolumns = this.headercolumns.map((headerItem: any) => {
-                    console.log(headerItem)
                     if (headerItem.header === key) {
                       if (headerItem.field_type_id == 5) {
                         const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
@@ -837,14 +840,11 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   }
 
   handleCustomAction(action: string) {
-    console.log(action);
-    console.log(this.masterInfo);
     if (action === 'addNew' && this.masterInfo.children.add) {
       this.router.navigate([`${this.masterInfo.children.add.target}`]);
     }
 
     if (action === 'addNew' && this.masterInfo.children.popup_add) {
-      console.log(this.masterInfo)
       // Permission check for popup_add
       if (!this.masterInfo.permissions.popup_create && !this.masterInfo.permissions.create) {
         this.noPopupPermission = true;
@@ -852,7 +852,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
         return;
       }
       this.loadingpopup = true;
-      console.log('coming');
       this.popupName = 'popup_add';
       this.selectedItemUuid = null;
       this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
@@ -863,7 +862,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }
   }
   editPopupItem(item: any) {
-    console.log(this.masterInfo)
     // Permission check for popup_edit
     if (!this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit) {
       this.noPopupPermission = true;
@@ -872,8 +870,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }
     this.loadingpopup = true;
     this.popupName = 'popup_edit';
-    console.log(this.popupName);
-    console.log(this.masterInfo);
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = this.masterInfo.children.popup_edit.entity_name;
     this.isViewPopupOpen = true;
@@ -884,23 +880,20 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   }
   viewPopupItem(item: any) {
     // Permission check for popup_details
-    console.log(this.masterInfo)
     if (this.masterInfo.permissions.popup_details || this.masterInfo.permissions.details) {
-     
-    
-    this.loadingpopup = true;
-    this.popupName = 'popup_details';
-    this.selectedItemUuid = item.uuid;
-    this.popupEntityName = this.masterInfo.children.popup_details.entity_name;
-    this.isViewPopupOpen = true;
-    setTimeout(() => {
-      this.loadingpopup = false;
-    }, 500);
-  }else{
-    this.noPopupPermission = true;
-    this.isViewPopupOpen = true;
-    return;
-  }
+      this.loadingpopup = true;
+      this.popupName = 'popup_details';
+      this.selectedItemUuid = item.uuid;
+      this.popupEntityName = this.masterInfo.children.popup_details.entity_name;
+      this.isViewPopupOpen = true;
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    } else {
+      this.noPopupPermission = true;
+      this.isViewPopupOpen = true;
+      return;
+    }
   }
   closeViewPopup() {
     this.isViewPopupOpen = false;
@@ -912,10 +905,8 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     if (this.masterInfo.children.edit) {
       let targetRoute = this.masterInfo.children.edit.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -924,7 +915,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      console.log(this.masterInfo.children.export_excel)
       this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id).subscribe({
         next: (response: ExportResponse) => {
           try {
@@ -1003,13 +993,10 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
   assignItem(item: any) {
     if (this.masterInfo.children.assign) {
-      
       let targetRoute = this.masterInfo.children.assign.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -1020,14 +1007,12 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     this.loading = true;
 
     if (this.masterInfo.children.record_export) {
-
       let targetRoute = this.masterInfo.children.record_export.target;
       let recordID = item.id;
       if (targetRoute.includes(':uuid') && item.uuid) {
-         recordID = item.uuid;
-      }else if (targetRoute.includes(':id') && item.id) {
-         recordID = item.id;
-
+        recordID = item.uuid;
+      } else if (targetRoute.includes(':id') && item.id) {
+        recordID = item.id;
       }
 
       this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID).subscribe({
@@ -1071,14 +1056,10 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
   printItem(item: any) {
     if (this.masterInfo.children.print) {
-      
-
       let targetRoute = this.masterInfo.children.print.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -1182,7 +1163,6 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
 
   deleteItem(item: any) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
-      
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
         this.commonService.procedureCall(procedureParams).subscribe({
@@ -1250,21 +1230,14 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
   }
 
   viewItem(item: any) {
-    console.log(item)
     if (this.masterInfo.children.details) {
-    
-      
-      
       let targetRoute = this.masterInfo.children.details.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming')
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
-
     }
   }
 
@@ -1294,37 +1267,29 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }, 500);
   }
 
-  onLinkComponentClick(event: { col: any, item: any }) {
-    console.log(event.col)
+  onLinkComponentClick(event: { col: any; item: any }) {
     if (event.col.link_type === 'component') {
       const mode = event.col.link_mode || 'popup_details';
-      console.log(mode);
-      console.log(this.masterInfo.permissions);
-      if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details){
+      if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
-      }else if(mode == 'popup_add' && !this.masterInfo.permissions.popup_create && !this.masterInfo.permissions.create){
+      } else if (mode == 'popup_add' && !this.masterInfo.permissions.popup_create && !this.masterInfo.permissions.create) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
-      }else if(mode == 'popup_edit' && !this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit){  
+      } else if (mode == 'popup_edit' && !this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
-      
       }
-
 
       this.popupName = mode;
-      console.log(this.popupName)
       this.selectedItemUuid = event.item.uuid;
-      if(mode === 'popup_add'){
+      if (mode === 'popup_add') {
         this.selectedItemUuid = null;
       }
-      console.log(this.selectedItemUuid)
       this.popupEntityName = event.col.link_action;
-      console.log(this.popupEntityName)
       this.isViewPopupOpen = true;
       this.loadingpopup = true;
       setTimeout(() => {
@@ -1345,16 +1310,18 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
       if (popupName === 'popup_add') {
         menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'add' || item.action_slug === 'popup_add'));
       } else if (popupName === 'popup_edit') {
-        menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit'));
+        menuItem = unorgmenuList.find(
+          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit')
+        );
       } else if (popupName === 'popup_details') {
-        menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details'));
+        menuItem = unorgmenuList.find(
+          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
+        );
       }
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
     }
-    console.log(menuPermissionId);
-    console.log(permissions);
     let hasPermission = true;
     if (menuPermissionId && userData?.main?.permissions && Array.isArray(userData.main.permissions)) {
       const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
@@ -1374,45 +1341,7 @@ export class MasterListComponent implements AfterViewInit, OnChanges {
     }, 500);
   }
 
-  async ngOnChanges(changes: SimpleChanges) {
-    if (changes['entity_name'] && this.entity_name) {
-      try {
-        const pageInfo = await this.routeUpdateService.getPageInfo(this.entity_name);
-        if (pageInfo) {
-          this.masterInfo = pageInfo;
-
-          this.resultsPerPage = parseInt(this.config.grid_pagination_default);
-          this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
-
-          if (this.user_info.main?.policies) {
-            this.policyData = this.user_info.main?.policies || null;
-          }
-
-          if (this.masterInfo.ListQuery.entity_name == 'user') {
-            this.allowPasswordModal = true;
-          }
-          
-          const masterListConfig = pageInfo;
-          const translateTitle = this.translate.instant(masterListConfig.fullEntity);
-          this.titleService.setTitle(translateTitle);
-          this.enableCheckBox = masterListConfig.enable_row_checkbox;
-          this.title = masterListConfig.fullEntity;
-          this.defaultQuery = masterListConfig.ListQuery;
-          this.listQuery = JSON.parse(JSON.stringify(this.defaultQuery));
-          this.listQuery.start_index = 0;
-          this.fetchAttachedPolicies(this.listQuery);
-        } else {
-          this.title = 'Default Title';
-          this.headercolumns = [];
-          this.items = [];
-        }
-        //this.cdr.detectChanges();
-      } catch (e) {
-        this.title = 'Default Title';
-        this.headercolumns = [];
-        this.items = [];
-        //this.cdr.detectChanges(); 
-      }
-    }
+  ngOnChanges(changes: SimpleChanges) {
+    // Optionally handle other input changes if needed
   }
 }

@@ -1,4 +1,20 @@
-import { Component, Input, Output, EventEmitter, OnInit, TemplateRef, OnChanges, SimpleChanges, ViewChild, ElementRef, ChangeDetectorRef, ViewChildren, QueryList, ViewContainerRef, AfterViewChecked } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  TemplateRef,
+  OnChanges,
+  SimpleChanges,
+  ViewChild,
+  ElementRef,
+  ChangeDetectorRef,
+  ViewChildren,
+  QueryList,
+  ViewContainerRef,
+  AfterViewChecked,
+} from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,10 +30,8 @@ import { commonConfig } from '../../config/common.config';
 import { DatePipe, Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
-import { ChildDatatableComponent } from '../child-datatable/child-datatable.component';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
-import { LoaderComponent } from '../loader/loader.component';
 
 interface SearchCondition {
   id: string;
@@ -35,7 +49,7 @@ interface InputTypes {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ChildDatatableComponent, MasterListComponent, LoaderComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -47,7 +61,7 @@ interface InputTypes {
 })
 export class DataTableComponent implements OnInit, OnChanges {
   expandedItem: any = null;
-  expandedColumnChildGrid: { uuid: string, colHeader: string } | null = null;
+  expandedColumnChildGrid: { uuid: string; colHeader: string } | null = null;
   @Input() unique_id: any;
   @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
@@ -75,9 +89,9 @@ export class DataTableComponent implements OnInit, OnChanges {
   @Output() columnSort = new EventEmitter<any>();
   @Output() searchQuery = new EventEmitter<any>();
   @Output() advancedSearchQuery = new EventEmitter<any>();
-  @Output() linkComponentClick = new EventEmitter<{ col: any, item: any }>();
+  @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
 
-  search:any = '';
+  search: any = '';
   selectedColumns: any[] = [];
   selectedColumn = '';
   searchCondition: string = 'contains';
@@ -153,9 +167,10 @@ export class DataTableComponent implements OnInit, OnChanges {
   user_info: any;
   config: any;
 
-
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
+  @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
   public lastRenderedUuid: string | null = null;
+  public lastRenderedColumnChildUuid: string | null = null;
 
   constructor(
     private translate: TranslateService,
@@ -167,7 +182,6 @@ export class DataTableComponent implements OnInit, OnChanges {
     public location: Location,
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef
-
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -176,53 +190,55 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   toggleRow(item: any) {
-    
     if (this.expandedItem === item) {
       this.expandedItem = null;
       // Also collapse column child grid for this row if open
       if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === item) {
         this.expandedColumnChildGrid = null;
+        if (this.columnChildMasterListContainer) {
+          this.columnChildMasterListContainer.clear();
+          this.lastRenderedColumnChildUuid = null;
+        }
       }
     } else {
-      // Collapse any previously expanded row's column child grid if open
+      // Close any previously expanded row's column child grid if open
       if (this.expandedItem !== null && this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === this.expandedItem) {
         this.expandedColumnChildGrid = null;
+        if (this.columnChildMasterListContainer) {
+          this.columnChildMasterListContainer.clear();
+          this.lastRenderedColumnChildUuid = null;
+        }
       }
-      this.expandedItem = item;
-      // Also collapse column child grid for this row if open
+
+      // Close any column child grid for the new row being expanded
       if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === item) {
         this.expandedColumnChildGrid = null;
+        if (this.columnChildMasterListContainer) {
+          this.columnChildMasterListContainer.clear();
+          this.lastRenderedColumnChildUuid = null;
+        }
       }
+
+      this.expandedItem = item;
     }
 
-
-    if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) { 
-      console.log("ngAfterViewCheckedngAfterViewChecked1111111111");
-
-
+    if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) {
       setTimeout(() => {
         this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
-        // this.cdr.detectChanges();
-      }, 500);
-
-      console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
+      }, 250);
 
       this.lastRenderedUuid = this.expandedItem;
     } else if (!this.expandedItem && this.childMasterListContainer) {
       this.childMasterListContainer.clear();
       this.lastRenderedUuid = null;
     }
-
   }
 
   ngOnInit() {
-    console.log(this.unique_id);
     this.headercolumns.forEach((col) => {
       col.sortDirection = '';
       col.colFilterHide = false;
     });
-
-    console.log(this.items);
 
     this.filteredItems = [...this.items];
 
@@ -418,7 +434,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(this.masterInfo);
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
@@ -746,54 +761,63 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   toggleColumnChildGrid(uuid: string, col: any) {
-    if (
-      this.expandedColumnChildGrid &&
-      this.expandedColumnChildGrid.uuid === uuid &&
-      this.expandedColumnChildGrid.colHeader === col.header
-    ) {
+    if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === uuid && this.expandedColumnChildGrid.colHeader === col.header) {
       // Collapse if already open
       this.expandedColumnChildGrid = null;
+      if (this.columnChildMasterListContainer) {
+        this.columnChildMasterListContainer.clear();
+        this.lastRenderedColumnChildUuid = null;
+      }
     } else {
-      // Open this column child grid, close any other
+      // Close main row expansion if open for this row
+      if (this.expandedItem === uuid) {
+        this.expandedItem = null;
+        if (this.childMasterListContainer) {
+          this.childMasterListContainer.clear();
+          this.lastRenderedUuid = null;
+        }
+      }
+
+      // Close any other column child grid
+      if (this.expandedColumnChildGrid && (this.expandedColumnChildGrid.uuid !== uuid || this.expandedColumnChildGrid.colHeader !== col.header)) {
+        this.expandedColumnChildGrid = null;
+        if (this.columnChildMasterListContainer) {
+          this.columnChildMasterListContainer.clear();
+          this.lastRenderedColumnChildUuid = null;
+        }
+      }
+
+      // Open this column child grid
       this.expandedColumnChildGrid = { uuid, colHeader: col.header };
+
+      // Create child datatable if not already rendered for this combination
+      const currentKey = `${uuid}-${col.header}`;
+      if (this.lastRenderedColumnChildUuid !== currentKey) {
+        setTimeout(() => {
+          this.createColumnChildMasterList(uuid, col.link_action);
+          this.lastRenderedColumnChildUuid = currentKey;
+        }, 250);
+      }
     }
   }
 
   isColumnChildGridExpanded(uuid: string, col: any): boolean {
-    return !!this.expandedColumnChildGrid &&
-      this.expandedColumnChildGrid.uuid === uuid &&
-      this.expandedColumnChildGrid.colHeader === col.header;
+    return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === uuid && this.expandedColumnChildGrid.colHeader === col.header;
   }
-
-  ngAfterViewInit() {
-    console.log(this.childMasterListContainer);
-  }
-
-  // ngAfterViewChecked() {
-  //   //console.log("ngAfterViewCheckedngAfterViewChecked123123");
-  //   // Dynamically create MasterListComponent when expandedItem changes and pass entity_name as input
-  //   // console.log("this.expandedItem", this.expandedItem);
-  //   // console.log("this.lastRenderedUuid", this.lastRenderedUuid);
-  //   // if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) { 
-  //   //   console.log("ngAfterViewCheckedngAfterViewChecked1111111111");
-  //   //   this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
-
-  //   //   console.log("children.child_details.entity_name", this.masterInfo?.children.child_details.entity_name);
-  //   //   // this.createChildMasterList(this.expandedItem, 'child_details_user');
-  //   //   this.lastRenderedUuid = this.expandedItem;
-  //   // } else if (!this.expandedItem && this.childMasterListContainer) {
-  //   //   this.childMasterListContainer.clear();
-  //   //   this.lastRenderedUuid = null;
-  //   // }
-  // }
 
   createChildMasterList(uuid: string, entityName: string) {
-
-    console.log("entityName", entityName);
-
     if (!this.childMasterListContainer) return;
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.uuid = uuid;
+    componentRef.instance.entity_name = entityName;
+    componentRef.instance.nonGridPage = false;
+  }
+
+  createColumnChildMasterList(uuid: string, entityName: string) {
+    if (!this.columnChildMasterListContainer) return;
+    this.columnChildMasterListContainer.clear();
+    const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.uuid = uuid;
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;

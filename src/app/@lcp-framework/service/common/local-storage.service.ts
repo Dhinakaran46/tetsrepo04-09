@@ -259,7 +259,6 @@ export class LocalStorageService implements OnInit {
   }
 
   formatPayloadWithPolicyConditions(payload: any, data: any, attachedPolicies: any[]) {
-    console.log(data);
     if (!data || !attachedPolicies.length) return payload;
     for (let policy of attachedPolicies) {
       if (!data[policy]) continue;
