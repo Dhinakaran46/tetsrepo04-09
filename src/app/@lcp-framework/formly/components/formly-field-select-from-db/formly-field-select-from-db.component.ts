@@ -84,6 +84,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     const tableName = this.props['table'] || this.props['primary_table'];
     const valueColumn = this.props['valueColumn'];
     const labelColumn = this.props['labelColumn'];
+    const uuidColumn = this.props['uuidColumn'] ? this.props['uuidColumn'] : 'uuid';
 
     if (tableName && labelColumn && valueColumn) {
       const updatedSearchAll = this.props['search_all']
@@ -109,14 +110,14 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
             company_id: 1,
             search_all,
             limit_range,
-            print_query:true,
+            print_query: true,
             start_index: 0,
             sort_columns,
             primary_table: tableName,
             select_columns: [
               [valueColumn, 'value'],
               [labelColumn, 'label'],
-              ["uuid", 'uuid'],
+              [uuidColumn, 'uuid'],
             ],
             includes,
           },
@@ -216,8 +217,8 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   }
 
   onEditOption(option: any) {
-    console.log(option)
-    console.log(this.to['enable_edit'])
+    console.log(option);
+    console.log(this.to['enable_edit']);
     if (!this.to['enable_edit']) return;
     const entityName = this.getAddEditForm();
     const fieldKey = this.getFieldKey();
