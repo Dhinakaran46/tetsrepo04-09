@@ -167,6 +167,7 @@ export class MasterListComponent implements OnChanges {
   };
   uniqueId!: string | null;
   noPopupPermission: boolean = false;
+  noPermission: boolean = false;
   isUUid: boolean = true;
 
   constructor(
@@ -231,34 +232,30 @@ export class MasterListComponent implements OnChanges {
 
   async ngAfterContentInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
-    console.log('this.config', this.config);
-
-    // let pageInfo: any;
-    /*if (this.uuid && this.entity_name) {
-      this.routeUpdateService.getPageInfo(this.entity_name).subscribe((val: any) => {
-        pageInfo = val;
-        console.log('Fetched PageInfo:', pageInfo);
-        });
-        } else {*/
-    // pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    // console.log(pageInfo);
-    /*}*/
 
     let pageInfo: any;
     if (this.uuid && this.entity_name) {
       const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
       pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
-      this.setupPageInfo(pageInfo);
+      const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
+      this.setupPageInfo(pageInfo, defaultPermission);
     } else {
       pageInfo = this.route.snapshot.data['pageInfo'] || '';
-      this.setupPageInfo(pageInfo);
+      const defaultPermission = this.route.snapshot.data['defaultPermission'] || '';
+      this.setupPageInfo(pageInfo, defaultPermission);
     }
   }
 
-  setupPageInfo(pageInfo: any) {
+  setupPageInfo(pageInfo: any, defaultPermission: any) {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+
+    if (defaultPermission !== true) {
+      this.noPermission = true;
+      return;
+    }
+
     if (pageInfo && this.resultsPerPage) {
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
@@ -632,7 +629,6 @@ export class MasterListComponent implements OnChanges {
       '$session_user_id',
       this.user_info.main.id
     );
-    console.log(this.uniqueId);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
@@ -641,7 +637,6 @@ export class MasterListComponent implements OnChanges {
     }
 
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
-    console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -758,7 +753,6 @@ export class MasterListComponent implements OnChanges {
                   this.isDate(formattedItem[key])
                 ) {
                   this.headercolumns = this.headercolumns.map((headerItem: any) => {
-                    console.log(headerItem);
                     if (headerItem.header === key) {
                       if (headerItem.field_type_id == 5) {
                         const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
@@ -846,14 +840,11 @@ export class MasterListComponent implements OnChanges {
   }
 
   handleCustomAction(action: string) {
-    console.log(action);
-    console.log(this.masterInfo);
     if (action === 'addNew' && this.masterInfo.children.add) {
       this.router.navigate([`${this.masterInfo.children.add.target}`]);
     }
 
     if (action === 'addNew' && this.masterInfo.children.popup_add) {
-      console.log(this.masterInfo);
       // Permission check for popup_add
       if (!this.masterInfo.permissions.popup_create && !this.masterInfo.permissions.create) {
         this.noPopupPermission = true;
@@ -861,7 +852,6 @@ export class MasterListComponent implements OnChanges {
         return;
       }
       this.loadingpopup = true;
-      console.log('coming');
       this.popupName = 'popup_add';
       this.selectedItemUuid = null;
       this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
@@ -872,7 +862,6 @@ export class MasterListComponent implements OnChanges {
     }
   }
   editPopupItem(item: any) {
-    console.log(this.masterInfo);
     // Permission check for popup_edit
     if (!this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit) {
       this.noPopupPermission = true;
@@ -881,8 +870,6 @@ export class MasterListComponent implements OnChanges {
     }
     this.loadingpopup = true;
     this.popupName = 'popup_edit';
-    console.log(this.popupName);
-    console.log(this.masterInfo);
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = this.masterInfo.children.popup_edit.entity_name;
     this.isViewPopupOpen = true;
@@ -893,7 +880,6 @@ export class MasterListComponent implements OnChanges {
   }
   viewPopupItem(item: any) {
     // Permission check for popup_details
-    console.log(this.masterInfo);
     if (this.masterInfo.permissions.popup_details || this.masterInfo.permissions.details) {
       this.loadingpopup = true;
       this.popupName = 'popup_details';
@@ -919,10 +905,8 @@ export class MasterListComponent implements OnChanges {
     if (this.masterInfo.children.edit) {
       let targetRoute = this.masterInfo.children.edit.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -931,7 +915,6 @@ export class MasterListComponent implements OnChanges {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      console.log(this.masterInfo.children.export_excel);
       this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id).subscribe({
         next: (response: ExportResponse) => {
           try {
@@ -1012,10 +995,8 @@ export class MasterListComponent implements OnChanges {
     if (this.masterInfo.children.assign) {
       let targetRoute = this.masterInfo.children.assign.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -1077,10 +1058,8 @@ export class MasterListComponent implements OnChanges {
     if (this.masterInfo.children.print) {
       let targetRoute = this.masterInfo.children.print.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -1251,14 +1230,11 @@ export class MasterListComponent implements OnChanges {
   }
 
   viewItem(item: any) {
-    console.log(item);
     if (this.masterInfo.children.details) {
       let targetRoute = this.masterInfo.children.details.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
-        console.log('coming');
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
       this.router.navigate([targetRoute]);
@@ -1292,11 +1268,8 @@ export class MasterListComponent implements OnChanges {
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
-    console.log(event.col);
     if (event.col.link_type === 'component') {
       const mode = event.col.link_mode || 'popup_details';
-      console.log(mode);
-      console.log(this.masterInfo.permissions);
       if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
@@ -1349,8 +1322,6 @@ export class MasterListComponent implements OnChanges {
         menuPermissionId = menuItem.permission_id;
       }
     }
-    console.log(menuPermissionId);
-    console.log(permissions);
     let hasPermission = true;
     if (menuPermissionId && userData?.main?.permissions && Array.isArray(userData.main.permissions)) {
       const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);

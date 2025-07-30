@@ -32,7 +32,6 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
 import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
-import { LoaderComponent } from '../loader/loader.component';
 
 interface SearchCondition {
   id: string;
@@ -92,7 +91,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
 
-  search:any = '';
+  search: any = '';
   selectedColumns: any[] = [];
   selectedColumn = '';
   searchCondition: string = 'contains';
@@ -236,13 +235,10 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
-    console.log(this.unique_id);
     this.headercolumns.forEach((col) => {
       col.sortDirection = '';
       col.colFilterHide = false;
     });
-
-    console.log(this.items);
 
     this.filteredItems = [...this.items];
 
@@ -438,7 +434,6 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(this.masterInfo);
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];

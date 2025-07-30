@@ -179,7 +179,8 @@ export class RouteUpdateService {
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
                 configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
-                user_configurations_module: () => import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
+                user_configurations_module: () =>
+                  import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
                 cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
                 import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
                 import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
@@ -201,7 +202,7 @@ export class RouteUpdateService {
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
               };
 
-              console.log(routeData);
+              // console.log(routeData);
               const route: Route = {
                 path: targetPath,
                 // component: componentMap[routeData.component_class_name],
@@ -263,7 +264,7 @@ export class RouteUpdateService {
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
-    console.log(entity_name)
+    // console.log(entity_name)
     const user_data_raw = this.localStore.getData('user_data');
     if (!user_data_raw || user_data_raw === 'undefined') return null;
 
@@ -276,10 +277,10 @@ export class RouteUpdateService {
     //const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
     //const routeDataArray = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
 
-    console.log(routeDataArray);
-    console.log(entity_name);
+    // console.log(routeDataArray);
+    // console.log(entity_name);
     //const permissionListJSON = await this.getPermissionListJSON().toPromise();
-    console.log(permissionListJSON);
+    // console.log(permissionListJSON);
     if (permissionListJSON && routeDataArray) {
       const dynamicRoutes = routeDataArray
         .filter((routeData: any) => routeData.entity_name === entity_name && routeData.component_class_name)
@@ -387,10 +388,10 @@ export class RouteUpdateService {
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
           };
 
-          console.log(permissionListJSON);
-          
-          console.log(childDetailsPermissionKey)
-          console.log(permissionListJSON[childDetailsPermissionKey])
+          // console.log(permissionListJSON);
+
+          // console.log(childDetailsPermissionKey)
+          // console.log(permissionListJSON[childDetailsPermissionKey])
           const route: Route = {
             path: targetPath,
             loadComponent: componentMap[routeData.component_class_name] || null,
