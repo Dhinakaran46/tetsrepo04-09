@@ -240,7 +240,7 @@
       </a>
     </li>
     <ng-container *ngFor="let item of menuItems; let i = index">
-      <li class="menu nav-item relative" *ngIf="item.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
+      <li class="menu nav-item relative" *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(item.link_type) === -1">
         <a
           *ngIf="item.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalLink"
           [attr.href]="item.target || 'javascript:void(0);'"
@@ -271,7 +271,11 @@
         </ng-template>
         <ul class="sub-menu custom-min-width" *ngIf="hasVisibleChildren(item)">
           <ng-container *ngFor="let child of item.children">
-            <li class="menu nav-item relative" [class.active]="child.isActive" *ngIf="child.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
+            <li
+              class="menu nav-item relative"
+              [class.active]="child.isActive"
+              *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(child.link_type) === -1"
+            >
               <a
                 *ngIf="child.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalChildLink"
                 [attr.href]="child.target || 'javascript:void(0);'"
@@ -304,7 +308,11 @@
                 *ngIf="hasVisibleChildren(child)"
               >
                 <ng-container *ngFor="let childin of child.children">
-                  <li class="menu nav-item relative" [class.active]="childin.isActive" *ngIf="childin.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
+                  <li
+                    class="menu nav-item relative"
+                    [class.active]="childin.isActive"
+                    *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(childin.link_type) === -1"
+                  >
                     <a
                       *ngIf="childin.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalChildinLink"
                       [attr.href]="childin.target || 'javascript:void(0);'"
@@ -345,7 +353,7 @@
                         <li
                           class="menu nav-item relative"
                           [class.active]="childin3.isActive"
-                          *ngIf="childin3.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION"
+                          *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(childin3.link_type) === -1"
                         >
                           <a
                             *ngIf="childin3.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalChildin3Link"

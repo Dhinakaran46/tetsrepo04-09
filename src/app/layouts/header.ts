@@ -327,7 +327,7 @@ export class HeaderComponent implements OnInit {
   }
 
   hasVisibleChildren(item: any): boolean {
-    return item.children && item.children.some((child: any) => child.link_type !== 2);
+    return item.children && item.children.some((child: any) => child.link_type !== 2 && child.link_type !== 5);
   }
 
   logout() {
