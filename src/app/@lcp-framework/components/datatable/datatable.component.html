@@ -249,7 +249,11 @@
         <table class="table-hover relative min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th *ngIf="this.masterInfo?.permissions.child_details" class="text-left uppercase tracking-wider" appDynamicFontSize="body">
+              <th
+                *ngIf="this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details"
+                class="text-left uppercase tracking-wider"
+                appDynamicFontSize="body"
+              >
                 <!-- Expand/Collapse column header -->
               </th>
               <th *ngIf="enableCheckBox" class="text-left uppercase tracking-wider" appDynamicFontSize="body">
@@ -323,7 +327,7 @@
                       >
                         <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
                           <ng-container *ngIf="col.link_type === 'component'; else notComponent">
-                            <span class="block cursor-pointer truncate text-blue-600 underline" (click)="onLinkComponentClick(col, item)">
+                            <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
                               {{ item[col.header] | booleanStatus }}
                             </span>
                           </ng-container>
@@ -331,13 +335,13 @@
                             <ng-container *ngIf="col.link_type === 'url'; else defaultCell">
                               <a
                                 *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrl"
-                                class="block truncate text-blue-600 underline"
+                                class="block truncate text-primary underline"
                                 [routerLink]="col.link_action"
                               >
                                 {{ item[col.header] | booleanStatus }}
                               </a>
                               <ng-template #externalUrl>
-                                <a class="block truncate text-blue-600 underline" [href]="col.link_action" target="_blank">
+                                <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
                                   {{ item[col.header] | booleanStatus }}
                                 </a>
                               </ng-template>
@@ -348,7 +352,7 @@
                                 *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
                                 ngxTippy
                                 [attr.data-tippy-content]="item[col.header]"
-                                [ngClass]="{ 'cursor-pointer text-blue-600 underline': col.link_type === 'component' }"
+                                [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
                               >
                                 <button
                                   *ngIf="col.link_type === 'child_grid'"
@@ -357,8 +361,9 @@
                                   (click)="toggleColumnChildGrid(item['uuid'], col)"
                                 >
                                   <i class="fa" [ngClass]="isColumnChildGridExpanded(item['uuid'], col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                  {{ item[col.header] | booleanStatus }}
                                 </button>
-                                {{ item[col.header] | booleanStatus }}
+                                <span *ngIf="col.link_type === 'none'">{{ item[col.header] | booleanStatus }}</span>
                               </span>
                               <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
                                 {{ item[col.header] | booleanStatus }}
