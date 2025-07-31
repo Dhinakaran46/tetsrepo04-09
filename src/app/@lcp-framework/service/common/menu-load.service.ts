@@ -80,9 +80,7 @@ export class MenuLoadService {
         ['app_user_configurations.config_field_type'],
       ],
       includes: [],
-      search_all: [
-        { column_name: 'app_user_configurations.user_id', value: userID, operator: '=' },
-      ],
+      search_all: [{ column_name: 'app_user_configurations.user_id', value: userID, operator: '=' }],
     };
 
     // Helper to process config and store user_data
@@ -94,7 +92,7 @@ export class MenuLoadService {
             'user_data',
             JSON.stringify({
               ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-              user_id:userID
+              user_id: userID,
             })
           );
         } else {
@@ -102,7 +100,7 @@ export class MenuLoadService {
             'user_data',
             JSON.stringify({
               ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-              user_id:userID
+              user_id: userID,
             })
           );
           this.localStorageService.removeData('enc_user');
@@ -228,6 +226,7 @@ export class MenuLoadService {
       search_all: [
         { column_name: 'menu_items.status_id', operator: '=', value: '1' },
         { column_name: 'menu_items.menu_id', operator: 'IN', value: this.menu_id },
+        { column_name: 'menu_items.link_type', operator: 'NOT IN', value: ['5'] },
       ],
     };
 

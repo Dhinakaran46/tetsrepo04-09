@@ -122,12 +122,14 @@ export const commonConfig: any = {
     ACTION: 2,
     ACTION_AND_GENERAL: 3,
     EXTERNAL: 4,
+    HIDDEN: 5,
   },
   menu_link_type: [
     { label: 'General', value: 1 },
     { label: 'Action', value: 2 },
     { label: 'Action AND General', value: 3 },
     { label: 'External', value: 4 },
+    { label: 'Hidden', value: 5 },
   ],
   menu_device_type: [
     { label: 'Web', value: 1 },
@@ -207,7 +209,7 @@ export const commonConfig: any = {
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
     { label: 'User Configurations Module', value: 'user_configurations_module' },
-    
+
     { label: 'Cron Setting Module', value: 'cron_setting_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
     { label: 'Import Job Detail Module', value: 'import_job_detail_module' },
