@@ -165,7 +165,9 @@ export class SidebarComponent {
 
   hasVisibleChildren(item: any): boolean {
     if (item.children && item.children.length) {
-      return item.children.some((child: any) => child.link_type !== this.COMMON_CONFIG.MENU_LINK_TYPE.ACTION);
+      return item.children.some(
+        (child: any) => child.link_type !== this.COMMON_CONFIG.MENU_LINK_TYPE.ACTION && child.link_type !== this.COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN
+      );
     }
     return false;
   }
