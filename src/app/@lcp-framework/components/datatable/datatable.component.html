@@ -307,7 +307,7 @@
               <ng-container *ngIf="items && items.length > 0; else noRecords">
                 <ng-container *ngFor="let item of items">
                   <tr>
-                    <td *ngIf="this.masterInfo?.permissions.child_details" (click)="toggleRow(item['uuid'])">
+                    <td *ngIf="this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details" (click)="toggleRow(item['uuid'])">
                       <button class="expand-collapse-btn">
                         <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === item['uuid'] ? 'fa-minus' : 'fa-plus'"></i>
                       </button>
