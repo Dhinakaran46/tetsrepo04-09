@@ -109,7 +109,7 @@
                 id="link_type"
                 formControlName="link_type"
                 class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
-                (change)="onActionTypeChange($event)"
+                (change)="onMenuLinkTypeChange($event)"
               >
                 <option *ngFor="let option of linkTypes" [value]="option.value">{{ option.label | translate }}</option>
               </select>

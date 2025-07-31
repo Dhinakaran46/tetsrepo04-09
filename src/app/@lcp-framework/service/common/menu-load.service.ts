@@ -226,7 +226,6 @@ export class MenuLoadService {
       search_all: [
         { column_name: 'menu_items.status_id', operator: '=', value: '1' },
         { column_name: 'menu_items.menu_id', operator: 'IN', value: this.menu_id },
-        { column_name: 'menu_items.link_type', operator: 'NOT IN', value: ['5'] },
       ],
     };
 
