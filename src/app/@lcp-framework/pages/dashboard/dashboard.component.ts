@@ -528,7 +528,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const compiled = format.map((html) => {
       const template = Handlebars.compile(html);
       let passData = data[0];
-      if (data.length > 1) {
+      if (data.length > 0) {
         passData.data_list = data;
       }
       return template(passData);
