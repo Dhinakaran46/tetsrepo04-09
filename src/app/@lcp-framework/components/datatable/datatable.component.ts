@@ -61,7 +61,7 @@ interface InputTypes {
 })
 export class DataTableComponent implements OnInit, OnChanges {
   expandedItem: any = null;
-  expandedColumnChildGrid: { uuid: string; colHeader: string } | null = null;
+  expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
   @Input() unique_id: any;
   @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
@@ -189,48 +189,43 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.initStore();
   }
 
-  toggleRow(item: any) {
-    if (this.expandedItem === item) {
-      this.expandedItem = null;
-      // Also collapse column child grid for this row if open
-      if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === item) {
-        this.expandedColumnChildGrid = null;
-        if (this.columnChildMasterListContainer) {
-          this.columnChildMasterListContainer.clear();
-          this.lastRenderedColumnChildUuid = null;
-        }
-      }
-    } else {
-      // Close any previously expanded row's column child grid if open
-      if (this.expandedItem !== null && this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === this.expandedItem) {
-        this.expandedColumnChildGrid = null;
-        if (this.columnChildMasterListContainer) {
-          this.columnChildMasterListContainer.clear();
-          this.lastRenderedColumnChildUuid = null;
-        }
-      }
-
-      // Close any column child grid for the new row being expanded
-      if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === item) {
-        this.expandedColumnChildGrid = null;
-        if (this.columnChildMasterListContainer) {
-          this.columnChildMasterListContainer.clear();
-          this.lastRenderedColumnChildUuid = null;
-        }
-      }
-
-      this.expandedItem = item;
+  toggleRow(item: any, row_index: number) {
+    if (this.expandedItem === row_index) {
+      this.clearAllExpandedGrids();
+      return;
     }
 
-    if (this.expandedItem && this.lastRenderedUuid !== this.expandedItem) {
-      setTimeout(() => {
-        this.createChildMasterList(this.expandedItem, this.masterInfo?.children.child_details.entity_name);
-      }, 250);
+    // Close any previously expanded row and its column child grids
+    if (this.expandedItem) {
+      this.clearAllExpandedGrids();
+    }
 
-      this.lastRenderedUuid = this.expandedItem;
-    } else if (!this.expandedItem && this.childMasterListContainer) {
+    if (this.expandedColumnChildGrid) {
+      this.clearAllExpandedGrids();
+    }
+
+    // Expand the new row
+    this.expandedItem = row_index;
+
+    if (this.expandedItem !== null) {
+      if (item) {
+        setTimeout(() => {
+          this.createChildMasterList(item, this.masterInfo?.children.child_details.entity_name);
+        }, 250);
+      }
+    }
+  }
+
+  clearAllExpandedGrids() {
+    this.expandedItem = null;
+    this.expandedColumnChildGrid = null;
+
+    if (this.childMasterListContainer) {
       this.childMasterListContainer.clear();
-      this.lastRenderedUuid = null;
+    }
+
+    if (this.columnChildMasterListContainer) {
+      this.columnChildMasterListContainer.clear();
     }
   }
 
@@ -760,66 +755,63 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.linkComponentClick.emit({ col, item });
   }
 
-  toggleColumnChildGrid(uuid: string, col: any) {
-    if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === uuid && this.expandedColumnChildGrid.colHeader === col.header) {
-      // Collapse if already open
-      this.expandedColumnChildGrid = null;
-      if (this.columnChildMasterListContainer) {
-        this.columnChildMasterListContainer.clear();
-        this.lastRenderedColumnChildUuid = null;
-      }
-    } else {
-      // Close main row expansion if open for this row
-      if (this.expandedItem === uuid) {
-        this.expandedItem = null;
-        if (this.childMasterListContainer) {
-          this.childMasterListContainer.clear();
-          this.lastRenderedUuid = null;
-        }
-      }
-
-      // Close any other column child grid
-      if (this.expandedColumnChildGrid && (this.expandedColumnChildGrid.uuid !== uuid || this.expandedColumnChildGrid.colHeader !== col.header)) {
-        this.expandedColumnChildGrid = null;
-        if (this.columnChildMasterListContainer) {
-          this.columnChildMasterListContainer.clear();
-          this.lastRenderedColumnChildUuid = null;
-        }
-      }
-
-      // Open this column child grid
-      this.expandedColumnChildGrid = { uuid, colHeader: col.header };
-
-      // Create child datatable if not already rendered for this combination
-      const currentKey = `${uuid}-${col.header}`;
-      if (this.lastRenderedColumnChildUuid !== currentKey) {
-        setTimeout(() => {
-          this.createColumnChildMasterList(uuid, col.link_action);
-          this.lastRenderedColumnChildUuid = currentKey;
-        }, 250);
-      }
+  toggleColumnChildGrid(item: any, col: any, row_index: number) {
+    if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header) {
+      this.clearAllExpandedGrids();
+      return;
     }
+
+    if (this.expandedItem) {
+      this.clearAllExpandedGrids();
+    }
+
+    if (this.expandedColumnChildGrid) {
+      this.clearAllExpandedGrids();
+    }
+
+    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
+    setTimeout(() => {
+      this.createColumnChildMasterList(item, col.link_action);
+    }, 250);
   }
 
-  isColumnChildGridExpanded(uuid: string, col: any): boolean {
-    return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.uuid === uuid && this.expandedColumnChildGrid.colHeader === col.header;
+  isColumnChildGridExpanded(row_index: number, col: any): boolean {
+    return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header;
   }
 
-  createChildMasterList(uuid: string, entityName: string) {
+  createChildMasterList(item: any, entityName: string) {
     if (!this.childMasterListContainer) return;
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
-    componentRef.instance.uuid = uuid;
+    componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+
+    const gridParams: any = {};
+    Object.keys(item).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    componentRef.instance.grid_params = gridParams;
   }
 
-  createColumnChildMasterList(uuid: string, entityName: string) {
+  createColumnChildMasterList(item: any, entityName: string) {
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
-    componentRef.instance.uuid = uuid;
+    componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+
+    const gridParams: any = {};
+    Object.keys(item).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    componentRef.instance.grid_params = gridParams;
   }
 }

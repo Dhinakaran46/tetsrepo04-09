@@ -309,11 +309,11 @@
 
             <ng-container *ngIf="!loading">
               <ng-container *ngIf="items && items.length > 0; else noRecords">
-                <ng-container *ngFor="let item of items">
+                <ng-container *ngFor="let item of items; let row_index = index">
                   <tr>
-                    <td *ngIf="this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details" (click)="toggleRow(item['uuid'])">
+                    <td *ngIf="this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details" (click)="toggleRow(item, row_index + 1)">
                       <button class="expand-collapse-btn">
-                        <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === item['uuid'] ? 'fa-minus' : 'fa-plus'"></i>
+                        <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === row_index + 1 ? 'fa-minus' : 'fa-plus'"></i>
                       </button>
                     </td>
                     <td *ngIf="enableCheckBox">
@@ -358,12 +358,12 @@
                                   *ngIf="col.link_type === 'child_grid'"
                                   class="expand-collapse-btn ml-1"
                                   style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
-                                  (click)="toggleColumnChildGrid(item['uuid'], col)"
+                                  (click)="toggleColumnChildGrid(item, col, row_index + 1)"
                                 >
-                                  <i class="fa" [ngClass]="isColumnChildGridExpanded(item['uuid'], col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                  <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                   {{ item[col.header] | booleanStatus }}
                                 </button>
-                                <span *ngIf="col.link_type === 'none'">{{ item[col.header] | booleanStatus }}</span>
+                                <span *ngIf="!col.link_type || col.link_type === 'none'">{{ item[col.header] | booleanStatus }}</span>
                               </span>
                               <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
                                 {{ item[col.header] | booleanStatus }}
@@ -379,7 +379,7 @@
                   </tr>
 
                   <!-- Child datatable row -->
-                  <tr *ngIf="expandedItem === item['uuid'] && this.masterInfo?.permissions.child_details">
+                  <tr *ngIf="expandedItem === row_index + 1 && this.masterInfo?.permissions.child_details">
                     <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                       <div class="bg-gray-50 p-4">
                         <!-- Child content -->
@@ -389,7 +389,7 @@
                   </tr>
                   <!-- Add for each column child grid -->
                   <ng-container *ngFor="let col of headercolumns">
-                    <tr *ngIf="col.link_type === 'child_grid' && isColumnChildGridExpanded(item['uuid'], col)">
+                    <tr *ngIf="col.link_type === 'child_grid' && isColumnChildGridExpanded(row_index + 1, col)">
                       <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                         <div class="bg-gray-50 p-4">
                           <!-- Column child content -->

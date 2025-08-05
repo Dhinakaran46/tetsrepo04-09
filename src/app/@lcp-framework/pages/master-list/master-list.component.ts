@@ -69,6 +69,7 @@ export class MasterListComponent implements OnChanges {
   @Input() isViewPopupOpen: boolean = false;
   @Input() popupEntityName: any = '';
   @Input() selectedItemUuid: string | null = null;
+  @Input() grid_params: any = null;
   @Input() set popupConfig(config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean } | null) {
     if (config) {
       this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
@@ -634,6 +635,9 @@ export class MasterListComponent implements OnChanges {
     }
     if (this.uuid) {
       payload.unique_id = this.uuid;
+    }
+    if (this.grid_params) {
+      payload.grid_params = this.grid_params;
     }
 
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
