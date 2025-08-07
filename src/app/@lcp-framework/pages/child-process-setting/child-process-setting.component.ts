@@ -242,6 +242,16 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         is_searchable: 'false',
         is_grid_column: 'true',
       },
+      {
+        header: 'gparam_1',
+        clause_type: 'where',
+        field_value: 'child_processes.uuid',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '1.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
     ];
   }
 
@@ -653,7 +663,10 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
               for (const key in formattedItem) {
                 if (
                   formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('deleted_at') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
+                  (key.toLowerCase().includes('date') ||
+                    key.toLowerCase().includes('deleted_at') ||
+                    key.toLowerCase().includes('created_at') ||
+                    key.toLowerCase().includes('updated_at')) &&
                   this.isDate(formattedItem[key])
                 ) {
                   const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
