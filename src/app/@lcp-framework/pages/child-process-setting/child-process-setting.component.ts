@@ -936,7 +936,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
   editItem(item: any) {
     if (this.masterInfo.children.edit) {
-      const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
+      const targetRoute = this.masterInfo.children.edit.target.replace(':uuid', item.uuid);
       this.router.navigate([targetRoute]);
     }
   }
