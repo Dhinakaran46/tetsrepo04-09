@@ -277,7 +277,7 @@ export class ExportTemplateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.id = this.route.snapshot.params['id'] || null;
+    this.id = this.route.snapshot.params['uuid'] || null;
     this.initForm();
     //this.constructRedirectUrl();
 
