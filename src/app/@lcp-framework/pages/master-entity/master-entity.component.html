@@ -399,6 +399,26 @@
                 {{ getErrorMessage('dashboard_wizard_order_no') }}
               </div>
             </div>
+
+            <div class="mt-0">
+              <label for="reload_timeout" class="required-mark mb-2 block font-medium">{{
+                'form_label_reload_timeout' | translate
+              }}</label>
+              <input
+                id="reload_timeout"
+                type="number"
+                formControlName="reload_timeout"
+                appDynamicFontSize="body"
+                
+                class="form-input w-full"
+                placeholder="{{ 'form_label_reload_timeout_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('reload_timeout') }"
+              />
+              <div *ngIf="isFieldInvalid('reload_timeout')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('reload_timeout') }}
+              </div>
+            </div>
+
           </ng-container>
         </div>
 

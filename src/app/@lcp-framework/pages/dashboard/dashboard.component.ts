@@ -67,6 +67,7 @@ interface BaseCard {
   rows: number;
   type: any;
   order_no?: number;
+  reload_timeout?: any;
   query_information?: any;
   report_information?: any;
   report_type: ReportType;
@@ -125,6 +126,21 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     isViewPopupOpen: boolean;
   } | null = null;
 
+
+  // NEW: keep track of per-widget timers
+  private reloadTimers = new Map<string, any>();
+
+  // Helper to generate a unique key per card (per tab)
+  private cardKey(tabId: string, cardId: number | string) {
+    return `${tabId}:${cardId}`;
+  }
+
+  // Clear all timers
+  private clearReloadTimers() {
+    this.reloadTimers.forEach((timerId) => clearInterval(timerId));
+    this.reloadTimers.clear();
+  }
+
   constructor(
     public storeData: Store<any>,
     private route: ActivatedRoute,
@@ -177,6 +193,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearReloadTimers();  
     this.removePowerBiInstances();
   }
 
@@ -212,7 +229,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
             [
-              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
+              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.reload_timeout ,  master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
               'cards',
             ],
           ],
@@ -272,6 +289,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                       'rows', master_entities.dashboard_wizard_rows,
                       'cols', master_entities.dashboard_wizard_columns,
                       'order_no', master_entities.dashboard_wizard_order_no,
+                      'reload_timeout', master_entities.reload_timeout,
                       'query_information', master_entities.query_information,
                       'report_information', master_entities.report_information,
                       'report_type', master_entities.report_type,
@@ -363,6 +381,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   async setActiveTab(tabId: any) {
     this.activeTabId = tabId;
+     // NEW: stop existing reloads before re-init
+  this.clearReloadTimers();
+
     const activeTab = this.dashboardTabs.find((tab) => tab.id === tabId);
     //if (activeTab && activeTab.cards.some((card) => card.data.length === 0)) {
     if (activeTab) {
@@ -371,6 +392,88 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       this.cdr.detectChanges();
     }
   }
+
+  // NEW: schedule auto-reload for LCP card
+private scheduleLcpReload(card: Card) {
+  const minutes = Number(card.reload_timeout) || 0;
+  if (minutes > 0 && card?.id != null) {
+    const key = this.cardKey(this.activeTabId, card.id);
+    // clear existing (if any)
+    if (this.reloadTimers.has(key)) {
+      clearInterval(this.reloadTimers.get(key));
+      this.reloadTimers.delete(key);
+    }
+    const intervalId = setInterval(() => this.refreshLcpCard(card), minutes * 60 * 1000);
+    this.reloadTimers.set(key, intervalId);
+  }
+}
+
+
+  // NEW: refresh just one LCP card (data + static/chart rebuild)
+private async refreshLcpCard(card: Card) {
+  try {
+    // re-run query if present
+    if (card.query_information) {
+      const qi = JSON.parse(JSON.stringify(card.query_information));
+      const queryString = JSON.stringify(qi).replace(/\$session_user_id/g, this.userId);
+      card.query_information = JSON.parse(queryString);
+      card.data = await this.getQueryInfo(card.query_information);
+    }
+
+    // static widgets: recompile
+    if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
+      card.format = this.compileStaticContent(card.format, card.data);
+    }
+
+    // charts: rebuild series/labels
+    if (card.type === commonConfig.WIZARD_TYPES.CHART) {
+      card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
+
+      if (card.chart_format[0] && card.chart_format[0].tooltip?.y?.formatter) {
+        if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
+          card.chart_format[0].tooltip.y.formatter = new Function(
+            'number',
+            card.chart_format[0].tooltip.y.formatter.substring(
+              card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
+              card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+            )
+          );
+        }
+      }
+
+      if (card.data?.length > 0) {
+        const dataMap: Record<string, any[]> = {};
+        const labels: any[] = [];
+        card.data.forEach((rec: any) => {
+          labels.push(rec.labels);
+          Object.keys(rec).forEach((k) => {
+            if (k !== 'labels') {
+              (dataMap[k] ||= []).push(rec[k]);
+            }
+          });
+        });
+
+        card.chart_format[0].series = Object.keys(dataMap).map((k) => ({
+          name: k.charAt(0).toUpperCase() + k.slice(1),
+          data: dataMap[k],
+        }));
+        card.chart_format[0].labels = labels;
+        card.chart_format[0].xaxis.categories = labels;
+      } else {
+        // no data: reset series/labels
+        card.chart_format[0].series = [];
+        card.chart_format[0].labels = [];
+        card.chart_format[0].xaxis.categories = [];
+      }
+    }
+
+    this.cdr.detectChanges();
+  } catch (e) {
+    // swallow per-card errors to avoid breaking other timers
+    console.error('Card refresh failed', e);
+  }
+}
+
 
   loadPowerBIReport(index: number, reportInformation: any) {
     try {
@@ -483,6 +586,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                 card.chart_format[0].xaxis.categories = labels;
               }
             }
+              // NEW: schedule auto-reload for LCP card
+          this.scheduleLcpReload(card);
+
           } else {
             this.powerBiSubscription = this.powerBiContainers.changes.subscribe((response: any) => {
               if (response.length && response.toArray()[pbiIndex]) {
