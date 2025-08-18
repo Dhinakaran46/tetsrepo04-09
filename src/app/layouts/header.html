@@ -1,5 +1,5 @@
-﻿<div class="z-40 shadow-sm" [ngClass]="{ 'dark text-white-dark': store.semidark && store.menu === 'horizontal'}">
-  <div class="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-[#0e1726]">
+﻿<div class="z-40 shadow-sm text-app-text" [ngClass]="{ 'dark text-white-dark': store.semidark && store.menu === 'horizontal'}">
+  <div class="relative flex w-full items-center bg-app-bg px-5 py-2.5 dark:bg-[#0e1726]">
     <div class="horizontal-logo flex items-center justify-between lg:hidden ltr:mr-2 rtl:ml-2">
       <a routerLink="/" class="main-logo flex shrink-0 items-center">
         <img class="inline w-8 ltr:-ml-1 rtl:-mr-1" [src]="apiUrl+'/'+ this.config?.logo" [alt]="this.config?.company_name" appDynamicFontSize="headerlogo" />
@@ -13,7 +13,7 @@
 
       <a
         href="javascript:;"
-        class="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-primary lg:hidden ltr:ml-2 rtl:mr-2"
+        class="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-app-hover lg:hidden ltr:ml-2 rtl:mr-2"
         (click)="storeData.dispatch({type: 'toggleSidebar'})"
       >
         <i class="fas fa-bars fa-xl"></i>
@@ -24,7 +24,7 @@
       <div class="sm:ltr:mr-auto sm:rtl:ml-auto">
         <button
           type="button"
-          class="search_btn rounded-full bg-white-light/40 p-4 hover:bg-white-light/90 dark:bg-dark/40 dark:hover:bg-dark/60 sm:hidden"
+          class="search_btn rounded-full bg-white-light/40 p-4 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60 sm:hidden"
           (click)="search = !search"
         >
           <i class="fa-solid fa-magnifying-glass mx-auto dark:text-[#d0d2d6]"></i>
@@ -34,7 +34,7 @@
         <a
           href="javascript:;"
           *ngIf="store.theme === 'light'"
-          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
           (click)="storeData.dispatch({type: 'toggleTheme', payload:'dark'})"
         >
           <i class="far fa-sun ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
@@ -42,7 +42,7 @@
         <a
           href="javascript:;"
           *ngIf="store.theme === 'dark'"
-          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
           (click)="storeData.dispatch({type: 'toggleTheme', payload:'system'})"
         >
           <i class="far fa-moon ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
@@ -50,7 +50,7 @@
         <a
           href="javascript:;"
           *ngIf="store.theme === 'system'"
-          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
           (click)="storeData.dispatch({type: 'toggleTheme', payload:'light'})"
         >
           <i class="fas fa-laptop ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
@@ -62,7 +62,7 @@
           <button
             type="button"
             hlMenuButton
-            class="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+            class="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
           >
             <img [src]="'assets/images/flags/'+ store.locale.toUpperCase() + '.svg'" alt="flag" class="h-5 w-5 rounded-full object-cover" />
           </button>

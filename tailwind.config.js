@@ -401,6 +401,11 @@ module.exports = {
           light: '#e0e6ed',
           dark: '#888ea8',
         },
+        'app-text': 'var(--app-text-color)',
+        'app-bg': 'var(--app-bg-color)',
+        'app-hover': 'var(--app-hover-color)',
+        'app-primary': 'var(--app-primary-color)',
+        'app-secondary': 'var(--app-secondary-color)',
       },
       fontFamily: {
         nunito: ['Nunito', 'sans-serif'],

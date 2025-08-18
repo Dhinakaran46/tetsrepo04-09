@@ -1,4 +1,22 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+  --app-text-color: inherit;
+  --app-bg-color: #ffffff;
+  --app-hover-color: #3b82f6;
+  --app-primary-color: #3b82f6;
+  --app-secondary-color: #64748b;
+}
+
+body {
+  color: var(--app-text-color);
+  background-color: var(--app-bg-color);
+}
+
+a:hover,
+button:hover,
+.hoverable:hover {
+  color: var(--app-hover-color);
+}
 html.login-page,
 html.login-page > body {
   height: 100%;

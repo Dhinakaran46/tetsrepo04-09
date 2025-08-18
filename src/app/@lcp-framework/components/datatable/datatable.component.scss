@@ -71,6 +71,7 @@
 .panel {
   margin: -15px;
   padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+  background-color: var(--app-bg-color);
 }
 
 .multiple-select {
@@ -162,12 +163,12 @@
 
 thead th.sticky {
   //box-shadow: inset 1px 0 0 #e5e7eb;
-  background: #e5e7eb;
+  background: var(--app-bg-color, #e5e7eb);
 }
 
 tbody td.sticky {
   // /box-shadow: inset 1px 0 0 #e5e7eb;
-  background-color: #fff;
+  background-color: var(--app-bg-color, #fff);
 }
 thead th.sticky:is(.dark *) {
   background-color: rgb(21 33 53) !important;
