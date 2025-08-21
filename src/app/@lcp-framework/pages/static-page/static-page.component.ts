@@ -178,9 +178,9 @@ export class StaticPageComponent {
     this.gridApiService.getAllList(this.query_information).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
-          if (response.data?.records?.length > 0) {
+          if (response.data?.records?.length === 1) {
             this.pageContent = this.compileStaticContent(this.static_page_content, {
-              result_data: response.data.records,
+              result_data: response.data.records[0],
               currentTab: this.currentTab,
               currentAccordion: this.currentAccordion,
             });

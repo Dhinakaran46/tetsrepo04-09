@@ -77,6 +77,7 @@ interface BaseCard {
 interface CommonCard extends BaseCard {
   title: any;
   format?: any;
+  particular_format?: any; // For static content, to hold compiled HTML
   data?: any;
   chart_format?: any;
 }
@@ -92,7 +93,16 @@ interface DashboardTab {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonSharedModule, DragDropModule, NgApexchartsModule, SafeHtmlPipe, FormBuilderComponent, StaticPageComponent, MasterListComponent, MasterListChildrenComponent],
+  imports: [
+    CommonSharedModule,
+    DragDropModule,
+    NgApexchartsModule,
+    SafeHtmlPipe,
+    FormBuilderComponent,
+    StaticPageComponent,
+    MasterListComponent,
+    MasterListChildrenComponent,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
@@ -125,7 +135,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     popupEntityName: string;
     isViewPopupOpen: boolean;
   } | null = null;
-
 
   // NEW: keep track of per-widget timers
   private reloadTimers = new Map<string, any>();
@@ -193,7 +202,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.clearReloadTimers();  
+    this.clearReloadTimers();
     this.removePowerBiInstances();
   }
 
@@ -381,8 +390,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   async setActiveTab(tabId: any) {
     this.activeTabId = tabId;
-     // NEW: stop existing reloads before re-init
-  this.clearReloadTimers();
+    // NEW: stop existing reloads before re-init
+    this.clearReloadTimers();
 
     const activeTab = this.dashboardTabs.find((tab) => tab.id === tabId);
     //if (activeTab && activeTab.cards.some((card) => card.data.length === 0)) {
@@ -394,86 +403,84 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   // NEW: schedule auto-reload for LCP card
-private scheduleLcpReload(card: Card) {
-  const minutes = Number(card.reload_timeout) || 0;
-  if (minutes > 0 && card?.id != null) {
-    const key = this.cardKey(this.activeTabId, card.id);
-    // clear existing (if any)
-    if (this.reloadTimers.has(key)) {
-      clearInterval(this.reloadTimers.get(key));
-      this.reloadTimers.delete(key);
+  private scheduleLcpReload(card: Card) {
+    const minutes = Number(card.reload_timeout) || 0;
+    if (minutes > 0 && card?.id != null) {
+      const key = this.cardKey(this.activeTabId, card.id);
+      // clear existing (if any)
+      if (this.reloadTimers.has(key)) {
+        clearInterval(this.reloadTimers.get(key));
+        this.reloadTimers.delete(key);
+      }
+      const intervalId = setInterval(() => this.refreshLcpCard(card), minutes * 60 * 1000);
+      this.reloadTimers.set(key, intervalId);
     }
-    const intervalId = setInterval(() => this.refreshLcpCard(card), minutes * 60 * 1000);
-    this.reloadTimers.set(key, intervalId);
   }
-}
-
 
   // NEW: refresh just one LCP card (data + static/chart rebuild)
-private async refreshLcpCard(card: Card) {
-  try {
-    // re-run query if present
-    if (card.query_information) {
-      const qi = JSON.parse(JSON.stringify(card.query_information));
-      const queryString = JSON.stringify(qi).replace(/\$session_user_id/g, this.userId);
-      card.query_information = JSON.parse(queryString);
-      card.data = await this.getQueryInfo(card.query_information);
-    }
+  private async refreshLcpCard(card: Card) {
+    try {
+      // re-run query if present
+      if (card.query_information) {
+        const qi = JSON.parse(JSON.stringify(card.query_information));
+        const queryString = JSON.stringify(qi).replace(/\$session_user_id/g, this.userId);
+        card.query_information = JSON.parse(queryString);
+        card.data = await this.getQueryInfo(card.query_information);
+      }
 
-    // static widgets: recompile
-    if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
-      card.format = this.compileStaticContent(card.format, card.data);
-    }
+      // static widgets: recompile
+      if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
+        card.particular_format = this.compileStaticContent(card.format, card.data);
+      }
 
-    // charts: rebuild series/labels
-    if (card.type === commonConfig.WIZARD_TYPES.CHART) {
-      card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
+      // charts: rebuild series/labels
+      if (card.type === commonConfig.WIZARD_TYPES.CHART) {
+        card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
 
-      if (card.chart_format[0] && card.chart_format[0].tooltip?.y?.formatter) {
-        if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
-          card.chart_format[0].tooltip.y.formatter = new Function(
-            'number',
-            card.chart_format[0].tooltip.y.formatter.substring(
-              card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-              card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
-            )
-          );
+        if (card.chart_format[0] && card.chart_format[0].tooltip?.y?.formatter) {
+          if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
+            card.chart_format[0].tooltip.y.formatter = new Function(
+              'number',
+              card.chart_format[0].tooltip.y.formatter.substring(
+                card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
+                card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+              )
+            );
+          }
+        }
+
+        if (card.data?.length > 0) {
+          const dataMap: Record<string, any[]> = {};
+          const labels: any[] = [];
+          card.data.forEach((rec: any) => {
+            labels.push(rec.labels);
+            Object.keys(rec).forEach((k) => {
+              if (k !== 'labels') {
+                (dataMap[k] ||= []).push(rec[k]);
+              }
+            });
+          });
+
+          card.chart_format[0].series = Object.keys(dataMap).map((k) => ({
+            name: k.charAt(0).toUpperCase() + k.slice(1),
+            data: dataMap[k],
+          }));
+          card.chart_format[0].labels = labels;
+          card.chart_format[0].xaxis.categories = labels;
+        } else {
+          // no data: reset series/labels
+          card.chart_format[0].series = [];
+          card.chart_format[0].labels = [];
+          card.chart_format[0].xaxis.categories = [];
         }
       }
 
-      if (card.data?.length > 0) {
-        const dataMap: Record<string, any[]> = {};
-        const labels: any[] = [];
-        card.data.forEach((rec: any) => {
-          labels.push(rec.labels);
-          Object.keys(rec).forEach((k) => {
-            if (k !== 'labels') {
-              (dataMap[k] ||= []).push(rec[k]);
-            }
-          });
-        });
-
-        card.chart_format[0].series = Object.keys(dataMap).map((k) => ({
-          name: k.charAt(0).toUpperCase() + k.slice(1),
-          data: dataMap[k],
-        }));
-        card.chart_format[0].labels = labels;
-        card.chart_format[0].xaxis.categories = labels;
-      } else {
-        // no data: reset series/labels
-        card.chart_format[0].series = [];
-        card.chart_format[0].labels = [];
-        card.chart_format[0].xaxis.categories = [];
-      }
+      this.cdr.detectChanges();
+    } catch (e) {
+      // swallow per-card errors to avoid breaking other timers
+      console.error('Card refresh failed', e);
     }
-
-    this.cdr.detectChanges();
-  } catch (e) {
-    // swallow per-card errors to avoid breaking other timers
-    console.error('Card refresh failed', e);
   }
-}
-
 
   loadPowerBIReport(index: number, reportInformation: any) {
     try {
@@ -542,7 +549,7 @@ private async refreshLcpCard(card: Card) {
             }
 
             if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
-              card.format = this.compileStaticContent(card.format, card.data);
+              card.particular_format = this.compileStaticContent(card.format, card.data);
             }
 
             if (card.type === commonConfig.WIZARD_TYPES.CHART) {
@@ -586,9 +593,8 @@ private async refreshLcpCard(card: Card) {
                 card.chart_format[0].xaxis.categories = labels;
               }
             }
-              // NEW: schedule auto-reload for LCP card
-          this.scheduleLcpReload(card);
-
+            // NEW: schedule auto-reload for LCP card
+            this.scheduleLcpReload(card);
           } else {
             this.powerBiSubscription = this.powerBiContainers.changes.subscribe((response: any) => {
               if (response.length && response.toArray()[pbiIndex]) {
@@ -645,7 +651,7 @@ private async refreshLcpCard(card: Card) {
 
   getStaticContent(card: Card): string[] {
     //if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
-    return card.type == commonConfig.WIZARD_TYPES.STATIC ? card.format : [];
+    return card.type == commonConfig.WIZARD_TYPES.STATIC ? card.particular_format : [];
   }
 
   onDrop(event: CdkDragDrop<Card[]>) {
@@ -778,7 +784,7 @@ private async refreshLcpCard(card: Card) {
       popupName,
       selectedItemUuid: uuid ? uuid : null,
       popupEntityName: entityName,
-      isViewPopupOpen: true
+      isViewPopupOpen: true,
     };
     this.showMasterListPopup = true;
   }
