@@ -501,12 +501,13 @@
           <div class="w-30 h-[1px] bg-gray-300 md:h-full md:w-[1px]"></div>
 
           <!-- Right Column: Other Details -->
-          <div class="grid grid-rows-2 gap-4 p-4">
+          <div class="flex flex-col gap-4 p-4">
             <ng-container *ngFor="let col of config.columns">
               <ng-container *ngIf="!errorKeys.includes(col.key)">
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="pr-4 font-bold" [innerHTML]="col.label"></div>
-                  <div class="text-gray-700" [innerHTML]="selectedRow[col.key] || '-'"></div>
+                <!-- Responsive Label-Value Pair -->
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="pr-2 font-bold" [innerHTML]="col.label"></div>
+                  <div class="break-words text-gray-700" [innerHTML]="selectedRow[col.key] || '-'"></div>
                 </div>
               </ng-container>
             </ng-container>
