@@ -353,6 +353,25 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       return;
     }
     this.isLoading = true;
+
+    if (this.import_job == 'scheduled') {
+      this.gridApiService.getImportTemplateDataScheduled(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
+        (response: ApiResponce) => {
+          if (response.status) {
+            this.section = 'section3';
+            this.sheet_data = response.data; //{ header_details, row_datas }
+            this.isLoading = false;
+          } else {
+            this.toastr.error(response.message);
+            this.isLoading = false;
+          }
+        },
+        (error: any) => {
+          this.toastr.error('Error getting import template data');
+          this.isLoading = false;
+        }
+      );
+    } else {
     this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
@@ -369,6 +388,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         this.isLoading = false;
       }
     );
+  }
+
   }
 
   getErrorCount(rowDatas: any = []) {
