@@ -19,6 +19,7 @@ export const commonConfig: any = {
     unauthcommonlistdata: 'common/unauth-list-data',
     importtemplatedetails: 'common/import-template/details',
     importtemplatevalidate: 'common/import-template/validate/',
+    importtemplatevalidatescheduled: 'common/import-template/validate-scheduled/',
     commonexecutetransaction: 'common/execute-transaction',
     getAllMenu: 'user/menus',
     getCommnList: 'common/list-data',

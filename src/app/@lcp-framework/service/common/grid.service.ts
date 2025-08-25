@@ -117,6 +117,12 @@ export class GridApiService {
   getImportTemplateDetail(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplatedetails}`, data);
   }
+  getImportTemplateDataScheduled(data: any, template_uuid: string, file_uuid: string): Observable<any> {
+    return this.cryptoHttp.encryptedPost(
+      `${this.apiUrl}${environment.apiAddress}${commonConfig.API.importtemplatevalidatescheduled}${template_uuid}/${file_uuid}`,
+      data
+    );
+  }
 
   getImportTemplateData(data: any, template_uuid: string, file_uuid: string): Observable<any> {
     return this.cryptoHttp.encryptedPost(
