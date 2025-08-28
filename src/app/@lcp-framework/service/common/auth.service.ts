@@ -19,7 +19,20 @@ export class AuthService {
   constructor(private http: HttpClient, private localstore: LocalStorageService, private cryptoHttp: CryptoHttpService) {}
 
   login(credentials: { email: string; password: string }): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.login}`, credentials);
+    const existingThemeInfo = this.localstore.getData('theme_info');
+    let themeInfo = null;
+    if (existingThemeInfo) {
+      try {
+        themeInfo = JSON.parse(existingThemeInfo);
+      } catch (error) {
+        console.warn('Failed to parse existing theme_info:', error);
+      }
+    }
+    const loginPayload = {
+      ...credentials,
+      theme_info: themeInfo
+    };
+    return this.http.post<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.login}`, loginPayload);
   }
 
   logout(): Observable<any> {

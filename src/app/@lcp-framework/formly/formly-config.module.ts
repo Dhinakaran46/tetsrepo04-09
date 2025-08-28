@@ -177,4 +177,4 @@ export const search_conditions: any = commonConfig.search_conditions;
     SplitLabelPipe,
   ],
 })
-export class FormlyConfigModule {}
+export class FormlyConfigModule { }

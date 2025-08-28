@@ -200,7 +200,9 @@
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
-              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              style="color: var(--app-button-text-color, var(--app-bg-color)); 
+         background-color: var(--app-button-bg-color, var(--app-primary-color));"
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
             </button>
@@ -212,7 +214,9 @@
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
-              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              style="color: var(--app-button-text-color, var(--app-bg-color)); 
+         background-color: var(--app-button-bg-color, var(--app-primary-color));"
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
             </button>

@@ -8,20 +8,38 @@
 }
 
 body {
-  color: var(--app-text-color);
-  background-color: var(--app-bg-color);
+  color: var(--app-text-color, var(--app-text-color-default));
+  background-color: var(--app-bg-color, var(--app-bg-color-default));
 }
 
-a:hover,
-button:hover,
-.hoverable:hover {
-  color: var(--app-hover-color);
+/* Dark mode body styling */
+body.dark,
+.dark body {
+  color: var(--app-text-color, var(--app-text-color-default));
+  background-color: var(--app-bg-color, var(--app-bg-color-default));
 }
+
+/* Ensure ng-content areas inherit theme styling */
+ng-content,
+::ng-deep ng-content {
+  color: inherit;
+  background-color: inherit;
+}
+
+/* Global content wrapper styling */
+.main-content,
+.animation,
+router-outlet {
+  color: var(--app-text-color, var(--app-text-color-default));
+  background-color: var(--app-bg-color, var(--app-bg-color-default));
+}
+
 html.login-page,
-html.login-page > body {
+html.login-page>body {
   height: 100%;
   overflow: hidden;
 }
+
 // html:not(.login-page),
 // body:not(.login-page) {
 //   height: auto;
@@ -51,10 +69,14 @@ html.login-page > body {
 .sidebar ul.relative li a div span.text-black,
 .sidebar ul.sub-menu li a,
 .ellipsis {
-  white-space: nowrap; /* Prevents the text from wrapping to a new line */
-  overflow: hidden; /* Hides any text that overflows the container */
-  text-overflow: ellipsis; /* Adds ellipses (…) to the end of the text */
-  width: 100%; /* Ensures the container has a width set (you can adjust as needed) */
+  white-space: nowrap;
+  /* Prevents the text from wrapping to a new line */
+  overflow: hidden;
+  /* Hides any text that overflows the container */
+  text-overflow: ellipsis;
+  /* Adds ellipses (…) to the end of the text */
+  width: 100%;
+  /* Ensures the container has a width set (you can adjust as needed) */
 }
 
 .required-mark:after {
