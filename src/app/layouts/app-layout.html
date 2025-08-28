@@ -1,9 +1,10 @@
 <div
   class="main-section relative font-nunito font-normal antialiased"
   [ngClass]="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass]"
-  appDynamicFontSize="body">
+  appDynamicFontSize="body"
+  style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))">
   <!--  BEGIN MAIN CONTAINER  -->
-  <div class="relative">
+  <div class="relative" style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))">
     <!-- sidebar menu overlay -->
     <div
       class="fixed inset-0 z-50 bg-[black]/60 lg:hidden"
@@ -12,9 +13,10 @@
 
     <!-- screen loader -->
     <div *ngIf="store.isShowMainLoader"
-      class="screen_loader animate__animated fixed inset-0 z-[60] grid place-content-center bg-[#fafafa] dark:bg-[#060818]">
+      class="screen_loader animate__animated fixed inset-0 z-[60] grid place-content-center bg-[#fafafa] dark:bg-[#060818]"
+      style="background-color: var(--app-bg-color, var(--app-bg-color-default))">
       <svg width="64" height="64" viewBox="0 0 135 135"
-        xmlns="http://www.w3.org/2000/svg" fill="#4361ee">
+        xmlns="http://www.w3.org/2000/svg" fill="var(--app-form-base-component-color, var(--app-primary-color))">
         <path
           d="M67.447 58c5.523 0 10-4.477 10-10s-4.477-10-10-10-10 4.477-10 10 4.477 10 10 10zm9.448 9.447c0 5.523 4.477 10 10 10 5.522 0 10-4.477 10-10s-4.478-10-10-10c-5.523 0-10 4.477-10 10zm-9.448 9.448c-5.523 0-10 4.477-10 10 0 5.522 4.477 10 10 10s10-4.478 10-10c0-5.523-4.477-10-10-10zM58 67.447c0-5.523-4.477-10-10-10s-10 4.477-10 10 4.477 10 10 10 10-4.477 10-10z">
           <animatetransform attributeName="transform" type="rotate"
@@ -34,6 +36,7 @@
       <button
         type="button"
         class="btn btn-outline-primary animate-pulse rounded-full bg-[#fafafa] p-2 dark:bg-[#060818] dark:hover:bg-primary"
+        style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))"
         (click)="goToTop()">
         <svg width="24" height="24" class="h-4 w-4" viewBox="0 0 24 24"
           fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -55,18 +58,21 @@
     <!-- END APP SETTING LAUNCHER -->
 
     <div class="main-container min-h-screen text-black dark:text-white-dark"
-      [ngClass]="[store.navbar]">
+      [ngClass]="[store.navbar]"
+      style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))">
       <!--  BEGIN SIDEBAR  -->
       <sidebar></sidebar>
       <!--  END SIDEBAR  -->
 
-      <div class="main-content flex min-h-screen flex-col">
+      <div class="main-content flex min-h-screen flex-col"
+           style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))">
         <!--  BEGIN TOP NAVBAR  -->
         <header></header>
         <!--  END TOP NAVBAR  -->
 
         <!--  BEGIN CONTENT AREA  -->
-        <div class="animation p-6">
+        <div class="animation p-6"
+             style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))">
           <router-outlet></router-outlet>
         </div>
         <!--  END CONTENT AREA  -->

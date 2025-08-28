@@ -1,4 +1,4 @@
-<div class="panel">
+<div class="panel text-app-text">
   <div class="mb-2.5">
     <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
       <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
@@ -13,7 +13,7 @@
               [(ngModel)]="search"
               (input)="onSearch()"
               type="text"
-              class="form-input w-full pr-10 text-gray-600"
+              class="form-input w-full pr-10 text-app-text"
               appDynamicFontSize="body"
               placeholder="{{ 'table_search_placeholder' | translate }}..."
             />
@@ -75,7 +75,7 @@
               <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
                 <div class="space-y-2 p-4">
                   <ng-container *ngIf="filterConditions.length === 0; else filterList">
-                    <p class="text-gray-600">{{ 'No filter applied' }}</p>
+                    <p class="text-app-text">{{ 'No filter applied' }}</p>
                   </ng-container>
                   <ng-template #filterList>
                     <div *ngFor="let condition of filterConditions; let i = index" class="flex items-center gap-2">
@@ -200,7 +200,9 @@
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
-              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              style="color: var(--app-button-text-color, var(--app-bg-color)); 
+         background-color: var(--app-button-bg-color, var(--app-primary-color));"
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
             </button>
@@ -212,7 +214,9 @@
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
-              class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+              style="color: var(--app-button-text-color, var(--app-bg-color)); 
+         background-color: var(--app-button-bg-color, var(--app-primary-color));"
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
             </button>

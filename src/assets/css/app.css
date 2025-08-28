@@ -3,6 +3,49 @@
 @import '@ng-select/ng-select/themes/default.theme.css';
 @import 'highlight.js/styles/androidstudio.css';
 
+.bg-app-bg {
+  background-color: var(--app-bg-color, #fafafa) !important;
+}
+
+.bg-app-bg.dark,
+.dark .bg-app-bg {
+  background-color: var(--app-bg-color, #060818) !important;
+}
+
+:root {
+  --app-text-color-default: #495057;
+  --app-bg-color-default: #fafafa;
+  --app-sidebar-bg-color-default: #ffffff;
+  --app-sidebar-text-color-default: #495057;
+  --app-header-bg-color-default: #ffffff;
+  --app-header-text-color-default: #495057;
+}
+
+.dark {
+  --app-text-color-default: #d0d2d6;
+  --app-bg-color-default: #0e1726;
+  --app-sidebar-bg-color-default: #0e1726;
+  --app-sidebar-text-color-default: #506690;
+  --app-header-bg-color-default: #0e1726;
+  --app-header-text-color-default: #d0d2d6;
+}
+
+.theme-sidebar-bg {
+  background-color: var(--app-sidebar-bg-color, var(--app-sidebar-bg-color-default)) !important;
+}
+
+.theme-sidebar-text {
+  color: var(--app-sidebar-text-color, var(--app-sidebar-text-color-default)) !important;
+}
+
+.theme-header-text {
+  color: var(--app-header-text-color, var(--app-header-text-color-default)) !important;
+}
+
+.theme-text {
+  color: var(--app-text-color, var(--app-text-color-default)) !important;
+}
+
 .btn-gradient {
   --tw-gradient-from: #fe7caa var(--tw-gradient-from-position);
   --tw-gradient-to: #8097fb var(--tw-gradient-to-position);

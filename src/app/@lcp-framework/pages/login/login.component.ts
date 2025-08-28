@@ -23,6 +23,7 @@ import { IconEyeComponent } from '../../shared/icon/icon-eye';
 import { CopyrightComponent } from '../../components/copyright/copyright.component';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { ThemeService } from '../../service/common/theme.service';
 
 interface MenuItem {
   id: number;
@@ -134,7 +135,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private menuLoadService: MenuLoadService,
     private timezoneService: TimezoneService,
-    private commonService: MenuMapService
+    private commonService: MenuMapService,
+    private themeService: ThemeService
   ) {
     this.initStore();
     this.loginForm = this.formBuilder.group({
@@ -292,6 +294,14 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           const conf: any = localStorage.getItem('config');
           const enc_config: any = JSON.parse(conf);
           this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
+          
+          if (response.data.theme_info) {
+            const themeData = JSON.stringify(response.data.theme_info);
+            this.localstore.storeData('theme_info', themeData);
+            localStorage.setItem('theme_info', themeData);
+            // console.log('Theme info ', response.data.theme_info);
+            this.themeService.applyThemeFromLocalStorage();
+          }
           if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
             this.localstore.storeDataEncrypted(
               'user_data',

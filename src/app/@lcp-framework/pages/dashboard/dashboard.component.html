@@ -1,4 +1,4 @@
-<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
+<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]" style="border-color: var(--app-table-border-color, var(--app-border-color))">
   <ng-container *ngFor="let tab of dashboardTabs">
     <button
       class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
@@ -15,7 +15,7 @@
   <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
     <ng-container *ngFor="let card of getActiveCards(); let i = index">
       <!--<div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" cdkDrag>-->
-      <div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)">
+      <div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color)); border-color: var(--app-table-border-color, var(--app-border-color))">
         <div class="overflow-x-auto overflow-y-auto p-2" [ngStyle]="getScrollContainerStyle(card.rows, card.cols)">
           <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
           <ng-container *ngIf="card.report_type === commonConfig.REPORT_TYPES.LCP; else powerBiContent">
@@ -24,9 +24,9 @@
             </div>
 
             <div *ngIf="[commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)">
-              <div class="panel">
+              <div class="panel" style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
                 <div class="mb-5 flex items-center justify-between">
-                  <h5 class="text-lg font-semibold dark:text-white">{{ card.title }}</h5>
+                  <h5 class="text-lg font-semibold dark:text-white" style="color: var(--app-table-text-color, var(--app-text-color))">{{ card.title }}</h5>
                 </div>
                 <div class="mb-5 overflow-hidden">
                   <apx-chart

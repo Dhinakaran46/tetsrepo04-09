@@ -1010,29 +1010,29 @@ export class MasterListComponent implements OnChanges {
 
   downloadExcel(filePath: string): void {
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
-    
-  // Remove "./public/" from the start of the path if it exists
-  const cleanPath = filePath.replace(/^\.?\/?public\//, '');
 
-  const fileUrl = `${apiUrl}/${cleanPath}`;
+    // Remove "./public/" from the start of the path if it exists
+    const cleanPath = filePath.replace(/^\.?\/?public\//, '');
 
-  this.http.get(fileUrl, { responseType: 'blob' }).subscribe({
-    next: (blob) => {
-      const filename = this.extractFilename(cleanPath) || 'downloaded_file.csv';
-      saveAs(blob, filename);
-    },
-    error: (err) => {
-      console.error('Error downloading the file', err);
-    },
-  });
+    const fileUrl = `${apiUrl}/${cleanPath}`;
+
+    this.http.get(fileUrl, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const filename = this.extractFilename(cleanPath) || 'downloaded_file.csv';
+        saveAs(blob, filename);
+      },
+      error: (err) => {
+        console.error('Error downloading the file', err);
+      },
+    });
   }
-  
+
   private extractFilename(filePath: string): string | null {
     return filePath?.split('/').pop() || null;
   }
 
   recordExport(item: any) {
-    if(item.downloadables){
+    if (item.downloadables) {
       this.downloadExcel(item.downloadables);
       return;
     }
