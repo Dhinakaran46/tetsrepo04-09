@@ -1,9 +1,9 @@
-<div class="mb-10">
+<div class="mb-10 login-form">
   <h1 class="text-3xl uppercase !leading-snug md:text-4xl">{{ 'title_forget_password' | translate }}</h1>
   <p class="text-base font-bold leading-normal text-white-dark">{{ 'description_forget_password' | translate }}</p>
 </div>
 <form class="space-y-5 pb-32 dark:text-white" [formGroup]="fgForm" (ngSubmit)="onSubmit()" autocomplete="off">
-  <div>
+  <div class="login-form">
     <label for="Email">{{ 'form_label_email' | translate }}</label>
     <div class="relative text-white-dark">
       <input
@@ -30,11 +30,11 @@
     </div>
   </div>
 
-  <button type="submit" class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+  <button type="submit" class="btn btn-primary login-form !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
     {{ 'submit' | translate }}
   </button>
 
-  <div class="text-center">
+  <div class="text-center login-form-btn-secondary" routerLink="/login">
     <span class="text-white-dark hover:text-blue-500">&lt;</span>
     <a routerLink="/login" class="text-white-dark hover:text-blue-500">
       {{ 'login_link' | translate }}
