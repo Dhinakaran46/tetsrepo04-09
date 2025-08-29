@@ -41,7 +41,7 @@ export class MenuMapService {
     );
   }
 
-  getThemeInfo(){
-    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getThemeInfo}`);
+  getThemeInfo(data: any){
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getThemeInfo}`, data);
   }
 }

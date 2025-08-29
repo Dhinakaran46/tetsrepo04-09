@@ -125,7 +125,9 @@ export class AuthLayout {
     }
     this.getconfig(userId);
     this.loadDataCarousel();
-    this.getThemeInfo();
+    const payload = { company_id: this.companyId, status_id: 1 };
+
+    this.getThemeInfo(payload);
   }
 
   changeFavicon(url: any): void {
@@ -268,8 +270,9 @@ export class AuthLayout {
     document.documentElement.scrollTop = 0;
   }
 
-  getThemeInfo(){
-    this.commonService.getThemeInfo().subscribe((response: any) => {
+  getThemeInfo(payload: any){
+
+    this.commonService.getThemeInfo(payload).subscribe((response: any) => {
       if (response.code === 200) {
           const themeData = JSON.stringify(response.data);
           this.localstore.storeData('theme_info', themeData);
