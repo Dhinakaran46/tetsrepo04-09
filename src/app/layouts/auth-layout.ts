@@ -15,6 +15,7 @@ import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { IconCaretDownComponent } from '../@lcp-framework/shared/icon/icon-caret-down';
 import { GridApiService } from '../@lcp-framework/service/common/grid.service';
+import { ThemeService } from '../@lcp-framework/service/common/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -54,7 +55,8 @@ export class AuthLayout {
     private service: AppService,
     public translate: TranslateService,
     private localstore: LocalStorageService,
-    private gridApiService: GridApiService
+    private gridApiService: GridApiService,
+    private themeService: ThemeService
   ) {
     this.initStore();
   }
@@ -81,6 +83,7 @@ export class AuthLayout {
   headerClass = '';
 
   ngOnInit() {
+
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
       console.log('Reloaded');
@@ -122,6 +125,7 @@ export class AuthLayout {
     }
     this.getconfig(userId);
     this.loadDataCarousel();
+    this.getThemeInfo();
   }
 
   changeFavicon(url: any): void {
@@ -262,5 +266,16 @@ export class AuthLayout {
   goToTop() {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
+  }
+
+  getThemeInfo(){
+    this.commonService.getThemeInfo().subscribe((response: any) => {
+      if (response.code === 200) {
+          const themeData = JSON.stringify(response.data);
+          this.localstore.storeData('theme_info', themeData);
+          localStorage.setItem('theme_info', themeData);
+          this.themeService.applyThemeFromLocalStorage();
+      }
+    });
   }
 }
