@@ -34,6 +34,7 @@ export const commonConfig: any = {
     uploadImageAndGetName: 'common/file-upload/image',
     deleteImageByName: 'common/file-delete/image',
     getLanguageContent: 'common/language-content',
+    getThemeInfo: 'common/theme-info',
     importtemplatedeletefile: 'common/import-template/remove',
     importtemplateuploaddata: 'common/import-template/upload',
     attachedpolicies: 'common/attached-policies',
