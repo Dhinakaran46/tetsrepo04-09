@@ -40,4 +40,8 @@ export class MenuMapService {
       data.params
     );
   }
+
+  getThemeInfo(){
+    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getThemeInfo}`);
+  }
 }

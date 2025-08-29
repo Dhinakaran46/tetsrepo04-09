@@ -346,7 +346,7 @@
   }
 
   .horizontal-menu {
-    background-color: var(--app-header-bg-color) !important;
+    background-color: var(--app-sidebar-bg-color) !important;
   }
 
   .horizontal-menu:is(.dark *) {
@@ -395,7 +395,7 @@
 
   .horizontal-menu ul.sub-menu {
     @apply absolute z-20 hidden min-w-[180px] rounded p-0 py-2 shadow;
-    background-color: var(--app-header-bg-color, white) !important;
+    background-color: var(--app-sidebar-bg-color, white) !important;
     color: var(--app-header-text-color, #1f2937) !important;
   }
 
@@ -1280,4 +1280,9 @@ button.login-form:hover{
 
 .login-form-btn-secondary:hover a, .login-form-btn-secondary:hover span{
      color: var(--app-button-text-color,  ) !important;
+}
+
+.border-\[\#ebedf2\]{
+    --tw-border-opacity: 1;
+    border-color: var(--app-sidebar-bg-color, rgb(255 255 255)) !important;
 }
