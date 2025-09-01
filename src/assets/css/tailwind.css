@@ -1286,3 +1286,7 @@ button.login-form:hover{
     --tw-border-opacity: 1;
     border-color: var(--app-sidebar-bg-color, rgb(255 255 255)) !important;
 }
+
+.sidebar .accordion.menu .accordion-content .sub-menu li a:hover::before {
+    background-color: var(--app-table-header-action-color, currentColor) !important;
+}
