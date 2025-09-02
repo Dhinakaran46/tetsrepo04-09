@@ -1,16 +1,22 @@
 import { Injectable } from '@angular/core';
 import { LocalStorageService } from './local-storage.service';
 
-type ThemeInfo = {
-  [key: string]: {
-    name?: string;
-    status_id?: number | string;
-    description?: string;
-    reference_images?: string;
-    theme_line_items?: Record<string, string>;
+interface ThemeData {
+  id: number;
+  uuid: string;
+  name: string;
+  description: string;
+  status_id: number;
+  theme_line_items: {
+    accent_color: string;
+    accent_secondary_color: string;
+    accent_secondary_tone_color: string;
+    accent_tone_color: string;
+    sidebar_bg_color: string;
+    sidebar_heading_color: string;
+    sidebar_text_color: string;
   };
-};
-
+}
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -34,22 +40,14 @@ export class ThemeService {
 
   applyThemeFromLocalStorage(): void {
     const theme = this.readThemeFromStorage();
-    if (!theme) {
+    
+    if (!theme?.theme_line_items) {
+      console.warn('No valid theme found in storage, resetting to defaults');
       this.resetCssVariablesToDefaults();
       return;
     }
 
-    const activeTheme = Object.values(theme).find(t => {
-      const status = typeof t.status_id === 'string' ? parseInt(t.status_id, 10) : Number(t.status_id);
-      return !isNaN(status) && status === 1;
-    });
-
-    if (!activeTheme) {
-      this.resetCssVariablesToDefaults();
-      return;
-    }
-
-    const attributes = this.extractAttributes(activeTheme);
+    const attributes = this.extractAttributes(theme.theme_line_items);
     this.applyCssVariables(attributes);
   }
 
@@ -96,13 +94,14 @@ export class ThemeService {
     body.style.removeProperty('background-color');
   }
 
-  private readThemeFromStorage(): ThemeInfo | null {
+  private readThemeFromStorage(): ThemeData | null {
     const key = 'theme_info';
 
     try {
       const stored = localStorage.getItem(key);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        return parsed.theme_line_items ? parsed : null;
       }
     } catch (e) {
       console.warn(`Failed to parse ${key}:`, e);
@@ -116,20 +115,13 @@ export class ThemeService {
     } catch (e) {
       console.warn(`Failed to parse scoped ${key}:`, e);
     }
-
     return null;
   }
 
-  private extractAttributes(theme: ThemeInfo[string]): Array<{ key: string; value: string }> {
-    const list: Array<{ key: string; value: string }> = [];
-    if (!theme?.theme_line_items) return list;
-
-    for (const [key, value] of Object.entries(theme.theme_line_items)) {
-      if (key && value) {
-        list.push({ key, value });
-      }
-    }
-    return list;
+  private extractAttributes(themeItems: Record<string, string>): Array<{ key: string; value: string }> {
+    return Object.entries(themeItems)
+      .filter(([_, value]) => typeof value === 'string')
+      .map(([key, value]) => ({ key, value }));
   }
 }
 
