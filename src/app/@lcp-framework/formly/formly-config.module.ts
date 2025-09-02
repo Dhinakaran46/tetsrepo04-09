@@ -21,6 +21,7 @@ import { FormlyRepeatTableFieldComponent } from './components/formly-repeat-tabl
 import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
 import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.component';
 import { SplitLabelPipe } from '../pipes/split-label.pipe';
+import { FormlyFieldColorPickerComponent } from './components/formly-field-color-picker/formly-field-color-picker.component';
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
   if (field.props) return `Should have at least ${field.props.minLength} characters`;
@@ -56,6 +57,7 @@ export const search_conditions: any = commonConfig.search_conditions;
     FormlyDisplayListComponent,
     FormlyVsCodeComponent,
     FormlyRepeatTableFieldComponent,
+    FormlyFieldColorPickerComponent,
     SplitLabelPipe,
   ],
   imports: [
@@ -161,6 +163,7 @@ export const search_conditions: any = commonConfig.search_conditions;
         { name: 'whatsapp-tags', component: WhatsappTagsComponent, wrappers: ['form-field'] },
         { name: 'vs-code', component: FormlyVsCodeComponent, wrappers: ['form-field'] },
         { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
+        { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] }
       ],
     }),
   ],
