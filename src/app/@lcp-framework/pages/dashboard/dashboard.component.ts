@@ -38,7 +38,7 @@ import { AuthService } from '../../service/common/auth.service';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { MasterListComponent } from '../master-list/master-list.component';
-import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
+//import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -101,7 +101,7 @@ interface DashboardTab {
     FormBuilderComponent,
     StaticPageComponent,
     MasterListComponent,
-    MasterListChildrenComponent,
+    //MasterListChildrenComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
