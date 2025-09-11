@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ChildDatatableComponent } from './child-datatable.component';
+import { BarcodePrintingComponent } from './barcode-printing.component';
 
-describe('ChildDatatableComponent', () => {
-  let component: ChildDatatableComponent;
-  let fixture: ComponentFixture<ChildDatatableComponent>;
+describe('BarcodePrintingComponent', () => {
+  let component: BarcodePrintingComponent;
+  let fixture: ComponentFixture<BarcodePrintingComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ChildDatatableComponent]
+      imports: [BarcodePrintingComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(ChildDatatableComponent);
+    fixture = TestBed.createComponent(BarcodePrintingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

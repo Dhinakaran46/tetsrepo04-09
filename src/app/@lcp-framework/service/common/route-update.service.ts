@@ -12,6 +12,7 @@ import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 // import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
 // import { DocumentationComponent } from '../../pages/documentation/documentation.component';
 // import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
+// import { BarcodePrintingComponent } from '../../pages/barcode-printing/barcode-printing.component';
 import { environment } from '../../../../environments/environment';
 // import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
 // import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
@@ -200,6 +201,7 @@ export class RouteUpdateService {
                 child_process_setting_module: () =>
                   import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
+                barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
               };
 
               // console.log(routeData);
