@@ -68,6 +68,7 @@ export const commonConfig: any = {
     EXPORT_MODULE: 'export_module',
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
+    BARCODE_PRINT_MODULE: 'barcode_print_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
     USER_CONFIGURATIONS_MODULE: 'user_configurations_module',
     CRON_SETTING_MODULE: 'cron_setting_module',
@@ -210,6 +211,7 @@ export const commonConfig: any = {
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
+    { label: 'Barcode Print Module', value: 'barcode_print_module' },
     { label: 'User Configurations Module', value: 'user_configurations_module' },
 
     { label: 'Cron Setting Module', value: 'cron_setting_module' },

@@ -1,0 +1,169 @@
+<div>
+  <form class="space-y-5 dark:text-white" [formGroup]="barcodePrintForm" (ngSubmit)="onSubmit()">
+    <div class="w-full space-y-5 dark:text-white">
+      <div class="panel">
+        <div class="mb-5 flex flex-col items-start justify-between lg:flex-row lg:items-center">
+          <h5 class="text-lg font-semibold dark:text-white-light">{{ title_key | translate }}</h5>
+          <div class="relative inline-flex align-middle">
+            <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+              {{ 'back' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-4">
+          <div class="flex flex-col">
+            <label for="name">{{ 'form_label_template_name' | translate }} </label>
+            <input
+              autocomplete="off"
+              formControlName="name"
+              id="name"
+              type="text"
+              readonly
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+            />
+          </div>
+
+          <div class="flex flex-col">
+            <label for="prefix">{{ 'form_label_prefix' | translate }} <span class="text-danger">*</span></label>
+            <input autocomplete="off" formControlName="prefix" id="prefix" type="text" class="form-input w-full py-1.5 text-xs placeholder:text-white-dark" />
+            <div *ngIf="isSubmitted && barcodePrintForm.controls['prefix'].hasError('required')" class="text-danger">
+              {{ 'form_label_prefix_req' | translate }}
+            </div>
+          </div>
+
+          <div class="flex flex-col">
+            <label for="label_end">{{ 'form_label_current_sequence' | translate }} <span class="text-danger">*</span></label>
+            <input
+              autocomplete="off"
+              formControlName="label_end"
+              id="label_end"
+              type="text"
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+            />
+            <div *ngIf="isSubmitted && barcodePrintForm.controls['label_end'].hasError('required')" class="text-danger">
+              {{ 'form_label_end_req' | translate }}
+            </div>
+          </div>
+          <div class="flex flex-col">
+            <label for="no_of_barcodes">{{ 'form_label_no_of_barcodes' | translate }} <span class="text-danger">*</span></label>
+            <input
+              autocomplete="off"
+              formControlName="no_of_barcodes"
+              id="no_of_barcodes"
+              type="number"
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+              (input)="onBarcodeChange($event)"
+            />
+            <div *ngIf="isSubmitted && barcodePrintForm.controls['no_of_barcodes'].hasError('required')" class="text-danger">
+              {{ 'form_label_no_of_barcodes_req' | translate }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-4">
+          <div class="flex flex-col">
+            <label for="asset_from">{{ 'form_label_asset_from' | translate }} </label>
+            <input
+              autocomplete="off"
+              formControlName="asset_from"
+              id="asset_from"
+              type="text"
+              readonly
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+            />
+          </div>
+
+          <div class="flex flex-col">
+            <label for="asset_to">{{ 'form_label_asset_to' | translate }}</label>
+            <input
+              autocomplete="off"
+              formControlName="asset_to"
+              id="asset_to"
+              type="text"
+              readonly
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+            />
+          </div>
+          <div class="flex flex-col">
+            <label for="page_width">{{ 'form_label_page_width_inch' | translate }}</label>
+            <input
+              autocomplete="off"
+              [(ngModel)]="inputWidth"
+              id="page_width"
+              type="number"
+              formControlName="page_width"
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+            />
+          </div>
+          <div class="flex flex-col">
+            <label for="page_height">{{ 'form_label_page_height_inch' | translate }}</label>
+            <input
+              autocomplete="off"
+              [(ngModel)]="inputHeight"
+              id="page_height"
+              type="number"
+              formControlName="page_height"
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+            />
+          </div>
+        </div>
+        <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div class="flex flex-col lg:col-span-8">
+            <label for="zpl_code">{{ 'form_label_zpl_code' | translate }}<span class="text-danger">*</span></label>
+            <textarea
+              autocomplete="off"
+              formControlName="zpl_code"
+              id="zpl_code"
+              class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
+              rows="15"
+            ></textarea>
+            <div *ngIf="isSubmitted && barcodePrintForm.controls['zpl_code'].hasError('required')" class="text-danger">
+              {{ 'form_label_zpl_code_req' | translate }}
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center lg:col-span-4" *ngIf="zplPreview">
+            <h3>{{ 'barcode_preview' | translate }}</h3>
+            <div class="mt-4 h-auto w-[250px] rounded border p-4 md:w-[330px]">
+              <img [src]="zplPreview" alt="ZPL Code Preview" class="h-auto w-full object-contain" />
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+          <div class="flex flex-col">
+            <button
+              type="button"
+              (click)="previewClick()"
+              class="btn-primary self-start rounded-md border border-[#e0e6ed] px-4 py-2 text-center font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            >
+              <i class="fa fa-eye"></i>
+              {{ 'preview' | translate }}
+            </button>
+          </div>
+          <div class="flex flex-col">
+            <button
+              type="submit"
+              class="btn-success w-max rounded-md border border-[#e0e6ed] px-4 py-2 text-center font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            >
+              <i class="fa fa-barcode"></i>
+              {{ 'generate_barcode' | translate }}
+            </button>
+          </div>
+          <div class="flex flex-col">
+            <button
+              type="button"
+              (click)="onSubmit(true)"
+              class="btn-success w-max rounded-md border border-[#e0e6ed] px-4 py-2 text-center font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            >
+              <i class="fa fa-microchip"></i>
+              {{ 'generate_rfid' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<app-loader *ngIf="loading"></app-loader>
