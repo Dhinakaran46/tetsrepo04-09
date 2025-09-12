@@ -14,6 +14,39 @@
   }
 }
 
+// Date Range Picker Tab Styles
+.date-range-tab {
+  .date-range-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    input[type="date"] {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font: inherit;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      
+      &:focus {
+        outline: none;
+        background: rgba(0, 0, 0, 0.05);
+      }
+      
+      &::-webkit-calendar-picker-indicator {
+        filter: invert(0.5);
+        cursor: pointer;
+      }
+    }
+    
+    .separator {
+      color: currentColor;
+    }
+  }
+}
+
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 4px;
