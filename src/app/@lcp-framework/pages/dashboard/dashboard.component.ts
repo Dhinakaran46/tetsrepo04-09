@@ -1,5 +1,8 @@
-import { Component, OnInit, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy } from '@angular/core';
-
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+import { CommonModule } from '@angular/common';
+import { DateRange} from '../../../@lcp-framework/components/models/date-range.model';
+import { DateRangePickerComponent } from '../../components/date-range-picker/date-range-picker.component';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import {
   ApexAxisChartSeries,
@@ -38,7 +41,7 @@ import { AuthService } from '../../service/common/auth.service';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { MasterListComponent } from '../master-list/master-list.component';
-//import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
+// import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -93,20 +96,44 @@ interface DashboardTab {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  animations: [
+    trigger('toggleAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'scale(0.95)' }), 
+        animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))
+      ]),
+      transition(':leave', [
+        animate('75ms', style({ opacity: 0, transform: 'scale(0.95)' }))
+      ]),
+    ]),
+  ],
   imports: [
+    CommonModule,
     CommonSharedModule,
     DragDropModule,
     NgApexchartsModule,
     SafeHtmlPipe,
-    FormBuilderComponent,
+     FormBuilderComponent,
     StaticPageComponent,
     MasterListComponent,
     //MasterListChildrenComponent,
+    DateRangePickerComponent
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
+  dateRange: DateRange = {
+    fromDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+    toDate: new Date()
+  };
+
+  grid_params = {
+    "$gparam_1": '1950-01-01',
+    "$gparam_2": '2050-01-01'
+  };
+  
   commonConfig = commonConfig;
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
@@ -118,8 +145,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   dashboardTabs: DashboardTab[] = [];
   private powerBiSubscription!: Subscription;
 
-  activeTabId: string = '1';
-
+  activeTabId: string = '1'
+  showDateRangePicker = false;
   userId: any;
   companyId: any;
 
@@ -167,6 +194,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
+    
+    // Set default date range
+    this.dateRange = {
+      fromDate: new Date('1950-01-01'),
+      toDate: new Date('2050-01-01')
+    };
   }
 
   removePowerBiInstances() {
@@ -204,6 +237,57 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearReloadTimers();
     this.removePowerBiInstances();
+  }
+  
+  formatDate(date: Date | null): string {
+    if (!date) return '';
+    
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    
+    // Format as YYYY-MM-DD
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  }
+
+  getDateRangeText(): string {
+    if (!this.dateRange) return 'Select a Date Range';
+    
+    const from = this.dateRange.fromDate ? this.formatDate(this.dateRange.fromDate) : '';
+    const to = this.dateRange.toDate ? this.formatDate(this.dateRange.toDate) : '';
+    
+    if (from && to) {
+      return `Showing Results From ${from} To ${to}`;
+    }
+    return 'Select a Date Range';
+  }
+
+  onDateRangeChange(range: DateRange) {
+    // Only update if dates have actually changed
+    const fromDateChanged = !this.dateRange.fromDate || !range.fromDate || 
+      (this.dateRange.fromDate && range.fromDate && this.dateRange.fromDate.getTime() !== range.fromDate.getTime());
+    const toDateChanged = !this.dateRange.toDate || !range.toDate || 
+      (this.dateRange.toDate && range.toDate && this.dateRange.toDate.getTime() !== range.toDate.getTime());
+    
+    if (fromDateChanged || toDateChanged) {
+      // Create new date objects to avoid reference issues
+      this.dateRange = {
+        fromDate: range.fromDate ? new Date(range.fromDate) : null,
+        toDate: range.toDate ? new Date(range.toDate) : null
+      };
+      
+      // Update grid_params with the new date range
+      this.grid_params = {
+        ...this.grid_params,
+        "$gparam_1": this.formatDate(this.dateRange.fromDate),
+        "$gparam_2": this.formatDate(this.dateRange.toDate)
+      };
+      
+      this.refreshDashboardData();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -336,7 +420,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                   mainElem.cards = [];
                 }
               }
-
+              
               // Proceed with Promise.all only if cards is an array
               if (Array.isArray(mainElem.cards)) {
                 mainElem.cards = await Promise.all(
@@ -356,10 +440,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
               return mainElem;
             })
-          );
-          // Set the first tab as the active tab and initialize its cards
-          await this.setActiveTab(this.dashboardTabs[0].id);
-        }
+            );
+            // Set the first tab as the active tab and initialize its cards
+            await this.setActiveTab(this.dashboardTabs[0].id);
+          }
       },
       (error) => {
         const key = 'failed_to_load';
@@ -368,9 +452,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
     );
   }
-
+  
   async getQueryInfo(params: any): Promise<any> {
     try {
+      params.grid_params = { ...params.grid_params, ...this.grid_params };
       const response = await this.gridApiService.getAllList(params).toPromise();
       if (response.status && response.code === 200) {
         return response.data.records || [];
@@ -422,8 +507,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     try {
       // re-run query if present
       if (card.query_information) {
-        const qi = JSON.parse(JSON.stringify(card.query_information));
-        const queryString = JSON.stringify(qi).replace(/\$session_user_id/g, this.userId);
+        const queryInfo = JSON.parse(JSON.stringify(card.query_information));
+        
+        // Initialize grid_params if it doesn't exist
+        if (!queryInfo.grid_params) {
+          queryInfo.grid_params = {};
+        }
+        
+        // Merge existing grid_params with the component's grid_params
+        queryInfo.grid_params = { ...queryInfo.grid_params, ...this.grid_params };
+        
+        const queryString = JSON.stringify(queryInfo).replace(/\$session_user_id/g, this.userId);
         card.query_information = JSON.parse(queryString);
         card.data = await this.getQueryInfo(card.query_information);
       }
@@ -793,4 +887,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.showMasterListPopup = false;
     this.popupConfig = null;
   }
+  
+  private refreshDashboardData(): void {
+    console.log('Refreshing dashboard with params:', this.grid_params);
+    
+    const activeTab = this.dashboardTabs.find(tab => tab.id === this.activeTabId);
+    if (activeTab) {
+      this.initializeDashboardCards(activeTab.cards).catch(error => {
+        console.error('Error refreshing dashboard data:', error);
+        this.toastr.error('Failed to refresh dashboard data');
+      });
+    }
+  }
+
 }
