@@ -729,9 +729,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
-          
-          
-          
+
+
+
           
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
@@ -740,6 +740,68 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
+
+          fieldsJson.forEach((field: any) => {
+                    // fieldGroup
+            field.fieldGroup?.forEach((subField: any) => {
+              if (subField.props && subField.props.label)
+                subField.props.label = this.translate.instant(subField.props.label);
+              if (subField.props && subField.props.placeholder)
+                subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
+
+              if (subField.templateOptions && subField.templateOptions.label)
+                subField.templateOptions.label = this.translate.instant(subField.templateOptions.label);
+              if (subField.templateOptions && subField.templateOptions.placeholder)
+                subField.templateOptions.placeholder = this.translate.instant(subField.templateOptions.placeholder || '');
+
+              // props.options (radio, select, etc.)
+              if (subField.props && Array.isArray(subField.props.options)) {
+                subField.props.options.forEach((opt: any) => {
+                  if (opt.label) {
+                    opt.label = this.translate.instant(opt.label);
+                  }
+                });
+              }
+            });
+
+            // fieldArray
+            field.fieldArray?.fieldGroup?.forEach((subField: any) => {
+              if (subField.props && subField.props.label)
+                subField.props.label = this.translate.instant(subField.props.label);
+              if (subField.props && subField.props.placeholder)
+                subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
+
+              if (subField.templateOptions && subField.templateOptions.label)
+                subField.templateOptions.label = this.translate.instant(subField.templateOptions.label);
+              if (subField.templateOptions && subField.templateOptions.placeholder)
+                subField.templateOptions.placeholder = this.translate.instant(subField.templateOptions.placeholder || '');
+
+              // props.options (radio, select, etc.)
+              if (subField.props && Array.isArray(subField.props.options)) {
+                subField.props.options.forEach((opt: any) => {
+                  if (opt.label) {
+                    opt.label = this.translate.instant(opt.label);
+                  }
+                });
+              }
+            });
+
+            // templateOptions (top-level)
+            if (field.templateOptions && field.templateOptions.label)
+              field.templateOptions.label = this.translate.instant(field.templateOptions.label);
+            if (field.templateOptions && field.templateOptions.placeholder)
+              field.templateOptions.placeholder = this.translate.instant(field.templateOptions.placeholder || '');
+
+            // props.options (top-level field, if ever used)
+            if (field.props && Array.isArray(field.props.options)) {
+              field.props.options.forEach((opt: any) => {
+                if (opt.label) {
+                  opt.label = this.translate.instant(opt.label);
+                }
+              });
+            }
+          });
+
           const isNestedModal = !!this.nestedFormEntityName && (this.entity_type === 'popup_add' || this.entity_type === 'popup_edit');
           if (!isNestedModal) {
             this.fields = this.processFields(fieldsJson);
