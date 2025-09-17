@@ -1293,3 +1293,19 @@ button.login-form:hover{
 .sidebar .accordion.menu .accordion-content .sub-menu li a:hover::before {
     background-color: var(--app-table-header-action-color, currentColor) !important;
 }
+
+[type="checkbox"].form-check-input{
+    border-radius:0.2rem !important;
+}
+
+[type="checkbox"].form-check-input::after{
+ content: "";
+  width: 0.9em !important;
+  height: 0.9em !important;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em var(--form-control-color);
+    transform-origin: bottom left;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%) !important;
+  color: var(--app-form-base-component-color, #4361ee) !important;
+}
