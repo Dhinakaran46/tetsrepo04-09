@@ -481,6 +481,9 @@ export class MasterListComponent implements OnChanges {
           '$session_user_id',
           this.user_info.main.id
         );
+        if (this.grid_params) {
+          listParams.grid_params = this.grid_params;
+        }
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
         this.gridApiService.getAllRecords(listParams).subscribe(
           (response) => {
