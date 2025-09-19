@@ -329,7 +329,7 @@ export class UserRolePermissionComponent {
           rightsArray.push(
             this.fb.group({
               id: new FormControl(right.id),
-              name: new FormControl(right.permission_name ?? right.entity_permission_name),
+              name: new FormControl(right.permission_name),
               entity_id: new FormControl(right.entity_id),
               link_type: new FormControl(right.link_type),
               permission_id: new FormControl(right.permission_id),

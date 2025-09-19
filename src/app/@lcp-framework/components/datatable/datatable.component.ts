@@ -32,6 +32,7 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
 import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
+import { LoaderComponent } from '../loader/loader.component';
 
 interface SearchCondition {
   id: string;
@@ -49,7 +50,7 @@ interface InputTypes {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe,LoaderComponent],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -60,6 +61,9 @@ interface InputTypes {
   ],
 })
 export class DataTableComponent implements OnInit, OnChanges {
+  // Add this property to your component class:
+pendingPopupData: { item: any, entityName: string } | null = null;
+
   expandedItem: any = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
   @Input() unique_id: any;
@@ -169,8 +173,15 @@ export class DataTableComponent implements OnInit, OnChanges {
 
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
   @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
+  @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
+  @Input() isViewPopupOpen: boolean = false;
+  
+
+  isViewPopupOpenDirect = false;
+  loadingpopup = false;
+  noPopupPermission = false;
 
   constructor(
     private translate: TranslateService,
@@ -188,6 +199,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
   }
+
+ 
 
   toggleRow(item: any, row_index: number) {
     if (this.expandedItem === row_index) {
@@ -227,6 +240,9 @@ export class DataTableComponent implements OnInit, OnChanges {
     if (this.columnChildMasterListContainer) {
       this.columnChildMasterListContainer.clear();
     }
+
+    
+    
   }
 
   ngOnInit() {
@@ -755,6 +771,31 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.linkComponentClick.emit({ col, item });
   }
 
+  /*onLinkPopupGridClick(item: any, col: any){
+    console.log(col);
+    console.log(col.link_action);
+    console.log(item);
+    this.isViewPopupOpenDirect = true;
+    this.loadingpopup = true;
+    this.createPopupChildMasterList(item, col.link_action);
+  }*/
+
+  onLinkPopupGridClick(item: any, col: any) {
+    console.log(col);
+    console.log(col.link_action);
+    console.log(item);
+    
+    this.isViewPopupOpenDirect = true;
+    this.loadingpopup = true;
+    
+    // Store the parameters for use after the view is initialized
+    this.pendingPopupData = { item, entityName: col.link_action };
+    
+    // Use setTimeout to ensure the DOM is updated and ViewChild is available
+    setTimeout(() => {
+      this.createPopupChildMasterList(item, col.link_action);
+    }, 100); // Increased delay to ensure DOM is ready
+  }
   toggleColumnChildGrid(item: any, col: any, row_index: number) {
     if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header) {
       this.clearAllExpandedGrids();
@@ -797,7 +838,64 @@ export class DataTableComponent implements OnInit, OnChanges {
     componentRef.instance.grid_params = gridParams;
   }
 
-  createColumnChildMasterList(item: any, entityName: string) {
+  closeViewPopup() {
+    this.isViewPopupOpenDirect = false;
+    
+  }
+  /*createPopupChildMasterList(item: any, entityName: string) {
+    
+    console.log('coming')
+    
+    const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.uuid = item['uuid'];
+    componentRef.instance.entity_name = entityName;
+    componentRef.instance.nonGridPage = false;
+
+    const gridParams: any = {};
+    Object.keys(item).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    componentRef.instance.grid_params = gridParams;
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }*/
+  
+    createPopupChildMasterList(item: any, entityName: string) {
+      console.log('coming');
+      
+      // Add safety check
+      if (!this.popupChildMasterListContainer) {
+        console.error('popupChildMasterListContainer is not available');
+        this.loadingpopup = false;
+        return;
+      }
+      
+      // Clear any existing components
+      this.popupChildMasterListContainer.clear();
+      
+      const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
+      componentRef.instance.uuid = item['uuid'];
+      componentRef.instance.entity_name = entityName;
+      componentRef.instance.nonGridPage = false;
+    
+      const gridParams: any = {};
+      Object.keys(item).forEach((key) => {
+        if (key.startsWith('gparam_')) {
+          let temp_key = '$' + key;
+          gridParams[temp_key] = item[key];
+        }
+      });
+      componentRef.instance.grid_params = gridParams;
+      
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    }
+    createColumnChildMasterList(item: any, entityName: string) {
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
