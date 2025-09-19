@@ -1993,6 +1993,8 @@ export class MasterEntityComponent implements OnInit {
       let entity;
       if (type === 'component') {
         entity = this.masterEntities.find((e: any) => e.value === entityName);
+      } else if (type === 'popup_grid') {
+        entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
       } else if (type === 'child_grid') {
         entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
       }
@@ -2014,7 +2016,7 @@ export class MasterEntityComponent implements OnInit {
     }
     // Subscribe to changes
     linkActionControl?.valueChanges.subscribe((entityName: string) => {
-      if (linkTypeControl?.value === 'component' || linkTypeControl?.value === 'child_grid') {
+      if (linkTypeControl?.value === 'component' || linkTypeControl?.value === 'child_grid' || linkTypeControl?.value === 'popup_grid') {
         setLinkMode(entityName);
       } else {
         (group as any)._linkMode = 'none';
@@ -2022,7 +2024,7 @@ export class MasterEntityComponent implements OnInit {
     });
     // Also update on linkType change
     linkTypeControl?.valueChanges.subscribe((type: string) => {
-      if (type !== 'component' && type !== 'child_grid') {
+      if (type !== 'component' && type !== 'child_grid' && type !== 'popup_grid') {
         (group as any)._linkMode = 'none';
       } else {
         setLinkMode(linkActionControl?.value);

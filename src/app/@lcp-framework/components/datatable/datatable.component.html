@@ -330,11 +330,21 @@
                         *ngIf="!col.colFilterHide"
                       >
                         <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
-                          <ng-container *ngIf="col.link_type === 'component'; else notComponent">
+                          
+
+                          <ng-container *ngIf="col.link_type === 'component'; else maybePopupGrid">
                             <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
                               {{ item[col.header] | booleanStatus }}
                             </span>
                           </ng-container>
+                          <ng-template #maybePopupGrid>
+                            <ng-container *ngIf="col.link_type === 'popup_grid'; else notComponent">
+                              <span class="block cursor-pointer truncate text-primary underline"
+                                    (click)="onLinkPopupGridClick(item, col)">
+                                {{ item[col.header] | booleanStatus }}
+                              </span>
+                            </ng-container>
+                          </ng-template>
                           <ng-template #notComponent>
                             <ng-container *ngIf="col.link_type === 'url'; else defaultCell">
                               <a
@@ -521,4 +531,33 @@
       </div>
     </div>
   </div>
+  
+
+
 </div>
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isViewPopupOpenDirect">
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-5xl transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
+    >
+      <button
+        type="button"
+        class="btn-xs absolute -right-5 -top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-lg hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
+        (click)="closeViewPopup()"
+      >
+        <span class="sr-only">Close</span>
+        <i class="fa-solid fa-xmark text-2xl"></i>
+      </button>
+
+      <div class="max-h-[80vh] overflow-y-auto p-4">
+        <app-loader *ngIf="loadingpopup"></app-loader>
+        <ng-template #popupChildMasterListContainer></ng-template>
+      </div>
+    </div>
+  </div>
+</div>
+

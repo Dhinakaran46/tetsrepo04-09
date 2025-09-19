@@ -858,6 +858,7 @@
                         <option value="none">{{ 'none' | translate }}</option>
                         <option value="component">{{ 'component' | translate }}</option>
                         <option value="child_grid">{{ 'child_grid' | translate }}</option>
+                        <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
                         <option value="url">{{ 'url' | translate }}</option>
                       </select>
                       <div *ngIf="isItemFieldInvalid(i, 'linkType')" class="invalid-feedback text-danger">
@@ -883,6 +884,19 @@
                         </select>
                         <select
                           *ngSwitchCase="'child_grid'"
+                          [id]="'linkAction' + i"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-select w-full"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        >
+                          <option value="">{{ 'select_any' | translate }}</option>
+                          <ng-container *ngFor="let entity of masterEntitiesForChildProcess">
+                            <option [value]="entity.value">{{ entity.label }}</option>
+                          </ng-container>
+                        </select>
+                        <select
+                          *ngSwitchCase="'popup_grid'"
                           [id]="'linkAction' + i"
                           formControlName="linkAction"
                           appDynamicFontSize="body"
