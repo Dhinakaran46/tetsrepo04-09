@@ -777,7 +777,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     console.log(item);
     this.isViewPopupOpenDirect = true;
     this.loadingpopup = true;
-    this.createPopupChildMasterList(item, col.link_action);
+    this.createColumnPopupChildMasterList(item, col.link_action);
   }*/
 
   onLinkPopupGridClick(item: any, col: any) {
@@ -793,7 +793,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     
     // Use setTimeout to ensure the DOM is updated and ViewChild is available
     setTimeout(() => {
-      this.createPopupChildMasterList(item, col.link_action);
+      this.createColumnPopupChildMasterList(item, col.link_action);
     }, 100); // Increased delay to ensure DOM is ready
   }
   toggleColumnChildGrid(item: any, col: any, row_index: number) {
@@ -842,7 +842,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     this.isViewPopupOpenDirect = false;
     
   }
-  /*createPopupChildMasterList(item: any, entityName: string) {
+  /*createColumnPopupChildMasterList(item: any, entityName: string) {
     
     console.log('coming')
     
@@ -864,7 +864,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     }, 500);
   }*/
   
-    createPopupChildMasterList(item: any, entityName: string) {
+    createColumnPopupChildMasterList(item: any, entityName: string) {
       console.log('coming');
       
       // Add safety check
