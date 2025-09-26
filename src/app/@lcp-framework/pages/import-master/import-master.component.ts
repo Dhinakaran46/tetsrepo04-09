@@ -213,7 +213,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       (response: EntityListDataResponce) => {
         if (response.status && response.data?.records.length) {
           this.importTemplates = response.data.records;
-          console.log(this.importTemplates);
+          
         } else if (!response.status) {
           this.importTemplates = [];
           this.toastr.error(`Code: ${response.code} , ${response.message}`);
@@ -237,7 +237,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getTemplateDetail() {
     this.submitted = true;
-    // console.log('val', this.importForm.value);
+    
     if (this.importForm.invalid) {
       if (this.importForm.controls['import_template'].hasError('required')) {
         this.toastr.error('please_select_import_template_before_continuing');
@@ -420,7 +420,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     if (this.fileUploadLog && this.fileUploadLog.uuid) {
       this.gridApiService.deleteFileByUuid(this.fileUploadLog?.uuid).subscribe(
         (response: ApiResponce) => {
-          // console.log('Component destroyed');
+          
         },
         (error: any) => {
           const key = 'error';
@@ -568,7 +568,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.toastr.error('Please fill the import job form');
       return;
     }
-    console.log(sheet_data);
+    
     let finalData: any = sheet_data;
     let finalRows: any = [];
     finalData.row_datas.forEach((item: any) => {
@@ -582,9 +582,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         row_object: item,
       });
     });
-    console.log(finalRows);
-
-    console.log(finalData);
+    
     const randomValue = Math.floor(Math.random() * 100000);
     const wholeData = this.getSheetDatas();
     const wholeDataConfig = this.getSheetHeader();
@@ -621,13 +619,11 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         table2: finalRows,
       },
     };
-    console.log(payload);
-    //    console.log('Payload:', JSON.stringify(payload, null, 2));
-    //return;
+   
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          console.log(response);
+         
           if (response.status) {
             this.resetComponent();
             this.getImportTemplates();
@@ -652,9 +648,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         this.isLoading = false;
       }
     );
-    //`{{{get_sequence_no('import_job', true)}}}`
-    //console.log(this.getSheetDatas());
-    //  console.log(this.getSheetHeader());
+    
   }
 
   async uploadExcelAndcallImport(sheet_data: SheetData) {
@@ -733,7 +727,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.gridApiService.getIndividualImportFields(uuid).subscribe(
         (response: ApiResponce) => {
           if (response.status && response.data.records.length) {
-            console.log(response.data.records);
+            
             this.resetComponent(uuid);
             if (response.data.records[0].importable_fields) {
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);

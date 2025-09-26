@@ -102,7 +102,7 @@ export class AuthLayout {
         this.showTopButton = false;
       }
     });
-    console.log('coming')
+    
     // Get userId from localStorageService if available
     let userId: number | undefined = undefined;
     try {
@@ -173,7 +173,7 @@ export class AuthLayout {
           const entity = response.data.records[0];
           this.mediaItems = entity.items;
           this.mediaItems.sort((a: any, b: any) => a.order - b.order);
-          console.log(this.mediaItems);
+          
         }
       },
       (error) => {
@@ -185,7 +185,7 @@ export class AuthLayout {
   }
 
   getconfig(userId?: number) {
-    console.log(userId)
+   
     // Prepare params for the procedure
     const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
     if (userId !== undefined && userId !== null) {
@@ -217,7 +217,7 @@ export class AuthLayout {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          console.log(response.message);
+         
         }
       },
       error: (error) => {

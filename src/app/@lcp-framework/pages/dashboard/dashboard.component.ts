@@ -229,7 +229,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
     if (this.powerBiSubscription) {
       this.powerBiSubscription.unsubscribe(); // Unsubscribe when the component is destroyed
-      // console.log('Unsubscribed from powerBiContainers changes');
+     
     }
     this.powerBiReportInstances = [];
   }
@@ -425,7 +425,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               if (Array.isArray(mainElem.cards)) {
                 mainElem.cards = await Promise.all(
                   mainElem.cards.map(async (item: any) => {
-                    // console.log(item);
+                    
                     return {
                       ...item,
                       format: item.format ? (Array.isArray(item.format) ? item.format : [item.format]) : [],
@@ -604,7 +604,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               if (this.powerBiContainers.get(index)) {
                 this.powerBiReportInstances.push(this.powerbiService.embed(this.powerBiContainers.get(index)?.nativeElement, embedConfig) as pbi.Report);
                 this.powerBiReportInstances[index]?.on('loaded', function () {
-                  // console.log('Power BI report loaded successfully');
+                 
                 });
 
                 this.powerBiReportInstances[index]?.on('error', function (event) {
@@ -889,7 +889,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
   
   private refreshDashboardData(): void {
-    console.log('Refreshing dashboard with params:', this.grid_params);
+    
     
     const activeTab = this.dashboardTabs.find(tab => tab.id === this.activeTabId);
     if (activeTab) {

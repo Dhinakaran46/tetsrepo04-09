@@ -252,42 +252,7 @@ export class MasterEntityComponent implements OnInit {
     jobBuilderQueryInfo: {
       header: 'sample_query_information',
       examples: [
-        /*{
-          name: 'example_1',
-          comments: [],
-          data: {
-            data: {
-              table1: [
-                {
-                  deleted_at: true,
-                  deleted_by: true,
-                },
-              ],
-            },
-            table: ['users'],
-            action: ['delete'],
-            conditions: {
-              table1: [
-                {
-                  id: '$unique_id',
-                },
-              ],
-            },
-            reset_unique: {
-              table1: [
-                {
-                  column_name: 'email',
-                  column_length: 100,
-                },
-                {
-                  column_name: 'username',
-                  column_length: 100,
-                },
-              ],
-            },
-            table_mapping: ['table1'],
-          },
-        },*/
+        
         {
           name: 'example_1',
           comments: [],
@@ -1186,52 +1151,7 @@ export class MasterEntityComponent implements OnInit {
     this.fetchAllMasterEntities();
   }
 
-  // ngAfterViewInit() {
-  //   if (this.monacoEditor && this.monacoEditor._editorContainer) {
-  //     const editorElement = this.monacoEditor._editorContainer.nativeElement;
-
-  //     const resizeObserver = new ResizeObserver(() => {
-  //       // Access the editor instance from the DOM element, if possible
-  //       const monacoInstance = (editorElement as any).editorInstance;
-  //       if (monacoInstance && typeof monacoInstance.layout === 'function') {
-  //         monacoInstance.layout();
-  //       }
-  //     });
-
-  //     resizeObserver.observe(editorElement);
-  //   }
-  // }
-
-  // ngAfterViewInit() {
-  //   if (this.monacoEditor && this.monacoEditor._editorContainer) {
-  //     const editorElement = this.monacoEditor._editorContainer.nativeElement;
-
-  //     // Try observing the window resize as a fallback
-  //     window.addEventListener('resize', () => {
-  //       console.log('Observing element:', editorElement);
-  //       this.adjustEditorHeight(editorElement);
-  //     });
-
-  //     // Still, attempt to use ResizeObserver as well
-  //     const resizeObserver = new ResizeObserver(() => {
-  //       this.adjustEditorHeight(editorElement);
-  //     });
-
-  //     resizeObserver.observe(editorElement);
-  //   }
-  // }
-
-  // private adjustEditorHeight(editorElement: any) {
-  //   const newHeight = editorElement.clientHeight;
-  //   editorElement.style.height = `${newHeight}px`;
-
-  //   console.log('Adjusted Height:', newHeight);
-
-  //   const monacoInstance = (editorElement as any).editorInstance;
-  //   if (monacoInstance && typeof monacoInstance.layout === 'function') {
-  //     monacoInstance.layout();
-  //   }
-  // }
+  
 
   async initStore() {
     this.storeData
@@ -1475,7 +1395,7 @@ export class MasterEntityComponent implements OnInit {
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
-    console.log(items);
+    
   }
 
   removeItem(index: number) {

@@ -126,7 +126,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    console.log(pageInfo);
+    
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
@@ -967,7 +967,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       (response: any) => {
         this.loading = false;
         if (response.status) {
-          // console.log('Response:', response);
+         
           this.toastr.success(response.message, 'Success');
         } else {
           console.error('Error: Operation failed with response:', response);

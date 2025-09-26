@@ -195,7 +195,7 @@ export class ExampleClientDatatableComponent implements OnInit {
   }
 
   onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
-    console.log('Sort changed:', sort);
+    
     this.tableData.sort((a: any, b: any) => {
       const aVal = a[sort.column];
       const bVal = b[sort.column];
@@ -223,11 +223,11 @@ export class ExampleClientDatatableComponent implements OnInit {
   // Action Handlers
   editItem(item: any): void {
     this.toastr.info(`Editing item: ${item.code}`);
-    console.log('Edit item:', item);
+    
   }
 
   deleteItem(item: any): void {
     this.toastr.warning(`Deleting item: ${item.code}`);
-    console.log('Delete item:', item);
+    
   }
 }

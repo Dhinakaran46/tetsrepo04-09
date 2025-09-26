@@ -157,7 +157,7 @@ export class ForgetpwdComponent {
       },
       complete: () => {
         this.loading = false;
-        console.log('password request completed');
+        
       },
     });
   }

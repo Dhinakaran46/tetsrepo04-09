@@ -146,7 +146,7 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
           if (evaluatedValue !== undefined) {
             item.value = evaluatedValue; // Replace value with the dynamically evaluated result
           } else {
-            console.log('undefined evaluatedValue', item.value);
+           
             item.value = null;
           }
         } catch (error) {
@@ -170,7 +170,7 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
   }
 
   openNestedFormModal(entityName: string, fieldKey?: string) {
-    console.log('Opening nested form modal:', { entityName, fieldKey });
+   
     
     // Don't open modal if entityName is empty
     if (!entityName || entityName.trim() === '') {
