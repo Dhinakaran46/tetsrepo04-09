@@ -160,6 +160,7 @@ export const commonConfig: any = {
     POPUP_ADD: 'popup_add',
     POPUP_EDIT: 'popup_edit',
     POPUP_DETAILS: 'popup_details',
+    RESET_PASSWORD: 'reset_password',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -196,6 +197,8 @@ export const commonConfig: any = {
     { label: 'Popup Add', value: 'popup_add' },
     { label: 'Popup Edit', value: 'popup_edit' },
     { label: 'Popup Details', value: 'popup_details' },
+    { label: 'Reset Password', value: 'reset_password' },
+    
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
