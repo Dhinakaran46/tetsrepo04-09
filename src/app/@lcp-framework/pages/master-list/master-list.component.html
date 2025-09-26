@@ -173,7 +173,7 @@
         [class.text-red-500]="!item.password"
         [class.hover:text-primary]="item.password"
         appDynamicFontSize="body"
-        *ngIf="this.allowPasswordModal"
+        *ngIf="this.masterInfo.permissions.reset_password"
         (click)="this.passwordModal(item)"
         ngxTippy
         [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'"

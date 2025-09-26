@@ -89,6 +89,8 @@ export class RouteUpdateService {
               const popupCreatePermissionKey = `popup_add_${routeData.entity_name}`;
               const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
               const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
+              const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
+              
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -244,6 +246,7 @@ export class RouteUpdateService {
                       popup_create: permissionListJSON[popupCreatePermissionKey] || false,
                       popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                       popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
+                      reset_password: permissionListJSON[resetPasswordPermissionKey] || false
                     },
                     children: children,
                   },
@@ -295,6 +298,7 @@ export class RouteUpdateService {
           const popupCreatePermissionKey = `popup_add_${routeData.entity_name}`;
           const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
           const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
+          const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
 
           const idColumn = `${routeData.primary_table}.id`;
           const deletedAtColumn = `${routeData.primary_table}.status_id`;
@@ -422,6 +426,7 @@ export class RouteUpdateService {
                   popup_create: permissionListJSON[popupCreatePermissionKey] || false,
                   popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                   popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
+                  reset_password: permissionListJSON[resetPasswordPermissionKey] || false
                 },
                 children: children,
               },
