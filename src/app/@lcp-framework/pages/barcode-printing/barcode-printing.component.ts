@@ -330,7 +330,7 @@ export class BarcodePrintingComponent {
       }
     }
 
-    const pdfBytes = await pdfDoc.save();
+    const pdfBytes:any = await pdfDoc.save();
 
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
@@ -366,7 +366,7 @@ export class BarcodePrintingComponent {
       responseType: 'arraybuffer',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
-    console.log(response.data);
+   
     return new Uint8Array(response.data);
   }
 
@@ -389,7 +389,7 @@ export class BarcodePrintingComponent {
 
   async generatePreviewImage(zplCode: string) {
     try {
-      const imageBytes = await this.fetchZPLImage(zplCode);
+      const imageBytes:any = await this.fetchZPLImage(zplCode);
       const blob = new Blob([imageBytes], { type: 'image/png' });
       this.loading = false;
 

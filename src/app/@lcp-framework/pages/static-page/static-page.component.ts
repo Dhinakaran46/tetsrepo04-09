@@ -109,8 +109,7 @@ export class StaticPageComponent {
       this.titleService.setTitle(translateTitle);
     }
 
-    console.log(this.entity_name);
-    console.log(this.unique_id);
+    
     this.initStore();
     this.loadData();
   }
@@ -140,7 +139,7 @@ export class StaticPageComponent {
     this.gridApiService.getAllList(listParams).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
-          console.log(response.data.records);
+          
           this.query_information = response.data.records[0].query_information;
           this.static_page_content = response.data.records[0].static_page_content;
 

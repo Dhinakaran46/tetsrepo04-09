@@ -119,7 +119,7 @@ export class CronSettingComponent {
       description: [''],
     });
 
-    // console.log('this.configData', this.configData.base_api_url);
+    
 
     this.cronForm = this.fb.group({
       timing: ['', Validators.required],
@@ -293,40 +293,7 @@ export class CronSettingComponent {
   }
 
   createCronJob(data: any) {
-    /*let param: any = {
-      action: ['insert'],
-      table: ['scheduled_jobs'],
-      table_mapping: ['table1'],
-
-      data: {
-        table1: [
-          {
-            timing: data.timing,
-            cron_url: data.cron_url,
-            concat_base_url: data.concat_base_url,
-            description: data.description,
-          },
-        ],
-      },
-    };
-    this.gridApiService.executeTransaction(param).subscribe(
-      (response: any) => {
-        if (response.status) {
-          this.toastr.success('Cron job created successfully');
-          this.resetForm();
-          this.getCronJobs(); // Refresh your list
-        } else if (!response.status) {
-          const key = response.message;
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
-        }
-      },
-      (error: any) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-      }
-    );*/
+    
     this.gridApiService.createCronJobs(data).subscribe({
       next: (response) => {
         this.toastr.success('Cron job created successfully');

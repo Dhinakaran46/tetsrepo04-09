@@ -7,8 +7,7 @@ import { FormGroup } from '@angular/forms';
 })
 export class OrderByControlPipe implements PipeTransform {
   transform(array: FormGroup[], field: string): FormGroup[] {
-    console.log(array);
-    console.log(field);
+   
     if (!Array.isArray(array)) {
       return array;
     }

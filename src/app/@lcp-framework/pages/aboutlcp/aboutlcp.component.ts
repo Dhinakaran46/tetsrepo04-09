@@ -147,7 +147,7 @@ export class AboutlcpComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('this.form.invalid', this.form.invalid);
+    
 
     if (this.form.invalid) {
       this.markFormGroupTouched(this.form);
@@ -246,7 +246,7 @@ export class AboutlcpComponent implements OnInit {
 
     this.gridApiService.getAllList(payload).subscribe({
       next: (response: any) => {
-        console.log(response);
+       
         if (response.code === 200 && response.status) {
           const data = response.data.records[0];
           this.form.patchValue({

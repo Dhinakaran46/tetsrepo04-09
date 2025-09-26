@@ -1303,7 +1303,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
-    console.log(event.col)
+   
     if (event.col.link_type === 'component' || event.col.link_type === "popup_grid") {
       const mode = event.col.link_mode || 'popup_details';
       if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {

@@ -693,7 +693,7 @@ export class MenuMappingComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
-        console.log(`Menu ${this.editMode ? 'update' : 'insertion'} completed`);
+       
 
         this.showForm = false;
         this.menuForm.reset();
@@ -756,7 +756,7 @@ export class MenuMappingComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
-        console.log(`Menu type 'insertion' completed`);
+        
         this.showTypeForm = false;
         this.menuForm.reset();
       },

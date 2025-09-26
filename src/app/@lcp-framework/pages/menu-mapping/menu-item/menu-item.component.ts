@@ -189,6 +189,6 @@ export class MenuItemComponent {
     this.menuService.loadMenus(this.menu_id);
     this.menuLoadService.serviceMenus(this.companyId);
 
-    console.log('Menu item deletion process completed.');
+   
   }
 }

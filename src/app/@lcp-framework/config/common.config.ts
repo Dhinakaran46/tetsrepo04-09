@@ -311,8 +311,7 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      /*{ id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
+      
     ],
 
     // DateTime Field Conditions
@@ -323,8 +322,7 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      /*{ id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
+      
     ],
 
     // DateTime Field Conditions
@@ -335,8 +333,7 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      /*{ id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
+      
     ],
 
     // Integer Range Field Conditions

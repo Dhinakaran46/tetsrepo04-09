@@ -771,19 +771,10 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     this.linkComponentClick.emit({ col, item });
   }
 
-  /*onLinkPopupGridClick(item: any, col: any){
-    console.log(col);
-    console.log(col.link_action);
-    console.log(item);
-    this.isViewPopupOpenDirect = true;
-    this.loadingpopup = true;
-    this.createColumnPopupChildMasterList(item, col.link_action);
-  }*/
+  
 
   onLinkPopupGridClick(item: any, col: any) {
-    console.log(col);
-    console.log(col.link_action);
-    console.log(item);
+    
     
     this.isViewPopupOpenDirect = true;
     this.loadingpopup = true;
@@ -842,30 +833,10 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     this.isViewPopupOpenDirect = false;
     
   }
-  /*createColumnPopupChildMasterList(item: any, entityName: string) {
-    
-    console.log('coming')
-    
-    const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
-    componentRef.instance.uuid = item['uuid'];
-    componentRef.instance.entity_name = entityName;
-    componentRef.instance.nonGridPage = false;
-
-    const gridParams: any = {};
-    Object.keys(item).forEach((key) => {
-      if (key.startsWith('gparam_')) {
-        let temp_key = '$' + key;
-        gridParams[temp_key] = item[key];
-      }
-    });
-    componentRef.instance.grid_params = gridParams;
-    setTimeout(() => {
-      this.loadingpopup = false;
-    }, 500);
-  }*/
+ 
   
     createColumnPopupChildMasterList(item: any, entityName: string) {
-      console.log('coming');
+      
       
       // Add safety check
       if (!this.popupChildMasterListContainer) {

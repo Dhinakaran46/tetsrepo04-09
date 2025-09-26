@@ -444,14 +444,7 @@ export class ImportTemplateComponent implements OnInit {
       }
     });
 
-    /*this.lineItemForm.get('is_unique')?.valueChanges.subscribe((value) => {
-      const uniqueQueryControl = this.lineItemForm.get('unique_query');
-      if (value) {
-        uniqueQueryControl?.enable();
-      } else {
-        uniqueQueryControl?.disable();
-      }
-    });*/
+    
   }
 
   initNewLineItem() {
@@ -543,16 +536,13 @@ export class ImportTemplateComponent implements OnInit {
 
       if (this.editingItemIndex !== -1) {
         // Update existing item in FormArray
-        //itemsArray.at(this.editingItemIndex).patchValue(formValue);
+        
         itemsArray.setControl(this.editingItemIndex, this.createItemFormGroup(formValue));
-        /*this._originalItems[this.editingItemIndex] = {
-          ...this._originalItems[this.editingItemIndex],
-          ...formValue,
-        };*/
+        
         this._originalItems[this.editingItemIndex] = { ...formValue };
       } else {
         // Push new item to FormArray
-        // itemsArray.push(this.fb.group(formValue));
+        
         itemsArray.push(this.createItemFormGroup(formValue));
 
         this._originalItems.push({ ...formValue });
@@ -688,7 +678,7 @@ export class ImportTemplateComponent implements OnInit {
       if (this._originalItems && this._originalItems[index]) {
         this._originalItems.splice(index, 1);
       }
-      //console.log(`Item with field_name: ${item.field_name} removed at index: ${index}`);
+     
     } else {
       this.toastr.warning(`Item with field_name: ${item.field_name} not found.`);
     }
@@ -706,7 +696,7 @@ export class ImportTemplateComponent implements OnInit {
       if (this._originalQueries && this._originalQueries[index]) {
         this._originalQueries.splice(index, 1);
       }
-      //console.log(`Query with query_name: ${query.query_name} removed at index: ${index}`);
+      
     } else {
       this.toastr.warning(`Query with query_name: ${query.query_name} not found.`);
     }
@@ -1058,7 +1048,7 @@ export class ImportTemplateComponent implements OnInit {
     Object.keys(this.form.controls).forEach((field) => {
       const control = this.form.get(field);
       if (control) {
-        //console.log(`Field: ${field}, Status: ${control.status}, Errors: ${JSON.stringify(control.errors)}`);
+        
       }
     });
   }

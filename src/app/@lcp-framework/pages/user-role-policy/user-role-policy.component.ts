@@ -111,7 +111,7 @@ export class UserRolePolicyComponent {
   }
 
   mapPolicies() {
-    console.log(this.mappingForm.invalid);
+   
     if (this.mappingForm.invalid) {
       const key = 'please_select_all_the_required_fields';
       const errorMessage = this.translate.instant(key);
@@ -339,12 +339,7 @@ export class UserRolePolicyComponent {
           policy_id: p.id,
         };
       });
-    /*if (!selectedPolicies.length) {
-      const key = 'please_select_atleast_one_policy';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
-      return;
-    }*/
+    
     param.data.table2 = selectedPolicies;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
@@ -386,12 +381,7 @@ export class UserRolePolicyComponent {
           policy_id: p.id,
         };
       });
-    /*if (!selectedPolicies.length) {
-      const key = 'please_select_atleast_one_policy';
-      const errorMessage = this.translate.instant(key);
-      this.toastr.error(errorMessage, 'Error');
-      return;
-    }*/
+    
     param.data.table2 = selectedPolicies;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {

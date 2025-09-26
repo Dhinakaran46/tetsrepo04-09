@@ -347,7 +347,7 @@ export class HeaderComponent implements OnInit {
         },
       });
     } catch (error: any) {
-      console.log('Logout Error: ', error);
+      console.error('Logout Error: ', error);
     }
   }
 }

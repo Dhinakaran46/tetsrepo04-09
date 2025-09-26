@@ -468,14 +468,7 @@ export class UserRolePermissionComponent {
   }
 
   // Ensure that each entity group has an 'expanded' property
-  /* getEntitiesControls() {
-    return (this.mappingForm.get('entities') as FormArray).controls.map(entityGroup => {
-      if (!entityGroup.expanded) {
-        entityGroup.expanded = false; // Default to collapsed
-      }
-      return entityGroup;
-    });
-  }*/
+  
   getEntitiesControls(): FormGroup[] {
     return (this.mappingForm.get('entities') as FormArray).controls as FormGroup[];
   }
@@ -524,7 +517,7 @@ export class UserRolePermissionComponent {
     this.gridApiService.getListData(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
-          console.log(response.data?.records);
+          
           if (response.data?.records) {
             let finalList: any = [];
             response.data?.records.map(function (elem: any) {

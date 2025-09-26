@@ -72,8 +72,7 @@ export class RouteUpdateService {
           const dynamicRoutes = routeDataArray
             .filter((routeData: any) => routeData.entity_name && routeData.component_class_name)
             .map((routeData: any) => {
-              //console.log(routeData);
-              //const slugParts = routeData.entity_name.split('_grid_');
+              
               const viewPermissionKey = `view_${routeData.entity_name}`;
 
               const createPermissionKey = `add_${routeData.entity_name}`;
@@ -204,10 +203,10 @@ export class RouteUpdateService {
                 barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
               };
 
-              // console.log(routeData);
+             
               const route: Route = {
                 path: targetPath,
-                // component: componentMap[routeData.component_class_name],
+             
                 loadComponent: componentMap[routeData.component_class_name] || null,
                 title: routeData.entity_name,
                 data: {
@@ -266,7 +265,7 @@ export class RouteUpdateService {
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
-    // console.log(entity_name)
+    
     const user_data_raw = this.localStore.getData('user_data');
     if (!user_data_raw || user_data_raw === 'undefined') return null;
 
@@ -276,13 +275,7 @@ export class RouteUpdateService {
     const permissionListJSON = await firstValueFrom(this.getPermissionListJSON());
     if (!permissionListJSON || !routeDataArray.length) return null;
 
-    //const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
-    //const routeDataArray = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
-
-    // console.log(routeDataArray);
-    // console.log(entity_name);
-    //const permissionListJSON = await this.getPermissionListJSON().toPromise();
-    // console.log(permissionListJSON);
+    
     if (permissionListJSON && routeDataArray) {
       const dynamicRoutes = routeDataArray
         .filter((routeData: any) => routeData.entity_name === entity_name && routeData.component_class_name)
@@ -390,10 +383,7 @@ export class RouteUpdateService {
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
           };
 
-          // console.log(permissionListJSON);
-
-          // console.log(childDetailsPermissionKey)
-          // console.log(permissionListJSON[childDetailsPermissionKey])
+          
           const route: Route = {
             path: targetPath,
             loadComponent: componentMap[routeData.component_class_name] || null,
@@ -465,13 +455,7 @@ export class RouteUpdateService {
           appLayoutRoute.children.unshift(...dynamicRoutes);
           this.router.resetConfig(config);
 
-          // setTimeout(() => {
-          //   const routes1 = this.router.config;
-          //   this.extractRoutes(routes1);
-          //   setTimeout(() => {
-          //     console.log('routes....', this.routeList);
-          //   }, 5000);
-          // }, 2000);
+          
         }
       });
     }

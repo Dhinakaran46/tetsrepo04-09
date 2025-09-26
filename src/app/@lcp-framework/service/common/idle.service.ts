@@ -23,12 +23,12 @@ export class IdleService {
       this.timeout = Number(this.config?.idle_timeout_in_minutes || '8') * 60;
       const observer = this.bnIdle.startWatching(this.timeout);
 
-      console.log('Observer:', observer);
+      
 
       observer.subscribe((isTimedOut: boolean) => {
-        console.log('isTimedOut', isTimedOut);
+      
         if (isTimedOut) {
-          console.log('User is idle for 5 minutes, logging out...');
+      
           this.stopIdleTimer();
           this.localstore.logout();
           Swal.fire({
@@ -52,8 +52,7 @@ export class IdleService {
 
   public stopIdleTimer() {
     try {
-      console.log('Attempting to stop idle timer...');
-      console.log('BnNgIdleService Instance:', this.bnIdle);
+     
       if (this.config?.enable_idle_timeout === true || this.config?.enable_idle_timeout === 'true') {
         // Check if bnIdle exists and is properly initialized
         if (!this.bnIdle) {
@@ -64,7 +63,7 @@ export class IdleService {
         // Check if stopTimer function exists before calling it
         if (typeof this.bnIdle.stopTimer === 'function') {
           this.bnIdle.stopTimer();
-          console.log('Idle timer stopped successfully.');
+          
         } else {
           console.warn('BnNgIdleService.stopTimer() is undefined.');
         }
@@ -72,7 +71,7 @@ export class IdleService {
         // Manually unsubscribe if idleSubscription exists and is active
         if (this.bnIdle['idleSubscription'] && !this.bnIdle['idleSubscription'].closed) {
           this.bnIdle['idleSubscription'].unsubscribe();
-          console.log('Idle subscription manually unsubscribed.');
+          
         } else {
           console.warn('No active idle subscription to unsubscribe.');
         }
