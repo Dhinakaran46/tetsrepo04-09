@@ -962,25 +962,39 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   }
 
   executeChildProcess(item: any) {
-    this.loading = true;
-    this.gridApiService.executeChildProcess(item.id).subscribe(
-      (response: any) => {
-        this.loading = false;
-        if (response.status) {
-          // console.log('Response:', response);
-          this.toastr.success(response.message, 'Success');
-        } else {
-          console.error('Error: Operation failed with response:', response);
-          this.toastr.error(response.message, 'Error');
-        }
-      },
-      (error) => {
-        this.loading = false;
-        console.error('Error executing child process:', error);
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+    Swal.fire({
+      icon: 'question',
+      title: 'Execute process?',
+      text: 'Do you want to proceed with this action?',
+      showCancelButton: true,
+      confirmButtonText: 'Proceed',
+      cancelButtonText: 'Cancel',
+      padding: '2em',
+    }).then((result) => {
+      if (result.isConfirmed || result.value) {
+        this.loading = true;
+        this.gridApiService.executeChildProcess(item.id).subscribe(
+          (response: any) => {
+            this.loading = false;
+            if (response.status) {
+              this.toastr.success(response.message, 'Success');
+              // Refresh policies and grid after successful execution
+              this.fetchAttachedPolicies(this.listQuery);
+            } else {
+              console.error('Error: Operation failed with response:', response);
+              this.toastr.error(response.message, 'Error');
+            }
+          },
+          (error) => {
+            this.loading = false;
+            console.error('Error executing child process:', error);
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
       }
-    );
+    });
   }
+  
 }
