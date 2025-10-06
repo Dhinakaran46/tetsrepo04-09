@@ -967,7 +967,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       (response: any) => {
         this.loading = false;
         if (response.status) {
-         
+          // console.log('Response:', response);
           this.toastr.success(response.message, 'Success');
         } else {
           console.error('Error: Operation failed with response:', response);
