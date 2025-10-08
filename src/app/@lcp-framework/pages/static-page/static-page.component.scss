@@ -31,3 +31,12 @@
   overflow: hidden; /* to hide content */
   transition: max-height 0.3s ease-in-out; /* optional transition */
 }
+
+
+
+#static-content img {
+  cursor: zoom-in;
+}
+#static-content img.no-zoom {
+  cursor: default;
+}
