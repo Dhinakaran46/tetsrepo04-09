@@ -53,6 +53,7 @@ export const commonConfig: any = {
     generateAiQuery: 'openai/generate-query',
     getResultFromQuery: 'openai/get-response-from-sql',
     generateVectorForTable: 'openai/generate-vector-for-table',
+    generateAiContent: 'openai/generate-query-json',
     execute_child_process: 'common/execute-child-process',
   },
   ENTITY_TYPES: {
