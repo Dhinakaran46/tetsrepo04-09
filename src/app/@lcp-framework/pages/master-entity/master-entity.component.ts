@@ -21,6 +21,7 @@ import { EditorComponent } from 'ngx-monaco-editor-v2';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
+import { OpenaiService } from '../../service/common/openai.service';
 
 export function viewMandatoryValidator(): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
@@ -247,12 +248,21 @@ export class MasterEntityComponent implements OnInit {
             ],
           },
         },
+        {
+          name: 'AI Conversion',
+          leftEditor: {
+            title: 'QUERY',
+          },
+          rightEditor: {
+            title: 'JSON',
+          }
+        },
       ],
     },
     jobBuilderQueryInfo: {
       header: 'sample_query_information',
       examples: [
-        
+
         {
           name: 'example_1',
           comments: [],
@@ -304,6 +314,15 @@ export class MasterEntityComponent implements OnInit {
             ],
           },
         },
+        {
+          name: 'AI Conversion',
+          leftEditor: {
+            title: 'QUERY',
+          },
+          rightEditor: {
+            title: 'JSON',
+          }
+        }
       ],
     },
     associatedTableInfo: {
@@ -1099,6 +1118,24 @@ export class MasterEntityComponent implements OnInit {
   popupInformation: any = null;
   popupName: string = 'reportInfo';
   popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
+  LeftEditorOptionsForAI = {
+    ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: false, automaticLayout: true, minimap: { enabled: false }, suggest: {
+      showWords: true,
+      showKeywords: true,
+    },
+    folding: true,
+    wordWrap: 'on',
+    tabSize: 4,
+    insertSpaces: true,
+    formatOnPaste: true,
+    formatOnType: true,
+  };
+  RightEditorOptionsForAI = {
+    ...this.editorOptions, language: 'json', cursorStyle: 'line', readOnly: false, automaticLayout: true, minimap: { enabled: false },
+    formatOnPaste: true,
+    formatOnType: true,
+    autoClosingQuotes: 'always'
+  };
   copied = false;
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
@@ -1113,7 +1150,8 @@ export class MasterEntityComponent implements OnInit {
     public storeData: Store<any>,
     public location: Location,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private openaiService: OpenaiService,
   ) {
     this.initStore();
   }
@@ -1151,7 +1189,7 @@ export class MasterEntityComponent implements OnInit {
     this.fetchAllMasterEntities();
   }
 
-  
+
 
   async initStore() {
     this.storeData
@@ -1395,7 +1433,7 @@ export class MasterEntityComponent implements OnInit {
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
-    
+
   }
 
   removeItem(index: number) {
@@ -1547,7 +1585,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
         ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
-        
+
         ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
       },
     ];
@@ -1574,9 +1612,9 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
             } else if (entity.entity_type === 'grid_builder_module') {
-              link_mode = 'child_grid';  
+              link_mode = 'child_grid';
             }
-            
+
           }
         }
         return {
@@ -1633,7 +1671,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
         ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
-        
+
         ...(formData.dashboard_wizard_options
           ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
           : { dashboard_wizard_options: null }),
@@ -1659,7 +1697,7 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
             } else if (entity.entity_type === 'grid_builder_module') {
-              link_mode = 'child_grid';  
+              link_mode = 'child_grid';
             }
           }
         }
@@ -1834,10 +1872,19 @@ export class MasterEntityComponent implements OnInit {
     this.isInfoModalOpen = true;
     this.popupName = popup;
     this.selectedInfoTab = 0;
+    const currentExample = this.infoContents[this.popupName].examples[this.selectedInfoTab];
     this.popupInformation = {
       header: this.infoContents[this.popupName].header,
       tabNames: this.infoContents[this.popupName].examples.map((example: any) => example.name),
-      data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
+      data: currentExample.data ? JSON.stringify(currentExample.data, null, 2) : null,
+      comments: currentExample.comments || [],
+      hasSplitEditors: !!currentExample.leftEditor && !!currentExample.rightEditor,
+      leftEditor: currentExample.leftEditor || null,
+      rightEditor: currentExample.rightEditor || null,
+      editorOptions: {
+        ...this.popupInfoEditorOptions,
+        minimap: { enabled: false }
+      }
     };
   }
 
@@ -1860,11 +1907,93 @@ export class MasterEntityComponent implements OnInit {
   // Function to switch tabs
   selectTab(index: number) {
     this.selectedInfoTab = index;
+    const currentExample = this.infoContents[this.popupName].examples[this.selectedInfoTab];
     this.popupInformation = {
       ...this.popupInformation,
-      data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
+      data: currentExample.data ? JSON.stringify(currentExample.data, null, 2) : null,
+      comments: currentExample.comments || [],
+      hasSplitEditors: !!currentExample.leftEditor && !!currentExample.rightEditor,
+      leftEditor: currentExample.leftEditor || null,
+      rightEditor: currentExample.rightEditor || null,
+      isProcessing: false
     };
   }
+
+  convertToQuery() {
+    const inputData = this.popupInformation.rightEditor.content;
+
+    if (!inputData) {
+    this.toastr.warning('Please Enter JSON.', 'Warning');
+    return;
+    }
+    
+    this.popupInformation.isProcessing = true;
+    
+    let payload = {
+      "input": inputData,
+      "type": "convert_to_query"
+    }
+
+    this.openaiService.generateAiContent(payload).subscribe(
+      (response) => {
+        let responseData = response.data;
+        if (this.popupInformation) {
+          this.popupInformation.leftEditor.content = responseData;
+          this.popupInformation.isProcessing = false;
+        }
+      },
+      (error) => {
+        console.error('API Error:', error);
+        this.toastr.error('Error generating AI content', 'Error');
+        this.popupInformation.isProcessing = false;
+      }
+    )
+  }
+
+  convertToJson() {
+    const inputData = this.popupInformation.leftEditor.content;
+
+    if (!inputData) {
+      this.toastr.warning('Please Enter Query.', 'Warning');
+    return;
+    }
+    
+    this.popupInformation.isProcessing = true;
+
+    let payload = {
+      "input": inputData,
+      "type": "convert_to_json"
+    }
+
+    this.openaiService.generateAiContent(payload).subscribe(
+      (response) => {
+        let responseData = response.data;
+        if (this.popupInformation) {
+          this.popupInformation.rightEditor.content = JSON.stringify(responseData, null, 2);
+          this.popupInformation.isProcessing = false;
+        }
+      },
+      (error) => {
+        console.error('API Error:', error);
+        this.toastr.error('Error generating AI content', 'Error');
+        this.popupInformation.isProcessing = false;
+      }
+    )
+  }
+
+  copyToClipboardData(content: string, type: string = '') {
+  if (!content) {
+    this.toastr.warning(`No ${type || 'data'} to copy`);
+    return;
+  }
+
+  navigator.clipboard.writeText(content)
+    .then(() => this.toastr.success(`${type || 'Content'} copied to clipboard!`))
+    .catch(err => {
+      console.error('Clipboard copy failed:', err);
+      this.toastr.error('Failed to copy text');
+    })
+}
 
   fetchAllMasterEntities() {
     const params = {

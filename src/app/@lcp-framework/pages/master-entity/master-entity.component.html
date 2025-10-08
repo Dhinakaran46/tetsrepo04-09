@@ -996,17 +996,67 @@
         </div>
         <div class="relative">
           <p *ngIf="copied" class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
-          <div class="monaco-editor-container .editor-container mt-3 rounded border border-gray-300">
+          <div class="monaco-editor-container editor-container mt-3 rounded border border-gray-300"
+          *ngIf="!popupInformation.hasSplitEditors">
             <!-- Monaco Editor -->
-            <ngx-monaco-editor
-              monacoEditor
-              (click)="copyToClipboard()"
-              [options]="popupInfoEditorOptions"
-              id="popupInformation"
-              [(ngModel)]="popupInformation.data"
+            <ngx-monaco-editor 
+            monacoEditor 
+            (click)="copyToClipboard()" 
+            [options]="popupInfoEditorOptions"
+              id="popupInformation" 
+              [(ngModel)]="popupInformation.data" 
               class="monaco-editor"
-            ></ngx-monaco-editor>
+              ></ngx-monaco-editor>
             <div class="editor-overlay" (click)="copyToClipboard()"></div>
+          </div>
+          <!-- Split Editor View -->
+          <div *ngIf="popupInformation.hasSplitEditors" class="grid grid-cols-2 gap-4 mt-3 relative">
+            <!-- Left Editor -->
+            <div class="flex flex-col gap-2 h-full">
+              <div class="flex justify-between items-center">
+                <h4 class="text-sm font-medium">{{ popupInformation.leftEditor.title }}</h4>
+                <div class="flex gap-2">
+                  <button (click)="copyToClipboardData(popupInformation.leftEditor.content, 'Query')" class="btn btn-outline-primary btn-sm">
+                    Copy Query
+                  </button>
+                  <button (click)="convertToJson()" class="btn btn-primary btn-sm">
+                    Convert to JSON
+                  </button>
+                </div>
+              </div>
+              <div class="monaco-editor-container editor-container rounded border border-gray-300 flex-1">
+                <ngx-monaco-editor monacoEditor [options]="LeftEditorOptionsForAI"
+                  [(ngModel)]="popupInformation.leftEditor.content" class="monaco-editor h-full"></ngx-monaco-editor>
+              </div>
+            </div>
+
+            <!-- Right Editor -->
+            <div class="flex flex-col gap-2 h-full">
+              <div class="flex justify-between items-center">
+                <h4 class="text-sm font-medium">{{ popupInformation.rightEditor.title }}</h4>
+                <div class="flex gap-2">
+                  <button (click)="copyToClipboardData(popupInformation.rightEditor.content, 'JSON')" class="btn btn-outline-primary btn-sm">
+                    Copy JSON
+                  </button>
+                  <button (click)="convertToQuery()" class="btn btn-primary btn-sm">
+                    Convert to Query
+                  </button>
+                </div>
+              </div>
+              <div class="monaco-editor-container editor-container rounded border border-gray-300 flex-1">
+                <ngx-monaco-editor monacoEditor [options]="RightEditorOptionsForAI"
+                  [(ngModel)]="popupInformation.rightEditor.content" class="monaco-editor h-full"></ngx-monaco-editor>
+              </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div *ngIf="popupInformation.isProcessing"
+              class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+              <div class="bg-white dark:bg-gray-800 p-4 rounded shadow-lg flex items-center">
+                <i class="fas fa-spinner fa-spin text-primary mr-2"></i>
+                <span>Converting...</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

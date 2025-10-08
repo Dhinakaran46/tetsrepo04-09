@@ -51,4 +51,8 @@ export class OpenaiService {
   generateVectorForAllTable(): Observable<ApiResponce> {
     return this.http.get<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateVector}`);
   }
+
+  generateAiContent(data: any): Observable<ApiResponce> {
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiContent}`, data);
+  }
 }
