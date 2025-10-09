@@ -657,13 +657,10 @@ export class MasterListComponent implements OnChanges {
                   column_width: '40px',
                 }));
 
-              // Check if only 'view' or 'view' + 'export_excel' are enabled
-              const isOnlyViewOrViewExport =
-                (!this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_excel === true) &&
-                (!this.masterInfo.permissions.create || this.masterInfo.permissions.create === true) &&
-                Object.keys(this.masterInfo.permissions).every(
-                  (key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false
-                );
+              // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
+              const enableActionMenu = Object.entries(this.masterInfo.permissions)
+              .some(([key, value]) => !['child_details', 'create', 'export_excel'].includes(key) && value === true);
+
 
               // Include serial number column if enabled in config
               if (this.config.grid_show_serial_number == 'true') {
@@ -681,7 +678,7 @@ export class MasterListComponent implements OnChanges {
                 ];
 
                 // Add 'Action' column if permissions are not limited to view/export
-                if (!isOnlyViewOrViewExport) {
+                if (enableActionMenu) {
                   this.headercolumns.push({
                     header: 'table_column_action',
                     field_value: 'Action',
@@ -695,7 +692,7 @@ export class MasterListComponent implements OnChanges {
               } else {
                 this.headercolumns = [...data];
 
-                if (!isOnlyViewOrViewExport) {
+                if (enableActionMenu) {
                   this.headercolumns.push({
                     header: 'table_column_action',
                     field_value: 'Action',
