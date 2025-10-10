@@ -78,11 +78,11 @@ export class GridApiService {
       );
   }
   // grid.service.ts
-  exportAllRecords(menuItemId: any): Observable<ExportResponse> {
+  exportAllRecords(menuItemId: any,filter:any): Observable<ExportResponse> {
     return this.cryptoHttp
       .encryptedPost(
         `${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddataexport}`,
-        { menu_item_id: menuItemId },
+        { menu_item_id: menuItemId,filter:filter },
         {
           responseType: 'blob',
           observe: 'response',

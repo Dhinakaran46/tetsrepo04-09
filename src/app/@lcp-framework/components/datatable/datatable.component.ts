@@ -529,6 +529,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
   }
 
   onSearch() {
+    
     this.search = this.search.trim();
     let hereColumns = [...this.filteredColumns];
 
@@ -560,6 +561,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
         });
       const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
       this.searchQuery.emit(fdata);
+     // this.loading = false;
     } else {
       //this.toastr.warning('Please select any column', 'Warning');
 
@@ -588,6 +590,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
         });
       const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
       this.searchQuery.emit(fdata);
+      //this.loading = false;
     }
   }
   applyFilter() {

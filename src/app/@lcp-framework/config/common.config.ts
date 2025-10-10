@@ -88,6 +88,7 @@ export const commonConfig: any = {
     CHILD_PROCESS_SETTING_MODULE: 'child_process_setting_module',
     QUERY_BUILDER_MODULE: 'query_builder_module',
     CAROUSEL_MODULE: 'carousel_module',
+    COMMON_PERMISSION_MODULE: 'common_permission_module'
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -120,6 +121,7 @@ export const commonConfig: any = {
     child_process_setting_module: 'childprocesssetting',
     query_builder_module: 'querybuilder',
     carousel_module: 'carouselmodule',
+    common_permission_module: 'commonpermissionmodule'
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -234,6 +236,7 @@ export const commonConfig: any = {
     { label: 'Child Process Setting Module', value: 'child_process_setting_module' },
     { label: 'Query Builder Module', value: 'query_builder_module' },
     { label: 'Carousel Module', value: 'carousel_module' },
+    {label:'Common Permission Module',value:'common_permission_module'}
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

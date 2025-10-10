@@ -203,6 +203,7 @@ export class RouteUpdateService {
                   import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
                 barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
+                common_permission_module:() => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
               };
 
              
@@ -385,6 +386,7 @@ export class RouteUpdateService {
             child_process_setting_module: () =>
               import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
+            common_permission_module:() => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
           };
 
           
