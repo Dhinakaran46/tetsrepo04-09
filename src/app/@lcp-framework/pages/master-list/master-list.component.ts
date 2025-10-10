@@ -171,6 +171,7 @@ export class MasterListComponent implements OnChanges {
   noPopupPermission: boolean = false;
   noPermission: boolean = false;
   isUUid: boolean = true;
+  commonSearchQuery:any = {};
 
   constructor(
     private toastr: ToastrService,
@@ -366,6 +367,10 @@ export class MasterListComponent implements OnChanges {
     this.isItemModalOpen = false;
   }
   advancedSearchData(data: any) {
+    this.commonSearchQuery.having_conditions = [];
+    this.commonSearchQuery.having_any_conditions = [];
+    this.commonSearchQuery.search_any = [];
+    this.commonSearchQuery.search_all = [];
     interface QueryItem {
       isAggregate: boolean;
       [key: string]: any;
@@ -395,17 +400,24 @@ export class MasterListComponent implements OnChanges {
     if (havingConditions.length > 0) {
       if (condition == 'AND') {
         clonedListQuery.having_conditions = [...havingConditions];
+        this.commonSearchQuery.having_conditions = [...havingConditions];
+        this.commonSearchQuery.having_any_conditions = [];
       } else {
         clonedListQuery.having_any_conditions = [...havingConditions];
+        this.commonSearchQuery.having_any_conditions = [...havingConditions];
+        this.commonSearchQuery.having_conditions = [];
       }
     }
     if (condition == 'AND') {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all];
+        this.commonSearchQuery.search_all = [];
       } else {
         clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all, ...whereConditions];
+        this.commonSearchQuery.search_any = [];
+        this.commonSearchQuery.search_all = [...whereConditions];
       }
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
@@ -414,9 +426,13 @@ export class MasterListComponent implements OnChanges {
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_any = [...clonedListQuery.search_any];
+        this.commonSearchQuery.search_any = [];
       } else {
         clonedListQuery.search_any = [...clonedListQuery.search_any, ...whereConditions];
+        this.commonSearchQuery.search_all = [];
+        this.commonSearchQuery.search_any = [...whereConditions];
       }
+      console.log(this.commonSearchQuery)
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
 
@@ -424,6 +440,10 @@ export class MasterListComponent implements OnChanges {
     }
   }
   searchData(input: any) {
+    
+    this.commonSearchQuery.having_any_conditions = [];
+    this.commonSearchQuery.search_any = [];
+    
     const clonedListQuery = this.listQuery;
 
     // Handling search in "where" conditions
@@ -441,6 +461,7 @@ export class MasterListComponent implements OnChanges {
         clonedListQuery.search_any = [...orgListQuery.search_any];
       } else {
         clonedListQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
+        this.commonSearchQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
       }
     }
 
@@ -457,7 +478,9 @@ export class MasterListComponent implements OnChanges {
       // Only update having_any_conditions if there's a non-empty search value
       if (search && search.length) {
         clonedListQuery.having_any_conditions = [...query];
+        this.commonSearchQuery.having_any_conditions = [...query];
       } else {
+        delete this.commonSearchQuery.having_any_conditions;
         delete clonedListQuery.having_any_conditions;
       }
     }
@@ -468,9 +491,12 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportTable(item: any) {
+    console.log(this.commonSearchQuery)
     if (this.masterInfo.permissions.export_excel) {
       this.loading = true;
       if (this.masterInfo.children.export_excel && this.masterInfo.children.export_excel.component_class_name == 'export_module') {
+        //const filteredHeaders = headers.filter((header) => header.header !== 'id' && header.header !== 'uuid');
+
         this.exportItem(item);
       } else {
         const query = { ...this.listQuery };
@@ -628,6 +654,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   fetchData(params: FetchDataParams) {
+    this.gridloading = true;
     params.limit_range = this.resultsPerPage;
     let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
@@ -920,7 +947,7 @@ export class MasterListComponent implements OnChanges {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id).subscribe({
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {

@@ -135,6 +135,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       border_color: 'badge-outline-secondary',
     },
   };
+  commonSearchQuery:any = {};
 
   constructor(
     private toastr: ToastrService,
@@ -916,6 +917,10 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
   }
 
   advancedSearchData(data: any) {
+    this.commonSearchQuery.having_conditions = [];
+    this.commonSearchQuery.having_any_conditions = [];
+    this.commonSearchQuery.search_any = [];
+    this.commonSearchQuery.search_all = [];
     interface QueryItem {
       isAggregate: boolean;
       [key: string]: any;
@@ -945,17 +950,24 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     if (havingConditions.length > 0) {
       if (condition == 'AND') {
         clonedListQuery.having_conditions = [...havingConditions];
+        this.commonSearchQuery.having_conditions = [...havingConditions];
+        this.commonSearchQuery.having_any_conditions = [];
       } else {
         clonedListQuery.having_any_conditions = [...havingConditions];
+        this.commonSearchQuery.having_any_conditions = [...havingConditions];
+        this.commonSearchQuery.having_conditions = [];
       }
     }
     if (condition == 'AND') {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all];
+        this.commonSearchQuery.search_all = [];
       } else {
         clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all, ...whereConditions];
+        this.commonSearchQuery.search_any = [];
+        this.commonSearchQuery.search_all = [...whereConditions];
       }
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
@@ -964,8 +976,11 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_any = [...clonedListQuery.search_any];
+        this.commonSearchQuery.search_any = [];
       } else {
         clonedListQuery.search_any = [...clonedListQuery.search_any, ...whereConditions];
+        this.commonSearchQuery.search_all = [];
+        this.commonSearchQuery.search_any = [...whereConditions];
       }
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
@@ -1461,7 +1476,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id).subscribe({
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {
