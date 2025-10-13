@@ -172,7 +172,8 @@ export class MasterListComponent implements OnChanges {
   noPermission: boolean = false;
   isUUid: boolean = true;
   commonSearchQuery:any = {};
-
+  grid_unique_id:any;
+  
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
@@ -667,6 +668,10 @@ export class MasterListComponent implements OnChanges {
     if (this.uuid) {
       payload.unique_id = this.uuid;
     }
+
+    console.log(payload.unique_id)
+    this.grid_unique_id = payload.unique_id;
+    
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
@@ -946,6 +951,47 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportItem(item: any) {
+    //grid_unique_id
+    console.log(this.grid_unique_id)
+    if(this.grid_unique_id){
+      this.gridApiService.exportIndividualRecords(this.masterInfo.children.export_excel.id,this.grid_unique_id,this.commonSearchQuery).subscribe({
+        next: (response: ExportResponse) => {
+          try {
+            const blob = new Blob([response.blob], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+  
+            // Excel case
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = response.fileName;
+  
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+  
+            // Cleanup
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            this.loading = false;
+          } catch (err) {
+            console.error('Download error:', err);
+            this.toastr.error('Error downloading file');
+            this.loading = false;
+          }
+        },
+        error: (error) => {
+          console.error('Export error:', error);
+          this.toastr.error('Error exporting data');
+          this.loading = false;
+        },
+      });
+      return;
+
+    }
+
+
     if (this.masterInfo.children.export_excel) {
       this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
@@ -1074,7 +1120,7 @@ export class MasterListComponent implements OnChanges {
         recordID = item.id;
       }
 
-      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID).subscribe({
+      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID, this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {
