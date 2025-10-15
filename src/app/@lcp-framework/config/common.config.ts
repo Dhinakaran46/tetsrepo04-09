@@ -27,6 +27,7 @@ export const commonConfig: any = {
     listdata: 'common/list-data',
     executeRecords: 'common/execute-transaction',
     executeRecordsCase: 'common/execute-transaction-case',
+    entitydetails: 'common/entity-name',
 
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',

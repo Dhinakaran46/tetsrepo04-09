@@ -102,25 +102,37 @@ export class MasterListComponent implements OnChanges {
   isItemModalOpen = false;
   changePasswordForm: FormGroup;
   column: any = '';
+  previewColumn: any = '';
   query: any = '';
 
   allowPasswordModal: any = false;
   selectcolumns: any[] = [];
+  previewSelectColumns: any[] = [];
   headercolumns: any[] = [];
+  previewHeaderColumns: any[] = [];
   items: any[] = [];
+  previewItems: any[] = [];
   totalItems: number = 0;
+  previewTotalItems: number = 0;
   currentPage: number = 1;
+  previewCurrentPage: number = 1;
   resultsPerPage: number = 10;
+  previewResultsPerPage: number = 10;
   enableCheckBox: boolean = false;
   masterInfo: any;
   policyData: any = null;
   loading: boolean = false;
   loadingpopup: boolean = false;
   gridloading: boolean = true;
+  selectedItemEntityType: string | null = null;
+  EntityName : string | null = null;
 
   title: any = '';
+  previewTitle: any = '';
   listQuery: any = '';
+  previewListQuery: any = '';
   defaultQuery: any = '';
+  previewDefaultQuery: any = '';
   user_info: any;
   grid_records_delete: any;
   config: any;
@@ -169,6 +181,7 @@ export class MasterListComponent implements OnChanges {
   };
   uniqueId!: string | null;
   noPopupPermission: boolean = false;
+  previewPopupPermission: boolean = false;
   noPermission: boolean = false;
   isUUid: boolean = true;
 
@@ -356,6 +369,13 @@ export class MasterListComponent implements OnChanges {
     this.fetchData(this.listQuery);
   }
 
+  previewSortColumn(previewColumn: any){
+    this.previewColumn = previewColumn;
+    this.previewListQuery.limit_range = this.previewResultsPerPage;
+    this.previewListQuery.sort_columns = [[this.previewColumn.header, this.previewColumn.sortDirection]];
+    this.previewFetchData(this.previewListQuery);
+  }
+
   passwordModal(item: any) {
     //return;
     this.isItemModalOpen = true;
@@ -423,6 +443,66 @@ export class MasterListComponent implements OnChanges {
       this.fetchData(clonedListQuery);
     }
   }
+  
+  previewAdvancedSearchData(data : any){
+    interface previewQueryItem {
+      isAggregate: boolean;
+      [key: string]: any;
+    }
+
+    const query = data.data;
+    //isAggregate
+    const uncleanedwhereConditions = query.filter((d: any) => !d.isAggregate);
+    const whereConditions = uncleanedwhereConditions.map(({ isAggregate, ...rest }: previewQueryItem) => rest);
+    const uncleanedhavingConditions = query.filter((d: any) => d.isAggregate);
+    const havingConditions = uncleanedhavingConditions.map(({ isAggregate, ...rest }: previewQueryItem) => rest);
+
+    const condition = data.condition;
+
+    //const previewClonedListQuery = JSON.parse(JSON.stringify(this.masterInfo.ListQuery));
+    const previewClonedListQuery = this.previewListQuery;
+    const orgListQuery = this.previewDefaultQuery;
+    if (whereConditions.length == 0 && havingConditions.length == 0) {
+      if (condition == 'AND') {
+        previewClonedListQuery.search_all = [...orgListQuery.search_all];
+      } else {
+        previewClonedListQuery.search_any = [...orgListQuery.search_any];
+      }
+      this.previewFetchData(previewClonedListQuery);
+      return;
+    }
+    if (havingConditions.length > 0) {
+      if (condition == 'AND') {
+        previewClonedListQuery.having_conditions = [...havingConditions];
+      } else {
+        previewClonedListQuery.having_any_conditions = [...havingConditions];
+      }
+    }
+    if (condition == 'AND') {
+      if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
+        previewClonedListQuery.search_all = [];
+        previewClonedListQuery.search_all = [...orgListQuery.search_all];
+      } else {
+        previewClonedListQuery.search_all = [];
+        previewClonedListQuery.search_all = [...orgListQuery.search_all, ...whereConditions];
+      }
+      previewClonedListQuery.start_index = 0;
+      this.previewCurrentPage = 1;
+
+      this.previewFetchData(previewClonedListQuery);
+    } else {
+      if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
+        previewClonedListQuery.search_any = [...previewClonedListQuery.search_any];
+      } else {
+        previewClonedListQuery.search_any = [...previewClonedListQuery.search_any, ...whereConditions];
+      }
+      previewClonedListQuery.start_index = 0;
+      this.previewCurrentPage = 1;
+
+      this.previewFetchData(previewClonedListQuery);
+    }
+  }
+
   searchData(input: any) {
     const clonedListQuery = this.listQuery;
 
@@ -464,7 +544,53 @@ export class MasterListComponent implements OnChanges {
 
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
+    this.previewCurrentPage = 1;
     this.fetchData(clonedListQuery);
+  }
+
+  previewSearchData(input: any){
+    const clonedPreviewListQuery = this.previewListQuery;
+
+    // Handling search in "where" conditions
+    if (input.where.data.length) {
+      const query = input.where.data;
+      let search = input.where.search;
+
+      // If search is cleared, ensure it's an empty string
+      if (search === null || search === undefined || search.trim() === '') {
+        search = ''; // Reset search to empty string if it's cleared
+      }
+
+      if (search === '') {
+        const orgListQuery = this.defaultQuery;
+        clonedPreviewListQuery.search_any = [...orgListQuery.search_any];
+      } else {
+        clonedPreviewListQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
+      }
+    }
+
+    // Handling search in "having" conditions
+    if (input.having.data.length) {
+      const query = input.having.data;
+      let search = input.having.search;
+
+      // If search is cleared, ensure it's an empty string
+      if (search === null || search === undefined || search.trim() === '') {
+        search = ''; // Reset search to empty string if it's cleared
+      }
+
+      // Only update having_any_conditions if there's a non-empty search value
+      if (search && search.length) {
+        clonedPreviewListQuery.having_any_conditions = [...query];
+      } else {
+        delete clonedPreviewListQuery.having_any_conditions;
+      }
+    }
+
+    clonedPreviewListQuery.start_index = 0;
+    this.currentPage = 1;
+    this.previewCurrentPage = 1;
+    this.previewFetchData(clonedPreviewListQuery);
   }
 
   exportTable(item: any) {
@@ -501,6 +627,7 @@ export class MasterListComponent implements OnChanges {
               this.loading = false;
               this.items = [];
               this.totalItems = 0;
+              this.previewTotalItems = 0;
 
               const key = response.message;
               const errorMessage = this.translate.instant(key);
@@ -560,6 +687,7 @@ export class MasterListComponent implements OnChanges {
     this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
+          this.EntityName = params.entity_name;
           this.attachedPolicies = response.data.attached_policies || [];
         }
       },
@@ -883,6 +1011,228 @@ export class MasterListComponent implements OnChanges {
       this.loadingpopup = false;
     }, 500);
   }
+
+  previewPopupItem(item: any) {
+    this.noPopupPermission = true;
+    this.previewPopupPermission = true;
+    let name = item.entity_name;
+    this.previewTitle = item.entity_name;
+    this.selectedItemEntityType = item.entity_type;
+    this.selectedItemUuid = item.uuid;
+    this.popupEntityName = name;
+    this.isViewPopupOpen = true;
+    
+    if(this.selectedItemEntityType == 'grid_builder_module'){
+      this.loadingpopup = true;
+      this.gridApiService.getEntityDetails(name).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          this.previewDefaultQuery = response.data.query_information;
+          this.previewListQuery = response.data.query_information;
+          this.previewFetchColumns(this.previewListQuery);
+          this.previewFetchData(this.previewListQuery);
+        }
+      }
+    )
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500)
+    } else{
+      this.previewHeaderColumns = [];
+      this.previewTotalItems = 0;
+      this.previewItems = [];
+      this.previewCurrentPage = 1;
+      this.previewResultsPerPage = 10;
+      
+    }
+  }
+
+  newfetchAttachedPolicies(params: any) {
+    this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {          
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      },
+      () => {
+        this.previewFetchColumns(params);
+        this.previewFetchData(params);
+      }
+    )
+  }
+
+  previewFetchColumns(params : any){
+  this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          const data = response.data.records.map((key: any, index: any) => {
+            return {
+              field: key.field_name,
+              previewTitle: this.translate.instant(key.display_name),
+              sorting: key.is_sortable,
+              searchable: key.is_searchable,
+              enable: true,
+              ...key,
+            };
+          });
+
+          this.previewSelectColumns = [
+            {
+              field: 'S.No',
+              previewTitle: 'S.No',
+              sorting: false,
+              searchable: false,
+              enable: false,
+              field_type_id: 1,
+            },
+            ...data,
+            {
+              field: 'Status',
+              previewTitle: 'Status',
+              sorting: false,
+              searchable: false,
+              enable: false,
+              field_type_id: 1,
+            },
+            {
+              field: 'Action',
+              previewTitle: 'Action',
+              sorting: false,
+              searchable: false,
+              enable: false,
+              field_type_id: 0,
+            },
+          ];
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  previewFetchData(params : any){
+    params.limit_range = this.previewResultsPerPage;
+          this.gridApiService.getAllRecords(params).subscribe(
+            (response) => {
+                      if (response.status && response.code === 200) {
+                        if (response.data.headers) {
+                            const data = response.data.headers
+                            .filter((key: any) => key.is_grid_column == 'true')
+                            .map((key: any) => ({
+                              ...key,
+                              column_width: '40px',
+                            }));
+
+              // Include serial number column if enabled in config
+              if (this.config.grid_show_serial_number == 'true') {
+                this.previewHeaderColumns = [
+                  {
+                    header: 'table_column_sno',
+                    field_value: 'S.No',
+                    is_sortable: 'false',
+                    column_order: '0.00',
+                    column_width: '40px',
+                    is_searchable: 'false',
+                    is_grid_column: 'true',
+                  },
+                  ...data,
+                ];
+
+              } else {
+                this.previewHeaderColumns = [...data];
+              }
+            // }
+
+            // Adding custom templates
+            this.previewHeaderColumns = this.previewHeaderColumns.map((item: any) => {
+              if (item.header === 'status') {
+                return {
+                  ...item,
+                  customTemplate: this.statusTemplate,
+                };
+              } else if (item.header === 'process_status') {
+                return {
+                  ...item,
+                  customTemplate: this.processStatusTemplate,
+                };
+              } 
+               else {
+                return { ...item };
+              }
+            });
+          }
+
+          // Processing records
+          if (response.data.records) {
+            this.previewItems = response.data.records.map((item: any, index: any) => {
+              const formattedItem = { ...item };
+              for (const key in formattedItem) {
+                if (
+                  formattedItem.hasOwnProperty(key) &&
+                  (key.toLowerCase().includes('date') ||
+                    key.toLowerCase().includes('deleted_at') ||
+                    key.toLowerCase().includes('created_at') ||
+                    key.toLowerCase().includes('updated_at')) &&
+                  this.isDate(formattedItem[key])
+                ) {
+                  this.previewHeaderColumns = this.previewHeaderColumns.map((headerItem: any) => {
+                    if (headerItem.header === key) {
+                      if (headerItem.field_type_id == 5) {
+                        const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      } else if (headerItem.field_type_id == 7) {
+                        const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      }
+                    }
+                    return headerItem;
+                  });
+                }
+              }
+
+              if (this.config.grid_show_serial_number == 'true') {
+                return {
+                  table_column_sno: this.listQuery.start_index + index + 1,
+                  ...formattedItem,
+                  Action: index + 1,
+                };
+              }
+              return {
+                ...formattedItem,
+                Action: index + 1,
+              };
+            });
+            this.previewTotalItems = response.data.total_records;
+            this.gridloading = false;
+          } else {
+            this.previewItems = [];
+            this.previewTotalItems = 0;
+            this.gridloading = false;
+          }
+          } else {
+            const key = response.message;
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+            this.previewItems = [];
+            this.previewHeaderColumns = [];
+            this.previewTotalItems = 0;
+            this.gridloading = false;
+          }
+            }
+          );
+  }
+  
   viewPopupItem(item: any) {
     // Permission check for popup_details
     if (this.masterInfo.permissions.popup_details || this.masterInfo.permissions.details) {
@@ -904,6 +1254,8 @@ export class MasterListComponent implements OnChanges {
     this.isViewPopupOpen = false;
     this.selectedItemUuid = null;
     this.noPopupPermission = false;
+    this.previewPopupPermission = false;
+    this.selectedItemEntityType = null;
   }
 
   editItem(item: any) {
@@ -1280,12 +1632,27 @@ export class MasterListComponent implements OnChanges {
     this.fetchData(this.listQuery);
   }
 
+  previewOnPageChange(event: { page: number; start_index: number }){
+    this.previewCurrentPage = event.page;
+    this.previewListQuery.start_index = event.start_index;
+    this.previewListQuery.limit_range = this.previewResultsPerPage
+    this.previewFetchData(this.previewListQuery)
+  }
+
   onResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
     this.currentPage = 1;
     this.resultsPerPage = event.resultsPerPage;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
+  }
+  
+  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number }){
+    this.previewCurrentPage = 1;
+    this.previewResultsPerPage = event.resultsPerPage;
+    this.previewListQuery.start_index = event.start_index;
+    this.previewListQuery.limit_range = event.resultsPerPage;
+    this.previewFetchData(this.previewListQuery);
   }
 
   openFormBuilderPopup(entityName: string, item: any) {
@@ -1300,7 +1667,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
-   
+  
     if (event.col.link_type === 'component' || event.col.link_type === "popup_grid") {
       const mode = event.col.link_mode || 'popup_details';
       if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
@@ -1316,7 +1683,7 @@ export class MasterListComponent implements OnChanges {
         this.isViewPopupOpen = true;
         return;
       }
-
+      
       this.popupName = mode;
       this.selectedItemUuid = event.item.uuid;
       if (mode === 'popup_add') {
