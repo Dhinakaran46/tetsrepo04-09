@@ -66,12 +66,14 @@ pendingPopupData: { item: any, entityName: string } | null = null;
 
   expandedItem: any = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
+  @Input() permissions: boolean = true;
   @Input() unique_id: any;
   @Input() loading: boolean = false;
   @ViewChild('searchInput') searchInput!: ElementRef;
   store: any;
   @Input() customTemplates: { [key: string]: TemplateRef<any> } = {};
   @Input() title: any = '';
+  @Input() previewTitle: any = '';
   @Input() enableCheckBox: boolean = false;
 
   @Input() masterInfo: any = [];
@@ -433,7 +435,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
   /* advanced search filter functions */
 
   capitalizeFirstLetter(string: string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    return string?.charAt(0)?.toUpperCase() + string?.slice(1);
   }
 
   async initStore() {
@@ -839,7 +841,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
  
   
     createColumnPopupChildMasterList(item: any, entityName: string) {
-      
+    
       
       // Add safety check
       if (!this.popupChildMasterListContainer) {
