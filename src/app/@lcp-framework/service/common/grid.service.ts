@@ -46,11 +46,11 @@ export class GridApiService {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, data);
   }
 
-  exportIndividualRecords(menuItemId: any, id: any): Observable<ExportResponse> {
+  exportIndividualRecords(menuItemId: any, id: any, filter:any): Observable<ExportResponse> {
     return this.http
       .post(
         `${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonindividualdataexport}`,
-        { id: id, menu_item_id: menuItemId },
+        { id: id, menu_item_id: menuItemId, filter:filter },
         {
           responseType: 'blob',
           observe: 'response',
@@ -233,5 +233,9 @@ export class GridApiService {
 
   executeChildProcess(id: number): Observable<any> {
     return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.execute_child_process}/${id}`, {});
+  }
+
+  getEntityDetails(entity_name: string): Observable<any> {
+    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.entitydetails}/${entity_name}`);
   }
 }
