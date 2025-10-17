@@ -71,10 +71,9 @@ export class LocalStorageService implements OnInit {
   }
 
   public clearStorage(): void {
-    /*localStorage.setItem('logout-event', 'logout' + Math.random());
-    localStorage.clear();*/
+    
     localStorage.setItem(this.getScopedKey('logout-event'), 'logout' + Math.random());
-    //const scope = window.location.port || window.location.hostname;
+    
     const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
     for (let key in localStorage) {
       if (key.startsWith(`${scope}_`)) {
@@ -220,7 +219,7 @@ export class LocalStorageService implements OnInit {
     // Base case: if the jsonObject is a string, replace the placeholder with the value
     if (typeof jsonObject === 'string') {
       const replacedString = jsonObject.replace(placeholderRegex, uniqueIdValue);
-      // console.log('Replaced:', jsonObject, 'with:', replacedString);
+      
       return replacedString;
     }
 
@@ -259,7 +258,6 @@ export class LocalStorageService implements OnInit {
   }
 
   formatPayloadWithPolicyConditions(payload: any, data: any, attachedPolicies: any[]) {
-    console.log(data);
     if (!data || !attachedPolicies.length) return payload;
     for (let policy of attachedPolicies) {
       if (!data[policy]) continue;

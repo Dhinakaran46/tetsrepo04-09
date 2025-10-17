@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
   templateUrl: './changepwd.component.html',
 })
 export class ChangePwdComponent implements OnInit {
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   changePasswordForm: FormGroup;
 
   constructor(private apiService: ProfileApiService, private formBuilder: FormBuilder, private toastr: ToastrService, private translate: TranslateService) {

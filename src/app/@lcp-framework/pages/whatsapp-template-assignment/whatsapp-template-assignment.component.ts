@@ -309,7 +309,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
                 }
               });
             }
-            console.log('query_information : ', query_information);
+            
             this.commonService.getCommonList(query_information).subscribe({
               next: (response: any) => {
                 if (response.data.records) {

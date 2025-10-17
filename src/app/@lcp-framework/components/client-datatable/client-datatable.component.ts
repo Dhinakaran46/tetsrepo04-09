@@ -614,6 +614,33 @@ export class ClientDatatableComponent implements OnInit {
 
   isDateLike(value: any): boolean {
     if (!value || typeof value !== 'string') return false;
+
+    // Match only YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss formats
+    const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const dateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+
+    if (dateOnlyRegex.test(value) || dateTimeRegex.test(value)) {
+      const parsed = new Date(value);
+      return !isNaN(parsed.getTime());
+    }
+
+    return false;
+  }
+
+  formatDateValue(value: any): string {
+    if (this.isDateLike(value)) {
+      // Detect time portion
+      if (/\d{2}:\d{2}/.test(value)) {
+        return this.timezoneService.transformDateTime(value) || value;
+      } else {
+        return this.timezoneService.transformDateOnly(value) || value;
+      }
+    }
+    return value;
+  }
+  
+  /*isDateLike(value: any): boolean {
+    if (!value || typeof value !== 'string') return false;
     // ISO, yyyy-MM-dd, yyyy-MM-ddTHH:mm:ss, etc.
     return /\d{4}-\d{2}-\d{2}/.test(value) || !isNaN(Date.parse(value));
   }
@@ -628,5 +655,5 @@ export class ClientDatatableComponent implements OnInit {
       }
     }
     return value;
-  }
+  }*/
 }

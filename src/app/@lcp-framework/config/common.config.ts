@@ -19,6 +19,7 @@ export const commonConfig: any = {
     unauthcommonlistdata: 'common/unauth-list-data',
     importtemplatedetails: 'common/import-template/details',
     importtemplatevalidate: 'common/import-template/validate/',
+    importtemplatevalidatescheduled: 'common/import-template/validate-scheduled/',
     commonexecutetransaction: 'common/execute-transaction',
     getAllMenu: 'user/menus',
     getCommnList: 'common/list-data',
@@ -26,6 +27,7 @@ export const commonConfig: any = {
     listdata: 'common/list-data',
     executeRecords: 'common/execute-transaction',
     executeRecordsCase: 'common/execute-transaction-case',
+    entitydetails: 'common/entity-name',
 
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',
@@ -33,6 +35,7 @@ export const commonConfig: any = {
     uploadImageAndGetName: 'common/file-upload/image',
     deleteImageByName: 'common/file-delete/image',
     getLanguageContent: 'common/language-content',
+    getThemeInfo: 'common/theme-info',
     importtemplatedeletefile: 'common/import-template/remove',
     importtemplateuploaddata: 'common/import-template/upload',
     attachedpolicies: 'common/attached-policies',
@@ -51,6 +54,7 @@ export const commonConfig: any = {
     generateAiQuery: 'openai/generate-query',
     getResultFromQuery: 'openai/get-response-from-sql',
     generateVectorForTable: 'openai/generate-vector-for-table',
+    generateAiContent: 'openai/generate-query-json',
     execute_child_process: 'common/execute-child-process',
   },
   ENTITY_TYPES: {
@@ -66,6 +70,7 @@ export const commonConfig: any = {
     EXPORT_MODULE: 'export_module',
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
+    BARCODE_PRINT_MODULE: 'barcode_print_module',
     CONFIGURATIONS_MODULE: 'configurations_module',
     USER_CONFIGURATIONS_MODULE: 'user_configurations_module',
     CRON_SETTING_MODULE: 'cron_setting_module',
@@ -84,6 +89,7 @@ export const commonConfig: any = {
     CHILD_PROCESS_SETTING_MODULE: 'child_process_setting_module',
     QUERY_BUILDER_MODULE: 'query_builder_module',
     CAROUSEL_MODULE: 'carousel_module',
+    COMMON_PERMISSION_MODULE: 'common_permission_module'
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -116,18 +122,21 @@ export const commonConfig: any = {
     child_process_setting_module: 'childprocesssetting',
     query_builder_module: 'querybuilder',
     carousel_module: 'carouselmodule',
+    common_permission_module: 'commonpermissionmodule'
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
     ACTION: 2,
     ACTION_AND_GENERAL: 3,
     EXTERNAL: 4,
+    HIDDEN: 5,
   },
   menu_link_type: [
     { label: 'General', value: 1 },
     { label: 'Action', value: 2 },
     { label: 'Action AND General', value: 3 },
     { label: 'External', value: 4 },
+    { label: 'Hidden', value: 5 },
   ],
   menu_device_type: [
     { label: 'Web', value: 1 },
@@ -155,6 +164,7 @@ export const commonConfig: any = {
     POPUP_ADD: 'popup_add',
     POPUP_EDIT: 'popup_edit',
     POPUP_DETAILS: 'popup_details',
+    RESET_PASSWORD: 'reset_password',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -191,6 +201,8 @@ export const commonConfig: any = {
     { label: 'Popup Add', value: 'popup_add' },
     { label: 'Popup Edit', value: 'popup_edit' },
     { label: 'Popup Details', value: 'popup_details' },
+    { label: 'Reset Password', value: 'reset_password' },
+    
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -206,8 +218,9 @@ export const commonConfig: any = {
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },
     { label: 'Language Contents Module', value: 'language_contents_module' },
     { label: 'Configurations Module', value: 'configurations_module' },
+    { label: 'Barcode Print Module', value: 'barcode_print_module' },
     { label: 'User Configurations Module', value: 'user_configurations_module' },
-    
+
     { label: 'Cron Setting Module', value: 'cron_setting_module' },
     { label: 'Import Template Module', value: 'import_template_module' },
     { label: 'Import Job Detail Module', value: 'import_job_detail_module' },
@@ -224,6 +237,7 @@ export const commonConfig: any = {
     { label: 'Child Process Setting Module', value: 'child_process_setting_module' },
     { label: 'Query Builder Module', value: 'query_builder_module' },
     { label: 'Carousel Module', value: 'carousel_module' },
+    {label:'Common Permission Module',value:'common_permission_module'}
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
@@ -305,8 +319,7 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      /*{ id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
+      
     ],
 
     // DateTime Field Conditions
@@ -317,8 +330,7 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      /*{ id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
+      
     ],
 
     // DateTime Field Conditions
@@ -329,8 +341,7 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      /*{ id: '7', label: 'Is Null', value: 'is_null' },
-      { id: '8', label: 'Is Not Null', value: 'is_not_null' },*/
+      
     ],
 
     // Integer Range Field Conditions

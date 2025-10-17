@@ -1,10 +1,10 @@
-﻿<div class="z-40 shadow-sm" [ngClass]="{ 'dark text-white-dark': store.semidark && store.menu === 'horizontal'}">
-  <div class="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-[#0e1726]">
+<div class="z-40 shadow-sm text-app-text" [ngClass]="{ 'dark text-white-dark': store.semidark && store.menu === 'horizontal'}">
+  <div class="relative flex w-full items-center px-5 py-2.5 theme-header-bg theme-header-text">
     <div class="horizontal-logo flex items-center justify-between lg:hidden ltr:mr-2 rtl:ml-2">
       <a routerLink="/" class="main-logo flex shrink-0 items-center">
         <img class="inline w-8 ltr:-ml-1 rtl:-mr-1" [src]="apiUrl+'/'+ this.config?.logo" [alt]="this.config?.company_name" appDynamicFontSize="headerlogo" />
         <span
-          class="hidden align-middle font-semibold transition-all duration-300 dark:text-white-light md:inline ltr:ml-1.5 rtl:mr-1.5"
+          class="hidden align-middle font-semibold transition-all duration-300 md:inline ltr:ml-1.5 rtl:mr-1.5 theme-header-text"
           appDynamicFontSize="heading"
         >
           {{this.config?.company_name}}
@@ -13,7 +13,8 @@
 
       <a
         href="javascript:;"
-        class="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-primary lg:hidden ltr:ml-2 rtl:mr-2"
+        class="collapse-icon flex flex-none rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:text-[#d0d2d6] dark:hover:bg-dark/60 dark:hover:text-app-hover lg:hidden ltr:ml-2 rtl:mr-2"
+        style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
         (click)="storeData.dispatch({type: 'toggleSidebar'})"
       >
         <i class="fas fa-bars fa-xl"></i>
@@ -24,7 +25,8 @@
       <div class="sm:ltr:mr-auto sm:rtl:ml-auto">
         <button
           type="button"
-          class="search_btn rounded-full bg-white-light/40 p-4 hover:bg-white-light/90 dark:bg-dark/40 dark:hover:bg-dark/60 sm:hidden"
+          class="search_btn rounded-full bg-white-light/40 p-4 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60 sm:hidden"
+          style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
           (click)="search = !search"
         >
           <i class="fa-solid fa-magnifying-glass mx-auto dark:text-[#d0d2d6]"></i>
@@ -34,7 +36,8 @@
         <a
           href="javascript:;"
           *ngIf="store.theme === 'light'"
-          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
+          style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
           (click)="storeData.dispatch({type: 'toggleTheme', payload:'dark'})"
         >
           <i class="far fa-sun ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
@@ -42,7 +45,8 @@
         <a
           href="javascript:;"
           *ngIf="store.theme === 'dark'"
-          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
+          style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
           (click)="storeData.dispatch({type: 'toggleTheme', payload:'system'})"
         >
           <i class="far fa-moon ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
@@ -50,7 +54,8 @@
         <a
           href="javascript:;"
           *ngIf="store.theme === 'system'"
-          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
+          style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
           (click)="storeData.dispatch({type: 'toggleTheme', payload:'light'})"
         >
           <i class="fas fa-laptop ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
@@ -62,7 +67,8 @@
           <button
             type="button"
             hlMenuButton
-            class="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+            class="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
+            style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
           >
             <img [src]="'assets/images/flags/'+ store.locale.toUpperCase() + '.svg'" alt="flag" class="h-5 w-5 rounded-full object-cover" />
           </button>
@@ -93,6 +99,7 @@
             type="button"
             hlMenuButton
             class="relative block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"
+            style="background-color: var(--app-header-bg-color, var(--app-header-bg-color-default)); color: var(--app-header-text-color, var(--app-header-text-color-default))"
           >
             <i class="fa-regular fa-bell ng-tns-c946920775-62 h-5 w-5 text-center text-sm"></i>
             <span class="absolute top-0 flex h-3 w-3 ltr:right-0 rtl:left-0">
@@ -169,8 +176,8 @@
                   <img class="h-10 w-10 rounded-md object-cover" [src]="getProfileInfo().profile_pic" alt="Profile Picture" />
                 </div>
                 <div class="truncate ltr:pl-4 rtl:pr-4">
-                  <h4 class="text-base">{{ getProfileInfo().name }}</h4>
-                  <a class="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white" href="javascript:;">
+                  <h4 class="text-base profile-name">{{ getProfileInfo().name }}</h4>
+                  <a class="hover:text-primary profile-email" href="javascript:;" style="opacity: 0.7;">
                     {{ getProfileInfo().email }}
                   </a>
                 </div>
@@ -199,7 +206,7 @@
 
   <!-- horizontal menu -->
   <ul
-    class="horizontal-menu hidden border-t border-[#ebedf2] bg-white px-6 py-1.5 font-semibold text-black dark:border-[#191e3a] dark:bg-[#0e1726] dark:text-white-dark lg:space-x-1.5 xl:space-x-8 rtl:space-x-reverse"
+    class="horizontal-menu hidden border-t border-[#ebedf2] px-6 py-1.5 font-semibold dark:border-[#191e3a] lg:space-x-1.5 xl:space-x-8 rtl:space-x-reverse theme-header-bg theme-header-text"
   >
     <li
       class="menu nav-item relative"
@@ -235,12 +242,12 @@
               fill="currentColor"
             ></path>
           </svg>
-          <span class="px-2">{{ 'dashboard' | translate }}</span>
+          <span class="px-2 theme-header-text">{{ 'dashboard' | translate }}</span>
         </div>
       </a>
     </li>
     <ng-container *ngFor="let item of menuItems; let i = index">
-      <li class="menu nav-item relative" *ngIf="item.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
+      <li class="menu nav-item relative" *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(item.link_type) === -1">
         <a
           *ngIf="item.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalLink"
           [attr.href]="item.target || 'javascript:void(0);'"
@@ -250,7 +257,7 @@
         >
           <div class="flex items-center">
             <i class="fas" [ngClass]="item.menu_img" aria-hidden="true"></i>
-            <span class="px-2">{{item.name | translate}}</span>
+            <span class="px-2 theme-header-text">{{item.name | translate}}</span>
           </div>
 
           <div class="right_arrow" *ngIf="hasVisibleChildren(item)">
@@ -262,7 +269,7 @@
             <div class="flex items-center">
               <i class="fas" [ngClass]="item.menu_img" aria-hidden="true"></i>
 
-              <span class="px-2"> {{ item.name | translate }} </span>
+              <span class="px-2 theme-header-text"> {{ item.name | translate }} </span>
             </div>
             <div class="right_arrow" *ngIf="hasVisibleChildren(item)">
               <i class="fa-solid fa-angle-down"></i>
@@ -271,7 +278,11 @@
         </ng-template>
         <ul class="sub-menu custom-min-width" *ngIf="hasVisibleChildren(item)">
           <ng-container *ngFor="let child of item.children">
-            <li class="menu nav-item relative" [class.active]="child.isActive" *ngIf="child.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
+            <li
+              class="menu nav-item relative"
+              [class.active]="child.isActive"
+              *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(child.link_type) === -1"
+            >
               <a
                 *ngIf="child.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalChildLink"
                 [attr.href]="child.target || 'javascript:void(0);'"
@@ -281,7 +292,7 @@
                 <div class="flex items-center">
                   <i class="fas" [ngClass]="child.menu_img" aria-hidden="true"></i>
 
-                  <span class="px-2"> {{ child.name | translate }} </span>
+                  <span class="px-2" style="color: var(--app-header-text-color, var(--app-text-color));"> {{ child.name | translate }} </span>
                 </div>
                 <div class="right_arrow" *ngIf="hasVisibleChildren(child)">
                   <i class="fa-solid fa-angle-down"></i>
@@ -292,7 +303,7 @@
                   <div class="flex items-center">
                     <i class="fas" [ngClass]="child.menu_img" aria-hidden="true"></i>
 
-                    <span class="px-2"> {{ child.name | translate }} </span>
+                    <span class="px-2" style="color: var(--app-header-text-color, var(--app-text-color));"> {{ child.name | translate }} </span>
                   </div>
                   <div class="right_arrow" *ngIf="hasVisibleChildren(child)">
                     <i class="fa-solid fa-angle-down"></i>
@@ -304,7 +315,11 @@
                 *ngIf="hasVisibleChildren(child)"
               >
                 <ng-container *ngFor="let childin of child.children">
-                  <li class="menu nav-item relative" [class.active]="childin.isActive" *ngIf="childin.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION">
+                  <li
+                    class="menu nav-item relative"
+                    [class.active]="childin.isActive"
+                    *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(childin.link_type) === -1"
+                  >
                     <a
                       *ngIf="childin.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalChildinLink"
                       [attr.href]="childin.target || 'javascript:void(0);'"
@@ -314,7 +329,7 @@
                       <div class="flex items-center">
                         <i class="fas" [ngClass]="childin.menu_img" aria-hidden="true"></i>
 
-                        <span class="px-2"> {{ childin.name | translate }} </span>
+                        <span class="px-2" style="color: var(--app-header-text-color, var(--app-text-color));"> {{ childin.name | translate }} </span>
                       </div>
                       <div class="right_arrow" *ngIf="hasVisibleChildren(childin)">
                         <i class="fa-solid fa-angle-down"></i>
@@ -330,7 +345,7 @@
                         <div class="flex items-center">
                           <i class="fas" [ngClass]="childin.menu_img" aria-hidden="true"></i>
 
-                          <span class="px-2"> {{ childin.name | translate }} </span>
+                          <span class="px-2" style="color: var(--app-header-text-color, var(--app-text-color));"> {{ childin.name | translate }} </span>
                         </div>
                         <div class="right_arrow" *ngIf="hasVisibleChildren(childin)">
                           <i class="fa-solid fa-angle-down"></i>
@@ -345,7 +360,7 @@
                         <li
                           class="menu nav-item relative"
                           [class.active]="childin3.isActive"
-                          *ngIf="childin3.link_type !== COMMON_CONFIG.MENU_LINK_TYPE.ACTION"
+                          *ngIf="[COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(childin3.link_type) === -1"
                         >
                           <a
                             *ngIf="childin3.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL; else internalChildin3Link"
@@ -372,7 +387,7 @@
                               <div class="flex items-center">
                                 <i class="fas" [ngClass]="childin3.menu_img" aria-hidden="true"></i>
 
-                                <span class="px-2"> {{ childin3.name | translate }} </span>
+                                <span class="px-2 theme-header-text"> {{ childin3.name | translate }} </span>
                               </div>
                               <div class="right_arrow" *ngIf="hasVisibleChildren(childin3)">
                                 <i class="fa-solid fa-angle-down"></i>

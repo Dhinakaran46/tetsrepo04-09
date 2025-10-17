@@ -27,25 +27,32 @@ export interface IGetResponseFromQuery {
   providedIn: 'root',
 })
 export class OpenaiService {
+  private get apiUrl() {
+    return localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+  }
   constructor(private http: HttpClient) {}
 
   syncTableSchema(): Observable<ApiResponce> {
-    return this.http.get<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.syncTableSchema}`);
+    return this.http.get<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.syncTableSchema}`);
   }
 
   generateAiQuery(data: IAiQuery): Observable<ApiResponce> {
-    return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiQuery}`, data);
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiQuery}`, data);
   }
 
   getResultFromQuery(data: IGetResponseFromQuery): Observable<ApiResponce> {
-    return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getResultFromQuery}`, data);
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getResultFromQuery}`, data);
   }
 
   generateVectorForTable(data: IGenerateVectorForTable): Observable<ApiResponce> {
-    return this.http.post<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generateVectorForTable}`, data);
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateVectorForTable}`, data);
   }
 
   generateVectorForAllTable(): Observable<ApiResponce> {
-    return this.http.get<ApiResponce>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.generateVector}`);
+    return this.http.get<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateVector}`);
+  }
+
+  generateAiContent(data: any): Observable<ApiResponce> {
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiContent}`, data);
   }
 }

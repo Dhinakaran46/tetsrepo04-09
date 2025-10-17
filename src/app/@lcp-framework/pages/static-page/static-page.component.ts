@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { SafeHtmlPipe } from '../../pipes/safehtml/safe-html.pipe';
 import * as Handlebars from 'handlebars';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -40,6 +40,41 @@ export class StaticPageComponent {
   @Input() isModal: boolean = false;
   @Output() closeModal = new EventEmitter<void>();
 
+
+  
+  private imageDelegationAttached = false;
+
+  viewer = {
+    open: false,
+    items: [] as string[],
+    index: 0,
+    zoom: 1,
+    pan: { x: 0, y: 0 },
+    dragging: false,
+    dragStart: { x: 0, y: 0 },
+    panStart: { x: 0, y: 0 },
+    minZoom: 0.5,
+    maxZoom: 5,
+    zoomStep: 0.15,
+  };
+
+  /* Keyboard shortcuts */
+  @HostListener('window:keydown.escape')
+  onEsc() {
+    if (this.viewer.open) this.closeViewer();
+  }
+
+  @HostListener('window:keydown.arrowright')
+  onRight() {
+    if (this.viewer.open) this.nextImage();
+  }
+
+  @HostListener('window:keydown.arrowleft')
+  onLeft() {
+    if (this.viewer.open) this.prevImage();
+  }
+
+
   constructor(
     private route: ActivatedRoute,
     public router: Router,
@@ -56,6 +91,122 @@ export class StaticPageComponent {
 
     registerHandlebarsHelpers(this.translate);
   }
+
+  
+  ngAfterViewInit() {
+    // Attach once; works even as innerHTML changes
+    this.attachImageClickDelegation();
+  }
+
+  /** Delegated click: open viewer when any IMG inside #static-content is clicked */
+  private attachImageClickDelegation() {
+    if (this.imageDelegationAttached) return;
+    const container = document.getElementById('static-content');
+    if (!container) return;
+
+    container.addEventListener('click', (evt: Event) => {
+      const target = evt.target as HTMLElement;
+      const img = (target instanceof HTMLImageElement ? target : target?.closest?.('img')) as HTMLImageElement | null;
+      if (!img) return;
+
+      // Limit to images inside the “Item Images” table (optional but tidy)
+      const allImgs = Array.from(
+        container.querySelectorAll('table img') // or just 'img' to allow all
+      ) as HTMLImageElement[];
+
+      const srcs = allImgs.map((i) => i.currentSrc || i.src).filter(Boolean);
+
+      this.viewer.items = Array.from(new Set(srcs)); // de-dupe
+      this.viewer.index = Math.max(0, this.viewer.items.indexOf(img.currentSrc || img.src));
+      this.openViewer();
+    });
+
+    this.imageDelegationAttached = true;
+  }
+
+  /* ---------- Viewer controls ---------- */
+
+  private openViewer() {
+    this.viewer.open = true;
+    this.resetView();
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeViewer() {
+    this.viewer.open = false;
+    document.body.style.overflow = '';
+  }
+
+  nextImage(evt?: Event) {
+    evt?.stopPropagation();
+    if (!this.viewer.items.length) return;
+    this.viewer.index = (this.viewer.index + 1) % this.viewer.items.length;
+    this.resetView();
+  }
+
+  prevImage(evt?: Event) {
+    evt?.stopPropagation();
+    if (!this.viewer.items.length) return;
+    this.viewer.index = (this.viewer.index - 1 + this.viewer.items.length) % this.viewer.items.length;
+    this.resetView();
+  }
+
+  zoomIn(evt?: Event) {
+    evt?.stopPropagation();
+    this.viewer.zoom = Math.min(this.viewer.maxZoom, this.viewer.zoom + this.viewer.zoomStep);
+  }
+
+  zoomOut(evt?: Event) {
+    evt?.stopPropagation();
+    this.viewer.zoom = Math.max(this.viewer.minZoom, this.viewer.zoom - this.viewer.zoomStep);
+  }
+
+  resetView(evt?: Event) {
+    evt?.stopPropagation();
+    this.viewer.zoom = 1;
+    this.viewer.pan = { x: 0, y: 0 };
+  }
+
+  onWheel(evt: WheelEvent) {
+    evt.preventDefault();
+    evt.stopPropagation();
+
+    const delta = Math.sign(evt.deltaY);
+    const prevZoom = this.viewer.zoom;
+    let nextZoom = prevZoom + (delta > 0 ? -this.viewer.zoomStep : this.viewer.zoomStep);
+    nextZoom = Math.max(this.viewer.minZoom, Math.min(this.viewer.maxZoom, nextZoom));
+
+    // keep zoom roughly centered at cursor
+    const rect = (evt.currentTarget as HTMLElement).getBoundingClientRect();
+    const cx = evt.clientX - rect.left - rect.width / 2 - this.viewer.pan.x;
+    const cy = evt.clientY - rect.top - rect.height / 2 - this.viewer.pan.y;
+
+    this.viewer.pan.x -= cx * (nextZoom / prevZoom - 1);
+    this.viewer.pan.y -= cy * (nextZoom / prevZoom - 1);
+    this.viewer.zoom = nextZoom;
+  }
+
+  onDragStart(evt: MouseEvent) {
+    this.viewer.dragging = true;
+    this.viewer.dragStart = { x: evt.clientX, y: evt.clientY };
+    this.viewer.panStart = { ...this.viewer.pan };
+    (evt.currentTarget as HTMLElement).classList.replace('cursor-grab', 'cursor-grabbing');
+  }
+
+  onDrag(evt: MouseEvent) {
+    if (!this.viewer.dragging) return;
+    const dx = evt.clientX - this.viewer.dragStart.x;
+    const dy = evt.clientY - this.viewer.dragStart.y;
+    this.viewer.pan = { x: this.viewer.panStart.x + dx, y: this.viewer.panStart.y + dy };
+  }
+
+  onDragEnd() {
+    if (!this.viewer.dragging) return;
+    this.viewer.dragging = false;
+    const el = document.querySelector('.cursor-grabbing');
+    el?.classList.replace('cursor-grabbing', 'cursor-grab');
+  }
+
 
   setTab(tab: string) {
     this.currentTab = tab;
@@ -109,8 +260,7 @@ export class StaticPageComponent {
       this.titleService.setTitle(translateTitle);
     }
 
-    console.log(this.entity_name);
-    console.log(this.unique_id);
+    
     this.initStore();
     this.loadData();
   }
@@ -140,7 +290,7 @@ export class StaticPageComponent {
     this.gridApiService.getAllList(listParams).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
-          console.log(response.data.records);
+          
           this.query_information = response.data.records[0].query_information;
           this.static_page_content = response.data.records[0].static_page_content;
 

@@ -1,6 +1,10 @@
 <div>
+  <div *ngIf="noPermission" class="flex h-full items-center justify-center">
+    <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
+  </div>
+
   <app-datatable
-    *ngIf="!nonGridPage"
+    *ngIf="!nonGridPage && !noPermission"
     [loading]="gridloading"
     [masterInfo]="masterInfo"
     [enableCheckBox]="enableCheckBox"
@@ -27,6 +31,7 @@
     (linkComponentClick)="onLinkComponentClick($event)"
     [unique_id]="uniqueId"
   ></app-datatable>
+
   <ng-template #actionTemplate let-item>
     <div class="flex items-center gap-4">
       <!-- mail resend -->
@@ -85,6 +90,17 @@
       </a>
 
       <a
+      *ngIf="EntityName == 'master_entity'"
+      href="javascript:void(0);"
+      class="hover:text-primary"
+      (click)="this.previewPopupItem(item)"
+        data-tippy-content="Preview"
+        ngxTippy
+        appDynamicFontSize="body"
+      >
+        <i class="fa-regular fa-file-lines"></i>
+      </a>
+      <a
         href="javascript:void(0);"
         class="hover:text-info"
         appDynamicFontSize="body"
@@ -139,11 +155,12 @@
       >
         <i class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.record_export"
+        *ngIf="this.masterInfo.permissions.record_export ||  item?.downloadables != null"
         (click)="this.recordExport(item)"
         ngxTippy
         data-tippy-content="Record Export"
@@ -167,7 +184,7 @@
         [class.text-red-500]="!item.password"
         [class.hover:text-primary]="item.password"
         appDynamicFontSize="body"
-        *ngIf="this.allowPasswordModal"
+        *ngIf="this.masterInfo.permissions.reset_password"
         (click)="this.passwordModal(item)"
         ngxTippy
         [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'"
@@ -219,6 +236,7 @@
       {{ item.documentation_video_url }}
     </a>
   </ng-template>
+
   <ng-template #linkDownloadPdfURLTemplate let-item>
     <a
       [href]="apiUrl + '/' + item.documentation_pdf"
@@ -232,6 +250,7 @@
       {{ item.documentation_pdf }}
     </a>
   </ng-template>
+
   <ng-template #linkDownloadWordURLTemplate let-item>
     <a
       [href]="apiUrl + '/' + item.documentation_word"
@@ -258,9 +277,10 @@
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
       class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
     >
       <!-- Modal Header -->
-      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6" style="background-color: var(--app-table-header-color, var(--app-sidebar-bg-color)); border-color: var(--app-table-border-color, var(--app-border-color))">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
             {{ 'title_reset_password' | translate }}
@@ -282,6 +302,7 @@
           [formGroup]="changePasswordForm"
           (ngSubmit)="onChangePassword()"
           class="mb-5 rounded-md border border-[#ebedf2] bg-white p-4 dark:border-[#191e3a] dark:bg-[#0e1726]"
+          style="background-color: var(--app-table-bg-color, var(--app-bg-color)); border-color: var(--app-table-border-color, var(--app-border-color)); color: var(--app-table-text-color, var(--app-text-color))"
         >
           <div class="flex flex-col sm:flex-row">
             <div class="grid flex-1 gap-5 sm:grid-cols-2">
@@ -342,11 +363,12 @@
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
       class="relative w-full max-w-5xl transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
     >
       <!-- Corner Close Button -->
       <button
         type="button"
-        class="btn-xs absolute -top-5 -right-5 z-20 rounded-full bg-white shadow-lg border border-gray-200 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
+        class="btn-xs absolute -right-5 -top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-lg hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
         (click)="closeViewPopup()"
       >
         <span class="sr-only">Close</span>
@@ -355,10 +377,34 @@
       <!-- Modal Body -->
       <div class="max-h-[80vh] overflow-y-auto p-4">
         <app-loader *ngIf="loadingpopup"></app-loader>
-        <div *ngIf="noPopupPermission" class="flex flex-col items-center justify-center min-h-[200px]">
-          <span class="text-lg text-red-600 font-semibold mb-4">No permission to view the details</span>
-          <button class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger" (click)="closeViewPopup()">Close</button>
+        <div *ngIf="noPopupPermission && selectedItemEntityType !== 'grid_builder_module'" class="flex min-h-[200px] flex-col items-center justify-center">
+          <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
+          <button class="btn btn-danger rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" (click)="closeViewPopup()">Close</button>
         </div>
+        
+         <ng-container>    
+           <app-datatable
+          *ngIf="selectedItemEntityType == 'grid_builder_module'"
+          [headercolumns]="previewHeaderColumns"
+          [selectcolumns]="previewSelectColumns"
+          [items]="previewItems"
+          [totalItems]="previewTotalItems"
+          [currentPage]="previewCurrentPage"
+          [resultsPerPage]="previewResultsPerPage"
+          [column]="column"
+          [title]="previewTitle"
+          [query]="query"
+          (pageChange)="previewOnPageChange($event)"
+          (resultsPerPageChange)="previewOnResultsPerPageChange($event)"
+          (columnSort)="previewSortColumn($event)"
+          (searchQuery)="previewSearchData($event)"
+          (advancedSearchQuery)="previewAdvancedSearchData($event)"
+          (linkComponentClick)="onLinkComponentClick($event)"
+          [permissions]="false"
+          >
+          </app-datatable>
+        </ng-container>
+        
         <ng-container *ngIf="!noPopupPermission">
           <app-static-page
             *ngIf="popupName == 'popup_details'"

@@ -234,7 +234,7 @@ export class UserConfigurationComponent implements OnInit {
   }
 
   loadAllItems(appCategoryTypeId: any) {
-    console.log(this.selectedUserId)
+    
     if (!this.companyId) {
       console.error('Company ID is not available');
       return;
@@ -256,11 +256,7 @@ export class UserConfigurationComponent implements OnInit {
     let appcondition = `app_categories.category_id = app_user_configurations.category_id`;
     if (this.selectedUserId) {
       appcondition += ` AND app_user_configurations.user_id = `+this.selectedUserId;
-      /*search_all.push({
-        column_name: 'app_user_configurations.user_id',
-        value: this.selectedUserId,
-        operator: '=',
-      });*/
+      
       
       
     }
@@ -303,26 +299,7 @@ export class UserConfigurationComponent implements OnInit {
             
           });
 
-          /*const finalObject = commonTabs.reduce((acc: any, record: any) => {
-            acc[record.config_key] = record.config_value;
-            return acc;
-          }, {});
-
-          if (finalObject.encrypt_local_storage == 'true') {
-            this.localStorageService.storeDataEncrypted(
-              'user_data',
-              JSON.stringify({
-                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-              })
-            );
-          } else {
-            this.localStorageService.storeData(
-              'user_data',
-              JSON.stringify({
-                ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
-              })
-            );
-          }*/
+          
 
           this.tabs.map(function (ielem) {
             if(ielem.configurations){
@@ -391,7 +368,7 @@ export class UserConfigurationComponent implements OnInit {
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
-          const res = response.data?.[0]?.result || [];
+          const res = response.data?.[0]?.result?.data || [];
 
           if (Object.keys(res).length > 0) {
             localStorage.setItem('config', JSON.stringify(res));
@@ -401,7 +378,7 @@ export class UserConfigurationComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          console.log(response.message);
+          
         }
       },
       error: (error) => {
@@ -415,7 +392,7 @@ export class UserConfigurationComponent implements OnInit {
   }
 
   initAllTabsForms() {
-    console.log('coming')
+   
     this.tabs.forEach((tab) => {
       this.allTabsForm.addControl(
         tab.name,

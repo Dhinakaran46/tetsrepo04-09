@@ -290,7 +290,8 @@ export class FormlyFieldFileComponent extends FieldType<FieldTypeConfig> impleme
       }
       return '';
     } else {
-      return `${environment.apiUrl}/${this.fileNameControl.value}`;
+      const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+      return `${apiUrl}/${this.fileNameControl.value}`;
     }
   }
 }

@@ -3,7 +3,7 @@
   <!--<p class="text-base font-bold leading-normal text-white-dark">{{ 'form_label_login_description' | translate }}</p>-->
 </div>
 <form class="space-y-5 dark:text-white" [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off">
-  <div>
+  <div class="login-form">
     <label for="Email">{{ 'form_label_email' | translate }}</label>
     <div class="relative text-white-dark">
       <input
@@ -26,7 +26,7 @@
     </div>
     <div *ngIf="isSubmitted && loginForm.controls['email'].hasError('email')" class="text-danger">{{ 'form_email_valid_msg' | translate }}</div>
   </div>
-  <div>
+  <div class="login-form">
     <label for="Password">{{ 'form_label_password' | translate }}</label>
     <div class="relative text-white-dark">
       <input
@@ -51,7 +51,7 @@
     </div>
     <div *ngIf="isSubmitted && passwordControl?.invalid" class="text-danger">{{ 'form_email_req_pwd' | translate }}</div>
   </div>
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between login-form">
     <label class="flex cursor-pointer items-center">
       <input formControlName="subscribe" type="checkbox" class="form-checkbox bg-white dark:bg-black" />
       <span class="text-white-dark">{{ 'form_remember_me' | translate }}</span>
@@ -60,7 +60,7 @@
       {{ 'forget_pwd' | translate }}
     </a>
   </div>
-  <button type="submit" class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+  <button type="submit" class="btn btn-primary login-form !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
     {{ 'submit' | translate }}
   </button>
 </form>

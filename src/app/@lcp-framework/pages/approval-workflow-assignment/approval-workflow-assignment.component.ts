@@ -177,7 +177,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           if (response.data.records.length) {
-            console.log(' response.data.records[0] : ', response.data.records[0]);
+           
             this.form.controls['approvalWorkflow'].patchValue({
               id: response.data.records[0].id,
               slug: response.data.records[0].slug,
@@ -253,7 +253,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
             } else {
               this.addApproverAssignment();
             }
-            console.log('form : ', this.form);
+          
           }
         }
       },
@@ -312,16 +312,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     });
   }
 
-  // onAcceptMailSelected(item: any) {
-  //   console.log('item : ', item);
-  //   const fg = this.form.controls['approvalWorkflow'] as FormGroup;
-  //   fg.controls['accept_email'].setValue(item.id);
-  // }
-
-  // onRejectMailSelected(item: any) {
-  //   const fg = this.form.controls['approvalWorkflow'] as FormGroup;
-  //   fg.controls['reject_email'].setValue(item.id);
-  // }
+  
 
   get approvalWorkflow() {
     return this.form.get('approvalWorkflow')?.getRawValue();

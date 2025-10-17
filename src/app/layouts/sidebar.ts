@@ -49,7 +49,7 @@ export class SidebarComponent {
   parentDropdown: string = '';
   user_info: any;
   COMMON_CONFIG = commonConfig;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
 
   showssmenu: boolean = true;
@@ -68,7 +68,7 @@ export class SidebarComponent {
       .select((d) => d.index)
       .subscribe((d) => {
         this.store = d;
-        // console.log(this.store);
+        
         if (this.store.menu == 'horizontal') {
           this.showssmenu = true;
         } else {
@@ -165,7 +165,9 @@ export class SidebarComponent {
 
   hasVisibleChildren(item: any): boolean {
     if (item.children && item.children.length) {
-      return item.children.some((child: any) => child.link_type !== this.COMMON_CONFIG.MENU_LINK_TYPE.ACTION);
+      return item.children.some(
+        (child: any) => child.link_type !== this.COMMON_CONFIG.MENU_LINK_TYPE.ACTION && child.link_type !== this.COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN
+      );
     }
     return false;
   }

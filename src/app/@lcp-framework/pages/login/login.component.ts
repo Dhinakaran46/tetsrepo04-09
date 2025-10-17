@@ -23,6 +23,7 @@ import { IconEyeComponent } from '../../shared/icon/icon-eye';
 import { CopyrightComponent } from '../../components/copyright/copyright.component';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { ThemeService } from '../../service/common/theme.service';
 
 interface MenuItem {
   id: number;
@@ -134,7 +135,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private menuLoadService: MenuLoadService,
     private timezoneService: TimezoneService,
-    private commonService: MenuMapService
+    private commonService: MenuMapService,
+    private themeService: ThemeService
   ) {
     this.initStore();
     this.loginForm = this.formBuilder.group({
@@ -224,7 +226,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       next: (menuList) => {
         if (menuList.length > 0) {
           // Proceed with the rest of the login process
-          console.log('Menu loaded, proceed with login');
+         
           this.routeUpdateService.addDynamicRoutes();
         } else {
           console.error('Failed to load menu, login halted');
@@ -238,7 +240,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
   setConfig(companyId: number,userID:any): void {
     this.menuLoadService.fetchConfigData(companyId,userID).subscribe({
       next: (res: any) => {
-        console.log(res);
+        
         this.timezoneService.reloadConfig();
       },
       error: (error: any) => {
@@ -292,6 +294,14 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           const conf: any = localStorage.getItem('config');
           const enc_config: any = JSON.parse(conf);
           this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
+          
+          if (response.data.theme_info) {
+            const themeData = JSON.stringify(response.data.theme_info);
+            this.localstore.storeData('theme_info', themeData);
+            localStorage.setItem('`theme_info`', themeData);
+           
+            this.themeService.applyThemeFromLocalStorage();
+          }
           if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
             this.localstore.storeDataEncrypted(
               'user_data',
@@ -325,11 +335,11 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           }
 
           this.setConfig(this.companyId,userID);
-          console.log(userID);
+          
           this.getconfig(userID);
           this.onLoginSuccess(this.companyId);
 
-          //return;
+          
           // Add dynamic routes
 
           forkJoin([
@@ -370,14 +380,14 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       },
       complete: () => {
         this.loading = false;
-        console.log('Login request completed');
+       
       },
     });
   }
 
   // Copy of getconfig from AuthLayout
   getconfig(userId?: number) {
-    console.log(userId);
+    
     // Prepare params for the procedure
     const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
     if (userId !== undefined && userId !== null) {
@@ -390,11 +400,11 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
-          const res = response.data?.[0]?.result || {};
+          const res = response.data?.[0]?.result?.data || {};
 
-  console.log(res);
+  
           if (Object.keys(res).length > 0) {
-          console.log(res);
+          
             // Optionally handle favicon, logo, etc. here if needed
             this.localstore.storeData('config', JSON.stringify(res));
           }
@@ -402,7 +412,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          console.log(response.message);
+          
         }
       },
       error: (error) => {

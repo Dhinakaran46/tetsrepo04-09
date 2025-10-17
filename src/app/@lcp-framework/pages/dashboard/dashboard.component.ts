@@ -1,5 +1,8 @@
-import { Component, OnInit, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy } from '@angular/core';
-
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { trigger, state, style, animate, transition } from '@angular/animations';
+import { CommonModule } from '@angular/common';
+import { DateRange} from '../../../@lcp-framework/components/models/date-range.model';
+import { DateRangePickerComponent } from '../../components/date-range-picker/date-range-picker.component';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import {
   ApexAxisChartSeries,
@@ -38,7 +41,7 @@ import { AuthService } from '../../service/common/auth.service';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { MasterListComponent } from '../master-list/master-list.component';
-import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
+// import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
 
 export type format = {
   series: ApexAxisChartSeries;
@@ -67,6 +70,7 @@ interface BaseCard {
   rows: number;
   type: any;
   order_no?: number;
+  reload_timeout?: any;
   query_information?: any;
   report_information?: any;
   report_type: ReportType;
@@ -76,6 +80,7 @@ interface BaseCard {
 interface CommonCard extends BaseCard {
   title: any;
   format?: any;
+  particular_format?: any; // For static content, to hold compiled HTML
   data?: any;
   chart_format?: any;
 }
@@ -91,11 +96,44 @@ interface DashboardTab {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonSharedModule, DragDropModule, NgApexchartsModule, SafeHtmlPipe, FormBuilderComponent, StaticPageComponent, MasterListComponent, MasterListChildrenComponent],
+  animations: [
+    trigger('toggleAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'scale(0.95)' }), 
+        animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))
+      ]),
+      transition(':leave', [
+        animate('75ms', style({ opacity: 0, transform: 'scale(0.95)' }))
+      ]),
+    ]),
+  ],
+  imports: [
+    CommonModule,
+    CommonSharedModule,
+    DragDropModule,
+    NgApexchartsModule,
+    SafeHtmlPipe,
+     FormBuilderComponent,
+    StaticPageComponent,
+    MasterListComponent,
+    //MasterListChildrenComponent,
+    DateRangePickerComponent
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
+  dateRange: DateRange = {
+    fromDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+    toDate: new Date()
+  };
+
+  grid_params = {
+    "$gparam_1": '1950-01-01',
+    "$gparam_2": '2050-01-01'
+  };
+  
   commonConfig = commonConfig;
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
@@ -107,8 +145,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   dashboardTabs: DashboardTab[] = [];
   private powerBiSubscription!: Subscription;
 
-  activeTabId: string = '1';
-
+  activeTabId: string = '1'
+  showDateRangePicker = false;
   userId: any;
   companyId: any;
 
@@ -124,6 +162,20 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     popupEntityName: string;
     isViewPopupOpen: boolean;
   } | null = null;
+
+  // NEW: keep track of per-widget timers
+  private reloadTimers = new Map<string, any>();
+
+  // Helper to generate a unique key per card (per tab)
+  private cardKey(tabId: string, cardId: number | string) {
+    return `${tabId}:${cardId}`;
+  }
+
+  // Clear all timers
+  private clearReloadTimers() {
+    this.reloadTimers.forEach((timerId) => clearInterval(timerId));
+    this.reloadTimers.clear();
+  }
 
   constructor(
     public storeData: Store<any>,
@@ -142,6 +194,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
+    
+    // Set default date range
+    this.dateRange = {
+      fromDate: new Date('1950-01-01'),
+      toDate: new Date('2050-01-01')
+    };
   }
 
   removePowerBiInstances() {
@@ -171,13 +229,65 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     });
     if (this.powerBiSubscription) {
       this.powerBiSubscription.unsubscribe(); // Unsubscribe when the component is destroyed
-      // console.log('Unsubscribed from powerBiContainers changes');
+     
     }
     this.powerBiReportInstances = [];
   }
 
   ngOnDestroy(): void {
+    this.clearReloadTimers();
     this.removePowerBiInstances();
+  }
+  
+  formatDate(date: Date | null): string {
+    if (!date) return '';
+    
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    
+    // Format as YYYY-MM-DD
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  }
+
+  getDateRangeText(): string {
+    if (!this.dateRange) return 'Select a Date Range';
+    
+    const from = this.dateRange.fromDate ? this.formatDate(this.dateRange.fromDate) : '';
+    const to = this.dateRange.toDate ? this.formatDate(this.dateRange.toDate) : '';
+    
+    if (from && to) {
+      return `Showing Results From ${from} To ${to}`;
+    }
+    return 'Select a Date Range';
+  }
+
+  onDateRangeChange(range: DateRange) {
+    // Only update if dates have actually changed
+    const fromDateChanged = !this.dateRange.fromDate || !range.fromDate || 
+      (this.dateRange.fromDate && range.fromDate && this.dateRange.fromDate.getTime() !== range.fromDate.getTime());
+    const toDateChanged = !this.dateRange.toDate || !range.toDate || 
+      (this.dateRange.toDate && range.toDate && this.dateRange.toDate.getTime() !== range.toDate.getTime());
+    
+    if (fromDateChanged || toDateChanged) {
+      // Create new date objects to avoid reference issues
+      this.dateRange = {
+        fromDate: range.fromDate ? new Date(range.fromDate) : null,
+        toDate: range.toDate ? new Date(range.toDate) : null
+      };
+      
+      // Update grid_params with the new date range
+      this.grid_params = {
+        ...this.grid_params,
+        "$gparam_1": this.formatDate(this.dateRange.fromDate),
+        "$gparam_2": this.formatDate(this.dateRange.toDate)
+      };
+      
+      this.refreshDashboardData();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -212,7 +322,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
             [
-              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
+              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.reload_timeout ,  master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
               'cards',
             ],
           ],
@@ -272,6 +382,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                       'rows', master_entities.dashboard_wizard_rows,
                       'cols', master_entities.dashboard_wizard_columns,
                       'order_no', master_entities.dashboard_wizard_order_no,
+                      'reload_timeout', master_entities.reload_timeout,
                       'query_information', master_entities.query_information,
                       'report_information', master_entities.report_information,
                       'report_type', master_entities.report_type,
@@ -309,12 +420,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                   mainElem.cards = [];
                 }
               }
-
+              
               // Proceed with Promise.all only if cards is an array
               if (Array.isArray(mainElem.cards)) {
                 mainElem.cards = await Promise.all(
                   mainElem.cards.map(async (item: any) => {
-                    // console.log(item);
+                    
                     return {
                       ...item,
                       format: item.format ? (Array.isArray(item.format) ? item.format : [item.format]) : [],
@@ -329,10 +440,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
               return mainElem;
             })
-          );
-          // Set the first tab as the active tab and initialize its cards
-          await this.setActiveTab(this.dashboardTabs[0].id);
-        }
+            );
+            // Set the first tab as the active tab and initialize its cards
+            await this.setActiveTab(this.dashboardTabs[0].id);
+          }
       },
       (error) => {
         const key = 'failed_to_load';
@@ -341,9 +452,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       }
     );
   }
-
+  
   async getQueryInfo(params: any): Promise<any> {
     try {
+      params.grid_params = { ...params.grid_params, ...this.grid_params };
       const response = await this.gridApiService.getAllList(params).toPromise();
       if (response.status && response.code === 200) {
         return response.data.records || [];
@@ -363,12 +475,104 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   async setActiveTab(tabId: any) {
     this.activeTabId = tabId;
+    // NEW: stop existing reloads before re-init
+    this.clearReloadTimers();
+
     const activeTab = this.dashboardTabs.find((tab) => tab.id === tabId);
     //if (activeTab && activeTab.cards.some((card) => card.data.length === 0)) {
     if (activeTab) {
       this.removePowerBiInstances();
       await this.initializeDashboardCards(activeTab.cards);
       this.cdr.detectChanges();
+    }
+  }
+
+  // NEW: schedule auto-reload for LCP card
+  private scheduleLcpReload(card: Card) {
+    const minutes = Number(card.reload_timeout) || 0;
+    if (minutes > 0 && card?.id != null) {
+      const key = this.cardKey(this.activeTabId, card.id);
+      // clear existing (if any)
+      if (this.reloadTimers.has(key)) {
+        clearInterval(this.reloadTimers.get(key));
+        this.reloadTimers.delete(key);
+      }
+      const intervalId = setInterval(() => this.refreshLcpCard(card), minutes * 60 * 1000);
+      this.reloadTimers.set(key, intervalId);
+    }
+  }
+
+  // NEW: refresh just one LCP card (data + static/chart rebuild)
+  private async refreshLcpCard(card: Card) {
+    try {
+      // re-run query if present
+      if (card.query_information) {
+        const queryInfo = JSON.parse(JSON.stringify(card.query_information));
+        
+        // Initialize grid_params if it doesn't exist
+        if (!queryInfo.grid_params) {
+          queryInfo.grid_params = {};
+        }
+        
+        // Merge existing grid_params with the component's grid_params
+        queryInfo.grid_params = { ...queryInfo.grid_params, ...this.grid_params };
+        
+        const queryString = JSON.stringify(queryInfo).replace(/\$session_user_id/g, this.userId);
+        card.query_information = JSON.parse(queryString);
+        card.data = await this.getQueryInfo(card.query_information);
+      }
+
+      // static widgets: recompile
+      if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
+        card.particular_format = this.compileStaticContent(card.format, card.data);
+      }
+
+      // charts: rebuild series/labels
+      if (card.type === commonConfig.WIZARD_TYPES.CHART) {
+        card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
+
+        if (card.chart_format[0] && card.chart_format[0].tooltip?.y?.formatter) {
+          if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
+            card.chart_format[0].tooltip.y.formatter = new Function(
+              'number',
+              card.chart_format[0].tooltip.y.formatter.substring(
+                card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
+                card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+              )
+            );
+          }
+        }
+
+        if (card.data?.length > 0) {
+          const dataMap: Record<string, any[]> = {};
+          const labels: any[] = [];
+          card.data.forEach((rec: any) => {
+            labels.push(rec.labels);
+            Object.keys(rec).forEach((k) => {
+              if (k !== 'labels') {
+                (dataMap[k] ||= []).push(rec[k]);
+              }
+            });
+          });
+
+          card.chart_format[0].series = Object.keys(dataMap).map((k) => ({
+            name: k.charAt(0).toUpperCase() + k.slice(1),
+            data: dataMap[k],
+          }));
+          card.chart_format[0].labels = labels;
+          card.chart_format[0].xaxis.categories = labels;
+        } else {
+          // no data: reset series/labels
+          card.chart_format[0].series = [];
+          card.chart_format[0].labels = [];
+          card.chart_format[0].xaxis.categories = [];
+        }
+      }
+
+      this.cdr.detectChanges();
+    } catch (e) {
+      // swallow per-card errors to avoid breaking other timers
+      console.error('Card refresh failed', e);
     }
   }
 
@@ -400,7 +604,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               if (this.powerBiContainers.get(index)) {
                 this.powerBiReportInstances.push(this.powerbiService.embed(this.powerBiContainers.get(index)?.nativeElement, embedConfig) as pbi.Report);
                 this.powerBiReportInstances[index]?.on('loaded', function () {
-                  // console.log('Power BI report loaded successfully');
+                 
                 });
 
                 this.powerBiReportInstances[index]?.on('error', function (event) {
@@ -439,7 +643,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             }
 
             if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
-              card.format = this.compileStaticContent(card.format, card.data);
+              card.particular_format = this.compileStaticContent(card.format, card.data);
             }
 
             if (card.type === commonConfig.WIZARD_TYPES.CHART) {
@@ -483,6 +687,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                 card.chart_format[0].xaxis.categories = labels;
               }
             }
+            // NEW: schedule auto-reload for LCP card
+            this.scheduleLcpReload(card);
           } else {
             this.powerBiSubscription = this.powerBiContainers.changes.subscribe((response: any) => {
               if (response.length && response.toArray()[pbiIndex]) {
@@ -528,7 +734,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const compiled = format.map((html) => {
       const template = Handlebars.compile(html);
       let passData = data[0];
-      if (data.length > 1) {
+      if (data.length > 0) {
         passData.data_list = data;
       }
       return template(passData);
@@ -539,7 +745,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   getStaticContent(card: Card): string[] {
     //if (card.type === commonConfig.WIZARD_TYPES.STATIC && card.format) {
-    return card.type == commonConfig.WIZARD_TYPES.STATIC ? card.format : [];
+    return card.type == commonConfig.WIZARD_TYPES.STATIC ? card.particular_format : [];
   }
 
   onDrop(event: CdkDragDrop<Card[]>) {
@@ -672,7 +878,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       popupName,
       selectedItemUuid: uuid ? uuid : null,
       popupEntityName: entityName,
-      isViewPopupOpen: true
+      isViewPopupOpen: true,
     };
     this.showMasterListPopup = true;
   }
@@ -681,4 +887,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.showMasterListPopup = false;
     this.popupConfig = null;
   }
+  
+  private refreshDashboardData(): void {
+    
+    
+    const activeTab = this.dashboardTabs.find(tab => tab.id === this.activeTabId);
+    if (activeTab) {
+      this.initializeDashboardCards(activeTab.cards).catch(error => {
+        console.error('Error refreshing dashboard data:', error);
+        this.toastr.error('Failed to refresh dashboard data');
+      });
+    }
+  }
+
 }

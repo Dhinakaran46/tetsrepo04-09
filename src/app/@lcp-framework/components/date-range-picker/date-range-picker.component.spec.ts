@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ChildDatatableComponent } from './child-datatable.component';
+import { DateRangePickerComponent } from './date-range-picker.component';
 
-describe('ChildDatatableComponent', () => {
-  let component: ChildDatatableComponent;
-  let fixture: ComponentFixture<ChildDatatableComponent>;
+describe('DateRangePickerComponent', () => {
+  let component: DateRangePickerComponent;
+  let fixture: ComponentFixture<DateRangePickerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ChildDatatableComponent]
+      imports: [DateRangePickerComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(ChildDatatableComponent);
+    fixture = TestBed.createComponent(DateRangePickerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

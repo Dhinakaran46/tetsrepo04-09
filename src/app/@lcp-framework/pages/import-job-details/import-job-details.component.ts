@@ -48,9 +48,9 @@ export class ImportJobDetailsComponent implements OnInit {
 
   ngOnInit() {
     this.id = this.route.snapshot.params['uuid'] || null;
-    console.log(this.id);
+    
     if (this.id) {
-      console.log(this.id);
+    
       this.loadData(this.id);
     }
   }
@@ -99,7 +99,7 @@ export class ImportJobDetailsComponent implements OnInit {
   }
 
   getSheetDatas(cdata: any): any {
-    console.log(cdata);
+   
     return cdata?.map((row: any) => {
       // Extract error messages and combine them into a single string
       const errorMessages = Object.values(row.row_object.errors)
@@ -129,82 +129,7 @@ export class ImportJobDetailsComponent implements OnInit {
       };
     });
   }
-  /*
-  loadData(id: any) {
-    this.loading = true;
-    const params = {
-      company_id: 1,
-      print_query: true,
-      primary_table: 'import_jobs',
-      start_index: 0,
-      limit_range: 1,
-      sort_columns: [['import_jobs.id', 'asc']],
-      search_all: [
-        {
-          column_name: 'import_jobs.uuid',
-          value: id,
-          operator: '=',
-        },
-      ],
-      select_columns: [
-        ['import_jobs.*'],
-        [
-          "CASE WHEN COUNT(import_job_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('row_object', import_job_line_items.row_object,'job_status', import_job_line_items.job_status))) END",
-          'items',
-        ],
-      ],
-      includes: [
-        {
-          join_type: 'LEFT',
-          table_name: 'import_job_line_items',
-          join_condition: 'import_jobs.id = import_job_line_items.import_job_id',
-        },
-      ],
-      group_by: ['import_jobs.id'],
-    };
-
-    this.gridApiService.getAllList(params).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-          const data = response.data.records[0];
-
-          console.log(data);
-          this.commonData = data;
-          if (Object.keys(data.header_details.ind_row_datas.columns).length > 0) {
-            this.sheet_data = data.header_details;
-          }
-          const allitems: any = data.items;
-        
-          this.commonItems = this.getSheetDatas(allitems);
-          console.log(this.commonItems);
-          this.commonItemsConfig = data.table_config;
-          this.commonItemsConfig.columns.filter((item: any) => (item.label = item.label.replace(`<span class="text-danger">*</span>`, '')));
-          this.commonItemsConfig.pageSizes = [5, 10, 25, 50];
-          this.commonItemsConfig.defaultPageSize = 10;
-          this.commonItemsConfig.searchable = true;
-          this.commonItemsConfig.headerConfig = {
-            title: 'Line Items',
-            showHeader: true,
-
-            enableFilter: true,
-            enableColumnSelector: true,
-            enableExport: false,
-          };
-          this.loading = false;
-          //this.commonData.items = data.items.sort((a: any, b: any) => a.mtr_sequence_number - b.mtr_sequence_number);
-          //this._originalItems = data.items.sort((a: any, b: any) => a.mtr_sequence_number - b.mtr_sequence_number);
-        } else {
-          this.loading = false;
-        }
-      },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-        this.loading = false;
-      }
-    );
-  }*/
+  
 
   loadData(id: any) {
     this.loading = true;

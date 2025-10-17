@@ -399,6 +399,26 @@
                 {{ getErrorMessage('dashboard_wizard_order_no') }}
               </div>
             </div>
+
+            <div class="mt-0">
+              <label for="reload_timeout" class="required-mark mb-2 block font-medium">{{
+                'form_label_reload_timeout' | translate
+              }}</label>
+              <input
+                id="reload_timeout"
+                type="number"
+                formControlName="reload_timeout"
+                appDynamicFontSize="body"
+                
+                class="form-input w-full"
+                placeholder="{{ 'form_label_reload_timeout_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('reload_timeout') }"
+              />
+              <div *ngIf="isFieldInvalid('reload_timeout')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('reload_timeout') }}
+              </div>
+            </div>
+
           </ng-container>
         </div>
 
@@ -838,6 +858,7 @@
                         <option value="none">{{ 'none' | translate }}</option>
                         <option value="component">{{ 'component' | translate }}</option>
                         <option value="child_grid">{{ 'child_grid' | translate }}</option>
+                        <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
                         <option value="url">{{ 'url' | translate }}</option>
                       </select>
                       <div *ngIf="isItemFieldInvalid(i, 'linkType')" class="invalid-feedback text-danger">
@@ -863,6 +884,19 @@
                         </select>
                         <select
                           *ngSwitchCase="'child_grid'"
+                          [id]="'linkAction' + i"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-select w-full"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        >
+                          <option value="">{{ 'select_any' | translate }}</option>
+                          <ng-container *ngFor="let entity of masterEntitiesForChildProcess">
+                            <option [value]="entity.value">{{ entity.label }}</option>
+                          </ng-container>
+                        </select>
+                        <select
+                          *ngSwitchCase="'popup_grid'"
                           [id]="'linkAction' + i"
                           formControlName="linkAction"
                           appDynamicFontSize="body"
@@ -962,17 +996,67 @@
         </div>
         <div class="relative">
           <p *ngIf="copied" class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
-          <div class="monaco-editor-container .editor-container mt-3 rounded border border-gray-300">
+          <div class="monaco-editor-container editor-container mt-3 rounded border border-gray-300"
+          *ngIf="!popupInformation.hasSplitEditors">
             <!-- Monaco Editor -->
-            <ngx-monaco-editor
-              monacoEditor
-              (click)="copyToClipboard()"
-              [options]="popupInfoEditorOptions"
-              id="popupInformation"
-              [(ngModel)]="popupInformation.data"
+            <ngx-monaco-editor 
+            monacoEditor 
+            (click)="copyToClipboard()" 
+            [options]="popupInfoEditorOptions"
+              id="popupInformation" 
+              [(ngModel)]="popupInformation.data" 
               class="monaco-editor"
-            ></ngx-monaco-editor>
+              ></ngx-monaco-editor>
             <div class="editor-overlay" (click)="copyToClipboard()"></div>
+          </div>
+          <!-- Split Editor View -->
+          <div *ngIf="popupInformation.hasSplitEditors" class="grid grid-cols-2 gap-4 mt-3 relative">
+            <!-- Left Editor -->
+            <div class="flex flex-col gap-2 h-full">
+              <div class="flex justify-between items-center">
+                <h4 class="text-sm font-medium">{{ popupInformation.leftEditor.title }}</h4>
+                <div class="flex gap-2">
+                  <button (click)="copyToClipboardData(popupInformation.leftEditor.content, 'Query')" class="btn btn-outline-primary btn-sm">
+                    Copy Query
+                  </button>
+                  <button (click)="convertToJson()" class="btn btn-primary btn-sm">
+                    Convert to JSON
+                  </button>
+                </div>
+              </div>
+              <div class="monaco-editor-container editor-container rounded border border-gray-300 flex-1">
+                <ngx-monaco-editor monacoEditor [options]="LeftEditorOptionsForAI"
+                  [(ngModel)]="popupInformation.leftEditor.content" class="monaco-editor h-full"></ngx-monaco-editor>
+              </div>
+            </div>
+
+            <!-- Right Editor -->
+            <div class="flex flex-col gap-2 h-full">
+              <div class="flex justify-between items-center">
+                <h4 class="text-sm font-medium">{{ popupInformation.rightEditor.title }}</h4>
+                <div class="flex gap-2">
+                  <button (click)="copyToClipboardData(popupInformation.rightEditor.content, 'JSON')" class="btn btn-outline-primary btn-sm">
+                    Copy JSON
+                  </button>
+                  <button (click)="convertToQuery()" class="btn btn-primary btn-sm">
+                    Convert to Query
+                  </button>
+                </div>
+              </div>
+              <div class="monaco-editor-container editor-container rounded border border-gray-300 flex-1">
+                <ngx-monaco-editor monacoEditor [options]="RightEditorOptionsForAI"
+                  [(ngModel)]="popupInformation.rightEditor.content" class="monaco-editor h-full"></ngx-monaco-editor>
+              </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div *ngIf="popupInformation.isProcessing"
+              class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+              <div class="bg-white dark:bg-gray-800 p-4 rounded shadow-lg flex items-center">
+                <i class="fas fa-spinner fa-spin text-primary mr-2"></i>
+                <span>Converting...</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

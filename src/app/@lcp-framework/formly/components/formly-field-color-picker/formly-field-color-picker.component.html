@@ -1,0 +1,18 @@
+<div class="color-picker-container">
+  <div class="color-picker-wrapper" (click)="openColorPicker()">
+    <div class="color-preview" [style.background]="formControlAsFormControl.value || '#ffffff'">
+      <input
+        #colorInput
+        type="color"
+        class="color-input"
+        [value]="hexValue"
+        [formControl]="formControlAsFormControl"
+        [formlyAttributes]="field"
+        (input)="onColorChange($event)"
+      />
+    </div>
+  </div>
+  <div class="color-value">
+    {{formControlAsFormControl.value || 'Select a color'}}
+  </div>
+</div>

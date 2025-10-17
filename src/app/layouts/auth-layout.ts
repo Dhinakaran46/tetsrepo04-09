@@ -15,6 +15,7 @@ import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { IconCaretDownComponent } from '../@lcp-framework/shared/icon/icon-caret-down';
 import { GridApiService } from '../@lcp-framework/service/common/grid.service';
+import { ThemeService } from '../@lcp-framework/service/common/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -36,7 +37,7 @@ export class AuthLayout {
   loading = false;
   store: any;
   showTopButton = false;
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   logo: any;
   authentication_banner: any;
   authentication_background_1: any;
@@ -54,7 +55,8 @@ export class AuthLayout {
     private service: AppService,
     public translate: TranslateService,
     private localstore: LocalStorageService,
-    private gridApiService: GridApiService
+    private gridApiService: GridApiService,
+    private themeService: ThemeService
   ) {
     this.initStore();
   }
@@ -81,6 +83,7 @@ export class AuthLayout {
   headerClass = '';
 
   ngOnInit() {
+
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
       console.log('Reloaded');
@@ -99,7 +102,7 @@ export class AuthLayout {
         this.showTopButton = false;
       }
     });
-    console.log('coming')
+    
     // Get userId from localStorageService if available
     let userId: number | undefined = undefined;
     try {
@@ -122,6 +125,9 @@ export class AuthLayout {
     }
     this.getconfig(userId);
     this.loadDataCarousel();
+    const payload = { company_id: this.companyId, status_id: 1 };
+
+    this.getThemeInfo(payload);
   }
 
   changeFavicon(url: any): void {
@@ -165,9 +171,10 @@ export class AuthLayout {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-          this.mediaItems = entity.items;
-          this.mediaItems.sort((a: any, b: any) => a.order - b.order);
-          console.log(this.mediaItems);
+          if(entity && entity.items){
+            this.mediaItems = entity.items;
+            this.mediaItems.sort((a: any, b: any) => a.order - b.order);
+          }
         }
       },
       (error) => {
@@ -179,7 +186,7 @@ export class AuthLayout {
   }
 
   getconfig(userId?: number) {
-    console.log(userId)
+   
     // Prepare params for the procedure
     const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
     if (userId !== undefined && userId !== null) {
@@ -192,7 +199,7 @@ export class AuthLayout {
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
-          const res = response.data?.[0]?.result || {};
+          const res = response.data?.[0]?.result?.data || {};
   
           if (Object.keys(res).length > 0) {
             if (res.favicon) {
@@ -211,7 +218,7 @@ export class AuthLayout {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          console.log(response.message);
+         
         }
       },
       error: (error) => {
@@ -262,5 +269,17 @@ export class AuthLayout {
   goToTop() {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
+  }
+
+  getThemeInfo(payload: any){
+
+    this.commonService.getThemeInfo(payload).subscribe((response: any) => {
+      if (response.code === 200) {
+          const themeData = JSON.stringify(response.data);
+          this.localstore.storeData('theme_info', themeData);
+          localStorage.setItem('theme_info', themeData);
+          this.themeService.applyThemeFromLocalStorage();
+      }
+    });
   }
 }

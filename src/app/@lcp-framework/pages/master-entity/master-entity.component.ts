@@ -21,6 +21,7 @@ import { EditorComponent } from 'ngx-monaco-editor-v2';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
+import { OpenaiService } from '../../service/common/openai.service';
 
 export function viewMandatoryValidator(): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
@@ -247,47 +248,21 @@ export class MasterEntityComponent implements OnInit {
             ],
           },
         },
+        {
+          name: 'AI Conversion',
+          leftEditor: {
+            title: 'QUERY',
+          },
+          rightEditor: {
+            title: 'JSON',
+          }
+        },
       ],
     },
     jobBuilderQueryInfo: {
       header: 'sample_query_information',
       examples: [
-        /*{
-          name: 'example_1',
-          comments: [],
-          data: {
-            data: {
-              table1: [
-                {
-                  deleted_at: true,
-                  deleted_by: true,
-                },
-              ],
-            },
-            table: ['users'],
-            action: ['delete'],
-            conditions: {
-              table1: [
-                {
-                  id: '$unique_id',
-                },
-              ],
-            },
-            reset_unique: {
-              table1: [
-                {
-                  column_name: 'email',
-                  column_length: 100,
-                },
-                {
-                  column_name: 'username',
-                  column_length: 100,
-                },
-              ],
-            },
-            table_mapping: ['table1'],
-          },
-        },*/
+
         {
           name: 'example_1',
           comments: [],
@@ -339,6 +314,15 @@ export class MasterEntityComponent implements OnInit {
             ],
           },
         },
+        {
+          name: 'AI Conversion',
+          leftEditor: {
+            title: 'QUERY',
+          },
+          rightEditor: {
+            title: 'JSON',
+          }
+        }
       ],
     },
     associatedTableInfo: {
@@ -1134,6 +1118,24 @@ export class MasterEntityComponent implements OnInit {
   popupInformation: any = null;
   popupName: string = 'reportInfo';
   popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
+  LeftEditorOptionsForAI = {
+    ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: false, automaticLayout: true, minimap: { enabled: false }, suggest: {
+      showWords: true,
+      showKeywords: true,
+    },
+    folding: true,
+    wordWrap: 'on',
+    tabSize: 4,
+    insertSpaces: true,
+    formatOnPaste: true,
+    formatOnType: true,
+  };
+  RightEditorOptionsForAI = {
+    ...this.editorOptions, language: 'json', cursorStyle: 'line', readOnly: false, automaticLayout: true, minimap: { enabled: false },
+    formatOnPaste: true,
+    formatOnType: true,
+    autoClosingQuotes: 'always'
+  };
   copied = false;
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
@@ -1148,7 +1150,8 @@ export class MasterEntityComponent implements OnInit {
     public storeData: Store<any>,
     public location: Location,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private openaiService: OpenaiService,
   ) {
     this.initStore();
   }
@@ -1186,52 +1189,7 @@ export class MasterEntityComponent implements OnInit {
     this.fetchAllMasterEntities();
   }
 
-  // ngAfterViewInit() {
-  //   if (this.monacoEditor && this.monacoEditor._editorContainer) {
-  //     const editorElement = this.monacoEditor._editorContainer.nativeElement;
 
-  //     const resizeObserver = new ResizeObserver(() => {
-  //       // Access the editor instance from the DOM element, if possible
-  //       const monacoInstance = (editorElement as any).editorInstance;
-  //       if (monacoInstance && typeof monacoInstance.layout === 'function') {
-  //         monacoInstance.layout();
-  //       }
-  //     });
-
-  //     resizeObserver.observe(editorElement);
-  //   }
-  // }
-
-  // ngAfterViewInit() {
-  //   if (this.monacoEditor && this.monacoEditor._editorContainer) {
-  //     const editorElement = this.monacoEditor._editorContainer.nativeElement;
-
-  //     // Try observing the window resize as a fallback
-  //     window.addEventListener('resize', () => {
-  //       console.log('Observing element:', editorElement);
-  //       this.adjustEditorHeight(editorElement);
-  //     });
-
-  //     // Still, attempt to use ResizeObserver as well
-  //     const resizeObserver = new ResizeObserver(() => {
-  //       this.adjustEditorHeight(editorElement);
-  //     });
-
-  //     resizeObserver.observe(editorElement);
-  //   }
-  // }
-
-  // private adjustEditorHeight(editorElement: any) {
-  //   const newHeight = editorElement.clientHeight;
-  //   editorElement.style.height = `${newHeight}px`;
-
-  //   console.log('Adjusted Height:', newHeight);
-
-  //   const monacoInstance = (editorElement as any).editorInstance;
-  //   if (monacoInstance && typeof monacoInstance.layout === 'function') {
-  //     monacoInstance.layout();
-  //   }
-  // }
 
   async initStore() {
     this.storeData
@@ -1272,6 +1230,7 @@ export class MasterEntityComponent implements OnInit {
       dashboard_wizard_rows: [''],
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
+      reload_timeout: [''],
       queryInformation: [''],
       reportInformation: [''],
       dashboard_wizard_options: [''],
@@ -1474,7 +1433,7 @@ export class MasterEntityComponent implements OnInit {
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
-    console.log(items);
+
   }
 
   removeItem(index: number) {
@@ -1551,6 +1510,7 @@ export class MasterEntityComponent implements OnInit {
             dashboard_wizard_rows: entity.dashboard_wizard_rows,
             dashboard_wizard_columns: entity.dashboard_wizard_columns,
             dashboard_wizard_order_no: entity.dashboard_wizard_order_no,
+            reload_timeout: entity.reload_timeout,
             dashboard_wizard_options: entity.dashboard_wizard_options ? this.prettyJSON(entity.dashboard_wizard_options) : '',
           });
 
@@ -1624,6 +1584,8 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_rows && { dashboard_wizard_rows: formData.dashboard_wizard_rows }),
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
+        ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
+
         ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
       },
     ];
@@ -1650,9 +1612,9 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
             } else if (entity.entity_type === 'grid_builder_module') {
-              link_mode = 'child_grid';  
+              link_mode = 'child_grid';
             }
-            
+
           }
         }
         return {
@@ -1708,6 +1670,8 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_rows ? { dashboard_wizard_rows: formData.dashboard_wizard_rows } : { dashboard_wizard_rows: null }),
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
+        ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
+
         ...(formData.dashboard_wizard_options
           ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
           : { dashboard_wizard_options: null }),
@@ -1733,7 +1697,7 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
             } else if (entity.entity_type === 'grid_builder_module') {
-              link_mode = 'child_grid';  
+              link_mode = 'child_grid';
             }
           }
         }
@@ -1908,10 +1872,19 @@ export class MasterEntityComponent implements OnInit {
     this.isInfoModalOpen = true;
     this.popupName = popup;
     this.selectedInfoTab = 0;
+    const currentExample = this.infoContents[this.popupName].examples[this.selectedInfoTab];
     this.popupInformation = {
       header: this.infoContents[this.popupName].header,
       tabNames: this.infoContents[this.popupName].examples.map((example: any) => example.name),
-      data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
+      data: currentExample.data ? JSON.stringify(currentExample.data, null, 2) : null,
+      comments: currentExample.comments || [],
+      hasSplitEditors: !!currentExample.leftEditor && !!currentExample.rightEditor,
+      leftEditor: currentExample.leftEditor || null,
+      rightEditor: currentExample.rightEditor || null,
+      editorOptions: {
+        ...this.popupInfoEditorOptions,
+        minimap: { enabled: false }
+      }
     };
   }
 
@@ -1934,11 +1907,93 @@ export class MasterEntityComponent implements OnInit {
   // Function to switch tabs
   selectTab(index: number) {
     this.selectedInfoTab = index;
+    const currentExample = this.infoContents[this.popupName].examples[this.selectedInfoTab];
     this.popupInformation = {
       ...this.popupInformation,
-      data: JSON.stringify(this.infoContents[this.popupName].examples[this.selectedInfoTab].data, null, 2),
+      data: currentExample.data ? JSON.stringify(currentExample.data, null, 2) : null,
+      comments: currentExample.comments || [],
+      hasSplitEditors: !!currentExample.leftEditor && !!currentExample.rightEditor,
+      leftEditor: currentExample.leftEditor || null,
+      rightEditor: currentExample.rightEditor || null,
+      isProcessing: false
     };
   }
+
+  convertToQuery() {
+    const inputData = this.popupInformation.rightEditor.content;
+
+    if (!inputData) {
+    this.toastr.warning('Please Enter JSON.', 'Warning');
+    return;
+    }
+    
+    this.popupInformation.isProcessing = true;
+    
+    let payload = {
+      "input": inputData,
+      "type": "convert_to_query"
+    }
+
+    this.openaiService.generateAiContent(payload).subscribe(
+      (response) => {
+        let responseData = response.data;
+        if (this.popupInformation) {
+          this.popupInformation.leftEditor.content = responseData;
+          this.popupInformation.isProcessing = false;
+        }
+      },
+      (error) => {
+        console.error('API Error:', error);
+        this.toastr.error('Error generating AI content', 'Error');
+        this.popupInformation.isProcessing = false;
+      }
+    )
+  }
+
+  convertToJson() {
+    const inputData = this.popupInformation.leftEditor.content;
+
+    if (!inputData) {
+      this.toastr.warning('Please Enter Query.', 'Warning');
+    return;
+    }
+    
+    this.popupInformation.isProcessing = true;
+
+    let payload = {
+      "input": inputData,
+      "type": "convert_to_json"
+    }
+
+    this.openaiService.generateAiContent(payload).subscribe(
+      (response) => {
+        let responseData = response.data;
+        if (this.popupInformation) {
+          this.popupInformation.rightEditor.content = JSON.stringify(responseData, null, 2);
+          this.popupInformation.isProcessing = false;
+        }
+      },
+      (error) => {
+        console.error('API Error:', error);
+        this.toastr.error('Error generating AI content', 'Error');
+        this.popupInformation.isProcessing = false;
+      }
+    )
+  }
+
+  copyToClipboardData(content: string, type: string = '') {
+  if (!content) {
+    this.toastr.warning(`No ${type || 'data'} to copy`);
+    return;
+  }
+
+  navigator.clipboard.writeText(content)
+    .then(() => this.toastr.success(`${type || 'Content'} copied to clipboard!`))
+    .catch(err => {
+      console.error('Clipboard copy failed:', err);
+      this.toastr.error('Failed to copy text');
+    })
+}
 
   fetchAllMasterEntities() {
     const params = {
@@ -1987,6 +2042,8 @@ export class MasterEntityComponent implements OnInit {
       let entity;
       if (type === 'component') {
         entity = this.masterEntities.find((e: any) => e.value === entityName);
+      } else if (type === 'popup_grid') {
+        entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
       } else if (type === 'child_grid') {
         entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
       }
@@ -2008,7 +2065,7 @@ export class MasterEntityComponent implements OnInit {
     }
     // Subscribe to changes
     linkActionControl?.valueChanges.subscribe((entityName: string) => {
-      if (linkTypeControl?.value === 'component' || linkTypeControl?.value === 'child_grid') {
+      if (linkTypeControl?.value === 'component' || linkTypeControl?.value === 'child_grid' || linkTypeControl?.value === 'popup_grid') {
         setLinkMode(entityName);
       } else {
         (group as any)._linkMode = 'none';
@@ -2016,7 +2073,7 @@ export class MasterEntityComponent implements OnInit {
     });
     // Also update on linkType change
     linkTypeControl?.valueChanges.subscribe((type: string) => {
-      if (type !== 'component' && type !== 'child_grid') {
+      if (type !== 'component' && type !== 'child_grid' && type !== 'popup_grid') {
         (group as any)._linkMode = 'none';
       } else {
         setLinkMode(linkActionControl?.value);

@@ -114,16 +114,16 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const id = params.get('id');
         const uuid = params.get('uuid');
         const value = id || uuid;
-        console.log(value)
+        
         this.originaluid = value;
         this.unique_id = value;
       });
     }
-    console.log(this.uuid)
+    
     if (this.uuid) {
       this.unique_id = this.uuid;
     }
-    console.log(this.unique_id)
+    
     if (!this.entityName) {
       this.route.data.subscribe((data) => {
         this.pageInfo = data['pageInfo'];
@@ -132,7 +132,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         this.draftMode = this.pageInfo.draft_mode;
       });
     }
-    console.log(this.nestedModalEntityType);
+    
     if (this.entityName) {
       this.entity_name = this.entityName;
       if(this.entityType){
@@ -265,7 +265,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         );
         listParams.company_id = 1;
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
-        console.log(listParams)
+       
         this.gridApiService.getAllList(listParams).subscribe(
           (response) => {
             if (response.status && response.code === 200) {
@@ -729,17 +729,78 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
-          
-          
-          
+
+
+
           
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
-            console.log(this.transParam)
-            console.log(this.entity_type)
+           
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
+
+          fieldsJson.forEach((field: any) => {
+                    // fieldGroup
+            field.fieldGroup?.forEach((subField: any) => {
+              if (subField.props && subField.props.label)
+                subField.props.label = this.translate.instant(subField.props.label);
+              if (subField.props && subField.props.placeholder)
+                subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
+
+              if (subField.templateOptions && subField.templateOptions.label)
+                subField.templateOptions.label = this.translate.instant(subField.templateOptions.label);
+              if (subField.templateOptions && subField.templateOptions.placeholder)
+                subField.templateOptions.placeholder = this.translate.instant(subField.templateOptions.placeholder || '');
+
+              // props.options (radio, select, etc.)
+              if (subField.props && Array.isArray(subField.props.options)) {
+                subField.props.options.forEach((opt: any) => {
+                  if (opt.label) {
+                    opt.label = this.translate.instant(opt.label);
+                  }
+                });
+              }
+            });
+
+            // fieldArray
+            field.fieldArray?.fieldGroup?.forEach((subField: any) => {
+              if (subField.props && subField.props.label)
+                subField.props.label = this.translate.instant(subField.props.label);
+              if (subField.props && subField.props.placeholder)
+                subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
+
+              if (subField.templateOptions && subField.templateOptions.label)
+                subField.templateOptions.label = this.translate.instant(subField.templateOptions.label);
+              if (subField.templateOptions && subField.templateOptions.placeholder)
+                subField.templateOptions.placeholder = this.translate.instant(subField.templateOptions.placeholder || '');
+
+              // props.options (radio, select, etc.)
+              if (subField.props && Array.isArray(subField.props.options)) {
+                subField.props.options.forEach((opt: any) => {
+                  if (opt.label) {
+                    opt.label = this.translate.instant(opt.label);
+                  }
+                });
+              }
+            });
+
+            // templateOptions (top-level)
+            if (field.templateOptions && field.templateOptions.label)
+              field.templateOptions.label = this.translate.instant(field.templateOptions.label);
+            if (field.templateOptions && field.templateOptions.placeholder)
+              field.templateOptions.placeholder = this.translate.instant(field.templateOptions.placeholder || '');
+
+            // props.options (top-level field, if ever used)
+            if (field.props && Array.isArray(field.props.options)) {
+              field.props.options.forEach((opt: any) => {
+                if (opt.label) {
+                  opt.label = this.translate.instant(opt.label);
+                }
+              });
+            }
+          });
+
           const isNestedModal = !!this.nestedFormEntityName && (this.entity_type === 'popup_add' || this.entity_type === 'popup_edit');
           if (!isNestedModal) {
             this.fields = this.processFields(fieldsJson);
@@ -761,8 +822,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   setDefaultData() {
-      console.log(this.entity_type)
-      console.log(this.defaultDataParam)
+      
     if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
       
       if (this.defaultDataParam.primary_table) {
@@ -1167,9 +1227,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any, uuid?: string | null, mode?: 'popup_add' | 'popup_edit') {
-    console.log(entityName);
-    console.log(fieldKey);
-    console.log(uuid);
+    
     this.noNestedFormPermission = false;
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1194,10 +1252,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     // Set these for nested modal; if uuid is provided, open in edit mode, else add mode
     this.nestedFormEntityName = entityName;
     this.nestedFormUuid = uuid || null;
-    console.log(mode);
+    
     // Always use the mode if provided, otherwise fallback to uuid logic
     this.nestedModalEntityType = mode ? mode : (uuid ? 'popup_edit' : 'popup_add');
-    console.log(this.nestedModalEntityType);
+    
     this.nestedFormFieldKey = fieldKey || null;
     this.nestedFormModalConfig = { ...(modalConfig || {}), open: true };
     // Do NOT call this.resetForm() here!

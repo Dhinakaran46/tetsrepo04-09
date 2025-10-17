@@ -508,7 +508,7 @@ export class MenuMappingComponent implements OnInit {
         if (response.code === 200 && response.status) {
           const viewActionId = response.data.records[0].id;
           const formData = this.menuForm.value;
-          if (formData.link_type == 1 && viewActionId) {
+          if ((formData.link_type == 1 || formData.link_type == 5) && viewActionId) {
             this.menuForm.patchValue({ parentActionItem: viewActionId });
             this.getActionItem = false;
           }
@@ -520,16 +520,17 @@ export class MenuMappingComponent implements OnInit {
     });
   }
 
-  onActionTypeChange(event: Event) {
+  onMenuLinkTypeChange(event: Event) {
     const target = event.target as HTMLSelectElement;
-    const actionTypeID = Number(target.value);
-    if (actionTypeID == 2 || actionTypeID == 3) {
+    const menuLinkTypeID = Number(target.value);
+    this.menuForm.patchValue({ parentActionItem: '' });
+    if (menuLinkTypeID == 2 || menuLinkTypeID == 3) {
       this.getActionItem = true;
     } else {
       this.getActionItem = false;
     }
 
-    if (actionTypeID == 4) {
+    if (menuLinkTypeID == 4) {
       this.entityElement = false;
     } else {
       this.entityElement = true;
@@ -692,7 +693,7 @@ export class MenuMappingComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
-        console.log(`Menu ${this.editMode ? 'update' : 'insertion'} completed`);
+       
 
         this.showForm = false;
         this.menuForm.reset();
@@ -755,7 +756,7 @@ export class MenuMappingComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
-        console.log(`Menu type 'insertion' completed`);
+        
         this.showTypeForm = false;
         this.menuForm.reset();
       },

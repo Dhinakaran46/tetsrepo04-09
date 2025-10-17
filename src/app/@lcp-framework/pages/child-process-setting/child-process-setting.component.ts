@@ -103,6 +103,8 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     },
   };
 
+  commonSearchQuery:any = {};
+
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
@@ -126,7 +128,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    console.log(pageInfo);
+    
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
@@ -242,6 +244,16 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         is_searchable: 'false',
         is_grid_column: 'true',
       },
+      {
+        header: 'gparam_1',
+        clause_type: 'where',
+        field_value: 'child_processes.uuid',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '1.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
     ];
   }
 
@@ -303,6 +315,10 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   }
 
   advancedSearchData(data: any) {
+    this.commonSearchQuery.having_conditions = [];
+    this.commonSearchQuery.having_any_conditions = [];
+    this.commonSearchQuery.search_any = [];
+    this.commonSearchQuery.search_all = [];
     interface QueryItem {
       isAggregate: boolean;
       [key: string]: any;
@@ -332,17 +348,24 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     if (havingConditions.length > 0) {
       if (condition == 'AND') {
         clonedListQuery.having_conditions = [...havingConditions];
+        this.commonSearchQuery.having_conditions = [...havingConditions];
+        this.commonSearchQuery.having_any_conditions = [];
       } else {
         clonedListQuery.having_any_conditions = [...havingConditions];
+        this.commonSearchQuery.having_any_conditions = [...havingConditions];
+        this.commonSearchQuery.having_conditions = [];
       }
     }
     if (condition == 'AND') {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all];
+        this.commonSearchQuery.search_all = [];
       } else {
         clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all, ...whereConditions];
+        this.commonSearchQuery.search_any = [];
+        this.commonSearchQuery.search_all = [...whereConditions];
       }
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
@@ -351,8 +374,11 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_any = [...clonedListQuery.search_any];
+        this.commonSearchQuery.search_any = [];
       } else {
         clonedListQuery.search_any = [...clonedListQuery.search_any, ...whereConditions];
+        this.commonSearchQuery.search_all = [];
+        this.commonSearchQuery.search_any = [...whereConditions];
       }
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
@@ -653,7 +679,10 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
               for (const key in formattedItem) {
                 if (
                   formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') || key.toLowerCase().includes('deleted_at') || key.toLowerCase().includes('created_at') || key.toLowerCase().includes('updated_at')) &&
+                  (key.toLowerCase().includes('date') ||
+                    key.toLowerCase().includes('deleted_at') ||
+                    key.toLowerCase().includes('created_at') ||
+                    key.toLowerCase().includes('updated_at')) &&
                   this.isDate(formattedItem[key])
                 ) {
                   const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
@@ -721,7 +750,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id).subscribe({
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {
@@ -923,7 +952,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
   editItem(item: any) {
     if (this.masterInfo.children.edit) {
-      const targetRoute = this.masterInfo.children.edit.target.replace(':id', item.uuid);
+      const targetRoute = this.masterInfo.children.edit.target.replace(':uuid', item.uuid);
       this.router.navigate([targetRoute]);
     }
   }
@@ -949,25 +978,39 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   }
 
   executeChildProcess(item: any) {
-    this.loading = true;
-    this.gridApiService.executeChildProcess(item.id).subscribe(
-      (response: any) => {
-        this.loading = false;
-        if (response.status) {
-          // console.log('Response:', response);
-          this.toastr.success(response.message, 'Success');
-        } else {
-          console.error('Error: Operation failed with response:', response);
-          this.toastr.error(response.message, 'Error');
-        }
-      },
-      (error) => {
-        this.loading = false;
-        console.error('Error executing child process:', error);
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+    Swal.fire({
+      icon: 'question',
+      title: 'Execute process?',
+      text: 'Do you want to proceed with this action?',
+      showCancelButton: true,
+      confirmButtonText: 'Proceed',
+      cancelButtonText: 'Cancel',
+      padding: '2em',
+    }).then((result) => {
+      if (result.isConfirmed || result.value) {
+        this.loading = true;
+        this.gridApiService.executeChildProcess(item.id).subscribe(
+          (response: any) => {
+            this.loading = false;
+            if (response.status) {
+              this.toastr.success(response.message, 'Success');
+              // Refresh policies and grid after successful execution
+              this.fetchAttachedPolicies(this.listQuery);
+            } else {
+              console.error('Error: Operation failed with response:', response);
+              this.toastr.error(response.message, 'Error');
+            }
+          },
+          (error) => {
+            this.loading = false;
+            console.error('Error executing child process:', error);
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        );
       }
-    );
+    });
   }
+  
 }

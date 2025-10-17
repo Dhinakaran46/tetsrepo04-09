@@ -172,7 +172,7 @@ export class LanguageMappingComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          console.log(response.message);
+          
         }
       },
       error: (error) => {
@@ -319,7 +319,7 @@ export class LanguageMappingComponent implements OnInit {
     });
 
     if (result.isConfirmed) {
-      console.log('deleted records', keyName);
+     
       removableItems.push(keyName);
 
       if (removableItems.length > 0) {

@@ -12,6 +12,7 @@ import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 // import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
 // import { DocumentationComponent } from '../../pages/documentation/documentation.component';
 // import { ConfigurationComponent } from '../../pages/configuration/configuration.component';
+// import { BarcodePrintingComponent } from '../../pages/barcode-printing/barcode-printing.component';
 import { environment } from '../../../../environments/environment';
 // import { UserRolePermissionComponent } from '../../pages/user-role-permission/user-role-permission.component';
 // import { ImportMasterComponent } from '../../pages/import-master/import-master.component';
@@ -26,7 +27,7 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root',
 })
 export class RouteUpdateService {
-  apiUrl = environment.apiUrl;
+  apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   private permissionsListSubject = new BehaviorSubject<any>(null);
   routeList: { path: string; component: any }[] = [];
 
@@ -71,8 +72,7 @@ export class RouteUpdateService {
           const dynamicRoutes = routeDataArray
             .filter((routeData: any) => routeData.entity_name && routeData.component_class_name)
             .map((routeData: any) => {
-              //console.log(routeData);
-              //const slugParts = routeData.entity_name.split('_grid_');
+              
               const viewPermissionKey = `view_${routeData.entity_name}`;
 
               const createPermissionKey = `add_${routeData.entity_name}`;
@@ -89,6 +89,8 @@ export class RouteUpdateService {
               const popupCreatePermissionKey = `popup_add_${routeData.entity_name}`;
               const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
               const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
+              const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
+              
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -179,7 +181,8 @@ export class RouteUpdateService {
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
                 configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
-                user_configurations_module: () => import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
+                user_configurations_module: () =>
+                  import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
                 cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
                 import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
                 import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
@@ -199,12 +202,14 @@ export class RouteUpdateService {
                 child_process_setting_module: () =>
                   import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
+                barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
+                common_permission_module:() => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
               };
 
-              console.log(routeData);
+             
               const route: Route = {
                 path: targetPath,
-                // component: componentMap[routeData.component_class_name],
+             
                 loadComponent: componentMap[routeData.component_class_name] || null,
                 title: routeData.entity_name,
                 data: {
@@ -242,6 +247,7 @@ export class RouteUpdateService {
                       popup_create: permissionListJSON[popupCreatePermissionKey] || false,
                       popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                       popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
+                      reset_password: permissionListJSON[resetPasswordPermissionKey] || false
                     },
                     children: children,
                   },
@@ -263,7 +269,7 @@ export class RouteUpdateService {
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
-    console.log(entity_name)
+    
     const user_data_raw = this.localStore.getData('user_data');
     if (!user_data_raw || user_data_raw === 'undefined') return null;
 
@@ -273,13 +279,7 @@ export class RouteUpdateService {
     const permissionListJSON = await firstValueFrom(this.getPermissionListJSON());
     if (!permissionListJSON || !routeDataArray.length) return null;
 
-    //const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
-    //const routeDataArray = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
-
-    console.log(routeDataArray);
-    console.log(entity_name);
-    //const permissionListJSON = await this.getPermissionListJSON().toPromise();
-    console.log(permissionListJSON);
+    
     if (permissionListJSON && routeDataArray) {
       const dynamicRoutes = routeDataArray
         .filter((routeData: any) => routeData.entity_name === entity_name && routeData.component_class_name)
@@ -299,6 +299,7 @@ export class RouteUpdateService {
           const popupCreatePermissionKey = `popup_add_${routeData.entity_name}`;
           const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
           const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
+          const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
 
           const idColumn = `${routeData.primary_table}.id`;
           const deletedAtColumn = `${routeData.primary_table}.status_id`;
@@ -385,12 +386,10 @@ export class RouteUpdateService {
             child_process_setting_module: () =>
               import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
+            common_permission_module:() => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
           };
 
-          console.log(permissionListJSON);
           
-          console.log(childDetailsPermissionKey)
-          console.log(permissionListJSON[childDetailsPermissionKey])
           const route: Route = {
             path: targetPath,
             loadComponent: componentMap[routeData.component_class_name] || null,
@@ -429,6 +428,7 @@ export class RouteUpdateService {
                   popup_create: permissionListJSON[popupCreatePermissionKey] || false,
                   popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                   popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
+                  reset_password: permissionListJSON[resetPasswordPermissionKey] || false
                 },
                 children: children,
               },
@@ -462,13 +462,7 @@ export class RouteUpdateService {
           appLayoutRoute.children.unshift(...dynamicRoutes);
           this.router.resetConfig(config);
 
-          // setTimeout(() => {
-          //   const routes1 = this.router.config;
-          //   this.extractRoutes(routes1);
-          //   setTimeout(() => {
-          //     console.log('routes....', this.routeList);
-          //   }, 5000);
-          // }, 2000);
+          
         }
       });
     }

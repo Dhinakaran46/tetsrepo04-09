@@ -277,7 +277,7 @@ export class ExportTemplateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.id = this.route.snapshot.params['id'] || null;
+    this.id = this.route.snapshot.params['uuid'] || null;
     this.initForm();
     //this.constructRedirectUrl();
 
@@ -307,7 +307,8 @@ export class ExportTemplateComponent implements OnInit {
   }
 
   downloadExcel(): void {
-    const fileUrl = `${environment.apiUrl}/${this.commonFile}`;
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+    const fileUrl = `${apiUrl}/${this.commonFile}`;
 
     this.http.get(fileUrl, { responseType: 'blob' }).subscribe({
       next: (blob) => {
@@ -537,9 +538,7 @@ export class ExportTemplateComponent implements OnInit {
     });
 
     this.addFormArraySubscriptions();
-    /*if (!this.id) {
-      this.initNewLineItem();
-    }*/
+    
 
     this.form.get('header_row')?.valueChanges.subscribe(() => {
       if (this.selectedFile) {
@@ -555,9 +554,7 @@ export class ExportTemplateComponent implements OnInit {
       query_procedure: ['', [Validators.required]],
     });
 
-    /*if (!this.id) {
-      this.initNewLineQuery();
-    }*/
+    
   }
 
   addFormArraySubscriptions() {
@@ -793,7 +790,7 @@ export class ExportTemplateComponent implements OnInit {
       if (this._originalItems && this._originalItems[index]) {
         this._originalItems.splice(index, 1);
       }
-      console.log(`Item with field_name: ${item.field_name} removed at index: ${index}`);
+     
     } else {
       this.toastr.warning(`Item with field_name: ${item.field_name} not found.`);
     }
@@ -811,7 +808,7 @@ export class ExportTemplateComponent implements OnInit {
       if (this._originalQueries && this._originalQueries[index]) {
         this._originalQueries.splice(index, 1);
       }
-      console.log(`Query with query_name: ${query.query_name} removed at index: ${index}`);
+     
     } else {
       this.toastr.warning(`Query with query_name: ${query.query_name} not found.`);
     }

@@ -84,6 +84,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     const tableName = this.props['table'] || this.props['primary_table'];
     const valueColumn = this.props['valueColumn'];
     const labelColumn = this.props['labelColumn'];
+    const uuidColumn = this.props['uuidColumn'] ? this.props['uuidColumn'] : 'uuid';
 
     if (tableName && labelColumn && valueColumn) {
       const updatedSearchAll = this.props['search_all']
@@ -109,14 +110,14 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
             company_id: 1,
             search_all,
             limit_range,
-            print_query:true,
+            print_query: true,
             start_index: 0,
             sort_columns,
             primary_table: tableName,
             select_columns: [
               [valueColumn, 'value'],
               [labelColumn, 'label'],
-              ["uuid", 'uuid'],
+              [uuidColumn, 'uuid'],
             ],
             includes,
           },
@@ -128,7 +129,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
       );
 
       let hasSetFirstValue = false;
-      console.log(listParams);
+     
       this.options$ = this.gridApiService.getAllList(listParams).pipe(
         map((response: any) => {
           if (response.status && response.data?.records?.length > 0) {
@@ -174,7 +175,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
           if (evaluatedValue !== undefined) {
             item.value = evaluatedValue; // Replace value with the dynamically evaluated result
           } else {
-            console.log('undefined evaluatedValue', item.value);
+           
             item.value = null;
           }
         } catch (error) {
@@ -216,15 +217,12 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   }
 
   onEditOption(option: any) {
-    console.log(option)
-    console.log(this.to['enable_edit'])
+   
     if (!this.to['enable_edit']) return;
     const entityName = this.getAddEditForm();
     const fieldKey = this.getFieldKey();
     const modalConfig = this.getModalConfig();
-    console.log(entityName);
-    console.log(fieldKey);
-    console.log(modalConfig);
+   
     // Access the parent component's method through formState
     const componentInstance = this.options?.formState?.componentInstance;
     if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {

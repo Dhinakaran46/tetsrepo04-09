@@ -1,6 +1,6 @@
-<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
-  <ng-container *ngFor="let tab of dashboardTabs">
-    <button
+<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]" style="border-color: var(--app-table-border-color, var(--app-border-color))">
+          <ng-container *ngFor="let tab of dashboardTabs">
+            <button
       class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
       [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTabId == tab.id }"
       (click)="setActiveTab(tab.id)"
@@ -10,12 +10,48 @@
   </ng-container>
 </div>
 
+<br>
+<div class="flex justify-end w-full pr-4">
+  <div class="relative">
+    <button 
+      (click)="showDateRangePicker = !showDateRangePicker"
+      style="color: var(--app-header-text-color, var(--app-bg-color)); background-color: var(--app-header-color, var(--app-primary-color));"
+      class="flex items-center px-4 py-2 -mb-px transition-all duration-300 cursor-pointer rounded-md"
+    >
+      {{ getDateRangeText() }}
+      <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+
+    <div 
+      *ngIf="showDateRangePicker"
+      @toggleAnimation
+      class="absolute right-0 z-10 mt-1 bg-white rounded-md shadow-lg focus:outline-none w-[800px]"
+      (click)="$event.stopPropagation()"
+      style="transform: translateX(0);"
+    >
+      <app-date-range-picker 
+        [dateRange]="dateRange"
+        (dateRangeChange)="onDateRangeChange($event)" 
+        (submitted)="showDateRangePicker = false"
+        class="date-range-tab p-4"
+        (click)="$event.stopPropagation()"
+        style="min-width: 100%;"
+      ></app-date-range-picker>
+    </div>
+  </div>
+</div>
+
+<!-- Click outside to close -->
+<div *ngIf="showDateRangePicker" class="fixed inset-0 z-0" (click)="showDateRangePicker = false"></div>
+
 <div class="flex-1 pt-5">
   <!--<div class="grid grid-cols-4 gap-4 p-4" cdkDropList (cdkDropListDropped)="onDrop($event)">-->
   <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
     <ng-container *ngFor="let card of getActiveCards(); let i = index">
       <!--<div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" cdkDrag>-->
-      <div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)">
+      <div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color)); border-color: var(--app-table-border-color, var(--app-border-color))">
         <div class="overflow-x-auto overflow-y-auto p-2" [ngStyle]="getScrollContainerStyle(card.rows, card.cols)">
           <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
           <ng-container *ngIf="card.report_type === commonConfig.REPORT_TYPES.LCP; else powerBiContent">
@@ -24,9 +60,9 @@
             </div>
 
             <div *ngIf="[commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)">
-              <div class="panel">
+              <div class="panel" style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
                 <div class="mb-5 flex items-center justify-between">
-                  <h5 class="text-lg font-semibold dark:text-white">{{ card.title }}</h5>
+                  <h5 class="text-lg font-semibold dark:text-white" style="color: var(--app-table-text-color, var(--app-text-color))">{{ card.title }}</h5>
                 </div>
                 <div class="mb-5 overflow-hidden">
                   <apx-chart

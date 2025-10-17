@@ -68,7 +68,7 @@ export class UserRolePermissionComponent {
   userList: any[] = [];
   user_info: any;
 
-  order_permissions = ['view', 'add', 'edit', 'details', 'delete', 'export_excel', 'assign'];
+  order_permissions = ['view', 'add', 'edit', 'details', 'delete', 'export_excel', 'assign','reset_password'];
 
   constructor(
     public fb: FormBuilder,
@@ -329,7 +329,7 @@ export class UserRolePermissionComponent {
           rightsArray.push(
             this.fb.group({
               id: new FormControl(right.id),
-              name: new FormControl(right.permission_name ?? right.entity_permission_name),
+              name: new FormControl(right.permission_name),
               entity_id: new FormControl(right.entity_id),
               link_type: new FormControl(right.link_type),
               permission_id: new FormControl(right.permission_id),
@@ -468,14 +468,7 @@ export class UserRolePermissionComponent {
   }
 
   // Ensure that each entity group has an 'expanded' property
-  /* getEntitiesControls() {
-    return (this.mappingForm.get('entities') as FormArray).controls.map(entityGroup => {
-      if (!entityGroup.expanded) {
-        entityGroup.expanded = false; // Default to collapsed
-      }
-      return entityGroup;
-    });
-  }*/
+  
   getEntitiesControls(): FormGroup[] {
     return (this.mappingForm.get('entities') as FormArray).controls as FormGroup[];
   }
@@ -524,7 +517,7 @@ export class UserRolePermissionComponent {
     this.gridApiService.getListData(param).subscribe(
       (response: ApiResponce) => {
         if (response.status) {
-          console.log(response.data?.records);
+          
           if (response.data?.records) {
             let finalList: any = [];
             response.data?.records.map(function (elem: any) {

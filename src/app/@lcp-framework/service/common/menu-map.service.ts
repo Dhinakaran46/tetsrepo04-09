@@ -9,32 +9,39 @@ import { CryptoHttpService } from '../crypto-http.service';
   providedIn: 'root',
 })
 export class MenuMapService {
+  private get apiUrl() {
+    return localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+  }
   constructor(private http: HttpClient, private cryptoHttp: CryptoHttpService) {}
 
   getAllMenus(): Observable<any> {
-    return this.cryptoHttp.encryptedGet<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getAllMenu}`);
+    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getAllMenu}`);
   }
 
   getCommonList(data: any) {
-    return this.cryptoHttp.encryptedPost<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.getCommnList}`, data);
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getCommnList}`, data);
   }
 
   postCommnList(data: any) {
-    return this.cryptoHttp.encryptedPost<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.postCommnList}`, data);
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.postCommnList}`, data);
   }
 
   executeRecords(data: any) {
-    return this.cryptoHttp.encryptedPost(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, data);
   }
 
   procedureCall(data: any) {
-    return this.cryptoHttp.encryptedPost<any>(`${environment.apiUrl}${environment.apiAddress}${commonConfig.API.procedureCall}${data.proc_name}`, data.params);
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.procedureCall}${data.proc_name}`, data.params);
   }
 
   unAuthProcedureCall(data: any) {
     return this.cryptoHttp.encryptedPost<any>(
-      `${environment.apiUrl}${environment.apiAddress}${commonConfig.API.unauthprocedureCall}${data.proc_name}`,
+      `${this.apiUrl}${environment.apiAddress}${commonConfig.API.unauthprocedureCall}${data.proc_name}`,
       data.params
     );
+  }
+
+  getThemeInfo(data: any){
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getThemeInfo}`, data);
   }
 }
