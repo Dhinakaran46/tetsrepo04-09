@@ -45,10 +45,10 @@ export class EmailTemplateAssignmentComponent implements OnInit {
     public localStorageService: LocalStorageService
   ) {
     this.form = this.fb.group({
-      email_template_process: this.fb.group({
-        email_template_process_id: [null, Validators.required],
+      notification_template_process: this.fb.group({
+        notification_template_process_id: [null, Validators.required],
       }),
-      email_template_assignments: this.fb.array([]),
+      notification_template_assignments: this.fb.array([]),
     });
 
     // get uuid from route
@@ -79,14 +79,18 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         {
           value: '3',
           operator: '!=',
-          column_name: 'email_template_recipient_tags.status_id',
+          column_name: 'notification_template_recipient_tags.status_id',
         },
       ],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'email_template_recipient_tags',
-      select_columns: [['email_template_recipient_tags.id'], ['email_template_recipient_tags.slug'], ['email_template_recipient_tags.name']],
+      primary_table: 'notification_template_recipient_tags',
+      select_columns: [
+        ['notification_template_recipient_tags.id'],
+        ['notification_template_recipient_tags.slug'],
+        ['notification_template_recipient_tags.name'],
+      ],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -110,8 +114,8 @@ export class EmailTemplateAssignmentComponent implements OnInit {
       includes: [
         {
           join_type: 'INNER',
-          table_name: 'email_template_process',
-          join_condition: 'email_template_process.id = email_templates.email_template_process_id',
+          table_name: 'notification_template_process',
+          join_condition: 'notification_template_process.id = notification_templates.notification_template_process_id',
         },
       ],
       company_id: 1,
@@ -119,22 +123,22 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         {
           value: '1',
           operator: '=',
-          column_name: 'email_templates.status_id',
+          column_name: 'notification_templates.status_id',
         },
         {
           value: this.emailTempAssignmentId,
           operator: '=',
-          column_name: 'email_template_process.uuid',
+          column_name: 'notification_template_process.uuid',
         },
       ],
       limit_range: 1000,
       print_query: false,
       start_index: 0,
-      sort_columns: [['email_templates.name', 'asc']],
-      primary_table: 'email_templates',
+      sort_columns: [['notification_templates.name', 'asc']],
+      primary_table: 'notification_templates',
       select_columns: [
-        ['email_templates.id', 'value'],
-        ['email_templates.name', 'label'],
+        ['notification_templates.id', 'value'],
+        ['notification_templates.name', 'label'],
       ],
     };
     this.commonService.getCommonList(payload).subscribe({
@@ -157,19 +161,19 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         {
           value: '3',
           operator: '!=',
-          column_name: 'email_template_process.status_id',
+          column_name: 'notification_template_process.status_id',
         },
         {
           value: this.emailTempAssignmentId,
           operator: '=',
-          column_name: 'email_template_process.uuid',
+          column_name: 'notification_template_process.uuid',
         },
       ],
       limit_range: 1,
       print_query: true,
       start_index: 0,
-      primary_table: 'email_template_process',
-      select_columns: [['email_template_process.id'], ['email_template_process.slug']],
+      primary_table: 'notification_template_process',
+      select_columns: [['notification_template_process.id'], ['notification_template_process.slug']],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -179,7 +183,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
               id: response.data.records[0].id,
               name: response.data.records[0].slug,
             });
-            this.form.controls['email_template_process'].setValue({ email_template_process_id: response.data.records[0].id });
+            this.form.controls['notification_template_process'].setValue({ notification_template_process_id: response.data.records[0].id });
           }
         }
       },
@@ -192,33 +196,38 @@ export class EmailTemplateAssignmentComponent implements OnInit {
       includes: [
         {
           join_type: 'INNER',
-          table_name: 'email_template_assignments',
-          join_condition: 'email_template_process.id = email_template_assignments.email_template_process_id',
+          table_name: 'notification_template_assignments',
+          join_condition: 'notification_template_process.id = notification_template_assignments.notification_template_process_id',
         },
       ],
       search_all: [
         {
           value: this.emailTempAssignmentId,
           operator: '=',
-          column_name: 'email_template_process.uuid',
+          column_name: 'notification_template_process.uuid',
         },
         {
           value: '3',
           operator: '!=',
-          column_name: 'email_template_process.status_id',
+          column_name: 'notification_template_process.status_id',
+        },
+        {
+          value: 'email',
+          operator: '!=',
+          column_name: 'notification_template_recipient_tags.notification_type',
         },
       ],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'email_template_process',
+      primary_table: 'notification_template_process',
       select_columns: [
-        ['email_template_process.id'],
-        ['email_template_process.slug'],
-        ['email_template_assignments.id', 'eta_id'],
-        ['email_template_assignments.template_id'],
-        ['email_template_assignments.recipient_type'],
-        ['email_template_assignments.email_to'],
+        ['notification_template_process.id'],
+        ['notification_template_process.slug'],
+        ['notification_template_assignments.id', 'eta_id'],
+        ['notification_template_assignments.template_id'],
+        ['notification_template_assignments.recipient_type'],
+        ['notification_template_assignments.notification_to'],
       ],
     };
     this.loading = true;
@@ -228,14 +237,14 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           this.loading = false;
           if (response.data.records) {
             if (response.data.records.length) {
-              const lineItemsArray: any = this.form.get('email_template_assignments') as FormArray;
+              const lineItemsArray: any = this.form.get('notification_template_assignments') as FormArray;
               let temp_assgn_ids: number[] = [];
               for (let each of response.data.records) {
                 lineItemsArray.push(
                   this.fb.group({
                     id: each.eta_id,
                     recipient_type: [each.recipient_type, Validators.required],
-                    email_to: [each.email_to, Validators.required],
+                    notification_to: [each.notification_to, Validators.required],
                     template_id: [each.template_id, Validators.required],
                     email_template_assignment_id: [each.eta_id, Validators.required],
                     cc_bcc: this.fb.array([]),
@@ -244,7 +253,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
                   })
                 );
                 if (each.recipient_type === 'tag') {
-                  this.getTemplateAssignmentTags(each.email_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+                  this.getTemplateAssignmentTags(each.notification_to, lineItemsArray.controls[lineItemsArray.length - 1]);
                 }
                 if (each.recipient_type === 'user_id') {
                   this.getUsers(lineItemsArray.controls[lineItemsArray.length - 1], '');
@@ -278,16 +287,16 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         {
           join_type: 'INNER',
           table_name: 'email_template_cc_bcc',
-          join_condition: 'email_template_assignments.id = email_template_cc_bcc.email_template_assignment_id',
+          join_condition: 'notification_template_assignments.id = email_template_cc_bcc.email_template_assignment_id',
         },
       ],
       search_any: [],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'email_template_assignments',
+      primary_table: 'notification_template_assignments',
       select_columns: [
-        ['email_template_assignments.id', 'eta_id'],
+        ['notification_template_assignments.id', 'eta_id'],
         ['email_template_cc_bcc.recipient_type'],
         ['email_template_cc_bcc.email_to'],
         ['email_template_cc_bcc.send_type'],
@@ -306,7 +315,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         if (response.code === 200 && response.status) {
           this.loading = false;
           if (response.data.records) {
-            const lineItemsArray = this.form.get('email_template_assignments') as FormArray;
+            const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
             lineItemsArray.controls.forEach((eachTemp: any) => {
               for (let ccBcc of response.data.records) {
                 if (ccBcc.eta_id === eachTemp.controls['email_template_assignment_id'].value) {
@@ -339,22 +348,22 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   }
 
   get emailTemplateAssignments() {
-    const emailRecpArray = this.form.get('email_template_assignments') as FormArray;
+    const emailRecpArray = this.form.get('notification_template_assignments') as FormArray;
     return emailRecpArray?.controls?.length ? emailRecpArray.controls : [];
   }
 
   getTemplateAssignmentList() {
-    const lineItemsArray = this.form.get('email_template_assignments') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
     return lineItemsArray?.controls?.length ? lineItemsArray.controls : [];
   }
 
   addEmailTemplateAssignment(): void {
-    const lineItemsArray = this.form.get('email_template_assignments') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
     lineItemsArray.push(
       this.fb.group({
         id: [0],
         recipient_type: ['tag', Validators.required],
-        email_to: [null, Validators.required],
+        notification_to: [null, Validators.required],
         template_id: [null, Validators.required],
         email_template_assignment_id: [0],
         cc_bcc: this.fb.array([]),
@@ -365,17 +374,17 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   }
 
   removeEmailTemplateAssignment(index: number): void {
-    const lineItemsArray = this.form.get('email_template_assignments') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
     lineItemsArray.removeAt(index);
   }
 
   getCcBccControls(i: number) {
-    const lineItemsArray = this.form.get('email_template_assignments.' + i + '.cc_bcc') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments.' + i + '.cc_bcc') as FormArray;
     return lineItemsArray?.controls?.length ? lineItemsArray.controls : [];
   }
 
   addCcBccGroup(i: number): void {
-    const lineItemsArray = this.form.get('email_template_assignments.' + i + '.cc_bcc') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments.' + i + '.cc_bcc') as FormArray;
     lineItemsArray.push(
       this.fb.group({
         eta_id: 0,
@@ -389,12 +398,18 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   }
 
   removeCcBccGroup(i: number, j: number): void {
-    const lineItemsArray = this.form.get('email_template_assignments.' + i + '.cc_bcc') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments.' + i + '.cc_bcc') as FormArray;
     lineItemsArray.removeAt(j);
   }
 
-  clearUserTagValues(formGroup: any) {
-    formGroup.controls['email_to'].reset();
+  clearUserTagValues(formGroup: any, type?: 'cc' | 'main') {
+    console.log('type : ', type);
+    if (type === 'cc') {
+      formGroup.controls['email_to']?.reset();
+    } else {
+      console.log('type 1: ', type);
+      formGroup.controls['notification_to']?.reset();
+    }
     formGroup.controls['email_tag_mail'].reset();
 
     if (formGroup.controls['recipient_type'].value === 'user_id') {
@@ -409,20 +424,24 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         {
           value: '3',
           operator: '!=',
-          column_name: 'email_template_recipient_tags.status_id',
+          column_name: 'notification_template_recipient_tags.status_id',
         },
         {
           value: tagId,
           operator: '=',
-          column_name: 'email_template_recipient_tags.id',
+          column_name: 'notification_template_recipient_tags.id',
         },
       ],
       search_any: [],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'email_template_recipient_tags',
-      select_columns: [['email_template_recipient_tags.id'], ['email_template_recipient_tags.slug'], ['email_template_recipient_tags.query_information']],
+      primary_table: 'notification_template_recipient_tags',
+      select_columns: [
+        ['notification_template_recipient_tags.id'],
+        ['notification_template_recipient_tags.slug'],
+        ['notification_template_recipient_tags.query_information'],
+      ],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -503,7 +522,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
       let no_of_child_tables: number = 2;
       const payload: any = {
         data: {},
-        table: ['email_template_process', 'email_template_assignments'],
+        table: ['notification_template_process', 'notification_template_assignments'],
         action: ['select', 'hard_delete'],
         columns: {
           table1: ['id'],
@@ -516,25 +535,25 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           ],
           table2: [
             {
-              email_template_process_id: '@table1.id',
+              notification_template_process_id: '@table1.id',
             },
           ],
         },
         table_mapping: ['table1', 'table2'],
       };
-      const lineItemsArray: any = this.form.get('email_template_assignments') as FormArray;
+      const lineItemsArray: any = this.form.get('notification_template_assignments') as FormArray;
 
       // add data for template assignment
       for (let templates of lineItemsArray.controls) {
         no_of_tables++;
         payload.data['table' + no_of_tables] = [
           {
-            email_to: templates.controls['email_to'].value,
+            notification_to: templates.controls['notification_to'].value,
             created_at: true,
             created_by: true,
             template_id: templates.controls['template_id'].value,
             recipient_type: templates.controls['recipient_type'].value,
-            email_template_process_id: '@table1.id',
+            notification_template_process_id: '@table1.id',
           },
         ];
 
@@ -545,7 +564,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         payload.table_mapping.push('table' + no_of_tables);
 
         // table for template assignment
-        payload.table.push('email_template_assignments');
+        payload.table.push('notification_template_assignments');
 
         let ccBccLineItems: any = templates.controls['cc_bcc'] as FormArray;
 

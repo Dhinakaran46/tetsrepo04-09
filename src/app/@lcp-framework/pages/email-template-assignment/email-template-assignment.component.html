@@ -14,12 +14,12 @@
 
   <div>
     <form [formGroup]="form">
-      <div formGroupName="email_template_process" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
+      <div formGroupName="notification_template_process" class="mb-5 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
         <div class="min-w-200-p">
           <div class="form-group">
-            <label for="email_template_process_id">{{ 'email_template_process' | translate }} <span class="text-danger">*</span></label>
+            <label for="notification_template_process_id">{{ 'email_template_process' | translate }} <span class="text-danger">*</span></label>
             <select
-              formControlName="email_template_process_id"
+              formControlName="notification_template_process_id"
               class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
               required
             >
@@ -40,7 +40,7 @@
         </button>
       </div>
 
-      <div formArrayName="email_template_assignments">
+      <div formArrayName="notification_template_assignments">
         @for(assignment of getTemplateAssignmentList(); track assignment; let i = $index) {
         <div [formGroupName]="i" class="my-4">
           <div class="grid grid-cols-4 gap-3">
@@ -80,17 +80,17 @@
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
               <label>{{ 'email_tag' | translate }} <span class="text-danger">*</span></label>
               <select
-                formControlName="email_to"
+                formControlName="notification_to"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
                 required
-                (change)="getTemplateAssignmentTags(assignment.get('email_to')?.value, assignment)"
+                (change)="getTemplateAssignmentTags(assignment.get('notification_to')?.value, assignment)"
               >
                 @for(tag of recipientTags; track tag; let i = $index) {
                 <option [value]="tag.id">{{ tag.name }}</option>
                 }
               </select>
               <div
-                *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
+                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
               >
                 {{ 'email_tag_is_required' | translate }}
@@ -103,7 +103,7 @@
               <ng-select
                 bindLabel="label"
                 bindValue="value"
-                formControlName="email_to"
+                formControlName="notification_to"
                 [clearable]="true"
                 [searchable]="true"
                 placeholder="Select User"
@@ -116,7 +116,7 @@
                 }
               </ng-select>
               <div
-                *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
+                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
               >
                 {{ 'user_email_is_required' | translate }}
@@ -128,13 +128,13 @@
               <input
                 type="email"
                 class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
-                formControlName="email_to"
+                formControlName="notification_to"
                 placeholder="Enter email address"
                 required
               />
               <div class="mt-5">Note : Can add multiple emails as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
               <div
-                *ngIf="assignment.get('email_to')?.invalid && (assignment.get('email_to')?.touched || assignment.get('email_to')?.dirty)"
+                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
               >
                 {{ 'email_is_required' | translate }}
@@ -174,7 +174,7 @@
                     formControlName="recipient_type"
                     class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
                     required
-                    (change)="clearUserTagValues(ccBcc)"
+                    (change)="clearUserTagValues(ccBcc, 'cc')"
                   >
                     <option value="tag">Tag</option>
                     <option value="user_id">User</option>

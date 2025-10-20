@@ -45,10 +45,10 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
     public localStorageService: LocalStorageService
   ) {
     this.form = this.fb.group({
-      whatsapp_template_process: this.fb.group({
-        whatsapp_template_process_id: [null, Validators.required],
+      notification_template_process: this.fb.group({
+        notification_template_process_id: [null, Validators.required],
       }),
-      whatsapp_template_assignments: this.fb.array([]),
+      notification_template_assignments: this.fb.array([]),
     });
 
     // get uuid from route
@@ -79,14 +79,23 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         {
           value: '3',
           operator: '!=',
-          column_name: 'whatsapp_template_recipient_tags.status_id',
+          column_name: 'notification_template_recipient_tags.status_id',
+        },
+        {
+          value: 'whatsapp',
+          operator: '!=',
+          column_name: 'notification_template_recipient_tags.notification_type',
         },
       ],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'whatsapp_template_recipient_tags',
-      select_columns: [['whatsapp_template_recipient_tags.id'], ['whatsapp_template_recipient_tags.slug'], ['whatsapp_template_recipient_tags.name']],
+      primary_table: 'notification_template_recipient_tags',
+      select_columns: [
+        ['notification_template_recipient_tags.id'],
+        ['notification_template_recipient_tags.slug'],
+        ['notification_template_recipient_tags.name'],
+      ],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -110,8 +119,8 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
       includes: [
         {
           join_type: 'INNER',
-          table_name: 'whatsapp_template_process',
-          join_condition: 'whatsapp_template_process.id = whatsapp_templates.whatsapp_template_process_id',
+          table_name: 'notification_template_process',
+          join_condition: 'notification_template_process.id = notification_templates.notification_template_process_id',
         },
       ],
       company_id: 1,
@@ -119,22 +128,22 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         {
           value: '1',
           operator: '=',
-          column_name: 'whatsapp_templates.status_id',
+          column_name: 'notification_templates.status_id',
         },
         {
           value: this.whatsappTempAssignmentId,
           operator: '=',
-          column_name: 'whatsapp_template_process.uuid',
+          column_name: 'notification_template_process.uuid',
         },
       ],
       limit_range: 1000,
       print_query: false,
       start_index: 0,
-      sort_columns: [['whatsapp_templates.name', 'asc']],
-      primary_table: 'whatsapp_templates',
+      sort_columns: [['notification_templates.name', 'asc']],
+      primary_table: 'notification_templates',
       select_columns: [
-        ['whatsapp_templates.id', 'value'],
-        ['whatsapp_templates.name', 'label'],
+        ['notification_templates.id', 'value'],
+        ['notification_templates.name', 'label'],
       ],
     };
     this.commonService.getCommonList(payload).subscribe({
@@ -157,19 +166,19 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         {
           value: '3',
           operator: '!=',
-          column_name: 'whatsapp_template_process.status_id',
+          column_name: 'notification_template_process.status_id',
         },
         {
           value: this.whatsappTempAssignmentId,
           operator: '=',
-          column_name: 'whatsapp_template_process.uuid',
+          column_name: 'notification_template_process.uuid',
         },
       ],
       limit_range: 1,
       print_query: true,
       start_index: 0,
-      primary_table: 'whatsapp_template_process',
-      select_columns: [['whatsapp_template_process.id'], ['whatsapp_template_process.slug']],
+      primary_table: 'notification_template_process',
+      select_columns: [['notification_template_process.id'], ['notification_template_process.slug']],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -179,7 +188,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
               id: response.data.records[0].id,
               name: response.data.records[0].slug,
             });
-            this.form.controls['whatsapp_template_process'].setValue({ whatsapp_template_process_id: response.data.records[0].id });
+            this.form.controls['notification_template_process'].setValue({ notification_template_process_id: response.data.records[0].id });
           }
         }
       },
@@ -192,33 +201,33 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
       includes: [
         {
           join_type: 'INNER',
-          table_name: 'whatsapp_template_assignments',
-          join_condition: 'whatsapp_template_process.id = whatsapp_template_assignments.whatsapp_template_process_id',
+          table_name: 'notification_template_assignments',
+          join_condition: 'notification_template_process.id = notification_template_assignments.notification_template_process_id',
         },
       ],
       search_all: [
         {
           value: this.whatsappTempAssignmentId,
           operator: '=',
-          column_name: 'whatsapp_template_process.uuid',
+          column_name: 'notification_template_process.uuid',
         },
         {
           value: '3',
           operator: '!=',
-          column_name: 'whatsapp_template_process.status_id',
+          column_name: 'notification_template_process.status_id',
         },
       ],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'whatsapp_template_process',
+      primary_table: 'notification_template_process',
       select_columns: [
-        ['whatsapp_template_process.id'],
-        ['whatsapp_template_process.slug'],
-        ['whatsapp_template_assignments.id', 'eta_id'],
-        ['whatsapp_template_assignments.template_id'],
-        ['whatsapp_template_assignments.recipient_type'],
-        ['whatsapp_template_assignments.whatsapp_to'],
+        ['notification_template_process.id'],
+        ['notification_template_process.slug'],
+        ['notification_template_assignments.id', 'eta_id'],
+        ['notification_template_assignments.template_id'],
+        ['notification_template_assignments.recipient_type'],
+        ['notification_template_assignments.whatsapp_to'],
       ],
     };
     this.loading = true;
@@ -228,7 +237,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
           this.loading = false;
           if (response.data.records) {
             if (response.data.records.length) {
-              const lineItemsArray: any = this.form.get('whatsapp_template_assignments') as FormArray;
+              const lineItemsArray: any = this.form.get('notification_template_assignments') as FormArray;
               let temp_assgn_ids: number[] = [];
               for (let each of response.data.records) {
                 lineItemsArray.push(
@@ -277,23 +286,23 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         {
           value: '3',
           operator: '!=',
-          column_name: 'whatsapp_template_recipient_tags.status_id',
+          column_name: 'notification_template_recipient_tags.status_id',
         },
         {
           value: tagId,
           operator: '=',
-          column_name: 'whatsapp_template_recipient_tags.id',
+          column_name: 'notification_template_recipient_tags.id',
         },
       ],
       search_any: [],
       limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'whatsapp_template_recipient_tags',
+      primary_table: 'notification_template_recipient_tags',
       select_columns: [
-        ['whatsapp_template_recipient_tags.id'],
-        ['whatsapp_template_recipient_tags.slug'],
-        ['whatsapp_template_recipient_tags.query_information'],
+        ['notification_template_recipient_tags.id'],
+        ['notification_template_recipient_tags.slug'],
+        ['notification_template_recipient_tags.query_information'],
       ],
     };
     this.commonService.getCommonList(payload).subscribe({
@@ -309,7 +318,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
                 }
               });
             }
-            
+
             this.commonService.getCommonList(query_information).subscribe({
               next: (response: any) => {
                 if (response.data.records) {
@@ -332,12 +341,12 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
   }
 
   getTemplateAssignmentList() {
-    const lineItemsArray = this.form.get('whatsapp_template_assignments') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
     return lineItemsArray?.controls?.length ? lineItemsArray.controls : [];
   }
 
   addWhatsappTemplateAssignment(): void {
-    const lineItemsArray = this.form.get('whatsapp_template_assignments') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
     lineItemsArray.push(
       this.fb.group({
         id: [0],
@@ -353,7 +362,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
   }
 
   removeWhatsappTemplateAssignment(index: number): void {
-    const lineItemsArray = this.form.get('whatsapp_template_assignments') as FormArray;
+    const lineItemsArray = this.form.get('notification_template_assignments') as FormArray;
     lineItemsArray.removeAt(index);
   }
 
@@ -412,7 +421,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
       let no_of_tables: number = 2;
       const payload: any = {
         data: {},
-        table: ['whatsapp_template_process', 'whatsapp_template_assignments'],
+        table: ['notification_template_process', 'notification_template_assignments'],
         action: ['select', 'hard_delete'],
         columns: {
           table1: ['id'],
@@ -425,13 +434,13 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
           ],
           table2: [
             {
-              whatsapp_template_process_id: '@table1.id',
+              notification_template_process_id: '@table1.id',
             },
           ],
         },
         table_mapping: ['table1', 'table2'],
       };
-      const lineItemsArray: any = this.form.get('whatsapp_template_assignments') as FormArray;
+      const lineItemsArray: any = this.form.get('notification_template_assignments') as FormArray;
 
       // add data for template assignment
       for (let templates of lineItemsArray.controls) {
@@ -443,7 +452,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
             created_by: true,
             template_id: templates.controls['template_id'].value,
             recipient_type: templates.controls['recipient_type'].value,
-            whatsapp_template_process_id: '@table1.id',
+            notification_template_process_id: '@table1.id',
           },
         ];
 
@@ -454,7 +463,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         payload.table_mapping.push('table' + no_of_tables);
 
         // table for template assignment
-        payload.table.push('whatsapp_template_assignments');
+        payload.table.push('notification_template_assignments');
       }
 
       this.gridApiService.executeRecords(payload).subscribe({
