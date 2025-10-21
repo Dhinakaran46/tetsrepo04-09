@@ -171,12 +171,10 @@ export class AuthLayout {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-          if(entity){
+          if(entity && entity.items){
             this.mediaItems = entity.items;
-          this.mediaItems.sort((a: any, b: any) => a.order - b.order);
+            this.mediaItems.sort((a: any, b: any) => a.order - b.order);
           }
-          
-          
         }
       },
       (error) => {

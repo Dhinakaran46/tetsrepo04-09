@@ -85,7 +85,7 @@
 
                       <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select w-full">
                         <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                        <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title }}</option>
+                         <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title || col.previewTitle }}</option>
                       </select>
                       <select [(ngModel)]="condition.operator" class="form-select w-full">
                         <option value selected disabled>{{ 'condition' | translate }}</option>
@@ -155,7 +155,7 @@
                 </ng-container>
               </ul>
             </div>
-            <div class="flex" *ngIf="this.masterInfo?.permissions.export_excel">
+            <div class="flex" *ngIf="permissions && this.masterInfo?.permissions.export_excel">
               <div hlMenu class="dropdown mb-2 md:mb-0">
                 <button
                   type="button"
@@ -196,7 +196,7 @@
 
           <div class="flex flex-wrap items-center gap-2">
             <button
-              *ngIf="this.masterInfo?.permissions.create"
+              *ngIf="permissions && this.masterInfo?.permissions.create"
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
@@ -210,7 +210,7 @@
 
           <div class="flex flex-wrap items-center gap-2">
             <button
-              *ngIf="this.masterInfo?.permissions.popup_create"
+              *ngIf="permissions && this.masterInfo?.permissions.popup_create"
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
@@ -254,7 +254,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th
-                *ngIf="this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details"
+                *ngIf="permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details"
                 class="text-left uppercase tracking-wider"
                 appDynamicFontSize="body"
               >
@@ -315,7 +315,7 @@
               <ng-container *ngIf="items && items.length > 0; else noRecords">
                 <ng-container *ngFor="let item of items; let row_index = index">
                   <tr>
-                    <td *ngIf="this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details" (click)="toggleRow(item, row_index + 1)">
+                    <td *ngIf="permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details" (click)="toggleRow(item, row_index + 1)">
                       <button class="expand-collapse-btn">
                         <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === row_index + 1 ? 'fa-minus' : 'fa-plus'"></i>
                       </button>
@@ -393,7 +393,7 @@
                   </tr>
 
                   <!-- Child datatable row -->
-                  <tr *ngIf="expandedItem === row_index + 1 && this.masterInfo?.permissions.child_details">
+                  <tr *ngIf="expandedItem === row_index + 1 && permissions && this.masterInfo?.permissions.child_details">
                     <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                       <div class="bg-gray-50 p-4">
                         <!-- Child content -->

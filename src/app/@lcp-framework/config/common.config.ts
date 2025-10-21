@@ -30,6 +30,7 @@ export const commonConfig: any = {
     executeRecords: 'common/execute-transaction',
     executeRecordsCase: 'common/execute-transaction-case',
     executeRecordsConfig: 'common/execute-transaction-configuration',
+    entitydetails: 'common/entity-name',
 
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',

@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, Type } from '@angular/core';
+import { Component, OnInit, Type } from '@angular/core';
 import { CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';
@@ -214,19 +214,34 @@ export class HeaderComponent implements OnInit {
   }
 
   filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
-    return menuItems.filter((item) => {
-      const permissionKey = item.entity_name;
-      const hasPermission = viewPermissions.includes(permissionKey);
-      if (item.children && item.children.length) {
-        item.children = this.filterMenu(item.children, viewPermissions);
-      }
-      if (item.parent_id == null) {
-        return true;
-      }
+  return menuItems.filter((item) => {
+    const permissionKey = item.entity_name;
+    const hasPermission = viewPermissions.includes(permissionKey);
+    if (item.children && item.children.length) {
+      item.children = this.filterMenu(item.children, viewPermissions);
+    }
+    // Menu item.link_type external must have either target or childern in order to display in application
+    if (item.link_type == 4) {
+      const hasTargetOrChildren =
+        (item?.target && item.target.trim() !== '') ||
+        (item?.children && item.children.length > 0);
 
-      return hasPermission || (item.children && item.children.length > 0);
-    });
-  }
+      if (hasTargetOrChildren) {
+        console.log(" Rendering item (link_type=4, has target/children):", item);
+        return true;
+      } else {
+        console.log("Skipping item (link_type=4, no target/children):", item);
+        return false;
+      }
+    }
+    if (item.parent_id == null) {
+      return true;
+    }
+
+    const hasTarget = item?.target && item.target.trim() !== '';
+    return hasPermission || hasTarget || (item.children && item.children.length > 0);
+  });
+}
 
   updateActiveClasses() {
     this.resetActiveClasses(this.menuItems);

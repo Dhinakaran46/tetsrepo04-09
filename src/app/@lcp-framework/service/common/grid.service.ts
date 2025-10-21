@@ -242,4 +242,8 @@ export class GridApiService {
   executeChildProcess(id: number): Observable<any> {
     return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.execute_child_process}/${id}`, {});
   }
+
+  getEntityDetails(entity_name: string): Observable<any> {
+    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.entitydetails}/${entity_name}`);
+  }
 }
