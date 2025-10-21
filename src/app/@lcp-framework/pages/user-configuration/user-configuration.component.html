@@ -135,6 +135,7 @@
                         />
                       </td>
                       <td appDynamicFontSize="body" *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4">
+                        <input type="hidden" formControlName="config_value_enc"  />
                         <select
                           formControlName="config_field_type"
                           appDynamicFontSize="body"

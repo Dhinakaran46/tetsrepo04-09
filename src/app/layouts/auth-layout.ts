@@ -199,8 +199,9 @@ export class AuthLayout {
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
+          //console.log(response)
           const res = response.data?.[0]?.result?.data || {};
-  
+          //console.log(res)
           if (Object.keys(res).length > 0) {
             if (res.favicon) {
               this.changeFavicon(this.apiUrl + '/' + res.favicon);
@@ -211,6 +212,7 @@ export class AuthLayout {
             this.authentication_background_2 = res.authentication_background_2;
             this.company = res.company_name;
             this.copyrightContent = res.footer_content;
+            //console.log(res)
             this.localstore.storeData('config', JSON.stringify(res));
             //localStorage.setItem('config', JSON.stringify(res));
           }

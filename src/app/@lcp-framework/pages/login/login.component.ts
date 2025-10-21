@@ -291,8 +291,11 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           }, {});
 
           // Store the user data along with permissions and menu lists
-          const conf: any = localStorage.getItem('config');
+          const conf: any = this.localstore.getData('config');
+          
           const enc_config: any = JSON.parse(conf);
+          
+          
           this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
           
           if (response.data.theme_info) {
@@ -335,8 +338,9 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           }
 
           this.setConfig(this.companyId,userID);
-          
+
           this.getconfig(userID);
+
           this.onLoginSuccess(this.companyId);
 
           

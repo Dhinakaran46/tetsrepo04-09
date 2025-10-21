@@ -388,29 +388,43 @@ export class MasterListComponent implements OnChanges {
     this.isItemModalOpen = false;
   }
   advancedSearchData(data: any) {
+    // Reset the common search query conditions
     this.commonSearchQuery.having_conditions = [];
     this.commonSearchQuery.having_any_conditions = [];
     this.commonSearchQuery.search_any = [];
     this.commonSearchQuery.search_all = [];
+  
     interface QueryItem {
       isAggregate: boolean;
+      column_name?: string;
       [key: string]: any;
     }
+    const query: QueryItem[] = data?.data || [];
+    const condition: 'AND' | 'OR' = data?.condition || 'AND';
+  
+    // Separate WHERE (non-aggregate) and HAVING (aggregate) conditions
+    // Separate WHERE (non-aggregate) and HAVING (aggregate) conditions
+  const whereConditions = query
+  .filter((d: QueryItem) => !d.isAggregate)
+  .map((d: QueryItem) => {
+    const { isAggregate, ...rest } = d;
+    return rest;
+  });
 
-    const query = data.data;
-    //isAggregate
-    const uncleanedwhereConditions = query.filter((d: any) => !d.isAggregate);
-    const whereConditions = uncleanedwhereConditions.map(({ isAggregate, ...rest }: QueryItem) => rest);
-    const uncleanedhavingConditions = query.filter((d: any) => d.isAggregate);
-    const havingConditions = uncleanedhavingConditions.map(({ isAggregate, ...rest }: QueryItem) => rest);
-
-    const condition = data.condition;
-
-    //const clonedListQuery = JSON.parse(JSON.stringify(this.masterInfo.ListQuery));
-    const clonedListQuery = this.listQuery;
-    const orgListQuery = this.defaultQuery;
-    if (whereConditions.length == 0 && havingConditions.length == 0) {
-      if (condition == 'AND') {
+const havingConditions = query
+  .filter((d: QueryItem) => d.isAggregate)
+  .map((d: QueryItem) => {
+    const { isAggregate, ...rest } = d;
+    return rest;
+  });
+  
+    // Deep clone to avoid mutating original listQuery
+    const clonedListQuery = JSON.parse(JSON.stringify(this.listQuery));
+    const orgListQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+  
+    // If no conditions, restore original query
+    if (whereConditions.length === 0 && havingConditions.length === 0) {
+      if (condition === 'AND') {
         clonedListQuery.search_all = [...orgListQuery.search_all];
       } else {
         clonedListQuery.search_any = [...orgListQuery.search_any];
@@ -418,8 +432,10 @@ export class MasterListComponent implements OnChanges {
       this.fetchData(clonedListQuery);
       return;
     }
+  
+    // Handle HAVING conditions
     if (havingConditions.length > 0) {
-      if (condition == 'AND') {
+      if (condition === 'AND') {
         clonedListQuery.having_conditions = [...havingConditions];
         this.commonSearchQuery.having_conditions = [...havingConditions];
         this.commonSearchQuery.having_any_conditions = [];
@@ -429,36 +445,37 @@ export class MasterListComponent implements OnChanges {
         this.commonSearchQuery.having_conditions = [];
       }
     }
-    if (condition == 'AND') {
-      if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
-        clonedListQuery.search_all = [];
+  
+    // Handle WHERE conditions
+    if (condition === 'AND') {
+      if (whereConditions.length === 1 && !whereConditions[0].column_name) {
+        // Empty condition → restore defaults
         clonedListQuery.search_all = [...orgListQuery.search_all];
         this.commonSearchQuery.search_all = [];
       } else {
-        clonedListQuery.search_all = [];
         clonedListQuery.search_all = [...orgListQuery.search_all, ...whereConditions];
-        this.commonSearchQuery.search_any = [];
         this.commonSearchQuery.search_all = [...whereConditions];
+        this.commonSearchQuery.search_any = [];
       }
-      clonedListQuery.start_index = 0;
-      this.currentPage = 1;
-
-      this.fetchData(clonedListQuery);
     } else {
-      if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
-        clonedListQuery.search_any = [...clonedListQuery.search_any];
+      if (whereConditions.length === 1 && !whereConditions[0].column_name) {
+        clonedListQuery.search_any = [...orgListQuery.search_any];
         this.commonSearchQuery.search_any = [];
       } else {
-        clonedListQuery.search_any = [...clonedListQuery.search_any, ...whereConditions];
-        this.commonSearchQuery.search_all = [];
+        clonedListQuery.search_any = [...orgListQuery.search_any, ...whereConditions];
         this.commonSearchQuery.search_any = [...whereConditions];
+        this.commonSearchQuery.search_all = [];
       }
-      console.log(this.commonSearchQuery)
-      clonedListQuery.start_index = 0;
-      this.currentPage = 1;
-
-      this.fetchData(clonedListQuery);
     }
+  
+    // Reset pagination and fetch data
+    clonedListQuery.start_index = 0;
+    this.currentPage = 1;
+  
+    console.log('Final Query:', clonedListQuery);
+    console.log('Common Search Query:', this.commonSearchQuery);
+  
+    this.fetchData(clonedListQuery);
   }
   
   previewAdvancedSearchData(data : any){
