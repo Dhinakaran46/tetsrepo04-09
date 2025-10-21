@@ -28,8 +28,13 @@ export class LocalStorageService implements OnInit {
   public getData(key: string): any {
     const conf: any = localStorage.getItem(this.getScopedKey('config'));
     const config: any = JSON.parse(conf);
-
-    if (localStorage.getItem(this.getScopedKey('user_data')) && key == 'user_data' && config?.encrypt_local_storage == 'true') {
+    //console.log(conf);
+    //console.log(config);
+    //console.log(localStorage.getItem(this.getScopedKey('user_data')));
+    //console.log(key)
+    //console.log(config?.encrypt_local_storage === 'true')
+    if (localStorage.getItem(this.getScopedKey('user_data')) && key == 'user_data' && config?.encrypt_local_storage === 'true') {
+      //console.log('coming')
       return this.getDataDecrypted(key);
     }
     this.returnData = localStorage.getItem(this.getScopedKey(key));

@@ -23,10 +23,13 @@ export const commonConfig: any = {
     commonexecutetransaction: 'common/execute-transaction',
     getAllMenu: 'user/menus',
     getCommnList: 'common/list-data',
+    getCommnListConfiguration: 'common/list-data-configuration-alone',
     postCommnList: 'common/execute-transaction',
     listdata: 'common/list-data',
+    listdataconfig: 'common/list-data-configuration',
     executeRecords: 'common/execute-transaction',
     executeRecordsCase: 'common/execute-transaction-case',
+    executeRecordsConfig: 'common/execute-transaction-configuration',
 
     getTablesList: 'common/tables',
     procedureCall: 'common/procedure/',

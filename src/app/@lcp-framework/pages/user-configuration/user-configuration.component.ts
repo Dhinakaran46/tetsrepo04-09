@@ -29,6 +29,7 @@ interface TabConfiguration {
   config_field_type: string;
   display_config: any;
   order_no: any;
+  config_value_enc:any;
 }
 
 interface Tab {
@@ -272,7 +273,7 @@ export class UserConfigurationComponent implements OnInit {
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_user_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_user_configurations.id,'display_config',app_user_configurations.display_config,'order_no',app_user_configurations.order_no,'config_key', app_user_configurations.config_key,'category_id', app_user_configurations.category_id,'config_value', app_user_configurations.config_value,'config_file_value', app_user_configurations.config_file_value,'config_value_type', app_user_configurations.config_value_type,'config_field_type', app_user_configurations.config_field_type,'config_select_json',app_user_configurations.config_select_json))) END",
+          "CASE WHEN COUNT(app_user_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_user_configurations.id,'display_config',app_user_configurations.display_config,'order_no',app_user_configurations.order_no,'config_key', app_user_configurations.config_key,'category_id', app_user_configurations.category_id,'config_value', app_user_configurations.config_value,'config_file_value', app_user_configurations.config_file_value,'config_value_type', app_user_configurations.config_value_type,'config_field_type', app_user_configurations.config_field_type,'config_value_enc',app_user_configurations.config_value_enc,'config_select_json',app_user_configurations.config_select_json))) END",
           'configurations',
         ],
       ],
@@ -286,7 +287,7 @@ export class UserConfigurationComponent implements OnInit {
       group_by: ['app_categories.id'],
     };
 
-    this.gridApiService.getAllList(payload).subscribe({
+    this.gridApiService.getAllListConfiguration(payload).subscribe({
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.tabs = response.data.records;
@@ -460,6 +461,7 @@ export class UserConfigurationComponent implements OnInit {
       order_no: [config.order_no],
       config_value_type: [config.config_value_type, Validators.required],
       config_field_type: [config.config_field_type, Validators.required],
+      config_value_enc: [config.config_value_enc],
       display_config: [config.display_config, Validators.required],
     });
     // Attach to FormGroup for template access
@@ -618,7 +620,7 @@ export class UserConfigurationComponent implements OnInit {
       this.update_json_schema.data['table1'] = updateItems;
       this.update_json_schema.data['table2'] = insertItems;
 
-      this.gridApiService.executeRecords(this.update_json_schema).subscribe(
+      this.gridApiService.executeRecordsConfig(this.update_json_schema).subscribe(
         (response: any) => {
           if (response.status && response.code === 200) {
             const key = 'record_updated_successfully';
@@ -739,6 +741,7 @@ export class UserConfigurationComponent implements OnInit {
         category_id: extracttab[0],
         config_key: newConfig.key,
         config_field_type: newConfig.keyType,
+        config_value_enc: newConfig.config_value_enc,
         config_value_type: newConfig.valueType,
         display_config: newConfig.display_config,
         config_select_json: config_select_json,

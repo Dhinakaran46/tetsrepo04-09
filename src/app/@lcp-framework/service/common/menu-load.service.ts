@@ -65,6 +65,7 @@ export class MenuLoadService {
   }
 
   fetchConfigData(companyId: number, userID: any): any {
+    console.log('coming')
     // 1. Try to fetch user config from app_user_configurations
     const userConfigPayload = {
       company_id: companyId,
@@ -75,6 +76,7 @@ export class MenuLoadService {
         ['app_user_configurations.id'],
         ['app_user_configurations.config_key'],
         ['app_user_configurations.category_id'],
+        ['app_user_configurations.config_value_enc'],
         ['app_user_configurations.config_value'],
         ['app_user_configurations.config_value_type'],
         ['app_user_configurations.config_field_type'],
@@ -85,9 +87,12 @@ export class MenuLoadService {
 
     // Helper to process config and store user_data
     const processConfig = (finalObject: any) => {
+      console.log(finalObject);
+      
       const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
+      console.log(user_data);
       if (user_data) {
-        if (finalObject.encrypt_local_storage == 'true') {
+        if (finalObject.encrypt_local_storage === 'true') {
           this.localStorageService.storeDataEncrypted(
             'user_data',
             JSON.stringify({
@@ -110,13 +115,14 @@ export class MenuLoadService {
     };
 
     // 2. Try user config first
-    return this.menuMapService.getCommonList(userConfigPayload).pipe(
+    return this.menuMapService.getCommnListConfiguration(userConfigPayload).pipe(
       map((userResponse: any) => {
         if (userResponse.code === 200 && userResponse.status && userResponse.data.records.length > 0) {
           const userConfig = userResponse.data.records.reduce((acc: any, record: any) => {
             acc[record.config_key] = record.config_value;
             return acc;
           }, {});
+          console.log(userConfig.encrypt_local_storage);
           // If user config has encrypt_local_storage, use it
           if (userConfig.encrypt_local_storage !== undefined) {
             return processConfig(userConfig);
@@ -132,6 +138,7 @@ export class MenuLoadService {
             ['app_configurations.id'],
             ['app_configurations.config_key'],
             ['app_configurations.category_id'],
+            ['app_configurations.config_value_enc'],
             ['app_configurations.config_value'],
             ['app_configurations.config_value_type'],
             ['app_configurations.config_field_type'],
@@ -140,8 +147,9 @@ export class MenuLoadService {
           search_all: [],
         };
         // Return an observable for chaining
-        return this.menuMapService.getCommonList(defaultConfigPayload).pipe(
+        return this.menuMapService.getCommnListConfiguration(defaultConfigPayload).pipe(
           map((response: any) => {
+            console.log(response)
             if (response.code === 200 && response.status) {
               const finalObject = response.data.records.reduce((acc: any, record: any) => {
                 acc[record.config_key] = record.config_value;
@@ -228,7 +236,7 @@ export class MenuLoadService {
         { column_name: 'menu_items.menu_id', operator: 'IN', value: this.menu_id },
       ],
     };
-
+    console.log(payload)
     return this.menuMapService.getCommonList(payload).pipe(
       map((response: any) => {
         if (response.code === 200 && response.status) {
@@ -236,6 +244,7 @@ export class MenuLoadService {
 
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
+          console.log(user_data);
           if (user_data) {
             if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
               this.localStorageService.storeDataEncrypted(
