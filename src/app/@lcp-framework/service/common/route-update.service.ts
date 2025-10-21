@@ -35,6 +35,7 @@ export class RouteUpdateService {
 
   constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
     this.renderer = this.rendererFactory.createRenderer(null, null);
+    console.log(this.localStore.getData('user_data'))
     const permissionsList = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')).permissions : null;
 
     this.permissionsListSubject.next(permissionsList);
@@ -450,7 +451,8 @@ export class RouteUpdateService {
     if (resn) {
       this.changeFavicon(this.apiUrl + '/' + resn.favicon);
     }
-
+    console.log(this.localStore.getData('user_data'));
+    console.log(JSON.parse(this.localStore.getData('user_data')))
     const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
     const unorgmenuList = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
     if (unorgmenuList) {

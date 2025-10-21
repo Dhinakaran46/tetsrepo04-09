@@ -30,6 +30,10 @@ export class GridApiService {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, data);
   }
 
+  getAllListConfiguration(data: any): Observable<any> {
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdataconfig}`, data);
+  }
+
   getAllUnAuthList(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.unauthcommonlistdata}`, data);
   }
@@ -137,6 +141,10 @@ export class GridApiService {
 
   executeRecords(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, data);
+  }
+
+  executeRecordsConfig(data: any): Observable<any> {
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecordsConfig}`, data);
   }
 
   executeRecordsCase(data: any): Observable<any> {

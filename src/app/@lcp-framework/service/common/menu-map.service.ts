@@ -21,6 +21,9 @@ export class MenuMapService {
   getCommonList(data: any) {
     return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getCommnList}`, data);
   }
+  getCommnListConfiguration(data: any) {
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getCommnListConfiguration}`, data);
+  }
 
   postCommnList(data: any) {
     return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.postCommnList}`, data);
@@ -32,6 +35,10 @@ export class MenuMapService {
 
   procedureCall(data: any) {
     return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.procedureCall}${data.proc_name}`, data.params);
+  }
+
+  getAllListConfiguration(data: any): Observable<any> {
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdataconfig}`, data);
   }
 
   unAuthProcedureCall(data: any) {
