@@ -27,11 +27,9 @@ export class LanguageService {
   }
 
   public serviceChangeLanguage(companyId: number, languageCode: string) {
+    this.localstore.storeData('languageCode', languageCode);
     const languageId = this.getLanguageId(languageCode);
     this.fetchLanguageData(companyId, languageId);
-
-    this.localstore.storeData('languageCode', languageCode);
-    //localStorage.setItem('languageCode', languageCode);
     if (!this.localstore.getData('languageReload')) {
       this.localstore.storeData('languageReload', 'true');
       setTimeout(() => {
@@ -41,7 +39,9 @@ export class LanguageService {
   }
 
   public fetchLanguageData(companyId: number, languageId: number) {
-    const payload = { company_id: companyId, language_id: languageId };
+    const stLangCode = this.localstore.getData('languageCode');
+    const languageIdSt = this.getLanguageId(stLangCode);
+    const payload = { company_id: companyId, language_id: languageIdSt ? languageIdSt : languageId };
 
     this.authservice.languageList(payload).subscribe({
       next: (response: any) => {

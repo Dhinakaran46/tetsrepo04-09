@@ -65,7 +65,7 @@ export class MenuLoadService {
   }
 
   fetchConfigData(companyId: number, userID: any): any {
-    console.log('coming')
+    
     // 1. Try to fetch user config from app_user_configurations
     const userConfigPayload = {
       company_id: companyId,
@@ -87,10 +87,10 @@ export class MenuLoadService {
 
     // Helper to process config and store user_data
     const processConfig = (finalObject: any) => {
-      console.log(finalObject);
+      
       
       const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
-      console.log(user_data);
+      
       if (user_data) {
         if (finalObject.encrypt_local_storage === 'true') {
           this.localStorageService.storeDataEncrypted(
@@ -122,7 +122,7 @@ export class MenuLoadService {
             acc[record.config_key] = record.config_value;
             return acc;
           }, {});
-          console.log(userConfig.encrypt_local_storage);
+          
           // If user config has encrypt_local_storage, use it
           if (userConfig.encrypt_local_storage !== undefined) {
             return processConfig(userConfig);
@@ -149,7 +149,7 @@ export class MenuLoadService {
         // Return an observable for chaining
         return this.menuMapService.getCommnListConfiguration(defaultConfigPayload).pipe(
           map((response: any) => {
-            console.log(response)
+            
             if (response.code === 200 && response.status) {
               const finalObject = response.data.records.reduce((acc: any, record: any) => {
                 acc[record.config_key] = record.config_value;
@@ -236,7 +236,7 @@ export class MenuLoadService {
         { column_name: 'menu_items.menu_id', operator: 'IN', value: this.menu_id },
       ],
     };
-    console.log(payload)
+    
     return this.menuMapService.getCommonList(payload).pipe(
       map((response: any) => {
         if (response.code === 200 && response.status) {
@@ -244,7 +244,7 @@ export class MenuLoadService {
 
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
-          console.log(user_data);
+          
           if (user_data) {
             if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
               this.localStorageService.storeDataEncrypted(
