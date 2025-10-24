@@ -359,6 +359,7 @@ export class ImportTemplateComponent implements OnInit {
       foreign_query: [''],
       unique_query: [''],
       expression_rules: this.fb.array([this.createExpressionRule()]),
+      query_rules: this.fb.array([this.createQueryRule()]),
       field_type_id: ['', Validators.required],
     });
 
@@ -369,6 +370,27 @@ export class ImportTemplateComponent implements OnInit {
         this.lineItemForm.updateValueAndValidity();
       });
     });
+  }
+
+  private createQueryRule() {
+    return this.fb.group({
+      query: ['', Validators.required],
+      message: ['', Validators.required],
+    });
+  }
+
+  get queryRules(): FormArray {
+    return this.lineItemForm.get('query_rules') as FormArray;
+  }
+
+  addQueryRule() {
+    this.queryRules.push(this.createQueryRule());
+    this.lineItemForm.updateValueAndValidity();
+  }
+  
+  removeQueryRule(index: number) {
+    this.queryRules.removeAt(index);
+    this.lineItemForm.updateValueAndValidity();
   }
 
   createExpressionRule() {
@@ -463,6 +485,7 @@ export class ImportTemplateComponent implements OnInit {
       unique_query: '',
     });
     this.lineItemForm.setControl('expression_rules', this.fb.array([])); // ← ensure it's reset
+    this.lineItemForm.setControl('query_rules', this.fb.array([])); // ← ensure it's reset
 
     // Force form validation update
     this.lineItemForm.updateValueAndValidity();
@@ -507,7 +530,17 @@ export class ImportTemplateComponent implements OnInit {
       })
     );
 
+    const queryArray = this.fb.array(
+      (index.query_rules || []).map((rule: any) =>
+        this.fb.group({
+          query: [rule.query || '', Validators.required],
+          message: [rule.message || '', Validators.required],
+        })
+      )
+    );
+
     this.lineItemForm.setControl('expression_rules', expressionArray);
+    this.lineItemForm.setControl('query_rules', queryArray);
 
     // Force form validation update
     this.lineItemForm.updateValueAndValidity();
@@ -728,7 +761,7 @@ export class ImportTemplateComponent implements OnInit {
         ['import_templates.*'],
 
         [
-          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('expression_rules', import_template_line_items.expression_rules,'field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values,'is_individual', import_template_line_items.is_individual, 'individual_column', import_template_line_items.individual_column, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create,'foreign_query',import_template_line_items.foreign_query,'unique_query',import_template_line_items.unique_query, 'field_type_id', import_template_line_items.field_type_id))) END",
+          "CASE WHEN COUNT(import_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('expression_rules', import_template_line_items.expression_rules,'query_rules', import_template_line_items.query_rules,'field_name', import_template_line_items.field_name, 'display_name', import_template_line_items.display_name, 'field_table', import_template_line_items.field_table, 'order_no', import_template_line_items.order_no, 'default_value', import_template_line_items.default_value, 'check_reg_exp', import_template_line_items.check_reg_exp, 'is_nullable', import_template_line_items.is_nullable, 'is_unique', import_template_line_items.is_unique, 'is_foreign', import_template_line_items.is_foreign, 'is_multiple', import_template_line_items.is_multiple, 'is_enum', import_template_line_items.is_enum, 'enum_values', import_template_line_items.enum_values,'is_individual', import_template_line_items.is_individual, 'individual_column', import_template_line_items.individual_column, 'foreign_table', import_template_line_items.foreign_table, 'foreign_column', import_template_line_items.foreign_column, 'foreign_can_create', import_template_line_items.foreign_can_create,'foreign_query',import_template_line_items.foreign_query,'unique_query',import_template_line_items.unique_query, 'field_type_id', import_template_line_items.field_type_id))) END",
           'items',
         ],
         [
@@ -809,6 +842,14 @@ export class ImportTemplateComponent implements OnInit {
                       })
                     )
                   ),
+                  query_rules: this.fb.array(
+                    (item.query_rules || []).map((rule: any) =>
+                      this.fb.group({
+                        query: [rule.query, Validators.required],
+                        message: [rule.message, Validators.required],
+                      })
+                    )
+                  ),                  
                   field_type_id: [item.field_type_id, Validators.required],
                 })
               );
@@ -891,6 +932,13 @@ export class ImportTemplateComponent implements OnInit {
             message: rule.message,
           })) || []
         ),
+        query_rules: JSON.stringify(
+          item.query_rules?.map((rule: any) => ({
+            query: rule.query,
+            message: rule.message,
+          })) || []
+        ),
+        
 
         field_type_id: item.field_type_id,
       }));
@@ -970,6 +1018,13 @@ export class ImportTemplateComponent implements OnInit {
             message: rule.message,
           })) || []
         ),
+        query_rules: JSON.stringify(
+          item.query_rules?.map((rule: any) => ({
+            query: rule.query,
+            message: rule.message,
+          })) || []
+        ),
+        
 
         field_type_id: item.field_type_id,
       }));
@@ -1189,6 +1244,15 @@ export class ImportTemplateComponent implements OnInit {
           })
         )
       ),
+      query_rules: this.fb.array(
+        (item.query_rules || []).map((rule: any) =>
+          this.fb.group({
+            query: [rule.query, Validators.required],
+            message: [rule.message, Validators.required],
+          })
+        )
+      ),
+      
       field_type_id: [item.field_type_id, Validators.required],
     });
   }

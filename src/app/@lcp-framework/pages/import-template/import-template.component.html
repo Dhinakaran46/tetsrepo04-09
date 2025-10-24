@@ -574,6 +574,27 @@
                 <button type="button" class="btn btn-sm bg-green-600 text-white" (click)="addExpressionRule()">+ Add Expression Rule</button>
               </div>
             </div>
+
+            <!-- Query Rules Section -->
+<div class="space-y-4 mt-6">
+  <div class="col-span-full">
+    <label class="form-label">Query Rules</label>
+
+    <div formArrayName="query_rules" *ngIf="queryRules && queryRules.length > 0">
+      <div *ngFor="let rule of queryRules.controls; let i = index" [formGroupName]="i" class="mb-3 grid grid-cols-2 gap-4">
+        <textarea formControlName="query" rows="3" class="form-textarea" placeholder="Enter Query"></textarea>
+        <input type="text" formControlName="message" class="form-input" placeholder="Validation message" />
+        <div class="col-span-2 text-right">
+          <button type="button" class="text-sm text-red-600" (click)="removeQueryRule(i)">Remove</button>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-sm bg-green-600 text-white" (click)="addQueryRule()">+ Add Query Rule</button>
+  </div>
+</div>
+
+
           </div>
 
           <!-- Form Actions -->
