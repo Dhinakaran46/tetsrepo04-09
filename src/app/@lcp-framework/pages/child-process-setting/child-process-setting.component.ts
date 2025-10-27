@@ -259,6 +259,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
   setDefaultQuery() {
     this.defaultQuery = {
+      cte:'WITH active_users AS ( SELECT username, status_id FROM users WHERE status_id = 3 )',
       print_query: true,
       company_id: 1,
       primary_table: 'child_processes',
@@ -427,7 +428,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         query.limit_range = 1000000;
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
         this.gridApiService
-          .getAllRecords(
+          .getAllList(
             this.localStorageService.replaceUniqueId(
               this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
               '$session_user_id',
@@ -437,8 +438,8 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
           .subscribe(
             (response) => {
               if (response.status && response.code === 200) {
-                if (response.data.records && response.data.headers) {
-                  const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
+                if (response.data.records ) {
+                  const filteredData = this.filterAndTransformData(this.headercolumns, response.data.records);
                   if (item.type == 'pdf') {
                     this.exportService.exportToPDF(filteredData, export_download);
                   } else {
