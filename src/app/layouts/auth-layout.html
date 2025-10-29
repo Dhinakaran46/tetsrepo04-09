@@ -150,7 +150,7 @@
                 </div>
 
                 <!-- Carousel Indicators -->
-                <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
+                <div *ngIf="mediaItems?.length > 1" class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
                   <span
                     *ngFor="let item of mediaItems; let i = index"
                     [ngClass]="{
@@ -165,11 +165,11 @@
 
               <div class="relative mx-auto w-full max-w-[835px]" *ngIf="mediaItems?.length == 0">
                 <!-- Title and Description Above Carousel -->
-                <div class="mb-6 text-center">
-                  <!--<h1 class="mb-2 text-3xl font-bold">Create, Translate, and Personalize <span class="text-primary">Videos in Minutes</span></h1>-->
-                  <h1 class="mb-2 text-3xl font-bold">LCP</h1>
-                  <p class="text-lg opacity-80">Low code platform</p>
-                </div>
+                <!--<div class="mb-6 text-center">
+                  
+                  <h1 class="mb-2 text-3xl font-bold">....</h1>
+                  <p class="text-lg opacity-80">.................</p>
+                </div>-->
                 <!-- Carousel Images / Videos -->
                 <div class="carousel-container">
                   <div class="relative">

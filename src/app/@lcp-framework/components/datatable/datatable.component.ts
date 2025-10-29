@@ -200,6 +200,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
+    console.log(this.masterInfo)
   }
 
  
@@ -447,6 +448,7 @@ pendingPopupData: { item: any, entityName: string } | null = null;
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    console.log(this.masterInfo)
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];

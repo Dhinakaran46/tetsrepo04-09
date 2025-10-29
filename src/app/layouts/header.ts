@@ -227,10 +227,10 @@ export class HeaderComponent implements OnInit {
         (item?.children && item.children.length > 0);
 
       if (hasTargetOrChildren) {
-        console.log(" Rendering item (link_type=4, has target/children):", item);
+        //console.log(" Rendering item (link_type=4, has target/children):", item);
         return true;
       } else {
-        console.log("Skipping item (link_type=4, no target/children):", item);
+        //console.log("Skipping item (link_type=4, no target/children):", item);
         return false;
       }
     }
@@ -330,6 +330,7 @@ export class HeaderComponent implements OnInit {
   }
 
   changeLanguage(item: any) {
+    
     this.translate.use(item.code);
     this.appSetting.toggleLanguage(item);
     if (this.store.locale?.toLowerCase() === 'ae') {
