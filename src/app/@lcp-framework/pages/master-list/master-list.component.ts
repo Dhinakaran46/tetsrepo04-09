@@ -186,6 +186,7 @@ export class MasterListComponent implements OnChanges {
   isUUid: boolean = true;
   commonSearchQuery:any = {};
   grid_unique_id:any;
+  popupComponentGridParams:any;
   
   constructor(
     private toastr: ToastrService,
@@ -1773,6 +1774,15 @@ const havingConditions = query
         this.isViewPopupOpen = true;
         return;
       }
+
+      const gridParams: any = {};
+    Object.keys(event.item).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = event.item[key];
+      }
+    });
+      this.popupComponentGridParams = gridParams;
       
       this.popupName = mode;
       this.selectedItemUuid = event.item.uuid;

@@ -32,12 +32,13 @@ export class StaticPageComponent {
   unique_id!: string | null;
   entity_name!: string;
   entity_type!: string | null;
-  query_information!: string | null;
+  query_information!: any | null;
   static_page_content: string = '';
 
   @Input() uuid!: string | null;
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
+  @Input() gridParams!: any;
   @Output() closeModal = new EventEmitter<void>();
 
 
@@ -325,6 +326,7 @@ export class StaticPageComponent {
     if (this.unique_id) {
       this.query_information = this.replaceUniqueId(this.query_information, '$unique_id', this.unique_id);
     }
+    this.query_information.grid_params = this.gridParams;
     this.gridApiService.getAllList(this.query_information).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
