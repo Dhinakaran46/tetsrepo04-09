@@ -1,14 +1,68 @@
-
 ::ng-deep {
+  /* Keep row fields equal width */
   formly-form.repeat-table-form > formly-field > formly-group {
     display: flex;
     gap: 0.5rem;
-    /* justify-content: space-between; */
+    flex-wrap: wrap;
   }
- 
+
+  formly-form.repeat-table-form > formly-field > formly-group > formly-field {
+    flex: 1 1 0;
+    min-width: 150px;
+    max-width: 100%;
+  }
+
+  /* ng-select container */
+  formly-form.repeat-table-form > formly-field > formly-group > formly-field ng-select {
+    width: 100%;
+    display: block;
+  }
+
+  /* Dropdown panel: responsive */
+  ::ng-deep .ng-dropdown-panel {
+    max-width: 100% !important;
+    // width: auto !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    // overflow-x: auto !important;
+    // white-space: nowrap !important;
+    // word-wrap: normal !important;
+  }
+
+  ::ng-deep .ng-select.ng-select-single .ng-select-container {
+    height: auto !important;
+  }
+
+  ::ng-deep .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-value {
+    white-space: wrap !important;
+    text-overflow: ellipsis !important;
+    height: auto;
+  }
+
+  ::ng-deep .ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-marked,
+  ::ng-deep .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    text-wrap: auto !important;
+  }
+
+  /* Mobile layout: stack fields */
   @media (max-width: 767px) {
     formly-form.repeat-table-form > formly-field > formly-group {
       flex-direction: column !important;
+    }
+
+    formly-form.repeat-table-form > formly-field > formly-group > formly-field {
+      width: 100% !important;
+    }
+
+    formly-form.repeat-table-form > formly-field > formly-group > formly-field ng-select {
+      width: 100% !important;
+    }
+
+    /* Mobile dropdown full width */
+    ::ng-deep .ng-dropdown-panel {
+      width: 100% !important;
+      max-width: 100% !important;
+      left: 0 !important;
     }
   }
 }

@@ -92,7 +92,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   @Input() fieldKey: string | null = null;
   @Output() closeModal = new EventEmitter<void>();
   @Output() nestedFormSuccess = new EventEmitter<any>();
-  
+
   @ViewChildren(FormlyFieldSelectFromDbComponent) selectFromDbFields!: QueryList<FormlyFieldSelectFromDbComponent>;
 
   constructor(
@@ -114,16 +114,16 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const id = params.get('id');
         const uuid = params.get('uuid');
         const value = id || uuid;
-        
+
         this.originaluid = value;
         this.unique_id = value;
       });
     }
-    
+
     if (this.uuid) {
       this.unique_id = this.uuid;
     }
-    
+
     if (!this.entityName) {
       this.route.data.subscribe((data) => {
         this.pageInfo = data['pageInfo'];
@@ -132,26 +132,22 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         this.draftMode = this.pageInfo.draft_mode;
       });
     }
-    
+
     if (this.entityName) {
       this.entity_name = this.entityName;
-      if(this.entityType){
+      if (this.entityType) {
         this.entity_type = this.entityType;
-      }else{
+      } else {
         if (this.unique_id) {
           this.entity_type = 'popup_edit';
         } else {
           this.entity_type = 'popup_add';
         }
       }
-      
+
       const translateTitle = this.translate.instant(this.entity_name);
       this.titleService.setTitle(translateTitle);
-    } 
-    
-
-    
-    
+    }
 
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     if (this.user_info.main?.policies) {
@@ -159,7 +155,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     }
 
     if (this.entity_type !== 'add' && this.entity_type !== 'popup_add' && !this.unique_id) {
-      
       this.toastr.error('Invalid entity details given.');
       this.router.navigate(['/dashboard']);
       return;
@@ -185,7 +180,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    
   }
 
   private initStore() {
@@ -245,7 +239,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   fetchList(field: FormlyFieldConfig | any, key: string, reset: boolean = false): Observable<any> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (!reset && key && this.listDatas[key]) {
         if (field && field.props) {
           field.props.options = this.listDatas[key];
@@ -265,7 +259,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         );
         listParams.company_id = 1;
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
-       
+
         this.gridApiService.getAllList(listParams).subscribe(
           (response) => {
             if (response.status && response.code === 200) {
@@ -353,14 +347,13 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   private executeTransaction(draft_mode: boolean) {
     // this.model = { ...this.model, ...this.form.value };
-    // 
-    
+    //
+
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false, draft_mode);
     transParam = this.replacePlaceholders(transParam, this.model);
     const val = transParam.data.table1[0].name;
     this.gridApiService.executeTransaction(transParam).subscribe(
       (response) => {
-        
         if (response.status) {
           if (this.oldUploadedFiles.length) this.deleteImageByName(this.oldUploadedFiles);
           const key = 'transaction_successfully_executed';
@@ -368,8 +361,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.toastr.success(successMessage);
           if (this.isNested) {
             setTimeout(() => {
-            this.nestedFormSuccess.emit({ value: val, fieldKey: this.fieldKey });
-            },500);
+              this.nestedFormSuccess.emit({ value: val, fieldKey: this.fieldKey });
+            }, 500);
           } else {
             this.redirectToCurrentPage();
           }
@@ -667,7 +660,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
               result.data[tableKey] = replaceInObject(result.data[tableKey]);
             }
           } else {
-            
           }
         }
       }
@@ -701,7 +693,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   private resetForm() {
-    
     const listParams = {
       company_id: 1,
       print_query: false,
@@ -721,7 +712,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
           let formEntity = response.data.records[0];
-          
+
           formEntity.query_information = this.parseJSONField(formEntity.query_information);
           formEntity.form_information = this.parseJSONField(formEntity.form_information);
           formEntity.add_query_information = this.parseJSONField(formEntity.add_query_information);
@@ -730,23 +721,18 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
 
-
-
-          
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
-           
+
           this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
 
           fieldsJson.forEach((field: any) => {
-                    // fieldGroup
+            // fieldGroup
             field.fieldGroup?.forEach((subField: any) => {
-              if (subField.props && subField.props.label)
-                subField.props.label = this.translate.instant(subField.props.label);
-              if (subField.props && subField.props.placeholder)
-                subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
+              if (subField.props && subField.props.label) subField.props.label = this.translate.instant(subField.props.label);
+              if (subField.props && subField.props.placeholder) subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
 
               if (subField.templateOptions && subField.templateOptions.label)
                 subField.templateOptions.label = this.translate.instant(subField.templateOptions.label);
@@ -765,10 +751,8 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
             // fieldArray
             field.fieldArray?.fieldGroup?.forEach((subField: any) => {
-              if (subField.props && subField.props.label)
-                subField.props.label = this.translate.instant(subField.props.label);
-              if (subField.props && subField.props.placeholder)
-                subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
+              if (subField.props && subField.props.label) subField.props.label = this.translate.instant(subField.props.label);
+              if (subField.props && subField.props.placeholder) subField.props.placeholder = this.translate.instant(subField.props.placeholder || '');
 
               if (subField.templateOptions && subField.templateOptions.label)
                 subField.templateOptions.label = this.translate.instant(subField.templateOptions.label);
@@ -786,8 +770,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             });
 
             // templateOptions (top-level)
-            if (field.templateOptions && field.templateOptions.label)
-              field.templateOptions.label = this.translate.instant(field.templateOptions.label);
+            if (field.templateOptions && field.templateOptions.label) field.templateOptions.label = this.translate.instant(field.templateOptions.label);
             if (field.templateOptions && field.templateOptions.placeholder)
               field.templateOptions.placeholder = this.translate.instant(field.templateOptions.placeholder || '');
 
@@ -822,9 +805,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   setDefaultData() {
-      
     if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
-      
       if (this.defaultDataParam.primary_table) {
         this.processDefaultParam(this.defaultDataParam);
       } else {
@@ -956,7 +937,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       formArray.push(this.createFormGroup(item));
     });
     // Manually trigger change detection if the UI doesn't update
-    // 
+    //
     setTimeout(() => {
       if (this.options && this.options.resetModel) {
         this.options.resetModel(this.model);
@@ -1012,8 +993,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   tap((parentValue: any) => {
                     this.form.patchValue({ [group.key]: '' });
                     if (parentValue) {
-                      
-                      
                       this.fetchList(f, group.key, true);
                     }
                   })
@@ -1022,8 +1001,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             }
           };
         } else {
-          
-                      
           group.hooks.onInit = (f: FormlyFieldConfig) => this.fetchList(f, group.key);
         }
       } else if (group.fieldArray?.hooks && group.fieldArray.hooks.onInit) {
@@ -1037,8 +1014,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   tap((parentValue: any) => {
                     this.form.patchValue({ [group.key]: '' });
                     if (parentValue) {
-                      
-                      
                       this.fetchList(f, group.key, true);
                     }
                   })
@@ -1047,8 +1022,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             }
           };
         } else {
-          
-                      
           group.fieldArray.hooks.onInit = (f: FormlyFieldConfig) => this.fetchList(f, group.key);
         }
       }
@@ -1087,12 +1060,12 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           group.fieldArray.asyncValidators = { unique: { expression: this.uniqueValidator(uniqueKey), message: 'this_value_cannot_be_duplicate' } };
         }
       }
-      
+
       // Set default options for select fields
       if (group.type === 'select' || group.type === 'select-from-db') {
         group.type = 'select-from-db';
         if (group.props) group.props.placeholder = group.props.placeholder || 'Please select';
-        
+
         // Ensure options are fetched for select-from-db fields
         this.fetchList(group, group.key, true);
         // Fallback: if no listParams for this key, build from templateOptions
@@ -1100,27 +1073,27 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const opts = group.templateOptions || group.props || {};
           if (opts.table && opts.valueColumn && opts.labelColumn) {
             this.listParams = this.listParams || {};
+            const additionalColumns = opts['additionalColumns'] ? opts['additionalColumns'] : [];
             this.listParams[group.key] = {
               primary_table: opts.table,
-              select_columns: [[
-                opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`
-              ], [
-                opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`
-              ]],
+              select_columns: [
+                ...additionalColumns,
+                [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
+                [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+              ],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
               start_index: 0,
-              limit_range: 1000
+              limit_range: 1000,
             };
-            
+
             this.fetchList(group, group.key, true);
           }
         }
       }
       // Also ensure options are fetched for fieldArray of type select-from-db
       if (group.type === 'select-from-db') {
-        
         this.fetchList(group, group.key, true);
         // Fallback for fieldArray
         if (!this.listParams || !this.listParams[group.key]) {
@@ -1129,16 +1102,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams = this.listParams || {};
             this.listParams[group.key] = {
               primary_table: opts.table,
-              select_columns: [[
-                opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`
-              ], [
-                opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`
-              ]],
+              select_columns: [
+                [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
+                [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+              ],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
               start_index: 0,
-              limit_range: 1000
+              limit_range: 1000,
             };
             this.fetchList(group, group.key, true);
           }
@@ -1153,16 +1125,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams = this.listParams || {};
             this.listParams[group.key] = {
               primary_table: opts.table,
-              select_columns: [[
-                opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`
-              ], [
-                opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`
-              ]],
+              select_columns: [
+                [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
+                [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+              ],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
               start_index: 0,
-              limit_range: 1000
+              limit_range: 1000,
             };
             this.fetchList(group.fieldArray, group.key, true);
           }
@@ -1179,17 +1150,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     });
     // After processing all fields, ensure all select/select-from-db options are loaded
     const selectKeys = this.collectSelectKeys(processedFields);
-    
-    selectKeys.forEach(key => {
+
+    selectKeys.forEach((key) => {
       const fieldConfig = this.findFieldConfigByKey(processedFields, key);
-      
+
       this.fetchList(fieldConfig, key, true).subscribe({
-        next: (options) => {
-          
-        },
+        next: (options) => {},
         error: (err) => {
           console.error('Error fetching options for', key, err);
-        }
+        },
       });
     });
     return processedFields;
@@ -1227,14 +1196,17 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any, uuid?: string | null, mode?: 'popup_add' | 'popup_edit') {
-    
     this.noNestedFormPermission = false;
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
     let menuPermissionId = null;
     if (unorgmenuList && Array.isArray(unorgmenuList)) {
       // For edit mode, check for 'edit' or 'popup_edit' permission; for add, check 'add' or 'popup_add'
-      const menuItem = unorgmenuList.find((item: any) => item.entity_name === entityName && (uuid ? (item.action_slug === 'edit' || item.action_slug === 'popup_edit') : (item.action_slug === 'add' || item.action_slug === 'popup_add')));
+      const menuItem = unorgmenuList.find(
+        (item: any) =>
+          item.entity_name === entityName &&
+          (uuid ? item.action_slug === 'edit' || item.action_slug === 'popup_edit' : item.action_slug === 'add' || item.action_slug === 'popup_add')
+      );
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
@@ -1252,10 +1224,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     // Set these for nested modal; if uuid is provided, open in edit mode, else add mode
     this.nestedFormEntityName = entityName;
     this.nestedFormUuid = uuid || null;
-    
+
     // Always use the mode if provided, otherwise fallback to uuid logic
-    this.nestedModalEntityType = mode ? mode : (uuid ? 'popup_edit' : 'popup_add');
-    
+    this.nestedModalEntityType = mode ? mode : uuid ? 'popup_edit' : 'popup_add';
+
     this.nestedFormFieldKey = fieldKey || null;
     this.nestedFormModalConfig = { ...(modalConfig || {}), open: true };
     // Do NOT call this.resetForm() here!
@@ -1275,11 +1247,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   onNestedFormSubmitted(formData: any) {
     // Check if the form submission was successful
     if (formData && formData.success) {
-      
-      
       // Close the modal
       this.closeNestedFormModal();
-      
+
       // Refresh the form data to update dropdowns and other dynamic content
       this.refreshFormData();
     } else {
@@ -1293,7 +1263,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     // Refresh the form data to update dropdowns and other dynamic content
     // This will reload the form configuration and fetch fresh data
     this.resetForm();
-    
+
     // Optionally show a success message
     this.toastr.success('Record created successfully. Form data refreshed.');
   }
@@ -1316,11 +1286,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const found = this.findFieldConfigByKey((field as any).fieldGroup, key);
           if (found) return found;
         }
-        if (
-          field.fieldArray &&
-          typeof field.fieldArray === 'object' &&
-          Array.isArray((field.fieldArray as any).fieldGroup)
-        ) {
+        if (field.fieldArray && typeof field.fieldArray === 'object' && Array.isArray((field.fieldArray as any).fieldGroup)) {
           const found = this.findFieldConfigByKey((field.fieldArray as any).fieldGroup, key);
           if (found) return found;
         }
@@ -1329,25 +1295,21 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     return null;
   }
 
-  public onNestedFormSuccess(event: { value: any, fieldKey: string }) {
+  public onNestedFormSuccess(event: { value: any; fieldKey: string }) {
     this.refreshSelectFromDbOptions();
-    
+
     if (event && event.value && event.fieldKey) {
       // Use recursive search for the field config
       const fieldConfig = this.findFieldConfigByKey(this.fields, event.fieldKey);
       // Fetch and wait for options to be available before updating value
       this.fetchList(fieldConfig, event.fieldKey, true).subscribe(() => {
         // Debug: log all keys and char codes
-        
-        
-        
-        Object.keys(this.listDatas).forEach(k => {
-          
-        });
+
+        Object.keys(this.listDatas).forEach((k) => {});
         // Normalize key by trimming whitespace
         const normalizedKey = event.fieldKey.trim();
         const options = this.listDatas[normalizedKey] || [];
-        
+
         // Always set the value immediately
         this.model[event.fieldKey] = event.value;
         const control = this.form.get(event.fieldKey);
@@ -1358,20 +1320,16 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         if (fieldConfig?.formControl) {
           let updatedValue: any[] = [];
           if (Array.isArray(currentValue)) {
-            updatedValue = currentValue.includes(event.value)
-              ? currentValue
-              : [...currentValue, event.value];
+            updatedValue = currentValue.includes(event.value) ? currentValue : [...currentValue, event.value];
           } else if (currentValue !== undefined && currentValue !== null) {
             updatedValue = [currentValue, event.value];
           } else {
             updatedValue = [event.value];
           }
           if (Array.isArray(options)) {
-            updatedValue = updatedValue.map(val => {
+            updatedValue = updatedValue.map((val) => {
               if (typeof val === 'string') {
-                const found = options.find(
-                  (opt: any) => opt.label === val || opt.name === val
-                );
+                const found = options.find((opt: any) => opt.label === val || opt.name === val);
                 if (found) {
                   return found.id !== undefined ? found.id : found.value;
                 }
@@ -1408,5 +1366,3 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     return selectKeys;
   }
 }
-
-        
