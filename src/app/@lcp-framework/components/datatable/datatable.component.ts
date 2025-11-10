@@ -34,6 +34,8 @@ import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
 import { LoaderComponent } from '../loader/loader.component';
 
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
 interface SearchCondition {
   id: string;
   label: string;
@@ -60,7 +62,7 @@ interface InputTypes {
     ]),
   ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   // Add this property to your component class:
 pendingPopupData: { item: any, entityName: string } | null = null;
 
@@ -194,7 +196,8 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     private openaiService: OpenaiService,
     public location: Location,
     private timezoneService: TimezoneService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -202,6 +205,230 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     this.initStore();
     console.log(this.masterInfo)
   }
+
+  ngAfterViewChecked() {
+    // if a popup is requested and the container is now available, create it once
+    if (this.isViewPopupOpenDirect && this.pendingPopupData && this.popupChildMasterListContainer) {
+      const { item, entityName } = this.pendingPopupData;
+      this.pendingPopupData = null;               // prevent double-create
+      this.createColumnPopupChildMasterList(item, entityName);
+      this.cdr.detectChanges();                   // flush changes
+    }
+  }
+
+
+  /**
+ * Return the HTML template string for a column, looking in various places/keys.
+ */
+getHtmlTemplateFor(col: any): string | null {
+  // 1) direct on the header column (snake_case or camelCase)
+  const direct = col?.field_html_content || col?.fieldHtmlContent;
+  if (direct && String(direct).trim().length) return String(direct);
+
+  // 2) find matching definition from selectcolumns metadata
+  const match =
+    this.selectcolumns?.find((sc: any) =>
+      // try by field match first
+      (sc.field && col.field && sc.field === col.field) ||
+      // then by header/title match (depending on what you pass)
+      (sc.title && col.title && sc.title === col.title) ||
+      (sc.title && col.header && sc.title === col.header) ||
+      (sc.header && col.header && sc.header === col.header)
+    ) || null;
+
+  const fromMeta = match?.field_html_content || match?.fieldHtmlContent;
+  return fromMeta && String(fromMeta).trim().length ? String(fromMeta) : null;
+}
+
+
+/**
+ * Process HTML content with col.header as the primary property accessor
+ * @param htmlTemplate - The HTML template string with interpolations
+ * @param item - The data item/row
+ * @param col - The column object containing header and other metadata
+ * @returns Sanitized HTML
+ */
+getProcessedHtmlContent(htmlTemplate: string, item: any, col: any): SafeHtml {
+  let processedHtml = htmlTemplate;
+
+  // Prefer field over header when available (safer mapping)
+  const key = (col?.field ?? col?.header) as string;
+  const primaryValue = item[key] ?? '';
+
+  processedHtml = processedHtml.replace(/\{\{\s*value\s*\}\}/g, String(primaryValue));
+  processedHtml = processedHtml.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), String(primaryValue));
+
+  // simple {{prop}} replacements
+  const simpleRegex = /\{\{\s*([\w.]+)\s*\}\}/g;
+  processedHtml = processedHtml.replace(simpleRegex, (_, prop) => {
+    const v = item[prop];
+    return (v !== undefined && v !== null) ? String(v) : '';
+  });
+
+  let matches = processedHtml.match(simpleRegex);
+  
+  if (matches) {
+    matches.forEach(match => {
+      const property = match.replace(/\{\{\s*|\s*\}\}/g, '');
+      if (item[property] !== undefined) {
+        const value = item[property];
+        processedHtml = processedHtml.replace(
+          new RegExp(`\\{\\{\\s*${property}\\s*\\}\\}`, 'g'), 
+          value
+        );
+      }
+    });
+  }
+  
+  // Handle conditional expressions like {{ name == 'Raj Supervisor' ? 'btn-green' : 'btn-primary' }}
+  // This regex captures everything between {{ and }} including complex expressions
+  const conditionalRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  processedHtml = processedHtml.replace(conditionalRegex, (match, expression) => {
+    try {
+      // Skip if already processed (simple variable replacement)
+      if (!expression.includes('?') && !expression.includes('==') && 
+          !expression.includes('!=') && !expression.includes('>') && 
+          !expression.includes('<') && item[expression.trim()] === undefined) {
+        return match;
+      }
+      
+      // Create a safe evaluation context with item properties and col.header value
+      const context: any = { 
+        ...item,
+        value: primaryValue,  // Allow using 'value' as alias for col.header
+      };
+      
+      // Handle ternary: condition ? trueValue : falseValue
+      if (expression.includes('?') && expression.includes(':')) {
+        const parts = expression.split('?');
+        const condition = parts[0].trim();
+        const outcomes = parts[1].split(':');
+        const trueValue = outcomes[0].trim().replace(/['"]/g, '');
+        const falseValue = outcomes[1].trim().replace(/['"]/g, '');
+        
+        // Evaluate the condition using col.header context
+        const conditionResult = this.evaluateCondition(condition, context, col.header);
+        return conditionResult ? trueValue : falseValue;
+      } else {
+        // Simple property access
+        const propName = expression.trim();
+        return context[propName] !== undefined ? context[propName] : '';
+      }
+    } catch (e) {
+      console.error('Error evaluating expression:', expression, e);
+      return '';
+    }
+  });
+  console.log(processedHtml)
+  // Sanitize the HTML to prevent XSS attacks
+  //return this.sanitizer.sanitize(1, processedHtml) || '';
+  return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
+}
+
+/**
+ * Helper method to evaluate conditions with col.header awareness
+ * @param condition - The condition string to evaluate
+ * @param context - The context object containing item data
+ * @param colHeader - The column header to use as primary value
+ * @returns Boolean result of condition evaluation
+ */
+private evaluateCondition(condition: string, context: any, colHeader: string): boolean {
+  try {
+    // Replace 'value' with actual col.header in condition
+    condition = condition.replace(/\bvalue\b/g, colHeader);
+    
+    // Handle == comparisons
+    if (condition.includes('==')) {
+      const [left, right] = condition.split('==').map(s => s.trim());
+      const leftValue = this.getContextValue(left, context);
+      const rightValue = right.replace(/['"]/g, '');
+      return String(leftValue) == String(rightValue);
+    }
+    
+    // Handle != comparisons
+    if (condition.includes('!=')) {
+      const [left, right] = condition.split('!=').map(s => s.trim());
+      const leftValue = this.getContextValue(left, context);
+      const rightValue = right.replace(/['"]/g, '');
+      return String(leftValue) != String(rightValue);
+    }
+    
+    // Handle >= comparisons (must come before >)
+    if (condition.includes('>=')) {
+      const [left, right] = condition.split('>=').map(s => s.trim());
+      const leftValue = this.parseNumber(this.getContextValue(left, context));
+      const rightValue = this.parseNumber(right);
+      return leftValue >= rightValue;
+    }
+    
+    // Handle <= comparisons (must come before <)
+    if (condition.includes('<=')) {
+      const [left, right] = condition.split('<=').map(s => s.trim());
+      const leftValue = this.parseNumber(this.getContextValue(left, context));
+      const rightValue = this.parseNumber(right);
+      return leftValue <= rightValue;
+    }
+    
+    // Handle > comparisons
+    if (condition.includes('>')) {
+      const [left, right] = condition.split('>').map(s => s.trim());
+      const leftValue = this.parseNumber(this.getContextValue(left, context));
+      const rightValue = this.parseNumber(right);
+      return leftValue > rightValue;
+    }
+    
+    // Handle < comparisons
+    if (condition.includes('<')) {
+      const [left, right] = condition.split('<').map(s => s.trim());
+      const leftValue = this.parseNumber(this.getContextValue(left, context));
+      const rightValue = this.parseNumber(right);
+      return leftValue < rightValue;
+    }
+    
+    // If no operator found, treat as truthy check
+    return !!this.getContextValue(condition, context);
+  } catch (e) {
+    console.error('Error evaluating condition:', condition, e);
+    return false;
+  }
+}
+
+/**
+ * Helper method to get value from context
+ * @param key - The key to look up
+ * @param context - The context object
+ * @returns The value from context or the key if it's a literal
+ */
+private getContextValue(key: string, context: any): any {
+  key = key.trim();
+  
+  // Handle string literals
+  if (key.startsWith("'") || key.startsWith('"')) {
+    return key.replace(/['"]/g, '');
+  }
+  
+  // Handle number literals
+  if (!isNaN(Number(key)) && key !== '') {
+    return Number(key);
+  }
+  
+  // Return value from context
+  return context[key] !== undefined ? context[key] : key;
+}
+
+/**
+ * Helper method to safely parse numbers
+ * @param value - The value to parse
+ * @returns Parsed number or 0 if not a valid number
+ */
+private parseNumber(value: any): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  const parsed = parseFloat(String(value).replace(/['"]/g, ''));
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 
  
 

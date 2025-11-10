@@ -851,6 +851,7 @@ const havingConditions = query
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content: false
                   },
                   ...data,
                 ];
@@ -865,6 +866,7 @@ const havingConditions = query
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content:  false
                   });
                 }
               } else {
@@ -879,6 +881,7 @@ const havingConditions = query
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content:  false
                   });
                 }
               }
@@ -1191,6 +1194,7 @@ const havingConditions = query
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content: false
                   },
                   ...data,
                 ];

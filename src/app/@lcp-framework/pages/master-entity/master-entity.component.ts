@@ -118,6 +118,42 @@ export class MasterEntityComponent implements OnInit {
   wizardGroupForm!: FormGroup;
   isInfoModalOpen: boolean = false;
   infoContents: any = {
+    fieldHtmlContentInfo: {
+      header: 'html_content_usage_examples',
+      examples: [
+        {
+          name: 'Example 1: Using col.header directly',
+          comments: ['If col.header = "name"'],
+          data: `html<button class="btn {{ name == 'Raj Supervisor' ? 'btn-green' : 'btn-primary' }}">{{ name }}</button>`
+        },
+        {
+          name: "Example 2: Using 'value' alias",
+          comments: ["Using 'value' alias"],
+          data: `html<button class="btn {{ value == 'Raj Supervisor' ? 'btn-green' : 'btn-primary' }}">{{ value }}</button>`
+        },
+        {
+          name: 'Example 3: Using multiple properties',
+          comments: ['item.name, item.status, item.role'],
+          data: `html<div class="user-card {{ status == 'active' ? 'active' : 'inactive' }}">
+      <span class="name">{{ name }}</span>
+      <span class="badge {{ role == 'admin' ? 'badge-red' : 'badge-blue' }}">{{ role }}</span>
+    </div>`
+        },
+        {
+          name: 'Example 4: Numeric comparisons',
+          comments: [],
+          data: `html<span class="badge {{ age >= 18 ? 'adult' : 'minor' }}">Age: {{ age }}</span>`
+        },
+        {
+          name: 'Example 5: Multiple conditions',
+          comments: [],
+          data: `html<button class="btn {{ status == 'approved' ? 'btn-success' : status == 'pending' ? 'btn-warning' : 'btn-danger' }}">
+      {{ status }}
+    </button>`
+        }
+      ]
+    },
+    
     reportInfo: {
       header: 'sample_report_information',
       examples: [
@@ -1430,6 +1466,7 @@ export class MasterEntityComponent implements OnInit {
       fieldType: [this.commonConfig.field_types[0].value, Validators.required],
       linkType: ['none', Validators.required],
       linkAction: [''],
+      fieldHtmlContent: ['']
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
@@ -1461,7 +1498,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
           'items',
         ],
       ],
@@ -1532,6 +1569,7 @@ export class MasterEntityComponent implements OnInit {
                 fieldType: [item.field_type_id, Validators.required],
                 linkType: [linkType, Validators.required],
                 linkAction: [linkAction],
+                field_html_content: [item.field_html_content]
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1630,6 +1668,7 @@ export class MasterEntityComponent implements OnInit {
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           link_mode,
+          field_html_content: control.value.fieldHtmlContent
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1713,6 +1752,7 @@ export class MasterEntityComponent implements OnInit {
           field_type_id: control.value.fieldType,
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
+          field_html_content: control.value.fieldHtmlContent,
           link_mode,
         };
       });

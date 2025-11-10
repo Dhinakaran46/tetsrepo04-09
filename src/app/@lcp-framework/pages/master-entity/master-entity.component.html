@@ -170,6 +170,9 @@
               {{ getErrorMessage('isAdminModule') }}
             </div>
           </div>
+
+
+
           <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE">
             <div class="mt-0">
               <label for="draftMode" class="required-mark mb-2 block font-medium">{{ 'form_label_draft_mode' | translate }}</label>
@@ -673,6 +676,25 @@
     <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
       <div class="mt-5 flex flex-wrap justify-between">
         <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>
+                  <!-- SHOW ONLY FOR GRID BUILDER -->
+<ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+  <div class="mt-0">
+    <div class="flex flex-row items-center gap-3">
+      <label class="mb-2 block font-medium">
+        {{ 'form_label_field_html_content_help' | translate }}
+      </label>
+      <i
+        (click)="openInfoPopUp('fieldHtmlContentInfo')"
+        class="fas fa-circle-info fa-lg cursor-pointer !leading-none"
+        title="{{ 'click_to_view_examples' | translate }}"
+      ></i>
+    </div>
+    <small class="text-white-dark">
+      {{ 'form_label_field_html_content_help_desc' | translate }}
+    </small>
+  </div>
+</ng-container>
+
         <div class="relative inline-flex align-middle">
           <button (click)="addItem()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
             <i class="fa-solid fa-plus"></i>&nbsp;
@@ -695,6 +717,7 @@
                 <th class="w-1/12">{{ 'table_field_type' | translate }}</th>
                 <th class="w-2/12">{{ 'link_type' | translate }}</th>
                 <th class="w-3/12">{{ 'link_action' | translate }}</th>
+                <th class="w-3/12">{{ 'html_content' | translate }}</th>
                 <th class="w-1/12">{{ 'table_action' | translate }}</th>
               </tr>
             </thead>
@@ -925,6 +948,24 @@
                       </div>
                     </div>
                   </td>
+                  <!-- NEW: HTML content cell (textarea) -->
+<td class="w-3/12">
+  <div class="mb-2">
+    <textarea
+      [id]="'field_html_content' + i"
+      formControlName="field_html_content"
+      appDynamicFontSize="body"
+      class="form-textarea w-full"
+      rows="3"
+      placeholder="{{ 'enter_html_content' | translate }}"
+      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'field_html_content') }"
+    ></textarea>
+    <div *ngIf="isItemFieldInvalid(i, 'field_html_content')" class="invalid-feedback text-danger">
+      {{ getItemErrorMessage(i, 'field_html_content') }}
+    </div>
+  </div>
+</td>
+
                   <td class="w-1/12">
                     <button type="button" (click)="removeItem(i)"><i class="fa-solid fa-xmark text-xl"></i>&nbsp;</button>
                   </td>
