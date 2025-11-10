@@ -46,6 +46,7 @@ const DATETIME_FORMAT_LIST = [
   { value: 'MM/dd/yyyy h:mm a', label: 'MM/dd/yyyy h:mm a' },
   { value: "EEEE, MMMM dd, yyyy", label: "EEEE, MMMM dd, yyyy" },
   { value: "yyyy-MM-dd'T'HH:mm:ss.SSSZ", label: "yyyy-MM-dd'T'HH:mm:ss.SSSZ" },
+  { value: 'dd-MMM-yyyy HH:mm:ss', label: 'dd-MMM-yyyy HH:mm:ss' },
 ];
 
 @Component({
