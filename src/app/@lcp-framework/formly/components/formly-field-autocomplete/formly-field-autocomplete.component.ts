@@ -75,7 +75,8 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
   }
 
   private loadOptions(searchTerm: string | any[]): Observable<{ label: string; value: any }[]> {
-    const { table: tableName, valueColumn, labelColumn } = this.props;
+    const { table: tableName, valueColumn, labelColumn, additionalColumns } = this.props;
+    const additionalCols = additionalColumns?.length ? additionalColumns : [];
     searchTerm = searchTerm ? searchTerm : this.formControl.value && Array.isArray(this.formControl.value) ? this.formControl.value : [this.formControl.value];
     if (!tableName || !labelColumn || !valueColumn || !searchTerm || !searchTerm.length) {
       return of([]); // Return early if essential properties are missing
@@ -83,7 +84,7 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
     const searchCriteria = this.buildSearchCriteria(searchTerm, valueColumn, labelColumn);
     let searchConditions = this.props['search_all'] ? JSON.parse(JSON.stringify(this.props['search_all'])) : [];
     searchConditions = this.evaluateDynamicValues([...searchConditions, searchCriteria], this);
-    const listParams = this.buildListParams(tableName, valueColumn, labelColumn, searchConditions);
+    const listParams = this.buildListParams(tableName, valueColumn, labelColumn, searchConditions, additionalCols);
 
     return this.gridApiService.getAllList(listParams).pipe(
       map((response) => this.transformResponse(response, valueColumn, labelColumn)),
@@ -102,7 +103,7 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
       : { value: `%${searchTerm || ''}%`, operator: 'ILIKE', column_name: labelColumn };
   }
 
-  private buildListParams(tableName: string, valueColumn: string, labelColumn: string, searchConditions: any) {
+  private buildListParams(tableName: string, valueColumn: string, labelColumn: string, searchConditions: any, additionalColumns: any[]) {
     return {
       company_id: 1,
       search_all: [{ value: '1', operator: '=', column_name: 'status_id' }, ...searchConditions],
@@ -111,16 +112,14 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
       start_index: 0,
       sort_columns: [[labelColumn, 'asc']],
       primary_table: tableName,
-      select_columns: [
-        [valueColumn, 'value'],
-        [labelColumn, 'label'],
-      ],
+      select_columns: [[valueColumn, 'value'], [labelColumn, 'label'], ...additionalColumns],
     };
   }
 
   private transformResponse(response: any, valueColumn: string, labelColumn: string): { label: string; value: any }[] {
     if (response.status && response.data?.records?.length > 0) {
       return response.data.records.map((record: any) => ({
+        ...record,
         value: record[valueColumn] || record['value'],
         label: record[labelColumn] || record['label'],
       }));
@@ -146,7 +145,6 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
           if (evaluatedValue !== undefined) {
             item.value = evaluatedValue; // Replace value with the dynamically evaluated result
           } else {
-           
             item.value = null;
           }
         } catch (error) {
@@ -170,14 +168,12 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
   }
 
   openNestedFormModal(entityName: string, fieldKey?: string) {
-   
-    
     // Don't open modal if entityName is empty
     if (!entityName || entityName.trim() === '') {
       console.warn('No entity name provided for nested form modal');
       return;
     }
-    
+
     // Access the parent component's method through formState
     const componentInstance = this.options?.formState?.componentInstance;
     if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {

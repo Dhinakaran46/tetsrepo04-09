@@ -557,28 +557,102 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
   }
 
+  // // old code
+  // private replacePlaceholders(obj: any, model: any, required: boolean = true): any {
+  //   const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
+  //   // const placeholderPattern = /\$(.+)/;
+  //   const placeholderPattern = /^\$(.+)/;
+  //   const replaceInObject = (item: any): any => {
+  //     if (Array.isArray(item)) {
+  //       return item.map(replaceInObject);
+  //     } else if (typeof item === 'object' && item !== null) {
+  //       for (const key in item) {
+  //         if (item.hasOwnProperty(key)) {
+  //           item[key] = replaceInObject(item[key]);
+  //         }
+  //       }
+  //       return item;
+  //     } else if (typeof item === 'string') {
+  //       const match = item.match(placeholderPattern);
+  //       if (match) {
+  //         const placeholder = match[1];
+  //         const value = this.getNestedProperty(placeholder, model);
+  //         return value !== undefined ? value : `$${required ? placeholder : ''}`;
+  //       }
+  //     }
+  //     return item;
+  //   };
+
+  //   return replaceInObject(result);
+  // }
+
   private replacePlaceholders(obj: any, model: any, required: boolean = true): any {
-    const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
-    // const placeholderPattern = /\$(.+)/;
-    const placeholderPattern = /^\$(.+)/;
-    const replaceInObject = (item: any): any => {
+    const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutation
+
+    const replaceInObject = (item: any, context: any = model, index?: number): any => {
+      // Handle arrays (loop recursively with proper sub-context)
       if (Array.isArray(item)) {
-        return item.map(replaceInObject);
-      } else if (typeof item === 'object' && item !== null) {
+        return item.map((subItem, i) => {
+          // Dynamically detect array key in context
+          const arrayKey = Object.keys(context || {}).find((key) => Array.isArray(context[key]) && context[key].length > i);
+
+          const arrayContext = arrayKey ? { ...context, [arrayKey]: context[arrayKey][i] } : context;
+
+          return replaceInObject(subItem, arrayContext, i);
+        });
+      }
+
+      // Handle objects recursively
+      if (typeof item === 'object' && item !== null) {
         for (const key in item) {
           if (item.hasOwnProperty(key)) {
-            item[key] = replaceInObject(item[key]);
+            item[key] = replaceInObject(item[key], context, index);
           }
         }
         return item;
-      } else if (typeof item === 'string') {
-        const match = item.match(placeholderPattern);
-        if (match) {
-          const placeholder = match[1];
-          const value = this.getNestedProperty(placeholder, model);
-          return value !== undefined ? value : `$${required ? placeholder : ''}`;
-        }
       }
+
+      // Handle strings with placeholders
+      if (typeof item === 'string') {
+        // Case 1: whole string is a single placeholder (like "$table.column")
+        if (/^\$[a-zA-Z0-9_.\[\]]+$/.test(item)) {
+          const path = item.substring(1);
+          const value = this.getNestedProperty(path, context);
+
+          if (value === undefined) return item;
+          if (value === null || value === '') return 'NULL';
+          if (value instanceof Date) return `'${value.toISOString()}'`;
+
+          return typeof value === 'string' ? `${value}` : String(value);
+        }
+
+        // Case 2: inline placeholders (inside SQL text)
+        return item.replace(/\$[a-zA-Z0-9_.\[\]]+/g, (match) => {
+          const path = match.substring(1);
+          const value = this.getNestedProperty(path, context);
+
+          if (value === undefined) return match;
+          if (value === null || value === '') return 'NULL';
+          if (value instanceof Date) return `'${value.toISOString()}'`;
+          // Avoid double quoting if already quoted or SQL-safe
+          if (
+            typeof value === 'number' ||
+            value === true ||
+            value === false ||
+            (typeof value === 'string' && value.startsWith("'") && value.endsWith("'")) ||
+            (typeof value === 'string' && value.match(/^\(.*\)$/)) ||
+            (typeof value === 'string' && value.match(/^[0-9]+(\.[0-9]+)?$/))
+          ) {
+            return String(value);
+          }
+
+          // Otherwise quote safely
+          if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
+
+          return String(value);
+        });
+      }
+
       return item;
     };
 
@@ -678,9 +752,40 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   // private getNestedProperty(path: string, obj: any): any {
   //   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
   // }
+
+  // // old code
+  // private getNestedProperty(path: string, obj: any): any {
+  //   const pathSegments = path.replace(/\[(\d+)\]/g, '.$1').split('.'); // Convert array-like keys to dot notation
+  //   return pathSegments.reduce((acc, part) => acc && acc[part], obj);
+  // }
+
   private getNestedProperty(path: string, obj: any): any {
-    const pathSegments = path.replace(/\[(\d+)\]/g, '.$1').split('.'); // Convert array-like keys to dot notation
-    return pathSegments.reduce((acc, part) => acc && acc[part], obj);
+    if (!obj || typeof path !== 'string') return undefined;
+
+    const pathSegments = path
+      .replace(/\[(\d+)\]/g, '.$1') // support array index access
+      .split('.')
+      .filter(Boolean);
+
+    let current = obj;
+    for (const segment of pathSegments) {
+      if (Array.isArray(current)) {
+        const index = parseInt(segment, 10);
+        if (!isNaN(index)) {
+          current = current[index];
+        } else {
+          return undefined;
+        }
+      } else if (current && typeof current === 'object') {
+        current = current[segment];
+      } else {
+        return undefined;
+      }
+
+      if (current === undefined || current === null) return current;
+    }
+
+    return current;
   }
 
   private parseJSONField(value: any) {
@@ -1077,9 +1182,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                ...additionalColumns,
                 [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
                 [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                ...additionalColumns,
               ],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
@@ -1100,11 +1205,13 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const opts = group.templateOptions || group.props || {};
           if (opts.table && opts.valueColumn && opts.labelColumn) {
             this.listParams = this.listParams || {};
+            const additionalColumns = opts['additionalColumns'] ? opts['additionalColumns'] : [];
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
                 [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
                 [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                ...additionalColumns,
               ],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
@@ -1123,11 +1230,13 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const opts = group.fieldArray.templateOptions || group.fieldArray.props || {};
           if (opts.table && opts.valueColumn && opts.labelColumn) {
             this.listParams = this.listParams || {};
+            const additionalColumns = opts['additionalColumns'] ? opts['additionalColumns'] : [];
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
                 [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
                 [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                ...additionalColumns,
               ],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
