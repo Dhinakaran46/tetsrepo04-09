@@ -12,19 +12,31 @@
 </div> -->
 <div class="flex items-center gap-2">
   <div class="flex-1">
-    <ng-select #selectRef [readonly]="to['readonly'] || false" *ngIf="to['table']" bindLabel="label" bindValue="value"
-      [formControl]="formControl" [formlyAttributes]="field" [items]="options$ | async" [multiple]="to['multiple'] || false"
-      [clearable]="false" placeholder="{{ to.placeholder || 'Select an option' }}" class="form-control"
-      [ngClass]="{'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted)}">
+    <ng-select
+      #selectRef
+      [readonly]="to['readonly'] || false"
+      *ngIf="to['table']"
+      bindLabel="label"
+      bindValue="value"
+      [formControl]="formControl"
+      [formlyAttributes]="field"
+      [items]="options$ | async"
+      [multiple]="to['multiple'] || false"
+      [clearable]="false"
+      placeholder="{{ to.placeholder || 'Select an option' }}"
+      class="form-control"
+      (change)="formControl.markAsDirty(); formControl.updateValueAndValidity({ emitEvent: true })"
+      [ngClass]="{ 'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted) }"
+    >
       <ng-template ng-option-tmp let-item="item" let-index="index">
-        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
           <span [innerHTML]="item.label | splitLabel"></span>
           <button
             *ngIf="to['enable_edit']"
             type="button"
-            class="ml-2 btn btn-link p-0"
-            (click)="onEditOption(item); $event.stopPropagation();"
-            style="margin-left: auto;"
+            class="btn btn-link ml-2 p-0"
+            (click)="onEditOption(item); $event.stopPropagation()"
+            style="margin-left: auto"
             tabindex="-1"
           >
             <i class="fa fa-edit"></i>
@@ -32,19 +44,29 @@
         </div>
       </ng-template>
     </ng-select>
-    <ng-select #selectRef *ngIf="!to['table']" bindLabel="label" bindValue="value" [formControl]="formControl"
-      [formlyAttributes]="field" [items]="static_options$ | async" [multiple]="to['multiple'] || false" [clearable]="false"
-      placeholder="{{ to.placeholder || 'Select an option' }}" class="form-control"
-      [ngClass]="{'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted)}">
+    <ng-select
+      #selectRef
+      *ngIf="!to['table']"
+      bindLabel="label"
+      bindValue="value"
+      [formControl]="formControl"
+      [formlyAttributes]="field"
+      [items]="static_options$ | async"
+      [multiple]="to['multiple'] || false"
+      [clearable]="false"
+      placeholder="{{ to.placeholder || 'Select an option' }}"
+      class="form-control"
+      [ngClass]="{ 'is-invalid': formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted) }"
+    >
       <ng-template ng-option-tmp let-item="item" let-index="index">
-        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
           <span [innerHTML]="item.label | splitLabel"></span>
           <button
             *ngIf="to['enable_edit']"
             type="button"
-            class="ml-2 btn btn-link p-0"
-            (click)="onEditOption(item); $event.stopPropagation();"
-            style="margin-left: auto;"
+            class="btn btn-link ml-2 p-0"
+            (click)="onEditOption(item); $event.stopPropagation()"
+            style="margin-left: auto"
             tabindex="-1"
           >
             <i class="fa fa-edit"></i>
@@ -54,8 +76,8 @@
     </ng-select>
   </div>
   <div class="flex-none" *ngIf="getAddEditForm()">
-    <button 
-      type="button" 
+    <button
+      type="button"
       class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-3 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
       (click)="openNestedFormModal(getAddEditForm() || '', getFieldKey(), null, null)"
       [title]="'Add new ' + (getAddEditForm() || '')"
