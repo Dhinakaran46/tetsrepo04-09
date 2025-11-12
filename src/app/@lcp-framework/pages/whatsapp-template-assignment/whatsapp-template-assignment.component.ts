@@ -227,7 +227,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         ['notification_template_assignments.id', 'eta_id'],
         ['notification_template_assignments.template_id'],
         ['notification_template_assignments.recipient_type'],
-        ['notification_template_assignments.whatsapp_to'],
+        ['notification_template_assignments.notification_to'],
       ],
     };
     this.loading = true;
@@ -244,7 +244,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
                   this.fb.group({
                     id: each.eta_id,
                     recipient_type: [each.recipient_type, Validators.required],
-                    whatsapp_to: [each.whatsapp_to, Validators.required],
+                    notification_to: [each.notification_to, Validators.required],
                     template_id: [each.template_id, Validators.required],
                     whatsapp_template_assignment_id: [each.eta_id, Validators.required],
                     cc_bcc: this.fb.array([]),
@@ -253,7 +253,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
                   })
                 );
                 if (each.recipient_type === 'tag') {
-                  this.getTemplateAssignmentTags(each.whatsapp_to, lineItemsArray.controls[lineItemsArray.length - 1]);
+                  this.getTemplateAssignmentTags(each.notification_to, lineItemsArray.controls[lineItemsArray.length - 1]);
                 }
                 if (each.recipient_type === 'user_id') {
                   this.getUsers(lineItemsArray.controls[lineItemsArray.length - 1], '');
@@ -351,7 +351,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
       this.fb.group({
         id: [0],
         recipient_type: ['tag', Validators.required],
-        whatsapp_to: [null, Validators.required],
+        notification_to: [null, Validators.required],
         template_id: [null, Validators.required],
         whatsapp_template_assignment_id: [0],
         cc_bcc: this.fb.array([]),
@@ -367,7 +367,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
   }
 
   clearUserTagValues(formGroup: any) {
-    formGroup.controls['whatsapp_to'].reset();
+    formGroup.controls['notification_to'].reset();
     formGroup.controls['whatsapp_tag_number'].reset();
 
     if (formGroup.controls['recipient_type'].value === 'user_id') {
@@ -447,7 +447,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         no_of_tables++;
         payload.data['table' + no_of_tables] = [
           {
-            whatsapp_to: templates.controls['whatsapp_to'].value,
+            notification_to: templates.controls['notification_to'].value,
             created_at: true,
             created_by: true,
             template_id: templates.controls['template_id'].value,

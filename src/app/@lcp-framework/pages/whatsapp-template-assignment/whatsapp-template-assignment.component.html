@@ -80,17 +80,17 @@
             <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
               <label>{{ 'whatsapp_tag' | translate }} <span class="text-danger">*</span></label>
               <select
-                formControlName="whatsapp_to"
+                formControlName="notification_to"
                 class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
                 required
-                (change)="getTemplateAssignmentTags(assignment.get('whatsapp_to')?.value, assignment)"
+                (change)="getTemplateAssignmentTags(assignment.get('notification_to')?.value, assignment)"
               >
                 @for(tag of recipientTags; track tag; let i = $index) {
                 <option [value]="tag.id">{{ tag.name }}</option>
                 }
               </select>
               <div
-                *ngIf="assignment.get('whatsapp_to')?.invalid && (assignment.get('whatsapp_to')?.touched || assignment.get('whatsapp_to')?.dirty)"
+                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
               >
                 {{ 'whatsapp_tag_is_required' | translate }}
@@ -103,7 +103,7 @@
               <ng-select
                 bindLabel="label"
                 bindValue="value"
-                formControlName="whatsapp_to"
+                formControlName="notification_to"
                 [clearable]="true"
                 [searchable]="true"
                 placeholder="Select User"
@@ -116,7 +116,7 @@
                 }
               </ng-select>
               <div
-                *ngIf="assignment.get('whatsapp_to')?.invalid && (assignment.get('whatsapp_to')?.touched || assignment.get('whatsapp_to')?.dirty)"
+                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
               >
                 {{ 'user_phoneno_is_required' | translate }}
@@ -128,13 +128,13 @@
               <input
                 type="tel"
                 class="form-control form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
-                formControlName="whatsapp_to"
+                formControlName="notification_to"
                 placeholder="Enter whatsapp address"
                 required
               />
               <div class="mt-5">Note : Can add multiple whatsapp numbers as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
               <div
-                *ngIf="assignment.get('whatsapp_to')?.invalid && (assignment.get('whatsapp_to')?.touched || assignment.get('whatsapp_to')?.dirty)"
+                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
                 class="invalid-feedback mt-1 text-danger"
               >
                 {{ 'whatsapp_is_required' | translate }}

@@ -406,6 +406,35 @@
         </ng-container>
         
         <ng-container *ngIf="!noPopupPermission">
+          <app-datatable
+          *ngIf="popupName == 'popup_grid'"
+          [loading]="gridloading"
+          [masterInfo]="masterInfo"
+          [enableCheckBox]="enableCheckBox"
+          [customTemplates]="customTemplates"
+          [headercolumns]="headercolumns"
+          [selectcolumns]="selectcolumns"
+          [items]="items"
+          [totalItems]="totalItems"
+          [currentPage]="currentPage"
+          [resultsPerPage]="resultsPerPage"
+          [column]="column"
+          [title]="title"
+          [query]="query"
+          (delete)="deleteItems($event)"
+          (edit)="editItem($event)"
+          (view)="viewItem($event)"
+          (customAction)="handleCustomAction($event)"
+          (pageChange)="onPageChange($event)"
+          (resultsPerPageChange)="onResultsPerPageChange($event)"
+          (columnSort)="sortColumn($event)"
+          (searchQuery)="searchData($event)"
+          (exportType)="exportTable($event)"
+          (advancedSearchQuery)="advancedSearchData($event)"
+          (linkComponentClick)="onLinkComponentClick($event)"
+          [unique_id]="uniqueId"
+          >
+          </app-datatable>
           <app-static-page
             *ngIf="popupName == 'popup_details'"
             [uuid]="selectedItemUuid"

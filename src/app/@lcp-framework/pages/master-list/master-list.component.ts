@@ -851,6 +851,7 @@ const havingConditions = query
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content: false
                   },
                   ...data,
                 ];
@@ -865,6 +866,7 @@ const havingConditions = query
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content:  false
                   });
                 }
               } else {
@@ -879,6 +881,7 @@ const havingConditions = query
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content:  false
                   });
                 }
               }
@@ -1191,6 +1194,7 @@ const havingConditions = query
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
+                    field_html_content: false
                   },
                   ...data,
                 ];
@@ -1800,6 +1804,7 @@ const havingConditions = query
 
   processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
     this.popupName = popupName;
+    console.log(popupName, selectedItemUuid, popupEntityName, isViewPopupOpen);
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1817,7 +1822,12 @@ const havingConditions = query
         menuItem = unorgmenuList.find(
           (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
         );
+      } else if (popupName === 'popup_grid') {
+        menuItem = unorgmenuList.find(
+          (item: any) => item.entity_name === popupEntityName
+        );  
       }
+      console.log(menuItem);
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
@@ -1827,6 +1837,7 @@ const havingConditions = query
       const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
       hasPermission = !!(permObj && permObj.accessible);
     }
+    console.log(hasPermission)
     if (!hasPermission) {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
