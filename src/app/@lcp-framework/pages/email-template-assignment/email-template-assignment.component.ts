@@ -210,12 +210,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           value: '3',
           operator: '!=',
           column_name: 'notification_template_process.status_id',
-        },
-        {
-          value: 'email',
-          operator: '!=',
-          column_name: 'notification_template_recipient_tags.notification_type',
-        },
+        }        
       ],
       limit_range: 1000,
       print_query: true,

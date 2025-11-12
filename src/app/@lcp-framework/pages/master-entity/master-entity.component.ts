@@ -122,37 +122,33 @@ export class MasterEntityComponent implements OnInit {
       header: 'html_content_usage_examples',
       examples: [
         {
-          name: 'Example 1: Using col.header directly',
-          comments: ['If col.header = "name"'],
-          data: `html<button class="btn {{ name == 'Raj Supervisor' ? 'btn-green' : 'btn-primary' }}">{{ name }}</button>`
+          name: 'Example 1: Conditional button based on name',
+          comments: ['Uses row_object.name to dynamically assign button color'],
+          data: `html<button class="btn {{ row_object.name == 'Raj Supervisor' ? 'btn-danger' : 'btn-primary' }}">{{ row_object.name }}</button>`
         },
         {
-          name: "Example 2: Using 'value' alias",
-          comments: ["Using 'value' alias"],
-          data: `html<button class="btn {{ value == 'Raj Supervisor' ? 'btn-green' : 'btn-primary' }}">{{ value }}</button>`
-        },
-        {
-          name: 'Example 3: Using multiple properties',
-          comments: ['item.name, item.status, item.role'],
-          data: `html<div class="user-card {{ status == 'active' ? 'active' : 'inactive' }}">
-      <span class="name">{{ name }}</span>
-      <span class="badge {{ role == 'admin' ? 'badge-red' : 'badge-blue' }}">{{ role }}</span>
+          name: 'Example 2: User card with nested ternary for role and status',
+          comments: ['Demonstrates multiple property usage: name, status, user_roles'],
+          data: `html<div class="user-card {{ row_object.status == '1' ? 'btn-success' : 'btn-danger' }}">
+      <span class="name">{{ row_object.name }}</span>
+      <span class="{{ row_object.user_roles == 'Manager' ? 'inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 inset-ring inset-ring-gray-500/10' : 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 inset-ring inset-ring-red-600/10' }}">{{ row_object.user_roles }}</span>
     </div>`
         },
         {
-          name: 'Example 4: Numeric comparisons',
-          comments: [],
-          data: `html<span class="badge {{ age >= 18 ? 'adult' : 'minor' }}">Age: {{ age }}</span>`
+          name: 'Example 3: Numeric comparison for badge color',
+          comments: ['Uses row_object.code to determine badge color based on numeric threshold'],
+          data: `html<span class="badge {{ row_object.code >= 1003 ? 'btn-danger' : 'btn-success' }}">Age: {{ row_object.name }} {{ row_object.code }}</span>`
         },
         {
-          name: 'Example 5: Multiple conditions',
-          comments: [],
-          data: `html<button class="btn {{ status == 'approved' ? 'btn-success' : status == 'pending' ? 'btn-warning' : 'btn-danger' }}">
-      {{ status }}
+          name: 'Example 4: Multi-condition button with nested ternary',
+          comments: ['Demonstrates chaining multiple status checks'],
+          data: `html<button class="btn {{ row_object.status == '1' ? 'btn-success' : row_object.status == '2' ? 'btn-warning' : 'btn-danger' }}">
+      {{ row_object.name }}
     </button>`
         }
       ]
     },
+    
     
     reportInfo: {
       header: 'sample_report_information',
@@ -1569,7 +1565,7 @@ export class MasterEntityComponent implements OnInit {
                 fieldType: [item.field_type_id, Validators.required],
                 linkType: [linkType, Validators.required],
                 linkAction: [linkAction],
-                field_html_content: [item.field_html_content]
+                fieldHtmlContent: [item.field_html_content]
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1740,6 +1736,7 @@ export class MasterEntityComponent implements OnInit {
             }
           }
         }
+        console.log(control.value)
         return {
           master_grid_id: '@table1.id',
           field_name: control.value.fieldName,
@@ -1781,7 +1778,7 @@ export class MasterEntityComponent implements OnInit {
     this.update_json_schema.conditions['table4'] = removable_items;
 
     this.update_json_schema.data['table5'] = newly_added_items;
-
+    console.log(this.update_json_schema)
     return this.update_json_schema;
   }
 
