@@ -11,7 +11,7 @@
             <input
               #searchInput
               [(ngModel)]="search"
-              (keydown.enter)="onSearch()" 
+              (keydown.enter)="onSearch()"
               type="text"
               class="form-input w-full pr-10 text-app-text"
               appDynamicFontSize="body"
@@ -85,7 +85,7 @@
 
                       <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select w-full">
                         <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                         <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title || col.previewTitle }}</option>
+                        <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title || col.previewTitle }}</option>
                       </select>
                       <select [(ngModel)]="condition.operator" class="form-select w-full">
                         <option value selected disabled>{{ 'condition' | translate }}</option>
@@ -155,7 +155,7 @@
                 </ng-container>
               </ul>
             </div>
-            <div class="flex" *ngIf="permissions && this.masterInfo?.permissions.export_excel">
+            <div class="flex" *ngIf="permissions && (this.masterInfo?.permissions.export_excel || this.masterInfo?.permissions.export_pdf)">
               <div hlMenu class="dropdown mb-2 md:mb-0">
                 <button
                   type="button"
@@ -165,14 +165,14 @@
                   <i class="fa-solid fa-download"></i> &nbsp; <span class="hidden md:inline">{{ 'export' | translate }} </span>
                 </button>
                 <ul *hlMenuItems @toggleAnimation class="whitespace-nowrap ltr:right-0 rtl:left-0">
-                  <!--<li>
-                    <a (click)="exportTable('pdf')" href="javascript:;" *hlMenuItem="let menuItem"
-                      ><i class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }}
-                    </a>
-                  </li>-->
-                  <li>
+                  <li *ngIf="this.masterInfo?.permissions.export_excel">
                     <a (click)="exportTable('excel')" href="javascript:;" *hlMenuItem="let menuItem"
                       ><i class="fa-solid fa-file-excel ltr:mr-2 rtl:ml-2"></i>{{ 'excel' | translate }}
+                    </a>
+                  </li>
+                  <li *ngIf="this.masterInfo?.permissions.export_pdf">
+                    <a (click)="exportTable('pdf')" href="javascript:;" *hlMenuItem="let menuItem"
+                      ><i class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }}
                     </a>
                   </li>
                 </ul>
@@ -200,8 +200,7 @@
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
-              style="color: var(--app-button-text-color, var(--app-bg-color)); 
-         background-color: var(--app-button-bg-color, var(--app-primary-color));"
+              style="color: var(--app-button-text-color, var(--app-bg-color)); background-color: var(--app-button-bg-color, var(--app-primary-color))"
               class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
@@ -214,8 +213,7 @@
               (click)="customAction.emit('addNew')"
               ngxTippy=" {{ title | translate }}"
               type="button"
-              style="color: var(--app-button-text-color, var(--app-bg-color)); 
-         background-color: var(--app-button-bg-color, var(--app-primary-color));"
+              style="color: var(--app-button-text-color, var(--app-bg-color)); background-color: var(--app-button-bg-color, var(--app-primary-color))"
               class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
             >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
@@ -315,7 +313,10 @@
               <ng-container *ngIf="items && items.length > 0; else noRecords">
                 <ng-container *ngFor="let item of items; let row_index = index">
                   <tr>
-                    <td *ngIf="permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details" (click)="toggleRow(item, row_index + 1)">
+                    <td
+                      *ngIf="permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details"
+                      (click)="toggleRow(item, row_index + 1)"
+                    >
                       <button class="expand-collapse-btn">
                         <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === row_index + 1 ? 'fa-minus' : 'fa-plus'"></i>
                       </button>
@@ -330,8 +331,6 @@
                         *ngIf="!col.colFilterHide"
                       >
                         <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
-                          
-
                           <ng-container *ngIf="col.link_type === 'component'; else maybePopupGrid">
                             <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
                               {{ item[col.header] | booleanStatus }}
@@ -339,8 +338,7 @@
                           </ng-container>
                           <ng-template #maybePopupGrid>
                             <ng-container *ngIf="col.link_type === 'popup_grid'; else notComponent">
-                              <span class="block cursor-pointer truncate text-primary underline"
-                                    (click)="onLinkPopupGridClick(item, col)">
+                              <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
                                 {{ item[col.header] | booleanStatus }}
                               </span>
                             </ng-container>
@@ -531,9 +529,6 @@
       </div>
     </div>
   </div>
-  
-
-
 </div>
 
 <div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isViewPopupOpenDirect">
@@ -560,4 +555,3 @@
     </div>
   </div>
 </div>
-
