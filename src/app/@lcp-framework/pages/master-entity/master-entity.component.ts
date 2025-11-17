@@ -118,6 +118,38 @@ export class MasterEntityComponent implements OnInit {
   wizardGroupForm!: FormGroup;
   isInfoModalOpen: boolean = false;
   infoContents: any = {
+    fieldHtmlContentInfo: {
+      header: 'html_content_usage_examples',
+      examples: [
+        {
+          name: 'Example 1: Conditional button based on name',
+          comments: ['Uses row_object.name to dynamically assign button color'],
+          data: `html<button class="btn {{ row_object.name == 'Raj Supervisor' ? 'btn-danger' : 'btn-primary' }}">{{ row_object.name }}</button>`
+        },
+        {
+          name: 'Example 2: User card with nested ternary for role and status',
+          comments: ['Demonstrates multiple property usage: name, status, user_roles'],
+          data: `html<div class="user-card {{ row_object.status == '1' ? 'btn-success' : 'btn-danger' }}">
+      <span class="name">{{ row_object.name }}</span>
+      <span class="{{ row_object.user_roles == 'Manager' ? 'inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 inset-ring inset-ring-gray-500/10' : 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 inset-ring inset-ring-red-600/10' }}">{{ row_object.user_roles }}</span>
+    </div>`
+        },
+        {
+          name: 'Example 3: Numeric comparison for badge color',
+          comments: ['Uses row_object.code to determine badge color based on numeric threshold'],
+          data: `html<span class="badge {{ row_object.code >= 1003 ? 'btn-danger' : 'btn-success' }}">Age: {{ row_object.name }} {{ row_object.code }}</span>`
+        },
+        {
+          name: 'Example 4: Multi-condition button with nested ternary',
+          comments: ['Demonstrates chaining multiple status checks'],
+          data: `html<button class="btn {{ row_object.status == '1' ? 'btn-success' : row_object.status == '2' ? 'btn-warning' : 'btn-danger' }}">
+      {{ row_object.name }}
+    </button>`
+        }
+      ]
+    },
+    
+    
     reportInfo: {
       header: 'sample_report_information',
       examples: [
@@ -1430,6 +1462,7 @@ export class MasterEntityComponent implements OnInit {
       fieldType: [this.commonConfig.field_types[0].value, Validators.required],
       linkType: ['none', Validators.required],
       linkAction: [''],
+      fieldHtmlContent: ['']
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
@@ -1461,7 +1494,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
           'items',
         ],
       ],
@@ -1532,6 +1565,7 @@ export class MasterEntityComponent implements OnInit {
                 fieldType: [item.field_type_id, Validators.required],
                 linkType: [linkType, Validators.required],
                 linkAction: [linkAction],
+                fieldHtmlContent: [item.field_html_content]
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1630,6 +1664,7 @@ export class MasterEntityComponent implements OnInit {
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           link_mode,
+          field_html_content: control.value.fieldHtmlContent
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1701,6 +1736,7 @@ export class MasterEntityComponent implements OnInit {
             }
           }
         }
+        console.log(control.value)
         return {
           master_grid_id: '@table1.id',
           field_name: control.value.fieldName,
@@ -1713,6 +1749,7 @@ export class MasterEntityComponent implements OnInit {
           field_type_id: control.value.fieldType,
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
+          field_html_content: control.value.fieldHtmlContent,
           link_mode,
         };
       });
@@ -1741,7 +1778,7 @@ export class MasterEntityComponent implements OnInit {
     this.update_json_schema.conditions['table4'] = removable_items;
 
     this.update_json_schema.data['table5'] = newly_added_items;
-
+    console.log(this.update_json_schema)
     return this.update_json_schema;
   }
 
