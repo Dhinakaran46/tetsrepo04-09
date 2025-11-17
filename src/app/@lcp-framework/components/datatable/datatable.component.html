@@ -405,7 +405,7 @@ class="max-w-150 truncate whitespace-nowrap"
     <!-- Use the same logic as in noHtmlContent, but render HTML content inside -->
     <ng-container *ngIf="col.link_type === 'component'; else maybePopupGridHtml">
       <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
-        <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+        <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"  ></div>
       </span>
     </ng-container>
 
@@ -413,7 +413,7 @@ class="max-w-150 truncate whitespace-nowrap"
       <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeUrlHtml">
         <span class="block cursor-pointer truncate text-primary underline"
               (click)="onLinkPopupGridClick(item, col)">
-          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)" ></div>
         </span>
       </ng-container>
     </ng-template>
@@ -425,11 +425,11 @@ class="max-w-150 truncate whitespace-nowrap"
           class="block truncate text-primary underline"
           [routerLink]="col.link_action"
         >
-          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)" ></div>
         </a>
         <ng-template #externalUrlHtml>
           <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
-            <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+            <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)" ></div>
           </a>
         </ng-template>
       </ng-container>
@@ -449,12 +449,12 @@ class="max-w-150 truncate whitespace-nowrap"
             (click)="toggleColumnChildGrid(item, col, row_index + 1)"
           >
             <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-            <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+            <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)" ></div>
           </button>
-          <div *ngIf="!col.link_type || col.link_type === 'none'" [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+          <div *ngIf="!col.link_type || col.link_type === 'none'" [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)" ></div>
         </span>
         <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)" ></div>
         </span>
       </ng-template>
     </ng-template>

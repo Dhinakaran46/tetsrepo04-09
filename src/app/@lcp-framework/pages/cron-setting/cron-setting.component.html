@@ -1,11 +1,10 @@
 <div class="flex justify-between">
   <div class="mx-2 mt-1">
     <h1 appdynamicfontsize="title" class="text-base font-bold dark:text-white-light">
-      {{ 'Cron Job Settings' | translate }}
+      
     </h1>
   </div>
-
-  <div>
+  <div  >
     <button (click)="stopCronJobs()" class="mx-2 rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700">
       <i class="fa-solid fa-ban"></i>
       <span class="ml-2">{{ 'Stop Cron Jobs' | translate }}</span>
@@ -16,93 +15,95 @@
     </button>
   </div>
 </div>
+  <div class="flex-1 p-3 pt-6">
+  <app-datatable
+    [loading]="gridloading"
+    [masterInfo]="masterInfo"
+    [enableCheckBox]="enableCheckBox"
+    [customTemplates]="customTemplates"
+    [headercolumns]="headercolumns"
+    [selectcolumns]="selectcolumns"
+    [items]="items"
+    [totalItems]="totalItems"
+    [currentPage]="currentPage"
+    [resultsPerPage]="resultsPerPage"
+    [column]="column"
+    [title]="title"
+    [query]="query"
+    (delete)="deleteItem($event)"
+    (edit)="editItem($event)"
+    (view)="viewItem($event)"
+    (customAction)="handleCustomAction($event)"
+    (pageChange)="onPageChange($event)"
+    (resultsPerPageChange)="onResultsPerPageChange($event)"
+    (columnSort)="sortColumn($event)"
+    (searchQuery)="searchData($event)"
+    (exportType)="exportTable($event)"
+    (advancedSearchQuery)="advancedSearchData($event)"
+  ></app-datatable>
+  <ng-template #actionTemplate let-item>
+    <div class="flex items-center gap-4">
+      <button ngxTippy data-tippy-content="Start Cron" appDynamicFontSize="body" type="button" (click)="this.startCronJob(item.id)">
+        <i class="fa-solid fa-play text-success"></i>
+      </button>
 
-<div class="mt-6">
-  <app-client-datatable [data]="listItems" [config]="itemsTableConfig"></app-client-datatable>
-</div>
+      <button ngxTippy data-tippy-content="Stop Cron" appDynamicFontSize="body" type="button" (click)="this.stopCronJob(item.id)">
+        <i class="fa-solid fa-ban text-warning"></i>
+      </button>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        *ngIf="this.masterInfo.permissions.details"
+        ngxTippy
+        (click)="this.viewItem(item)"
+        data-tippy-content="Details"
+        appDynamicFontSize="body"
+      >
+        <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-info"
+        appDynamicFontSize="body"
+        *ngIf="
+          this.masterInfo.permissions.edit &&
+          (this.masterInfo?.Listname == 'mrn_grid'
+            ? item?.mrn_status != 'completed'
+            : true && this.masterInfo?.Listname == 'min_grid'
+            ? item?.min_status != 'completed'
+            : true)
+        "
+        (click)="this.editItem(item)"
+        ngxTippy
+        data-tippy-content="Edit"
+      >
+        <i
+          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
+        ></i>
+      </a>
 
-<div *ngIf="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-  <div class="w-full max-w-md rounded-lg bg-white shadow-lg dark:bg-gray-800">
-    <!-- Header remains the same -->
-
-    <div class="p-4">
-      <h2 class="mb-4 text-xl font-semibold">{{ editMode ? ('Edit Cron Job' | translate) : ('Add New Cron Job' | translate) }}</h2>
-      <form [formGroup]="cronForm" (ngSubmit)="onCronFormSubmit()">
-        <!-- Timing Field -->
-        <div class="mb-4">
-          <label class="mb-2 block text-gray-700 dark:text-gray-300" for="timing">
-            {{ 'Cron Timing' | translate }} ({{ 'Minute, Hour, Day, Month, Weekday' | translate }})(* * * * *)
-            <span class="text-red-500">*</span>
-          </label>
-          <input
-            id="timing"
-            type="text"
-            formControlName="timing"
-            class="w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-            [class.border-red-500]="cronForm.get('timing')?.invalid && cronForm.get('timing')?.touched"
-          />
-          <div *ngIf="cronForm.get('timing')?.invalid && cronForm.get('timing')?.touched" class="mt-1 text-sm text-red-500">
-            {{ 'Cron Timing is required' | translate }}
-          </div>
-        </div>
-
-        <!-- Cron URL Field -->
-        <div class="mb-4">
-          <label class="mb-2 block text-gray-700 dark:text-gray-300" for="cron_url"> {{ 'Cron URL' | translate }} <span class="text-red-500">*</span> </label>
-          <input
-            id="cron_url"
-            type="text"
-            formControlName="cron_url"
-            class="w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-            [class.border-red-500]="cronForm.get('cron_url')?.invalid && cronForm.get('cron_url')?.touched"
-          />
-          <div *ngIf="cronForm.get('cron_url')?.invalid && cronForm.get('cron_url')?.touched" class="mt-1 text-sm text-red-500">
-            {{ 'Cron URL is required' | translate }}
-          </div>
-        </div>
-
-        <!-- Concat Base URL Field -->
-        <div class="mb-4">
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="concat_base_url"
-              formControlName="concat_base_url"
-              class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700"
-            />
-            <span class="text-gray-700 dark:text-gray-300"
-              >{{ 'Concat base url' | translate }} {{ '( Base URL : ' + this.configData.base_api_url + ' )' }}
-            </span>
-          </label>
-        </div>
-
-        <div class="mb-4">
-          <label class="mb-2 block text-gray-700 dark:text-gray-300" for="description">
-            {{ 'Description' | translate }} <span class="text-red-500">*</span>
-          </label>
-          <textarea
-            id="description"
-            formControlName="description"
-            class="w-full resize-none rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-            rows="4"
-            [class.border-red-500]="cronForm.get('description')?.invalid && cronForm.get('description')?.touched"
-          >
-          </textarea>
-          <div *ngIf="cronForm.get('description')?.invalid && cronForm.get('description')?.touched" class="mt-1 text-sm text-red-500">
-            {{ 'Description is required' | translate }}
-          </div>
-        </div>
-
-        <!-- Buttons remain the same -->
-        <div class="mt-4 flex justify-end space-x-2">
-          <button type="button" (click)="showModal = false" class="rounded border px-4 py-2 text-gray-700 dark:text-gray-300">
-            {{ 'Cancel' | translate }}
-          </button>
-          <button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-            {{ 'Save' | translate }}
-          </button>
-        </div>
-      </form>
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        appDynamicFontSize="body"
+        *ngIf="this.masterInfo.permissions.delete"
+        (click)="this.deleteItem(item)"
+        ngxTippy
+        data-tippy-content="Delete"
+      >
+        <i class="fa-regular fa-trash-can {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
     </div>
-  </div>
+  </ng-template>
+
+  <ng-template #statusTemplate let-item>
+    <span
+      class="badge"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color]"
+    >
+      {{ statuses[item.status].value | translate }}
+    </span>
+  </ng-template>
 </div>
+
+<app-loader *ngIf="loading"></app-loader>
