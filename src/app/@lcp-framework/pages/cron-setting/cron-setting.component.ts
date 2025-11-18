@@ -129,6 +129,11 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
     this.initStore();
   }
 
+  ngOnInit() {
+    
+    this.getCronJobs();
+  }
+
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
