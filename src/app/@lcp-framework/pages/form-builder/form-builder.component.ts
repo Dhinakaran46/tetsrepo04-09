@@ -620,7 +620,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const value = this.getNestedProperty(path, context);
 
           if (value === undefined) return item;
-          if (value === null || value === '') return 'NULL';
+          if (value === null) return null;
+          if (value === '') return '';
+
           if (value instanceof Date) return `'${value.toISOString()}'`;
 
           return typeof value === 'string' ? `${value}` : String(value);
