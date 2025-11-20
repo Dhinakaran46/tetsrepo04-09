@@ -389,7 +389,7 @@ export class MasterListComponent implements OnChanges {
     this.isItemModalOpen = false;
   }
   advancedSearchData(data: any) {
-    // Reset the common search query conditions
+    // Reset common search query holders
     this.commonSearchQuery.having_conditions = [];
     this.commonSearchQuery.having_any_conditions = [];
     this.commonSearchQuery.search_any = [];
@@ -400,30 +400,24 @@ export class MasterListComponent implements OnChanges {
       column_name?: string;
       [key: string]: any;
     }
+  
     const query: QueryItem[] = data?.data || [];
     const condition: 'AND' | 'OR' = data?.condition || 'AND';
   
-    // Separate WHERE (non-aggregate) and HAVING (aggregate) conditions
-    // Separate WHERE (non-aggregate) and HAVING (aggregate) conditions
-  const whereConditions = query
-  .filter((d: QueryItem) => !d.isAggregate)
-  .map((d: QueryItem) => {
-    const { isAggregate, ...rest } = d;
-    return rest;
-  });
-
-const havingConditions = query
-  .filter((d: QueryItem) => d.isAggregate)
-  .map((d: QueryItem) => {
-    const { isAggregate, ...rest } = d;
-    return rest;
-  });
+    // --- Separate WHERE and HAVING ---
+    const whereConditions = query
+      .filter((d) => !d.isAggregate)
+      .map(({ isAggregate, ...rest }) => rest);
   
-    // Deep clone to avoid mutating original listQuery
-    const clonedListQuery = JSON.parse(JSON.stringify(this.listQuery));
-    const orgListQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+    const havingConditions = query
+      .filter((d) => d.isAggregate)
+      .map(({ isAggregate, ...rest }) => rest);
   
-    // If no conditions, restore original query
+    // DO NOT DEEP CLONE – matches your existing working behaviour
+    const clonedListQuery = this.listQuery;
+    const orgListQuery = this.defaultQuery;
+  
+    // --- NO CONDITIONS → RESTORE DEFAULT ---
     if (whereConditions.length === 0 && havingConditions.length === 0) {
       if (condition === 'AND') {
         clonedListQuery.search_all = [...orgListQuery.search_all];
@@ -434,7 +428,7 @@ const havingConditions = query
       return;
     }
   
-    // Handle HAVING conditions
+    // --- HANDLE HAVING CONDITIONS ---
     if (havingConditions.length > 0) {
       if (condition === 'AND') {
         clonedListQuery.having_conditions = [...havingConditions];
@@ -447,10 +441,10 @@ const havingConditions = query
       }
     }
   
-    // Handle WHERE conditions
+    // --- HANDLE WHERE CONDITIONS ---
     if (condition === 'AND') {
-      if (whereConditions.length === 1 && !whereConditions[0].column_name) {
-        // Empty condition → restore defaults
+      // Case: empty single condition → restore default
+      if (whereConditions.length === 1 && (!whereConditions[0].column_name || whereConditions[0].column_name === '')) {
         clonedListQuery.search_all = [...orgListQuery.search_all];
         this.commonSearchQuery.search_all = [];
       } else {
@@ -459,7 +453,8 @@ const havingConditions = query
         this.commonSearchQuery.search_any = [];
       }
     } else {
-      if (whereConditions.length === 1 && !whereConditions[0].column_name) {
+      // OR conditions
+      if (whereConditions.length === 1 && (!whereConditions[0].column_name || whereConditions[0].column_name === '')) {
         clonedListQuery.search_any = [...orgListQuery.search_any];
         this.commonSearchQuery.search_any = [];
       } else {
@@ -469,15 +464,16 @@ const havingConditions = query
       }
     }
   
-    // Reset pagination and fetch data
+    // Reset pagination
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
   
-    console.log('Final Query:', clonedListQuery);
-    console.log('Common Search Query:', this.commonSearchQuery);
+    console.log("Final Query:", clonedListQuery);
+    console.log("Common Search Query:", this.commonSearchQuery);
   
     this.fetchData(clonedListQuery);
   }
+  
   
   previewAdvancedSearchData(data : any){
     interface previewQueryItem {

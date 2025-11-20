@@ -19,15 +19,15 @@ export class FormlyDisplayListComponent extends FieldType implements OnInit {
 
   ngOnInit() {
     this.setData();
-    this.fileNameControl = this.form.get('email_template_process_id') as FormControl;
+    this.fileNameControl = this.form.get('notification_template_process_id') as FormControl;
     this.fileNameControl?.valueChanges.subscribe(() => {
       this.setData();
     });
   }
 
   setData() {
-    const email_template_process_id = this.fileNameControl?.value;
-    if (email_template_process_id) {
+    const notification_template_process_id = this.fileNameControl?.value;
+    if (notification_template_process_id) {
       const listParams = {
         company_id: 1,
         search_all: [
@@ -37,9 +37,9 @@ export class FormlyDisplayListComponent extends FieldType implements OnInit {
             column_name: 'status_id',
           },
           {
-            value: email_template_process_id,
+            value: notification_template_process_id,
             operator: '=',
-            column_name: 'email_template_process_tags_mapping.email_template_process_id',
+            column_name: 'notification_template_process_tags_mapping.notification_template_process_id',
           },
         ],
         limit_range: 1000,
@@ -53,9 +53,9 @@ export class FormlyDisplayListComponent extends FieldType implements OnInit {
         ],
         includes: [
           {
-            table_name: 'email_template_process_tags_mapping',
+            table_name: 'notification_template_process_tags_mapping',
             join_type: 'INNER',
-            join_condition: 'email_template_tags.id = email_template_process_tags_mapping.email_template_tag_id',
+            join_condition: 'email_template_tags.id = notification_template_process_tags_mapping.email_template_tag_id',
           },
         ],
       };
