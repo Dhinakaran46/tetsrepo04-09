@@ -260,10 +260,38 @@ export class ExportTemplateComponent implements OnInit {
     },
   };
 
-  pageSizes = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'LETTER', 'LEGAL', 'TABLOID', 'EXECUTIVE'];
+  pageSizes = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'LETTER', 'LEGAL', 'TABLOID', 'EXECUTIVE'];
+
   orientations = ['portrait', 'landscape'];
   colorThemes = ['light', 'dark', 'corporate', 'classic', 'minimal', 'modern', 'vibrant', 'monochrome', 'custom'];
-  fonts = ['Helvetica', 'Arial', 'Times_New_Roman', 'Courier_New', 'Georgia', 'Verdana', 'Tahoma', 'Trebuchet_MS', 'Roboto', 'Poppins', 'Inter'];
+
+  fonts = [
+    // Web-safe fonts
+    'Helvetica',
+    'Arial',
+    'Times New Roman',
+    'Courier New',
+    'Georgia',
+    'Verdana',
+    'Tahoma',
+    'Trebuchet MS',
+    'Palatino Linotype',
+    'Lucida Console',
+
+    // Google fonts
+    'Roboto',
+    'OpenSans',
+    'Lato',
+    'Poppins',
+    'Inter',
+    'Montserrat',
+    'Nunito',
+    'SourceSansPro',
+    'Raleway',
+    'Merriweather',
+    'Ubuntu',
+  ];
+
   watermarkPositions = ['center', 'diagonal', 'top_left', 'top_right', 'bottom_left', 'bottom_right', 'full_background'];
 
   constructor(
@@ -800,8 +828,8 @@ export class ExportTemplateComponent implements OnInit {
         template_header: [{ value: '', disabled: true }],
         template_footer: [{ value: '', disabled: true }],
         template_content: ['', Validators.required],
-        is_repeatative_header: [{ value: false, disabled: true }],
-        is_repeatative_footer: [{ value: false, disabled: true }],
+        is_repeatative_header: [{ value: true, disabled: true }],
+        is_repeatative_footer: [{ value: true, disabled: true }],
         is_first_page_header_only: [{ value: false, disabled: true }],
         is_first_page_footer_only: [{ value: false, disabled: true }],
         is_watermark_enabled: [false],
@@ -829,7 +857,7 @@ export class ExportTemplateComponent implements OnInit {
       const templateHeader = pdfDetailsGroup.get('template_header');
 
       if (enabled) {
-        repeatHeader?.enable({ emitEvent: false });
+        repeatHeader?.enable({ emitEvent: true });
         firstPageHeader?.enable({ emitEvent: false });
         templateHeader?.enable({ emitEvent: false });
         templateHeader?.setValidators([Validators.required]);
@@ -852,7 +880,7 @@ export class ExportTemplateComponent implements OnInit {
       const templateFooter = pdfDetailsGroup.get('template_footer');
 
       if (enabled) {
-        repeatFooter?.enable({ emitEvent: false });
+        repeatFooter?.enable({ emitEvent: true });
         firstPageFooter?.enable({ emitEvent: false });
         templateFooter?.enable({ emitEvent: false });
         templateFooter?.setValidators([Validators.required]);
@@ -866,6 +894,27 @@ export class ExportTemplateComponent implements OnInit {
         templateFooter?.clearValidators();
       }
       [repeatFooter, firstPageFooter, templateFooter].forEach((ctrl) => ctrl?.updateValueAndValidity({ emitEvent: false }));
+    });
+
+    pdfDetailsGroup.get('is_first_page_header_only')?.valueChanges.subscribe((enabled) => {
+      const repeatHeader = pdfDetailsGroup.get('is_repeatative_header');
+      if (enabled) repeatHeader?.setValue(false, { emitEvent: false });
+    });
+
+    pdfDetailsGroup.get('is_first_page_footer_only')?.valueChanges.subscribe((enabled) => {
+      const repeatFooter = pdfDetailsGroup.get('is_repeatative_footer');
+      if (enabled) repeatFooter?.setValue(false, { emitEvent: false });
+    });
+
+    //  Header/footers repeatable
+    pdfDetailsGroup.get('is_repeatative_header')?.valueChanges.subscribe((enabled) => {
+      const firstPageHeader = pdfDetailsGroup.get('is_first_page_header_only');
+      if (enabled) firstPageHeader?.setValue(false, { emitEvent: false });
+    });
+
+    pdfDetailsGroup.get('is_repeatative_footer')?.valueChanges.subscribe((enabled) => {
+      const firstPageFooter = pdfDetailsGroup.get('is_first_page_footer_only');
+      if (enabled) firstPageFooter?.setValue(false, { emitEvent: false });
     });
 
     //  Watermark enable/disable

@@ -52,7 +52,7 @@ interface InputTypes {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe,LoaderComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -64,7 +64,7 @@ interface InputTypes {
 })
 export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   // Add this property to your component class:
-pendingPopupData: { item: any, entityName: string } | null = null;
+  pendingPopupData: { item: any; entityName: string } | null = null;
 
   expandedItem: any = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
@@ -181,7 +181,6 @@ pendingPopupData: { item: any, entityName: string } | null = null;
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
   @Input() isViewPopupOpen: boolean = false;
-  
 
   isViewPopupOpenDirect = false;
   loadingpopup = false;
@@ -203,191 +202,188 @@ pendingPopupData: { item: any, entityName: string } | null = null;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
-    console.log(this.masterInfo)
+    console.log(this.masterInfo);
   }
 
   ngAfterViewChecked() {
     // if a popup is requested and the container is now available, create it once
     if (this.isViewPopupOpenDirect && this.pendingPopupData && this.popupChildMasterListContainer) {
       const { item, entityName } = this.pendingPopupData;
-      this.pendingPopupData = null;               // prevent double-create
+      this.pendingPopupData = null; // prevent double-create
       this.createColumnPopupChildMasterList(item, entityName);
-      this.cdr.detectChanges();                   // flush changes
+      this.cdr.detectChanges(); // flush changes
     }
   }
-
 
   /**
- * Return the HTML template string for a column, looking in various places/keys.
- */
-getHtmlTemplateFor(col: any): string | null {
-  // 1) direct on the header column (snake_case or camelCase)
-  const direct = col?.field_html_content || col?.fieldHtmlContent;
-  if (direct && String(direct).trim().length) return String(direct);
+   * Return the HTML template string for a column, looking in various places/keys.
+   */
+  getHtmlTemplateFor(col: any): string | null {
+    // 1) direct on the header column (snake_case or camelCase)
+    const direct = col?.field_html_content || col?.fieldHtmlContent;
+    if (direct && String(direct).trim().length) return String(direct);
 
-  // 2) find matching definition from selectcolumns metadata
-  const match =
-    this.selectcolumns?.find((sc: any) =>
-      // try by field match first
-      (sc.field && col.field && sc.field === col.field) ||
-      // then by header/title match (depending on what you pass)
-      (sc.title && col.title && sc.title === col.title) ||
-      (sc.title && col.header && sc.title === col.header) ||
-      (sc.header && col.header && sc.header === col.header)
-    ) || null;
+    // 2) find matching definition from selectcolumns metadata
+    const match =
+      this.selectcolumns?.find(
+        (sc: any) =>
+          // try by field match first
+          (sc.field && col.field && sc.field === col.field) ||
+          // then by header/title match (depending on what you pass)
+          (sc.title && col.title && sc.title === col.title) ||
+          (sc.title && col.header && sc.title === col.header) ||
+          (sc.header && col.header && sc.header === col.header)
+      ) || null;
 
-  const fromMeta = match?.field_html_content || match?.fieldHtmlContent;
-  return fromMeta && String(fromMeta).trim().length ? String(fromMeta) : null;
-}
+    const fromMeta = match?.field_html_content || match?.fieldHtmlContent;
+    return fromMeta && String(fromMeta).trim().length ? String(fromMeta) : null;
+  }
 
+  /**
+   * Process HTML content with col.header as the primary property accessor
+   * @param htmlTemplate - The HTML template string with interpolations
+   * @param item - The data item/row
+   * @param col - The column object containing header and other metadata
+   * @returns Sanitized HTML
+   */
+  getProcessedHtmlContent(htmlTemplate: string, item: any, col: any): SafeHtml {
+    let processedHtml = htmlTemplate;
 
-/**
- * Process HTML content with col.header as the primary property accessor
- * @param htmlTemplate - The HTML template string with interpolations
- * @param item - The data item/row
- * @param col - The column object containing header and other metadata
- * @returns Sanitized HTML
- */
-getProcessedHtmlContent(htmlTemplate: string, item: any, col: any): SafeHtml {
-  let processedHtml = htmlTemplate;
+    // primary value (column field wins over header)
+    const key = (col?.field ?? col?.header) as string;
+    const primaryValue = key ? item?.[key] ?? '' : '';
 
-  // primary value (column field wins over header)
-  const key = (col?.field ?? col?.header) as string;
-  const primaryValue = key ? item?.[key] ?? '' : '';
+    // Build a context exposed to expressions:
+    // - spread row properties (e.g., name)
+    // - value: primary cell value
+    // - row_object: full row for explicit usage in templates
+    const context: any = {
+      ...item,
+      value: primaryValue,
+      row_object: item,
+    };
 
-  // Build a context exposed to expressions:
-  // - spread row properties (e.g., name)
-  // - value: primary cell value
-  // - row_object: full row for explicit usage in templates
-  const context: any = {
-    ...item,
-    value: primaryValue,
-    row_object: item
-  };
+    // 1) Resolve ternary/conditional expressions first:
+    //    {{ condition ? trueValue : falseValue }} or {{ some.prop }}
+    const exprRegex = /\{\{\s*(.+?)\s*\}\}/g;
+    processedHtml = processedHtml.replace(exprRegex, (_m, expression: string) => {
+      const exp = expression.trim();
 
-  // 1) Resolve ternary/conditional expressions first:
-  //    {{ condition ? trueValue : falseValue }} or {{ some.prop }}
-  const exprRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  processedHtml = processedHtml.replace(exprRegex, (_m, expression: string) => {
-    const exp = expression.trim();
+      // ternary?
+      const qIdx = exp.indexOf('?');
+      const cIdx = exp.lastIndexOf(':');
+      if (qIdx > -1 && cIdx > qIdx) {
+        const condition = exp.slice(0, qIdx).trim();
+        const truePart = exp.slice(qIdx + 1, cIdx).trim();
+        const falsePart = exp.slice(cIdx + 1).trim();
 
-    // ternary?
-    const qIdx = exp.indexOf('?');
-    const cIdx = exp.lastIndexOf(':');
-    if (qIdx > -1 && cIdx > qIdx) {
-      const condition = exp.slice(0, qIdx).trim();
-      const truePart = exp.slice(qIdx + 1, cIdx).trim();
-      const falsePart = exp.slice(cIdx + 1).trim();
+        const condResult = this.evaluateCondition(condition, context);
 
-      const condResult = this.evaluateCondition(condition, context);
+        // resolve each branch as either literal, path, or raw
+        const chosen = condResult ? truePart : falsePart;
+        const val = this.getContextValue(chosen, context);
+        return val === undefined
+          ? chosen.replace(/^['"]|['"]$/g, '') // strip quotes if they used them
+          : String(val);
+      }
 
-      // resolve each branch as either literal, path, or raw
-      const chosen = condResult ? truePart : falsePart;
-      const val = this.getContextValue(chosen, context);
-      return val === undefined
-        ? chosen.replace(/^['"]|['"]$/g, '') // strip quotes if they used them
-        : String(val);
+      // non-ternary: try to resolve as path/literal (supports row_object.name, value, etc.)
+      const v = this.getContextValue(exp, context);
+      return v !== undefined && v !== null ? String(v) : '';
+    });
+
+    // (optional) final pass for the explicit {{ value }} or {{ key }} placeholders
+    if (key) {
+      processedHtml = processedHtml
+        .replace(/\{\{\s*value\s*\}\}/g, String(primaryValue))
+        .replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), String(primaryValue));
     }
 
-    // non-ternary: try to resolve as path/literal (supports row_object.name, value, etc.)
-    const v = this.getContextValue(exp, context);
-    return (v !== undefined && v !== null) ? String(v) : '';
-  });
-
-  // (optional) final pass for the explicit {{ value }} or {{ key }} placeholders
-  if (key) {
-    processedHtml = processedHtml
-      .replace(/\{\{\s*value\s*\}\}/g, String(primaryValue))
-      .replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), String(primaryValue));
+    return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
   }
 
-  return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
-}
+  /** Resolve a.b.c or ["a"][0].b style paths against an object */
+  /** Resolve a.b.c or ["a"][0].b style paths against an object */
+  private resolvePath(path: string, root: any): any {
+    let p = (path ?? '').trim();
+    if (!p) return undefined;
 
+    // 🔧 normalize doubled quotes from SQL/JSON (''x'' or ""x"")
+    if (/^''.*''$/.test(p)) p = p.slice(2, -2).replace(/''''/g, "''"); // handle escaped inner ''
+    if (/^"".*""$/.test(p)) p = p.slice(2, -2).replace(/""""/g, '""');
 
-/** Resolve a.b.c or ["a"][0].b style paths against an object */
-/** Resolve a.b.c or ["a"][0].b style paths against an object */
-private resolvePath(path: string, root: any): any {
-  let p = (path ?? '').trim();
-  if (!p) return undefined;
+    // single-quoted / double-quoted literals
+    if ((p.startsWith("'") && p.endsWith("'")) || (p.startsWith('"') && p.endsWith('"'))) {
+      return p.slice(1, -1);
+    }
 
-  // 🔧 normalize doubled quotes from SQL/JSON (''x'' or ""x"")
-  if ((/^''.*''$/).test(p)) p = p.slice(2, -2).replace(/''''/g, "''"); // handle escaped inner ''
-  if ((/^"".*""$/).test(p)) p = p.slice(2, -2).replace(/""""/g, '""');
+    // number & boolean literals
+    if (/^-?\d+(\.\d+)?$/.test(p)) return Number(p);
+    if (p === 'true') return true;
+    if (p === 'false') return false;
 
-  // single-quoted / double-quoted literals
-  if ((p.startsWith("'") && p.endsWith("'")) || (p.startsWith('"') && p.endsWith('"'))) {
-    return p.slice(1, -1);
+    // normalize bracket to dot: a['b'][0] -> a.b.0
+    p = p.replace(/\[(\d+)\]/g, '.$1').replace(/\[["']([^"']+)["']\]/g, '.$1');
+
+    const parts = p.split('.');
+    let cur = root;
+    for (const part of parts) {
+      if (cur == null) return undefined;
+      cur = cur[part];
+    }
+    return cur;
   }
 
-  // number & boolean literals
-  if (/^-?\d+(\.\d+)?$/.test(p)) return Number(p);
-  if (p === 'true') return true;
-  if (p === 'false') return false;
-
-  // normalize bracket to dot: a['b'][0] -> a.b.0
-  p = p.replace(/\[(\d+)\]/g, '.$1')
-       .replace(/\[["']([^"']+)["']\]/g, '.$1');
-
-  const parts = p.split('.');
-  let cur = root;
-  for (const part of parts) {
-    if (cur == null) return undefined;
-    cur = cur[part];
+  private getContextValue(key: string, context: any): any {
+    return this.resolvePath(key, context);
   }
-  return cur;
-}
 
+  private parseNumber(value: any): number {
+    if (typeof value === 'number') return value;
+    const n = parseFloat(String(value).replace(/['"]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
 
-private getContextValue(key: string, context: any): any {
-  return this.resolvePath(key, context);
-}
+  /** Evaluate simple comparisons & truthiness with full context support */
+  /** Evaluate simple comparisons & truthiness with full context support */
+  private evaluateCondition(condition: string, context: any): boolean {
+    const c = (condition ?? '').trim();
+    const ops = ['==', '!=', '>=', '<=', '>', '<'] as const;
 
-private parseNumber(value: any): number {
-  if (typeof value === 'number') return value;
-  const n = parseFloat(String(value).replace(/['"]/g, ''));
-  return isNaN(n) ? 0 : n;
-}
+    for (const op of ops) {
+      const idx = c.indexOf(op);
+      if (idx > -1) {
+        let left = c.slice(0, idx).trim();
+        let right = c.slice(idx + op.length).trim();
 
-/** Evaluate simple comparisons & truthiness with full context support */
-/** Evaluate simple comparisons & truthiness with full context support */
-private evaluateCondition(condition: string, context: any): boolean {
-  const c = (condition ?? '').trim();
-  const ops = ['==', '!=', '>=', '<=', '>', '<'] as const;
+        // 🔧 normalize doubled quotes on both sides
+        if (/^''.*''$/.test(left)) left = left.slice(2, -2);
+        if (/^"".*""$/.test(left)) left = left.slice(2, -2);
+        if (/^''.*''$/.test(right)) right = right.slice(2, -2);
+        if (/^"".*""$/.test(right)) right = right.slice(2, -2);
 
-  for (const op of ops) {
-    const idx = c.indexOf(op);
-    if (idx > -1) {
-      let left = c.slice(0, idx).trim();
-      let right = c.slice(idx + op.length).trim();
+        const lv = this.getContextValue(left, context);
+        const rvRaw = this.getContextValue(right, context);
+        const rv = rvRaw === undefined ? right.replace(/^['"]|['"]$/g, '') : rvRaw;
 
-      // 🔧 normalize doubled quotes on both sides
-      if ((/^''.*''$/).test(left))  left  = left.slice(2, -2);
-      if ((/^"".*""$/).test(left))  left  = left.slice(2, -2);
-      if ((/^''.*''$/).test(right)) right = right.slice(2, -2);
-      if ((/^"".*""$/).test(right)) right = right.slice(2, -2);
-
-      const lv = this.getContextValue(left, context);
-      const rvRaw = this.getContextValue(right, context);
-      const rv = rvRaw === undefined ? right.replace(/^['"]|['"]$/g, '') : rvRaw;
-
-      switch (op) {
-        case '==': return String(lv) == String(rv);
-        case '!=': return String(lv) != String(rv);
-        case '>=': return this.parseNumber(lv) >= this.parseNumber(rv);
-        case '<=': return this.parseNumber(lv) <= this.parseNumber(rv);
-        case '>' : return this.parseNumber(lv) >  this.parseNumber(rv);
-        case '<' : return this.parseNumber(lv) <  this.parseNumber(rv);
+        switch (op) {
+          case '==':
+            return String(lv) == String(rv);
+          case '!=':
+            return String(lv) != String(rv);
+          case '>=':
+            return this.parseNumber(lv) >= this.parseNumber(rv);
+          case '<=':
+            return this.parseNumber(lv) <= this.parseNumber(rv);
+          case '>':
+            return this.parseNumber(lv) > this.parseNumber(rv);
+          case '<':
+            return this.parseNumber(lv) < this.parseNumber(rv);
+        }
       }
     }
+    return !!this.getContextValue(c, context);
   }
-  return !!this.getContextValue(c, context);
-}
-
-
-
-
- 
 
   toggleRow(item: any, row_index: number) {
     if (this.expandedItem === row_index) {
@@ -427,9 +423,6 @@ private evaluateCondition(condition: string, context: any): boolean {
     if (this.columnChildMasterListContainer) {
       this.columnChildMasterListContainer.clear();
     }
-
-    
-    
   }
 
   ngOnInit() {
@@ -632,7 +625,7 @@ private evaluateCondition(condition: string, context: any): boolean {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(this.masterInfo)
+    // console.log(this.masterInfo);
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
@@ -717,7 +710,6 @@ private evaluateCondition(condition: string, context: any): boolean {
   }
 
   onSearch() {
-    
     this.search = this.search.trim();
     let hereColumns = [...this.filteredColumns];
 
@@ -749,7 +741,7 @@ private evaluateCondition(condition: string, context: any): boolean {
         });
       const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
       this.searchQuery.emit(fdata);
-     // this.loading = false;
+      // this.loading = false;
     } else {
       //this.toastr.warning('Please select any column', 'Warning');
 
@@ -962,17 +954,13 @@ private evaluateCondition(condition: string, context: any): boolean {
     this.linkComponentClick.emit({ col, item });
   }
 
-  
-
   onLinkPopupGridClick(item: any, col: any) {
-    
-    
     this.isViewPopupOpenDirect = true;
     this.loadingpopup = true;
-    
+
     // Store the parameters for use after the view is initialized
     this.pendingPopupData = { item, entityName: col.link_action };
-    
+
     // Use setTimeout to ensure the DOM is updated and ViewChild is available
     setTimeout(() => {
       this.createColumnPopupChildMasterList(item, col.link_action);
@@ -1022,57 +1010,52 @@ private evaluateCondition(condition: string, context: any): boolean {
 
   closeViewPopup() {
     this.isViewPopupOpenDirect = false;
-    
   }
- 
 
   // In your component.ts
-onVideoHover(event: Event) {
-  const video = event.target as HTMLVideoElement;
-  if (!video.paused) return; // don't reload if already playing
-  // Optionally preload buffer when hovered
-  video.load();
-}
+  onVideoHover(event: Event) {
+    const video = event.target as HTMLVideoElement;
+    if (!video.paused) return; // don't reload if already playing
+    // Optionally preload buffer when hovered
+    video.load();
+  }
 
-onVideoLeave(event: Event) {
-  const video = event.target as HTMLVideoElement;
-  // pause, but do not reset to start
-  video.pause();
-}
+  onVideoLeave(event: Event) {
+    const video = event.target as HTMLVideoElement;
+    // pause, but do not reset to start
+    video.pause();
+  }
 
-  
-    createColumnPopupChildMasterList(item: any, entityName: string) {
-    
-      
-      // Add safety check
-      if (!this.popupChildMasterListContainer) {
-        console.error('popupChildMasterListContainer is not available');
-        this.loadingpopup = false;
-        return;
-      }
-      
-      // Clear any existing components
-      this.popupChildMasterListContainer.clear();
-      
-      const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
-      componentRef.instance.uuid = item['uuid'];
-      componentRef.instance.entity_name = entityName;
-      componentRef.instance.nonGridPage = false;
-    
-      const gridParams: any = {};
-      Object.keys(item).forEach((key) => {
-        if (key.startsWith('gparam_')) {
-          let temp_key = '$' + key;
-          gridParams[temp_key] = item[key];
-        }
-      });
-      componentRef.instance.grid_params = gridParams;
-      
-      setTimeout(() => {
-        this.loadingpopup = false;
-      }, 500);
+  createColumnPopupChildMasterList(item: any, entityName: string) {
+    // Add safety check
+    if (!this.popupChildMasterListContainer) {
+      console.error('popupChildMasterListContainer is not available');
+      this.loadingpopup = false;
+      return;
     }
-    createColumnChildMasterList(item: any, entityName: string) {
+
+    // Clear any existing components
+    this.popupChildMasterListContainer.clear();
+
+    const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.uuid = item['uuid'];
+    componentRef.instance.entity_name = entityName;
+    componentRef.instance.nonGridPage = false;
+
+    const gridParams: any = {};
+    Object.keys(item).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    componentRef.instance.grid_params = gridParams;
+
+    setTimeout(() => {
+      this.loadingpopup = false;
+    }, 500);
+  }
+  createColumnChildMasterList(item: any, entityName: string) {
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
