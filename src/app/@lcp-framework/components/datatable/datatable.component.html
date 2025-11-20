@@ -387,136 +387,132 @@
                           <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
                         </ng-container>
                       </td>-->
-                    
+
                       <!-- Replace the cell rendering section in your datatable.component.html -->
-<td
-class="max-w-150 truncate whitespace-nowrap"
-[ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
-*ngIf="!col.colFilterHide"
->
-<ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
-  
-  <!-- NEW: Check if column has field_html_content -->
-   <!-- Check if column has HTML content -->
-   <ng-container *ngIf="getHtmlTemplateFor(col) as tpl; else noHtmlContent">
+                      <td
+                        class="max-w-150 truncate whitespace-nowrap"
+                        [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
+                        *ngIf="!col.colFilterHide"
+                      >
+                        <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
+                          <!-- NEW: Check if column has field_html_content -->
+                          <!-- Check if column has HTML content -->
+                          <ng-container *ngIf="getHtmlTemplateFor(col) as tpl; else noHtmlContent">
+                            <!-- Use the same logic as in noHtmlContent, but render HTML content inside -->
+                            <ng-container *ngIf="col.link_type === 'component'; else maybePopupGridHtml">
+                              <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
+                                <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                              </span>
+                            </ng-container>
 
-    <!-- Use the same logic as in noHtmlContent, but render HTML content inside -->
-    <ng-container *ngIf="col.link_type === 'component'; else maybePopupGridHtml">
-      <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
-        <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-      </span>
-    </ng-container>
+                            <ng-template #maybePopupGridHtml>
+                              <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeUrlHtml">
+                                <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                                </span>
+                              </ng-container>
+                            </ng-template>
 
-    <ng-template #maybePopupGridHtml>
-      <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeUrlHtml">
-        <span class="block cursor-pointer truncate text-primary underline"
-              (click)="onLinkPopupGridClick(item, col)">
-          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-        </span>
-      </ng-container>
-    </ng-template>
+                            <ng-template #maybeUrlHtml>
+                              <ng-container *ngIf="col.link_type === 'url'; else defaultHtml">
+                                <a
+                                  *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrlHtml"
+                                  class="block truncate text-primary underline"
+                                  [routerLink]="col.link_action"
+                                >
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                                </a>
+                                <ng-template #externalUrlHtml>
+                                  <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
+                                    <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                                  </a>
+                                </ng-template>
+                              </ng-container>
 
-    <ng-template #maybeUrlHtml>
-      <ng-container *ngIf="col.link_type === 'url'; else defaultHtml">
-        <a
-          *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrlHtml"
-          class="block truncate text-primary underline"
-          [routerLink]="col.link_action"
-        >
-          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-        </a>
-        <ng-template #externalUrlHtml>
-          <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
-            <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-          </a>
-        </ng-template>
-      </ng-container>
+                              <ng-template #defaultHtml>
+                                <span
+                                  class="block truncate"
+                                  *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                                  ngxTippy
+                                  [attr.data-tippy-content]="item[col.header]"
+                                  [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
+                                >
+                                  <button
+                                    *ngIf="col.link_type === 'child_grid'"
+                                    class="expand-collapse-btn ml-1"
+                                    style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
+                                    (click)="toggleColumnChildGrid(item, col, row_index + 1)"
+                                  >
+                                    <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                    <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                                  </button>
+                                  <div *ngIf="!col.link_type || col.link_type === 'none'" [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                                </span>
+                                <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
+                                </span>
+                              </ng-template>
+                            </ng-template>
+                          </ng-container>
 
-      <ng-template #defaultHtml>
-        <span
-          class="block truncate"
-          *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
-          ngxTippy
-          [attr.data-tippy-content]="item[col.header]"
-          [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
-        >
-          <button
-            *ngIf="col.link_type === 'child_grid'"
-            class="expand-collapse-btn ml-1"
-            style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
-            (click)="toggleColumnChildGrid(item, col, row_index + 1)"
-          >
-            <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-            <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-          </button>
-          <div *ngIf="!col.link_type || col.link_type === 'none'" [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-        </span>
-        <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-          <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"></div>
-        </span>
-      </ng-template>
-    </ng-template>
-  </ng-container>
-  
-  <ng-template #noHtmlContent>
-    <ng-container *ngIf="col.link_type === 'component'; else maybePopupGrid">
-      <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
-        {{ item[col.header] | booleanStatus }}
-      </span>
-    </ng-container>
-    <ng-template #maybePopupGrid>
-      <ng-container *ngIf="col.link_type === 'popup_grid'; else notComponent">
-        <span class="block cursor-pointer truncate text-primary underline"
-              (click)="onLinkPopupGridClick(item, col)">
-          {{ item[col.header] | booleanStatus }}
-        </span>
-      </ng-container>
-    </ng-template>
-    <ng-template #notComponent>
-      <ng-container *ngIf="col.link_type === 'url'; else defaultCell">
-        <a
-          *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrl"
-          class="block truncate text-primary underline"
-          [routerLink]="col.link_action"
-        >
-          {{ item[col.header] | booleanStatus }}
-        </a>
-        <ng-template #externalUrl>
-          <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
-            {{ item[col.header] | booleanStatus }}
-          </a>
-        </ng-template>
-      </ng-container>
-      <ng-template #defaultCell>
-        <span
-          class="block truncate"
-          *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
-          ngxTippy
-          [attr.data-tippy-content]="item[col.header]"
-          [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
-        >
-          <button
-            *ngIf="col.link_type === 'child_grid'"
-            class="expand-collapse-btn ml-1"
-            style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
-            (click)="toggleColumnChildGrid(item, col, row_index + 1)"
-          >
-            <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-            {{ item[col.header] | booleanStatus }}
-          </button>
-          <span *ngIf="!col.link_type || col.link_type === 'none'">{{ item[col.header] | booleanStatus }}</span>
-        </span>
-        <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-          {{ item[col.header] | booleanStatus }}
-        </span>
-      </ng-template>
-    </ng-template>
-  </ng-template>
-</ng-container>
-<ng-container *ngIf="col.customTemplate">
-  <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
-</ng-container>
-</td>
+                          <ng-template #noHtmlContent>
+                            <ng-container *ngIf="col.link_type === 'component'; else maybePopupGrid">
+                              <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
+                                {{ item[col.header] | booleanStatus }}
+                              </span>
+                            </ng-container>
+                            <ng-template #maybePopupGrid>
+                              <ng-container *ngIf="col.link_type === 'popup_grid'; else notComponent">
+                                <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
+                                  {{ item[col.header] | booleanStatus }}
+                                </span>
+                              </ng-container>
+                            </ng-template>
+                            <ng-template #notComponent>
+                              <ng-container *ngIf="col.link_type === 'url'; else defaultCell">
+                                <a
+                                  *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrl"
+                                  class="block truncate text-primary underline"
+                                  [routerLink]="col.link_action"
+                                >
+                                  {{ item[col.header] | booleanStatus }}
+                                </a>
+                                <ng-template #externalUrl>
+                                  <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
+                                    {{ item[col.header] | booleanStatus }}
+                                  </a>
+                                </ng-template>
+                              </ng-container>
+                              <ng-template #defaultCell>
+                                <span
+                                  class="block truncate"
+                                  *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                                  ngxTippy
+                                  [attr.data-tippy-content]="item[col.header]"
+                                  [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
+                                >
+                                  <button
+                                    *ngIf="col.link_type === 'child_grid'"
+                                    class="expand-collapse-btn ml-1"
+                                    style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
+                                    (click)="toggleColumnChildGrid(item, col, row_index + 1)"
+                                  >
+                                    <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                    {{ item[col.header] | booleanStatus }}
+                                  </button>
+                                  <span *ngIf="!col.link_type || col.link_type === 'none'">{{ item[col.header] | booleanStatus }}</span>
+                                </span>
+                                <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                                  {{ item[col.header] | booleanStatus }}
+                                </span>
+                              </ng-template>
+                            </ng-template>
+                          </ng-template>
+                        </ng-container>
+                        <ng-container *ngIf="col.customTemplate">
+                          <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
+                        </ng-container>
+                      </td>
                     </ng-container>
                   </tr>
 

@@ -636,9 +636,12 @@ export class MasterListComponent implements OnChanges {
 
   exportTable(item: any) {
     console.log(this.commonSearchQuery);
-    if (this.masterInfo.permissions.export_excel) {
+    if (this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_pdf) {
       this.loading = true;
-      if (this.masterInfo.children.export_excel && this.masterInfo.children.export_excel.component_class_name == 'export_module') {
+      if (
+        (this.masterInfo.permissions.export_excel && this.masterInfo.children.export_excel.component_class_name == 'export_module') ||
+        (this.masterInfo.permissions.export_pdf && this.masterInfo.children.export_pdf.component_class_name == 'export_module')
+      ) {
         //const filteredHeaders = headers.filter((header) => header.header !== 'id' && header.header !== 'uuid');
 
         this.exportItem(item);

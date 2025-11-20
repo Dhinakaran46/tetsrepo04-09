@@ -242,17 +242,19 @@
               </div>
             </div>
           </ng-container>
+          <ng-container *ngIf="form.get('template_type')?.value === 'pdf'">
+            <div class="flex items-end justify-start">
+              <div>
+                <button
+                  class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+                  (click)="openPdfModal()"
+                >
+                  {{ 'configure_pdf_settings' | translate }}
+                </button>
+              </div>
+            </div>
+          </ng-container>
         </div>
-        <ng-container *ngIf="form.get('template_type')?.value === 'pdf'">
-          <div>
-            <button
-              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
-              (click)="openPdfModal()"
-            >
-              {{ 'configure_pdf_settings' | translate }}
-            </button>
-          </div>
-        </ng-container>
       </div>
     </div>
   </div>
@@ -572,9 +574,9 @@
       <!-- Body -->
       <div class="px-4 py-4 sm:px-6">
         <form [formGroup]="pdfDetailsForm" (ngSubmit)="onPdfSubmit()" class="space-y-5">
-          <div class="max-h-[calc(90vh-10rem)] space-y-6 overflow-y-auto px-2 py-1 sm:px-3">
+          <div class="px max-h-[calc(90vh-10rem)] space-y-6 overflow-y-auto py-1 sm:px-3">
             <!-- PAGE SETUP -->
-            <div>
+            <div class="px-3">
               <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'page_setup' | translate }}</h4>
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <!-- Page Size -->
@@ -588,18 +590,18 @@
                 <!-- Orientation -->
                 <div>
                   <label class="form-label required-mark">{{ 'orientation' | translate }}</label>
-                  <select formControlName="orientation" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('orientation') }">
-                    <option *ngFor="let o of orientations" [value]="o">{{ o }}</option>
+                  <select formControlName="orientation" class="form-select w-full capitalize" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('orientation') }">
+                    <option class="capitalize" *ngFor="let o of orientations" [value]="o">{{ o }}</option>
                   </select>
                 </div>
 
                 <!-- Color Theme -->
-                <div>
+                <!-- <div>
                   <label class="form-label required-mark">{{ 'color_theme' | translate }}</label>
                   <select formControlName="color_theme" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('color_theme') }">
                     <option *ngFor="let theme of colorThemes" [value]="theme">{{ theme }}</option>
                   </select>
-                </div>
+                </div> -->
 
                 <!-- Margins -->
                 <ng-container *ngFor="let m of ['top', 'bottom', 'left', 'right']">
@@ -630,7 +632,7 @@
             </div>
 
             <!-- HEADER & FOOTER -->
-            <div>
+            <div class="px-3">
               <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'header_footer_settings' | translate }}</h4>
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <!-- Header -->
@@ -696,7 +698,7 @@
             </div>
 
             <!-- TEMPLATE BODY -->
-            <div>
+            <div class="px-3">
               <label class="form-label required-mark">{{ 'template_content' | translate }}</label>
               <ngx-monaco-editor
                 monacoEditor

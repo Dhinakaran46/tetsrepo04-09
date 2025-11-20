@@ -269,14 +269,14 @@ export class ExportTemplateComponent implements OnInit {
     // Web-safe fonts
     'Helvetica',
     'Arial',
-    'Times New Roman',
-    'Courier New',
+    'TimesNewRoman',
+    'CourierNew',
     'Georgia',
     'Verdana',
     'Tahoma',
-    'Trebuchet MS',
-    'Palatino Linotype',
-    'Lucida Console',
+    'TrebuchetMS',
+    'PalatinoLinotype',
+    'LucidaConsole',
 
     // Google fonts
     'Roboto',
