@@ -26,20 +26,81 @@ export class LocalStorageService implements OnInit {
   }
 
   public getData(key: string): any {
+    const scopedKey = this.getScopedKey(key);
     const conf: any = localStorage.getItem(this.getScopedKey('config'));
-    const config: any = JSON.parse(conf);
+    //const config: any = JSON.parse(conf);
+    let config: any = null;
+  try {
+    config = conf ? JSON.parse(conf) : null;
+  } catch {
+    config = null;
+  }
+    console.log(config)
+
+    const rawValue = localStorage.getItem(scopedKey);
+  console.log(key, rawValue);
+
+  if (!rawValue) {
+    this.returnData = null;
+    return null;
+  }
     //console.log(conf);
     //console.log(config);
     //console.log(localStorage.getItem(this.getScopedKey('user_data')));
     //console.log(key)
     //console.log(config?.encrypt_local_storage === 'true')
-    if (localStorage.getItem(this.getScopedKey('user_data')) && key == 'user_data' && config?.encrypt_local_storage === 'true') {
-      //console.log('coming')
-      return this.getDataDecrypted(key);
+    console.log(key);
+    console.log(localStorage.getItem(this.getScopedKey('user_data')));
+    // Special handling for user_data
+  if (key === 'user_data') {
+    // Prefer config flag *if* it exists, but don't rely on it
+    const encryptLocalStorage = config?.encrypt_local_storage === 'true';
+
+    let finalValue = rawValue;
+
+    // 1) If config says encrypted, try decrypt
+    if (encryptLocalStorage) {
+      const decrypted = this.tryDecryptToJsonString(rawValue, key);
+      if (decrypted !== null) {
+        this.returnData = decrypted;
+        return decrypted;
+      }
     }
+
+    // 2) Even if config doesn't say encrypted, still *attempt* decrypt.
+    const maybeDecrypted = this.tryDecryptToJsonString(rawValue, key);
+    if (maybeDecrypted !== null) {
+      this.returnData = maybeDecrypted;
+      return maybeDecrypted;
+    }
+
+    // 3) Fall back to raw string (plain JSON stored)
+    this.returnData = rawValue;
+    return rawValue;
+  }
+
     this.returnData = localStorage.getItem(this.getScopedKey(key));
+    console.log(this.returnData)
     return this.returnData;
   }
+
+  private tryDecryptToJsonString(value: string, key: string): string | null {
+    try {
+      const bytes = CryptoJS.AES.decrypt(value, key);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+  
+      // If decryption fails or wrong key, decrypted will usually be empty
+      if (!decrypted) return null;
+  
+      // Make sure it’s valid JSON
+      JSON.parse(decrypted);
+  
+      return decrypted;
+    } catch {
+      return null;
+    }
+  }
+  
 
   public storeDataEncrypted(key: string, value: string | any): void {
     const encryptedInfo: string = CryptoJS.AES.encrypt(value, key).toString();

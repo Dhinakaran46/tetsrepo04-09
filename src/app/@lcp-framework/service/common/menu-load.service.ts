@@ -76,7 +76,7 @@ export class MenuLoadService {
         ['app_user_configurations.id'],
         ['app_user_configurations.config_key'],
         ['app_user_configurations.category_id'],
-        ['app_user_configurations.config_value_enc'],
+        
         ['app_user_configurations.config_value'],
         ['app_user_configurations.config_value_type'],
         ['app_user_configurations.config_field_type'],
@@ -138,7 +138,7 @@ export class MenuLoadService {
             ['app_configurations.id'],
             ['app_configurations.config_key'],
             ['app_configurations.category_id'],
-            ['app_configurations.config_value_enc'],
+            
             ['app_configurations.config_value'],
             ['app_configurations.config_value_type'],
             ['app_configurations.config_field_type'],
