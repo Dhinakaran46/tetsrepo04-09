@@ -25,7 +25,6 @@ interface TabConfiguration {
   config_select_json?: any; // <-- new field
   config_value_type: string;
   config_field_type: string;
-  config_value_enc: string;
   display_config: any;
   order_no: any;
 }
@@ -251,7 +250,7 @@ export class ConfigurationComponent implements OnInit {
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type,'config_value_enc', app_configurations.config_value_enc,'config_select_json',app_configurations.config_select_json))) END",
+          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type,'config_select_json',app_configurations.config_select_json))) END",
           'configurations',
         ],
       ],
@@ -430,7 +429,7 @@ export class ConfigurationComponent implements OnInit {
       order_no: [config.order_no],
       config_value_type: [config.config_value_type, Validators.required],
       config_field_type: [config.config_field_type, Validators.required],
-      config_value_enc: [config.config_value_enc],
+      
       display_config: [config.display_config, Validators.required],
     });
     // Attach to FormGroup for template access
@@ -642,7 +641,7 @@ export class ConfigurationComponent implements OnInit {
         category_id: extracttab[0],
         config_key: newConfig.key,
         config_field_type: newConfig.keyType,
-        config_value_enc: newConfig.config_value_enc,
+        
         config_value_type: newConfig.valueType,
         display_config: newConfig.display_config,
         config_select_json: config_select_json,
