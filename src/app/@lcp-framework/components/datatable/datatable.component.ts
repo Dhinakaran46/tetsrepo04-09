@@ -249,181 +249,62 @@ getHtmlTemplateFor(col: any): string | null {
  * @returns Sanitized HTML
  */
 getProcessedHtmlContent(htmlTemplate: string, item: any, col: any): SafeHtml {
-  // Replace all item properties in the HTML template
   let processedHtml = htmlTemplate;
-  
-  // First, handle the primary column value using col.header
-  const primaryValue = item[col.header] !== undefined ? item[col.header] : '';
-  
-  // Replace {{ value }} or {{ col.header }} with the actual column value
-  processedHtml = processedHtml.replace(/\{\{\s*value\s*\}\}/g, primaryValue);
-  processedHtml = processedHtml.replace(new RegExp(`\\{\\{\\s*${col.header}\\s*\\}\\}`, 'g'), primaryValue);
-  
-  // Find all remaining {{ property }} patterns and replace with actual values from item
-  const simpleRegex = /\{\{\s*(\w+)\s*\}\}/g;
-  let matches = processedHtml.match(simpleRegex);
-  
-  if (matches) {
-    matches.forEach(match => {
-      const property = match.replace(/\{\{\s*|\s*\}\}/g, '');
-      if (item[property] !== undefined) {
-        const value = item[property];
-        processedHtml = processedHtml.replace(
-          new RegExp(`\\{\\{\\s*${property}\\s*\\}\\}`, 'g'), 
-          value
-        );
-      }
-    });
-  }
-  
-  // Handle conditional expressions like {{ name == 'Raj Supervisor' ? 'btn-green' : 'btn-primary' }}
-  // This regex captures everything between {{ and }} including complex expressions
-  const conditionalRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  processedHtml = processedHtml.replace(conditionalRegex, (match, expression) => {
-    try {
-      // Skip if already processed (simple variable replacement)
-      if (!expression.includes('?') && !expression.includes('==') && 
-          !expression.includes('!=') && !expression.includes('>') && 
-          !expression.includes('<') && item[expression.trim()] === undefined) {
-        return match;
-      }
-      
-      // Create a safe evaluation context with item properties and col.header value
-      const context: any = { 
-        ...item,
-        value: primaryValue,  // Allow using 'value' as alias for col.header
-      };
-      
-      // Handle ternary: condition ? trueValue : falseValue
-      if (expression.includes('?') && expression.includes(':')) {
-        const parts = expression.split('?');
-        const condition = parts[0].trim();
-        const outcomes = parts[1].split(':');
-        const trueValue = outcomes[0].trim().replace(/['"]/g, '');
-        const falseValue = outcomes[1].trim().replace(/['"]/g, '');
-        
-        // Evaluate the condition using col.header context
-        const conditionResult = this.evaluateCondition(condition, context, col.header);
-        return conditionResult ? trueValue : falseValue;
-      } else {
-        // Simple property access
-        const propName = expression.trim();
-        return context[propName] !== undefined ? context[propName] : '';
-      }
-    } catch (e) {
-      console.error('Error evaluating expression:', expression, e);
-      return '';
+
+  // primary value (column field wins over header)
+  const key = (col?.field ?? col?.header) as string;
+  const primaryValue = key ? item?.[key] ?? '' : '';
+
+  // Build a context exposed to expressions:
+  // - spread row properties (e.g., name)
+  // - value: primary cell value
+  // - row_object: full row for explicit usage in templates
+  const context: any = {
+    ...item,
+    value: primaryValue,
+    row_object: item
+  };
+
+  // 1) Resolve ternary/conditional expressions first:
+  //    {{ condition ? trueValue : falseValue }} or {{ some.prop }}
+  const exprRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  processedHtml = processedHtml.replace(exprRegex, (_m, expression: string) => {
+    const exp = expression.trim();
+
+    // ternary?
+    const qIdx = exp.indexOf('?');
+    const cIdx = exp.lastIndexOf(':');
+    if (qIdx > -1 && cIdx > qIdx) {
+      const condition = exp.slice(0, qIdx).trim();
+      const truePart = exp.slice(qIdx + 1, cIdx).trim();
+      const falsePart = exp.slice(cIdx + 1).trim();
+
+      const condResult = this.evaluateCondition(condition, context);
+
+      // resolve each branch as either literal, path, or raw
+      const chosen = condResult ? truePart : falsePart;
+      const val = this.getContextValue(chosen, context);
+      return val === undefined
+        ? chosen.replace(/^['"]|['"]$/g, '') // strip quotes if they used them
+        : String(val);
     }
+
+    // non-ternary: try to resolve as path/literal (supports row_object.name, value, etc.)
+    const v = this.getContextValue(exp, context);
+    return (v !== undefined && v !== null) ? String(v) : '';
   });
-  
-  // Sanitize the HTML to prevent XSS attacks
-  //return this.sanitizer.sanitize(1, processedHtml) || '';
+
+  // (optional) final pass for the explicit {{ value }} or {{ key }} placeholders
+  if (key) {
+    processedHtml = processedHtml
+      .replace(/\{\{\s*value\s*\}\}/g, String(primaryValue))
+      .replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), String(primaryValue));
+  }
+
   return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
+  //return processedHtml;
 }
 
-/**
- * Helper method to evaluate conditions with col.header awareness
- * @param condition - The condition string to evaluate
- * @param context - The context object containing item data
- * @param colHeader - The column header to use as primary value
- * @returns Boolean result of condition evaluation
- */
-private evaluateCondition(condition: string, context: any, colHeader: string): boolean {
-  try {
-    // Replace 'value' with actual col.header in condition
-    condition = condition.replace(/\bvalue\b/g, colHeader);
-    
-    // Handle == comparisons
-    if (condition.includes('==')) {
-      const [left, right] = condition.split('==').map(s => s.trim());
-      const leftValue = this.getContextValue(left, context);
-      const rightValue = right.replace(/['"]/g, '');
-      return String(leftValue) == String(rightValue);
-    }
-    
-    // Handle != comparisons
-    if (condition.includes('!=')) {
-      const [left, right] = condition.split('!=').map(s => s.trim());
-      const leftValue = this.getContextValue(left, context);
-      const rightValue = right.replace(/['"]/g, '');
-      return String(leftValue) != String(rightValue);
-    }
-    
-    // Handle >= comparisons (must come before >)
-    if (condition.includes('>=')) {
-      const [left, right] = condition.split('>=').map(s => s.trim());
-      const leftValue = this.parseNumber(this.getContextValue(left, context));
-      const rightValue = this.parseNumber(right);
-      return leftValue >= rightValue;
-    }
-    
-    // Handle <= comparisons (must come before <)
-    if (condition.includes('<=')) {
-      const [left, right] = condition.split('<=').map(s => s.trim());
-      const leftValue = this.parseNumber(this.getContextValue(left, context));
-      const rightValue = this.parseNumber(right);
-      return leftValue <= rightValue;
-    }
-    
-    // Handle > comparisons
-    if (condition.includes('>')) {
-      const [left, right] = condition.split('>').map(s => s.trim());
-      const leftValue = this.parseNumber(this.getContextValue(left, context));
-      const rightValue = this.parseNumber(right);
-      return leftValue > rightValue;
-    }
-    
-    // Handle < comparisons
-    if (condition.includes('<')) {
-      const [left, right] = condition.split('<').map(s => s.trim());
-      const leftValue = this.parseNumber(this.getContextValue(left, context));
-      const rightValue = this.parseNumber(right);
-      return leftValue < rightValue;
-    }
-    
-    // If no operator found, treat as truthy check
-    return !!this.getContextValue(condition, context);
-  } catch (e) {
-    console.error('Error evaluating condition:', condition, e);
-    return false;
-  }
-}
-
-/**
- * Helper method to get value from context
- * @param key - The key to look up
- * @param context - The context object
- * @returns The value from context or the key if it's a literal
- */
-private getContextValue(key: string, context: any): any {
-  key = key.trim();
-  
-  // Handle string literals
-  if (key.startsWith("'") || key.startsWith('"')) {
-    return key.replace(/['"]/g, '');
-  }
-  
-  // Handle number literals
-  if (!isNaN(Number(key)) && key !== '') {
-    return Number(key);
-  }
-  
-  // Return value from context
-  return context[key] !== undefined ? context[key] : key;
-}
-
-/**
- * Helper method to safely parse numbers
- * @param value - The value to parse
- * @returns Parsed number or 0 if not a valid number
- */
-private parseNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-  const parsed = parseFloat(String(value).replace(/['"]/g, ''));
-  return isNaN(parsed) ? 0 : parsed;
-}
 
 
 onHtmlCellClick(ev: MouseEvent) {
@@ -476,6 +357,50 @@ private resolvePath(path: string, root: any): any {
 }
 
 
+private getContextValue(key: string, context: any): any {
+  return this.resolvePath(key, context);
+}
+
+private parseNumber(value: any): number {
+  if (typeof value === 'number') return value;
+  const n = parseFloat(String(value).replace(/['"]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+/** Evaluate simple comparisons & truthiness with full context support */
+/** Evaluate simple comparisons & truthiness with full context support */
+private evaluateCondition(condition: string, context: any): boolean {
+  const c = (condition ?? '').trim();
+  const ops = ['==', '!=', '>=', '<=', '>', '<'] as const;
+
+  for (const op of ops) {
+    const idx = c.indexOf(op);
+    if (idx > -1) {
+      let left = c.slice(0, idx).trim();
+      let right = c.slice(idx + op.length).trim();
+
+      // 🔧 normalize doubled quotes on both sides
+      if ((/^''.*''$/).test(left))  left  = left.slice(2, -2);
+      if ((/^"".*""$/).test(left))  left  = left.slice(2, -2);
+      if ((/^''.*''$/).test(right)) right = right.slice(2, -2);
+      if ((/^"".*""$/).test(right)) right = right.slice(2, -2);
+
+      const lv = this.getContextValue(left, context);
+      const rvRaw = this.getContextValue(right, context);
+      const rv = rvRaw === undefined ? right.replace(/^['"]|['"]$/g, '') : rvRaw;
+
+      switch (op) {
+        case '==': return String(lv) == String(rv);
+        case '!=': return String(lv) != String(rv);
+        case '>=': return this.parseNumber(lv) >= this.parseNumber(rv);
+        case '<=': return this.parseNumber(lv) <= this.parseNumber(rv);
+        case '>' : return this.parseNumber(lv) >  this.parseNumber(rv);
+        case '<' : return this.parseNumber(lv) <  this.parseNumber(rv);
+      }
+    }
+  }
+  return !!this.getContextValue(c, context);
+}
 
 
 

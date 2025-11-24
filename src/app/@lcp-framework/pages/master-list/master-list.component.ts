@@ -389,7 +389,7 @@ export class MasterListComponent implements OnChanges {
     this.isItemModalOpen = false;
   }
   advancedSearchData(data: any) {
-    // Reset common search query holders
+    // Reset the common search query conditions
     this.commonSearchQuery.having_conditions = [];
     this.commonSearchQuery.having_any_conditions = [];
     this.commonSearchQuery.search_any = [];
@@ -400,24 +400,30 @@ export class MasterListComponent implements OnChanges {
       column_name?: string;
       [key: string]: any;
     }
-  
     const query: QueryItem[] = data?.data || [];
     const condition: 'AND' | 'OR' = data?.condition || 'AND';
   
-    // --- Separate WHERE and HAVING ---
-    const whereConditions = query
-      .filter((d) => !d.isAggregate)
-      .map(({ isAggregate, ...rest }) => rest);
+    // Separate WHERE (non-aggregate) and HAVING (aggregate) conditions
+    // Separate WHERE (non-aggregate) and HAVING (aggregate) conditions
+  const whereConditions = query
+  .filter((d: QueryItem) => !d.isAggregate)
+  .map((d: QueryItem) => {
+    const { isAggregate, ...rest } = d;
+    return rest;
+  });
+
+const havingConditions = query
+  .filter((d: QueryItem) => d.isAggregate)
+  .map((d: QueryItem) => {
+    const { isAggregate, ...rest } = d;
+    return rest;
+  });
   
-    const havingConditions = query
-      .filter((d) => d.isAggregate)
-      .map(({ isAggregate, ...rest }) => rest);
+    // Deep clone to avoid mutating original listQuery
+    const clonedListQuery = JSON.parse(JSON.stringify(this.listQuery));
+    const orgListQuery = JSON.parse(JSON.stringify(this.defaultQuery));
   
-    // DO NOT DEEP CLONE – matches your existing working behaviour
-    const clonedListQuery = this.listQuery;
-    const orgListQuery = this.defaultQuery;
-  
-    // --- NO CONDITIONS → RESTORE DEFAULT ---
+    // If no conditions, restore original query
     if (whereConditions.length === 0 && havingConditions.length === 0) {
       if (condition === 'AND') {
         clonedListQuery.search_all = [...orgListQuery.search_all];
@@ -428,7 +434,7 @@ export class MasterListComponent implements OnChanges {
       return;
     }
   
-    // --- HANDLE HAVING CONDITIONS ---
+    // Handle HAVING conditions
     if (havingConditions.length > 0) {
       if (condition === 'AND') {
         clonedListQuery.having_conditions = [...havingConditions];
@@ -441,10 +447,10 @@ export class MasterListComponent implements OnChanges {
       }
     }
   
-    // --- HANDLE WHERE CONDITIONS ---
+    // Handle WHERE conditions
     if (condition === 'AND') {
-      // Case: empty single condition → restore default
-      if (whereConditions.length === 1 && (!whereConditions[0].column_name || whereConditions[0].column_name === '')) {
+      if (whereConditions.length === 1 && !whereConditions[0].column_name) {
+        // Empty condition → restore defaults
         clonedListQuery.search_all = [...orgListQuery.search_all];
         this.commonSearchQuery.search_all = [];
       } else {
@@ -453,8 +459,7 @@ export class MasterListComponent implements OnChanges {
         this.commonSearchQuery.search_any = [];
       }
     } else {
-      // OR conditions
-      if (whereConditions.length === 1 && (!whereConditions[0].column_name || whereConditions[0].column_name === '')) {
+      if (whereConditions.length === 1 && !whereConditions[0].column_name) {
         clonedListQuery.search_any = [...orgListQuery.search_any];
         this.commonSearchQuery.search_any = [];
       } else {
@@ -464,16 +469,15 @@ export class MasterListComponent implements OnChanges {
       }
     }
   
-    // Reset pagination
+    // Reset pagination and fetch data
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
   
-    console.log("Final Query:", clonedListQuery);
-    console.log("Common Search Query:", this.commonSearchQuery);
+    console.log('Final Query:', clonedListQuery);
+    console.log('Common Search Query:', this.commonSearchQuery);
   
     this.fetchData(clonedListQuery);
   }
-  
   
   previewAdvancedSearchData(data : any){
     interface previewQueryItem {
@@ -847,7 +851,6 @@ export class MasterListComponent implements OnChanges {
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content: false
                   },
                   ...data,
                 ];
@@ -862,7 +865,6 @@ export class MasterListComponent implements OnChanges {
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content:  false
                   });
                 }
               } else {
@@ -877,7 +879,6 @@ export class MasterListComponent implements OnChanges {
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content:  false
                   });
                 }
               }
@@ -1190,7 +1191,6 @@ export class MasterListComponent implements OnChanges {
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content: false
                   },
                   ...data,
                 ];
@@ -1800,7 +1800,6 @@ export class MasterListComponent implements OnChanges {
 
   processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
     this.popupName = popupName;
-    console.log(popupName, selectedItemUuid, popupEntityName, isViewPopupOpen);
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1818,12 +1817,7 @@ export class MasterListComponent implements OnChanges {
         menuItem = unorgmenuList.find(
           (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
         );
-      } else if (popupName === 'popup_grid') {
-        menuItem = unorgmenuList.find(
-          (item: any) => item.entity_name === popupEntityName
-        );  
       }
-      console.log(menuItem);
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
@@ -1833,7 +1827,6 @@ export class MasterListComponent implements OnChanges {
       const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
       hasPermission = !!(permObj && permObj.accessible);
     }
-    console.log(hasPermission)
     if (!hasPermission) {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
