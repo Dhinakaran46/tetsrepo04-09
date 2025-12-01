@@ -213,14 +213,14 @@ export class HeaderComponent implements OnInit {
     this.menuItems = this.filterMenu(this.menuItems, viewPermissions);
   }
 
-  filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
-  return menuItems.filter((item) => {
-    const permissionKey = item.entity_name;
-    const hasPermission = viewPermissions.includes(permissionKey);
-    if (item.children && item.children.length) {
-      item.children = this.filterMenu(item.children, viewPermissions);
-    }
-    // Menu item.link_type external must have either target or childern in order to display in application
+filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
+    return menuItems.filter((item) => {
+      const permissionKey = item.entity_name;
+      const hasPermission = viewPermissions.includes(permissionKey);
+      if (item.children && item.children.length) {
+        item.children = this.filterMenu(item.children, viewPermissions);
+      }
+      // Menu item.link_type external must have either target or childern in order to display in application
     if (item.link_type == 4) {
       const hasTargetOrChildren =
         (item?.target && item.target.trim() !== '') ||
@@ -233,15 +233,14 @@ export class HeaderComponent implements OnInit {
         //console.log("Skipping item (link_type=4, no target/children):", item);
         return false;
       }
-    }
-    if (item.parent_id == null) {
-      return true;
-    }
+     }
+     if (item.parent_id == null) {
+        return true;
+     }
 
-    const hasTarget = item?.target && item.target.trim() !== '';
-    return hasPermission || hasTarget || (item.children && item.children.length > 0);
-  });
-}
+      return hasPermission || (item.children && item.children.length > 0);
+    });
+  }
 
   updateActiveClasses() {
     this.resetActiveClasses(this.menuItems);
