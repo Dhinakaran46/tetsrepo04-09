@@ -300,6 +300,21 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     }
 
     return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
+    //return processedHtml;
+  }
+
+  onHtmlCellClick(ev: MouseEvent) {
+    const a = (ev.target as HTMLElement)?.closest('a') as HTMLAnchorElement | null;
+    if (!a) return;
+
+    // Don’t let row-level handlers swallow it
+    ev.stopPropagation();
+
+    const href = a.getAttribute('href');
+    if (!href) return;
+
+    const target = a.getAttribute('target') || '_blank';
+    window.open(href, target, 'noopener,noreferrer');
   }
 
   /** Resolve a.b.c or ["a"][0].b style paths against an object */

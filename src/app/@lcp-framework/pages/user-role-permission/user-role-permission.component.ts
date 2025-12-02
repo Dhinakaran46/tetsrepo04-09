@@ -34,6 +34,7 @@ interface IPermissionEntity {
   entity_permission_id: number;
   entity_permission_name: string;
   entity_permission_value: string;
+  child_entity_name: any;
 }
 
 interface IPermission {
@@ -124,6 +125,7 @@ export class UserRolePermissionComponent {
               link_type: new FormControl(right.link_type),
               permission_id: new FormControl(right.permission_id),
               entity_permission_id: new FormControl(right.entity_permission_id),
+              child_entity_name: new FormControl(right.child_entity_name),
               permission_value: new FormControl(right.permission_value == 'true'),
               entity_permission_value: new FormControl(right.entity_permission_value == 'true'),
               selected: new FormControl(isSelectedRight),
@@ -280,6 +282,7 @@ export class UserRolePermissionComponent {
                     this.fb.group({
                       entity_id: new FormControl(ielem.id),
                       entity_permission_id: new FormControl(ielem.permission_id),
+                      child_entity_name: new FormControl(ielem.child_entity_name),
                       permission_id: new FormControl(ielem.permission_id),
                       name: new FormControl('view'),
                       permission_value: new FormControl(ielem.has_permission),
@@ -334,6 +337,7 @@ export class UserRolePermissionComponent {
               link_type: new FormControl(right.link_type),
               permission_id: new FormControl(right.permission_id),
               entity_permission_id: new FormControl(right.entity_permission_id),
+              child_entity_name: new FormControl(right.child_entity_name),
               permission_value: new FormControl(right.permission_value == 'true'),
               entity_permission_value: new FormControl(right.entity_permission_value == 'true'),
               selected: new FormControl(isSelectedRight),
@@ -366,9 +370,13 @@ export class UserRolePermissionComponent {
     return (entityGroup.get('rights') as FormArray).controls as FormGroup[];
   }
   onCheckboxChange(rightGroup: FormGroup, event: Event, parentGroup: FormGroup) {
+    console.log(parentGroup);
     const rightsArray = parentGroup.get('rights') as FormArray;
     const viewControl: any = rightsArray.at(0).get('selected'); // Assuming 'View' is at index 0
     const isChecked = rightGroup.get('selected')?.value;
+
+    const entityId = rightGroup.get('entity_id')?.value;
+
     if (rightGroup.get('name')?.value === 'view') {
       if (!isChecked) {
         // If "View" is unchecked, uncheck all other checkboxes
@@ -390,9 +398,126 @@ export class UserRolePermissionComponent {
         });
       }
     }
+
+    // If the permission name is 'child_details', match its entity_id with other checkboxes from all entity groups
+    /*if (rightGroup.get('name')?.value === 'child_details') {
+      const entityIdToMatch = rightGroup.get('entity_id')?.value;
+
+      // Iterate over all entityGroups (getEntitiesControls)
+      this.getEntitiesControls().forEach((entityGroup: FormGroup) => {
+        console.log('entityGroup:', entityGroup);
+
+        // Check the rights and children recursively
+        this.checkEntityIdInRightsAndChildren(entityGroup, entityIdToMatch, isChecked);
+      });
+    }*/
+  }
+
+  checkEntityIdInRightsAndChildren(entityGroup: FormGroup, entityIdToMatch: any, isChecked: boolean) {
+    // Access rights and children as form arrays
+    const rightsArray = entityGroup.get('rights');
+    const childrenArray = entityGroup.get('children');
+
+    console.log('Checking rights:', rightsArray);
+    console.log('Checking children:', childrenArray);
+
+    // Check rights array for matching entity_id
+    if (rightsArray instanceof FormArray) {
+      rightsArray.controls.forEach((right: AbstractControl) => {
+        const rightFormGroup = right as FormGroup;
+        const rightEntityId = rightFormGroup.get('entity_id')?.value;
+        if (rightEntityId === entityIdToMatch) {
+          if (isChecked) {
+            console.log('Matching entity_id found in rights. Checking the box.');
+          } else {
+            console.log('Matching entity_id found in rights. Unchecking the box.');
+          }
+          rightFormGroup.get('selected')?.setValue(isChecked);
+
+          // Apply view checkbox logic for parent rights
+          this.applyViewCheckboxLogic(rightsArray, rightFormGroup, isChecked);
+        }
+      });
+    }
+
+    // Check children array
+    if (childrenArray instanceof FormArray) {
+      childrenArray.controls.forEach((child: AbstractControl) => {
+        const childFormGroup = child as FormGroup;
+        const childEntityId = childFormGroup.get('entity_id')?.value;
+
+        // Check if this child's entity_id matches
+        if (childEntityId === entityIdToMatch) {
+          if (isChecked) {
+            console.log('Matching entity_id found in children. Checking the box.');
+          } else {
+            console.log('Matching entity_id found in children. Unchecking the box.');
+          }
+          childFormGroup.get('selected')?.setValue(isChecked);
+        }
+
+        // Check this child's rights array
+        const childRightsArray = childFormGroup.get('rights');
+        if (childRightsArray instanceof FormArray) {
+          childRightsArray.controls.forEach((childRight: AbstractControl) => {
+            const childRightFormGroup = childRight as FormGroup;
+            const childRightEntityId = childRightFormGroup.get('entity_id')?.value;
+            if (childRightEntityId === entityIdToMatch) {
+              if (isChecked) {
+                console.log('Matching entity_id found in child rights. Checking the box.');
+              } else {
+                console.log('Matching entity_id found in child rights. Unchecking the box.');
+              }
+              childRightFormGroup.get('selected')?.setValue(isChecked);
+
+              // Apply view checkbox logic for child rights
+              this.applyViewCheckboxLogic(childRightsArray, childRightFormGroup, isChecked);
+            }
+          });
+        }
+
+        // Recurse through grandchildren if they exist
+        const grandChildrenArray = childFormGroup.get('children');
+        if (grandChildrenArray instanceof FormArray && grandChildrenArray.length > 0) {
+          this.checkEntityIdInRightsAndChildren(childFormGroup, entityIdToMatch, isChecked);
+        }
+      });
+    }
+  }
+
+  applyViewCheckboxLogic(rightsArray: FormArray, rightGroup: FormGroup, isChecked: boolean) {
+    const viewControl = rightsArray.at(0)?.get('selected'); // Assuming 'View' is at index 0
+    const rightName = rightGroup.get('name')?.value;
+
+    if (rightName === 'view') {
+      if (!isChecked) {
+        // If "View" is unchecked, uncheck all other checkboxes in this rights array
+        rightsArray.controls.forEach((control) => {
+          control.get('selected')?.setValue(false);
+        });
+      }
+    } else {
+      if (isChecked) {
+        // If checking a checkbox other than "View", check the "View" checkbox
+        viewControl?.setValue(true);
+      } else {
+        // Check if any checkboxes other than "View" are checked
+        const otherChecked = rightsArray.controls.some((control, index) => {
+          const isView = control.get('name')?.value === 'view';
+          return control.get('selected')?.value && !isView;
+        });
+
+        // Optional: If no other checkboxes are checked, you might want to uncheck view too
+        // Uncomment the following if you want this behavior:
+        // if (!otherChecked && viewControl) {
+        //   viewControl.setValue(false);
+        // }
+      }
+    }
   }
 
   getSortedRightsControls(entityGroup: FormGroup) {
+    //console.log('entityGroup:', entityGroup);
     const rightsControls = this.getRightsControls(entityGroup);
 
     if (rightsControls) {
