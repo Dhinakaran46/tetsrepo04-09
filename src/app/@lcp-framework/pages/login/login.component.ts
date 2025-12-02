@@ -361,6 +361,11 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
             },
           });
         } else {
+          if (response.code === 401) {
+            const errorMessage = 'Login Access Denied';
+            this.toastr.error(errorMessage, 'Error');
+            return;
+          }
           if (response.code == 405 || response.code == 421) {
             const key = 'incorrect_username_or_password';
             const errorMessage = this.translate.instant(key);
