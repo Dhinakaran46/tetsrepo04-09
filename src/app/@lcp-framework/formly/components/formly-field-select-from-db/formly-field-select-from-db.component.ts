@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { GridApiService } from '../../../service/common/grid.service';
 import { FormControl, FormGroup } from '@angular/forms';
 import { LocalStorageService } from '../../../service/common/local-storage.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-formly-field-select-from-db',
@@ -16,12 +17,19 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   labelControl: FormControl | undefined;
   policyData: any = null;
   user_info: any = null;
+  unique_id: any;
 
-  constructor(private gridApiService: GridApiService, private localStorageService: LocalStorageService) {
+  constructor(private route: ActivatedRoute, public router: Router, private gridApiService: GridApiService, private localStorageService: LocalStorageService) {
     super();
   }
 
   ngOnInit() {
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+      const uuid = params.get('uuid');
+      const value = id || uuid;
+      this.unique_id = value;
+    });
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     if (this.user_info.main?.policies) {
       this.policyData = this.user_info.main?.policies || null;
@@ -105,7 +113,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
       const sort_columns = this.props['sort_columns'] ? this.props['sort_columns'] : [[labelColumn, 'asc']];
       const includes = this.props['includes'] ? this.props['includes'] : [];
 
-      const listParams = this.localStorageService.replaceUniqueId(
+      let listParams = this.localStorageService.replaceUniqueId(
         this.localStorageService.formatPayloadWithPolicyConditions(
           {
             company_id: 1,
@@ -125,6 +133,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
         this.user_info.main.id
       );
 
+      listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
       let hasSetFirstValue = false;
       this.options$ = this.gridApiService.getAllList(listParams).pipe(
         map((response: any) => {
@@ -203,6 +212,10 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   }
 
   openNestedFormModal(entityName: string, fieldKey?: string, modalConfig?: any, uuid?: string | null) {
+    if (!entityName || entityName.trim() === '') {
+      console.warn('No entity name provided for nested form modal');
+      return;
+    }
     const modalCfg = modalConfig ?? this.getModalConfig();
     // Access the parent component's method through formState
     const componentInstance = this.options?.formState?.componentInstance;

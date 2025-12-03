@@ -623,7 +623,6 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportTable(item: any) {
-    console.log(this.commonSearchQuery);
     if (this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_pdf) {
       this.loading = true;
       if (
@@ -805,7 +804,6 @@ export class MasterListComponent implements OnChanges {
       payload.unique_id = this.uuid;
     }
 
-    console.log(payload.unique_id);
     this.grid_unique_id = payload.unique_id;
 
     if (this.grid_params) {
@@ -1352,13 +1350,10 @@ export class MasterListComponent implements OnChanges {
     }
 
     if ((item.type === 'excel' && this.masterInfo.children.export_excel) || (item.type === 'pdf' && this.masterInfo.children.export_pdf)) {
-      console.log('type===>', item.type);
       const id = item.type === 'excel' ? this.masterInfo.children.export_excel.id : item.type === 'pdf' ? this.masterInfo.children.export_pdf.id : null;
-      console.log('type===>', id, this.masterInfo);
       if (id) {
         this.gridApiService.exportAllRecords(id, this.commonSearchQuery).subscribe({
           next: (response: ExportResponse) => {
-            console.log('response', response);
             try {
               if (response.blob) {
                 const type =
@@ -1809,7 +1804,6 @@ export class MasterListComponent implements OnChanges {
 
   processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
     this.popupName = popupName;
-    console.log(popupName, selectedItemUuid, popupEntityName, isViewPopupOpen);
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1830,7 +1824,6 @@ export class MasterListComponent implements OnChanges {
       } else if (popupName === 'popup_grid') {
         menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName);
       }
-      console.log(menuItem);
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
@@ -1840,7 +1833,6 @@ export class MasterListComponent implements OnChanges {
       const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
       hasPermission = !!(permObj && permObj.accessible);
     }
-    console.log(hasPermission);
     if (!hasPermission) {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
