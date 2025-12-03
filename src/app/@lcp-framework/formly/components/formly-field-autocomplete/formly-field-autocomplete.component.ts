@@ -173,7 +173,6 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
       console.warn('No entity name provided for nested form modal');
       return;
     }
-
     // Access the parent component's method through formState
     const componentInstance = this.options?.formState?.componentInstance;
     if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {

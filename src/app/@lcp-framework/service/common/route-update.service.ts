@@ -35,7 +35,7 @@ export class RouteUpdateService {
 
   constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
     this.renderer = this.rendererFactory.createRenderer(null, null);
-    
+
     const permissionsList = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')).permissions : null;
 
     this.permissionsListSubject.next(permissionsList);
@@ -73,13 +73,13 @@ export class RouteUpdateService {
           const dynamicRoutes = routeDataArray
             .filter((routeData: any) => routeData.entity_name && routeData.component_class_name)
             .map((routeData: any) => {
-              
               const viewPermissionKey = `view_${routeData.entity_name}`;
 
               const createPermissionKey = `add_${routeData.entity_name}`;
               const editPermissionKey = `edit_${routeData.entity_name}`;
               const deletePermissionKey = `delete_${routeData.entity_name}`;
               const exportExcelPermissionKey = `export_excel_${routeData.entity_name}`;
+              const exportPDFPermissionKey = `export_pdf_${routeData.entity_name}`;
               const detailsPermissionKey = `details_${routeData.entity_name}`;
               const assignPermissionKey = `assign_${routeData.entity_name}`;
               const printPermissionKey = `print_${routeData.entity_name}`;
@@ -91,7 +91,7 @@ export class RouteUpdateService {
               const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
               const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
               const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
-              
+
               const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -204,13 +204,12 @@ export class RouteUpdateService {
                   import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
                 carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
                 barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
-                common_permission_module:() => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
+                common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
               };
 
-             
               const route: Route = {
                 path: targetPath,
-             
+
                 loadComponent: componentMap[routeData.component_class_name] || null,
                 title: routeData.entity_name,
                 data: {
@@ -238,6 +237,7 @@ export class RouteUpdateService {
                       edit: permissionListJSON[editPermissionKey] || false,
                       delete: permissionListJSON[deletePermissionKey] || false,
                       export_excel: permissionListJSON[exportExcelPermissionKey] || false,
+                      export_pdf: permissionListJSON[exportPDFPermissionKey] || false,
                       details: permissionListJSON[detailsPermissionKey] || false,
                       assign: permissionListJSON[assignPermissionKey] || false,
                       print: permissionListJSON[printPermissionKey] || false,
@@ -248,7 +248,7 @@ export class RouteUpdateService {
                       popup_create: permissionListJSON[popupCreatePermissionKey] || false,
                       popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                       popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
-                      reset_password: permissionListJSON[resetPasswordPermissionKey] || false
+                      reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
                     },
                     children: children,
                   },
@@ -270,7 +270,6 @@ export class RouteUpdateService {
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
-    
     const user_data_raw = this.localStore.getData('user_data');
     if (!user_data_raw || user_data_raw === 'undefined') return null;
 
@@ -280,7 +279,6 @@ export class RouteUpdateService {
     const permissionListJSON = await firstValueFrom(this.getPermissionListJSON());
     if (!permissionListJSON || !routeDataArray.length) return null;
 
-    
     if (permissionListJSON && routeDataArray) {
       const dynamicRoutes = routeDataArray
         .filter((routeData: any) => routeData.entity_name === entity_name && routeData.component_class_name)
@@ -290,6 +288,7 @@ export class RouteUpdateService {
           const editPermissionKey = `edit_${routeData.entity_name}`;
           const deletePermissionKey = `delete_${routeData.entity_name}`;
           const exportExcelPermissionKey = `export_excel_${routeData.entity_name}`;
+          const exportPDFPermissionKey = `export_pdf_${routeData.entity_name}`;
           const detailsPermissionKey = `details_${routeData.entity_name}`;
           const assignPermissionKey = `assign_${routeData.entity_name}`;
           const printPermissionKey = `print_${routeData.entity_name}`;
@@ -387,10 +386,9 @@ export class RouteUpdateService {
             child_process_setting_module: () =>
               import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
-            common_permission_module:() => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
+            common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
           };
 
-          
           const route: Route = {
             path: targetPath,
             loadComponent: componentMap[routeData.component_class_name] || null,
@@ -419,6 +417,7 @@ export class RouteUpdateService {
                   edit: permissionListJSON[editPermissionKey] || false,
                   delete: permissionListJSON[deletePermissionKey] || false,
                   export_excel: permissionListJSON[exportExcelPermissionKey] || false,
+                  export_pdf: permissionListJSON[exportPDFPermissionKey] || false,
                   details: permissionListJSON[detailsPermissionKey] || false,
                   assign: permissionListJSON[assignPermissionKey] || false,
                   print: permissionListJSON[printPermissionKey] || false,
@@ -429,7 +428,7 @@ export class RouteUpdateService {
                   popup_create: permissionListJSON[popupCreatePermissionKey] || false,
                   popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                   popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
-                  reset_password: permissionListJSON[resetPasswordPermissionKey] || false
+                  reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
                 },
                 children: children,
               },
@@ -451,7 +450,7 @@ export class RouteUpdateService {
     if (resn) {
       this.changeFavicon(this.apiUrl + '/' + resn.favicon);
     }
-    
+
     const user_data = this.localStore.getData('user_data') ? JSON.parse(this.localStore.getData('user_data')) : null;
     const unorgmenuList = user_data && user_data?.unorgmenuList ? user_data?.unorgmenuList : null;
     if (unorgmenuList) {
@@ -462,8 +461,6 @@ export class RouteUpdateService {
         if (appLayoutRoute && appLayoutRoute.children) {
           appLayoutRoute.children.unshift(...dynamicRoutes);
           this.router.resetConfig(config);
-
-          
         }
       });
     }
