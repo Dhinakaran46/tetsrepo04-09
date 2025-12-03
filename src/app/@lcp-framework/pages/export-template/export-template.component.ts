@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconXComponent } from '../../shared/icon/icon-x';
@@ -161,7 +161,7 @@ export class ExportTemplateComponent implements OnInit {
   // Add modal state variables
   isItemModalOpen = false;
   isQueryModalOpen = false;
-
+  isPdfModalOpen = false;
   // Items Datatable Configuration
   itemsTableConfig: TableConfig = {
     columns: [
@@ -260,6 +260,40 @@ export class ExportTemplateComponent implements OnInit {
     },
   };
 
+  pageSizes = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'LETTER', 'LEGAL', 'TABLOID', 'EXECUTIVE'];
+
+  orientations = ['portrait', 'landscape'];
+  colorThemes = ['light', 'dark', 'corporate', 'classic', 'minimal', 'modern', 'vibrant', 'monochrome', 'custom'];
+
+  fonts = [
+    // Web-safe fonts
+    'Helvetica',
+    'Arial',
+    'TimesNewRoman',
+    'CourierNew',
+    'Georgia',
+    'Verdana',
+    'Tahoma',
+    'TrebuchetMS',
+    'PalatinoLinotype',
+    'LucidaConsole',
+
+    // Google fonts
+    'Roboto',
+    'OpenSans',
+    'Lato',
+    'Poppins',
+    'Inter',
+    'Montserrat',
+    'Nunito',
+    'SourceSansPro',
+    'Raleway',
+    'Merriweather',
+    'Ubuntu',
+  ];
+
+  watermarkPositions = ['center', 'diagonal', 'top_left', 'top_right', 'bottom_left', 'bottom_right', 'full_background'];
+
   constructor(
     private fb: FormBuilder,
     private gridApiService: GridApiService,
@@ -271,7 +305,8 @@ export class ExportTemplateComponent implements OnInit {
     public location: Location,
     private translate: TranslateService,
     private titleService: Title,
-    private http: HttpClient
+    private http: HttpClient,
+    private zone: NgZone
   ) {
     this.initStore();
   }
@@ -538,7 +573,6 @@ export class ExportTemplateComponent implements OnInit {
     });
 
     this.addFormArraySubscriptions();
-    
 
     this.form.get('header_row')?.valueChanges.subscribe(() => {
       if (this.selectedFile) {
@@ -553,8 +587,6 @@ export class ExportTemplateComponent implements OnInit {
       query_name: ['', [Validators.required, Validators.min(0)]],
       query_procedure: ['', [Validators.required]],
     });
-
-    
   }
 
   addFormArraySubscriptions() {
@@ -721,21 +753,193 @@ export class ExportTemplateComponent implements OnInit {
     return null;
   }
 
+  private updateTemplateValidators(type: string): void {
+    const pdfGroup = this.form.get('pdfDetails') as FormGroup;
+    const xlsxFields = ['header_row', 'data_start_row', 'data_end_row', 'max_row_count', 'data_filepath'].map((f) => this.form.get(f)!);
+
+    // Clear all validators first
+    xlsxFields.forEach((ctrl) => ctrl?.clearValidators());
+    Object.values(pdfGroup.controls).forEach((ctrl) => ctrl?.clearValidators());
+
+    if (type === 'xlsx') {
+      // XLSX → only xlsx fields required
+      xlsxFields.forEach((ctrl) => ctrl?.setValidators([Validators.required]));
+      [
+        'margin_top',
+        'margin_bottom',
+        'margin_left',
+        'margin_right',
+        'page_size',
+        'orientation',
+        'color_theme',
+        'font_family',
+        'font_size',
+        'template_content',
+      ].forEach((f) => {
+        pdfGroup.get(f)?.clearValidators();
+      });
+      pdfGroup.disable({ emitEvent: false });
+    } else if (type === 'pdf') {
+      // PDF → enable pdf fields
+      pdfGroup.enable({ emitEvent: false });
+      pdfGroup.get('font_size')?.setValidators([Validators.required, Validators.min(6), Validators.max(48)]);
+      ['page_size', 'orientation', 'color_theme', 'font_family', 'template_content'].forEach((f) => {
+        pdfGroup.get(f)?.setValidators([Validators.required]);
+      });
+      ['margin_top', 'margin_bottom', 'margin_left', 'margin_right'].forEach((f) => {
+        pdfGroup.get(f)?.setValidators([Validators.required, Validators.min(0)]);
+      });
+    } else {
+      pdfGroup.disable({ emitEvent: false });
+    }
+
+    // Recalculate
+    xlsxFields.forEach((ctrl) => ctrl.updateValueAndValidity({ emitEvent: false }));
+    pdfGroup.updateValueAndValidity({ emitEvent: false });
+  }
+
   initForm() {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       slug: [''],
+      template_type: ['xlsx', Validators.required],
       description: ['', Validators.required],
-      max_row_count: ['', Validators.required],
-      data_filepath: ['', Validators.required],
-      header_row: ['', Validators.required],
-      data_start_row: ['', Validators.required],
-      data_end_row: ['', Validators.required],
-
+      max_row_count: [''],
+      data_filepath: [''],
+      header_row: [''],
+      data_start_row: [''],
+      data_end_row: [''],
       status_id: [1],
       items: this.fb.array([]),
       queries: this.fb.array([]),
+      pdfDetails: this.fb.group({
+        page_size: ['A4', Validators.required],
+        orientation: ['portrait', Validators.required],
+        margin_top: [20, [Validators.required, Validators.min(0)]],
+        margin_bottom: [20, [Validators.required, Validators.min(0)]],
+        margin_left: [15, [Validators.required, Validators.min(0)]],
+        margin_right: [15, [Validators.required, Validators.min(0)]],
+        color_theme: ['light', Validators.required],
+        font_family: ['Helvetica', Validators.required],
+        font_size: [12, [Validators.required, Validators.min(6), Validators.max(48)]],
+        is_paginated: [false],
+        is_header_enabled: [false],
+        is_footer_enabled: [false],
+        template_header: [{ value: '', disabled: true }],
+        template_footer: [{ value: '', disabled: true }],
+        template_content: ['', Validators.required],
+        is_repeatative_header: [{ value: true, disabled: true }],
+        is_repeatative_footer: [{ value: true, disabled: true }],
+        is_first_page_header_only: [{ value: false, disabled: true }],
+        is_first_page_footer_only: [{ value: false, disabled: true }],
+        is_watermark_enabled: [false],
+        watermark_text: [{ value: '', disabled: true }],
+        watermark_image: [{ value: '', disabled: true }],
+        watermark_position: [{ value: 'center', disabled: true }],
+      }),
     });
+
+    const initialType = this.form.get('template_type')?.value;
+    this.updateTemplateValidators(initialType);
+    const pdfDetailsGroup = this.form.get('pdfDetails') as FormGroup;
+
+    // Template type logic
+    this.form.get('template_type')?.valueChanges.subscribe((type) => {
+      this.updateTemplateValidators(type);
+    });
+
+    // Run once on init to set correct validators
+
+    //  Header enable/disable
+    pdfDetailsGroup.get('is_header_enabled')?.valueChanges.subscribe((enabled) => {
+      const repeatHeader = pdfDetailsGroup.get('is_repeatative_header');
+      const firstPageHeader = pdfDetailsGroup.get('is_first_page_header_only');
+      const templateHeader = pdfDetailsGroup.get('template_header');
+
+      if (enabled) {
+        repeatHeader?.enable({ emitEvent: true });
+        firstPageHeader?.enable({ emitEvent: false });
+        templateHeader?.enable({ emitEvent: false });
+        templateHeader?.setValidators([Validators.required]);
+      } else {
+        repeatHeader?.setValue(false, { emitEvent: false });
+        firstPageHeader?.setValue(false, { emitEvent: false });
+        templateHeader?.setValue('', { emitEvent: false });
+        repeatHeader?.disable({ emitEvent: false });
+        firstPageHeader?.disable({ emitEvent: false });
+        templateHeader?.disable({ emitEvent: false });
+        templateHeader?.clearValidators();
+      }
+      [repeatHeader, firstPageHeader, templateHeader].forEach((ctrl) => ctrl?.updateValueAndValidity({ emitEvent: false }));
+    });
+
+    //  Footer enable/disable
+    pdfDetailsGroup.get('is_footer_enabled')?.valueChanges.subscribe((enabled) => {
+      const repeatFooter = pdfDetailsGroup.get('is_repeatative_footer');
+      const firstPageFooter = pdfDetailsGroup.get('is_first_page_footer_only');
+      const templateFooter = pdfDetailsGroup.get('template_footer');
+
+      if (enabled) {
+        repeatFooter?.enable({ emitEvent: true });
+        firstPageFooter?.enable({ emitEvent: false });
+        templateFooter?.enable({ emitEvent: false });
+        templateFooter?.setValidators([Validators.required]);
+      } else {
+        repeatFooter?.setValue(false, { emitEvent: false });
+        firstPageFooter?.setValue(false, { emitEvent: false });
+        templateFooter?.setValue('', { emitEvent: false });
+        repeatFooter?.disable({ emitEvent: false });
+        firstPageFooter?.disable({ emitEvent: false });
+        templateFooter?.disable({ emitEvent: false });
+        templateFooter?.clearValidators();
+      }
+      [repeatFooter, firstPageFooter, templateFooter].forEach((ctrl) => ctrl?.updateValueAndValidity({ emitEvent: false }));
+    });
+
+    pdfDetailsGroup.get('is_first_page_header_only')?.valueChanges.subscribe((enabled) => {
+      const repeatHeader = pdfDetailsGroup.get('is_repeatative_header');
+      if (enabled) repeatHeader?.setValue(false, { emitEvent: false });
+    });
+
+    pdfDetailsGroup.get('is_first_page_footer_only')?.valueChanges.subscribe((enabled) => {
+      const repeatFooter = pdfDetailsGroup.get('is_repeatative_footer');
+      if (enabled) repeatFooter?.setValue(false, { emitEvent: false });
+    });
+
+    //  Header/footers repeatable
+    pdfDetailsGroup.get('is_repeatative_header')?.valueChanges.subscribe((enabled) => {
+      const firstPageHeader = pdfDetailsGroup.get('is_first_page_header_only');
+      if (enabled) firstPageHeader?.setValue(false, { emitEvent: false });
+    });
+
+    pdfDetailsGroup.get('is_repeatative_footer')?.valueChanges.subscribe((enabled) => {
+      const firstPageFooter = pdfDetailsGroup.get('is_first_page_footer_only');
+      if (enabled) firstPageFooter?.setValue(false, { emitEvent: false });
+    });
+
+    //  Watermark enable/disable
+    pdfDetailsGroup.get('is_watermark_enabled')?.valueChanges.subscribe((enabled) => {
+      const textCtrl = pdfDetailsGroup.get('watermark_text');
+      const imageCtrl = pdfDetailsGroup.get('watermark_image');
+      const posCtrl = pdfDetailsGroup.get('watermark_position');
+
+      if (enabled) {
+        textCtrl?.enable({ emitEvent: false });
+        imageCtrl?.enable({ emitEvent: false });
+        posCtrl?.enable({ emitEvent: false });
+        textCtrl?.setValidators([Validators.required]);
+        posCtrl?.setValidators([Validators.required]);
+      } else {
+        textCtrl?.disable({ emitEvent: false });
+        imageCtrl?.disable({ emitEvent: false });
+        posCtrl?.disable({ emitEvent: false });
+        textCtrl?.clearValidators();
+        imageCtrl?.clearValidators();
+        posCtrl?.clearValidators();
+      }
+      [textCtrl, imageCtrl, posCtrl].forEach((ctrl) => ctrl?.updateValueAndValidity({ emitEvent: false }));
+    });
+
     this.initLineItemForm();
     this.initLineQueryForm();
   }
@@ -790,7 +994,6 @@ export class ExportTemplateComponent implements OnInit {
       if (this._originalItems && this._originalItems[index]) {
         this._originalItems.splice(index, 1);
       }
-     
     } else {
       this.toastr.warning(`Item with field_name: ${item.field_name} not found.`);
     }
@@ -808,7 +1011,6 @@ export class ExportTemplateComponent implements OnInit {
       if (this._originalQueries && this._originalQueries[index]) {
         this._originalQueries.splice(index, 1);
       }
-     
     } else {
       this.toastr.warning(`Query with query_name: ${query.query_name} not found.`);
     }
@@ -871,6 +1073,7 @@ export class ExportTemplateComponent implements OnInit {
           this.form.patchValue({
             name: entity.name,
             slug: entity.slug,
+            template_type: entity.template_type,
             description: entity.description,
             max_row_count: entity.max_row_count,
             data_filepath: entity.data_filepath,
@@ -881,6 +1084,32 @@ export class ExportTemplateComponent implements OnInit {
             status_id: entity.status_id,
           });
 
+          const pdfGroup = this.form.get('pdfDetails') as FormGroup;
+          pdfGroup.patchValue({
+            page_size: entity.page_size || 'A4',
+            orientation: entity.orientation || 'portrait',
+            margin_top: entity.margin_top ?? 20,
+            margin_bottom: entity.margin_bottom ?? 20,
+            margin_left: entity.margin_left ?? 15,
+            margin_right: entity.margin_right ?? 15,
+            color_theme: entity.color_theme || 'light',
+            font_family: entity.font_family || 'Helvetica',
+            font_size: entity.font_size ?? 12,
+            is_paginated: entity.is_paginated ?? false,
+            is_header_enabled: entity.is_header_enabled ?? false,
+            is_footer_enabled: entity.is_footer_enabled ?? false,
+            template_header: entity.template_header || '',
+            template_footer: entity.template_footer || '',
+            template_content: entity.template_content || '',
+            is_repeatative_header: entity.is_repeatative_header ?? false,
+            is_repeatative_footer: entity.is_repeatative_footer ?? false,
+            is_first_page_header_only: entity.is_first_page_header_only ?? false,
+            is_first_page_footer_only: entity.is_first_page_footer_only ?? false,
+            is_watermark_enabled: entity.is_watermark_enabled ?? false,
+            watermark_text: entity.watermark_text || '',
+            watermark_image: entity.watermark_image || '',
+            watermark_position: entity.watermark_position || 'center',
+          });
           // Handle Excel file display
 
           if (entity.data_filepath) {
@@ -949,16 +1178,41 @@ export class ExportTemplateComponent implements OnInit {
   getAddParams(formData: any) {
     const master = [
       {
-        name: formData.name,
+        name: formData?.name,
 
-        status_id: formData.status_id,
-        slug: formData.slug,
-        description: formData.description,
-        max_row_count: formData.max_row_count,
-        data_filepath: formData.data_filepath,
-        header_row: formData.header_row,
-        data_start_row: formData.data_start_row,
-        data_end_row: formData.data_end_row,
+        status_id: formData?.status_id,
+        slug: formData?.slug,
+        template_type: formData?.template_type,
+        description: formData?.description,
+        max_row_count: formData?.max_row_count,
+        data_filepath: formData?.data_filepath,
+        header_row: formData?.header_row,
+        data_start_row: formData?.data_start_row,
+        data_end_row: formData?.data_end_row,
+        page_size: formData?.pdfDetails?.page_size ?? 'A4',
+        orientation: formData?.pdfDetails?.orientation ?? 'portrait',
+        margin_top: formData?.pdfDetails?.margin_top ?? 20,
+        margin_bottom: formData?.pdfDetails?.margin_bottom ?? 20,
+        margin_left: formData?.pdfDetails?.margin_left ?? 15,
+        margin_right: formData?.pdfDetails?.margin_right ?? 15,
+        color_theme: formData?.pdfDetails?.color_theme ?? 'light',
+        font_family: formData?.pdfDetails?.font_family ?? 'Helvetica',
+        font_size: formData?.pdfDetails?.font_size ?? 12,
+        is_paginated: formData?.pdfDetails?.is_paginated ?? false,
+        is_header_enabled: formData?.pdfDetails?.is_header_enabled ?? false,
+        is_footer_enabled: formData?.pdfDetails?.is_footer_enabled ?? false,
+        template_header: formData?.pdfDetails?.template_header ?? '',
+        template_footer: formData?.pdfDetails?.template_footer ?? '',
+        template_content: formData?.pdfDetails?.template_content ?? '',
+        is_repeatative_header: formData?.pdfDetails?.is_repeatative_header ?? false,
+        is_repeatative_footer: formData?.pdfDetails?.is_repeatative_footer ?? false,
+        is_first_page_header_only: formData?.pdfDetails?.is_first_page_header_only ?? false,
+        is_first_page_footer_only: formData?.pdfDetails?.is_first_page_footer_only ?? false,
+        is_watermark_enabled: formData?.pdfDetails?.is_watermark_enabled ?? false,
+        watermark_text: formData?.pdfDetails?.watermark_text ?? '',
+        watermark_image: formData?.pdfDetails?.watermark_image ?? '',
+        watermark_position: formData?.pdfDetails?.watermark_position ?? 'center',
+        created_by: true,
       },
     ];
 
@@ -1002,13 +1256,38 @@ export class ExportTemplateComponent implements OnInit {
         name: formData.name,
 
         status_id: formData.status_id,
-        slug: formData.slug,
-        description: formData.description,
-        max_row_count: formData.max_row_count,
-        data_filepath: formData.data_filepath,
-        header_row: formData.header_row,
-        data_start_row: formData.data_start_row,
-        data_end_row: formData.data_end_row,
+        slug: formData?.slug,
+        template_type: formData?.template_type,
+        description: formData?.description,
+        max_row_count: formData?.max_row_count,
+        data_filepath: formData?.data_filepath,
+        header_row: formData?.header_row,
+        data_start_row: formData?.data_start_row,
+        data_end_row: formData?.data_end_row,
+        page_size: formData?.pdfDetails?.page_size ?? 'A4',
+        orientation: formData?.pdfDetails?.orientation ?? 'portrait',
+        margin_top: formData?.pdfDetails?.margin_top ?? 20,
+        margin_bottom: formData?.pdfDetails?.margin_bottom ?? 20,
+        margin_left: formData?.pdfDetails?.margin_left ?? 15,
+        margin_right: formData?.pdfDetails?.margin_right ?? 15,
+        color_theme: formData?.pdfDetails?.color_theme ?? 'light',
+        font_family: formData?.pdfDetails?.font_family ?? 'Helvetica',
+        font_size: formData?.pdfDetails?.font_size ?? 12,
+        is_paginated: formData?.pdfDetails?.is_paginated ?? false,
+        is_header_enabled: formData?.pdfDetails?.is_header_enabled ?? false,
+        is_footer_enabled: formData?.pdfDetails?.is_footer_enabled ?? false,
+        template_header: formData?.pdfDetails?.template_header ?? '',
+        template_footer: formData?.pdfDetails?.template_footer ?? '',
+        template_content: formData?.pdfDetails?.template_content ?? '',
+        is_repeatative_header: formData?.pdfDetails?.is_repeatative_header ?? false,
+        is_repeatative_footer: formData?.pdfDetails?.is_repeatative_footer ?? false,
+        is_first_page_header_only: formData?.pdfDetails?.is_first_page_header_only ?? false,
+        is_first_page_footer_only: formData?.pdfDetails?.is_first_page_footer_only ?? false,
+        is_watermark_enabled: formData?.pdfDetails?.is_watermark_enabled ?? false,
+        watermark_text: formData?.pdfDetails?.watermark_text ?? '',
+        watermark_image: formData?.pdfDetails?.watermark_image ?? '',
+        watermark_position: formData?.pdfDetails?.watermark_position ?? 'center',
+        updated_by: true,
       },
     ];
 
@@ -1098,8 +1377,11 @@ export class ExportTemplateComponent implements OnInit {
     return field ? field.invalid && (field.touched || this.submitted) : false;
   }
 
-  isFormInvalid() {
-    return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0;
+  isFormInvalid(): boolean {
+    const templateType = this.form.get('template_type')?.value;
+    const isPdfInvalid = templateType === 'pdf' ? this.form.get('pdfDetails')?.invalid : false;
+
+    return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0 || !!isPdfInvalid;
   }
 
   logFormStatus(): void {
@@ -1285,5 +1567,42 @@ export class ExportTemplateComponent implements OnInit {
       return sort.direction === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
     });
     this.onQueriesDataChange(queries);
+  }
+  openPdfModal() {
+    if (this.form.get('template_type')?.value === 'pdf') {
+      this.isPdfModalOpen = true;
+    }
+  }
+  closePdfModal() {
+    this.isPdfModalOpen = false;
+  }
+
+  //  Helper methods
+  get pdfDetailsForm(): FormGroup {
+    return this.form.get('pdfDetails') as FormGroup;
+  }
+  isFieldInvalidPdf(fieldName: string): boolean {
+    const field = this.pdfDetailsForm.get(fieldName);
+    return field ? field.invalid && (field.touched || this.submitted) : false;
+  }
+  getErrorMessagePdf(fieldName: string): string {
+    const field = this.pdfDetailsForm.get(fieldName);
+    if (!field) return '';
+    if (field.hasError('required')) return 'This field is required';
+    if (field.hasError('maxlength')) return `Maximum length exceeded (${field.errors?.['maxlength'].requiredLength} characters allowed)`;
+    if (field.hasError('min')) return `Minimum value is ${field.errors?.['min'].min}`;
+    if (field.hasError('max')) return `Maximum value is ${field.errors?.['max'].max}`;
+    return '';
+  }
+
+  onPdfSubmit(): void {
+    this.submitted = true;
+    const pdfGroup = this.pdfDetailsForm;
+    if (pdfGroup.invalid) {
+      pdfGroup.markAllAsTouched();
+      return;
+    }
+    console.log('✅ PDF Settings Saved:', pdfGroup.value);
+    this.closePdfModal();
   }
 }

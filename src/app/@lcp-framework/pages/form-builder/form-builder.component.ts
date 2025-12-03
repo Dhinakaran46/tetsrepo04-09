@@ -217,7 +217,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           return item;
         });
       }
-
       // Replace placeholders with the updated model values
       listParams = this.replacePlaceholders(listParams, this.model, false);
 
@@ -246,7 +245,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         }
         observer.next(this.listDatas[key]);
         observer.complete();
-      } else if (key && this.listParams[key]) {
+      } else if (key && this.listParams && this.listParams[key]) {
         const required = false;
         let listParams = this.localStorageService.replaceUniqueId(
           this.localStorageService.formatPayloadWithPolicyConditions(
@@ -588,12 +587,12 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   private replacePlaceholders(obj: any, model: any, required: boolean = true): any {
     const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutation
+    const skipPlaceholders = new Set(['unique_id', 'session_user_id']);
 
     const replaceInObject = (item: any, context: any = model, index?: number): any => {
-      // Handle arrays (loop recursively with proper sub-context)
+      // Handle arrays recursively
       if (Array.isArray(item)) {
         return item.map((subItem, i) => {
-          // Dynamically detect array key in context
           const arrayKey = Object.keys(context || {}).find((key) => Array.isArray(context[key]) && context[key].length > i);
 
           const arrayContext = arrayKey ? { ...context, [arrayKey]: context[arrayKey][i] } : context;
@@ -614,9 +613,11 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
       // Handle strings with placeholders
       if (typeof item === 'string') {
-        // Case 1: whole string is a single placeholder (like "$table.column")
+        // Case 1: whole string is one placeholder like "$table.column"
         if (/^\$[a-zA-Z0-9_.\[\]]+$/.test(item)) {
           const path = item.substring(1);
+
+          // if (skipPlaceholders.has(path)) return item;
           const value = this.getNestedProperty(path, context);
 
           if (value === undefined) return item;
@@ -628,15 +629,17 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           return typeof value === 'string' ? `${value}` : String(value);
         }
 
-        // Case 2: inline placeholders (inside SQL text)
+        // Case 2: inline placeholders inside SQL
         return item.replace(/\$[a-zA-Z0-9_.\[\]]+/g, (match) => {
           const path = match.substring(1);
+          if (skipPlaceholders.has(path)) return match;
           const value = this.getNestedProperty(path, context);
 
           if (value === undefined) return match;
           if (value === null || value === '') return 'NULL';
           if (value instanceof Date) return `'${value.toISOString()}'`;
-          // Avoid double quoting if already quoted or SQL-safe
+
+          // Avoid unnecessary quoting
           if (
             typeof value === 'number' ||
             value === true ||
@@ -648,8 +651,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             return String(value);
           }
 
-          // Otherwise quote safely
-          if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
+          // Safe quoting for strings
+          if (typeof value === 'string') {
+            return `'${value.replace(/'/g, "''")}'`;
+          }
 
           return String(value);
         });
@@ -1184,17 +1189,17 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
-                [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                [opts.valueColumn.includes('CONCAT(') || opts?.includes?.length ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
+                [opts.labelColumn.includes('CONCAT(') || opts?.includes?.length ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
                 ...additionalColumns,
               ],
+              includes: opts?.includes || [],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
               start_index: 0,
               limit_range: 1000,
             };
-
             this.fetchList(group, group.key, true);
           }
         }
@@ -1211,10 +1216,11 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
-                [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                [opts.valueColumn.includes('CONCAT(') || opts?.includes?.length ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
+                [opts.labelColumn.includes('CONCAT(') || opts?.includes?.length ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
                 ...additionalColumns,
               ],
+              includes: opts?.includes || [],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
@@ -1236,10 +1242,11 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                [opts.valueColumn.includes('CONCAT(') ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
-                [opts.labelColumn.includes('CONCAT(') ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                [opts.valueColumn.includes('CONCAT(') || opts?.includes?.length ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
+                [opts.labelColumn.includes('CONCAT(') || opts?.includes?.length ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
                 ...additionalColumns,
               ],
+              includes: opts?.includes || [],
               search_all: opts.search_all || [],
               sort_columns: opts.sort_columns || [],
               print_query: false,
@@ -1408,7 +1415,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   public onNestedFormSuccess(event: { value: any; fieldKey: string }) {
     this.refreshSelectFromDbOptions();
-
     if (event && event.value && event.fieldKey) {
       // Use recursive search for the field config
       const fieldConfig = this.findFieldConfigByKey(this.fields, event.fieldKey);

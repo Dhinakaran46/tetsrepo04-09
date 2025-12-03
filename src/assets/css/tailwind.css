@@ -28,8 +28,6 @@
     background-color: var(--app-bg-color, #060818);
   }
 
-
-
   /* Panel */
   .panel {
     @apply relative rounded-md p-5 shadow;
@@ -40,7 +38,6 @@
     background-color: var(--app-bg-color, #0e1726);
   }
 
-
   body.dark .main-content {
     background-color: #060818 !important;
   }
@@ -48,7 +45,6 @@
   body.dark .main-content .animation {
     background-color: #060818 !important;
   }
-
 
   body.dark .main-content .animation div .panel {
     background-color: #0e1726 !important;
@@ -58,11 +54,10 @@
     background-color: #060818 !important;
   }
 
-
   body.dark app-dashboard,
   body.dark app-dashboard td,
   body.dark app-dashboard th {
-    color: #888Ea8 !important;
+    color: #888ea8 !important;
   }
 
   nav .bg-blue-50 {
@@ -83,7 +78,7 @@
   body.dark app-datatable,
   .dark app-datatable td,
   .dark app-datatable th {
-    color: #888Ea8 !important;
+    color: #888ea8 !important;
   }
 
   body.dark .sidebar .truncate-text {
@@ -122,32 +117,29 @@
     background-color: rgb(24 31 50) !important;
   }
 
-  .sidebar .nav-item>a:hover>div>span {
+  .sidebar .nav-item > a:hover > div > span {
     background-color: var(--app-sidebar-hover-color) !important;
     color: var(--app-sidebar-text-color) !important;
   }
 
-  .sidebar .nav-item>button:hover,
-  .sidebar .nav-item>a:hover {
+  .sidebar .nav-item > button:hover,
+  .sidebar .nav-item > a:hover {
     --tw-text-opacity: 1;
     background-color: var(--app-sidebar-hover-color, rgb(0 0 0 / 0.08)) !important;
     color: var(--app-sidebar-text-color, rgb(14 23 38 / var(--tw-text-opacity))) !important;
   }
 
-
-  .sidebar .nav-item>a.active>div,
-  .sidebar .nav-item>a.active>div>span {
+  .sidebar .nav-item > a.active > div,
+  .sidebar .nav-item > a.active > div > span {
     background-color: var(--app-sidebar-hover-color) !important;
     color: var(--app-sidebar-text-color) !important;
   }
 
-  .sidebar .nav-item>button.active,
-  .sidebar .nav-item>a.active {
+  .sidebar .nav-item > button.active,
+  .sidebar .nav-item > a.active {
     background-color: var(--app-sidebar-hover-color, rgb(0 0 0 / 0.08)) !important;
     color: var(--app-sidebar-text-color, rgb(14 23 38 / 1)) !important;
   }
-
-
 
   /* Navbar */
   .navbar-sticky header,
@@ -168,11 +160,11 @@
     background-color: var(--app-header-bg-color, rgba(6, 8, 24, 0.9)) !important;
   }
 
-  .navbar-floating header>div>div:first-child {
+  .navbar-floating header > div > div:first-child {
     @apply rounded-md;
   }
 
-  .horizontal .navbar-floating header>div>div:first-child {
+  .horizontal .navbar-floating header > div > div:first-child {
     @apply rounded-b-none;
   }
 
@@ -193,37 +185,36 @@
     background-color: var(--app-sidebar-bg-color, #0e1726) !important;
   }
 
-  .sidebar:hover .nav-item>a {
+  .sidebar:hover .nav-item > a {
     @apply w-auto;
   }
 
-  .sidebar .nav-item>button,
-  .sidebar .nav-item>a {
+  .sidebar .nav-item > button,
+  .sidebar .nav-item > a {
     @apply mb-1 flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-md p-2.5;
     color: var(--app-sidebar-text-color) !important;
   }
 
-
-  .sidebar .nav-item>button:hover:is(.dark *),
-  .sidebar .nav-item>a:hover:is(.dark *) {
+  .sidebar .nav-item > button:hover:is(.dark *),
+  .sidebar .nav-item > a:hover:is(.dark *) {
     background-color: var(--app-sidebar-color) !important;
     color: var(--app-sidebar-text-color) !important;
   }
 
-  .dark .sidebar .nav-item>button:hover,
-  .dark .sidebar .nav-item>a:hover {
+  .dark .sidebar .nav-item > button:hover,
+  .dark .sidebar .nav-item > a:hover {
     background-color: var(--app-sidebar-color) !important;
     color: var(--app-sidebar-text-color) !important;
   }
 
-  .sidebar .nav-item>button.active:is(.dark *),
-  .sidebar .nav-item>a.active:is(.dark *) {
+  .sidebar .nav-item > button.active:is(.dark *),
+  .sidebar .nav-item > a.active:is(.dark *) {
     background-color: var(--app-sidebar-color) !important;
     color: var(--app-sidebar-text-color) !important;
   }
 
-  .sidebar .nav-item>button,
-  .sidebar .nav-item>a {
+  .sidebar .nav-item > button,
+  .sidebar .nav-item > a {
     margin-bottom: 0.25rem;
     display: flex;
     width: 100%;
@@ -237,12 +228,10 @@
     color: rgb(80 102 144 / var(--tw-text-opacity));
   }
 
-
-  .dark .sidebar .nav-item>button.active>div>span,
-  .dark .sidebar .nav-item>a.active>div>span {
+  .dark .sidebar .nav-item > button.active > div > span,
+  .dark .sidebar .nav-item > a.active > div > span {
     @apply !text-white-dark;
   }
-
 
   .sidebar ul.relative li a div span.text-black {
     color: var(--app-sidebar-text-color) !important;
@@ -298,8 +287,8 @@
     background-color: var(--app-primary-color);
   }
 
-  .icon-hover:hover{
-     color: var(--app-table-header-action-color , #3b82f6)!important;
+  .icon-hover:hover {
+    color: var(--app-table-header-action-color, #3b82f6) !important;
   }
 
   .sidebar .nav-item a div:first-child svg,
@@ -429,9 +418,9 @@
     background-color: var(--app-header-color, rgba(67, 97, 238, 0.1));
   }
 
-  .horizontal-menu>li.nav-item:hover>ul.sub-menu,
-  .horizontal-menu>li.nav-item>ul.sub-menu>li:hover>ul,
-  .horizontal-menu>li.nav-item>ul.sub-menu>li.nav-item>ul.sub-menu>li.nav-item:hover>ul.sub-menu {
+  .horizontal-menu > li.nav-item:hover > ul.sub-menu,
+  .horizontal-menu > li.nav-item > ul.sub-menu > li:hover > ul,
+  .horizontal-menu > li.nav-item > ul.sub-menu > li.nav-item > ul.sub-menu > li.nav-item:hover > ul.sub-menu {
     @apply block;
   }
 
@@ -487,7 +476,7 @@
     @apply lg:w-[260px];
   }
 
-  .collapsible-vertical.toggle-sidebar .sidebar .nav-item>a {
+  .collapsible-vertical.toggle-sidebar .sidebar .nav-item > a {
     @apply w-auto;
   }
 
@@ -510,14 +499,14 @@
   }
 
   .collapsible-vertical .sidebar .collapse-icon,
-  .collapsible-vertical .main-logo>span {
+  .collapsible-vertical .main-logo > span {
     @apply transition-opacity duration-300 lg:opacity-0;
   }
 
   .collapsible-vertical .sidebar:hover .collapse-icon,
   .collapsible-vertical.toggle-sidebar .collapse-icon,
-  .collapsible-vertical .sidebar:hover .main-logo>span,
-  .collapsible-vertical.toggle-sidebar .main-logo>span {
+  .collapsible-vertical .sidebar:hover .main-logo > span,
+  .collapsible-vertical.toggle-sidebar .main-logo > span {
     @apply duration-500 lg:opacity-100;
   }
 
@@ -529,21 +518,21 @@
     @apply flex rotate-180;
   }
 
-  .collapsible-vertical .sidebar ul>h2 span {
+  .collapsible-vertical .sidebar ul > h2 span {
     @apply hidden whitespace-nowrap;
   }
 
-  .collapsible-vertical .sidebar ul>h2 svg {
+  .collapsible-vertical .sidebar ul > h2 svg {
     @apply block;
   }
 
-  .collapsible-vertical .sidebar:hover ul>h2 span,
-  .collapsible-vertical.toggle-sidebar .sidebar ul>h2 span {
+  .collapsible-vertical .sidebar:hover ul > h2 span,
+  .collapsible-vertical.toggle-sidebar .sidebar ul > h2 span {
     @apply inline;
   }
 
-  .collapsible-vertical .sidebar:hover ul>h2 svg,
-  .collapsible-vertical.toggle-sidebar .sidebar ul>h2 svg {
+  .collapsible-vertical .sidebar:hover ul > h2 svg,
+  .collapsible-vertical.toggle-sidebar .sidebar ul > h2 svg {
     @apply hidden;
   }
 
@@ -723,7 +712,6 @@
     @apply w-full rounded-md px-4 py-2 text-sm font-semibold !outline-none focus:ring-transparent;
     color: var(--app-form-base-component-color, black) !important;
     border-color: var(--app-form-base-component-color, black) !important;
-
   }
 
   .form-input:focus,
@@ -872,7 +860,6 @@
     border-color: var(--app-form-base-component-color, #4a98f2) !important;
   }
 
-
   .form-checkbox.outline-primary:checked {
     @apply border-primary bg-transparent;
     background-image: url("data:image/svg+xml,<svg viewBox='0 0 16 16' fill='%234361ee' xmlns='http://www.w3.org/2000/svg'><path d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/></svg>");
@@ -945,7 +932,7 @@
     @apply relative;
   }
 
-  .dropdown>button {
+  .dropdown > button {
     @apply flex;
   }
 
@@ -960,12 +947,12 @@
     color: var(--app-text-color, #888ea8);
   }
 
-  .dropdown ul li>a,
-  .dropdown ul li>button {
+  .dropdown ul li > a,
+  .dropdown ul li > button {
     @apply flex items-center px-4 py-2;
   }
 
-  .dropdown ul li>button {
+  .dropdown ul li > button {
     @apply w-full;
   }
 
@@ -1143,10 +1130,9 @@
   @apply !mr-2;
 }
 
-[dir="rtl"] .apexcharts-legend-series {
+[dir='rtl'] .apexcharts-legend-series {
   @apply !ml-2;
 }
-
 
 .dark .apexcharts-title-text {
   fill: #e0e6ed;
@@ -1185,14 +1171,13 @@
   box-shadow: none;
 }
 
-[dir="ltr"] .apexcharts-canvas .apexcharts-legend-marker {
+[dir='ltr'] .apexcharts-canvas .apexcharts-legend-marker {
   @apply !mr-1.5;
 }
 
-[dir="rtl"] .apexcharts-canvas .apexcharts-legend-marker {
+[dir='rtl'] .apexcharts-canvas .apexcharts-legend-marker {
   @apply !mr-0 ml-1.5;
 }
-
 
 [dir='rtl'] .apexcharts-tooltip-marker {
   @apply ml-2.5 mr-0;
@@ -1245,67 +1230,71 @@ pre code.hljs {
   @apply w-full;
 }
 
-
 /* login , forgot password */
-.login-form span i, .login-form label span, .login-form a, .login-form-btn-secondary span, .login-form-btn-secondary a{
-    color: var(--app-form-base-component-color, #888Ea8 ) !important;
+.login-form span i,
+.login-form label span,
+.login-form a,
+.login-form-btn-secondary span,
+.login-form-btn-secondary a {
+  color: var(--app-form-base-component-color, #888ea8) !important;
 }
 
-button.login-form{
- background-color:var(--app-form-base-component-color, #4361ee ) !important;
+button.login-form {
+  background-color: var(--app-form-base-component-color, #4361ee) !important;
 }
 
-button.login-form:hover{
- background-color:var(--app-button-hover-color, #364ebe ) !important;
+button.login-form:hover {
+  background-color: var(--app-button-hover-color, #364ebe) !important;
 }
 
-.login-form-btn-secondary{
-     background-color: var(--app-table-header-color,  ) !important;
-    border: 1px solid var(--app-form-base-component-color, #E0E6ED ) !important;
-    border-radius: 0.375rem;
-    border-width: 1px;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    line-height: 1.25rem;
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;   
-    cursor:pointer;
+.login-form-btn-secondary {
+  background-color: var(--app-table-header-color) !important;
+  border: 1px solid var(--app-form-base-component-color, #e0e6ed) !important;
+  border-radius: 0.375rem;
+  border-width: 1px;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  line-height: 1.25rem;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+  cursor: pointer;
 }
 
-.login-form-btn-secondary:hover{
-     background-color: var(--app-header-bg-color,  ) !important;
-    border: 1px solid var(--app-form-base-component-color, #E0E6ED ) !important; 
-    cursor:pointer;
+.login-form-btn-secondary:hover {
+  background-color: var(--app-header-bg-color) !important;
+  border: 1px solid var(--app-form-base-component-color, #e0e6ed) !important;
+  cursor: pointer;
 }
 
-.login-form-btn-secondary:hover a, .login-form-btn-secondary:hover span{
-     color: var(--app-button-text-color,  ) !important;
+.login-form-btn-secondary:hover a,
+.login-form-btn-secondary:hover span {
+  color: var(--app-button-text-color) !important;
 }
 
-.border-\[\#ebedf2\]{
-    --tw-border-opacity: 1;
-    border-color: var(--app-sidebar-bg-color, rgb(255 255 255)) !important;
+.border-\[\#ebedf2\] {
+  --tw-border-opacity: 1;
+  border-color: var(--app-sidebar-bg-color, rgb(255 255 255)) !important;
 }
 
 .sidebar .accordion.menu .accordion-content .sub-menu li a:hover::before {
-    background-color: var(--app-table-header-action-color, currentColor) !important;
+  background-color: var(--app-table-header-action-color, currentColor) !important;
 }
 
-[type="checkbox"].form-check-input{
-    border-radius:0.2rem !important;
+[type='checkbox'].form-check-input {
+  border-radius: 0.2rem !important;
 }
 
-[type="checkbox"].form-check-input::after{
- content: "";
+[type='checkbox'].form-check-input::after {
+  content: '';
   width: 0.9em !important;
   height: 0.9em !important;
   transform: scale(0);
   transition: 120ms transform ease-in-out;
   box-shadow: inset 1em 1em var(--form-control-color);
-    transform-origin: bottom left;
+  transform-origin: bottom left;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%) !important;
   color: var(--app-form-base-component-color, #4361ee) !important;
 }

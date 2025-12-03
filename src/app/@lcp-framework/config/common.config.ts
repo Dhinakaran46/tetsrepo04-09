@@ -92,7 +92,7 @@ export const commonConfig: any = {
     CHILD_PROCESS_SETTING_MODULE: 'child_process_setting_module',
     QUERY_BUILDER_MODULE: 'query_builder_module',
     CAROUSEL_MODULE: 'carousel_module',
-    COMMON_PERMISSION_MODULE: 'common_permission_module'
+    COMMON_PERMISSION_MODULE: 'common_permission_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -125,7 +125,7 @@ export const commonConfig: any = {
     child_process_setting_module: 'childprocesssetting',
     query_builder_module: 'querybuilder',
     carousel_module: 'carouselmodule',
-    common_permission_module: 'commonpermissionmodule'
+    common_permission_module: 'commonpermissionmodule',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -157,6 +157,7 @@ export const commonConfig: any = {
     DELETE: 'delete',
     VIEW_DETAILS: 'details',
     EXPORT_AS_EXCEL: 'export_excel',
+    EXPORT_AS_PDF: 'export_pdf',
     IMPORT: 'import',
     ASSIGN: 'assign',
     Print: 'print',
@@ -193,6 +194,7 @@ export const commonConfig: any = {
     { label: 'Delete', value: 'delete' },
     { label: 'Details', value: 'details' },
     { label: 'Export As Excel', value: 'export_excel' },
+    { label: 'Export As PDF', value: 'export_pdf' },
     { label: 'Import', value: 'import' },
     { label: 'Assign', value: 'assign' },
     { label: 'Print', value: 'print' },
@@ -205,7 +207,6 @@ export const commonConfig: any = {
     { label: 'Popup Edit', value: 'popup_edit' },
     { label: 'Popup Details', value: 'popup_details' },
     { label: 'Reset Password', value: 'reset_password' },
-    
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -240,7 +241,7 @@ export const commonConfig: any = {
     { label: 'Child Process Setting Module', value: 'child_process_setting_module' },
     { label: 'Query Builder Module', value: 'query_builder_module' },
     { label: 'Carousel Module', value: 'carousel_module' },
-    {label:'Common Permission Module',value:'common_permission_module'}
+    { label: 'Common Permission Module', value: 'common_permission_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
@@ -322,7 +323,6 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      
     ],
 
     // DateTime Field Conditions
@@ -333,7 +333,6 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      
     ],
 
     // DateTime Field Conditions
@@ -344,7 +343,6 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
-      
     ],
 
     // Integer Range Field Conditions

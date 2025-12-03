@@ -50,11 +50,11 @@ export class GridApiService {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, data);
   }
 
-  exportIndividualRecords(menuItemId: any, id: any, filter:any): Observable<ExportResponse> {
+  exportIndividualRecords(menuItemId: any, id: any, filter: any): Observable<ExportResponse> {
     return this.http
       .post(
         `${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonindividualdataexport}`,
-        { id: id, menu_item_id: menuItemId, filter:filter },
+        { id: id, menu_item_id: menuItemId, filter: filter },
         {
           responseType: 'blob',
           observe: 'response',
@@ -82,30 +82,30 @@ export class GridApiService {
       );
   }
   // grid.service.ts
-  exportAllRecords(menuItemId: any,filter:any): Observable<ExportResponse> {
+  exportAllRecords(menuItemId: any, filter: any): Observable<ExportResponse> {
     return this.cryptoHttp
       .encryptedPost(
         `${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddataexport}`,
-        { menu_item_id: menuItemId,filter:filter },
-        {
-          responseType: 'blob',
-          observe: 'response',
-        }
+        { menu_item_id: menuItemId, filter },
+        { responseType: 'blob', observe: 'response' }
       )
       .pipe(
         map((response: any) => {
           if (!response.body) {
             throw new Error('No data received from server');
           }
+          const contentType = response.headers.get('Content-Type') || '';
+          if (contentType.includes('application/json')) {
+            throw new Error('Server returned JSON instead of file.');
+          }
 
-          const blob = response.body; // response.body is already a Blob due to responseType: 'blob'
+          const blob = response.body; // Use directly
           const contentDisposition = response.headers.get('Content-Disposition');
-          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_excel_${new Date().getTime()}.xlsx`;
+          const fileName = contentDisposition
+            ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+            : `export_${Date.now()}.${contentType.includes('pdf') ? 'pdf' : 'xlsx'}`;
 
-          return {
-            blob, // This is guaranteed to be a Blob
-            fileName,
-          } as ExportResponse;
+          return { blob, fileName } as ExportResponse;
         }),
         catchError((error) => {
           console.error('Export error:', error);

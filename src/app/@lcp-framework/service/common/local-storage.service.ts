@@ -30,57 +30,47 @@ export class LocalStorageService implements OnInit {
     const conf: any = localStorage.getItem(this.getScopedKey('config'));
     //const config: any = JSON.parse(conf);
     let config: any = null;
-  try {
-    config = conf ? JSON.parse(conf) : null;
-  } catch {
-    config = null;
-  }
-    console.log(config)
+    try {
+      config = conf ? JSON.parse(conf) : null;
+    } catch {
+      config = null;
+    }
 
     const rawValue = localStorage.getItem(scopedKey);
-  console.log(key, rawValue);
 
-  if (!rawValue) {
-    this.returnData = null;
-    return null;
-  }
-    //console.log(conf);
-    //console.log(config);
-    //console.log(localStorage.getItem(this.getScopedKey('user_data')));
-    //console.log(key)
-    //console.log(config?.encrypt_local_storage === 'true')
-    console.log(key);
-    console.log(localStorage.getItem(this.getScopedKey('user_data')));
+    if (!rawValue) {
+      this.returnData = null;
+      return null;
+    }
     // Special handling for user_data
-  if (key === 'user_data') {
-    // Prefer config flag *if* it exists, but don't rely on it
-    const encryptLocalStorage = config?.encrypt_local_storage === 'true';
+    if (key === 'user_data') {
+      // Prefer config flag *if* it exists, but don't rely on it
+      const encryptLocalStorage = config?.encrypt_local_storage === 'true';
 
-    let finalValue = rawValue;
+      let finalValue = rawValue;
 
-    // 1) If config says encrypted, try decrypt
-    if (encryptLocalStorage) {
-      const decrypted = this.tryDecryptToJsonString(rawValue, key);
-      if (decrypted !== null) {
-        this.returnData = decrypted;
-        return decrypted;
+      // 1) If config says encrypted, try decrypt
+      if (encryptLocalStorage) {
+        const decrypted = this.tryDecryptToJsonString(rawValue, key);
+        if (decrypted !== null) {
+          this.returnData = decrypted;
+          return decrypted;
+        }
       }
-    }
 
-    // 2) Even if config doesn't say encrypted, still *attempt* decrypt.
-    const maybeDecrypted = this.tryDecryptToJsonString(rawValue, key);
-    if (maybeDecrypted !== null) {
-      this.returnData = maybeDecrypted;
-      return maybeDecrypted;
-    }
+      // 2) Even if config doesn't say encrypted, still *attempt* decrypt.
+      const maybeDecrypted = this.tryDecryptToJsonString(rawValue, key);
+      if (maybeDecrypted !== null) {
+        this.returnData = maybeDecrypted;
+        return maybeDecrypted;
+      }
 
-    // 3) Fall back to raw string (plain JSON stored)
-    this.returnData = rawValue;
-    return rawValue;
-  }
+      // 3) Fall back to raw string (plain JSON stored)
+      this.returnData = rawValue;
+      return rawValue;
+    }
 
     this.returnData = localStorage.getItem(this.getScopedKey(key));
-    console.log(this.returnData)
     return this.returnData;
   }
 
@@ -88,19 +78,18 @@ export class LocalStorageService implements OnInit {
     try {
       const bytes = CryptoJS.AES.decrypt(value, key);
       const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-  
+
       // If decryption fails or wrong key, decrypted will usually be empty
       if (!decrypted) return null;
-  
+
       // Make sure it’s valid JSON
       JSON.parse(decrypted);
-  
+
       return decrypted;
     } catch {
       return null;
     }
   }
-  
 
   public storeDataEncrypted(key: string, value: string | any): void {
     const encryptedInfo: string = CryptoJS.AES.encrypt(value, key).toString();
@@ -137,9 +126,8 @@ export class LocalStorageService implements OnInit {
   }
 
   public clearStorage(): void {
-    
     localStorage.setItem(this.getScopedKey('logout-event'), 'logout' + Math.random());
-    
+
     const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
     for (let key in localStorage) {
       if (key.startsWith(`${scope}_`)) {
@@ -285,7 +273,7 @@ export class LocalStorageService implements OnInit {
     // Base case: if the jsonObject is a string, replace the placeholder with the value
     if (typeof jsonObject === 'string') {
       const replacedString = jsonObject.replace(placeholderRegex, uniqueIdValue);
-      
+
       return replacedString;
     }
 
