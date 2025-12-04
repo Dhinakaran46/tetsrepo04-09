@@ -22,7 +22,7 @@ import { environment } from '../../../../environments/environment';
 // import { PolicyComponent } from '../../pages/policy/policy.component';
 // import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
 // import { EmailTemplateAssignmentComponent } from '../../pages/email-template-assignment/email-template-assignment.component';
-
+import { commonConfig } from '../../config/common.config';
 @Injectable({
   providedIn: 'root',
 })
@@ -270,6 +270,7 @@ export class RouteUpdateService {
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
+    const action_types = commonConfig.action_types;
     const user_data_raw = this.localStore.getData('user_data');
     if (!user_data_raw || user_data_raw === 'undefined') return null;
 
@@ -277,6 +278,7 @@ export class RouteUpdateService {
     const routeDataArray = user_data?.unorgmenuList || [];
 
     const permissionListJSON = await firstValueFrom(this.getPermissionListJSON());
+    console.log(permissionListJSON)
     if (!permissionListJSON || !routeDataArray.length) return null;
 
     if (permissionListJSON && routeDataArray) {
@@ -345,12 +347,43 @@ export class RouteUpdateService {
             ];
           }
 
+          console.log(routeDataArray)
           const children = routeDataArray.reduce((acc: any, childRoute: any) => {
             if (childRoute.parent_id === routeData.id && childRoute.action_slug) {
               acc[childRoute.action_slug] = childRoute;
             }
             return acc;
           }, {});
+
+          
+          if (
+            routeData.action_slug === 'child_details' &&
+            Object.keys(children).length === 0
+          ) {
+            // Build ALL possible action_slug patterns:
+            const possibleActionSlugs = action_types.map(
+              (a: any) => `menu_${a.value}_${routeData.entity_name}`
+            );
+            console.log("possibleActionSlugs", possibleActionSlugs);
+            // Filter matching menu items
+            const matchedItems = routeDataArray.filter(
+              (r: any) =>
+                r.id !== routeData.id &&
+                r.action_slug &&
+                possibleActionSlugs.includes(r.name)
+            );
+         
+            matchedItems.forEach((r: any) => {
+              if (!children[r.action_slug]) {
+                children[r.action_slug] = r;
+              }
+            });
+         
+            // Debug:
+             console.log("Matched Actions =>", possibleActionSlugs);
+             console.log("matchedItems", matchedItems)
+          }
+
 
           const componentMap: any = {
             grid_builder_module: () => import('../../pages/master-list/master-list.component').then((m) => m.MasterListComponent),

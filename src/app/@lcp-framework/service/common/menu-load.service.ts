@@ -13,6 +13,9 @@ interface MenuItem {
   parent_id: number | null;
   permission_slug: string | null;
   children?: MenuItem[];
+  action_slug?:any;
+  entity_name?:any;
+
 }
 
 @Injectable({
@@ -44,6 +47,63 @@ export class MenuLoadService {
 
   organizeMenu(menuList: MenuItem[]): MenuItem[] {
     const itemMap = new Map<number, MenuItem>();
+  
+    // Step 1: Initialize map with empty children arrays
+    menuList.forEach((item) => {
+      itemMap.set(item.id, { ...item, children: [] });
+    });
+  
+    // Step 2: Normal parent-child relationships
+    menuList.forEach((item) => {
+      if (item.parent_id !== null) {
+        const parent = itemMap.get(item.parent_id);
+        if (parent) {
+          parent.children!.push(itemMap.get(item.id)!);
+        }
+      }
+    });
+  
+    // Step 3: For child_details with no children, attach "virtual" children
+    menuList.forEach((item) => {
+      const mappedItem = itemMap.get(item.id)!;
+  
+      if (
+        mappedItem.action_slug === 'child_details' && // make sure this matches DB value
+        mappedItem.children &&
+        mappedItem.children.length === 0
+      ) {
+        // Find other items with same entity_name
+        const matchedItems = menuList.filter(
+          (x) =>
+            x.entity_name === mappedItem.entity_name &&
+            x.id !== mappedItem.id
+        );
+  
+        // Clone them WITHOUT their existing children to avoid cycles
+        const clonedChildren: MenuItem[] = matchedItems.map((x) => {
+          const original = itemMap.get(x.id)!;
+          return {
+            ...original,
+            // IMPORTANT: break links to original children to avoid cycles
+            children: [],
+          };
+        });
+  
+        mappedItem.children = clonedChildren;
+      }
+    });
+  
+    // Step 4: Return top-level menus sorted
+    return menuList
+      .filter((item) => item.parent_id === null)
+      .map((item) => itemMap.get(item.id)!)
+      .sort((a, b) => a.order_no - b.order_no);
+  }
+  
+  
+  
+  /*organizeMenu(menuList: MenuItem[]): MenuItem[] {
+    const itemMap = new Map<number, MenuItem>();
 
     menuList.forEach((item) => {
       itemMap.set(item.id, { ...item, children: [] });
@@ -62,7 +122,7 @@ export class MenuLoadService {
       .filter((item) => item.parent_id === null)
       .map((item) => itemMap.get(item.id)!)
       .sort((a, b) => a.order_no - b.order_no);
-  }
+  }*/
 
   fetchConfigData(companyId: number, userID: any): any {
     
@@ -241,7 +301,7 @@ export class MenuLoadService {
       map((response: any) => {
         if (response.code === 200 && response.status) {
           const organizedMenu = this.organizeMenu(response.data.records);
-
+          console.log(organizedMenu)
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
           

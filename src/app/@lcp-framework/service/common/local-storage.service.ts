@@ -17,7 +17,7 @@ export class LocalStorageService implements OnInit {
 
   private getScopedKey(key: string): string {
     //const scope = window.location.port || window.location.hostname;
-    const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
+    const scope = (window.location.hostname.replace('/', '') + '_' + (window.location.port || window.location.pathname)).replace('/', '');
     return `${scope}_${key}`;
   }
 
