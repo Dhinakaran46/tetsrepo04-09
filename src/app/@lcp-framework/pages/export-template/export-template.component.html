@@ -19,7 +19,7 @@
     </div>
     <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
     <div class="mt-2">
-      <div class="flex flex-col justify-between">
+      <div class="flex flex-col justify-between gap-5">
         <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
           <div class="mt-0">
             <label for="name" class="required-mark mb-2 block font-medium">{{ 'form_label_name' | translate }}</label>
@@ -87,136 +87,173 @@
             </div>
           </div>
 
-          <!-- New Integer Fields -->
           <div class="mt-0">
-            <label for="max_row_count" class="required-mark mb-2 block font-medium">{{ 'form_label_max_row_count' | translate }}</label>
-            <input
-              id="max_row_count"
-              type="number"
-              formControlName="max_row_count"
+            <label for="template_type" class="required-mark mb-2 block font-medium">{{ 'form_label_template_type' | translate }}</label>
+            <select
+              id="template_type"
+              formControlName="template_type"
               appDynamicFontSize="body"
-              class="form-input w-full"
-              placeholder="{{ 'form_label_max_row_count_placeholder' | translate }}"
-              [ngClass]="{ 'is-invalid': isFieldInvalid('max_row_count') }"
-            />
-            <div *ngIf="isFieldInvalid('max_row_count')" class="invalid-feedback mt-1 text-danger">
-              {{ getErrorMessage('max_row_count') }}
+              class="form-select z-10 w-full border"
+              [style.border-color]="'var(--app-table-border-color, #e0e6ed) !important'"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('template_type') }"
+            >
+              <option value="xlsx">{{ 'excel' | translate }}</option>
+              <option value="pdf">{{ 'pdf' | translate }}</option>
+            </select>
+            <div *ngIf="isFieldInvalid('template_type')" class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('template_type') }}
             </div>
           </div>
-
-          <div class="mt-0">
-            <label for="header_row" class="required-mark mb-2 block font-medium">{{ 'form_label_header_row' | translate }}</label>
-            <input
-              id="header_row"
-              type="number"
-              formControlName="header_row"
-              (change)="validateHeaderRow($event)"
-              appDynamicFontSize="body"
-              class="form-input w-full"
-              placeholder="{{ 'form_label_header_row_placeholder' | translate }}"
-              [ngClass]="{ 'is-invalid': isFieldInvalid('header_row') }"
-            />
-            <div *ngIf="isFieldInvalid('header_row')" class="invalid-feedback mt-1 text-danger">
-              {{ getErrorMessage('header_row') }}
-            </div>
-          </div>
-
-          <div class="mt-0">
-            <label for="data_start_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_start_row' | translate }}</label>
-            <input
-              id="data_start_row"
-              type="number"
-              formControlName="data_start_row"
-              appDynamicFontSize="body"
-              class="form-input w-full"
-              placeholder="{{ 'form_label_data_start_row_placeholder' | translate }}"
-              [ngClass]="{ 'is-invalid': isFieldInvalid('data_start_row') }"
-            />
-            <div *ngIf="isFieldInvalid('data_start_row')" class="invalid-feedback mt-1 text-danger">
-              {{ getErrorMessage('data_start_row') }}
-            </div>
-          </div>
-
-          <div class="mt-0">
-            <label for="data_end_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_end_row' | translate }}</label>
-            <input
-              id="data_end_row"
-              type="number"
-              formControlName="data_end_row"
-              appDynamicFontSize="body"
-              class="form-input w-full"
-              placeholder="{{ 'form_label_data_end_row_placeholder' | translate }}"
-              [ngClass]="{ 'is-invalid': isFieldInvalid('data_end_row') }"
-            />
-            <div *ngIf="isFieldInvalid('data_end_row')" class="invalid-feedback mt-1 text-danger">
-              {{ getErrorMessage('data_end_row') }}
-            </div>
-          </div>
-
-          <div class="mt-4">
-            <div class="text-md required-mark font-medium">
-              {{ 'Excel File Upload' | translate }}
+          <ng-container *ngIf="form.get('template_type')?.value === 'xlsx'">
+            <!-- New Integer Fields -->
+            <div class="mt-0">
+              <label for="max_row_count" class="required-mark mb-2 block font-medium">{{ 'form_label_max_row_count' | translate }}</label>
+              <input
+                id="max_row_count"
+                type="number"
+                formControlName="max_row_count"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_max_row_count_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('max_row_count') }"
+              />
+              <div *ngIf="isFieldInvalid('max_row_count')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('max_row_count') }}
+              </div>
             </div>
 
-            <div class="mt-2">
-              <div class="flex flex-col gap-4">
-                <!-- File Upload Area -->
-                <div *ngIf="!selectedFile" class="flex w-full items-center justify-center">
-                  <label
-                    [class.opacity-50]="!form.get('header_row')?.value"
-                    class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-800"
-                  >
-                    <div class="flex flex-col items-center justify-center pb-6 pt-5">
-                      <svg class="mb-3 h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                        />
+            <div class="mt-0">
+              <label for="header_row" class="required-mark mb-2 block font-medium">{{ 'form_label_header_row' | translate }}</label>
+              <input
+                id="header_row"
+                type="number"
+                formControlName="header_row"
+                (change)="validateHeaderRow($event)"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_header_row_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('header_row') }"
+              />
+              <div *ngIf="isFieldInvalid('header_row')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('header_row') }}
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="data_start_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_start_row' | translate }}</label>
+              <input
+                id="data_start_row"
+                type="number"
+                formControlName="data_start_row"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_data_start_row_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('data_start_row') }"
+              />
+              <div *ngIf="isFieldInvalid('data_start_row')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('data_start_row') }}
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="data_end_row" class="required-mark mb-2 block font-medium">{{ 'form_label_data_end_row' | translate }}</label>
+              <input
+                id="data_end_row"
+                type="number"
+                formControlName="data_end_row"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'form_label_data_end_row_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('data_end_row') }"
+              />
+              <div *ngIf="isFieldInvalid('data_end_row')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('data_end_row') }}
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <div class="text-md required-mark font-medium">
+                {{ 'Excel File Upload' | translate }}
+              </div>
+
+              <div class="mt-2">
+                <div class="flex flex-col gap-4">
+                  <!-- File Upload Area -->
+                  <div *ngIf="!selectedFile" class="flex w-full items-center justify-center">
+                    <label
+                      [class.opacity-50]="!form.get('header_row')?.value"
+                      class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-800"
+                    >
+                      <div class="flex flex-col items-center justify-center pb-6 pt-5">
+                        <svg class="mb-3 h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Excel files only (.xlsx, .xls, .csv)</p>
+                      </div>
+                      <input
+                        type="file"
+                        class="hidden"
+                        accept=".xlsx,.xls,.csv"
+                        [disabled]="!form.get('header_row')?.value"
+                        (change)="handleFileInput($event)"
+                      />
+                    </label>
+                  </div>
+
+                  <!-- Selected File Info -->
+                  <!-- Selected File Info -->
+                  <div *ngIf="selectedFile" class="flex items-center justify-between rounded-lg border bg-gray-50 p-4 dark:bg-gray-700">
+                    <div class="flex items-center">
+                      <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                          {{ selectedFile.name }}
+                        </p>
+                        <!-- Only show file size if it's available -->
+                        <p *ngIf="selectedFile.size" class="text-xs text-gray-500 dark:text-gray-400">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+                        <p *ngIf="!selectedFile.size" class="text-xs text-gray-500 dark:text-gray-400">Existing file</p>
+                      </div>
+                    </div>
+                    <button (click)="removeFile()" class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600">
+                      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
-                      <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">Excel files only (.xlsx, .xls, .csv)</p>
-                    </div>
-                    <input type="file" class="hidden" accept=".xlsx,.xls,.csv" [disabled]="!form.get('header_row')?.value" (change)="handleFileInput($event)" />
-                  </label>
-                </div>
-
-                <!-- Selected File Info -->
-                <!-- Selected File Info -->
-                <div *ngIf="selectedFile" class="flex items-center justify-between rounded-lg border bg-gray-50 p-4 dark:bg-gray-700">
-                  <div class="flex items-center">
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ selectedFile.name }}
-                      </p>
-                      <!-- Only show file size if it's available -->
-                      <p *ngIf="selectedFile.size" class="text-xs text-gray-500 dark:text-gray-400">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
-                      <p *ngIf="!selectedFile.size" class="text-xs text-gray-500 dark:text-gray-400">Existing file</p>
+                    </button>
+                    <div (click)="downloadExcel()" class="cursor-pointer items-center justify-between rounded-lg border bg-gray-50 p-4 dark:bg-gray-700">
+                      <i class="fa-solid fa-download"></i>
                     </div>
                   </div>
-                  <button (click)="removeFile()" class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                  <div (click)="downloadExcel()" class="cursor-pointer items-center justify-between rounded-lg border bg-gray-50 p-4 dark:bg-gray-700">
-                    <i class="fa-solid fa-download"></i>
+
+                  <!-- Loading Indicator -->
+                  <div *ngIf="isProcessingFile" class="flex items-center justify-center p-4">
+                    <div class="h-6 w-6 animate-spin rounded-full border-b-2 border-gray-900 dark:border-white"></div>
                   </div>
-                </div>
 
-                <!-- Loading Indicator -->
-                <div *ngIf="isProcessingFile" class="flex items-center justify-center p-4">
-                  <div class="h-6 w-6 animate-spin rounded-full border-b-2 border-gray-900 dark:border-white"></div>
-                </div>
-
-                <!-- Error Message -->
-                <div *ngIf="fileError" class="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-                  <p class="text-sm">{{ fileError }}</p>
+                  <!-- Error Message -->
+                  <div *ngIf="fileError" class="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+                    <p class="text-sm">{{ fileError }}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ng-container>
+          <ng-container *ngIf="form.get('template_type')?.value === 'pdf'">
+            <div class="flex items-end justify-start">
+              <div>
+                <button
+                  class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+                  (click)="openPdfModal()"
+                >
+                  {{ 'configure_pdf_settings' | translate }}
+                </button>
+              </div>
+            </div>
+          </ng-container>
         </div>
       </div>
     </div>
@@ -510,6 +547,210 @@
               [disabled]="lineQueryForm.invalid"
             >
               {{ editingQueryIndex !== -1 ? ('update' | translate) : ('add' | translate) }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isPdfModalOpen">
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-6xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ 'pdf_template_settings' | translate }}</h3>
+        <button type="button" (click)="closePdfModal()" class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none dark:hover:text-gray-100">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-4 py-4 sm:px-6">
+        <form [formGroup]="pdfDetailsForm" (ngSubmit)="onPdfSubmit()" class="space-y-5">
+          <div class="px max-h-[calc(90vh-10rem)] space-y-6 overflow-y-auto py-1 sm:px-3">
+            <!-- PAGE SETUP -->
+            <div class="px-3">
+              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'page_setup' | translate }}</h4>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Page Size -->
+                <div>
+                  <label class="form-label required-mark">{{ 'page_size' | translate }}</label>
+                  <select formControlName="page_size" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('page_size') }">
+                    <option *ngFor="let size of pageSizes" [value]="size">{{ size }}</option>
+                  </select>
+                </div>
+
+                <!-- Orientation -->
+                <div>
+                  <label class="form-label required-mark">{{ 'orientation' | translate }}</label>
+                  <select formControlName="orientation" class="form-select w-full capitalize" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('orientation') }">
+                    <option class="capitalize" *ngFor="let o of orientations" [value]="o">{{ o }}</option>
+                  </select>
+                </div>
+
+                <!-- Color Theme -->
+                <!-- <div>
+                  <label class="form-label required-mark">{{ 'color_theme' | translate }}</label>
+                  <select formControlName="color_theme" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('color_theme') }">
+                    <option *ngFor="let theme of colorThemes" [value]="theme">{{ theme }}</option>
+                  </select>
+                </div> -->
+
+                <!-- Margins -->
+                <ng-container *ngFor="let m of ['top', 'bottom', 'left', 'right']">
+                  <div>
+                    <label class="form-label capitalize">Margin {{ m }} (mm)</label>
+                    <input
+                      type="number"
+                      [formControlName]="'margin_' + m"
+                      class="form-input w-full"
+                      [ngClass]="{ 'is-invalid': isFieldInvalidPdf('margin_' + m) }"
+                    />
+                  </div>
+                </ng-container>
+
+                <!-- Font -->
+                <div>
+                  <label class="form-label required-mark">{{ 'font_family' | translate }}</label>
+                  <select formControlName="font_family" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('font_family') }">
+                    <option *ngFor="let font of fonts" [value]="font">{{ font }}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label required-mark">{{ 'font_size' | translate }}</label>
+                  <input type="number" formControlName="font_size" class="form-input w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('font_size') }" />
+                </div>
+              </div>
+            </div>
+
+            <!-- HEADER & FOOTER -->
+            <div class="px-3">
+              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'header_footer_settings' | translate }}</h4>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Header -->
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" formControlName="is_header_enabled" class="form-checkbox" />
+                  <span>{{ 'enable_header' | translate }}</span>
+                </label>
+
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" formControlName="is_footer_enabled" class="form-checkbox" />
+                  <span>{{ 'enable_footer' | translate }}</span>
+                </label>
+
+                <label *ngIf="pdfDetailsForm.get('is_footer_enabled')?.value" class="flex items-center space-x-2">
+                  <input type="checkbox" formControlName="is_paginated" class="form-checkbox" />
+                  <span>{{ 'enable_pagination' | translate }}</span>
+                </label>
+              </div>
+
+              <!-- Header Textarea -->
+              <div *ngIf="pdfDetailsForm.get('is_header_enabled')?.value" class="mt-4">
+                <label class="form-label required-mark">{{ 'header_content' | translate }}</label>
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="htmlEditorOptions"
+                  id="template_header"
+                  formControlName="template_header"
+                  class="monaco-editor"
+                ></ngx-monaco-editor>
+                <!-- <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" formControlName="is_repeatative_header" class="form-checkbox" />
+                    <span>Repeat Header</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" formControlName="is_first_page_header_only" class="form-checkbox" />
+                    <span>Header Only on First Page</span>
+                  </label>
+                </div> -->
+              </div>
+
+              <!-- Footer Textarea -->
+              <div *ngIf="pdfDetailsForm.get('is_footer_enabled')?.value" class="mt-4">
+                <label class="form-label required-mark">{{ 'footer_content' | translate }}</label>
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="htmlEditorOptions"
+                  id="template_footer"
+                  formControlName="template_footer"
+                  class="monaco-editor"
+                ></ngx-monaco-editor>
+                <!-- <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" formControlName="is_repeatative_footer" class="form-checkbox" />
+                    <span>Repeat Footer</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" formControlName="is_first_page_footer_only" class="form-checkbox" />
+                    <span>Footer Only on First Page</span>
+                  </label>
+                </div> -->
+              </div>
+            </div>
+
+            <!-- TEMPLATE BODY -->
+            <div class="px-3">
+              <label class="form-label required-mark">{{ 'template_content' | translate }}</label>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="htmlEditorOptions"
+                id="template_content"
+                formControlName="template_content"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+
+            <!-- WATERMARK -->
+            <!-- <div>
+              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">Watermark Settings</h4>
+              <label class="mb-2 flex items-center space-x-2">
+                <input type="checkbox" formControlName="is_watermark_enabled" class="form-checkbox" />
+                <span>Enable Watermark</span>
+              </label>
+
+              <div *ngIf="pdfDetailsForm.get('is_watermark_enabled')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <label class="form-label required-mark">Watermark Text</label>
+                  <input type="text" formControlName="watermark_text" class="form-input w-full" />
+                </div>
+                <div>
+                  <label class="form-label">Watermark Image URL</label>
+                  <input type="text" formControlName="watermark_image" class="form-input w-full" />
+                </div>
+                <div>
+                  <label class="form-label required-mark">Watermark Position</label>
+                  <select formControlName="watermark_position" class="form-select w-full">
+                    <option *ngFor="let pos of watermarkPositions" [value]="pos">{{ pos }}</option>
+                  </select>
+                </div>
+              </div>
+            </div> -->
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              class="btn rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              (click)="closePdfModal()"
+            >
+              {{ 'cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              class="btn rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              [disabled]="pdfDetailsForm.invalid"
+            >
+              {{ 'save_settings' | translate }}
             </button>
           </div>
         </form>

@@ -125,7 +125,7 @@ export class MasterListComponent implements OnChanges {
   loadingpopup: boolean = false;
   gridloading: boolean = true;
   selectedItemEntityType: string | null = null;
-  EntityName : string | null = null;
+  EntityName: string | null = null;
 
   title: any = '';
   previewTitle: any = '';
@@ -184,10 +184,10 @@ export class MasterListComponent implements OnChanges {
   previewPopupPermission: boolean = false;
   noPermission: boolean = false;
   isUUid: boolean = true;
-  commonSearchQuery:any = {};
-  grid_unique_id:any;
-  popupComponentGridParams:any;
-  
+  commonSearchQuery: any = {};
+  grid_unique_id: any;
+  popupComponentGridParams: any;
+
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
@@ -372,7 +372,7 @@ export class MasterListComponent implements OnChanges {
     this.fetchData(this.listQuery);
   }
 
-  previewSortColumn(previewColumn: any){
+  previewSortColumn(previewColumn: any) {
     this.previewColumn = previewColumn;
     this.previewListQuery.limit_range = this.previewResultsPerPage;
     this.previewListQuery.sort_columns = [[this.previewColumn.header, this.previewColumn.sortDirection]];
@@ -394,29 +394,25 @@ export class MasterListComponent implements OnChanges {
     this.commonSearchQuery.having_any_conditions = [];
     this.commonSearchQuery.search_any = [];
     this.commonSearchQuery.search_all = [];
-  
+
     interface QueryItem {
       isAggregate: boolean;
       column_name?: string;
       [key: string]: any;
     }
-  
+
     const query: QueryItem[] = data?.data || [];
     const condition: 'AND' | 'OR' = data?.condition || 'AND';
-  
+
     // --- Separate WHERE and HAVING ---
-    const whereConditions = query
-      .filter((d) => !d.isAggregate)
-      .map(({ isAggregate, ...rest }) => rest);
-  
-    const havingConditions = query
-      .filter((d) => d.isAggregate)
-      .map(({ isAggregate, ...rest }) => rest);
-  
+    const whereConditions = query.filter((d) => !d.isAggregate).map(({ isAggregate, ...rest }) => rest);
+
+    const havingConditions = query.filter((d) => d.isAggregate).map(({ isAggregate, ...rest }) => rest);
+
     // DO NOT DEEP CLONE – matches your existing working behaviour
     const clonedListQuery = this.listQuery;
     const orgListQuery = this.defaultQuery;
-  
+
     // --- NO CONDITIONS → RESTORE DEFAULT ---
     if (whereConditions.length === 0 && havingConditions.length === 0) {
       if (condition === 'AND') {
@@ -427,7 +423,7 @@ export class MasterListComponent implements OnChanges {
       this.fetchData(clonedListQuery);
       return;
     }
-  
+
     // --- HANDLE HAVING CONDITIONS ---
     if (havingConditions.length > 0) {
       if (condition === 'AND') {
@@ -440,7 +436,7 @@ export class MasterListComponent implements OnChanges {
         this.commonSearchQuery.having_conditions = [];
       }
     }
-  
+
     // --- HANDLE WHERE CONDITIONS ---
     if (condition === 'AND') {
       // Case: empty single condition → restore default
@@ -463,19 +459,15 @@ export class MasterListComponent implements OnChanges {
         this.commonSearchQuery.search_all = [];
       }
     }
-  
+
     // Reset pagination
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
-  
-    console.log("Final Query:", clonedListQuery);
-    console.log("Common Search Query:", this.commonSearchQuery);
-  
+
     this.fetchData(clonedListQuery);
   }
-  
-  
-  previewAdvancedSearchData(data : any){
+
+  previewAdvancedSearchData(data: any) {
     interface previewQueryItem {
       isAggregate: boolean;
       [key: string]: any;
@@ -535,10 +527,9 @@ export class MasterListComponent implements OnChanges {
   }
 
   searchData(input: any) {
-    
     this.commonSearchQuery.having_any_conditions = [];
     this.commonSearchQuery.search_any = [];
-    
+
     const clonedListQuery = this.listQuery;
 
     // Handling search in "where" conditions
@@ -586,7 +577,7 @@ export class MasterListComponent implements OnChanges {
     this.fetchData(clonedListQuery);
   }
 
-  previewSearchData(input: any){
+  previewSearchData(input: any) {
     const clonedPreviewListQuery = this.previewListQuery;
 
     // Handling search in "where" conditions
@@ -632,10 +623,12 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportTable(item: any) {
-    console.log(this.commonSearchQuery)
-    if (this.masterInfo.permissions.export_excel) {
+    if (this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_pdf) {
       this.loading = true;
-      if (this.masterInfo.children.export_excel && this.masterInfo.children.export_excel.component_class_name == 'export_module') {
+      if (
+        (this.masterInfo.permissions.export_excel && this.masterInfo.children.export_excel.component_class_name == 'export_module') ||
+        (this.masterInfo.permissions.export_pdf && this.masterInfo.children.export_pdf.component_class_name == 'export_module')
+      ) {
         //const filteredHeaders = headers.filter((header) => header.header !== 'id' && header.header !== 'uuid');
 
         this.exportItem(item);
@@ -811,9 +804,8 @@ export class MasterListComponent implements OnChanges {
       payload.unique_id = this.uuid;
     }
 
-    console.log(payload.unique_id)
     this.grid_unique_id = payload.unique_id;
-    
+
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
@@ -832,9 +824,9 @@ export class MasterListComponent implements OnChanges {
                 }));
 
               // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
-              const enableActionMenu = Object.entries(this.masterInfo.permissions)
-              .some(([key, value]) => !['child_details', 'create', 'export_excel'].includes(key) && value === true);
-
+              const enableActionMenu = Object.entries(this.masterInfo.permissions).some(
+                ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true
+              );
 
               // Include serial number column if enabled in config
               if (this.config.grid_show_serial_number == 'true') {
@@ -847,7 +839,7 @@ export class MasterListComponent implements OnChanges {
                     column_width: '40px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content: false
+                    field_html_content: false,
                   },
                   ...data,
                 ];
@@ -862,7 +854,7 @@ export class MasterListComponent implements OnChanges {
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content:  false
+                    field_html_content: false,
                   });
                 }
               } else {
@@ -877,7 +869,7 @@ export class MasterListComponent implements OnChanges {
                     column_width: '50px',
                     is_searchable: 'false',
                     is_grid_column: 'true',
-                    field_html_content:  false
+                    field_html_content: false,
                   });
                 }
               }
@@ -1070,36 +1062,33 @@ export class MasterListComponent implements OnChanges {
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = name;
     this.isViewPopupOpen = true;
-    
-    if(this.selectedItemEntityType == 'grid_builder_module'){
+
+    if (this.selectedItemEntityType == 'grid_builder_module') {
       this.loadingpopup = true;
-      this.gridApiService.getEntityDetails(name).subscribe(
-      (response) => {
+      this.gridApiService.getEntityDetails(name).subscribe((response) => {
         if (response.status && response.code === 200) {
           this.previewDefaultQuery = response.data.query_information;
           this.previewListQuery = response.data.query_information;
           this.previewFetchColumns(this.previewListQuery);
           this.previewFetchData(this.previewListQuery);
         }
-      }
-    )
-    setTimeout(() => {
-      this.loadingpopup = false;
-    }, 500)
-    } else{
+      });
+      setTimeout(() => {
+        this.loadingpopup = false;
+      }, 500);
+    } else {
       this.previewHeaderColumns = [];
       this.previewTotalItems = 0;
       this.previewItems = [];
       this.previewCurrentPage = 1;
       this.previewResultsPerPage = 10;
-      
     }
   }
 
   newfetchAttachedPolicies(params: any) {
     this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
       (response) => {
-        if (response.status && response.code === 200) {          
+        if (response.status && response.code === 200) {
         }
       },
       (error) => {
@@ -1111,11 +1100,11 @@ export class MasterListComponent implements OnChanges {
         this.previewFetchColumns(params);
         this.previewFetchData(params);
       }
-    )
+    );
   }
 
-  previewFetchColumns(params : any){
-  this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
+  previewFetchColumns(params: any) {
+    this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           const data = response.data.records.map((key: any, index: any) => {
@@ -1166,123 +1155,119 @@ export class MasterListComponent implements OnChanges {
     );
   }
 
-  previewFetchData(params : any){
+  previewFetchData(params: any) {
     params.limit_range = this.previewResultsPerPage;
-          this.gridApiService.getAllRecords(params).subscribe(
-            (response) => {
-                      if (response.status && response.code === 200) {
-                        if (response.data.headers) {
-                            const data = response.data.headers
-                            .filter((key: any) => key.is_grid_column == 'true')
-                            .map((key: any) => ({
-                              ...key,
-                              column_width: '40px',
-                            }));
+    this.gridApiService.getAllRecords(params).subscribe((response) => {
+      if (response.status && response.code === 200) {
+        if (response.data.headers) {
+          const data = response.data.headers
+            .filter((key: any) => key.is_grid_column == 'true')
+            .map((key: any) => ({
+              ...key,
+              column_width: '40px',
+            }));
 
-              // Include serial number column if enabled in config
-              if (this.config.grid_show_serial_number == 'true') {
-                this.previewHeaderColumns = [
-                  {
-                    header: 'table_column_sno',
-                    field_value: 'S.No',
-                    is_sortable: 'false',
-                    column_order: '0.00',
-                    column_width: '40px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                    field_html_content: false
-                  },
-                  ...data,
-                ];
-
-              } else {
-                this.previewHeaderColumns = [...data];
-              }
-            // }
-
-            // Adding custom templates
-            this.previewHeaderColumns = this.previewHeaderColumns.map((item: any) => {
-              if (item.header === 'status') {
-                return {
-                  ...item,
-                  customTemplate: this.statusTemplate,
-                };
-              } else if (item.header === 'process_status') {
-                return {
-                  ...item,
-                  customTemplate: this.processStatusTemplate,
-                };
-              } 
-               else {
-                return { ...item };
-              }
-            });
+          // Include serial number column if enabled in config
+          if (this.config.grid_show_serial_number == 'true') {
+            this.previewHeaderColumns = [
+              {
+                header: 'table_column_sno',
+                field_value: 'S.No',
+                is_sortable: 'false',
+                column_order: '0.00',
+                column_width: '40px',
+                is_searchable: 'false',
+                is_grid_column: 'true',
+                field_html_content: false,
+              },
+              ...data,
+            ];
+          } else {
+            this.previewHeaderColumns = [...data];
           }
+          // }
 
-          // Processing records
-          if (response.data.records) {
-            this.previewItems = response.data.records.map((item: any, index: any) => {
-              const formattedItem = { ...item };
-              for (const key in formattedItem) {
-                if (
-                  formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') ||
-                    key.toLowerCase().includes('deleted_at') ||
-                    key.toLowerCase().includes('created_at') ||
-                    key.toLowerCase().includes('updated_at')) &&
-                  this.isDate(formattedItem[key])
-                ) {
-                  this.previewHeaderColumns = this.previewHeaderColumns.map((headerItem: any) => {
-                    if (headerItem.header === key) {
-                      if (headerItem.field_type_id == 5) {
-                        const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
-                        if (transformedDate) {
-                          formattedItem[key] = transformedDate;
-                        }
-                      } else if (headerItem.field_type_id == 7) {
-                        const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
-                        if (transformedDate) {
-                          formattedItem[key] = transformedDate;
-                        }
+          // Adding custom templates
+          this.previewHeaderColumns = this.previewHeaderColumns.map((item: any) => {
+            if (item.header === 'status') {
+              return {
+                ...item,
+                customTemplate: this.statusTemplate,
+              };
+            } else if (item.header === 'process_status') {
+              return {
+                ...item,
+                customTemplate: this.processStatusTemplate,
+              };
+            } else {
+              return { ...item };
+            }
+          });
+        }
+
+        // Processing records
+        if (response.data.records) {
+          this.previewItems = response.data.records.map((item: any, index: any) => {
+            const formattedItem = { ...item };
+            for (const key in formattedItem) {
+              if (
+                formattedItem.hasOwnProperty(key) &&
+                (key.toLowerCase().includes('date') ||
+                  key.toLowerCase().includes('deleted_at') ||
+                  key.toLowerCase().includes('created_at') ||
+                  key.toLowerCase().includes('updated_at')) &&
+                this.isDate(formattedItem[key])
+              ) {
+                this.previewHeaderColumns = this.previewHeaderColumns.map((headerItem: any) => {
+                  if (headerItem.header === key) {
+                    if (headerItem.field_type_id == 5) {
+                      const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                      if (transformedDate) {
+                        formattedItem[key] = transformedDate;
+                      }
+                    } else if (headerItem.field_type_id == 7) {
+                      const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
+                      if (transformedDate) {
+                        formattedItem[key] = transformedDate;
                       }
                     }
-                    return headerItem;
-                  });
-                }
+                  }
+                  return headerItem;
+                });
               }
+            }
 
-              if (this.config.grid_show_serial_number == 'true') {
-                return {
-                  table_column_sno: this.listQuery.start_index + index + 1,
-                  ...formattedItem,
-                  Action: index + 1,
-                };
-              }
+            if (this.config.grid_show_serial_number == 'true') {
               return {
+                table_column_sno: this.listQuery.start_index + index + 1,
                 ...formattedItem,
                 Action: index + 1,
               };
-            });
-            this.previewTotalItems = response.data.total_records;
-            this.gridloading = false;
-          } else {
-            this.previewItems = [];
-            this.previewTotalItems = 0;
-            this.gridloading = false;
-          }
-          } else {
-            const key = response.message;
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
-            this.previewItems = [];
-            this.previewHeaderColumns = [];
-            this.previewTotalItems = 0;
-            this.gridloading = false;
-          }
             }
-          );
+            return {
+              ...formattedItem,
+              Action: index + 1,
+            };
+          });
+          this.previewTotalItems = response.data.total_records;
+          this.gridloading = false;
+        } else {
+          this.previewItems = [];
+          this.previewTotalItems = 0;
+          this.gridloading = false;
+        }
+      } else {
+        const key = response.message;
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+        this.previewItems = [];
+        this.previewHeaderColumns = [];
+        this.previewTotalItems = 0;
+        this.gridloading = false;
+      }
+    });
   }
-  
+
   viewPopupItem(item: any) {
     // Permission check for popup_details
     if (this.masterInfo.permissions.popup_details || this.masterInfo.permissions.details) {
@@ -1320,31 +1305,35 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
+  private downloadBlob(blob: Blob, fileName: string) {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   exportItem(item: any) {
     //grid_unique_id
-    console.log(this.grid_unique_id)
-    if(this.grid_unique_id){
-      this.gridApiService.exportIndividualRecords(this.masterInfo.children.export_excel.id,this.grid_unique_id,this.commonSearchQuery).subscribe({
+    if (this.grid_unique_id) {
+      this.gridApiService.exportIndividualRecords(this.masterInfo.children.export_excel.id, this.grid_unique_id, this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
-            const blob = new Blob([response.blob], {
-              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            });
-  
-            // Excel case
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = response.fileName;
-  
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-  
-            // Cleanup
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            this.loading = false;
+            if (response.blob) {
+              const blob = new Blob([response.blob], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              });
+
+              this.downloadBlob(blob, response.fileName);
+              this.loading = false;
+            } else {
+              this.loading = false;
+              this.toastr.error('Error downloading file');
+            }
           } catch (err) {
             console.error('Download error:', err);
             this.toastr.error('Error downloading file');
@@ -1358,50 +1347,66 @@ export class MasterListComponent implements OnChanges {
         },
       });
       return;
-
     }
 
+    if ((item.type === 'excel' && this.masterInfo.children.export_excel) || (item.type === 'pdf' && this.masterInfo.children.export_pdf)) {
+      const id = item.type === 'excel' ? this.masterInfo.children.export_excel.id : item.type === 'pdf' ? this.masterInfo.children.export_pdf.id : null;
+      if (id) {
+        this.gridApiService.exportAllRecords(id, this.commonSearchQuery).subscribe({
+          next: (response: ExportResponse) => {
+            try {
+              if (response.blob) {
+                const type =
+                  item.type === 'excel'
+                    ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    : item.type === 'pdf'
+                    ? 'application/pdf'
+                    : 'application/octet-stream';
+                const blob = new Blob([response.blob], {
+                  type,
+                });
+                this.downloadBlob(blob, response.fileName);
+                this.loading = false;
+              } else {
+                this.loading = false;
+                this.toastr.error('Error downloading file');
+              }
+              // if (item.type === 'excel') {
+              //   // Excel case
+              //   const url = window.URL.createObjectURL(blob);
+              //   const link = document.createElement('a');
+              //   link.href = url;
+              //   link.download = response.fileName;
 
-    if (this.masterInfo.children.export_excel) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
-        next: (response: ExportResponse) => {
-          try {
-            const blob = new Blob([response.blob], {
-              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            });
+              //   // Trigger download
+              //   document.body.appendChild(link);
+              //   link.click();
 
-            if (item.type === 'excel') {
-              // Excel case
-              const url = window.URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = response.fileName;
-
-              // Trigger download
-              document.body.appendChild(link);
-              link.click();
-
-              // Cleanup
-              document.body.removeChild(link);
-              window.URL.revokeObjectURL(url);
+              //   // Cleanup
+              //   document.body.removeChild(link);
+              //   window.URL.revokeObjectURL(url);
+              //   this.loading = false;
+              // } else if (item.type === 'pdf') {
+              //   // Convert Excel to PDF
+              //   this.convertExcelToPDF(blob, response.fileName.replace('.xlsx', '.pdf'));
+              //   this.loading = false;
+              // }
+            } catch (err) {
               this.loading = false;
-            } else if (item.type === 'pdf') {
-              // Convert Excel to PDF
-              this.convertExcelToPDF(blob, response.fileName.replace('.xlsx', '.pdf'));
-              this.loading = false;
+              console.error('Download error:', err);
+              this.toastr.error('Error downloading file');
             }
-          } catch (err) {
+          },
+          error: (error) => {
             this.loading = false;
-            console.error('Download error:', err);
-            this.toastr.error('Error downloading file');
-          }
-        },
-        error: (error) => {
-          this.loading = false;
-          console.error('Export error:', error);
-          this.toastr.error('Error exporting data');
-        },
-      });
+            console.error('Export error:', error);
+            this.toastr.error('Error exporting data');
+          },
+        });
+      } else {
+        console.log('No export id found');
+        return;
+      }
     }
   }
 
@@ -1723,11 +1728,11 @@ export class MasterListComponent implements OnChanges {
     this.fetchData(this.listQuery);
   }
 
-  previewOnPageChange(event: { page: number; start_index: number }){
+  previewOnPageChange(event: { page: number; start_index: number }) {
     this.previewCurrentPage = event.page;
     this.previewListQuery.start_index = event.start_index;
-    this.previewListQuery.limit_range = this.previewResultsPerPage
-    this.previewFetchData(this.previewListQuery)
+    this.previewListQuery.limit_range = this.previewResultsPerPage;
+    this.previewFetchData(this.previewListQuery);
   }
 
   onResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
@@ -1737,8 +1742,8 @@ export class MasterListComponent implements OnChanges {
     this.listQuery.limit_range = event.resultsPerPage;
     this.fetchData(this.listQuery);
   }
-  
-  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number }){
+
+  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
     this.previewCurrentPage = 1;
     this.previewResultsPerPage = event.resultsPerPage;
     this.previewListQuery.start_index = event.start_index;
@@ -1758,8 +1763,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
-  
-    if (event.col.link_type === 'component' || event.col.link_type === "popup_grid") {
+    if (event.col.link_type === 'component' || event.col.link_type === 'popup_grid') {
       const mode = event.col.link_mode || 'popup_details';
       if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
         this.noPopupPermission = true;
@@ -1776,14 +1780,14 @@ export class MasterListComponent implements OnChanges {
       }
 
       const gridParams: any = {};
-    Object.keys(event.item).forEach((key) => {
-      if (key.startsWith('gparam_')) {
-        let temp_key = '$' + key;
-        gridParams[temp_key] = event.item[key];
-      }
-    });
+      Object.keys(event.item).forEach((key) => {
+        if (key.startsWith('gparam_')) {
+          let temp_key = '$' + key;
+          gridParams[temp_key] = event.item[key];
+        }
+      });
       this.popupComponentGridParams = gridParams;
-      
+
       this.popupName = mode;
       this.selectedItemUuid = event.item.uuid;
       if (mode === 'popup_add') {
@@ -1800,7 +1804,6 @@ export class MasterListComponent implements OnChanges {
 
   processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
     this.popupName = popupName;
-    console.log(popupName, selectedItemUuid, popupEntityName, isViewPopupOpen);
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
@@ -1819,11 +1822,8 @@ export class MasterListComponent implements OnChanges {
           (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
         );
       } else if (popupName === 'popup_grid') {
-        menuItem = unorgmenuList.find(
-          (item: any) => item.entity_name === popupEntityName
-        );  
+        menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName);
       }
-      console.log(menuItem);
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
       }
@@ -1833,7 +1833,6 @@ export class MasterListComponent implements OnChanges {
       const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
       hasPermission = !!(permObj && permObj.accessible);
     }
-    console.log(hasPermission)
     if (!hasPermission) {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
