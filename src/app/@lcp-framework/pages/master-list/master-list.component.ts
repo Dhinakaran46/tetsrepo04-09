@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input, SimpleChanges, OnChanges, Output, EventEmitter } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -83,6 +83,10 @@ export class MasterListComponent implements OnChanges {
     this._nonGridPage = value;
     this.cdr.detectChanges();
   }
+  
+  @Output() selectionChange = new EventEmitter<any[]>();
+  @Output() deleteTriggred = new EventEmitter<any>();
+  @Input() selectedItems: any[] = [];
 
   get nonGridPage() {
     return this._nonGridPage;
@@ -288,7 +292,12 @@ export class MasterListComponent implements OnChanges {
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
 
-      this.enableCheckBox = masterListConfig.enable_row_checkbox;
+      if(masterListConfig.fullEntity === 'unmapped_delivery_notes'){
+        this.enableCheckBox = true;
+      }else{
+        this.enableCheckBox = masterListConfig.enable_row_checkbox;
+      }
+      
 
       if (this.entity_name) {
         this.title = this.entity_name;
@@ -1566,6 +1575,7 @@ export class MasterListComponent implements OnChanges {
           if (jobResponse) {
             await this.executeJob({ ...jobResponse, record_info: item });
             Swal.fire({ title: 'Deleted!', text: 'Your file has been deleted.', icon: 'success' });
+            this.deleteTriggred.emit();
             this.fetchData(this.listQuery);
           }
         } catch (error: any) {
@@ -1849,5 +1859,9 @@ export class MasterListComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     // Optionally handle other input changes if needed
+  }
+
+  onSelectionChange(data: any) {
+    this.selectionChange.emit(data);
   }
 }

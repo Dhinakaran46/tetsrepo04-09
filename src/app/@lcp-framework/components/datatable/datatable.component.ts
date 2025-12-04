@@ -98,12 +98,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Output() searchQuery = new EventEmitter<any>();
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
-
+  @Output() selectionChange = new EventEmitter<any>();
+  
   search: any = '';
   selectedColumns: any[] = [];
   selectedColumn = '';
   searchCondition: string = 'contains';
-  selectedItems: any[] = [];
+  @Input() selectedItems: any[] = [];
 
   totalPages: number = 1;
   filteredItems: any[] = [];
@@ -420,7 +421,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (this.expandedItem !== null) {
       if (item) {
         setTimeout(() => {
-          this.createChildMasterList(item, this.masterInfo?.children.child_details.entity_name);
+          this.createChildMasterList(item, this.masterInfo?.children.child_details.entity_name, row_index - 1);
         }, 250);
       }
     }
@@ -446,6 +447,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     });
 
     this.filteredItems = [...this.items];
+
+    for (let each of this.items) {
+         this.selectedItems.push(each);
+    }
 
     this.translate.get(['table_multiselect_0', 'table_multiselect_3']).subscribe((translations) => {
       this.dropdownSettings = {
@@ -803,6 +808,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     } else {
       this.selectedItems.splice(index, 1);
     }
+
+    this.selectionChange.emit(this.selectedItems);
+
+  }
+
+  isItemSelected(item: any): boolean {
+    return this.selectedItems.some((sel) => sel.uuid === item.uuid);
   }
 
   toggleSelectAll(event: any) {
@@ -1003,13 +1015,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header;
   }
 
-  createChildMasterList(item: any, entityName: string) {
+  createChildMasterList(item: any, entityName: string, row_index: number) {
     if (!this.childMasterListContainer) return;
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.enableCheckBox = this.enableCheckBox;
+    componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
+      this.selectionChange.emit(selectedItems);
+    });
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
