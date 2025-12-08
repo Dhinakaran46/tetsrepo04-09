@@ -34,6 +34,7 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { QuillModule } from 'ngx-quill';
 import { provideHighlightOptions } from 'ngx-highlightjs';
 import { BnNgIdleService } from 'bn-ng-idle';
+import { LocalStorageService } from './service/common/local-storage.service';
 
 export function initializeApp(routeUpdateService: RouteUpdateService): () => Promise<void> {
   return () =>
@@ -80,7 +81,7 @@ export const lcpAppConfig: ApplicationConfig = {
         loader: {
           provide: TranslateLoader,
           useFactory: httpTranslateLoader,
-          deps: [HttpClient],
+          deps: [HttpClient, LocalStorageService],
         },
       }),
       StoreModule.forRoot({ index: indexReducer }),
@@ -100,6 +101,6 @@ export const lcpAppConfig: ApplicationConfig = {
 };
 
 // AOT compilation support
-export function httpTranslateLoader(http: HttpClient) {
-  return new LocalStorageTranslateLoader();
+export function httpTranslateLoader(http: HttpClient, localstore: LocalStorageService) {
+  return new LocalStorageTranslateLoader(localstore);
 }

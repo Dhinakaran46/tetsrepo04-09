@@ -226,7 +226,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       next: (menuList) => {
         if (menuList.length > 0) {
           // Proceed with the rest of the login process
-         
+
           this.routeUpdateService.addDynamicRoutes();
         } else {
           console.error('Failed to load menu, login halted');
@@ -237,10 +237,9 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       },
     });
   }
-  setConfig(companyId: number,userID:any): void {
-    this.menuLoadService.fetchConfigData(companyId,userID).subscribe({
+  setConfig(companyId: number, userID: any): void {
+    this.menuLoadService.fetchConfigData(companyId, userID).subscribe({
       next: (res: any) => {
-        
         this.timezoneService.reloadConfig();
       },
       error: (error: any) => {
@@ -281,10 +280,9 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
 
     this.authService.login(loginData).subscribe({
       next: async (response: any) => {
-        
         if (response.status) {
           const userID = response.data.id;
-        
+
           const permissionsObj = response.data.permissions.reduce((acc: any, perm: any) => {
             acc[perm.slug] = perm.accessible;
             return acc;
@@ -292,17 +290,15 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
 
           // Store the user data along with permissions and menu lists
           const conf: any = this.localstore.getData('config');
-          
+
           const enc_config: any = JSON.parse(conf);
-          
-          
+
           this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
-          
+
           if (response.data.theme_info) {
             const themeData = JSON.stringify(response.data.theme_info);
             this.localstore.storeData('theme_info', themeData);
-            localStorage.setItem('`theme_info`', themeData);
-           
+
             this.themeService.applyThemeFromLocalStorage();
           }
           if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
@@ -311,7 +307,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               JSON.stringify({
                 main: response.data,
                 permissions: permissionsObj,
-                user_id:userID
+                user_id: userID,
               })
             );
           } else {
@@ -320,7 +316,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               JSON.stringify({
                 main: response.data,
                 permissions: permissionsObj,
-                user_id:userID
+                user_id: userID,
               })
             );
           }
@@ -337,18 +333,15 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
             this.localstore.removeData('rememberme');
           }
 
-          this.setConfig(this.companyId,userID);
+          this.setConfig(this.companyId, userID);
 
           this.getconfig(userID);
 
           this.onLoginSuccess(this.companyId);
 
-          
           // Add dynamic routes
 
-          forkJoin([
-            this.menuLoadService.fetchMenuData(this.companyId),
-          ]).subscribe({
+          forkJoin([this.menuLoadService.fetchMenuData(this.companyId)]).subscribe({
             next: ([configData]) => {
               // Notify other tabs of login
               localStorage.setItem('login', Date.now().toString());
@@ -389,19 +382,17 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       },
       complete: () => {
         this.loading = false;
-       
       },
     });
   }
 
   // Copy of getconfig from AuthLayout
   getconfig(userId?: number) {
-    
     // Prepare params for the procedure
-    const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
+    const params: any = { categories: { '0': 'ac1', '1': 'ac2' } };
     if (userId !== undefined && userId !== null) {
       params.user_id = userId; // Add user_id if provided
-      params.categories = {'0': 'ac16', '1': 'ac17'};
+      params.categories = { '0': 'ac16', '1': 'ac17' };
     }
 
     const procedureParams = { proc_name: 'get_configurations_values_v1', params };
@@ -411,9 +402,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
         if (response.code === 200 && response.status && response.data) {
           const res = response.data?.[0]?.result?.data || {};
 
-  
           if (Object.keys(res).length > 0) {
-          
             // Optionally handle favicon, logo, etc. here if needed
             this.localstore.storeData('config', JSON.stringify(res));
           }
@@ -421,7 +410,6 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          
         }
       },
       error: (error) => {
