@@ -83,7 +83,6 @@ export class AuthLayout {
   headerClass = '';
 
   ngOnInit() {
-
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
       console.log('Reloaded');
@@ -102,7 +101,7 @@ export class AuthLayout {
         this.showTopButton = false;
       }
     });
-    
+
     // Get userId from localStorageService if available
     let userId: number | undefined = undefined;
     try {
@@ -171,7 +170,7 @@ export class AuthLayout {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-          if(entity && entity.items){
+          if (entity && entity.items) {
             this.mediaItems = entity.items;
             this.mediaItems.sort((a: any, b: any) => a.order - b.order);
           }
@@ -186,16 +185,15 @@ export class AuthLayout {
   }
 
   getconfig(userId?: number) {
-   
     // Prepare params for the procedure
-    const params: any = { categories:{'0': 'ac1', '1': 'ac2'} };
+    const params: any = { categories: { '0': 'ac1', '1': 'ac2' } };
     if (userId !== undefined && userId !== null) {
       params.user_id = userId; // Add user_id if provided
-      params.categories = {'0': 'ac16', '1': 'ac17'}
+      params.categories = { '0': 'ac16', '1': 'ac17' };
     }
-  
+
     const procedureParams = { proc_name: 'get_configurations_values_v1', params };
-  
+
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
         if (response.code === 200 && response.status && response.data) {
@@ -220,7 +218,6 @@ export class AuthLayout {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-         
         }
       },
       error: (error) => {
@@ -273,14 +270,12 @@ export class AuthLayout {
     document.documentElement.scrollTop = 0;
   }
 
-  getThemeInfo(payload: any){
-
+  getThemeInfo(payload: any) {
     this.commonService.getThemeInfo(payload).subscribe((response: any) => {
       if (response.code === 200) {
-          const themeData = JSON.stringify(response.data);
-          this.localstore.storeData('theme_info', themeData);
-          localStorage.setItem('theme_info', themeData);
-          this.themeService.applyThemeFromLocalStorage();
+        const themeData = JSON.stringify(response.data);
+        this.localstore.storeData('theme_info', themeData);
+        this.themeService.applyThemeFromLocalStorage();
       }
     });
   }
