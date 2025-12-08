@@ -577,28 +577,32 @@
           <div class="px max-h-[calc(90vh-10rem)] space-y-6 overflow-y-auto py-1 sm:px-3">
             <!-- PAGE SETUP -->
             <div class="px-3">
-              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'page_setup' | translate }}</h4>
+              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'pdf_page_setup' | translate }}</h4>
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <!-- Page Size -->
                 <div>
-                  <label class="form-label required-mark">{{ 'page_size' | translate }}</label>
-                  <select formControlName="page_size" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('page_size') }">
+                  <label class="form-label required-mark">{{ 'pdf_page_size' | translate }}</label>
+                  <select formControlName="pdf_page_size" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('pdf_page_size') }">
                     <option *ngFor="let size of pageSizes" [value]="size">{{ size }}</option>
                   </select>
                 </div>
 
                 <!-- Orientation -->
                 <div>
-                  <label class="form-label required-mark">{{ 'orientation' | translate }}</label>
-                  <select formControlName="orientation" class="form-select w-full capitalize" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('orientation') }">
+                  <label class="form-label required-mark">{{ 'pdf_orientation' | translate }}</label>
+                  <select
+                    formControlName="pdf_orientation"
+                    class="form-select w-full capitalize"
+                    [ngClass]="{ 'is-invalid': isFieldInvalidPdf('pdf_orientation') }"
+                  >
                     <option class="capitalize" *ngFor="let o of orientations" [value]="o">{{ o }}</option>
                   </select>
                 </div>
 
                 <!-- Color Theme -->
                 <!-- <div>
-                  <label class="form-label required-mark">{{ 'color_theme' | translate }}</label>
-                  <select formControlName="color_theme" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('color_theme') }">
+                  <label class="form-label required-mark">{{ 'pdf_color_theme' | translate }}</label>
+                  <select formControlName="pdf_color_theme" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('pdf_color_theme') }">
                     <option *ngFor="let theme of colorThemes" [value]="theme">{{ theme }}</option>
                   </select>
                 </div> -->
@@ -609,57 +613,62 @@
                     <label class="form-label capitalize">Margin {{ m }} (mm)</label>
                     <input
                       type="number"
-                      [formControlName]="'margin_' + m"
+                      [formControlName]="'pdf_margin_' + m"
                       class="form-input w-full"
-                      [ngClass]="{ 'is-invalid': isFieldInvalidPdf('margin_' + m) }"
+                      [ngClass]="{ 'is-invalid': isFieldInvalidPdf('pdf_margin_' + m) }"
                     />
                   </div>
                 </ng-container>
 
                 <!-- Font -->
                 <div>
-                  <label class="form-label required-mark">{{ 'font_family' | translate }}</label>
-                  <select formControlName="font_family" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('font_family') }">
+                  <label class="form-label required-mark">{{ 'pdf_font_family' | translate }}</label>
+                  <select formControlName="pdf_font_family" class="form-select w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('pdf_font_family') }">
                     <option *ngFor="let font of fonts" [value]="font">{{ font }}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label class="form-label required-mark">{{ 'font_size' | translate }}</label>
-                  <input type="number" formControlName="font_size" class="form-input w-full" [ngClass]="{ 'is-invalid': isFieldInvalidPdf('font_size') }" />
+                  <label class="form-label required-mark">{{ 'pdf_font_size' | translate }}</label>
+                  <input
+                    type="number"
+                    formControlName="pdf_font_size"
+                    class="form-input w-full"
+                    [ngClass]="{ 'is-invalid': isFieldInvalidPdf('pdf_font_size') }"
+                  />
                 </div>
               </div>
             </div>
 
             <!-- HEADER & FOOTER -->
             <div class="px-3">
-              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'header_footer_settings' | translate }}</h4>
+              <h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">{{ 'pdf_header_footer_settings' | translate }}</h4>
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <!-- Header -->
                 <label class="flex items-center space-x-2">
-                  <input type="checkbox" formControlName="is_header_enabled" class="form-checkbox" />
-                  <span>{{ 'enable_header' | translate }}</span>
+                  <input type="checkbox" formControlName="pdf_is_header_enabled" class="form-checkbox" />
+                  <span>{{ 'pdf_enable_header' | translate }}</span>
                 </label>
 
                 <label class="flex items-center space-x-2">
-                  <input type="checkbox" formControlName="is_footer_enabled" class="form-checkbox" />
-                  <span>{{ 'enable_footer' | translate }}</span>
+                  <input type="checkbox" formControlName="pdf_is_footer_enabled" class="form-checkbox" />
+                  <span>{{ 'pdf_enable_footer' | translate }}</span>
                 </label>
 
-                <label *ngIf="pdfDetailsForm.get('is_footer_enabled')?.value" class="flex items-center space-x-2">
-                  <input type="checkbox" formControlName="is_paginated" class="form-checkbox" />
-                  <span>{{ 'enable_pagination' | translate }}</span>
+                <label *ngIf="pdfDetailsForm.get('pdf_is_footer_enabled')?.value" class="flex items-center space-x-2">
+                  <input type="checkbox" formControlName="pdf_is_paginated" class="form-checkbox" />
+                  <span>{{ 'pdf_enable_pagination' | translate }}</span>
                 </label>
               </div>
 
               <!-- Header Textarea -->
-              <div *ngIf="pdfDetailsForm.get('is_header_enabled')?.value" class="mt-4">
-                <label class="form-label required-mark">{{ 'header_content' | translate }}</label>
+              <div *ngIf="pdfDetailsForm.get('pdf_is_header_enabled')?.value" class="mt-4">
+                <label class="form-label required-mark">{{ 'pdf_header_content' | translate }}</label>
                 <ngx-monaco-editor
                   monacoEditor
                   [options]="htmlEditorOptions"
-                  id="template_header"
-                  formControlName="template_header"
+                  id="pdf_template_header"
+                  formControlName="pdf_template_header"
                   class="monaco-editor"
                 ></ngx-monaco-editor>
                 <!-- <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -675,13 +684,13 @@
               </div>
 
               <!-- Footer Textarea -->
-              <div *ngIf="pdfDetailsForm.get('is_footer_enabled')?.value" class="mt-4">
-                <label class="form-label required-mark">{{ 'footer_content' | translate }}</label>
+              <div *ngIf="pdfDetailsForm.get('pdf_is_footer_enabled')?.value" class="mt-4">
+                <label class="form-label required-mark">{{ 'pdf_footer_content' | translate }}</label>
                 <ngx-monaco-editor
                   monacoEditor
                   [options]="htmlEditorOptions"
-                  id="template_footer"
-                  formControlName="template_footer"
+                  id="pdf_template_footer"
+                  formControlName="pdf_template_footer"
                   class="monaco-editor"
                 ></ngx-monaco-editor>
                 <!-- <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -699,12 +708,12 @@
 
             <!-- TEMPLATE BODY -->
             <div class="px-3">
-              <label class="form-label required-mark">{{ 'template_content' | translate }}</label>
+              <label class="form-label required-mark">{{ 'pdf_template_content' | translate }}</label>
               <ngx-monaco-editor
                 monacoEditor
                 [options]="htmlEditorOptions"
-                id="template_content"
-                formControlName="template_content"
+                id="pdf_template_content"
+                formControlName="pdf_template_content"
                 class="monaco-editor"
               ></ngx-monaco-editor>
             </div>
