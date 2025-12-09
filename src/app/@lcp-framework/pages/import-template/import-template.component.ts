@@ -308,11 +308,11 @@ export class ImportTemplateComponent implements OnInit {
     const params = {
       company_id: 1,
       print_query: true,
-      primary_table: 'email_templates',
+      primary_table: 'notification_templates',
       start_index: 0,
       limit_range: 1,
-      sort_columns: [['email_templates.id', 'asc']],
-      select_columns: [['email_templates.*']],
+      sort_columns: [['notification_templates.id', 'asc']],
+      select_columns: [['notification_templates.*']],
     };
 
     this.gridApiService.getAllList(params).subscribe(

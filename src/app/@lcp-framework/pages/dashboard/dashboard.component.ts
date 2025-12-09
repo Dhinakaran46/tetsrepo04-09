@@ -1,4 +1,4 @@
-import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy, CUSTOM_ELEMENTS_SCHEMA, ViewContainerRef,ComponentRef } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { DateRange} from '../../../@lcp-framework/components/models/date-range.model';
@@ -41,6 +41,7 @@ import { AuthService } from '../../service/common/auth.service';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { MasterListComponent } from '../master-list/master-list.component';
+
 // import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
 
 export type format = {
@@ -73,11 +74,13 @@ interface BaseCard {
   reload_timeout?: any;
   query_information?: any;
   report_information?: any;
+  dashboard_grid?: any;
   report_type: ReportType;
   permissions: any;
 }
 
 interface CommonCard extends BaseCard {
+  entity_name?: string;
   title: any;
   format?: any;
   particular_format?: any; // For static content, to hold compiled HTML
@@ -124,6 +127,10 @@ interface DashboardTab {
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
+  // Add these properties to your class
+@ViewChildren('gridContainer', { read: ViewContainerRef }) gridContainers!: QueryList<ViewContainerRef>;
+private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
+
   dateRange: DateRange = {
     fromDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
     toDate: new Date()
@@ -237,6 +244,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearReloadTimers();
     this.removePowerBiInstances();
+    this.clearGridComponents();
+  }
+  private clearGridComponents() {
+    this.gridComponentRefs.forEach(ref => ref.destroy());
+    this.gridComponentRefs = [];
   }
   
   formatDate(date: Date | null): string {
@@ -322,7 +334,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
             [
-              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_wizard_order_no AS order_no, master_entities.reload_timeout ,  master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
+              'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name, sub.dashboard_grid FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols,master_entities.dashboard_grid AS dashboard_grid, master_entities.dashboard_wizard_order_no AS order_no, master_entities.reload_timeout ,  master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.dashboard_grid AS dashboard_grid, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
               'cards',
             ],
           ],
@@ -381,10 +393,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                       'type', master_entities.dashboard_wizard_type,
                       'rows', master_entities.dashboard_wizard_rows,
                       'cols', master_entities.dashboard_wizard_columns,
+                      'dashboard_grid', master_entities.dashboard_grid,
                       'order_no', master_entities.dashboard_wizard_order_no,
                       'reload_timeout', master_entities.reload_timeout,
                       'query_information', master_entities.query_information,
                       'report_information', master_entities.report_information,
+                      'dashboard_grid', master_entities.dashboard_grid,
                       'report_type', master_entities.report_type,
                       'entity_name',master_entities.entity_name
                     ) AS jsonb_object,
@@ -408,6 +422,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
     this.gridApiService.getAllList(params).subscribe(
       async (response) => {
+        console.log(response)
         if (response.status && response.code === 200) {
           this.dashboardTabs = await Promise.all(
             response.data.records.map(async (mainElem: any) => {
@@ -441,6 +456,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               return mainElem;
             })
             );
+            console.log(this.dashboardTabs);
             // Set the first tab as the active tab and initialize its cards
             await this.setActiveTab(this.dashboardTabs[0].id);
           }
@@ -569,6 +585,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
       }
 
+       // NEW: Handle GRID refresh
+    if (card.type === commonConfig.WIZARD_TYPES.GRID) {
+      // Trigger re-render of grid component
+      const activeTab = this.dashboardTabs.find(tab => tab.id === this.activeTabId);
+      if (activeTab) {
+        const cardIndex = activeTab.cards.findIndex(c => c.id === card.id);
+        if (cardIndex !== -1) {
+          this.createGridComponent(card, cardIndex);
+        }
+      }
+    }
+
       this.cdr.detectChanges();
     } catch (e) {
       // swallow per-card errors to avoid breaking other timers
@@ -632,6 +660,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   private async initializeDashboardCards(cards: Card[]): Promise<void> {
     if (cards) {
       let pbiIndex = 0;
+      let gridIndex = 0;
       await Promise.all(
         cards.map(async (card, i) => {
           if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
@@ -687,6 +716,21 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                 card.chart_format[0].xaxis.categories = labels;
               }
             }
+
+            console.log(card)
+            // NEW: Handle GRID type
+          if (card.type === commonConfig.WIZARD_TYPES.GRID) {
+            // Ensure card has entity_name
+            if (!card.entity_name) {
+              console.error('Grid card missing entity_name:', card);
+              return;
+            }
+            // Wait for view to be ready
+            setTimeout(() => {
+              this.createGridComponent(card, gridIndex);
+              gridIndex++;
+            }, 100);
+          }
             // NEW: schedule auto-reload for LCP card
             this.scheduleLcpReload(card);
           } else {
@@ -702,6 +746,69 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     }
     this.cdr.detectChanges();
   }
+
+  // Add method to create grid component
+private createGridComponent(card: Card, index: number) {
+  console.log(card)
+  // Wait for the gridContainers to be available
+  if (!this.gridContainers || this.gridContainers.length === 0) {
+    // Retry after a short delay
+    setTimeout(() => this.createGridComponent(card, index), 100);
+    return;
+  }
+
+  const container = this.gridContainers.toArray()[index];
+  if (!container) {
+    console.warn(`Grid container at index ${index} not found`);
+    return;
+  }
+
+  container.clear();
+  const componentRef = container.createComponent(MasterListComponent);
+  
+  // Set the entity name from card configuration
+  if (card.dashboard_grid) {
+    componentRef.instance.entity_name = card.dashboard_grid;
+  }
+
+  // Set uuid if available from card data
+  if (card.data && card.data.length > 0 && card.data[0].uuid) {
+    componentRef.instance.uuid = card.data[0].uuid;
+  }
+  
+  componentRef.instance.nonGridPage = false;
+  componentRef.instance.enableCheckBox = false;
+
+  // Pass grid parameters if available
+  const gridParams: any = {};
+  if (card.data && card.data.length > 0) {
+    Object.keys(card.data[0]).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = card.data[0][key];
+      }
+    });
+  }
+  
+  // Merge with component's grid_params
+  componentRef.instance.grid_params = { ...gridParams, ...this.grid_params };
+
+  // Subscribe to selection changes if needed
+  componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
+    // Handle selection changes if needed
+    console.log('Grid selection changed:', selectedItems);
+  });
+
+  console.log(componentRef.instance)
+  // Store reference for cleanup
+  this.gridComponentRefs.push(componentRef);
+  
+  // Manually trigger the component's initialization since it's not going through routing
+  // This will call ngAfterContentInit which fetches the data
+  componentRef.instance.ngAfterContentInit();
+
+  this.cdr.detectChanges();
+}
 
   validateChartData(chart: any) {
     if (chart.data.length > 0) {
