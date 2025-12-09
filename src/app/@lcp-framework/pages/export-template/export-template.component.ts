@@ -765,16 +765,16 @@ export class ExportTemplateComponent implements OnInit {
       // XLSX → only xlsx fields required
       xlsxFields.forEach((ctrl) => ctrl?.setValidators([Validators.required]));
       [
-        'margin_top',
-        'margin_bottom',
-        'margin_left',
-        'margin_right',
-        'page_size',
-        'orientation',
-        'color_theme',
-        'font_family',
-        'font_size',
-        'template_content',
+        'pdf_margin_top',
+        'pdf_margin_bottom',
+        'pdf_margin_left',
+        'pdf_margin_right',
+        'pdf_page_size',
+        'pdf_orientation',
+        'pdf_color_theme',
+        'pdf_font_family',
+        'pdf_font_size',
+        'pdf_template_content',
       ].forEach((f) => {
         pdfGroup.get(f)?.clearValidators();
       });
@@ -782,11 +782,11 @@ export class ExportTemplateComponent implements OnInit {
     } else if (type === 'pdf') {
       // PDF → enable pdf fields
       pdfGroup.enable({ emitEvent: false });
-      pdfGroup.get('font_size')?.setValidators([Validators.required, Validators.min(6), Validators.max(48)]);
-      ['page_size', 'orientation', 'color_theme', 'font_family', 'template_content'].forEach((f) => {
+      pdfGroup.get('pdf_font_size')?.setValidators([Validators.required, Validators.min(6), Validators.max(48)]);
+      ['pdf_page_size', 'pdf_orientation', 'pdf_color_theme', 'pdf_font_family', 'pdf_template_content'].forEach((f) => {
         pdfGroup.get(f)?.setValidators([Validators.required]);
       });
-      ['margin_top', 'margin_bottom', 'margin_left', 'margin_right'].forEach((f) => {
+      ['pdf_margin_top', 'pdf_margin_bottom', 'pdf_margin_left', 'pdf_margin_right'].forEach((f) => {
         pdfGroup.get(f)?.setValidators([Validators.required, Validators.min(0)]);
       });
     } else {
@@ -813,29 +813,29 @@ export class ExportTemplateComponent implements OnInit {
       items: this.fb.array([]),
       queries: this.fb.array([]),
       pdfDetails: this.fb.group({
-        page_size: ['A4', Validators.required],
-        orientation: ['portrait', Validators.required],
-        margin_top: [20, [Validators.required, Validators.min(0)]],
-        margin_bottom: [20, [Validators.required, Validators.min(0)]],
-        margin_left: [15, [Validators.required, Validators.min(0)]],
-        margin_right: [15, [Validators.required, Validators.min(0)]],
-        color_theme: ['light', Validators.required],
-        font_family: ['Helvetica', Validators.required],
-        font_size: [12, [Validators.required, Validators.min(6), Validators.max(48)]],
-        is_paginated: [false],
-        is_header_enabled: [false],
-        is_footer_enabled: [false],
-        template_header: [{ value: '', disabled: true }],
-        template_footer: [{ value: '', disabled: true }],
-        template_content: ['', Validators.required],
-        is_repeatative_header: [{ value: true, disabled: true }],
-        is_repeatative_footer: [{ value: true, disabled: true }],
-        is_first_page_header_only: [{ value: false, disabled: true }],
-        is_first_page_footer_only: [{ value: false, disabled: true }],
-        is_watermark_enabled: [false],
-        watermark_text: [{ value: '', disabled: true }],
-        watermark_image: [{ value: '', disabled: true }],
-        watermark_position: [{ value: 'center', disabled: true }],
+        pdf_page_size: ['A4', Validators.required],
+        pdf_orientation: ['portrait', Validators.required],
+        pdf_margin_top: [20, [Validators.required, Validators.min(0)]],
+        pdf_margin_bottom: [20, [Validators.required, Validators.min(0)]],
+        pdf_margin_left: [15, [Validators.required, Validators.min(0)]],
+        pdf_margin_right: [15, [Validators.required, Validators.min(0)]],
+        pdf_color_theme: ['light', Validators.required],
+        pdf_font_family: ['Helvetica', Validators.required],
+        pdf_font_size: [12, [Validators.required, Validators.min(6), Validators.max(48)]],
+        pdf_is_paginated: [false],
+        pdf_is_header_enabled: [false],
+        pdf_is_footer_enabled: [false],
+        pdf_template_header: [{ value: '', disabled: true }],
+        pdf_template_footer: [{ value: '', disabled: true }],
+        pdf_template_content: ['', Validators.required],
+        pdf_is_repeatative_header: [{ value: true, disabled: true }],
+        pdf_is_repeatative_footer: [{ value: true, disabled: true }],
+        pdf_is_first_page_header_only: [{ value: false, disabled: true }],
+        pdf_is_first_page_footer_only: [{ value: false, disabled: true }],
+        pdf_is_watermark_enabled: [false],
+        pdf_watermark_text: [{ value: '', disabled: true }],
+        pdf_watermark_image: [{ value: '', disabled: true }],
+        pdf_watermark_position: [{ value: 'center', disabled: true }],
       }),
     });
 
@@ -851,10 +851,10 @@ export class ExportTemplateComponent implements OnInit {
     // Run once on init to set correct validators
 
     //  Header enable/disable
-    pdfDetailsGroup.get('is_header_enabled')?.valueChanges.subscribe((enabled) => {
-      const repeatHeader = pdfDetailsGroup.get('is_repeatative_header');
-      const firstPageHeader = pdfDetailsGroup.get('is_first_page_header_only');
-      const templateHeader = pdfDetailsGroup.get('template_header');
+    pdfDetailsGroup.get('pdf_is_header_enabled')?.valueChanges.subscribe((enabled) => {
+      const repeatHeader = pdfDetailsGroup.get('pdf_is_repeatative_header');
+      const firstPageHeader = pdfDetailsGroup.get('pdf_is_first_page_header_only');
+      const templateHeader = pdfDetailsGroup.get('pdf_template_header');
 
       if (enabled) {
         repeatHeader?.enable({ emitEvent: true });
@@ -874,10 +874,10 @@ export class ExportTemplateComponent implements OnInit {
     });
 
     //  Footer enable/disable
-    pdfDetailsGroup.get('is_footer_enabled')?.valueChanges.subscribe((enabled) => {
-      const repeatFooter = pdfDetailsGroup.get('is_repeatative_footer');
-      const firstPageFooter = pdfDetailsGroup.get('is_first_page_footer_only');
-      const templateFooter = pdfDetailsGroup.get('template_footer');
+    pdfDetailsGroup.get('pdf_is_footer_enabled')?.valueChanges.subscribe((enabled) => {
+      const repeatFooter = pdfDetailsGroup.get('pdf_is_repeatative_footer');
+      const firstPageFooter = pdfDetailsGroup.get('pdf_is_first_page_footer_only');
+      const templateFooter = pdfDetailsGroup.get('pdf_template_footer');
 
       if (enabled) {
         repeatFooter?.enable({ emitEvent: true });
@@ -896,32 +896,32 @@ export class ExportTemplateComponent implements OnInit {
       [repeatFooter, firstPageFooter, templateFooter].forEach((ctrl) => ctrl?.updateValueAndValidity({ emitEvent: false }));
     });
 
-    pdfDetailsGroup.get('is_first_page_header_only')?.valueChanges.subscribe((enabled) => {
-      const repeatHeader = pdfDetailsGroup.get('is_repeatative_header');
+    pdfDetailsGroup.get('pdf_is_first_page_header_only')?.valueChanges.subscribe((enabled) => {
+      const repeatHeader = pdfDetailsGroup.get('pdf_is_repeatative_header');
       if (enabled) repeatHeader?.setValue(false, { emitEvent: false });
     });
 
-    pdfDetailsGroup.get('is_first_page_footer_only')?.valueChanges.subscribe((enabled) => {
-      const repeatFooter = pdfDetailsGroup.get('is_repeatative_footer');
+    pdfDetailsGroup.get('pdf_is_first_page_footer_only')?.valueChanges.subscribe((enabled) => {
+      const repeatFooter = pdfDetailsGroup.get('pdf_is_repeatative_footer');
       if (enabled) repeatFooter?.setValue(false, { emitEvent: false });
     });
 
     //  Header/footers repeatable
-    pdfDetailsGroup.get('is_repeatative_header')?.valueChanges.subscribe((enabled) => {
-      const firstPageHeader = pdfDetailsGroup.get('is_first_page_header_only');
+    pdfDetailsGroup.get('pdf_is_repeatative_header')?.valueChanges.subscribe((enabled) => {
+      const firstPageHeader = pdfDetailsGroup.get('pdf_is_first_page_header_only');
       if (enabled) firstPageHeader?.setValue(false, { emitEvent: false });
     });
 
-    pdfDetailsGroup.get('is_repeatative_footer')?.valueChanges.subscribe((enabled) => {
-      const firstPageFooter = pdfDetailsGroup.get('is_first_page_footer_only');
+    pdfDetailsGroup.get('pdf_is_repeatative_footer')?.valueChanges.subscribe((enabled) => {
+      const firstPageFooter = pdfDetailsGroup.get('pdf_is_first_page_footer_only');
       if (enabled) firstPageFooter?.setValue(false, { emitEvent: false });
     });
 
     //  Watermark enable/disable
-    pdfDetailsGroup.get('is_watermark_enabled')?.valueChanges.subscribe((enabled) => {
-      const textCtrl = pdfDetailsGroup.get('watermark_text');
-      const imageCtrl = pdfDetailsGroup.get('watermark_image');
-      const posCtrl = pdfDetailsGroup.get('watermark_position');
+    pdfDetailsGroup.get('pdf_is_watermark_enabled')?.valueChanges.subscribe((enabled) => {
+      const textCtrl = pdfDetailsGroup.get('pdf_watermark_text');
+      const imageCtrl = pdfDetailsGroup.get('pdf_watermark_image');
+      const posCtrl = pdfDetailsGroup.get('pdf_watermark_position');
 
       if (enabled) {
         textCtrl?.enable({ emitEvent: false });
@@ -1086,29 +1086,29 @@ export class ExportTemplateComponent implements OnInit {
 
           const pdfGroup = this.form.get('pdfDetails') as FormGroup;
           pdfGroup.patchValue({
-            page_size: entity.page_size || 'A4',
-            orientation: entity.orientation || 'portrait',
-            margin_top: entity.margin_top ?? 20,
-            margin_bottom: entity.margin_bottom ?? 20,
-            margin_left: entity.margin_left ?? 15,
-            margin_right: entity.margin_right ?? 15,
-            color_theme: entity.color_theme || 'light',
-            font_family: entity.font_family || 'Helvetica',
-            font_size: entity.font_size ?? 12,
-            is_paginated: entity.is_paginated ?? false,
-            is_header_enabled: entity.is_header_enabled ?? false,
-            is_footer_enabled: entity.is_footer_enabled ?? false,
-            template_header: entity.template_header || '',
-            template_footer: entity.template_footer || '',
-            template_content: entity.template_content || '',
-            is_repeatative_header: entity.is_repeatative_header ?? false,
-            is_repeatative_footer: entity.is_repeatative_footer ?? false,
-            is_first_page_header_only: entity.is_first_page_header_only ?? false,
-            is_first_page_footer_only: entity.is_first_page_footer_only ?? false,
-            is_watermark_enabled: entity.is_watermark_enabled ?? false,
-            watermark_text: entity.watermark_text || '',
-            watermark_image: entity.watermark_image || '',
-            watermark_position: entity.watermark_position || 'center',
+            pdf_page_size: entity?.pdf_configurations?.page_size || 'A4',
+            pdf_orientation: entity?.pdf_configurations?.orientation || 'portrait',
+            pdf_margin_top: entity?.pdf_configurations?.margin_top ?? 20,
+            pdf_margin_bottom: entity?.pdf_configurations?.margin_bottom ?? 20,
+            pdf_margin_left: entity?.pdf_configurations?.margin_left ?? 15,
+            pdf_margin_right: entity?.pdf_configurations?.margin_right ?? 15,
+            pdf_color_theme: entity?.pdf_configurations?.color_theme || 'light',
+            pdf_font_family: entity?.pdf_configurations?.font_family || 'Helvetica',
+            pdf_font_size: entity?.pdf_configurations?.font_size ?? 12,
+            pdf_is_paginated: entity?.pdf_configurations?.is_paginated ?? false,
+            pdf_is_header_enabled: entity?.pdf_configurations?.is_header_enabled ?? false,
+            pdf_is_footer_enabled: entity?.pdf_configurations?.is_footer_enabled ?? false,
+            pdf_template_header: entity?.pdf_configurations?.template_header || '',
+            pdf_template_footer: entity?.pdf_configurations?.template_footer || '',
+            pdf_template_content: entity?.pdf_configurations?.template_content || '',
+            pdf_is_repeatative_header: entity?.pdf_configurations?.is_repeatative_header ?? false,
+            pdf_is_repeatative_footer: entity?.pdf_configurations?.is_repeatative_footer ?? false,
+            pdf_is_first_page_header_only: entity?.pdf_configurations?.is_first_page_header_only ?? false,
+            pdf_is_first_page_footer_only: entity?.pdf_configurations?.is_first_page_footer_only ?? false,
+            pdf_is_watermark_enabled: entity?.pdf_configurations?.is_watermark_enabled ?? false,
+            pdf_watermark_text: entity?.pdf_configurations?.watermark_text || '',
+            pdf_watermark_image: entity?.pdf_configurations?.watermark_image || '',
+            pdf_watermark_position: entity?.pdf_configurations?.watermark_position || 'center',
           });
           // Handle Excel file display
 
@@ -1189,29 +1189,31 @@ export class ExportTemplateComponent implements OnInit {
         header_row: formData?.header_row,
         data_start_row: formData?.data_start_row,
         data_end_row: formData?.data_end_row,
-        page_size: formData?.pdfDetails?.page_size ?? 'A4',
-        orientation: formData?.pdfDetails?.orientation ?? 'portrait',
-        margin_top: formData?.pdfDetails?.margin_top ?? 20,
-        margin_bottom: formData?.pdfDetails?.margin_bottom ?? 20,
-        margin_left: formData?.pdfDetails?.margin_left ?? 15,
-        margin_right: formData?.pdfDetails?.margin_right ?? 15,
-        color_theme: formData?.pdfDetails?.color_theme ?? 'light',
-        font_family: formData?.pdfDetails?.font_family ?? 'Helvetica',
-        font_size: formData?.pdfDetails?.font_size ?? 12,
-        is_paginated: formData?.pdfDetails?.is_paginated ?? false,
-        is_header_enabled: formData?.pdfDetails?.is_header_enabled ?? false,
-        is_footer_enabled: formData?.pdfDetails?.is_footer_enabled ?? false,
-        template_header: formData?.pdfDetails?.template_header ?? '',
-        template_footer: formData?.pdfDetails?.template_footer ?? '',
-        template_content: formData?.pdfDetails?.template_content ?? '',
-        is_repeatative_header: formData?.pdfDetails?.is_repeatative_header ?? false,
-        is_repeatative_footer: formData?.pdfDetails?.is_repeatative_footer ?? false,
-        is_first_page_header_only: formData?.pdfDetails?.is_first_page_header_only ?? false,
-        is_first_page_footer_only: formData?.pdfDetails?.is_first_page_footer_only ?? false,
-        is_watermark_enabled: formData?.pdfDetails?.is_watermark_enabled ?? false,
-        watermark_text: formData?.pdfDetails?.watermark_text ?? '',
-        watermark_image: formData?.pdfDetails?.watermark_image ?? '',
-        watermark_position: formData?.pdfDetails?.watermark_position ?? 'center',
+        pdf_configurations: {
+          page_size: formData?.pdfDetails?.pdf_page_size ?? 'A4',
+          orientation: formData?.pdfDetails?.pdf_orientation ?? 'portrait',
+          margin_top: formData?.pdfDetails?.pdf_margin_top ?? 20,
+          margin_bottom: formData?.pdfDetails?.pdf_margin_bottom ?? 20,
+          margin_left: formData?.pdfDetails?.pdf_margin_left ?? 15,
+          margin_right: formData?.pdfDetails?.pdf_margin_right ?? 15,
+          color_theme: formData?.pdfDetails?.pdf_color_theme ?? 'light',
+          font_family: formData?.pdfDetails?.pdf_font_family ?? 'Helvetica',
+          font_size: formData?.pdfDetails?.pdf_font_size ?? 12,
+          is_paginated: formData?.pdfDetails?.pdf_is_paginated ?? false,
+          is_header_enabled: formData?.pdfDetails?.pdf_is_header_enabled ?? false,
+          is_footer_enabled: formData?.pdfDetails?.pdf_is_footer_enabled ?? false,
+          template_header: formData?.pdfDetails?.pdf_template_header ?? '',
+          template_footer: formData?.pdfDetails?.pdf_template_footer ?? '',
+          template_content: formData?.pdfDetails?.pdf_template_content ?? '',
+          is_repeatative_header: formData?.pdfDetails?.pdf_is_repeatative_header ?? false,
+          is_repeatative_footer: formData?.pdfDetails?.pdf_is_repeatative_footer ?? false,
+          is_first_page_header_only: formData?.pdfDetails?.pdf_is_first_page_header_only ?? false,
+          is_first_page_footer_only: formData?.pdfDetails?.pdf_is_first_page_footer_only ?? false,
+          is_watermark_enabled: formData?.pdfDetails?.pdf_is_watermark_enabled ?? false,
+          watermark_text: formData?.pdfDetails?.pdf_watermark_text ?? '',
+          watermark_image: formData?.pdfDetails?.pdf_watermark_image ?? '',
+          watermark_position: formData?.pdfDetails?.pdf_watermark_position ?? 'center',
+        },
         created_by: true,
       },
     ];
@@ -1264,29 +1266,31 @@ export class ExportTemplateComponent implements OnInit {
         header_row: formData?.header_row,
         data_start_row: formData?.data_start_row,
         data_end_row: formData?.data_end_row,
-        page_size: formData?.pdfDetails?.page_size ?? 'A4',
-        orientation: formData?.pdfDetails?.orientation ?? 'portrait',
-        margin_top: formData?.pdfDetails?.margin_top ?? 20,
-        margin_bottom: formData?.pdfDetails?.margin_bottom ?? 20,
-        margin_left: formData?.pdfDetails?.margin_left ?? 15,
-        margin_right: formData?.pdfDetails?.margin_right ?? 15,
-        color_theme: formData?.pdfDetails?.color_theme ?? 'light',
-        font_family: formData?.pdfDetails?.font_family ?? 'Helvetica',
-        font_size: formData?.pdfDetails?.font_size ?? 12,
-        is_paginated: formData?.pdfDetails?.is_paginated ?? false,
-        is_header_enabled: formData?.pdfDetails?.is_header_enabled ?? false,
-        is_footer_enabled: formData?.pdfDetails?.is_footer_enabled ?? false,
-        template_header: formData?.pdfDetails?.template_header ?? '',
-        template_footer: formData?.pdfDetails?.template_footer ?? '',
-        template_content: formData?.pdfDetails?.template_content ?? '',
-        is_repeatative_header: formData?.pdfDetails?.is_repeatative_header ?? false,
-        is_repeatative_footer: formData?.pdfDetails?.is_repeatative_footer ?? false,
-        is_first_page_header_only: formData?.pdfDetails?.is_first_page_header_only ?? false,
-        is_first_page_footer_only: formData?.pdfDetails?.is_first_page_footer_only ?? false,
-        is_watermark_enabled: formData?.pdfDetails?.is_watermark_enabled ?? false,
-        watermark_text: formData?.pdfDetails?.watermark_text ?? '',
-        watermark_image: formData?.pdfDetails?.watermark_image ?? '',
-        watermark_position: formData?.pdfDetails?.watermark_position ?? 'center',
+        pdf_configurations: {
+          page_size: formData?.pdfDetails?.pdf_page_size ?? 'A4',
+          orientation: formData?.pdfDetails?.pdf_orientation ?? 'portrait',
+          margin_top: formData?.pdfDetails?.pdf_margin_top ?? 20,
+          margin_bottom: formData?.pdfDetails?.pdf_margin_bottom ?? 20,
+          margin_left: formData?.pdfDetails?.pdf_margin_left ?? 15,
+          margin_right: formData?.pdfDetails?.pdf_margin_right ?? 15,
+          color_theme: formData?.pdfDetails?.pdf_color_theme ?? 'light',
+          font_family: formData?.pdfDetails?.pdf_font_family ?? 'Helvetica',
+          font_size: formData?.pdfDetails?.pdf_font_size ?? 12,
+          is_paginated: formData?.pdfDetails?.pdf_is_paginated ?? false,
+          is_header_enabled: formData?.pdfDetails?.pdf_is_header_enabled ?? false,
+          is_footer_enabled: formData?.pdfDetails?.pdf_is_footer_enabled ?? false,
+          template_header: formData?.pdfDetails?.pdf_template_header ?? '',
+          template_footer: formData?.pdfDetails?.pdf_template_footer ?? '',
+          template_content: formData?.pdfDetails?.pdf_template_content ?? '',
+          is_repeatative_header: formData?.pdfDetails?.pdf_is_repeatative_header ?? false,
+          is_repeatative_footer: formData?.pdfDetails?.pdf_is_repeatative_footer ?? false,
+          is_first_page_header_only: formData?.pdfDetails?.pdf_is_first_page_header_only ?? false,
+          is_first_page_footer_only: formData?.pdfDetails?.pdf_is_first_page_footer_only ?? false,
+          is_watermark_enabled: formData?.pdfDetails?.pdf_is_watermark_enabled ?? false,
+          watermark_text: formData?.pdfDetails?.pdf_watermark_text ?? '',
+          watermark_image: formData?.pdfDetails?.pdf_watermark_image ?? '',
+          watermark_position: formData?.pdfDetails?.pdf_watermark_position ?? 'center',
+        },
         updated_by: true,
       },
     ];
@@ -1602,7 +1606,6 @@ export class ExportTemplateComponent implements OnInit {
       pdfGroup.markAllAsTouched();
       return;
     }
-    console.log('✅ PDF Settings Saved:', pdfGroup.value);
     this.closePdfModal();
   }
 }

@@ -15,7 +15,7 @@ export class LocalStorageService implements OnInit {
 
   ngOnInit() {}
 
-  private getScopedKey(key: string): string {
+  getScopedKey(key: string): string {
     //const scope = window.location.port || window.location.hostname;
     const scope = (window.location.hostname.replace('/', '') + '_' + (window.location.port || window.location.pathname)).replace('/', '');
     return `${scope}_${key}`;
@@ -104,10 +104,11 @@ export class LocalStorageService implements OnInit {
     return bytes.toString(CryptoJS.enc.Utf8);
   }
 
-  static isAccessible(key: string): any {
+  isAccessible(key: string): any {
     //const scope = window.location.port || window.location.hostname;
-    const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
-    const data = JSON.parse(localStorage.getItem(`${scope}_user_data`) || '{}');
+    // const scope = (window.location.port || window.location.hostname + '' + window.location.pathname).replace('/', '-');
+    const scopedKey = this.getScopedKey('user_data');
+    const data = JSON.parse(localStorage.getItem(scopedKey) || '{}');
     return data?.permissions && data.permissions[key] ? data.permissions[key] : false;
   }
 
