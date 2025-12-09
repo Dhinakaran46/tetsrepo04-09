@@ -278,112 +278,117 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
 
     const loginData = this.loginForm.value;
 
-    this.authService.login(loginData).subscribe({
-      next: async (response: any) => {
-        if (response.status) {
-          const userID = response.data.id;
+    this.authService
+      .login({
+        ...loginData,
+        from_source: 1,
+      })
+      .subscribe({
+        next: async (response: any) => {
+          if (response.status) {
+            const userID = response.data.id;
 
-          const permissionsObj = response.data.permissions.reduce((acc: any, perm: any) => {
-            acc[perm.slug] = perm.accessible;
-            return acc;
-          }, {});
+            const permissionsObj = response.data.permissions.reduce((acc: any, perm: any) => {
+              acc[perm.slug] = perm.accessible;
+              return acc;
+            }, {});
 
-          // Store the user data along with permissions and menu lists
-          const conf: any = this.localstore.getData('config');
+            // Store the user data along with permissions and menu lists
+            const conf: any = this.localstore.getData('config');
 
-          const enc_config: any = JSON.parse(conf);
+            const enc_config: any = JSON.parse(conf);
 
-          this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
+            this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
 
-          if (response.data.theme_info) {
-            const themeData = JSON.stringify(response.data.theme_info);
-            this.localstore.storeData('theme_info', themeData);
+            if (response.data.theme_info) {
+              const themeData = JSON.stringify(response.data.theme_info);
+              this.localstore.storeData('theme_info', themeData);
 
-            this.themeService.applyThemeFromLocalStorage();
-          }
-          if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
-            this.localstore.storeDataEncrypted(
-              'user_data',
-              JSON.stringify({
-                main: response.data,
-                permissions: permissionsObj,
-                user_id: userID,
-              })
-            );
+              this.themeService.applyThemeFromLocalStorage();
+            }
+            if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
+              this.localstore.storeDataEncrypted(
+                'user_data',
+                JSON.stringify({
+                  main: response.data,
+                  permissions: permissionsObj,
+                  user_id: userID,
+                })
+              );
+            } else {
+              this.localstore.storeData(
+                'user_data',
+                JSON.stringify({
+                  main: response.data,
+                  permissions: permissionsObj,
+                  user_id: userID,
+                })
+              );
+            }
+
+            // Update permissions list in RouteUpdateService
+            this.routeUpdateService.setPermissionsList(permissionsObj);
+
+            if (this.loginForm.value.subscribe) {
+              this.localstore.storeData(
+                'rememberme',
+                JSON.stringify({ savedEmail: this.loginForm.value.email, savedPassword: this.loginForm.value.password, rememberMe: 'true' })
+              );
+            } else {
+              this.localstore.removeData('rememberme');
+            }
+
+            this.setConfig(this.companyId, userID);
+
+            this.getconfig(userID);
+
+            this.onLoginSuccess(this.companyId);
+
+            // Add dynamic routes
+
+            forkJoin([this.menuLoadService.fetchMenuData(this.companyId)]).subscribe({
+              next: ([configData]) => {
+                // Notify other tabs of login
+                localStorage.setItem('login', Date.now().toString());
+                this.router.navigate(['/dashboard']);
+                window.location.reload();
+              },
+              error: (error) => {
+                console.error('Error during login:', error);
+                this.toastr.error('Login failed due to an internal error.');
+              },
+            });
           } else {
-            this.localstore.storeData(
-              'user_data',
-              JSON.stringify({
-                main: response.data,
-                permissions: permissionsObj,
-                user_id: userID,
-              })
-            );
+            if (response.code === 401) {
+              const errorMessage = 'Login Access Denied';
+              this.toastr.error(errorMessage, 'Error');
+              return;
+            }
+            if (response.code == 405 || response.code == 421) {
+              const key = 'incorrect_username_or_password';
+              const errorMessage = this.translate.instant(key);
+              this.toastr.error(errorMessage, 'Error');
+            } else {
+              const key = 'login_failed';
+              const errorMessage = this.translate.instant(key);
+              this.toastr.error(errorMessage, 'Error');
+            }
           }
-
-          // Update permissions list in RouteUpdateService
-          this.routeUpdateService.setPermissionsList(permissionsObj);
-
-          if (this.loginForm.value.subscribe) {
-            this.localstore.storeData(
-              'rememberme',
-              JSON.stringify({ savedEmail: this.loginForm.value.email, savedPassword: this.loginForm.value.password, rememberMe: 'true' })
-            );
-          } else {
-            this.localstore.removeData('rememberme');
+        },
+        error: (error) => {
+          const key = 'error';
+          let errorMessage = this.translate.instant(key);
+          if (error.code === 429) {
+            errorMessage = error.message;
           }
-
-          this.setConfig(this.companyId, userID);
-
-          this.getconfig(userID);
-
-          this.onLoginSuccess(this.companyId);
-
-          // Add dynamic routes
-
-          forkJoin([this.menuLoadService.fetchMenuData(this.companyId)]).subscribe({
-            next: ([configData]) => {
-              // Notify other tabs of login
-              localStorage.setItem('login', Date.now().toString());
-              this.router.navigate(['/dashboard']);
-              window.location.reload();
-            },
-            error: (error) => {
-              console.error('Error during login:', error);
-              this.toastr.error('Login failed due to an internal error.');
-            },
-          });
-        } else {
-          if (response.code === 401) {
-            const errorMessage = 'Login Access Denied';
-            this.toastr.error(errorMessage, 'Error');
-            return;
-          }
-          if (response.code == 405 || response.code == 421) {
-            const key = 'incorrect_username_or_password';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
-          } else {
-            const key = 'login_failed';
-            const errorMessage = this.translate.instant(key);
-            this.toastr.error(errorMessage, 'Error');
-          }
-        }
-      },
-      error: (error) => {
-        const key = 'error';
-        let errorMessage = this.translate.instant(key);
-        if (error.code === 429) {
-          errorMessage = error.message;
-        }
-        this.toastr.error(errorMessage, 'Error');
-        this.loading = false;
-        console.error(error);
-      },
-      complete: () => {
-        this.loading = false;
-      },
-    });
+          this.toastr.error(errorMessage, 'Error');
+          this.loading = false;
+          console.error(error);
+        },
+        complete: () => {
+          this.loading = false;
+        },
+      });
   }
 
   // Copy of getconfig from AuthLayout
