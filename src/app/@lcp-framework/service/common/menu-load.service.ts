@@ -13,9 +13,8 @@ interface MenuItem {
   parent_id: number | null;
   permission_slug: string | null;
   children?: MenuItem[];
-  action_slug?:any;
-  entity_name?:any;
-
+  action_slug?: any;
+  entity_name?: any;
 }
 
 @Injectable({
@@ -47,12 +46,12 @@ export class MenuLoadService {
 
   organizeMenu(menuList: MenuItem[]): MenuItem[] {
     const itemMap = new Map<number, MenuItem>();
-  
+
     // Step 1: Initialize map with empty children arrays
     menuList.forEach((item) => {
       itemMap.set(item.id, { ...item, children: [] });
     });
-  
+
     // Step 2: Normal parent-child relationships
     menuList.forEach((item) => {
       if (item.parent_id !== null) {
@@ -62,23 +61,19 @@ export class MenuLoadService {
         }
       }
     });
-  
+
     // Step 3: For child_details with no children, attach "virtual" children
     menuList.forEach((item) => {
       const mappedItem = itemMap.get(item.id)!;
-  
+
       if (
         mappedItem.action_slug === 'child_details' && // make sure this matches DB value
         mappedItem.children &&
         mappedItem.children.length === 0
       ) {
         // Find other items with same entity_name
-        const matchedItems = menuList.filter(
-          (x) =>
-            x.entity_name === mappedItem.entity_name &&
-            x.id !== mappedItem.id
-        );
-  
+        const matchedItems = menuList.filter((x) => x.entity_name === mappedItem.entity_name && x.id !== mappedItem.id);
+
         // Clone them WITHOUT their existing children to avoid cycles
         const clonedChildren: MenuItem[] = matchedItems.map((x) => {
           const original = itemMap.get(x.id)!;
@@ -88,20 +83,18 @@ export class MenuLoadService {
             children: [],
           };
         });
-  
+
         mappedItem.children = clonedChildren;
       }
     });
-  
+
     // Step 4: Return top-level menus sorted
     return menuList
       .filter((item) => item.parent_id === null)
       .map((item) => itemMap.get(item.id)!)
       .sort((a, b) => a.order_no - b.order_no);
   }
-  
-  
-  
+
   /*organizeMenu(menuList: MenuItem[]): MenuItem[] {
     const itemMap = new Map<number, MenuItem>();
 
@@ -125,7 +118,6 @@ export class MenuLoadService {
   }*/
 
   fetchConfigData(companyId: number, userID: any): any {
-    
     // 1. Try to fetch user config from app_user_configurations
     const userConfigPayload = {
       company_id: companyId,
@@ -136,7 +128,7 @@ export class MenuLoadService {
         ['app_user_configurations.id'],
         ['app_user_configurations.config_key'],
         ['app_user_configurations.category_id'],
-        
+
         ['app_user_configurations.config_value'],
         ['app_user_configurations.config_value_type'],
         ['app_user_configurations.config_field_type'],
@@ -147,10 +139,8 @@ export class MenuLoadService {
 
     // Helper to process config and store user_data
     const processConfig = (finalObject: any) => {
-      
-      
       const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
-      
+
       if (user_data) {
         if (finalObject.encrypt_local_storage === 'true') {
           this.localStorageService.storeDataEncrypted(
@@ -182,7 +172,7 @@ export class MenuLoadService {
             acc[record.config_key] = record.config_value;
             return acc;
           }, {});
-          
+
           // If user config has encrypt_local_storage, use it
           if (userConfig.encrypt_local_storage !== undefined) {
             return processConfig(userConfig);
@@ -198,7 +188,7 @@ export class MenuLoadService {
             ['app_configurations.id'],
             ['app_configurations.config_key'],
             ['app_configurations.category_id'],
-            
+
             ['app_configurations.config_value'],
             ['app_configurations.config_value_type'],
             ['app_configurations.config_field_type'],
@@ -209,7 +199,6 @@ export class MenuLoadService {
         // Return an observable for chaining
         return this.menuMapService.getCommnListConfiguration(defaultConfigPayload).pipe(
           map((response: any) => {
-            
             if (response.code === 200 && response.status) {
               const finalObject = response.data.records.reduce((acc: any, record: any) => {
                 acc[record.config_key] = record.config_value;
@@ -296,15 +285,14 @@ export class MenuLoadService {
         { column_name: 'menu_items.menu_id', operator: 'IN', value: this.menu_id },
       ],
     };
-    
+
     return this.menuMapService.getCommonList(payload).pipe(
       map((response: any) => {
         if (response.code === 200 && response.status) {
           const organizedMenu = this.organizeMenu(response.data.records);
-          console.log(organizedMenu)
           // Store menu data
           const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
-          
+
           if (user_data) {
             if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
               this.localStorageService.storeDataEncrypted(

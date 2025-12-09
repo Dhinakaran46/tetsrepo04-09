@@ -23,11 +23,11 @@ export class ThemeService {
   private cssVarMap: Record<string, string | string[]> = {
     accent_color: ['--app-button-bg-color', '--app-sidebar-hover-color', '--app-form-base-component-color'],
     accent_tone_color: ['--app-header-bg-color', '--app-button-hover-color', '--app-header-color'],
-    accent_secondary_color: ['--app-table-header-color','--app-pagination-button-bg-color' ],
+    accent_secondary_color: ['--app-table-header-color', '--app-pagination-button-bg-color'],
     accent_secondary_tone_color: ['--app-table-header-action-color'],
     sidebar_bg_color: ['--app-sidebar-bg-color'],
     sidebar_heading_color: ['--app-sidebar-heading-color'],
-    sidebar_text_color: ['--app-sidebar-text-color' , '--app-header-text-color', '--app-button-text-color'],
+    sidebar_text_color: ['--app-sidebar-text-color', '--app-header-text-color', '--app-button-text-color'],
   };
 
   constructor(private scopedStorage: LocalStorageService) {
@@ -40,9 +40,9 @@ export class ThemeService {
 
   applyThemeFromLocalStorage(): void {
     const theme = this.readThemeFromStorage();
-    
+
     if (!theme?.theme_line_items) {
-      console.warn('No valid theme found in storage, resetting to defaults');
+      // console.warn('No valid theme found in storage, resetting to defaults');
       this.resetCssVariablesToDefaults();
       return;
     }
@@ -69,11 +69,7 @@ export class ThemeService {
       if (normalized === 'text_color') {
         body.style.color = value;
       }
-      if (
-        normalized === 'background_color' ||
-        normalized === 'bg_color' ||
-        normalized === 'sidebar_background_color'
-      ) {
+      if (normalized === 'background_color' || normalized === 'bg_color' || normalized === 'sidebar_background_color') {
         body.style.backgroundColor = value;
       }
     }
@@ -83,9 +79,7 @@ export class ThemeService {
     const root = document.documentElement;
     const body = document.body;
 
-    const allVars = Object.values(this.cssVarMap).flatMap(v =>
-      Array.isArray(v) ? v : [v]
-    );
+    const allVars = Object.values(this.cssVarMap).flatMap((v) => (Array.isArray(v) ? v : [v]));
 
     const uniqueVars = new Set(allVars);
     uniqueVars.forEach((varName) => root.style.removeProperty(varName));
@@ -109,7 +103,7 @@ export class ThemeService {
 
     try {
       const scoped = this.scopedStorage.getData(key);
-      if (scoped) {
+      if (scoped && scoped !== 'null') {
         return JSON.parse(scoped as string);
       }
     } catch (e) {
@@ -124,4 +118,3 @@ export class ThemeService {
       .map(([key, value]) => ({ key, value }));
   }
 }
-
