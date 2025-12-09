@@ -59,7 +59,10 @@ export class CryptoHttpService {
     // Encrypt the body only if encPayload is true
     // Don't encrypt if it's FormData (e.g., file uploads)
     if (body instanceof FormData || !this.encPayload) {
-      return this.http.post<T>(url, body, options);
+      return this.http.post<T>(url, body, {
+        ...options,
+        headers: new HttpHeaders(),
+      });
     }
 
     const encryptedBody = this.encPayload ? { payload: this.encryptService.encrypt(body) } : body;
