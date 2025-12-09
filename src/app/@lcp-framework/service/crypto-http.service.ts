@@ -61,7 +61,7 @@ export class CryptoHttpService {
     if (body instanceof FormData || !this.encPayload) {
       return this.http.post<T>(url, body, {
         ...options,
-        headers: new HttpHeaders(),
+        // headers: new HttpHeaders(),
       });
     }
 

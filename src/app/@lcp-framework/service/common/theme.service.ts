@@ -40,7 +40,6 @@ export class ThemeService {
 
   applyThemeFromLocalStorage(): void {
     const theme = this.readThemeFromStorage();
-
     if (!theme?.theme_line_items) {
       // console.warn('No valid theme found in storage, resetting to defaults');
       this.resetCssVariablesToDefaults();
@@ -90,10 +89,9 @@ export class ThemeService {
 
   private readThemeFromStorage(): ThemeData | null {
     const key = 'theme_info';
-
     try {
       const stored = localStorage.getItem(key);
-      if (stored) {
+      if (stored && stored !== 'null') {
         const parsed = JSON.parse(stored);
         return parsed.theme_line_items ? parsed : null;
       }
