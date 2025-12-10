@@ -254,8 +254,6 @@ export class MasterListComponent implements OnChanges {
 
   async ngAfterContentInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
-    console.log(this.entity_name);
-    console.log(this.uuid);
     let pageInfo: any;
     if (this.entity_name) {
       const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
@@ -699,7 +697,6 @@ export class MasterListComponent implements OnChanges {
         const translationKey = `${header.header}`;
 
         const translatedHeader = this.translate.instant(translationKey);
-        console.log(translatedHeader);
         if (header.field_type_id == '5') {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateOnly(record[header.header]);
         } else if (header.field_type_id == '7') {
@@ -937,12 +934,10 @@ export class MasterListComponent implements OnChanges {
                           formattedItem[key] = transformedDate;
                         }
                       } else if (headerItem.field_type_id == 7) {
-                        console.log(formattedItem[key]);
                         const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
                         if (transformedDate) {
                           formattedItem[key] = transformedDate;
                         }
-                        console.log(transformedDate);
                       }
                     }
                     return headerItem;
