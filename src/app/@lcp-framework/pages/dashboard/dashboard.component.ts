@@ -1,7 +1,20 @@
-import { Component, ElementRef, Renderer2, ViewChild, AfterViewInit, ChangeDetectorRef, ViewChildren, QueryList, OnDestroy, CUSTOM_ELEMENTS_SCHEMA, ViewContainerRef,ComponentRef } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Renderer2,
+  ViewChild,
+  AfterViewInit,
+  ChangeDetectorRef,
+  ViewChildren,
+  QueryList,
+  OnDestroy,
+  CUSTOM_ELEMENTS_SCHEMA,
+  ViewContainerRef,
+  ComponentRef,
+} from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { DateRange} from '../../../@lcp-framework/components/models/date-range.model';
+import { DateRange } from '../../../@lcp-framework/components/models/date-range.model';
 import { DateRangePickerComponent } from '../../components/date-range-picker/date-range-picker.component';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import {
@@ -101,13 +114,8 @@ interface DashboardTab {
   standalone: true,
   animations: [
     trigger('toggleAnimation', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'scale(0.95)' }), 
-        animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))
-      ]),
-      transition(':leave', [
-        animate('75ms', style({ opacity: 0, transform: 'scale(0.95)' }))
-      ]),
+      transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
+      transition(':leave', [animate('75ms', style({ opacity: 0, transform: 'scale(0.95)' }))]),
     ]),
   ],
   imports: [
@@ -116,31 +124,31 @@ interface DashboardTab {
     DragDropModule,
     NgApexchartsModule,
     SafeHtmlPipe,
-     FormBuilderComponent,
+    FormBuilderComponent,
     StaticPageComponent,
     MasterListComponent,
     //MasterListChildrenComponent,
-    DateRangePickerComponent
+    DateRangePickerComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
   // Add these properties to your class
-@ViewChildren('gridContainer', { read: ViewContainerRef }) gridContainers!: QueryList<ViewContainerRef>;
-private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
+  @ViewChildren('gridContainer', { read: ViewContainerRef }) gridContainers!: QueryList<ViewContainerRef>;
+  private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
 
   dateRange: DateRange = {
     fromDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
-    toDate: new Date()
+    toDate: new Date(),
   };
 
   grid_params = {
-    "$gparam_1": '1950-01-01',
-    "$gparam_2": '2050-01-01'
+    $gparam_1: '1950-01-01',
+    $gparam_2: '2050-01-01',
   };
-  
+
   commonConfig = commonConfig;
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
@@ -152,7 +160,7 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
   dashboardTabs: DashboardTab[] = [];
   private powerBiSubscription!: Subscription;
 
-  activeTabId: string = '1'
+  activeTabId: string = '1';
   showDateRangePicker = false;
   userId: any;
   companyId: any;
@@ -201,11 +209,11 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
     this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
-    
+
     // Set default date range
     this.dateRange = {
       fromDate: new Date('1950-01-01'),
-      toDate: new Date('2050-01-01')
+      toDate: new Date('2050-01-01'),
     };
   }
 
@@ -236,7 +244,6 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
     });
     if (this.powerBiSubscription) {
       this.powerBiSubscription.unsubscribe(); // Unsubscribe when the component is destroyed
-     
     }
     this.powerBiReportInstances = [];
   }
@@ -247,30 +254,30 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
     this.clearGridComponents();
   }
   private clearGridComponents() {
-    this.gridComponentRefs.forEach(ref => ref.destroy());
+    this.gridComponentRefs.forEach((ref) => ref.destroy());
     this.gridComponentRefs = [];
   }
-  
+
   formatDate(date: Date | null): string {
     if (!date) return '';
-    
+
     const d = new Date(date);
     if (isNaN(d.getTime())) return '';
-    
+
     // Format as YYYY-MM-DD
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   }
 
   getDateRangeText(): string {
     if (!this.dateRange) return 'Select a Date Range';
-    
+
     const from = this.dateRange.fromDate ? this.formatDate(this.dateRange.fromDate) : '';
     const to = this.dateRange.toDate ? this.formatDate(this.dateRange.toDate) : '';
-    
+
     if (from && to) {
       return `Showing Results From ${from} To ${to}`;
     }
@@ -279,25 +286,27 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
 
   onDateRangeChange(range: DateRange) {
     // Only update if dates have actually changed
-    const fromDateChanged = !this.dateRange.fromDate || !range.fromDate || 
+    const fromDateChanged =
+      !this.dateRange.fromDate ||
+      !range.fromDate ||
       (this.dateRange.fromDate && range.fromDate && this.dateRange.fromDate.getTime() !== range.fromDate.getTime());
-    const toDateChanged = !this.dateRange.toDate || !range.toDate || 
-      (this.dateRange.toDate && range.toDate && this.dateRange.toDate.getTime() !== range.toDate.getTime());
-    
+    const toDateChanged =
+      !this.dateRange.toDate || !range.toDate || (this.dateRange.toDate && range.toDate && this.dateRange.toDate.getTime() !== range.toDate.getTime());
+
     if (fromDateChanged || toDateChanged) {
       // Create new date objects to avoid reference issues
       this.dateRange = {
         fromDate: range.fromDate ? new Date(range.fromDate) : null,
-        toDate: range.toDate ? new Date(range.toDate) : null
+        toDate: range.toDate ? new Date(range.toDate) : null,
       };
-      
+
       // Update grid_params with the new date range
       this.grid_params = {
         ...this.grid_params,
-        "$gparam_1": this.formatDate(this.dateRange.fromDate),
-        "$gparam_2": this.formatDate(this.dateRange.toDate)
+        $gparam_1: this.formatDate(this.dateRange.fromDate),
+        $gparam_2: this.formatDate(this.dateRange.toDate),
       };
-      
+
       this.refreshDashboardData();
     }
   }
@@ -422,7 +431,6 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
 
     this.gridApiService.getAllList(params).subscribe(
       async (response) => {
-        console.log(response)
         if (response.status && response.code === 200) {
           this.dashboardTabs = await Promise.all(
             response.data.records.map(async (mainElem: any) => {
@@ -435,12 +443,11 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
                   mainElem.cards = [];
                 }
               }
-              
+
               // Proceed with Promise.all only if cards is an array
               if (Array.isArray(mainElem.cards)) {
                 mainElem.cards = await Promise.all(
                   mainElem.cards.map(async (item: any) => {
-                    
                     return {
                       ...item,
                       format: item.format ? (Array.isArray(item.format) ? item.format : [item.format]) : [],
@@ -455,11 +462,10 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
 
               return mainElem;
             })
-            );
-            console.log(this.dashboardTabs);
-            // Set the first tab as the active tab and initialize its cards
-            await this.setActiveTab(this.dashboardTabs[0].id);
-          }
+          );
+          // Set the first tab as the active tab and initialize its cards
+          await this.setActiveTab(this.dashboardTabs[0].id);
+        }
       },
       (error) => {
         const key = 'failed_to_load';
@@ -468,7 +474,7 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
       }
     );
   }
-  
+
   async getQueryInfo(params: any): Promise<any> {
     try {
       params.grid_params = { ...params.grid_params, ...this.grid_params };
@@ -524,15 +530,15 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
       // re-run query if present
       if (card.query_information) {
         const queryInfo = JSON.parse(JSON.stringify(card.query_information));
-        
+
         // Initialize grid_params if it doesn't exist
         if (!queryInfo.grid_params) {
           queryInfo.grid_params = {};
         }
-        
+
         // Merge existing grid_params with the component's grid_params
         queryInfo.grid_params = { ...queryInfo.grid_params, ...this.grid_params };
-        
+
         const queryString = JSON.stringify(queryInfo).replace(/\$session_user_id/g, this.userId);
         card.query_information = JSON.parse(queryString);
         card.data = await this.getQueryInfo(card.query_information);
@@ -585,17 +591,17 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
         }
       }
 
-       // NEW: Handle GRID refresh
-    if (card.type === commonConfig.WIZARD_TYPES.GRID) {
-      // Trigger re-render of grid component
-      const activeTab = this.dashboardTabs.find(tab => tab.id === this.activeTabId);
-      if (activeTab) {
-        const cardIndex = activeTab.cards.findIndex(c => c.id === card.id);
-        if (cardIndex !== -1) {
-          this.createGridComponent(card, cardIndex);
+      // NEW: Handle GRID refresh
+      if (card.type === commonConfig.WIZARD_TYPES.GRID) {
+        // Trigger re-render of grid component
+        const activeTab = this.dashboardTabs.find((tab) => tab.id === this.activeTabId);
+        if (activeTab) {
+          const cardIndex = activeTab.cards.findIndex((c) => c.id === card.id);
+          if (cardIndex !== -1) {
+            this.createGridComponent(card, cardIndex);
+          }
         }
       }
-    }
 
       this.cdr.detectChanges();
     } catch (e) {
@@ -631,9 +637,7 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
               };
               if (this.powerBiContainers.get(index)) {
                 this.powerBiReportInstances.push(this.powerbiService.embed(this.powerBiContainers.get(index)?.nativeElement, embedConfig) as pbi.Report);
-                this.powerBiReportInstances[index]?.on('loaded', function () {
-                 
-                });
+                this.powerBiReportInstances[index]?.on('loaded', function () {});
 
                 this.powerBiReportInstances[index]?.on('error', function (event) {
                   console.error('Power BI error:', event);
@@ -717,20 +721,19 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
               }
             }
 
-            console.log(card)
             // NEW: Handle GRID type
-          if (card.type === commonConfig.WIZARD_TYPES.GRID) {
-            // Ensure card has entity_name
-            if (!card.entity_name) {
-              console.error('Grid card missing entity_name:', card);
-              return;
+            if (card.type === commonConfig.WIZARD_TYPES.GRID) {
+              // Ensure card has entity_name
+              if (!card.entity_name) {
+                console.error('Grid card missing entity_name:', card);
+                return;
+              }
+              // Wait for view to be ready
+              setTimeout(() => {
+                this.createGridComponent(card, gridIndex);
+                gridIndex++;
+              }, 100);
             }
-            // Wait for view to be ready
-            setTimeout(() => {
-              this.createGridComponent(card, gridIndex);
-              gridIndex++;
-            }, 100);
-          }
             // NEW: schedule auto-reload for LCP card
             this.scheduleLcpReload(card);
           } else {
@@ -748,67 +751,64 @@ private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
   }
 
   // Add method to create grid component
-private createGridComponent(card: Card, index: number) {
-  console.log(card)
-  // Wait for the gridContainers to be available
-  if (!this.gridContainers || this.gridContainers.length === 0) {
-    // Retry after a short delay
-    setTimeout(() => this.createGridComponent(card, index), 100);
-    return;
-  }
+  private createGridComponent(card: Card, index: number) {
+    // Wait for the gridContainers to be available
+    if (!this.gridContainers || this.gridContainers.length === 0) {
+      // Retry after a short delay
+      setTimeout(() => this.createGridComponent(card, index), 100);
+      return;
+    }
 
-  const container = this.gridContainers.toArray()[index];
-  if (!container) {
-    console.warn(`Grid container at index ${index} not found`);
-    return;
-  }
+    const container = this.gridContainers.toArray()[index];
+    if (!container) {
+      console.warn(`Grid container at index ${index} not found`);
+      return;
+    }
 
-  container.clear();
-  const componentRef = container.createComponent(MasterListComponent);
-  
-  // Set the entity name from card configuration
-  if (card.dashboard_grid) {
-    componentRef.instance.entity_name = card.dashboard_grid;
-  }
+    container.clear();
+    const componentRef = container.createComponent(MasterListComponent);
 
-  // Set uuid if available from card data
-  if (card.data && card.data.length > 0 && card.data[0].uuid) {
-    componentRef.instance.uuid = card.data[0].uuid;
-  }
-  
-  componentRef.instance.nonGridPage = false;
-  componentRef.instance.enableCheckBox = false;
+    // Set the entity name from card configuration
+    if (card.dashboard_grid) {
+      componentRef.instance.entity_name = card.dashboard_grid;
+    }
 
-  // Pass grid parameters if available
-  const gridParams: any = {};
-  if (card.data && card.data.length > 0) {
-    Object.keys(card.data[0]).forEach((key) => {
-      if (key.startsWith('gparam_')) {
-        let temp_key = '$' + key;
-        gridParams[temp_key] = card.data[0][key];
-      }
+    // Set uuid if available from card data
+    if (card.data && card.data.length > 0 && card.data[0].uuid) {
+      componentRef.instance.uuid = card.data[0].uuid;
+    }
+
+    componentRef.instance.nonGridPage = false;
+    componentRef.instance.enableCheckBox = false;
+
+    // Pass grid parameters if available
+    const gridParams: any = {};
+    if (card.data && card.data.length > 0) {
+      Object.keys(card.data[0]).forEach((key) => {
+        if (key.startsWith('gparam_')) {
+          let temp_key = '$' + key;
+          gridParams[temp_key] = card.data[0][key];
+        }
+      });
+    }
+
+    // Merge with component's grid_params
+    componentRef.instance.grid_params = { ...gridParams, ...this.grid_params };
+
+    // Subscribe to selection changes if needed
+    componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
+      // Handle selection changes if needed
     });
+
+    // Store reference for cleanup
+    this.gridComponentRefs.push(componentRef);
+
+    // Manually trigger the component's initialization since it's not going through routing
+    // This will call ngAfterContentInit which fetches the data
+    componentRef.instance.ngAfterContentInit();
+
+    this.cdr.detectChanges();
   }
-  
-  // Merge with component's grid_params
-  componentRef.instance.grid_params = { ...gridParams, ...this.grid_params };
-
-  // Subscribe to selection changes if needed
-  componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
-    // Handle selection changes if needed
-    console.log('Grid selection changed:', selectedItems);
-  });
-
-  console.log(componentRef.instance)
-  // Store reference for cleanup
-  this.gridComponentRefs.push(componentRef);
-  
-  // Manually trigger the component's initialization since it's not going through routing
-  // This will call ngAfterContentInit which fetches the data
-  componentRef.instance.ngAfterContentInit();
-
-  this.cdr.detectChanges();
-}
 
   validateChartData(chart: any) {
     if (chart.data.length > 0) {
@@ -994,17 +994,14 @@ private createGridComponent(card: Card, index: number) {
     this.showMasterListPopup = false;
     this.popupConfig = null;
   }
-  
+
   private refreshDashboardData(): void {
-    
-    
-    const activeTab = this.dashboardTabs.find(tab => tab.id === this.activeTabId);
+    const activeTab = this.dashboardTabs.find((tab) => tab.id === this.activeTabId);
     if (activeTab) {
-      this.initializeDashboardCards(activeTab.cards).catch(error => {
+      this.initializeDashboardCards(activeTab.cards).catch((error) => {
         console.error('Error refreshing dashboard data:', error);
         this.toastr.error('Failed to refresh dashboard data');
       });
     }
   }
-
 }

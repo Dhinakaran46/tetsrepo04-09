@@ -299,7 +299,6 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
             const enc_config: any = JSON.parse(conf);
 
             this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
-
             if (response.data.theme_info) {
               const themeData = JSON.stringify(response.data.theme_info);
               this.localstore.storeData('theme_info', themeData);
