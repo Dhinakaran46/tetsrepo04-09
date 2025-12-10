@@ -12,20 +12,9 @@ import { AccessDeniedComponent } from './components/access-denied/access-denied.
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { loginGuard } from './guards/login.guard';
 import { permissionGuardFactory } from './guards/permission.guard';
-import { ImportMasterComponent } from './pages/import-master/import-master.component';
-import { DocumentationComponent } from './pages/documentation/documentation.component';
-import { ImportConfirmDeactivateGuard } from './guards/impotrt-confirm-deactivate.guard';
 import { ExampleClientDatatableComponent } from './pages/example-client-datatable/example-client-datatable.component';
-import { EmailTemplateAssignmentComponent } from './pages/email-template-assignment/email-template-assignment.component';
 import { ApiBaseUrlComponent } from './pages/api-base-url/api-base-url.component';
 export const routes: Routes = [
-  {
-    path: 'documentation',
-    component: DocumentationComponent,
-    canActivate: [authGuard],
-    canActivateChild: [permissionGuardFactory()],
-    title: 'Documentation',
-  },
   {
     path: '',
     component: AppLayout,

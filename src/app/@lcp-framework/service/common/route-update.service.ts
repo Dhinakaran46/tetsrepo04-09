@@ -180,7 +180,6 @@ export class RouteUpdateService {
                 language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
                 job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
                 export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
-                help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
                 configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
                 user_configurations_module: () =>
                   import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
@@ -278,7 +277,6 @@ export class RouteUpdateService {
     const routeDataArray = user_data?.unorgmenuList || [];
 
     const permissionListJSON = await firstValueFrom(this.getPermissionListJSON());
-    console.log(permissionListJSON)
     if (!permissionListJSON || !routeDataArray.length) return null;
 
     if (permissionListJSON && routeDataArray) {
@@ -347,7 +345,6 @@ export class RouteUpdateService {
             ];
           }
 
-          console.log(routeDataArray)
           const children = routeDataArray.reduce((acc: any, childRoute: any) => {
             if (childRoute.parent_id === routeData.id && childRoute.action_slug) {
               acc[childRoute.action_slug] = childRoute;
@@ -355,35 +352,18 @@ export class RouteUpdateService {
             return acc;
           }, {});
 
-          
-          if (
-            routeData.action_slug === 'child_details' &&
-            Object.keys(children).length === 0
-          ) {
+          if (routeData.action_slug === 'child_details' && Object.keys(children).length === 0) {
             // Build ALL possible action_slug patterns:
-            const possibleActionSlugs = action_types.map(
-              (a: any) => `menu_${a.value}_${routeData.entity_name}`
-            );
-            console.log("possibleActionSlugs", possibleActionSlugs);
+            const possibleActionSlugs = action_types.map((a: any) => `menu_${a.value}_${routeData.entity_name}`);
             // Filter matching menu items
-            const matchedItems = routeDataArray.filter(
-              (r: any) =>
-                r.id !== routeData.id &&
-                r.action_slug &&
-                possibleActionSlugs.includes(r.name)
-            );
-         
+            const matchedItems = routeDataArray.filter((r: any) => r.id !== routeData.id && r.action_slug && possibleActionSlugs.includes(r.name));
+
             matchedItems.forEach((r: any) => {
               if (!children[r.action_slug]) {
                 children[r.action_slug] = r;
               }
             });
-         
-            // Debug:
-             console.log("Matched Actions =>", possibleActionSlugs);
-             console.log("matchedItems", matchedItems)
           }
-
 
           const componentMap: any = {
             grid_builder_module: () => import('../../pages/master-list/master-list.component').then((m) => m.MasterListComponent),
@@ -399,7 +379,6 @@ export class RouteUpdateService {
             language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
             job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
             export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
-            help_page_module: () => import('../../pages/documentation/documentation.component').then((m) => m.DocumentationComponent),
             configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
             user_configurations_module: () => import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
             cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
