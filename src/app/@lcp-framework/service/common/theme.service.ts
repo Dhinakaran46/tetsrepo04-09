@@ -30,13 +30,7 @@ export class ThemeService {
     sidebar_text_color: ['--app-sidebar-text-color', '--app-header-text-color', '--app-button-text-color'],
   };
 
-  constructor(private scopedStorage: LocalStorageService) {
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'theme_info') {
-        this.applyThemeFromLocalStorage();
-      }
-    });
-  }
+  constructor(private scopedStorage: LocalStorageService) {}
 
   applyThemeFromLocalStorage(): void {
     const theme = this.readThemeFromStorage();
@@ -92,8 +86,8 @@ export class ThemeService {
     const key = 'theme_info';
 
     try {
-      const stored = localStorage.getItem(key);
-      if (stored) {
+      const stored = this.scopedStorage.getData(key);
+      if (stored && stored !== 'null') {
         const parsed = JSON.parse(stored);
         return parsed.theme_line_items ? parsed : null;
       }

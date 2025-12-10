@@ -83,7 +83,7 @@ export class MasterListComponent implements OnChanges {
     this._nonGridPage = value;
     this.cdr.detectChanges();
   }
-  
+
   @Output() selectionChange = new EventEmitter<any[]>();
   @Output() deleteTriggred = new EventEmitter<any>();
   @Input() selectedItems: any[] = [];
@@ -258,6 +258,7 @@ export class MasterListComponent implements OnChanges {
     let pageInfo: any;
     if (this.uuid && this.entity_name) {
       const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
+
       pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
       const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
       this.setupPageInfo(pageInfo, defaultPermission);
@@ -292,12 +293,11 @@ export class MasterListComponent implements OnChanges {
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
 
-      if(masterListConfig.fullEntity === 'unmapped_delivery_notes'){
+      if (masterListConfig.fullEntity === 'unmapped_delivery_notes') {
         this.enableCheckBox = true;
-      }else{
+      } else {
         this.enableCheckBox = masterListConfig.enable_row_checkbox;
       }
-      
 
       if (this.entity_name) {
         this.title = this.entity_name;
@@ -927,14 +927,7 @@ export class MasterListComponent implements OnChanges {
             this.items = response.data.records.map((item: any, index: any) => {
               const formattedItem = { ...item };
               for (const key in formattedItem) {
-                if (
-                  formattedItem.hasOwnProperty(key) &&
-                  (key.toLowerCase().includes('date') ||
-                    key.toLowerCase().includes('deleted_at') ||
-                    key.toLowerCase().includes('created_at') ||
-                    key.toLowerCase().includes('updated_at')) &&
-                  this.isDate(formattedItem[key])
-                ) {
+                if (formattedItem.hasOwnProperty(key) && this.isDate(formattedItem[key])) {
                   this.headercolumns = this.headercolumns.map((headerItem: any) => {
                     if (headerItem.header === key) {
                       if (headerItem.field_type_id == 5) {
