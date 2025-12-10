@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  //apiUrl: 'https://opensource.techcedence.net/lcp-altaiseer-api',
   //apiUrl: 'https://lcp.techcedence.net/lcp-api',
   apiUrl: 'http://localhost:3131',
   apiAddress: '/api/',

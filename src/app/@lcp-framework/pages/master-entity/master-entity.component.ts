@@ -1263,6 +1263,7 @@ export class MasterEntityComponent implements OnInit {
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
       reload_timeout: [''],
+      dashboard_grid: [''],
       queryInformation: [''],
       reportInformation: [''],
       dashboard_wizard_options: [''],
@@ -1544,6 +1545,7 @@ export class MasterEntityComponent implements OnInit {
             dashboard_wizard_columns: entity.dashboard_wizard_columns,
             dashboard_wizard_order_no: entity.dashboard_wizard_order_no,
             reload_timeout: entity.reload_timeout,
+            dashboard_grid: entity.dashboard_grid,
             dashboard_wizard_options: entity.dashboard_wizard_options ? this.prettyJSON(entity.dashboard_wizard_options) : '',
           });
 
@@ -1619,7 +1621,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
         ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
-
+        ...(formData.dashboard_grid && { dashboard_grid: formData.dashboard_grid }),
         ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
       },
     ];
@@ -1706,7 +1708,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
         ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
-
+        ...(formData.dashboard_grid ? { dashboard_grid: formData.dashboard_grid } : { dashboard_grid: null }),
         ...(formData.dashboard_wizard_options
           ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
           : { dashboard_wizard_options: null }),
