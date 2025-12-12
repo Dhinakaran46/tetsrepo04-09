@@ -1,74 +1,63 @@
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnInit } from '@angular/core';
 import { FieldType, FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'formly-field-color-picker',
   templateUrl: './formly-field-color-picker.component.html',
-  styleUrls: ['./formly-field-color-picker.component.scss']
+  styleUrls: ['./formly-field-color-picker.component.scss'],
 })
-export class FormlyFieldColorPickerComponent extends FieldType<FormlyFieldConfig> implements AfterViewInit {
+export class FormlyFieldColorPickerComponent extends FieldType<FormlyFieldConfig> implements OnInit, OnDestroy {
   @ViewChild('colorInput') colorInput!: ElementRef<HTMLInputElement>;
 
-  rgbValue: any;
-  hexValue: string = '#ffffff';
+  hexValue = '#ffffff';
+  sub!: Subscription;
+  ignoreUpdates = false;
 
   get formControlAsFormControl(): FormControl {
-    return this.formControl as unknown as FormControl;
+    return this.formControl as any;
   }
 
-  openColorPicker() {
-    this.colorInput.nativeElement.click();
-  }
+  ngOnInit() {
+    this.sub = this.formControlAsFormControl.valueChanges.subscribe((value) => {
+      if (this.ignoreUpdates) return;
 
-  ngAfterViewInit() {
-
-    if (this.to && this.to['value']) {
-      this.convertToRgb(this.to['value']);
-    } else {
-      this.formControlAsFormControl.setValue('#ffffff');
-    }
+      if (!value) this.hexValue = '#ffffff';
+      else if (value.startsWith('#')) this.hexValue = value;
+      else if (value.startsWith('rgb(')) this.hexValue = this.rgbToHex(value);
+    });
+    // Initial load
+    const initial = this.formControlAsFormControl.value;
+    if (initial?.startsWith('#')) this.hexValue = initial;
+    else if (initial?.startsWith('rgb(')) this.hexValue = this.rgbToHex(initial);
   }
 
   onColorChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    this.convertToRgb(input.value);
+    this.hexValue = input.value;
+
+    // Prevent looping
+    this.ignoreUpdates = true;
+    this.formControlAsFormControl.setValue(this.hexToRgb(this.hexValue));
+    this.ignoreUpdates = false;
   }
 
-  private convertToRgb(color: string | null | undefined) {
-    if (!color) {
-      return;
-    }
-
-    if (typeof color === 'string' && color.startsWith('rgb(')) {
-      this.formControl.setValue(color);
-      this.hexValue = this.rgbToHex(color);
-      return;
-    }
-
-    try {
-      const hex = color.replace('#', '');
-      const bigint = parseInt(hex, 16);
-      const r = (bigint >> 16) & 255;
-      const g = (bigint >> 8) & 255;
-      const b = bigint & 255;
-
-      const rgbValue = `rgb(${r}, ${g}, ${b})`;
-      this.formControl.setValue(rgbValue);
-      this.hexValue = `#${hex}`;
-    } catch (e) {
-      this.formControl.setValue('');
-      this.hexValue = '#ffffff';
-    }
+  private hexToRgb(hex: string) {
+    hex = hex.replace('#', '');
+    const bigint = parseInt(hex, 16);
+    return `rgb(${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255})`;
   }
 
-  private rgbToHex(rgb: string): string {
-    const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
+  private rgbToHex(rgb: string) {
+    const result = rgb.match(/\d+/g);
     if (!result) return '#ffffff';
-    const r = parseInt(result[1], 10).toString(16).padStart(2, '0');
-    const g = parseInt(result[2], 10).toString(16).padStart(2, '0');
-    const b = parseInt(result[3], 10).toString(16).padStart(2, '0');
+
+    const [r, g, b] = result.map((v) => Number(v).toString(16).padStart(2, '0'));
     return `#${r}${g}${b}`;
   }
-}
 
+  ngOnDestroy() {
+    if (this.sub) this.sub.unsubscribe();
+  }
+}
