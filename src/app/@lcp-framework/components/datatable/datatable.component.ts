@@ -100,6 +100,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
   @Output() selectionChange = new EventEmitter<any>();
   
+  
   search: any = '';
   selectedColumns: any[] = [];
   selectedColumn = '';
@@ -197,7 +198,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     public location: Location,
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -309,6 +310,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     // Don’t let row-level handlers swallow it
     ev.stopPropagation();
+    ev.preventDefault();
 
     const href = a.getAttribute('href');
     if (!href) return;
@@ -316,6 +318,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const target = a.getAttribute('target') || '_blank';
     window.open(href, target, 'noopener,noreferrer');
   }
+
 
   /** Resolve a.b.c or ["a"][0].b style paths against an object */
   /** Resolve a.b.c or ["a"][0].b style paths against an object */

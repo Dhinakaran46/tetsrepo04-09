@@ -106,3 +106,27 @@ html.login-page>body {
 .align-items-center {
   align-items: center;
 }
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;   /* enable horizontal scroll */
+  overflow-y: hidden; /* prevent vertical scroll */
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  width: max-content;   /* table can grow wider than container */
+  // min-width: 1650px;    /* adjust based on columns */
+  border-collapse: collapse;
+}
+
+.table-responsive th,
+.table-responsive td {
+  white-space: nowrap; /* prevent column wrapping */
+}
+
+.table-responsive textarea {
+  min-width: 250px;
+  resize: horizontal; /* user can resize if needed */
+}
+
