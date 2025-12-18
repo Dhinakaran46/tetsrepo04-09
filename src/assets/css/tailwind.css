@@ -957,9 +957,7 @@
   }
 
   /* tables */
-  .table-responsive {
-    @apply overflow-auto;
-  }
+
 
   table {
     @apply w-full !border-collapse;

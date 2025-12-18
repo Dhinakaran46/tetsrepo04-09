@@ -444,12 +444,11 @@ class="max-w-150 truncate whitespace-nowrap"
             <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
             <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
           </button>
-          <div 
-            *ngIf="!col.link_type || col.link_type === 'none'" 
-            [innerHTML]="getProcessedHtmlContent(tpl, item, col)" 
-            (click)="onHtmlCellClick($event)"
-            ></div>
         </span>
+        <div *ngIf="!col.link_type || col.link_type === 'none'" 
+                [innerHTML]="getProcessedHtmlContent(tpl, item, col)" 
+                (click)="onHtmlCellClick($event)"
+        ></div>
         <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
           <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
         </span>

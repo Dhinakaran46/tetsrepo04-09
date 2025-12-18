@@ -705,6 +705,7 @@
           <table>
             <thead>
               <tr>
+                <th class="w-1/12">{{ 'table_action' | translate }}</th>
                 <th class="required-mark w-2/12">{{ 'table_field_name' | translate }}</th>
                 <th class="required-mark w-2/12">{{ 'table_display_name' | translate }}</th>
                 <th class="required-mark w-1/16">{{ 'table_order_no' | translate }}</th>
@@ -725,7 +726,6 @@
                   </div>
                 </th>
 
-                <th class="w-1/12">{{ 'table_action' | translate }}</th>
               </tr>
             </thead>
             <tbody formArrayName="items">
@@ -736,6 +736,9 @@
               </ng-container>
               <ng-container *ngFor="let item of itemsControls; index as i" [formGroupName]="i">
                 <tr class="align-top">
+                  <td class="w-1/12">
+                    <button type="button" (click)="removeItem(i)"><i class="fa-solid fa-xmark text-xl"></i>&nbsp;</button>
+                  </td>
                   <td class="w-2/12">
                     <div class="mb-2">
                       <input
@@ -971,10 +974,6 @@
                         {{ getItemErrorMessage(i, 'fieldHtmlContent') }}
                       </div>
                     </div>
-                  </td>
-
-                  <td class="w-1/12">
-                    <button type="button" (click)="removeItem(i)"><i class="fa-solid fa-xmark text-xl"></i>&nbsp;</button>
                   </td>
                 </tr>
               </ng-container>

@@ -204,6 +204,7 @@ export class UserRolePermissionComponent {
                   'order_no', master_entities.dashboard_wizard_order_no,
                   'entity_name', master_entities.entity_name,
                   'permission_id', permissions.id,
+                  'dasboard_grid', master_entities.dashboard_grid,
                   'has_permission',
                     CASE
                       WHEN '${permission_type}' = 'user' THEN
@@ -276,6 +277,11 @@ export class UserRolePermissionComponent {
                   id: new FormControl(ielem.id),
                   name: new FormControl(ielem.entity_name),
                   menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
+                  // menu_img: ielem.dashboard_grid
+                  //     ? new FormControl('fa-table-cells')
+                  //     : ielem.type === 'chart'
+                  //       ? new FormControl('fa-chart-simple')
+                  //       : new FormControl('fa-palette'),
                   expanded: [true],
                   children: this.fb.array([]), // If card has children, it's an array
                   rights: this.fb.array([
@@ -287,6 +293,7 @@ export class UserRolePermissionComponent {
                       name: new FormControl('view'),
                       permission_value: new FormControl(ielem.has_permission),
                       entity_permission_value: new FormControl(ielem.has_permission),
+                      dashboard_grid: new FormControl(ielem.dasboard_grid),
                       link_type: new FormControl(1),
                       id: new FormControl(ielem.id),
                       selected: new FormControl(ielem.has_permission),
