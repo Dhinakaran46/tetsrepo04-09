@@ -117,6 +117,9 @@
                       class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
                     />
                     <span class="leading-none" appDynamicFontSize="subtitle">{{ rightGroup.get('name')?.value | translate }}</span>
+                      <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value" >
+                        ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
+                      </span>
                     <!------  -->
                   </label>
                 </ng-container>
@@ -204,6 +207,10 @@
                                       appDynamicFontSize="body"
                                     />
                                     <span class="leading-none" appDynamicFontSize="body">{{ rightGroup.get('name')?.value | translate }}</span>
+                                    <!-- Dashboard Grid Name -->
+                                    <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value" >
+                                      ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
+                                    </span>
                                     <!-- Check if the permission name is 'child_details' and show the child_entity_name -->
                                     <span *ngIf="rightGroup.get('name')?.value === 'child_details'">
                                       ( {{ rightGroup.get('child_entity_name')?.value | translate }} )

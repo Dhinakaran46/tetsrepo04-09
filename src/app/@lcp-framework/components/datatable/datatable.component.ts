@@ -309,6 +309,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     // Don’t let row-level handlers swallow it
     ev.stopPropagation();
+    ev.preventDefault();
 
     const href = a.getAttribute('href');
     if (!href) return;
