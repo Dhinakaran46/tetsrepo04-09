@@ -143,7 +143,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
         {
           join_type: 'LEFT',
           table_name: 'approval_workflow_assignments',
-          join_condition: 'approval_workflow_assignments.approval_workflow_id = approval_workflows.id AND approval_workflow_assignments.status_id != 3',
+          join_condition: 'approval_workflow_assignments.approval_workflow_slug = approval_workflows.slug AND approval_workflow_assignments.status_id != 3',
         },
       ],
       limit_range: 1,
@@ -177,7 +177,6 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           if (response.data.records.length) {
-           
             this.form.controls['approvalWorkflow'].patchValue({
               id: response.data.records[0].id,
               slug: response.data.records[0].slug,
@@ -209,7 +208,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
                       approver_type: [each.approver_type || 'tag', Validators.required],
                       approver_order_no: [each.approver_order_no, Validators.required],
                       approver: [each.approver, Validators.required],
-                      approval_workflow_id: [response.data.records[0].id, Validators.required],
+                      approval_workflow_slug: [response.data.records[0].slug, Validators.required],
                       approve_query_information: [this.prettyJSON(each.approve_query_information || []), Validators.required],
                       reject_query_information: [this.prettyJSON(each.reject_query_information || []), Validators.required],
                       accordian: false,
@@ -253,7 +252,6 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
             } else {
               this.addApproverAssignment();
             }
-          
           }
         }
       },
@@ -263,19 +261,24 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   async getEmailTemplateList() {
     const payload = {
       company_id: 1,
-      group_by: ['email_templates.id', 'email_templates.name'],
+      group_by: ['notification_templates.id', 'notification_templates.name'],
       search_all: [
+        {
+          value: 'email',
+          operator: '=',
+          column_name: 'notification_templates.notification_type',
+        },
         {
           value: '3',
           operator: '!=',
-          column_name: 'email_templates.status_id',
+          column_name: 'notification_templates.status_id',
         },
       ],
-      limit_range: 100,
+      limit_range: 1000,
       print_query: true,
       start_index: 0,
-      primary_table: 'email_templates',
-      select_columns: [['email_templates.id'], ['email_templates.name']],
+      primary_table: 'notification_templates',
+      select_columns: [['notification_templates.id'], ['notification_templates.name']],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -289,19 +292,24 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   async getWhatsappTemplateList() {
     const payload = {
       company_id: 1,
-      group_by: ['whatsapp_templates.id', 'whatsapp_templates.name'],
+      group_by: ['notification_templates.id', 'notification_templates.name'],
       search_all: [
         {
           value: '3',
           operator: '!=',
-          column_name: 'whatsapp_templates.status_id',
+          column_name: 'notification_templates.status_id',
+        },
+        {
+          value: 'whatsapp',
+          operator: '=',
+          column_name: 'notification_templates.notification_type',
         },
       ],
       limit_range: 100,
       print_query: true,
       start_index: 0,
-      primary_table: 'whatsapp_templates',
-      select_columns: [['whatsapp_templates.id'], ['whatsapp_templates.name']],
+      primary_table: 'notification_templates',
+      select_columns: [['notification_templates.id'], ['notification_templates.name']],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -311,8 +319,6 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       },
     });
   }
-
-  
 
   get approvalWorkflow() {
     return this.form.get('approvalWorkflow')?.getRawValue();
@@ -334,7 +340,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       approver_type: ['tag', Validators.required],
       approver_order_no: [null, Validators.required],
       approver: [null, Validators.required],
-      approval_workflow_id: [0, Validators.required],
+      approval_workflow_slug: ['', Validators.required],
       approve_query_information: ['[]', Validators.required],
       reject_query_information: ['[]', Validators.required],
       accordian: false,
@@ -562,7 +568,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
           table2: this.approvalWorkflowAssignments.map((each: any) => {
             return {
               approver_order_no: each.approver_order_no,
-              approval_workflow_id: each.approval_workflow_id || this.approvalWorkflow.id,
+              approval_workflow_slug: each.approval_workflow_slug || this.approvalWorkflow.slug,
               approver_type: each.approver_type,
               approver: each.approver,
               approve_query_information: this.parseJSON(each.approve_query_information || '[]'),
@@ -584,7 +590,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
         conditions: {
           table1: [
             {
-              approval_workflow_id: this.approvalWorkflow.id,
+              approval_workflow_slug: this.approvalWorkflow.slug,
             },
           ],
         },
