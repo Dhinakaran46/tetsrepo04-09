@@ -99,8 +99,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
   @Output() selectionChange = new EventEmitter<any>();
-  
-  
+
   search: any = '';
   selectedColumns: any[] = [];
   selectedColumn = '';
@@ -198,7 +197,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     public location: Location,
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer,
+    private sanitizer: DomSanitizer
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -318,7 +317,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const target = a.getAttribute('target') || '_blank';
     window.open(href, target, 'noopener,noreferrer');
   }
-
 
   /** Resolve a.b.c or ["a"][0].b style paths against an object */
   /** Resolve a.b.c or ["a"][0].b style paths against an object */
@@ -452,7 +450,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.filteredItems = [...this.items];
 
     for (let each of this.items) {
-         this.selectedItems.push(each);
+      this.selectedItems.push(each);
     }
 
     this.translate.get(['table_multiselect_0', 'table_multiselect_3']).subscribe((translations) => {
@@ -655,6 +653,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         this.isSchemaChunks = true;
       }
 
+      if (!translationKeys?.length) return;
+
       this.translate.get(translationKeys).subscribe((translations) => {
         this.filteredColumns = this.selectcolumns
           .filter((col) => col.searchable)
@@ -813,7 +813,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     }
 
     this.selectionChange.emit(this.selectedItems);
-
   }
 
   isItemSelected(item: any): boolean {
