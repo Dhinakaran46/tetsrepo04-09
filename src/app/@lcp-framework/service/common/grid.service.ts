@@ -26,6 +26,10 @@ export class GridApiService {
   }
   constructor(private http: HttpClient, private cryptoHttp: CryptoHttpService) {}
 
+  processImportJob(uuid: any): Observable<any> {
+    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.processImportJob}/${uuid}`);
+  }
+  
   getAllList(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, data);
   }

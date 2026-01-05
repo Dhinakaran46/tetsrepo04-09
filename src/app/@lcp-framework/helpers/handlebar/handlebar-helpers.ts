@@ -22,6 +22,18 @@ export function registerHandlebarsHelpers(translate: TranslateService) {
     return translate.instant(key); // Fetch translation from ngx-translate
   });
 
+  Handlebars.registerHelper('hbp_translate_dynamic', function (key: any) {
+    if (key === null || key === undefined) return '';
+
+    // 🔴 IMPORTANT: normalize runtime values
+    const normalizedKey = typeof key === 'string' ? key : key?.toString ? key.toString() : String(key);
+
+    const translated = translate.instant(normalizedKey);
+
+    // fallback if translation not found
+    return translated !== normalizedKey ? translated : normalizedKey;
+  });
+
   // Limit helper
   Handlebars.registerHelper('hbp_limit', function (items: any[], limit: number) {
     if (Array.isArray(items)) {

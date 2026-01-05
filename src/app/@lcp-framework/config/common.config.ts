@@ -1,5 +1,6 @@
 export const commonConfig: any = {
   API: {
+    processImportJob: 'common/process-import-job',
     login: 'auth/admin/login',
     logout: 'auth/logout',
     getallprofile: 'auth/profile',
