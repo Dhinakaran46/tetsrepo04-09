@@ -471,7 +471,7 @@ export class RouteUpdateService {
         const appLayoutRoute = config.find((route) => route.path === '');
 
         if (appLayoutRoute && appLayoutRoute.children) {
-          appLayoutRoute.children.unshift(...dynamicRoutes);
+          appLayoutRoute.children.push(...dynamicRoutes);
           this.router.resetConfig(config);
         }
       });
