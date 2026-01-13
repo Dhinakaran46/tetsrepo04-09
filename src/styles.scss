@@ -35,7 +35,7 @@ router-outlet {
 }
 
 html.login-page,
-html.login-page>body {
+html.login-page > body {
   height: 100%;
   overflow: hidden;
 }
@@ -109,14 +109,12 @@ html.login-page>body {
 
 .table-responsive {
   width: 100%;
-  overflow-x: auto;   /* enable horizontal scroll */
+  overflow-x: auto; /* enable horizontal scroll */
   overflow-y: hidden; /* prevent vertical scroll */
   -webkit-overflow-scrolling: touch;
 }
 
 .table-responsive table {
-  width: max-content;   /* table can grow wider than container */
-  // min-width: 1650px;    /* adjust based on columns */
   border-collapse: collapse;
 }
 
@@ -129,4 +127,3 @@ html.login-page>body {
   min-width: 250px;
   resize: horizontal; /* user can resize if needed */
 }
-
