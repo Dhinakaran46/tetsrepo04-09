@@ -349,8 +349,9 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               next: ([configData]) => {
                 // Notify other tabs of login
                 localStorage.setItem('login', Date.now().toString());
-                this.router.navigate(['/dashboard']);
-                window.location.reload();
+                this.router.navigate(['/dashboard']).then(() => {
+                  window.location.reload();
+                });
               },
               error: (error) => {
                 console.error('Error during login:', error);
