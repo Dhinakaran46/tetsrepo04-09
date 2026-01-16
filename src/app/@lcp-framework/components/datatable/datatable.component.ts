@@ -548,35 +548,102 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   applyFilters() {
     this.removeEmptyFilters();
     this.isMenuOpen = false;
+  
+    const condition = this.filterCondition ? 'AND' : 'OR';
+    const data = this.filterConditions.map((key: any, index: any) => {
+      const type = this.getInputTypeForColumn(key.field);
+      const isNoValue = this.isNoValueOperator(key.operator);
+  
+      if (!isNoValue) {
+        if (type == 'datetime-local') {
+          const formattedDate: any = this.formatDateTime(key.value);
+          key.value = formattedDate;
+        } else if (type == 'date') {
+          const formattedDate: any = this.formatDate(key.value);
+          key.value = formattedDate;
+        }
+      }
+  
+      // For no-value operators: operator = 'IS NULL' or 'IS NOT NULL', value = ''
+      // For normal operators: use mapConditionToSQL and addWildcards
+      return {
+        column_name: key.field,
+        operator: isNoValue ? this.getNoValueOperatorSQL(key.operator) : (key.operator ? this.mapConditionToSQL(key.operator) : '='),
+        value: isNoValue ? '' : this.addWildcards(key.operator, key.value).trim(),
+        isAggregate: key?.clause_type === 'having',
+      };
+    });
+    const fdata = { data: data, condition: condition };
+  
+    this.advancedSearchQuery.emit(fdata);
+  }
+
+  /*applyFilters() {
+    this.removeEmptyFilters();
+    this.isMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = this.getInputTypeForColumn(key.field);
-      if (type == 'datetime-local') {
-        const formattedDate: any = this.formatDateTime(key.value);
-
-        key.value = formattedDate;
-      } else if (type == 'date') {
-        const formattedDate: any = this.formatDate(key.value);
-
-        key.value = formattedDate;
+      
+      
+      const isNoValue = this.isNoValueOperator(key.operator);
+    
+      if (!isNoValue) {
+        if (type == 'datetime-local') {
+          const formattedDate: any = this.formatDateTime(key.value);
+          key.value = formattedDate;
+        } else if (type == 'date') {
+          const formattedDate: any = this.formatDate(key.value);
+          key.value = formattedDate;
+        }
       }
+
+       // Get the appropriate value for no-value operators
+    let finalValue = '';
+    if (isNoValue) {
+      finalValue = this.getNoValueOperatorSQL(key.operator);
+    } else {
+      finalValue = this.addWildcards(key.operator, key.value).trim();
+    }
 
       return {
         column_name: key.field,
         operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
-        value: this.addWildcards(key.operator, key.value).trim(),
+        value: finalValue,
         isAggregate: key?.clause_type === 'having',
       };
     });
     const fdata = { data: data, condition: condition };
 
     this.advancedSearchQuery.emit(fdata);
+  }*/
+
+  // Get the SQL value for no-value operators (is_empty, is_not_empty, is_null, is_not_null)
+getNoValueOperatorSQL(operator: string): string {
+  switch (operator) {
+    case 'is_null':
+      return 'IS NULL';
+    case 'is_empty':
+      return 'IS_EMPTY';  // Custom marker for backend
+    case 'is_not_null':
+      return 'IS NOT NULL';
+    case 'is_not_empty':
+      return 'IS_NOT_EMPTY';  // Custom marker for backend
+    default:
+      return '';
   }
+}
 
   isApplyButtonEnabled(): boolean {
-    return this.filterConditions.some((condition) => condition.field && condition.operator && condition.value.trim() !== '');
+    return this.filterConditions.some((condition) => {
+      const isNoValueOperator = this.isNoValueOperator(condition.operator);
+      return condition.field && condition.operator && (isNoValueOperator || condition.value.trim() !== '');
+    });
   }
+  /*isApplyButtonEnabled(): boolean {
+    return this.filterConditions.some((condition) => condition.field && condition.operator && condition.value.trim() !== '');
+  }*/
   getPlaceholderForColumn(column: string): string {
     const columnType = this.getInputTypeForColumn(column);
     switch (columnType) {
@@ -623,8 +690,18 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   private removeEmptyFilters(): void {
-    this.filterConditions = this.filterConditions.filter((filter: any) => filter.value.trim() !== '');
+    this.filterConditions = this.filterConditions.filter((filter: any) => 
+      this.isNoValueOperator(filter.operator) || filter.value.trim() !== ''
+    );
   }
+  // Check if the operator doesn't require a value (is_empty, is_not_empty, is_null, is_not_null)
+isNoValueOperator(operator: string): boolean {
+  const noValueOperators = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'];
+  return noValueOperators.includes(operator);
+}
+  /*private removeEmptyFilters(): void {
+    this.filterConditions = this.filterConditions.filter((filter: any) => filter.value.trim() !== '');
+  }*/
 
   cancelFilters() {
     this.isMenuOpen = false;
