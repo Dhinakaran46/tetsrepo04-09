@@ -91,7 +91,7 @@
                         <option value selected disabled>{{ 'condition' | translate }}</option>
                         <option *ngFor="let op of getOperatorsForColumn(condition.field)" [value]="op.value">{{ op.label }}</option>
                       </select>
-                      <input
+                     <!-- <input
                         [ngModel]="getConditionValue(i)"
                         (ngModelChange)="setConditionValue(i, $event)"
                         [type]="getInputTypeForColumn(condition.field)"
@@ -101,7 +101,22 @@
                         [attr.max]="getMaxValueForColumn(condition.field)"
                         [attr.pattern]="getPatternForColumn(condition.field)"
                         [required]="true"
-                      />
+                      />-->
+                      <input
+  *ngIf="!isNoValueOperator(condition.operator)"
+  [ngModel]="getConditionValue(i)"
+  (ngModelChange)="setConditionValue(i, $event)"
+  [type]="getInputTypeForColumn(condition.field)"
+  class="form-input w-full pr-10 text-gray-600"
+  [placeholder]="getPlaceholderForColumn(condition.field)"
+  [attr.min]="getMinValueForColumn(condition.field)"
+  [attr.max]="getMaxValueForColumn(condition.field)"
+  [attr.pattern]="getPatternForColumn(condition.field)"
+  [required]="true"
+/>
+<span *ngIf="isNoValueOperator(condition.operator)" class="form-input w-full bg-gray-100 text-gray-400 dark:bg-gray-700">
+  {{ 'no_value_required' | translate }}
+</span>
                       <button (click)="removeCondition(i)" class="text-red-500">
                         <i class="fa-solid fa-xmark text-xl"></i>
                       </button>
