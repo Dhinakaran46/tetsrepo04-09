@@ -23,6 +23,7 @@ interface TabConfiguration {
   id: number;
   config_key: string;
   category_id: any;
+  category_type_id: any;
   config_value: any;
   config_select_json?: any; // <-- new field
   config_value_type: string;
@@ -36,6 +37,7 @@ interface Tab {
   id: number;
   name: string;
   category_id: any;
+  category_type_id:any;
   configurations: TabConfiguration[];
 }
 
@@ -274,7 +276,7 @@ export class UserConfigurationComponent implements OnInit {
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_user_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_user_configurations.id,'display_config',app_user_configurations.display_config,'order_no',app_user_configurations.order_no,'config_key', app_user_configurations.config_key,'category_id', app_user_configurations.category_id,'config_value', app_user_configurations.config_value,'config_file_value', app_user_configurations.config_file_value,'config_value_type', app_user_configurations.config_value_type,'config_field_type', app_user_configurations.config_field_type,'config_select_json',app_user_configurations.config_select_json))) END",
+          "CASE WHEN COUNT(app_user_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_user_configurations.id,'display_config',app_user_configurations.display_config,'order_no',app_user_configurations.order_no,'config_key', app_user_configurations.config_key,'category_type_id', app_user_configurations.category_type_id,'category_id', app_user_configurations.category_id,'config_value', app_user_configurations.config_value,'config_file_value', app_user_configurations.config_file_value,'config_value_type', app_user_configurations.config_value_type,'config_field_type', app_user_configurations.config_field_type,'config_select_json',app_user_configurations.config_select_json))) END",
           'configurations',
         ],
       ],
@@ -365,7 +367,8 @@ export class UserConfigurationComponent implements OnInit {
   }
 
   getconfig() {
-    const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories:{'0': 'ac16', '1': 'ac17'} } };
+    //const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories:{'0': 'ac16', '1': 'ac17'} } };
+    const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories:{'0': 'ac1', '1': 'ac2'} } };
 
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {
@@ -451,6 +454,7 @@ export class UserConfigurationComponent implements OnInit {
       id: [config.id],
       config_key: [config.config_key, Validators.required],
       category_id: [config.category_id],
+      category_type_id: ['act5'],
       config_value: [config.config_value],
       config_select_json: [
         config.config_select_json
@@ -740,6 +744,7 @@ export class UserConfigurationComponent implements OnInit {
       {
         order_no: newConfig.order_no,
         category_id: extracttab[0],
+        category_type_id: 'act5',
         config_key: newConfig.key,
         config_field_type: newConfig.keyType,
         
@@ -764,6 +769,7 @@ export class UserConfigurationComponent implements OnInit {
       this.newConfigForm.get('config_select_json')?.setValue(JSON.stringify(parsedJson));
     }
 
+    console.log(this.insert_particular_schema)
     this.gridApiService.executeRecords(this.insert_particular_schema).subscribe(
       (response: any) => {
         if (response.status && response.code === 200) {

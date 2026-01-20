@@ -119,6 +119,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   submitted: boolean = false;
   isLoading: boolean = false;
   isSendMail: boolean = false;
+  selectedTemplateId:any = null;
 
   private socket$!: WebSocketSubject<any>;
   public progress = 100;
@@ -563,6 +564,48 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     }
   }
 
+  processDirectInsertion(sheet_data: SheetData){
+    const payload = {
+      action: ['insert'],
+      table: ['direct_import_details'],
+      table_mapping: ['table1'],
+      data: {
+        table1: [
+          {
+            
+            import_template_id: this.selectedTemplateId,            
+            file_path: sheet_data.attachments_path,
+            file_name: sheet_data.attachments_name,
+            created_by: this.userData.main.user_id,
+            
+          },
+        ]
+      },
+    };
+   
+    this.gridApiService.executeRecords(payload).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+         
+          if (response.status) {
+           console.warn(response);
+          } else {
+            // error
+          }
+        } else {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          console.error(errorMessage)
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+        
+      }
+    );
+  }
   processScheduledInsertion(sheet_data: SheetData) {
     if (this.importForm.invalid) {
       this.toastr.error('Please fill the import job form');
@@ -596,6 +639,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         table1: [
           {
             name: this.importForm.get('name')?.value,
+            import_template_id: this.selectedTemplateId,
             description: this.importForm.get('description')?.value,
             sequence_number: `{{{get_sequence_no('import_job', true)}}}`,
             total_rows: wholeData.length,
@@ -672,6 +716,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       //this.isLoading = true;
       this.processScheduledInsertion(sheet_data);
     } else {
+      
       //this.isLoading = true;
       let payload: any = {
         row_datas: sheet_data.row_datas,
@@ -687,6 +732,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.gridApiService.importTemplateDetail(this.selectedTemplate?.uuid, this.fileUploadLog?.uuid, payload).subscribe(
         (response: ApiResponce) => {
           if (response.status) {
+            this.processDirectInsertion(sheet_data);
             this.resetComponent();
             this.getImportTemplates();
             this.submitted = false;
@@ -728,6 +774,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         (response: ApiResponce) => {
           if (response.status && response.data.records.length) {
             
+            this.selectedTemplateId = response.data.records[0].id;
             this.resetComponent(uuid);
             if (response.data.records[0].importable_fields) {
               this.individual_fields = this.getIndividualHeader(response.data.records[0].importable_fields);
