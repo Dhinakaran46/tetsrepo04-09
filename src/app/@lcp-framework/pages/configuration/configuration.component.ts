@@ -21,6 +21,7 @@ interface TabConfiguration {
   id: number;
   config_key: string;
   category_id: any;
+  category_type_id: any;
   config_value: any;
   config_select_json?: any; // <-- new field
   config_value_type: string;
@@ -33,6 +34,7 @@ interface Tab {
   id: number;
   name: string;
   category_id: any;
+  category_type_id: any;
   configurations: TabConfiguration[];
 }
 
@@ -250,7 +252,7 @@ export class ConfigurationComponent implements OnInit {
       select_columns: [
         ['app_categories.*'],
         [
-          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type,'config_select_json',app_configurations.config_select_json))) END",
+          "CASE WHEN COUNT(app_configurations.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', app_configurations.id,'display_config',app_configurations.display_config,'order_no',app_configurations.order_no,'config_key', app_configurations.config_key,'category_id', app_configurations.category_id,'category_type_id', app_configurations.category_type_id,'config_value', app_configurations.config_value,'config_file_value', app_configurations.config_file_value,'config_value_type', app_configurations.config_value_type,'config_field_type', app_configurations.config_field_type,'config_select_json',app_configurations.config_select_json))) END",
           'configurations',
         ],
       ],
@@ -418,6 +420,7 @@ export class ConfigurationComponent implements OnInit {
       id: [config.id],
       config_key: [config.config_key, Validators.required],
       category_id: [config.category_id],
+      category_type_id: ['act1'],
       config_value: [config.config_value],
       config_select_json: [
         config.config_select_json
@@ -639,6 +642,7 @@ export class ConfigurationComponent implements OnInit {
       {
         order_no: newConfig.order_no,
         category_id: extracttab[0],
+        category_type_id: 'act1',
         config_key: newConfig.key,
         config_field_type: newConfig.keyType,
         

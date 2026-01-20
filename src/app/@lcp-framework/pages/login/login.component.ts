@@ -397,7 +397,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     const params: any = { categories: { '0': 'ac1', '1': 'ac2' } };
     if (userId !== undefined && userId !== null) {
       params.user_id = userId; // Add user_id if provided
-      params.categories = { '0': 'ac16', '1': 'ac17' };
+      //params.categories = { '0': 'ac16', '1': 'ac17' };
     }
 
     const procedureParams = { proc_name: 'get_configurations_values_v1', params };
