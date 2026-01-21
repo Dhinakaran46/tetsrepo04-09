@@ -45,17 +45,17 @@ export class FormlyDisplayListComponent extends FieldType implements OnInit {
         limit_range: 1000,
         print_query: true,
         start_index: 0,
-        sort_columns: [['email_template_tags.slug', 'asc']],
-        primary_table: 'email_template_tags',
+        sort_columns: [['notification_template_tags.slug', 'asc']],
+        primary_table: 'notification_template_tags',
         select_columns: [
-          ['email_template_tags.id', 'value'],
-          ['email_template_tags.slug', 'label'],
+          ['notification_template_tags.id', 'value'],
+          ['notification_template_tags.slug', 'label'],
         ],
         includes: [
           {
             table_name: 'notification_template_process_tags_mapping',
             join_type: 'INNER',
-            join_condition: 'email_template_tags.id = notification_template_process_tags_mapping.email_template_tag_id',
+            join_condition: 'notification_template_tags.id = notification_template_process_tags_mapping.notification_template_tag_id',
           },
         ],
       };

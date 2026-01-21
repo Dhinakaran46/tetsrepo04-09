@@ -387,7 +387,7 @@ export class ImportTemplateComponent implements OnInit {
     this.queryRules.push(this.createQueryRule());
     this.lineItemForm.updateValueAndValidity();
   }
-  
+
   removeQueryRule(index: number) {
     this.queryRules.removeAt(index);
     this.lineItemForm.updateValueAndValidity();
@@ -465,8 +465,6 @@ export class ImportTemplateComponent implements OnInit {
         individualColumn?.disable();
       }
     });
-
-    
   }
 
   initNewLineItem() {
@@ -569,13 +567,13 @@ export class ImportTemplateComponent implements OnInit {
 
       if (this.editingItemIndex !== -1) {
         // Update existing item in FormArray
-        
+
         itemsArray.setControl(this.editingItemIndex, this.createItemFormGroup(formValue));
-        
+
         this._originalItems[this.editingItemIndex] = { ...formValue };
       } else {
         // Push new item to FormArray
-        
+
         itemsArray.push(this.createItemFormGroup(formValue));
 
         this._originalItems.push({ ...formValue });
@@ -650,7 +648,7 @@ export class ImportTemplateComponent implements OnInit {
       is_admin_module: [false],
       ignore_error_rows: [false],
       is_send_mail: [false],
-      email_process_slug: ['mail-import'],
+      email_process_slug: ['mail_import'],
       status_id: [1],
       job_type: ['direct'],
       batch_process_count: [50],
@@ -711,7 +709,6 @@ export class ImportTemplateComponent implements OnInit {
       if (this._originalItems && this._originalItems[index]) {
         this._originalItems.splice(index, 1);
       }
-     
     } else {
       this.toastr.warning(`Item with field_name: ${item.field_name} not found.`);
     }
@@ -729,7 +726,6 @@ export class ImportTemplateComponent implements OnInit {
       if (this._originalQueries && this._originalQueries[index]) {
         this._originalQueries.splice(index, 1);
       }
-      
     } else {
       this.toastr.warning(`Query with query_name: ${query.query_name} not found.`);
     }
@@ -849,7 +845,7 @@ export class ImportTemplateComponent implements OnInit {
                         message: [rule.message, Validators.required],
                       })
                     )
-                  ),                  
+                  ),
                   field_type_id: [item.field_type_id, Validators.required],
                 })
               );
@@ -938,7 +934,6 @@ export class ImportTemplateComponent implements OnInit {
             message: rule.message,
           })) || []
         ),
-        
 
         field_type_id: item.field_type_id,
       }));
@@ -1024,7 +1019,6 @@ export class ImportTemplateComponent implements OnInit {
             message: rule.message,
           })) || []
         ),
-        
 
         field_type_id: item.field_type_id,
       }));
@@ -1103,7 +1097,6 @@ export class ImportTemplateComponent implements OnInit {
     Object.keys(this.form.controls).forEach((field) => {
       const control = this.form.get(field);
       if (control) {
-        
       }
     });
   }
@@ -1252,7 +1245,7 @@ export class ImportTemplateComponent implements OnInit {
           })
         )
       ),
-      
+
       field_type_id: [item.field_type_id, Validators.required],
     });
   }
