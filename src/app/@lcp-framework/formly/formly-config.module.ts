@@ -159,11 +159,11 @@ export const search_conditions: any = commonConfig.search_conditions;
         { name: 'select-from-db', component: FormlyFieldSelectFromDbComponent, wrappers: ['form-field'] },
         { name: 'async-select-from-db', component: FormlyFieldAutocompleteComponent, wrappers: ['form-field'] },
         { name: 'rich-editor', component: FormlyRichEditorComponent, wrappers: ['form-field'] },
-        { name: 'email-tags', component: FormlyDisplayListComponent, wrappers: ['form-field'] },
+        { name: 'notification-tags', component: FormlyDisplayListComponent, wrappers: ['form-field'] },
         { name: 'whatsapp-tags', component: WhatsappTagsComponent, wrappers: ['form-field'] },
         { name: 'vs-code', component: FormlyVsCodeComponent, wrappers: ['form-field'] },
         { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
-        { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] }
+        { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] },
       ],
     }),
   ],
@@ -180,4 +180,4 @@ export const search_conditions: any = commonConfig.search_conditions;
     SplitLabelPipe,
   ],
 })
-export class FormlyConfigModule { }
+export class FormlyConfigModule {}

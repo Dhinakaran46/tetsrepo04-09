@@ -24,7 +24,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 export class EmailTemplateAssignmentComponent implements OnInit {
   form: FormGroup;
   emailTempAssignmentId: string;
-  emailTemplateProcessDetail: { name: string; id: number }[] = [];
+  emailTemplateProcessDetail: { name: string; id: number; type: string }[] = [];
   loading: boolean = false;
   recipientTags: {
     id: number;
@@ -173,7 +173,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
       print_query: true,
       start_index: 0,
       primary_table: 'notification_template_process',
-      select_columns: [['notification_template_process.id'], ['notification_template_process.slug']],
+      select_columns: [['notification_template_process.id'], ['notification_template_process.slug'], ['notification_template_process.notification_type']],
     };
     this.commonService.getCommonList(payload).subscribe({
       next: (response: any) => {
@@ -182,6 +182,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
             this.emailTemplateProcessDetail.push({
               id: response.data.records[0].id,
               name: response.data.records[0].slug,
+              type: response.data.records[0].notification_type,
             });
             this.form.controls['notification_template_process'].setValue({ notification_template_process_id: response.data.records[0].id });
           }
@@ -210,7 +211,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           value: '3',
           operator: '!=',
           column_name: 'notification_template_process.status_id',
-        }        
+        },
       ],
       limit_range: 1000,
       print_query: true,
@@ -546,6 +547,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
             notification_to: templates.controls['notification_to'].value,
             created_at: true,
             created_by: true,
+            notification_type: this.emailTemplateProcessDetail[0].type,
             template_id: templates.controls['template_id'].value,
             recipient_type: templates.controls['recipient_type'].value,
             notification_template_process_id: '@table1.id',
