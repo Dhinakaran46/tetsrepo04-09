@@ -124,7 +124,7 @@ export class MasterEntityComponent implements OnInit {
         {
           name: 'Example 1: Conditional button based on name',
           comments: ['Uses row_object.name to dynamically assign button color'],
-          data: `html<button class="btn {{ row_object.name == 'Raj Supervisor' ? 'btn-danger' : 'btn-primary' }}">{{ row_object.name }}</button>`
+          data: `html<button class="btn {{ row_object.name == 'Raj Supervisor' ? 'btn-danger' : 'btn-primary' }}">{{ row_object.name }}</button>`,
         },
         {
           name: 'Example 2: User card with nested ternary for role and status',
@@ -132,24 +132,23 @@ export class MasterEntityComponent implements OnInit {
           data: `html<div class="user-card {{ row_object.status == '1' ? 'btn-success' : 'btn-danger' }}">
       <span class="name">{{ row_object.name }}</span>
       <span class="{{ row_object.user_roles == 'Manager' ? 'inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 inset-ring inset-ring-gray-500/10' : 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 inset-ring inset-ring-red-600/10' }}">{{ row_object.user_roles }}</span>
-    </div>`
+    </div>`,
         },
         {
           name: 'Example 3: Numeric comparison for badge color',
           comments: ['Uses row_object.code to determine badge color based on numeric threshold'],
-          data: `html<span class="badge {{ row_object.code >= 1003 ? 'btn-danger' : 'btn-success' }}">Age: {{ row_object.name }} {{ row_object.code }}</span>`
+          data: `html<span class="badge {{ row_object.code >= 1003 ? 'btn-danger' : 'btn-success' }}">Age: {{ row_object.name }} {{ row_object.code }}</span>`,
         },
         {
           name: 'Example 4: Multi-condition button with nested ternary',
           comments: ['Demonstrates chaining multiple status checks'],
           data: `html<button class="btn {{ row_object.status == '1' ? 'btn-success' : row_object.status == '2' ? 'btn-warning' : 'btn-danger' }}">
       {{ row_object.name }}
-    </button>`
-        }
-      ]
+    </button>`,
+        },
+      ],
     },
-    
-    
+
     reportInfo: {
       header: 'sample_report_information',
       examples: [
@@ -287,14 +286,13 @@ export class MasterEntityComponent implements OnInit {
           },
           rightEditor: {
             title: 'JSON',
-          }
+          },
         },
       ],
     },
     jobBuilderQueryInfo: {
       header: 'sample_query_information',
       examples: [
-
         {
           name: 'example_1',
           comments: [],
@@ -353,8 +351,8 @@ export class MasterEntityComponent implements OnInit {
           },
           rightEditor: {
             title: 'JSON',
-          }
-        }
+          },
+        },
       ],
     },
     associatedTableInfo: {
@@ -425,7 +423,7 @@ export class MasterEntityComponent implements OnInit {
                   created_at: true,
                   created_by: true,
                   prefill_data: '$model',
-                  email_template_process_slug: 'user-created',
+                  email_template_process_slug: 'user_created',
                 },
               ],
             },
@@ -1151,7 +1149,13 @@ export class MasterEntityComponent implements OnInit {
   popupName: string = 'reportInfo';
   popupInfoEditorOptions = { ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: true, automaticLayout: true, minimap: { enabled: false } };
   LeftEditorOptionsForAI = {
-    ...this.editorOptions, language: 'sql', cursorStyle: 'line', readOnly: false, automaticLayout: true, minimap: { enabled: false }, suggest: {
+    ...this.editorOptions,
+    language: 'sql',
+    cursorStyle: 'line',
+    readOnly: false,
+    automaticLayout: true,
+    minimap: { enabled: false },
+    suggest: {
       showWords: true,
       showKeywords: true,
     },
@@ -1163,10 +1167,15 @@ export class MasterEntityComponent implements OnInit {
     formatOnType: true,
   };
   RightEditorOptionsForAI = {
-    ...this.editorOptions, language: 'json', cursorStyle: 'line', readOnly: false, automaticLayout: true, minimap: { enabled: false },
+    ...this.editorOptions,
+    language: 'json',
+    cursorStyle: 'line',
+    readOnly: false,
+    automaticLayout: true,
+    minimap: { enabled: false },
     formatOnPaste: true,
     formatOnType: true,
-    autoClosingQuotes: 'always'
+    autoClosingQuotes: 'always',
   };
   copied = false;
   masterEntities: any[] = [];
@@ -1183,7 +1192,7 @@ export class MasterEntityComponent implements OnInit {
     public location: Location,
     private translate: TranslateService,
     private titleService: Title,
-    private openaiService: OpenaiService,
+    private openaiService: OpenaiService
   ) {
     this.initStore();
   }
@@ -1220,8 +1229,6 @@ export class MasterEntityComponent implements OnInit {
     this.titleChange();
     this.fetchAllMasterEntities();
   }
-
-
 
   async initStore() {
     this.storeData
@@ -1463,11 +1470,10 @@ export class MasterEntityComponent implements OnInit {
       fieldType: [this.commonConfig.field_types[0].value, Validators.required],
       linkType: ['none', Validators.required],
       linkAction: [''],
-      fieldHtmlContent: ['']
+      fieldHtmlContent: [''],
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
-
   }
 
   removeItem(index: number) {
@@ -1567,7 +1573,7 @@ export class MasterEntityComponent implements OnInit {
                 fieldType: [item.field_type_id, Validators.required],
                 linkType: [linkType, Validators.required],
                 linkAction: [linkAction],
-                fieldHtmlContent: [item.field_html_content]
+                fieldHtmlContent: [item.field_html_content],
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1650,7 +1656,6 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'grid_builder_module') {
               link_mode = 'child_grid';
             }
-
           }
         }
         return {
@@ -1666,7 +1671,7 @@ export class MasterEntityComponent implements OnInit {
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           link_mode,
-          field_html_content: control.value.fieldHtmlContent
+          field_html_content: control.value.fieldHtmlContent,
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1738,7 +1743,6 @@ export class MasterEntityComponent implements OnInit {
             }
           }
         }
-        console.log(control.value)
         return {
           master_grid_id: '@table1.id',
           field_name: control.value.fieldName,
@@ -1780,7 +1784,6 @@ export class MasterEntityComponent implements OnInit {
     this.update_json_schema.conditions['table4'] = removable_items;
 
     this.update_json_schema.data['table5'] = newly_added_items;
-    console.log(this.update_json_schema)
     return this.update_json_schema;
   }
 
@@ -1922,8 +1925,8 @@ export class MasterEntityComponent implements OnInit {
       rightEditor: currentExample.rightEditor || null,
       editorOptions: {
         ...this.popupInfoEditorOptions,
-        minimap: { enabled: false }
-      }
+        minimap: { enabled: false },
+      },
     };
   }
 
@@ -1954,7 +1957,7 @@ export class MasterEntityComponent implements OnInit {
       hasSplitEditors: !!currentExample.leftEditor && !!currentExample.rightEditor,
       leftEditor: currentExample.leftEditor || null,
       rightEditor: currentExample.rightEditor || null,
-      isProcessing: false
+      isProcessing: false,
     };
   }
 
@@ -1962,16 +1965,16 @@ export class MasterEntityComponent implements OnInit {
     const inputData = this.popupInformation.rightEditor.content;
 
     if (!inputData) {
-    this.toastr.warning('Please Enter JSON.', 'Warning');
-    return;
+      this.toastr.warning('Please Enter JSON.', 'Warning');
+      return;
     }
-    
+
     this.popupInformation.isProcessing = true;
-    
+
     let payload = {
-      "input": inputData,
-      "type": "convert_to_query"
-    }
+      input: inputData,
+      type: 'convert_to_query',
+    };
 
     this.openaiService.generateAiContent(payload).subscribe(
       (response) => {
@@ -1986,7 +1989,7 @@ export class MasterEntityComponent implements OnInit {
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
       }
-    )
+    );
   }
 
   convertToJson() {
@@ -1994,15 +1997,15 @@ export class MasterEntityComponent implements OnInit {
 
     if (!inputData) {
       this.toastr.warning('Please Enter Query.', 'Warning');
-    return;
+      return;
     }
-    
+
     this.popupInformation.isProcessing = true;
 
     let payload = {
-      "input": inputData,
-      "type": "convert_to_json"
-    }
+      input: inputData,
+      type: 'convert_to_json',
+    };
 
     this.openaiService.generateAiContent(payload).subscribe(
       (response) => {
@@ -2017,22 +2020,23 @@ export class MasterEntityComponent implements OnInit {
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
       }
-    )
+    );
   }
 
   copyToClipboardData(content: string, type: string = '') {
-  if (!content) {
-    this.toastr.warning(`No ${type || 'data'} to copy`);
-    return;
-  }
+    if (!content) {
+      this.toastr.warning(`No ${type || 'data'} to copy`);
+      return;
+    }
 
-  navigator.clipboard.writeText(content)
-    .then(() => this.toastr.success(`${type || 'Content'} copied to clipboard!`))
-    .catch(err => {
-      console.error('Clipboard copy failed:', err);
-      this.toastr.error('Failed to copy text');
-    })
-}
+    navigator.clipboard
+      .writeText(content)
+      .then(() => this.toastr.success(`${type || 'Content'} copied to clipboard!`))
+      .catch((err) => {
+        console.error('Clipboard copy failed:', err);
+        this.toastr.error('Failed to copy text');
+      });
+  }
 
   fetchAllMasterEntities() {
     const params = {
@@ -2045,19 +2049,19 @@ export class MasterEntityComponent implements OnInit {
       select_columns: [
         ['master_entities.entity_name', 'value'],
         ['master_entities.name', 'label'],
-        ['master_entities.entity_type', 'entity_type']
+        ['master_entities.entity_type', 'entity_type'],
       ],
     };
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           // For 'component' linkType
-          this.masterEntities = response.data.records.filter((entity: any) =>
-            entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+          this.masterEntities = response.data.records.filter(
+            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
           );
           // For 'child_process' linkType (only grid_builder_module)
-          this.masterEntitiesForChildProcess = response.data.records.filter((entity: any) =>
-            entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
+          this.masterEntitiesForChildProcess = response.data.records.filter(
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
           );
         }
       },
