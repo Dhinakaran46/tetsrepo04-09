@@ -12,6 +12,7 @@ export const commonConfig: any = {
     updateprofilepwd: 'auth/password/change',
     resetuserpwd: 'auth/password/reset-pwd-user',
     commongriddata: 'common/grid-data',
+    commonindividualdataexportalone: 'common/individual-data-export-alone',
     commonindividualdataexport: 'common/individual-data-export',
     commongriddataexport: 'common/grid-data-export',
     forgetpasswordEmail: 'auth/admin/password/request/',

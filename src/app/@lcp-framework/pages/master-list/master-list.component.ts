@@ -649,8 +649,15 @@ export class MasterListComponent implements OnChanges {
           '$session_user_id',
           this.user_info.main.id
         );
-        if (this.grid_params) {
-          listParams.grid_params = this.grid_params;
+        const gridParams: any = {};
+        Object.keys(item).forEach((key) => {
+          if (key.startsWith('gparam_')) {
+            let temp_key = '$' + key;
+            gridParams[temp_key] = item[key];
+          }
+        });
+        if (this.grid_params || gridParams) {
+          listParams.grid_params = this.grid_params || gridParams;
         }
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
         this.gridApiService.getAllRecords(listParams).subscribe(
@@ -1488,14 +1495,24 @@ export class MasterListComponent implements OnChanges {
 
     if (this.masterInfo.children.record_export) {
       let targetRoute = this.masterInfo.children.record_export.target;
-      let recordID = item.id;
+      /*let recordID = item.id;
       if (targetRoute.includes(':uuid') && item.uuid) {
         recordID = item.uuid;
       } else if (targetRoute.includes(':id') && item.id) {
         recordID = item.id;
-      }
+      }*/
+      const gridParams: any = {};
+      Object.keys(item).forEach((key) => {
+        if (key.startsWith('gparam_')) {
+          let temp_key = '$' + key;
+          gridParams[temp_key] = item[key];
+        }
+      });
 
-      this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID, this.commonSearchQuery).subscribe({
+      const grid_params = gridParams;
+      console.log(grid_params);
+      this.gridApiService.exportIndividualRecordsAlone(this.masterInfo.children.record_export.id, grid_params).subscribe({
+        //this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {

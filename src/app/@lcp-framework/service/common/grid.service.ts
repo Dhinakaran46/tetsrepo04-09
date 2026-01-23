@@ -29,7 +29,7 @@ export class GridApiService {
   processImportJob(uuid: any): Observable<any> {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.processImportJob}/${uuid}`);
   }
-  
+
   getAllList(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, data);
   }
@@ -52,6 +52,38 @@ export class GridApiService {
 
   getAllRecords(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, data);
+  }
+
+  exportIndividualRecordsAlone(menuItemId: any, item: any): Observable<ExportResponse> {
+    return this.http
+      .post(
+        `${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonindividualdataexportalone}`,
+        { grid_params: item, menu_item_id: menuItemId },
+        {
+          responseType: 'blob',
+          observe: 'response',
+        }
+      )
+      .pipe(
+        map((response) => {
+          if (!response.body) {
+            throw new Error('No data received from server');
+          }
+
+          const blob = response.body; // response.body is already a Blob due to responseType: 'blob'
+          const contentDisposition = response.headers.get('Content-Disposition');
+          const fileName = contentDisposition ? contentDisposition.split('filename=')[1].replace(/"/g, '') : `export_excel_${new Date().getTime()}.xlsx`;
+
+          return {
+            blob, // This is guaranteed to be a Blob
+            fileName,
+          } as ExportResponse;
+        }),
+        catchError((error) => {
+          console.error('Export error:', error);
+          throw error;
+        })
+      );
   }
 
   exportIndividualRecords(menuItemId: any, id: any, filter: any): Observable<ExportResponse> {
