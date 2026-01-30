@@ -823,7 +823,9 @@ export class MasterListComponent implements OnChanges {
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
-
+    if (this.attachedPolicies) {
+      payload.attached_policies = this.attachedPolicies;
+    }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {

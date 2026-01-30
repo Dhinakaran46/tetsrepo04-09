@@ -299,8 +299,21 @@ export class LocalStorageService implements OnInit {
   }
 
   removeDuplicateObjects(conditions: any[]) {
-    const seen = new WeakSet();
-    return conditions.filter((condition) => !seen.has(condition) && seen.add(condition));
+    const seen = new Set<string>();
+    return conditions.filter((condition) => {
+      // Handle primitive values or null/undefined
+      if (typeof condition !== 'object' || condition === null) {
+        const key = String(condition);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }
+      // Handle objects by stringifying them
+      const key = JSON.stringify(condition);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   removeDuplicateStringsOrNumbers(conditions: any[]) {
@@ -316,7 +329,7 @@ export class LocalStorageService implements OnInit {
     if (!data || !attachedPolicies.length) return payload;
     for (let policy of attachedPolicies) {
       if (!data[policy]) continue;
-      const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns'];
+      const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns', 'filtered_columns'];
 
       for (const field of fields) {
         if (data[policy]?.query_information[field]) {
@@ -325,7 +338,7 @@ export class LocalStorageService implements OnInit {
       }
     }
 
-    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions'];
+    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'filtered_columns'];
     objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
 
     if (payload.group_by) {
