@@ -686,7 +686,9 @@ getNoValueOperatorSQL(operator: string): string {
   }
 
   getNonEmptyFilterCount(): number {
-    return this.filterConditions.filter((filter) => filter.value.trim() !== '').length;
+    return this.filterConditions.filter((filter) =>
+      this.isNoValueOperator(filter.operator) || filter.value.trim() !== ''
+    ).length;
   }
 
   private removeEmptyFilters(): void {
