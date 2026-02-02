@@ -83,7 +83,7 @@ export class AboutlcpComponent implements OnInit {
     }
     // Check if we are in Edit mode by checking the URL params
     this.route.paramMap.subscribe((params) => {
-      this.aboutLcpId = params.get('id');
+      this.aboutLcpId = params.get('id') || params.get('uuid');
       if (this.aboutLcpId) {
         this.isEditMode = true;
         this.loadExistingData(this.aboutLcpId);
