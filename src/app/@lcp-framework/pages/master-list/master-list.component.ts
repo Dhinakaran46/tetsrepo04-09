@@ -1512,7 +1512,7 @@ export class MasterListComponent implements OnChanges {
       });
 
       const grid_params = gridParams;
-      console.log(grid_params);
+      // console.log(grid_params);
       this.gridApiService.exportIndividualRecordsAlone(this.masterInfo.children.record_export.id, grid_params).subscribe({
         //this.gridApiService.exportIndividualRecords(this.masterInfo.children.record_export.id, recordID).subscribe({
         next: (response: ExportResponse) => {

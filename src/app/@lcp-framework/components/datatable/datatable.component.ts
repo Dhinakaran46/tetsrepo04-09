@@ -114,13 +114,30 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   isMenuOpen = false;
   filterCondition: any = true;
-  filterConditions: Array<{ field: string; operator: string; value: string; clause_type: string }> = [];
+  filterConditions: Array<{ field: string; operator: string; value: string; clause_type: string; enum_values: any[] }> = [];
   selectedColumnType: any = 1;
   currentSearchConditions: any = [];
   field_types = commonConfig.field_types;
   inputTypes: InputTypes = commonConfig.field_type;
   searchConditions: SearchConditions = commonConfig.search_conditions;
   isSchemaChunks: boolean = false;
+
+  // Quick fix - minimal required settings
+  filterDropdownSettings: any = {
+    singleSelection: false,
+    idField: 'value', // REQUIRED: This was missing!
+    textField: 'label', // REQUIRED: This was missing!
+    allowSearchFilter: true,
+  };
+
+  onItemSelect(item: any, index: number) {
+    const enum_values = this.filterConditions[index].enum_values;
+    // this.filterConditions[index].value = enum_values.map((e) => e.value);
+  }
+
+  onItemDeSelect(item: any, index: number) {
+    const enum_values = this.filterConditions[index].enum_values;
+  }
 
   mapConditionToSQL = (condition: any) => {
     switch (condition) {
@@ -140,6 +157,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         return 'IS NULL';
       case 'is_not_null':
         return 'IS NOT NULL';
+      case 'in':
+        return 'IN';
+      case 'not_in':
+        return 'NOT IN';
       default:
         return condition;
     }
@@ -155,6 +176,29 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         return `${value}%`;
       case 'ends_with':
         return `%${value}`;
+      case 'in':
+      case 'not_in': {
+        if (Array.isArray(value)) {
+          return value;
+        }
+        return value
+          .split(',')
+          .map((val: string) => val.trim())
+          .filter(Boolean);
+      }
+      default:
+        return value;
+    }
+  };
+
+  mapConditionToValue = (condition: any, value: any) => {
+    switch (condition) {
+      case 'is_empty':
+        return '';
+      case 'is_not_empty':
+        return '';
+      case 'is_null':
+        return null;
       default:
         return value;
     }
@@ -472,8 +516,30 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.currentSearchConditions = this.searchConditions[this.selectedColumnType] || [];
   }
   getOperatorsForColumn(column: string): SearchCondition[] {
-    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
-    return this.searchConditions[columnType] || [];
+    const columnData = this.filteredColumns.find((col) => col.field === column);
+    const columnType = columnData?.field_type_id;
+    if (columnData?.enum_values) {
+      return [
+        { id: '1', label: 'IN', value: 'in' },
+        { id: '2', label: 'NOT IN', value: 'not_in' },
+      ];
+    } else if (this.isAggregateFunction(column) && columnData?.clause_type !== 'having') {
+      return this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || [];
+    } else {
+      return this.searchConditions[columnType] || [];
+    }
+  }
+
+  getEnumValues(column: string) {
+    const columnData = this.filteredColumns.find((col) => col.field === column);
+    return columnData?.enum_values || [];
+  }
+
+  isAggregateFunction(column: string): boolean {
+    // Check for common SQL aggregate functions
+    const aggregatePatterns = [/^count\(/i, /^sum\(/i, /^avg\(/i, /^min\(/i, /^max\(/i, /^group_concat\(/i, /^string_agg\(/i, /^stddev\(/i, /^variance\(/i];
+
+    return aggregatePatterns.some((pattern) => pattern.test(column.trim()));
   }
 
   getInputTypeForColumn(column: string): string {
@@ -488,8 +554,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const data = this.filteredColumns.find((col) => col.field === column);
     const columnType = data?.field_type_id;
     this.filterConditions[index].clause_type = data?.clause_type || 'where';
-    this.filterConditions[index].operator = this.searchConditions[columnType][0].value;
+    this.filterConditions[index].operator = data?.enum_values ? 'in' : this.searchConditions[columnType][0].value;
     this.filterConditions[index].value = '';
+    this.filterConditions[index].enum_values = [];
     this.currentSearchConditions = this.searchConditions[columnType] || [];
   }
 
@@ -506,11 +573,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       operator: '',
       value: '',
       clause_type: '',
+      enum_values: [],
     });
   }
 
   removeCondition(index: number) {
+    const value = this.filterConditions[index].value;
+    const enum_values = this.filterConditions[index].enum_values;
     this.filterConditions.splice(index, 1);
+    if (value || enum_values.length > 0) this.applyFilters();
   }
 
   clearFilters() {
@@ -537,6 +608,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return value;
   }
 
+  isEnumValue(column: string): boolean {
+    if (!column) return false;
+    const columnData = this.filteredColumns.find((col) => col.field === column);
+    return columnData?.enum_values ? true : false;
+  }
+
   setConditionValue(index: number, value: string): void {
     const type = this.getInputTypeForColumn(this.filterConditions[index].field);
     if (type === 'datetime-local' || type === 'date') {
@@ -548,12 +625,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   applyFilters() {
     this.removeEmptyFilters();
     this.isMenuOpen = false;
-  
+
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = this.getInputTypeForColumn(key.field);
       const isNoValue = this.isNoValueOperator(key.operator);
-  
+      const enum_values = key.enum_values;
+
+      let operator: string = '';
+      let value: any = '';
       if (!isNoValue) {
         if (type == 'datetime-local') {
           const formattedDate: any = this.formatDateTime(key.value);
@@ -562,19 +642,20 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
           const formattedDate: any = this.formatDate(key.value);
           key.value = formattedDate;
         }
+        operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
+        value = enum_values?.length > 0 ? enum_values.map((e: any) => e.value) : this.addWildcards(key.operator, key.value?.trim());
+      } else {
+        operator = this.getNoValueOperatorSQL(key.operator);
       }
-  
-      // For no-value operators: operator = 'IS NULL' or 'IS NOT NULL', value = ''
-      // For normal operators: use mapConditionToSQL and addWildcards
+
       return {
         column_name: key.field,
-        operator: isNoValue ? this.getNoValueOperatorSQL(key.operator) : (key.operator ? this.mapConditionToSQL(key.operator) : '='),
-        value: isNoValue ? '' : this.addWildcards(key.operator, key.value).trim(),
+        operator,
+        value,
         isAggregate: key?.clause_type === 'having',
       };
     });
     const fdata = { data: data, condition: condition };
-  
     this.advancedSearchQuery.emit(fdata);
   }
 
@@ -585,10 +666,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = this.getInputTypeForColumn(key.field);
-      
-      
+
+
       const isNoValue = this.isNoValueOperator(key.operator);
-    
+
       if (!isNoValue) {
         if (type == 'datetime-local') {
           const formattedDate: any = this.formatDateTime(key.value);
@@ -620,25 +701,25 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }*/
 
   // Get the SQL value for no-value operators (is_empty, is_not_empty, is_null, is_not_null)
-getNoValueOperatorSQL(operator: string): string {
-  switch (operator) {
-    case 'is_null':
-      return 'IS NULL';
-    case 'is_empty':
-      return 'IS_EMPTY';  // Custom marker for backend
-    case 'is_not_null':
-      return 'IS NOT NULL';
-    case 'is_not_empty':
-      return 'IS_NOT_EMPTY';  // Custom marker for backend
-    default:
-      return '';
+  getNoValueOperatorSQL(operator: string): string {
+    switch (operator) {
+      case 'is_null':
+        return 'IS NULL';
+      case 'is_empty':
+        return 'IS_EMPTY'; // Custom marker for backend
+      case 'is_not_null':
+        return 'IS NOT NULL';
+      case 'is_not_empty':
+        return 'IS_NOT_EMPTY'; // Custom marker for backend
+      default:
+        return '';
+    }
   }
-}
 
   isApplyButtonEnabled(): boolean {
     return this.filterConditions.some((condition) => {
       const isNoValueOperator = this.isNoValueOperator(condition.operator);
-      return condition.field && condition.operator && (isNoValueOperator || condition.value.trim() !== '');
+      return condition.field && condition.operator && (isNoValueOperator || condition.value.trim() !== '' || condition.enum_values?.length > 0);
     });
   }
   /*isApplyButtonEnabled(): boolean {
@@ -686,21 +767,20 @@ getNoValueOperatorSQL(operator: string): string {
   }
 
   getNonEmptyFilterCount(): number {
-    return this.filterConditions.filter((filter) =>
-      this.isNoValueOperator(filter.operator) || filter.value.trim() !== ''
-    ).length;
+    return this.filterConditions.filter((filter) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0)
+      .length;
   }
 
   private removeEmptyFilters(): void {
-    this.filterConditions = this.filterConditions.filter((filter: any) => 
-      this.isNoValueOperator(filter.operator) || filter.value.trim() !== ''
+    this.filterConditions = this.filterConditions.filter(
+      (filter: any) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0
     );
   }
   // Check if the operator doesn't require a value (is_empty, is_not_empty, is_null, is_not_null)
-isNoValueOperator(operator: string): boolean {
-  const noValueOperators = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'];
-  return noValueOperators.includes(operator);
-}
+  isNoValueOperator(operator: string): boolean {
+    const noValueOperators = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'];
+    return noValueOperators.includes(operator);
+  }
   /*private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter((filter: any) => filter.value.trim() !== '');
   }*/
