@@ -19,8 +19,8 @@ import {
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
-import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
 import { BooleanStatusPipe } from '../../pipes/boolean/boolean-status.pipe';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -35,6 +35,7 @@ import { MasterListComponent } from '../../pages/master-list/master-list.compone
 import { LoaderComponent } from '../loader/loader.component';
 
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 
 interface SearchCondition {
   id: string;
@@ -47,6 +48,21 @@ interface SearchConditions {
 
 interface InputTypes {
   [key: number]: string;
+}
+
+interface FilterCondition {
+  field: string;
+  operator: string;
+  value: string;
+  clause_type: string;
+  enum_values: any[];
+  availableOperators: SearchCondition[];
+  inputType: string;
+  isEnum: boolean;
+  enumType: string;
+  enumValueOptions: Array<{ label: any; value: any }>;
+  autocompleteLoading: boolean;
+  autocompleteSearchText: string;
 }
 
 @Component({
@@ -99,6 +115,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
   @Output() selectionChange = new EventEmitter<any>();
+  autocompleteSearchSubject = new Subject<string>();
 
   search: any = '';
   selectedColumns: any[] = [];
@@ -114,7 +131,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   isMenuOpen = false;
   filterCondition: any = true;
-  filterConditions: Array<{ field: string; operator: string; value: string; clause_type: string; enum_values: any[] }> = [];
+  filterConditions: Array<FilterCondition> = [];
   selectedColumnType: any = 1;
   currentSearchConditions: any = [];
   field_types = commonConfig.field_types;
@@ -233,6 +250,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   constructor(
     private translate: TranslateService,
+    private gridApiService: GridApiService,
     private toastr: ToastrService,
     public storeData: Store<any>,
     public datePipe: DatePipe,
@@ -509,12 +527,28 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         searchPlaceholderText: translations['table_multiselect_3'],
       };
     });
+
+    this.autocompleteSearchSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((searchTerm) => this.autoCompleteFieldChange(searchTerm))
+      )
+      .subscribe((results) => {
+        const activeCondition = this.filterConditions.find((c) => c.enumType === 'autocomplete' && c.autocompleteLoading);
+        if (activeCondition) {
+          activeCondition.enumValueOptions = results;
+          activeCondition.autocompleteLoading = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   /* advanced search filter functions */
   updateFilterConditions() {
     this.currentSearchConditions = this.searchConditions[this.selectedColumnType] || [];
   }
+
   getOperatorsForColumn(column: string): SearchCondition[] {
     const columnData = this.filteredColumns.find((col) => col.field === column);
     const columnType = columnData?.field_type_id;
@@ -530,9 +564,105 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     }
   }
 
-  getEnumValues(column: string) {
-    const columnData = this.filteredColumns.find((col) => col.field === column);
-    return columnData?.enum_values || [];
+  async getEnumValues(columnData: any, operator: string): Promise<{ label: any; value: any }[]> {
+    if (!columnData) return [];
+
+    const enumObj = columnData?.enum_values || [];
+
+    switch (enumObj?.type) {
+      case 'master':
+        if (enumObj?.value) {
+          try {
+            const response = await this.gridApiService.getListData(enumObj.value).toPromise();
+            if (response.status && response.data?.records) {
+              return response.data.records.map((option: any) => ({
+                label: enumObj.optionKey ? option[enumObj.optionKey] : option.label,
+                value: enumObj.optionValue ? option[enumObj.optionValue] : option.value,
+              }));
+            }
+          } catch (error: any) {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+          }
+        }
+        return [];
+      case 'autocomplete':
+        return [];
+      case 'json':
+        if (!enumObj?.value || !Array.isArray(enumObj.value)) {
+          return [];
+        }
+        return enumObj.value.map((value: any) => ({
+          label: enumObj.optionKey ? value[enumObj.optionKey] : value.label,
+          value: enumObj.optionvalue ? value[enumObj.optionvalue] : value.value,
+        }));
+
+      case 'array':
+        if (!enumObj?.value || !Array.isArray(enumObj.value)) {
+          return [];
+        }
+        return enumObj.value.map((value: any) => ({
+          label: value.trim() ?? '',
+          value: value.trim() ?? '',
+        }));
+
+      default:
+        return [];
+    }
+  }
+
+  // Update autoCompleteFieldChange to handle the active condition
+  async autoCompleteFieldChange(searchTerm: string): Promise<{ label: any; value: any }[]> {
+    if (!searchTerm || searchTerm.length < 2) return [];
+
+    const activeCondition = this.filterConditions.find((c) => c.enumType === 'autocomplete' && c.autocompleteLoading);
+    // const activeCondition = this.filterConditions[index];
+    if (!activeCondition) return [];
+
+    const columnData = this.filteredColumns.find((col) => col.field === activeCondition.field);
+    const enumObj = columnData?.enum_values || {};
+
+    try {
+      // Add search parameter to your API call
+      let params: any = enumObj.value || {}; // is an object
+      params = this.replaceSearchTermInObject(params, searchTerm);
+
+      const response = await this.gridApiService.getListData(params).toPromise();
+      if (response.status && response.data?.records) {
+        return response.data.records.map((option: any) => ({
+          label: enumObj.optionKey ? option[enumObj.optionKey] : option.label,
+          value: enumObj.optionValue ? option[enumObj.optionValue] : option.value,
+        }));
+      }
+    } catch (error: any) {
+      const key = 'error';
+      const errorMessage = this.translate.instant(key);
+      this.toastr.error(errorMessage, 'Error');
+    }
+    return [];
+  }
+
+  // Handle search event from ng-select
+  onAutocompleteSearch(event: any, index: number) {
+    const condition = this.filterConditions[index];
+    const searchTerm = event.term;
+
+    if (searchTerm && searchTerm.length >= 2) {
+      condition.autocompleteLoading = true;
+      condition.autocompleteSearchText = searchTerm;
+      this.autocompleteSearchSubject.next(searchTerm);
+    } else {
+      condition.enumValueOptions = [];
+    }
+  }
+
+  // Handle clear event
+  onAutocompleteClear(index: number) {
+    const condition = this.filterConditions[index];
+    condition.enum_values = [];
+    condition.enumValueOptions = [];
+    condition.autocompleteSearchText = '';
   }
 
   isAggregateFunction(column: string): boolean {
@@ -547,17 +677,40 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return this.inputTypes[columnType] || 'text';
   }
 
-  onColumnChange(event: Event, index: number) {
-    const target = event.target as HTMLSelectElement;
-    const column = target.value;
-    this.filterConditions[index].field = column;
+  async onColumnChange(event: Event, index: number) {
+    // const target = event.target as HTMLSelectElement;
+    // const column = target.value;
+    const column = this.filterConditions[index].field; //(event.target as HTMLSelectElement).value;
     const data = this.filteredColumns.find((col) => col.field === column);
     const columnType = data?.field_type_id;
     this.filterConditions[index].clause_type = data?.clause_type || 'where';
-    this.filterConditions[index].operator = data?.enum_values ? 'in' : this.searchConditions[columnType][0].value;
+    const operator = data?.enum_values ? 'in' : this.searchConditions[columnType][0].value;
+    this.filterConditions[index].operator = operator;
     this.filterConditions[index].value = '';
     this.filterConditions[index].enum_values = [];
+    this.filterConditions[index].availableOperators = this.getOperatorsForColumn(column);
+    this.filterConditions[index].inputType = this.getInputTypeForColumn(column);
+    const isEnum = this.isEnumValue(data, operator);
+    this.filterConditions[index].isEnum = isEnum;
+    if (isEnum) {
+      this.filterConditions[index].enumType = data.enum_values.type;
+      this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
+    }
     this.currentSearchConditions = this.searchConditions[columnType] || [];
+  }
+
+  async onOperatorChange(index: number) {
+    const column = this.filterConditions[index].field;
+    const operator = this.filterConditions[index].operator;
+    const data = this.filteredColumns.find((col) => col.field === column);
+    this.filterConditions[index].value = '';
+    this.filterConditions[index].enum_values = [];
+    const isEnum = this.isEnumValue(data, operator);
+    this.filterConditions[index].isEnum = isEnum;
+    if (isEnum) {
+      this.filterConditions[index].enumType = data.enum_values.type;
+      this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
+    }
   }
 
   toggleMenu() {
@@ -574,6 +727,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       value: '',
       clause_type: '',
       enum_values: [],
+      availableOperators: [],
+      inputType: 'text', // Default input type
+      isEnum: false,
+      enumValueOptions: [], // Default options
+      enumType: '',
+      autocompleteLoading: false,
+      autocompleteSearchText: '',
     });
   }
 
@@ -608,14 +768,28 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return value;
   }
 
-  isEnumValue(column: string): boolean {
-    if (!column) return false;
-    const columnData = this.filteredColumns.find((col) => col.field === column);
-    return columnData?.enum_values ? true : false;
+  isEnumValue(columnData: any, operator: string): boolean {
+    if (!columnData) return false;
+    const enumObj = columnData?.enum_values || [];
+    switch (enumObj?.type) {
+      case 'master':
+        return operator === 'in' || operator === 'not_in';
+        break;
+      case 'autocomplete':
+        return operator === 'in' || operator === 'not_in';
+        break;
+      case 'json':
+      case 'array':
+        return true;
+        break;
+      default:
+        return false;
+        break;
+    }
   }
 
   setConditionValue(index: number, value: string): void {
-    const type = this.getInputTypeForColumn(this.filterConditions[index].field);
+    const type = this.filterConditions[index].inputType;
     if (type === 'datetime-local' || type === 'date') {
       this.filterConditions[index].value = value;
     } else {
@@ -628,7 +802,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
-      const type = this.getInputTypeForColumn(key.field);
+      const type = key.inputType || this.getInputTypeForColumn(key.field);
       const isNoValue = this.isNoValueOperator(key.operator);
       const enum_values = key.enum_values;
 
@@ -643,7 +817,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
           key.value = formattedDate;
         }
         operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
-        value = enum_values?.length > 0 ? enum_values.map((e: any) => e.value) : this.addWildcards(key.operator, key.value?.trim());
+        value =
+          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, key.value?.trim());
       } else {
         operator = this.getNoValueOperatorSQL(key.operator);
       }
@@ -719,7 +894,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   isApplyButtonEnabled(): boolean {
     return this.filterConditions.some((condition) => {
       const isNoValueOperator = this.isNoValueOperator(condition.operator);
-      return condition.field && condition.operator && (isNoValueOperator || condition.value.trim() !== '' || condition.enum_values?.length > 0);
+      const value = (condition.value ?? '').trim();
+      return condition.field && condition.operator && (isNoValueOperator || value !== '' || condition.enum_values?.length > 0);
     });
   }
   /*isApplyButtonEnabled(): boolean {
@@ -1260,5 +1436,40 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       }
     });
     componentRef.instance.grid_params = gridParams;
+  }
+
+  private replaceSearchTermInObject(obj: any, searchText: string): any {
+    if (!obj) return obj;
+
+    // Handle strings - check if they contain %searchTerm%
+    if (typeof obj === 'string') {
+      if (obj.includes('%searchTerm%')) {
+        return obj.replace(/%searchTerm%/g, `%${searchText}%`);
+      } else if (obj.includes('%searchTerm')) {
+        return obj.replace(/%searchTerm/g, '%' + searchText);
+      } else if (obj.includes('searchTerm%')) {
+        return obj.replace(/searchTerm%/g, searchText + '%');
+      }
+      return obj;
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.replaceSearchTermInObject(item, searchText));
+    }
+
+    // Handle objects
+    if (typeof obj === 'object' && obj !== null) {
+      const result: any = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          result[key] = this.replaceSearchTermInObject(obj[key], searchText);
+        }
+      }
+      return result;
+    }
+
+    // Return other types as is (number, boolean, etc.)
+    return obj;
   }
 }

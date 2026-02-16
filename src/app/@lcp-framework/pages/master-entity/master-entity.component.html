@@ -795,7 +795,7 @@
                     <div class="mb-2">
                       <textarea [id]="'enumValues' + i" rows="3" formControlName="enumValues" appDynamicFontSize="body"
                         class="form-textarea w-full" placeholder="{{ 'enter_enum_values' | translate }}"
-                        appJsonValidator="arrayOfObjects"
+                        appJsonValidator="object"
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'enumValues') }"></textarea>
                       <div *ngIf="isItemFieldInvalid(i, 'enumValues')" class="invalid-feedback text-danger">
                         {{ getItemErrorMessage(i, 'enumValues') }}

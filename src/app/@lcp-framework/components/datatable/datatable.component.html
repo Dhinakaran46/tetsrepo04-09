@@ -65,12 +65,14 @@
                       <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field"
                         class="form-select w-full">
                         <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                        <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title || col.previewTitle
+                        <option *ngFor="let col of filteredColumns;" [value]="col.field">{{ col.title ||
+                          col.previewTitle
                           }}</option>
                       </select>
-                      <select [(ngModel)]="condition.operator" class="form-select w-full">
+                      <select [(ngModel)]="condition.operator" class="form-select w-full"
+                        (ngModelChange)="onOperatorChange(i)">
                         <option value selected disabled>{{ 'condition' | translate }}</option>
-                        <option *ngFor="let op of getOperatorsForColumn(condition.field)" [value]="op.value">{{ op.label
+                        <option *ngFor="let op of condition.availableOperators;" [value]="op.value">{{ op.label
                           }}</option>
                       </select>
                       <!-- <input
@@ -84,20 +86,37 @@
                         [attr.pattern]="getPatternForColumn(condition.field)"
                         [required]="true"
                       />-->
-                      <ng-multiselect-dropdown class="w-full pr-10" [hidden]="!isEnumValue(condition.field)"
-                        [placeholder]="'select' | translate" [data]="getEnumValues(condition.field)"
+                      <!-- For autocomplete type -->
+                      <div *ngIf="condition.isEnum && condition.enumType === 'autocomplete'"
+                        class="w-full pr-10 relative">
+                        <ng-select [items]="condition.enumValueOptions || []" [(ngModel)]="condition.enum_values"
+                          bindLabel="label" bindValue="value" [multiple]="true" [searchable]="true"
+                          [loading]="condition.autocompleteLoading" [typeahead]="autocompleteSearchSubject"
+                          placeholder="{{ 'search_and_select' | translate }}" [closeOnSelect]="false"
+                          [hideSelected]="true" (search)="onAutocompleteSearch($event, i)"
+                          (clear)="onAutocompleteClear(i)" class="custom-ng-select">
+                          <ng-template ng-notfound-tmp>
+                            <div class="p-2 text-center text-gray-500">
+                              {{ 'no_results_found' | translate }}
+                            </div>
+                          </ng-template>
+                        </ng-select>
+                      </div>
+                      <ng-multiselect-dropdown class="w-full pr-10"
+                        [hidden]="!condition.isEnum || condition.enumType === 'autocomplete'"
+                        [placeholder]="'select' | translate" [data]="condition?.enumValueOptions || []"
                         [(ngModel)]="condition.enum_values" [settings]="filterDropdownSettings"
                         (onSelect)="onItemSelect($event, i)" (onDeSelect)="onItemDeSelect($event, i)">
                       </ng-multiselect-dropdown>
-                      <!-- <select *ngIf="isEnumValue(condition.field)" [(ngModel)]="condition.value"
+                      <!-- <select *ngIf="isEnumValue(condition.field, condition.operator)" [(ngModel)]="condition.value"
                         class="form-select w-full pr-10" multiple>
                         <option value selected disabled>{{ 'select' | translate }}</option>
-                        <option *ngFor="let op of getEnumValues(condition.field)" [value]="op.value">{{ op.label
+                        <option *ngFor="let op of getEnumValues(condition.field, condition.operator)" [value]="op.value">{{ op.label
                           }}</option>
                       </select> -->
-                      <input *ngIf="!isNoValueOperator(condition.operator) && !isEnumValue(condition.field)"
+                      <input *ngIf="!isNoValueOperator(condition.operator) && !condition.isEnum"
                         [ngModel]="getConditionValue(i)" (ngModelChange)="setConditionValue(i, $event)"
-                        [type]="getInputTypeForColumn(condition.field)" class="form-input w-full pr-10 text-gray-600"
+                        [type]="condition?.inputType || 'text'" class="form-input w-full pr-10 text-gray-600"
                         [placeholder]="getPlaceholderForColumn(condition.field)"
                         [attr.min]="getMinValueForColumn(condition.field)"
                         [attr.max]="getMaxValueForColumn(condition.field)"
