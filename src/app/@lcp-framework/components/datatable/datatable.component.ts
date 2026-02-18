@@ -33,7 +33,7 @@ import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
 import { LoaderComponent } from '../loader/loader.component';
-
+import { AppendToBodyDirective } from './append-to-body.directive';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 
@@ -68,7 +68,7 @@ interface FilterCondition {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -233,6 +233,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   };
 
   paginationOptions: any[] = [];
+  previousSelections: any[] = [];
 
   user_info: any;
   config: any;
@@ -275,6 +276,21 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       this.createColumnPopupChildMasterList(item, entityName);
       this.cdr.detectChanges(); // flush changes
     }
+  }
+
+  onEnumChange(selectedValues: any[], index: number) {
+    console.log('Selected enum values:', selectedValues);
+
+    // If you still need select / deselect logic:
+    const previous = this.previousSelections[index] || [];
+
+    const added = selectedValues.filter((x: any) => !previous.includes(x));
+    const removed = previous.filter((x: any) => !selectedValues.includes(x));
+
+    added.forEach((item) => this.onItemSelect(item, index));
+    removed.forEach((item: any) => this.onItemDeSelect(item, index));
+
+    this.previousSelections[index] = [...selectedValues];
   }
 
   /**

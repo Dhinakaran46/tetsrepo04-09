@@ -316,11 +316,20 @@ tbody td.sticky:is(.dark *) {
   left: 50%;
   transform: translateX(-50%);
   right: auto;
-  z-index: 1000;
+  z-index: 1050;
   position: fixed;
   top: 10%;
   max-height: 60vh;
   overflow-y: auto;
+  overflow: visible !important;
+}
+
+// Ensure dropdown overlays are always above the filter container
+::ng-deep .ng-dropdown-panel {
+  z-index: 3000 !important;
+}
+::ng-deep .dropdown-list {
+  z-index: 3000 !important;
 }
 
 @media (min-width: 640px) {

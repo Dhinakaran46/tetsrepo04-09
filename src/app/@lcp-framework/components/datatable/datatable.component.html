@@ -8,42 +8,63 @@
       <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
         <div class="flex flex-col gap-2 md:flex-row md:items-center">
           <div class="relative mb-2 flex-grow md:mb-0">
-            <input #searchInput [(ngModel)]="search" (keydown.enter)="onSearch()" type="text"
-              class="form-input w-full pr-10 text-app-text" appDynamicFontSize="body"
-              placeholder="{{ 'table_search_placeholder' | translate }}..." />
-            <a (click)="onSearch()" href="javascript:void(0);"
-              class="search-btn absolute inset-y-0 right-0 flex items-center border-none" (click)="focusSearchInput()">
+            <input
+              #searchInput
+              [(ngModel)]="search"
+              (keydown.enter)="onSearch()"
+              type="text"
+              class="form-input w-full pr-10 text-app-text"
+              appDynamicFontSize="body"
+              placeholder="{{ 'table_search_placeholder' | translate }}..."
+            />
+            <a
+              (click)="onSearch()"
+              href="javascript:void(0);"
+              class="search-btn absolute inset-y-0 right-0 flex items-center border-none"
+              (click)="focusSearchInput()"
+            >
               <i class="fa-solid fa-magnifying-glass"></i>
             </a>
           </div>
 
           <!-- Filter Button -->
           <div class="align-center align-items-center relative inline-flex justify-center">
-            <button (click)="toggleMenu()" aria-expanded="true" aria-haspopup="true"
+            <button
+              (click)="toggleMenu()"
+              aria-expanded="true"
+              aria-haspopup="true"
               class="filter-button mr-2 flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-              id="options-menu" type="button">
-              <i class="fa-solid fa-filter"></i>&nbsp;<span class="hidden md:inline">{{ 'table_filter' | translate
-                }}</span>
-              <span *ngIf="getNonEmptyFilterCount() > 0"
-                class="badge absolute -top-3 rounded-full bg-danger p-0.5 px-1.5">{{ getNonEmptyFilterCount() }}</span>
+              id="options-menu"
+              type="button"
+            >
+              <i class="fa-solid fa-filter"></i>&nbsp;<span class="hidden md:inline">{{ 'table_filter' | translate }}</span>
+              <span *ngIf="getNonEmptyFilterCount() > 0" class="badge absolute -top-3 rounded-full bg-danger p-0.5 px-1.5">{{ getNonEmptyFilterCount() }}</span>
             </button>
 
-            <div [hidden]="!isMenuOpen" aria-labelledby="options-menu" aria-orientation="vertical"
+            <div
+              [hidden]="!isMenuOpen"
+              aria-labelledby="options-menu"
+              aria-orientation="vertical"
               class="advancedfiltercontainer rigin-top-left absolute z-10 mt-2 divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-              role="menu">
+              role="menu"
+            >
               <!-- Header -->
               <div class="flex items-center justify-between border-b border-gray-200 p-4">
                 <span>{{ 'table_advance_filter' | translate }}</span>
 
                 <div class="flex items-center gap-4">
-                  <button (click)="addCondition()" class="text-blue-500" ngxTippy="Add Filter"><i
-                      class="fa-solid fa-plus"></i>&nbsp;</button>
+                  <button (click)="addCondition()" class="text-blue-500" ngxTippy="Add Filter"><i class="fa-solid fa-plus"></i>&nbsp;</button>
                   <label class="relative h-6 w-12">
-                    <input type="checkbox" [(ngModel)]="filterCondition"
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="filterCondition"
                       class="custom_switch peer absolute z-10 h-full w-full cursor-pointer opacity-0"
-                      id="custom_switch_checkbox" />
-                    <span for="custom_switch_checkbox"
-                      class="block h-full rounded-full bg-[#ebedf2] before:absolute before:bottom-1 before:left-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:duration-300 peer-checked:bg-primary peer-checked:before:left-7"></span>
+                      id="custom_switch_checkbox"
+                    />
+                    <span
+                      for="custom_switch_checkbox"
+                      class="block h-full rounded-full bg-[#ebedf2] before:absolute before:bottom-1 before:left-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:duration-300 peer-checked:bg-primary peer-checked:before:left-7"
+                    ></span>
                   </label>
                   <span>{{ filterCondition ? 'AND' : 'OR' }}</span>
                 </div>
@@ -62,18 +83,13 @@
 
                       <i *ngIf="filterCondition" class="fa-solid fa-diamond shrink-0 text-info"></i>
 
-                      <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field"
-                        class="form-select w-full">
+                      <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select w-full">
                         <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                        <option *ngFor="let col of filteredColumns;" [value]="col.field">{{ col.title ||
-                          col.previewTitle
-                          }}</option>
+                        <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title || col.previewTitle }}</option>
                       </select>
-                      <select [(ngModel)]="condition.operator" class="form-select w-full"
-                        (ngModelChange)="onOperatorChange(i)">
+                      <select [(ngModel)]="condition.operator" class="form-select w-full" (ngModelChange)="onOperatorChange(i)">
                         <option value selected disabled>{{ 'condition' | translate }}</option>
-                        <option *ngFor="let op of condition.availableOperators;" [value]="op.value">{{ op.label
-                          }}</option>
+                        <option *ngFor="let op of condition.availableOperators" [value]="op.value">{{ op.label }}</option>
                       </select>
                       <!-- <input
                         [ngModel]="getConditionValue(i)"
@@ -87,14 +103,24 @@
                         [required]="true"
                       />-->
                       <!-- For autocomplete type -->
-                      <div *ngIf="condition.isEnum && condition.enumType === 'autocomplete'"
-                        class="w-full pr-10 relative">
-                        <ng-select [items]="condition.enumValueOptions || []" [(ngModel)]="condition.enum_values"
-                          bindLabel="label" bindValue="value" [multiple]="true" [searchable]="true"
-                          [loading]="condition.autocompleteLoading" [typeahead]="autocompleteSearchSubject"
-                          placeholder="{{ 'search_and_select' | translate }}" [closeOnSelect]="false"
-                          [hideSelected]="true" (search)="onAutocompleteSearch($event, i)"
-                          (clear)="onAutocompleteClear(i)" class="custom-ng-select">
+                      <div *ngIf="condition.isEnum && condition.enumType === 'autocomplete'" class="relative w-full pr-10">
+                        <ng-select
+                          [items]="condition.enumValueOptions || []"
+                          [(ngModel)]="condition.enum_values"
+                          bindLabel="label"
+                          bindValue="value"
+                          [multiple]="true"
+                          [searchable]="true"
+                          [loading]="condition.autocompleteLoading"
+                          [typeahead]="autocompleteSearchSubject"
+                          placeholder="{{ 'search_and_select' | translate }}"
+                          [closeOnSelect]="false"
+                          [hideSelected]="true"
+                          (search)="onAutocompleteSearch($event, i)"
+                          (clear)="onAutocompleteClear(i)"
+                          class="custom-ng-select"
+                          appendTo="body"
+                        >
                           <ng-template ng-notfound-tmp>
                             <div class="p-2 text-center text-gray-500">
                               {{ 'no_results_found' | translate }}
@@ -102,27 +128,52 @@
                           </ng-template>
                         </ng-select>
                       </div>
-                      <ng-multiselect-dropdown class="w-full pr-10"
-                        [hidden]="!condition.isEnum || condition.enumType === 'autocomplete'"
-                        [placeholder]="'select' | translate" [data]="condition?.enumValueOptions || []"
-                        [(ngModel)]="condition.enum_values" [settings]="filterDropdownSettings"
-                        (onSelect)="onItemSelect($event, i)" (onDeSelect)="onItemDeSelect($event, i)">
-                      </ng-multiselect-dropdown>
+
+                      <div *ngIf="condition.isEnum && condition.enumType !== 'autocomplete'" class="relative w-full pr-10">
+                        <ng-select
+                          [items]="condition.enumValueOptions || []"
+                          [(ngModel)]="condition.enum_values"
+                          bindLabel="label"
+                          bindValue="value"
+                          [multiple]="true"
+                          [searchable]="true"
+                          [closeOnSelect]="false"
+                          [hideSelected]="true"
+                          placeholder="{{ 'select' | translate }}"
+                          appendTo="body"
+                          (change)="onEnumChange($event, i)"
+                          class="custom-ng-select"
+                        >
+                          <ng-template ng-option-tmp let-item="item" let-item$="item$">
+                            <input type="checkbox" [ngModel]="item$.selected" [ngModelOptions]="{ standalone: true }" />
+                            &nbsp;{{ item.label }}
+                          </ng-template>
+                          <ng-template ng-notfound-tmp>
+                            <div class="p-2 text-center text-gray-500">
+                              {{ 'no_results_found' | translate }}
+                            </div>
+                          </ng-template>
+                        </ng-select>
+                      </div>
                       <!-- <select *ngIf="isEnumValue(condition.field, condition.operator)" [(ngModel)]="condition.value"
                         class="form-select w-full pr-10" multiple>
                         <option value selected disabled>{{ 'select' | translate }}</option>
                         <option *ngFor="let op of getEnumValues(condition.field, condition.operator)" [value]="op.value">{{ op.label
                           }}</option>
                       </select> -->
-                      <input *ngIf="!isNoValueOperator(condition.operator) && !condition.isEnum"
-                        [ngModel]="getConditionValue(i)" (ngModelChange)="setConditionValue(i, $event)"
-                        [type]="condition?.inputType || 'text'" class="form-input w-full pr-10 text-gray-600"
+                      <input
+                        *ngIf="!isNoValueOperator(condition.operator) && !condition.isEnum"
+                        [ngModel]="getConditionValue(i)"
+                        (ngModelChange)="setConditionValue(i, $event)"
+                        [type]="condition?.inputType || 'text'"
+                        class="form-input w-full pr-10 text-gray-600"
                         [placeholder]="getPlaceholderForColumn(condition.field)"
                         [attr.min]="getMinValueForColumn(condition.field)"
                         [attr.max]="getMaxValueForColumn(condition.field)"
-                        [attr.pattern]="getPatternForColumn(condition.field)" [required]="true" />
-                      <span *ngIf="isNoValueOperator(condition.operator)"
-                        class="form-input w-full bg-gray-100 text-gray-400 dark:bg-gray-700">
+                        [attr.pattern]="getPatternForColumn(condition.field)"
+                        [required]="true"
+                      />
+                      <span *ngIf="isNoValueOperator(condition.operator)" class="form-input w-full bg-gray-100 text-gray-400 dark:bg-gray-700">
                         {{ 'no_value_required' | translate }}
                       </span>
                       <button (click)="removeCondition(i)" class="text-red-500">
@@ -137,25 +188,26 @@
               <div class="flex items-center justify-between border-t border-gray-200 p-4">
                 <button (click)="clearFilters()" class="text-red-500">{{ 'table_clear_filter' | translate }}</button>
                 <div class="flex gap-4">
-                  <button (click)="applyFilters()" [disabled]="!isApplyButtonEnabled()" class="btn btn-primary">{{
-                    'apply' | translate }}</button>
+                  <button (click)="applyFilters()" [disabled]="!isApplyButtonEnabled()" class="btn btn-primary">{{ 'apply' | translate }}</button>
                   <button (click)="cancelFilters()" class="btn btn-secondary">{{ 'cancel' | translate }}</button>
                 </div>
               </div>
             </div>
 
             <div hlMenu class="dropdown mb-2 md:mb-0">
-              <button hlMenuButton type="button"
+              <button
+                hlMenuButton
+                type="button"
                 class="mr-2 flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-                appDynamicFontSize="body">
+                appDynamicFontSize="body"
+              >
                 <i class="fa-solid fa-table-columns"></i>&nbsp;
                 <span class="ltr:mr-1 rtl:ml-1">{{ 'table_multiselect_1' | translate }}</span>
               </button>
               <ul *hlMenuItems @toggleAnimation class="w-max ltr:left-0 rtl:right-0">
                 <li>
                   <div class="flex items-center border-b border-gray-200 px-4 py-1">
-                    <button class="mr-2 px-2 py-1 text-blue-500" (click)="selectAll()">{{ 'select_all' | translate
-                      }}</button>
+                    <button class="mr-2 px-2 py-1 text-blue-500" (click)="selectAll()">{{ 'select_all' | translate }}</button>
                     <button class="px-2 py-1 text-red-500" (click)="clearAll()">{{ 'clear_all' | translate }}</button>
                   </div>
                 </li>
@@ -163,33 +215,38 @@
                   <li>
                     <div class="flex items-center px-4 py-1">
                       <label [for]="'chk-' + i" class="mb-0 cursor-pointer">
-                        <input type="checkbox" [id]="'chk-' + i" class="form-checkbox" [ngModel]="!col.colFilterHide"
-                          (ngModelChange)="toggleColumnFilterHide(col)" />
-                        <span class="uppercase ltr:ml-2 rtl:mr-2" appDynamicFontSize="body"> {{ col.header | translate
-                          }}</span>
+                        <input
+                          type="checkbox"
+                          [id]="'chk-' + i"
+                          class="form-checkbox"
+                          [ngModel]="!col.colFilterHide"
+                          (ngModelChange)="toggleColumnFilterHide(col)"
+                        />
+                        <span class="uppercase ltr:ml-2 rtl:mr-2" appDynamicFontSize="body"> {{ col.header | translate }}</span>
                       </label>
                     </div>
                   </li>
                 </ng-container>
               </ul>
             </div>
-            <div class="flex"
-              *ngIf="permissions && (this.masterInfo?.permissions.export_excel || this.masterInfo?.permissions.export_pdf)">
+            <div class="flex" *ngIf="permissions && (this.masterInfo?.permissions.export_excel || this.masterInfo?.permissions.export_pdf)">
               <div hlMenu class="dropdown mb-2 md:mb-0">
-                <button type="button" hlMenuButton
-                  class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
-                  <i class="fa-solid fa-download"></i> &nbsp; <span class="hidden md:inline">{{ 'export' | translate }}
-                  </span>
+                <button
+                  type="button"
+                  hlMenuButton
+                  class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+                >
+                  <i class="fa-solid fa-download"></i> &nbsp; <span class="hidden md:inline">{{ 'export' | translate }} </span>
                 </button>
                 <ul *hlMenuItems @toggleAnimation class="whitespace-nowrap ltr:right-0 rtl:left-0">
                   <li *ngIf="this.masterInfo?.permissions.export_excel">
-                    <a (click)="exportTable('excel')" href="javascript:;" *hlMenuItem="let menuItem"><i
-                        class="fa-solid fa-file-excel ltr:mr-2 rtl:ml-2"></i>{{ 'excel' | translate }}
+                    <a (click)="exportTable('excel')" href="javascript:;" *hlMenuItem="let menuItem"
+                      ><i class="fa-solid fa-file-excel ltr:mr-2 rtl:ml-2"></i>{{ 'excel' | translate }}
                     </a>
                   </li>
                   <li *ngIf="this.masterInfo?.permissions.export_pdf">
-                    <a (click)="exportTable('pdf')" href="javascript:;" *hlMenuItem="let menuItem"><i
-                        class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }}
+                    <a (click)="exportTable('pdf')" href="javascript:;" *hlMenuItem="let menuItem"
+                      ><i class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }}
                     </a>
                   </li>
                 </ul>
@@ -212,19 +269,27 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <button *ngIf="permissions && this.masterInfo?.permissions.create" (click)="customAction.emit('addNew')"
-              ngxTippy=" {{ title | translate }}" type="button"
+            <button
+              *ngIf="permissions && this.masterInfo?.permissions.create"
+              (click)="customAction.emit('addNew')"
+              ngxTippy=" {{ title | translate }}"
+              type="button"
               style="color: var(--app-button-text-color, var(--app-bg-color)); background-color: var(--app-button-bg-color, var(--app-primary-color))"
-              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
             </button>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <button *ngIf="permissions && this.masterInfo?.permissions.popup_create"
-              (click)="customAction.emit('addNew')" ngxTippy=" {{ title | translate }}" type="button"
+            <button
+              *ngIf="permissions && this.masterInfo?.permissions.popup_create"
+              (click)="customAction.emit('addNew')"
+              ngxTippy=" {{ title | translate }}"
+              type="button"
               style="color: var(--app-button-text-color, var(--app-bg-color)); background-color: var(--app-button-bg-color, var(--app-primary-color))"
-              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+            >
               <i class="fa-solid fa-plus"></i>&nbsp;{{ 'form_button_add_new' | translate }}
             </button>
           </div>
@@ -243,9 +308,12 @@
           </div>
           } -->
 
-          <button *ngIf="unique_id && true" type="button"
+          <button
+            *ngIf="unique_id && true"
+            type="button"
             class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
-            (click)="location.back()">
+            (click)="location.back()"
+          >
             {{ 'back' | translate }}
           </button>
         </div>
@@ -257,8 +325,7 @@
         <table class="table-hover relative min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              @if(permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details)
-              {
+              @if(permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details) {
               <th class="text-left uppercase tracking-wider" appDynamicFontSize="body">
                 <!-- Expand/Collapse column header -->
               </th>
@@ -267,19 +334,34 @@
                 <input type="checkbox" (change)="toggleSelectAll($event)" />
               </th>
               <ng-container *ngFor="let col of headercolumns; let last = last">
-                <th scope="col"
+                <th
+                  scope="col"
                   class="max-w-140 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
-                  [ngClass]="[last ? 'sticky right-0 z-10 bg-gray-50' : '']" appDynamicFontSize="body"
-                  (click)="sortColumn(col)" *ngIf="col.is_grid_column == 'true' && !col.colFilterHide" ngxTippy
-                  [attr.data-tippy-content]="col.header | translate">
+                  [ngClass]="[last ? 'sticky right-0 z-10 bg-gray-50' : '']"
+                  appDynamicFontSize="body"
+                  (click)="sortColumn(col)"
+                  *ngIf="col.is_grid_column == 'true' && !col.colFilterHide"
+                  ngxTippy
+                  [attr.data-tippy-content]="col.header | translate"
+                >
                   {{ col.header | translate }}
-                  <span *ngIf="col.is_sortable == 'true' && col.is_grid_column == 'true'"
-                    class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center id asc ng-star-inserted">
+                  <span
+                    *ngIf="col.is_sortable == 'true' && col.is_grid_column == 'true'"
+                    class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center id asc ng-star-inserted"
+                  >
                     <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                      <polygon [ngClass]="{ 'bh-text-primary': col.sortDirection === 'asc' }"
-                        points="3.11,6.25 10.89,6.25 7,1.75" fill="currentColor" class="bh-text-black"></polygon>
-                      <polygon [ngClass]="{ 'bh-text-primary': col.sortDirection === 'desc' }"
-                        points="7,12.25 10.89,7.75 3.11,7.75" fill="currentColor" class="bh-text-black"></polygon>
+                      <polygon
+                        [ngClass]="{ 'bh-text-primary': col.sortDirection === 'asc' }"
+                        points="3.11,6.25 10.89,6.25 7,1.75"
+                        fill="currentColor"
+                        class="bh-text-black"
+                      ></polygon>
+                      <polygon
+                        [ngClass]="{ 'bh-text-primary': col.sortDirection === 'desc' }"
+                        points="7,12.25 10.89,7.75 3.11,7.75"
+                        fill="currentColor"
+                        class="bh-text-black"
+                      ></polygon>
                     </svg>
                   </span>
                 </th>
@@ -288,8 +370,7 @@
           </thead>
           <tbody class="divide-y divide-gray-200">
             <tr *ngIf="loading">
-              <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500"
-                appDynamicFontSize="body">
+              <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500" appDynamicFontSize="body">
                 <section class="dots-container">
                   <div class="dot"></div>
                   <div class="dot"></div>
@@ -305,12 +386,10 @@
                 @for(item of items;track items; let row_index = $index) {
                 <ng-container>
                   <tr>
-                    @if(permissions && this.masterInfo?.permissions.child_details &&
-                    this.masterInfo?.children?.child_details) {
+                    @if(permissions && this.masterInfo?.permissions.child_details && this.masterInfo?.children?.child_details) {
                     <td class="align-items-center flex gap-2">
                       <button class="expand-collapse-btn" (click)="toggleRow(item, row_index + 1)">
-                        <i class="fa"
-                          [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === row_index + 1 ? 'fa-minus' : 'fa-plus'"></i>
+                        <i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : expandedItem === row_index + 1 ? 'fa-minus' : 'fa-plus'"></i>
                       </button>
                     </td>
                     }
@@ -382,69 +461,71 @@
                       </td>-->
 
                       <!-- Replace the cell rendering section in your datatable.component.html -->
-                      <td class="max-w-150 truncate whitespace-nowrap"
+                      <td
+                        class="max-w-150 truncate whitespace-nowrap"
                         [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
-                        *ngIf="!col.colFilterHide">
+                        *ngIf="!col.colFilterHide"
+                      >
                         <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">
                           <!-- NEW: Check if column has field_html_content -->
                           <!-- Check if column has HTML content -->
                           <ng-container *ngIf="getHtmlTemplateFor(col) as tpl; else noHtmlContent">
                             <!-- Use the same logic as in noHtmlContent, but render HTML content inside -->
                             <ng-container *ngIf="col.link_type === 'component'; else maybePopupGridHtml">
-                              <span class="block cursor-pointer truncate text-primary underline"
-                                (click)="onLinkComponentClick(col, item)">
-                                <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                  (click)="onHtmlCellClick($event)"></div>
+                              <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
+                                <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                               </span>
                             </ng-container>
 
                             <ng-template #maybePopupGridHtml>
                               <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeUrlHtml">
-                                <span class="block cursor-pointer truncate text-primary underline"
-                                  (click)="onLinkPopupGridClick(item, col)">
-                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                    (click)="onHtmlCellClick($event)"></div>
+                                <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                                 </span>
                               </ng-container>
                             </ng-template>
 
                             <ng-template #maybeUrlHtml>
                               <ng-container *ngIf="col.link_type === 'url'; else defaultHtml">
-                                <a *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrlHtml"
-                                  class="block truncate text-primary underline" [routerLink]="col.link_action">
-                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                    (click)="onHtmlCellClick($event)"></div>
+                                <a
+                                  *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrlHtml"
+                                  class="block truncate text-primary underline"
+                                  [routerLink]="col.link_action"
+                                >
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                                 </a>
                                 <ng-template #externalUrlHtml>
-                                  <a class="block truncate text-primary underline" [href]="col.link_action"
-                                    target="_blank">
-                                    <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                      (click)="onHtmlCellClick($event)"></div>
+                                  <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
+                                    <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                                   </a>
                                 </ng-template>
                               </ng-container>
 
                               <ng-template #defaultHtml>
-                                <span class="block truncate"
-                                  *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'" ngxTippy
+                                <span
+                                  class="block truncate"
+                                  *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                                  ngxTippy
                                   [attr.data-tippy-content]="item[col.header]"
-                                  [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }">
-                                  <button *ngIf="col.link_type === 'child_grid'" class="expand-collapse-btn ml-1"
+                                  [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
+                                >
+                                  <button
+                                    *ngIf="col.link_type === 'child_grid'"
+                                    class="expand-collapse-btn ml-1"
                                     style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
-                                    (click)="toggleColumnChildGrid(item, col, row_index + 1)">
-                                    <i class="fa"
-                                      [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                    <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                      (click)="onHtmlCellClick($event)"></div>
+                                    (click)="toggleColumnChildGrid(item, col, row_index + 1)"
+                                  >
+                                    <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                    <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                                   </button>
                                 </span>
-                                <div *ngIf="!col.link_type || col.link_type === 'none'"
+                                <div
+                                  *ngIf="!col.link_type || col.link_type === 'none'"
                                   [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                  (click)="onHtmlCellClick($event)"></div>
-                                <span class="block truncate"
-                                  *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
-                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)"
-                                    (click)="onHtmlCellClick($event)"></div>
+                                  (click)="onHtmlCellClick($event)"
+                                ></div>
+                                <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                                 </span>
                               </ng-template>
                             </ng-template>
@@ -452,49 +533,52 @@
 
                           <ng-template #noHtmlContent>
                             <ng-container *ngIf="col.link_type === 'component'; else maybePopupGrid">
-                              <span class="block cursor-pointer truncate text-primary underline"
-                                (click)="onLinkComponentClick(col, item)">
+                              <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkComponentClick(col, item)">
                                 {{ item[col.header] | booleanStatus }}
                               </span>
                             </ng-container>
                             <ng-template #maybePopupGrid>
                               <ng-container *ngIf="col.link_type === 'popup_grid'; else notComponent">
-                                <span class="block cursor-pointer truncate text-primary underline"
-                                  (click)="onLinkPopupGridClick(item, col)">
+                                <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
                                   {{ item[col.header] | booleanStatus }}
                                 </span>
                               </ng-container>
                             </ng-template>
                             <ng-template #notComponent>
                               <ng-container *ngIf="col.link_type === 'url'; else defaultCell">
-                                <a *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrl"
-                                  class="block truncate text-primary underline" [routerLink]="col.link_action">
+                                <a
+                                  *ngIf="col.link_action && col.link_action.startsWith('/master-entities'); else externalUrl"
+                                  class="block truncate text-primary underline"
+                                  [routerLink]="col.link_action"
+                                >
                                   {{ item[col.header] | booleanStatus }}
                                 </a>
                                 <ng-template #externalUrl>
-                                  <a class="block truncate text-primary underline" [href]="col.link_action"
-                                    target="_blank">
+                                  <a class="block truncate text-primary underline" [href]="col.link_action" target="_blank">
                                     {{ item[col.header] | booleanStatus }}
                                   </a>
                                 </ng-template>
                               </ng-container>
                               <ng-template #defaultCell>
-                                <span class="block truncate"
-                                  *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'" ngxTippy
+                                <span
+                                  class="block truncate"
+                                  *ngIf="col.header !== 'Status' && col.header !== 'table_column_action'"
+                                  ngxTippy
                                   [attr.data-tippy-content]="item[col.header]"
-                                  [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }">
-                                  <button *ngIf="col.link_type === 'child_grid'" class="expand-collapse-btn ml-1"
+                                  [ngClass]="{ 'cursor-pointer text-primary underline': col.link_type === 'component' }"
+                                >
+                                  <button
+                                    *ngIf="col.link_type === 'child_grid'"
+                                    class="expand-collapse-btn ml-1"
                                     style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
-                                    (click)="toggleColumnChildGrid(item, col, row_index + 1)">
-                                    <i class="fa"
-                                      [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                    (click)="toggleColumnChildGrid(item, col, row_index + 1)"
+                                  >
+                                    <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     {{ item[col.header] | booleanStatus }}
                                   </button>
-                                  <span *ngIf="!col.link_type || col.link_type === 'none'">{{ item[col.header] |
-                                    booleanStatus }}</span>
+                                  <span *ngIf="!col.link_type || col.link_type === 'none'">{{ item[col.header] | booleanStatus }}</span>
                                 </span>
-                                <span class="block truncate"
-                                  *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
+                                <span class="block truncate" *ngIf="col.header === 'Status' || col.header === 'table_column_action'">
                                   {{ item[col.header] | booleanStatus }}
                                 </span>
                               </ng-template>
@@ -502,16 +586,14 @@
                           </ng-template>
                         </ng-container>
                         <ng-container *ngIf="col.customTemplate">
-                          <ng-container
-                            *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
+                          <ng-container *ngTemplateOutlet="col.customTemplate; context: { $implicit: item }"></ng-container>
                         </ng-container>
                       </td>
                     </ng-container>
                   </tr>
 
                   <!-- Child datatable row -->
-                  <tr
-                    *ngIf="expandedItem === row_index + 1 && permissions && this.masterInfo?.permissions.child_details">
+                  <tr *ngIf="expandedItem === row_index + 1 && permissions && this.masterInfo?.permissions.child_details">
                     <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                       <div class="bg-gray-50 p-4">
                         <!-- Child content -->
@@ -535,8 +617,7 @@
               </ng-container>
               <ng-template #noRecords>
                 <tr>
-                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500"
-                    appDynamicFontSize="body">
+                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0)" class="py-4 text-center text-gray-500" appDynamicFontSize="body">
                     {{ 'no_records_found' | translate }}
                   </td>
                 </tr>
@@ -548,8 +629,13 @@
       <div class="pagination flex items-center justify-between border-t border-gray-200 py-1 text-xs sm:mb-0">
         <div class="flex items-center">
           <div class="mr-4">
-            <select id="results-per-page" [(ngModel)]="resultsPerPage" class="py-1.5 text-xs"
-              (ngModelChange)="onResultsPerPageChange()" appDynamicFontSize="body">
+            <select
+              id="results-per-page"
+              [(ngModel)]="resultsPerPage"
+              class="py-1.5 text-xs"
+              (ngModelChange)="onResultsPerPageChange()"
+              appDynamicFontSize="body"
+            >
               <option *ngFor="let option of paginationOptions" [value]="option">{{ option }}</option>
             </select>
           </div>
@@ -565,59 +651,80 @@
           </div>
         </div>
         <div>
-          <nav class="isolate inline-flex -space-x-px rounded-md py-1.5 text-xs shadow-sm" aria-label="Pagination"
-            appDynamicFontSize="body">
-            <button (click)="goToPage(1)"
+          <nav class="isolate inline-flex -space-x-px rounded-md py-1.5 text-xs shadow-sm" aria-label="Pagination" appDynamicFontSize="body">
+            <button
+              (click)="goToPage(1)"
               class="relative inline-flex items-center rounded-l-md px-2 py-1 text-xs text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-              [disabled]="currentPage === 1">
+              [disabled]="currentPage === 1"
+            >
               <span class="sr-only">{{ 'first' | translate }}</span>
               <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd"
+                <path
+                  fill-rule="evenodd"
                   d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
-                  clip-rule="evenodd" />
+                  clip-rule="evenodd"
+                />
               </svg>
             </button>
-            <button (click)="previousPage()"
+            <button
+              (click)="previousPage()"
               class="relative inline-flex items-center px-2 py-1 text-xs text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-              [disabled]="currentPage === 1">
+              [disabled]="currentPage === 1"
+            >
               <span class="sr-only">{{ 'previous' | translate }}</span>
               <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd"
+                <path
+                  fill-rule="evenodd"
                   d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                  clip-rule="evenodd" />
+                  clip-rule="evenodd"
+                />
               </svg>
             </button>
             <ng-container *ngFor="let page of getPageNumbers(); let i = index">
               <ng-container [ngSwitch]="page">
-                <button *ngSwitchCase="'...'" (click)="handleEllipsisClick(i)"
-                  class="relative inline-flex items-center px-2 py-1.5 text-xs font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <button
+                  *ngSwitchCase="'...'"
+                  (click)="handleEllipsisClick(i)"
+                  class="relative inline-flex items-center px-2 py-1.5 text-xs font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                >
                   ...
                 </button>
-                <button *ngSwitchDefault (click)="goToPage(page)"
+                <button
+                  *ngSwitchDefault
+                  (click)="goToPage(page)"
                   class="relative inline-flex items-center px-2 py-1.5 text-xs font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                  [ngClass]="{ 'bg-blue-50': currentPage === page }">
+                  [ngClass]="{ 'bg-blue-50': currentPage === page }"
+                >
                   {{ page }}
                 </button>
               </ng-container>
             </ng-container>
-            <button (click)="nextPage()"
+            <button
+              (click)="nextPage()"
               class="relative inline-flex items-center px-2 py-1.5 text-xs text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-              [disabled]="currentPage === totalPages">
+              [disabled]="currentPage === totalPages"
+            >
               <span class="sr-only">{{ 'next' | translate }}</span>
               <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd"
+                <path
+                  fill-rule="evenodd"
                   d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                  clip-rule="evenodd" />
+                  clip-rule="evenodd"
+                />
               </svg>
             </button>
-            <button (click)="goToPage(totalPages)"
+            <button
+              (click)="goToPage(totalPages)"
               class="relative inline-flex items-center rounded-r-md px-2 py-1.5 text-xs text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-              [disabled]="currentPage === totalPages">
+              [disabled]="currentPage === totalPages"
+            >
               <span class="sr-only">{{ 'last' | translate }}</span>
               <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd"
+                <path
+                  fill-rule="evenodd"
                   d="M4.21 14.77a.75.75 0 01.02-1.06L8.168 10 4.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02zm6 0a.75.75 0 01.02-1.06L14.168 10 10.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                  clip-rule="evenodd" />
+                  clip-rule="evenodd"
+                />
               </svg>
             </button>
           </nav>
@@ -633,10 +740,13 @@
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
       class="relative w-full max-w-5xl transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
-      <button type="button"
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
+    >
+      <button
+        type="button"
         class="btn-xs absolute -right-5 -top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-lg hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
-        (click)="closeViewPopup()">
+        (click)="closeViewPopup()"
+      >
         <span class="sr-only">Close</span>
         <i class="fa-solid fa-xmark text-2xl"></i>
       </button>
