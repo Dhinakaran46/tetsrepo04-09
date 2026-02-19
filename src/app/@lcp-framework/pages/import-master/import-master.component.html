@@ -271,7 +271,8 @@
               <!-- Counts Section -->
               <div class="my-4 flex flex-wrap items-center justify-between rounded-lg bg-gray-50 dark:bg-[#1b1f38]">
                 <div class="flex items-center space-x-4">
-                  <h2 class="space-x-2 text-lg font-bold">{{ 'validated_records' | translate }}</h2>
+                  <h2 class="space-x-2 text-lg font-bold" *ngIf="this.import_job != 'scheduled'">{{ 'validated_records' | translate }}</h2>
+                  <h2 class="space-x-2 text-lg font-bold" *ngIf="this.import_job == 'scheduled'">{{ 'records' | translate }}</h2>
                 </div>
                 <div class="flex items-center space-x-4">
                   <div class="flex items-center space-x-2">
@@ -279,17 +280,17 @@
                     <span class="text-sm font-bold text-gray-600">{{ 'total_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ (sheet_data.row_datas || []).length }}</span>
                   </div>
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-2" *ngIf="this.import_job != 'scheduled'">
                     <span class="h-4 w-4 rounded-full bg-red-200"></span>
                     <span class="text-sm font-semibold text-red-600">{{ 'errors_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getErrorCount(sheet_data.row_datas || []) }}</span>
                   </div>
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-2" *ngIf="this.import_job != 'scheduled'">
                     <span class="h-4 w-4 rounded-full bg-green-200"></span>
                     <span class="text-sm font-semibold text-green-600">{{ 'valid_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getValidCount(sheet_data.row_datas || []) }}</span>
                   </div>
-                  <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-2" *ngIf="this.import_job != 'scheduled'">
                     <span class="h-4 w-4 rounded-full bg-yellow-200"></span>
                     <span class="text-sm font-semibold text-yellow-600">{{ 'warnings_rows:' | translate }}</span>
                     <span class="text-sm font-bold text-gray-800 dark:text-white">{{ getWarningCount(sheet_data.row_datas || []) }}</span>

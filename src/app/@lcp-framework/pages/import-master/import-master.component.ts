@@ -119,7 +119,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   submitted: boolean = false;
   isLoading: boolean = false;
   isSendMail: boolean = false;
-  selectedTemplateId:any = null;
+  selectedTemplateId: any = null;
 
   private socket$!: WebSocketSubject<any>;
   public progress = 100;
@@ -214,7 +214,6 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       (response: EntityListDataResponce) => {
         if (response.status && response.data?.records.length) {
           this.importTemplates = response.data.records;
-          
         } else if (!response.status) {
           this.importTemplates = [];
           this.toastr.error(`Code: ${response.code} , ${response.message}`);
@@ -238,7 +237,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
 
   getTemplateDetail() {
     this.submitted = true;
-    
+
     if (this.importForm.invalid) {
       if (this.importForm.controls['import_template'].hasError('required')) {
         this.toastr.error('please_select_import_template_before_continuing');
@@ -373,24 +372,23 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         }
       );
     } else {
-    this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
-      (response: ApiResponce) => {
-        if (response.status) {
-          this.section = 'section3';
-          this.sheet_data = response.data; //{ header_details, row_datas }
-          this.isLoading = false;
-        } else {
-          this.toastr.error(response.message);
+      this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
+        (response: ApiResponce) => {
+          if (response.status) {
+            this.section = 'section3';
+            this.sheet_data = response.data; //{ header_details, row_datas }
+            this.isLoading = false;
+          } else {
+            this.toastr.error(response.message);
+            this.isLoading = false;
+          }
+        },
+        (error: any) => {
+          this.toastr.error('Error getting import template data');
           this.isLoading = false;
         }
-      },
-      (error: any) => {
-        this.toastr.error('Error getting import template data');
-        this.isLoading = false;
-      }
-    );
-  }
-
+      );
+    }
   }
 
   getErrorCount(rowDatas: any = []) {
@@ -420,9 +418,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   deleteUploadedSheet() {
     if (this.fileUploadLog && this.fileUploadLog.uuid) {
       this.gridApiService.deleteFileByUuid(this.fileUploadLog?.uuid).subscribe(
-        (response: ApiResponce) => {
-          
-        },
+        (response: ApiResponce) => {},
         (error: any) => {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
@@ -433,7 +429,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getSheetDatas(): any {
-    const data = this.sheet_data?.row_datas.map((row: any) => {
+    const data = this.sheet_data?.row_datas.map((row: any, index: number) => {
       // Extract error messages and combine them into a single string
       const errorMessages = Object.values(row.errors)
         .flat()
@@ -450,18 +446,20 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         : '<span class="badge text-xs badge-outline-success">valid</span>';
       const errorstatus = row.error ? `<span class="badge text-xs badge-outline-danger">invalid</span>` : status;
       return {
+        sno: index + 1,
         ...row.columns,
         errors: row.errors,
         warnings: row.warnings,
-        errorstatus, // Add error status
-        errorMessages: row.error ? errorMessages : warnMessages, // Add combined error messages
+        errorstatus,
+        errorMessages: row.error ? errorMessages : warnMessages,
       };
     });
     return data;
   }
   getSheetDatasForScheduled(): any {
-    return this.sheet_data?.row_datas.map((row: any) => {
+    return this.sheet_data?.row_datas.map((row: any, index: number) => {
       return {
+        sno: index + 1,
         ...row.columns,
       };
     });
@@ -478,14 +476,21 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         searchable: true,
         isHtmlHeader: true,
       }));
-    // Add the two new columns at the beginning
+    // Add the three new columns at the beginning (S.No + two meta columns)
     const additionalColumns = [
+      { key: 'sno', label: 'S.No', sortable: false },
       { key: 'errorstatus', label: 'Status', sortable: true, isHtmlValue: true },
       { key: 'errorMessages', label: 'Messages', sortable: false, isHtmlValue: true },
     ];
 
     // Prepend additionalColumns to the existing columns
-    const updatedColumns = [...additionalColumns, ...columns];
+    let updatedColumns: any[] = [];
+    if (this.import_job != 'scheduled') {
+      updatedColumns = [...additionalColumns, ...columns];
+    } else {
+      // For scheduled imports we still include the S.No column
+      updatedColumns = [{ key: 'sno', label: 'S.No', sortable: false }, ...columns];
+    }
 
     return { ...this.tableConfig, columns: updatedColumns, detailStatusPopup: true };
   }
@@ -564,7 +569,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     }
   }
 
-  processDirectInsertion(sheet_data: SheetData){
+  processDirectInsertion(sheet_data: SheetData) {
     const payload = {
       action: ['insert'],
       table: ['direct_import_details'],
@@ -572,37 +577,33 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       data: {
         table1: [
           {
-            
-            import_template_id: this.selectedTemplateId,            
+            import_template_id: this.selectedTemplateId,
             file_path: sheet_data.attachments_path,
             file_name: sheet_data.attachments_name,
             created_by: this.userData.main.user_id,
-            
           },
-        ]
+        ],
       },
     };
-   
+
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-         
           if (response.status) {
-           console.warn(response);
+            console.warn(response);
           } else {
             // error
           }
         } else {
           const key = response.message;
           const errorMessage = this.translate.instant(key);
-          console.error(errorMessage)
+          console.error(errorMessage);
         }
       },
       (error) => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-        
       }
     );
   }
@@ -611,7 +612,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.toastr.error('Please fill the import job form');
       return;
     }
-    
+
     let finalData: any = sheet_data;
     let finalRows: any = [];
     finalData.row_datas.forEach((item: any) => {
@@ -625,7 +626,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         row_object: item,
       });
     });
-    
+
     const randomValue = Math.floor(Math.random() * 100000);
     const wholeData = this.getSheetDatas();
     const wholeDataConfig = this.getSheetHeader();
@@ -663,11 +664,10 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         table2: finalRows,
       },
     };
-   
+
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-         
           if (response.status) {
             this.resetComponent();
             this.getImportTemplates();
@@ -692,7 +692,6 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
         this.isLoading = false;
       }
     );
-    
   }
 
   async uploadExcelAndcallImport(sheet_data: SheetData) {
@@ -716,7 +715,6 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       //this.isLoading = true;
       this.processScheduledInsertion(sheet_data);
     } else {
-      
       //this.isLoading = true;
       let payload: any = {
         row_datas: sheet_data.row_datas,
@@ -773,7 +771,6 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.gridApiService.getIndividualImportFields(uuid).subscribe(
         (response: ApiResponce) => {
           if (response.status && response.data.records.length) {
-            
             this.selectedTemplateId = response.data.records[0].id;
             this.resetComponent(uuid);
             if (response.data.records[0].importable_fields) {
