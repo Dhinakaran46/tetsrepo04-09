@@ -263,6 +263,8 @@ export const commonConfig: any = {
     { id: '12', label: 'Is Not Empty', value: 'is_not_empty' },
     { id: '13', label: 'Is Null', value: 'is_null' },
     { id: '14', label: 'Is Not Null', value: 'is_not_null' },
+    { id: '15', label: 'IN', value: 'in' },
+    { id: '16', label: 'NOT IN', value: 'not_in' },
   ],
   search_conditions: {
     // Integer Field Conditions
@@ -275,6 +277,8 @@ export const commonConfig: any = {
       { id: '6', label: 'Less Than or Equal To', value: '<=' },
       { id: '7', label: 'Is Null', value: 'is_null' },
       { id: '8', label: 'Is Not Null', value: 'is_not_null' },
+      { id: '9', label: 'IN', value: 'in' },
+      { id: '10', label: 'NOT IN', value: 'not_in' },
     ],
 
     // Float Field Conditions
@@ -287,6 +291,8 @@ export const commonConfig: any = {
       { id: '6', label: 'Less Than or Equal To', value: '<=' },
       { id: '7', label: 'Is Null', value: 'is_null' },
       { id: '8', label: 'Is Not Null', value: 'is_not_null' },
+      { id: '9', label: 'IN', value: 'in' },
+      { id: '10', label: 'NOT IN', value: 'not_in' },
     ],
 
     // String Field Conditions
@@ -301,6 +307,8 @@ export const commonConfig: any = {
       { id: '8', label: 'Is Not Empty', value: 'is_not_empty' },
       { id: '9', label: 'Is Null', value: 'is_null' },
       { id: '10', label: 'Is Not Null', value: 'is_not_null' },
+      { id: '11', label: 'IN', value: 'in' },
+      { id: '12', label: 'NOT IN', value: 'not_in' },
     ],
 
     // Big String Field Conditions
@@ -315,6 +323,8 @@ export const commonConfig: any = {
       { id: '8', label: 'Is Not Empty', value: 'is_not_empty' },
       { id: '9', label: 'Is Null', value: 'is_null' },
       { id: '10', label: 'Is Not Null', value: 'is_not_null' },
+      { id: '11', label: 'IN', value: 'in' },
+      { id: '12', label: 'NOT IN', value: 'not_in' },
     ],
 
     // Date Field Conditions
@@ -325,6 +335,10 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
+      { id: '7', label: 'Is Null', value: 'is_null' },
+      { id: '8', label: 'Is Not Null', value: 'is_not_null' },
+      { id: '9', label: 'IN', value: 'in' },
+      { id: '10', label: 'NOT IN', value: 'not_in' },
     ],
 
     // DateTime Field Conditions
@@ -335,6 +349,8 @@ export const commonConfig: any = {
       { id: '4', label: 'On or Before', value: '<=' },
       { id: '5', label: 'After', value: '>' },
       { id: '6', label: 'On or After', value: '>=' },
+      { id: '7', label: 'Is Null', value: 'is_null' },
+      { id: '8', label: 'Is Not Null', value: 'is_not_null' },
     ],
 
     // DateTime Field Conditions

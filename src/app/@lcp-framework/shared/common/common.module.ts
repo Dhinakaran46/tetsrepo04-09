@@ -11,6 +11,7 @@ import { OrderByPipe } from '../../pipes/order-by/order-by.pipe';
 import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 import { DatetimePipe } from '../../pipes/datetime/datetime.pipe';
 import { DatePipe } from '../../pipes/date/date.pipe';
+import { JsonValidatorDirective } from '../../directives/json-validator.directive';
 
 @NgModule({
   imports: [
@@ -24,6 +25,7 @@ import { DatePipe } from '../../pipes/date/date.pipe';
     NgSelectModule,
     OrderByPipe,
     DynamicFontSizeDirective,
+    JsonValidatorDirective,
     DatetimePipe,
     DatePipe,
   ],
@@ -38,6 +40,7 @@ import { DatePipe } from '../../pipes/date/date.pipe';
     NgSelectModule,
     OrderByPipe,
     DynamicFontSizeDirective,
+    JsonValidatorDirective,
     DatetimePipe,
     DatePipe,
   ],
