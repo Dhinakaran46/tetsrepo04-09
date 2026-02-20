@@ -32,7 +32,7 @@ export class AutocompleteFormComponent implements ControlValueAccessor, OnChange
   @Output() itemSelected: EventEmitter<any> = new EventEmitter();
   filteredItems: { id: number | string; name: string }[] = [];
   showDropdown: boolean = false;
-  private innerValue: any = null;
+  innerValue: any = null;
 
   constructor() {}
 
@@ -51,6 +51,7 @@ export class AutocompleteFormComponent implements ControlValueAccessor, OnChange
     if (value) {
       const selectedItem = this.items.find((item) => item.id === value);
       this.dispLabel = selectedItem ? selectedItem.name : null;
+      this.value = value;
     } else {
       this.dispLabel = null;
     }
@@ -61,9 +62,15 @@ export class AutocompleteFormComponent implements ControlValueAccessor, OnChange
     this.onTouched = fn;
   }
 
+  @Input() disabled: boolean = false;
+
   // This is called when form value is changed
   registerOnChange(fn: any): void {
     this.onChange = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
   }
 
   showDropdowndisp() {
@@ -73,13 +80,16 @@ export class AutocompleteFormComponent implements ControlValueAccessor, OnChange
   filterItems(event: any) {
     const term = event.target.value ?? '';
     const searchTerm = term.toLowerCase();
+    this.dispLabel = term;
     this.filteredItems = this.items.filter((item) => item.name.toLowerCase().includes(searchTerm));
     this.showDropdown = this.filteredItems.length > 0;
   }
 
   selectItem(item: any) {
     this.value = item.id;
+    this.innerValue = item.id;
     this.dispLabel = item.name;
+    this.onChange(item.id);
     this.itemSelected.emit(item);
     this.showDropdown = false;
   }
