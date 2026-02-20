@@ -213,7 +213,7 @@ export class HeaderComponent implements OnInit {
     this.menuItems = this.filterMenu(this.menuItems, viewPermissions);
   }
 
-filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
+  filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
     return menuItems.filter((item) => {
       const permissionKey = item.entity_name;
       const hasPermission = viewPermissions.includes(permissionKey);
@@ -221,22 +221,20 @@ filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
         item.children = this.filterMenu(item.children, viewPermissions);
       }
       // Menu item.link_type external must have either target or childern in order to display in application
-    if (item.link_type == 4) {
-      const hasTargetOrChildren =
-        (item?.target && item.target.trim() !== '') ||
-        (item?.children && item.children.length > 0);
+      if (item.link_type == 4) {
+        const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
 
-      if (hasTargetOrChildren) {
-        //console.log(" Rendering item (link_type=4, has target/children):", item);
-        return true;
-      } else {
-        //console.log("Skipping item (link_type=4, no target/children):", item);
-        return false;
+        if (hasTargetOrChildren) {
+          //console.log(" Rendering item (link_type=4, has target/children):", item);
+          return true;
+        } else {
+          //console.log("Skipping item (link_type=4, no target/children):", item);
+          return false;
+        }
       }
-     }
-     if (item.parent_id == null) {
+      if (item.parent_id == null) {
         return true;
-     }
+      }
 
       return hasPermission || (item.children && item.children.length > 0);
     });
@@ -320,16 +318,15 @@ filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
     let profile_pic = this.user_info.main.profile_pic;
     profile_pic = profile_pic && profile_pic !== 'null' ? apiUrl + '/' + profile_pic : 'assets/images/user.png';
 
-    const first_name = this.user_info.main.first_name || 'First Name';
-    const last_name = this.user_info.main.last_name || 'Last Name';
+    const first_name = this.user_info.main.first_name || '';
+    const last_name = this.user_info.main.last_name || '';
     const name = `${first_name} ${last_name}`;
-    const email = this.user_info.main.email || 'email@example.com';
+    const email = this.user_info.main.email || '';
 
     return { profile_pic: profile_pic, name, email };
   }
 
   changeLanguage(item: any) {
-    
     this.translate.use(item.code);
     this.appSetting.toggleLanguage(item);
     if (this.store.locale?.toLowerCase() === 'ae') {

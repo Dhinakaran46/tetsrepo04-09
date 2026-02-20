@@ -16,10 +16,14 @@ export class AutocompleteComponent implements OnInit, OnChanges {
   @Input() placeholder: string = '';
   @Input() items: { id: number | string; name: string }[] = [];
   @Input() fieldName: string = '';
+  @Input() hidelabel: boolean = false;
   dispLabel: string | null = null;
   @Input() width: string | null = null;
+  @Input() required: boolean = false;
+  @Input() disabled: boolean = false;
 
   @Output() itemSelected: EventEmitter<any> = new EventEmitter();
+  @Output() filterTyped: EventEmitter<any> = new EventEmitter();
   filteredItems: { id: number | string; name: string }[] = [];
   showDropdown: boolean = false;
 
@@ -51,8 +55,10 @@ export class AutocompleteComponent implements OnInit, OnChanges {
   filterItems(event: any) {
     const term = event.target.value ?? '';
     const searchTerm = term.toLowerCase();
+    this.dispLabel = term;
     this.filteredItems = this.items.filter((item) => item.name.toLowerCase().includes(searchTerm));
     this.showDropdown = this.filteredItems.length > 0;
+    this.filterTyped.emit(term);
   }
 
   selectItem(item: any) {

@@ -64,8 +64,8 @@
                 </div>
               </div>
               <p class="text-sm text-gray-600" appDynamicFontSize="body">Type: {{ approverTypes[step.approver_type] }}</p>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Assigned At: {{ step?.assigned_at || 'N/A' }}</p>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Processed At: {{ step?.processed_at || 'N/A' }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Assigned At: {{ formatDate(step?.assigned_at) || 'N/A' }}</p>
+              <p class="text-sm text-gray-600" appDynamicFontSize="body">Processed At: {{ formatDate(step?.processed_at) || 'N/A' }}</p>
               <p class="text-sm text-gray-600" appDynamicFontSize="body">Reviewed By: {{ step?.reviewed_by || 'N/A' }}</p>
               <p class="text-sm text-gray-600" appDynamicFontSize="body">Reason: {{ step?.reason || 'N/A' }}</p>
             </div>
