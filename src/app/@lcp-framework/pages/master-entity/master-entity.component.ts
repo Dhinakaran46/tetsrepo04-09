@@ -1471,6 +1471,7 @@ export class MasterEntityComponent implements OnInit {
       linkType: ['none', Validators.required],
       linkAction: [''],
       fieldHtmlContent: [''],
+      enumValues: [''],
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
@@ -1501,7 +1502,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values))) END",
           'items',
         ],
       ],
@@ -1574,6 +1575,7 @@ export class MasterEntityComponent implements OnInit {
                 linkType: [linkType, Validators.required],
                 linkAction: [linkAction],
                 fieldHtmlContent: [item.field_html_content],
+                enumValues: [item.enum_values ? this.prettyJSON(item.enum_values) : null],
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1672,6 +1674,7 @@ export class MasterEntityComponent implements OnInit {
           link_action: control.value.linkAction,
           link_mode,
           field_html_content: control.value.fieldHtmlContent,
+          enum_values: control.value.enumValues,
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1756,6 +1759,7 @@ export class MasterEntityComponent implements OnInit {
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
+          enum_values: control.value.enumValues,
           link_mode,
         };
       });
@@ -1905,6 +1909,19 @@ export class MasterEntityComponent implements OnInit {
       }
       if (field.hasError('min')) {
         return `Minimum value is ${field.errors?.['min'].min}`;
+      }
+      // console.log('field.errors', field.errors);
+      if (field.hasError('invalidJson')) {
+        return field.errors?.['invalidJson']?.message || `Invalid JSON Syntax.`;
+      }
+      if (field.hasError('invalidJsonType')) {
+        return `Invalid JSON Type: Expected ${field.errors?.['invalidJsonType'].expected} but got ${field.errors?.['invalidJsonType'].actual}`;
+      }
+      if (field.hasError('invalidArrayItemType')) {
+        return (
+          field.errors?.['invalidArrayItemType']?.message ||
+          `Invalid Array Item Type: Expected ${field.errors?.['invalidArrayItemType'].expected} but got ${field.errors?.['invalidArrayItemType'].actual} at index ${field.errors?.['invalidArrayItemType'].index}.`
+        );
       }
     }
     return '';
