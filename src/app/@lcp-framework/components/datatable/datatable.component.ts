@@ -570,8 +570,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const columnType = columnData?.field_type_id;
     if (columnData?.enum_values) {
       return [
-        { id: '1', label: 'IN', value: 'in' },
-        { id: '2', label: 'NOT IN', value: 'not_in' },
+        { id: '1', label: 'In', value: 'in' },
+        { id: '2', label: 'Not In', value: 'not_in' },
       ];
     } else if (this.isAggregateFunction(column) && columnData?.clause_type !== 'having') {
       return this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || [];
