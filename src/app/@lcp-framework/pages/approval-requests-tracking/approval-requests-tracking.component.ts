@@ -12,6 +12,7 @@ import { LoaderComponent } from '../../components/loader/loader.component';
 import { FormlyModule } from '@ngx-formly/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { MenuMapService } from '../../service/common/menu-map.service';
+import { TimezoneService } from '../../service/common/timezone.service';
 
 @Component({
   selector: 'app-approval-requests-tracking',
@@ -55,7 +56,8 @@ export class ApprovalRequestsTrackingComponent implements OnInit {
     private route: ActivatedRoute,
     private toastr: ToastrService,
     public localStorageService: LocalStorageService,
-    private commonService: MenuMapService
+    private commonService: MenuMapService,
+    private timezoneService: TimezoneService
   ) {
     this.route.paramMap.subscribe((params) => {
       this.uniqueId = params.get('uuid');
@@ -64,6 +66,10 @@ export class ApprovalRequestsTrackingComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.getApprovalWorkflowDetail();
+  }
+
+  formatDate(dateTime: any) {
+    return this.timezoneService.transformDateOnly(dateTime);
   }
 
   async getApprovalWorkflowDetail() {

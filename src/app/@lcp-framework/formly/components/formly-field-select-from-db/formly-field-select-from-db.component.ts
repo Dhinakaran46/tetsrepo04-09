@@ -92,7 +92,7 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     const tableName = this.props['table'] || this.props['primary_table'];
     const valueColumn = this.props['valueColumn'];
     const labelColumn = this.props['labelColumn'];
-    const uuidColumn = this.props['uuidColumn'] ? this.props['uuidColumn'] : 'uuid';
+    const uuidColumn = this.props['uuidColumn'] ? this.props['uuidColumn'] : `${tableName}.uuid`;
     const additionalColumns = this.props['additionalColumns'] ? this.props['additionalColumns'] : [];
 
     if (tableName && labelColumn && valueColumn) {

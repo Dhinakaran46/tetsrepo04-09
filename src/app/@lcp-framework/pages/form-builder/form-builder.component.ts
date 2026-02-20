@@ -1189,8 +1189,20 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                [opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
-                [opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                [
+                  opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
+                    ? opts.valueColumn
+                    : opts.valueColumn.startsWith(`${opts.table}.`)
+                    ? opts.valueColumn
+                    : `${opts.table}.${opts.valueColumn}`,
+                ],
+                [
+                  opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
+                    ? opts.labelColumn
+                    : opts.labelColumn.startsWith(`${opts.table}.`)
+                    ? opts.labelColumn
+                    : `${opts.table}.${opts.labelColumn}`,
+                ],
                 ...additionalColumns,
               ],
               includes: opts?.includes || [],
@@ -1200,7 +1212,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
               start_index: 0,
               limit_range: 1000,
             };
-
             this.fetchList(group, group.key, true);
           }
         }
@@ -1217,8 +1228,20 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                [opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
-                [opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                [
+                  opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
+                    ? opts.valueColumn
+                    : opts.valueColumn.startsWith(`${opts.table}.`)
+                    ? opts.valueColumn
+                    : `${opts.table}.${opts.valueColumn}`,
+                ],
+                [
+                  opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
+                    ? opts.labelColumn
+                    : opts.labelColumn.startsWith(`${opts.table}.`)
+                    ? opts.labelColumn
+                    : `${opts.table}.${opts.labelColumn}`,
+                ],
                 ...additionalColumns,
               ],
               includes: opts?.includes || [],
@@ -1228,7 +1251,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
               start_index: 0,
               limit_range: 1000,
             };
-
             this.fetchList(group, group.key, true);
           }
         }
@@ -1244,8 +1266,20 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.listParams[group.key] = {
               primary_table: opts.table,
               select_columns: [
-                [opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length ? opts.valueColumn : `${opts.table}.${opts.valueColumn}`],
-                [opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length ? opts.labelColumn : `${opts.table}.${opts.labelColumn}`],
+                [
+                  opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
+                    ? opts.valueColumn
+                    : opts.valueColumn.startsWith(`${opts.table}.`)
+                    ? opts.valueColumn
+                    : `${opts.table}.${opts.valueColumn}`,
+                ],
+                [
+                  opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
+                    ? opts.labelColumn
+                    : opts.labelColumn.startsWith(`${opts.table}.`)
+                    ? opts.labelColumn
+                    : `${opts.table}.${opts.labelColumn}`,
+                ],
                 ...additionalColumns,
               ],
               includes: opts?.includes || [],
@@ -1255,7 +1289,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
               start_index: 0,
               limit_range: 1000,
             };
-
             this.fetchList(group.fieldArray, group.key, true);
           }
         }
