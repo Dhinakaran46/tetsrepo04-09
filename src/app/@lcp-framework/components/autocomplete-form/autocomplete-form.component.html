@@ -10,14 +10,25 @@
     (blur)="hideDropdown()"
     [placeholder]="placeholder"
     (input)="filterItems($event)"
+    (input)="filterItems($event)"
     [value]="dispLabel"
+    [disabled]="disabled"
+    [class.bg-gray-200]="disabled"
+    [class.cursor-not-allowed]="disabled"
   />
 
   <ul
     *ngIf="showDropdown && filteredItems.length"
     class="absolute top-full z-10 mt-1 max-h-60 w-full overflow-y-auto rounded border border-gray-300 bg-white text-xs shadow"
   >
-    <li *ngFor="let item of filteredItems" (mousedown)="selectItem(item)" class="cursor-pointer px-3 py-1 hover:bg-blue-100">
+    <li
+      *ngFor="let item of filteredItems"
+      (mousedown)="selectItem(item)"
+      [class.bg-blue-100]="item.id === innerValue"
+      [class.text-blue-800]="item.id === innerValue"
+      [class.font-semibold]="item.id === innerValue"
+      class="cursor-pointer px-3 py-1 hover:bg-blue-100"
+    >
       {{ item.name }}
     </li>
   </ul>
