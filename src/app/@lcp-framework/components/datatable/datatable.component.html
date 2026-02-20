@@ -49,12 +49,18 @@
               role="menu"
             >
               <!-- Header -->
-              <div class="flex items-center justify-between border-b border-gray-200 p-4">
-                <span>{{ 'table_advance_filter' | translate }}</span>
+              <div class="flex items-center justify-between border-b border-gray-200 p-2.5">
+                <span class="text-xs font-semibold">{{ 'table_advance_filter' | translate }}</span>
 
-                <div class="flex items-center gap-4">
-                  <button (click)="addCondition()" class="text-blue-500" ngxTippy="Add Filter"><i class="fa-solid fa-plus"></i>&nbsp;</button>
-                  <label class="relative h-6 w-12">
+                <div class="flex items-center gap-2">
+                  <button
+                    (click)="addCondition()"
+                    class="flex h-6 w-6 items-center justify-center rounded text-blue-500 transition-colors hover:bg-blue-50"
+                    ngxTippy="Add Filter"
+                  >
+                    <i class="fa-solid fa-plus text-xs"></i>
+                  </button>
+                  <label class="relative h-5 w-10">
                     <input
                       type="checkbox"
                       [(ngModel)]="filterCondition"
@@ -63,31 +69,32 @@
                     />
                     <span
                       for="custom_switch_checkbox"
-                      class="block h-full rounded-full bg-[#ebedf2] before:absolute before:bottom-1 before:left-1 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:duration-300 peer-checked:bg-primary peer-checked:before:left-7"
+                      class="block h-full rounded-full bg-[#ebedf2] before:absolute before:bottom-0.5 before:left-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-all before:duration-300 peer-checked:bg-primary peer-checked:before:left-5"
                     ></span>
                   </label>
-                  <span>{{ filterCondition ? 'AND' : 'OR' }}</span>
+                  <span class="min-w-[2rem] text-center text-xs font-medium">{{ filterCondition ? 'AND' : 'OR' }}</span>
                 </div>
               </div>
 
               <!-- Body -->
               <!-- Body -->
               <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
-                <div class="space-y-2 p-4">
+                <div class="space-y-2 p-3">
                   <ng-container *ngIf="filterConditions.length === 0; else filterList">
                     <p class="text-app-text">{{ 'No filter applied' }}</p>
                   </ng-container>
                   <ng-template #filterList>
-                    <div *ngFor="let condition of filterConditions; let i = index" class="flex items-center gap-2">
-                      <i *ngIf="!filterCondition" class="fa-solid fa-diamond shrink-0 text-warning"></i>
+                    <div *ngFor="let condition of filterConditions; let i = index" class="grid grid-cols-[auto_1fr_1fr_1fr_auto] items-center gap-1.5">
+                      <div class="flex items-center justify-center">
+                        <i *ngIf="!filterCondition" class="fa-solid fa-diamond text-xs text-warning"></i>
+                        <i *ngIf="filterCondition" class="fa-solid fa-diamond text-xs text-info"></i>
+                      </div>
 
-                      <i *ngIf="filterCondition" class="fa-solid fa-diamond shrink-0 text-info"></i>
-
-                      <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select w-full">
+                      <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select h-8 w-full text-xs">
                         <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
                         <option *ngFor="let col of filteredColumns" [value]="col.field">{{ col.title || col.previewTitle }}</option>
                       </select>
-                      <select [(ngModel)]="condition.operator" class="form-select w-full" (ngModelChange)="onOperatorChange(i)">
+                      <select [(ngModel)]="condition.operator" class="form-select h-8 w-full text-xs" (ngModelChange)="onOperatorChange(i)">
                         <option value selected disabled>{{ 'condition' | translate }}</option>
                         <option *ngFor="let op of condition.availableOperators" [value]="op.value">{{ op.label }}</option>
                       </select>
@@ -103,7 +110,7 @@
                         [required]="true"
                       />-->
                       <!-- For autocomplete type -->
-                      <div *ngIf="condition.isEnum && condition.enumType === 'autocomplete'" class="relative w-full pr-10">
+                      <div *ngIf="condition.isEnum && condition.enumType === 'autocomplete'" class="w-full">
                         <ng-select
                           [items]="condition.enumValueOptions || []"
                           [(ngModel)]="condition.enum_values"
@@ -118,18 +125,18 @@
                           [hideSelected]="true"
                           (search)="onAutocompleteSearch($event, i)"
                           (clear)="onAutocompleteClear(i)"
-                          class="custom-ng-select"
+                          class="custom-ng-select h-8"
                           appendTo="body"
                         >
                           <ng-template ng-notfound-tmp>
-                            <div class="p-2 text-center text-gray-500">
+                            <div class="p-1.5 text-center text-xs text-gray-500">
                               {{ 'no_results_found' | translate }}
                             </div>
                           </ng-template>
                         </ng-select>
                       </div>
 
-                      <div *ngIf="condition.isEnum && condition.enumType !== 'autocomplete'" class="relative w-full pr-10">
+                      <div *ngIf="condition.isEnum && condition.enumType !== 'autocomplete'" class="w-full">
                         <ng-select
                           [items]="condition.enumValueOptions || []"
                           [(ngModel)]="condition.enum_values"
@@ -142,54 +149,57 @@
                           placeholder="{{ 'select' | translate }}"
                           appendTo="body"
                           (change)="onEnumChange($event, i)"
-                          class="custom-ng-select"
+                          class="custom-ng-select h-8"
                         >
                           <ng-template ng-option-tmp let-item="item" let-item$="item$">
                             <input type="checkbox" [ngModel]="item$.selected" [ngModelOptions]="{ standalone: true }" />
                             &nbsp;{{ item.label }}
                           </ng-template>
                           <ng-template ng-notfound-tmp>
-                            <div class="p-2 text-center text-gray-500">
+                            <div class="p-1.5 text-center text-xs text-gray-500">
                               {{ 'no_results_found' | translate }}
                             </div>
                           </ng-template>
                         </ng-select>
                       </div>
-                      <!-- <select *ngIf="isEnumValue(condition.field, condition.operator)" [(ngModel)]="condition.value"
-                        class="form-select w-full pr-10" multiple>
-                        <option value selected disabled>{{ 'select' | translate }}</option>
-                        <option *ngFor="let op of getEnumValues(condition.field, condition.operator)" [value]="op.value">{{ op.label
-                          }}</option>
-                      </select> -->
+
                       <input
                         *ngIf="!isNoValueOperator(condition.operator) && !condition.isEnum"
                         [ngModel]="getConditionValue(i)"
                         (ngModelChange)="setConditionValue(i, $event)"
                         [type]="condition?.inputType || 'text'"
-                        class="form-input w-full pr-10 text-gray-600"
+                        class="form-input h-8 w-full text-xs text-gray-600"
                         [placeholder]="getPlaceholderForColumn(condition.field)"
                         [attr.min]="getMinValueForColumn(condition.field)"
                         [attr.max]="getMaxValueForColumn(condition.field)"
                         [attr.pattern]="getPatternForColumn(condition.field)"
                         [required]="true"
                       />
-                      <span *ngIf="isNoValueOperator(condition.operator)" class="form-input w-full bg-gray-100 text-gray-400 dark:bg-gray-700">
+                      <span *ngIf="isNoValueOperator(condition.operator)" class="form-input h-8 w-full bg-gray-100 text-xs text-gray-400 dark:bg-gray-700">
                         {{ 'no_value_required' | translate }}
                       </span>
-                      <button (click)="removeCondition(i)" class="text-red-500">
-                        <i class="fa-solid fa-xmark text-xl"></i>
-                      </button>
+
+                      <div class="flex items-center justify-center">
+                        <button
+                          (click)="removeCondition(i)"
+                          class="flex h-8 w-8 items-center justify-center rounded text-red-500 transition-colors hover:bg-red-50"
+                        >
+                          <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                      </div>
                     </div>
                   </ng-template>
                 </div>
               </ng-scrollbar>
 
               <!-- Footer -->
-              <div class="flex items-center justify-between border-t border-gray-200 p-4">
-                <button (click)="clearFilters()" class="text-red-500">{{ 'table_clear_filter' | translate }}</button>
-                <div class="flex gap-4">
-                  <button (click)="applyFilters()" [disabled]="!isApplyButtonEnabled()" class="btn btn-primary">{{ 'apply' | translate }}</button>
-                  <button (click)="cancelFilters()" class="btn btn-secondary">{{ 'cancel' | translate }}</button>
+              <div class="flex items-center justify-between border-t border-gray-200 p-2.5">
+                <button (click)="clearFilters()" class="btn btn-danger h-8 px-3 text-xs text-white">{{ 'table_clear_filter' | translate }}</button>
+                <div class="flex gap-2">
+                  <button (click)="applyFilters()" [disabled]="!isApplyButtonEnabled()" class="btn btn-primary h-8 px-4 text-xs">
+                    {{ 'apply' | translate }}
+                  </button>
+                  <button (click)="cancelFilters()" class="btn btn-secondary h-8 px-4 text-xs">{{ 'cancel' | translate }}</button>
                 </div>
               </div>
             </div>

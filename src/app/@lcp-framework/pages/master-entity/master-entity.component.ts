@@ -77,6 +77,9 @@ export class MasterEntityComponent implements OnInit {
 
   editorOptions = { theme: 'vs-dark', language: 'sql', tabSize: 1, insertSpaces: true };
   htmlEditorOptions = { ...this.editorOptions, language: 'html' };
+  // Modal editor options
+  modalHtmlEditorOptions = { theme: 'vs-dark', language: 'html', tabSize: 2, insertSpaces: true, minimap: { enabled: false }, automaticLayout: true };
+  modalJsonEditorOptions = { theme: 'vs-dark', language: 'json', tabSize: 2, insertSpaces: true, minimap: { enabled: false }, automaticLayout: true };
   isDarkTheme = true; // Default theme
   @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
 
@@ -117,34 +120,44 @@ export class MasterEntityComponent implements OnInit {
   newWizardGroupName: string = '';
   wizardGroupForm!: FormGroup;
   isInfoModalOpen: boolean = false;
+  // Edit modal properties
+  isEditModalOpen: boolean = false;
+  editItemIndex: number | null = null;
+  editItemForm!: FormGroup;
   infoContents: any = {
     fieldHtmlContentInfo: {
       header: 'html_content_usage_examples',
       examples: [
         {
-          name: 'Example 1: Conditional button based on name',
-          comments: ['Uses row_object.name to dynamically assign button color'],
-          data: `html<button class="btn {{ row_object.name == 'Raj Supervisor' ? 'btn-danger' : 'btn-primary' }}">{{ row_object.name }}</button>`,
-        },
-        {
-          name: 'Example 2: User card with nested ternary for role and status',
-          comments: ['Demonstrates multiple property usage: name, status, user_roles'],
-          data: `html<div class="user-card {{ row_object.status == '1' ? 'btn-success' : 'btn-danger' }}">
+          name: 'All Examples',
+          comments: ['These examples demonstrate how to use row_object properties in HTML templates for dynamic content rendering.'],
+          data: [
+            {
+              title: 'Example 1: Conditional button based on name',
+              description: 'Uses row_object.name to dynamically assign button color',
+              html: `<button class="btn {{ row_object.name == 'Raj Supervisor' ? 'btn-danger' : 'btn-primary' }}">{{ row_object.name }}</button>`,
+            },
+            {
+              title: 'Example 2: User card with nested ternary for role and status',
+              description: 'Demonstrates multiple property usage: name, status, user_roles',
+              html: `<div class="user-card {{ row_object.status == '1' ? 'btn-success' : 'btn-danger' }}">
       <span class="name">{{ row_object.name }}</span>
       <span class="{{ row_object.user_roles == 'Manager' ? 'inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 inset-ring inset-ring-gray-500/10' : 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 inset-ring inset-ring-red-600/10' }}">{{ row_object.user_roles }}</span>
     </div>`,
-        },
-        {
-          name: 'Example 3: Numeric comparison for badge color',
-          comments: ['Uses row_object.code to determine badge color based on numeric threshold'],
-          data: `html<span class="badge {{ row_object.code >= 1003 ? 'btn-danger' : 'btn-success' }}">Age: {{ row_object.name }} {{ row_object.code }}</span>`,
-        },
-        {
-          name: 'Example 4: Multi-condition button with nested ternary',
-          comments: ['Demonstrates chaining multiple status checks'],
-          data: `html<button class="btn {{ row_object.status == '1' ? 'btn-success' : row_object.status == '2' ? 'btn-warning' : 'btn-danger' }}">
+            },
+            {
+              title: 'Example 3: Numeric comparison for badge color',
+              description: ['Uses row_object.code to determine badge color based on numeric threshold'],
+              html: `<span class="badge {{ row_object.code >= 1003 ? 'btn-danger' : 'btn-success' }}">Age: {{ row_object.name }} {{ row_object.code }}</span>`,
+            },
+            {
+              title: 'Example 4: Multi-condition button with nested ternary',
+              description: ['Demonstrates chaining multiple status checks'],
+              html: `<button class="btn {{ row_object.status == '1' ? 'btn-success' : row_object.status == '2' ? 'btn-warning' : 'btn-danger' }}">
       {{ row_object.name }}
     </button>`,
+            },
+          ],
         },
       ],
     },
@@ -1177,7 +1190,6 @@ export class MasterEntityComponent implements OnInit {
     formatOnType: true,
     autoClosingQuotes: 'always',
   };
-  copied = false;
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
 
@@ -1280,6 +1292,22 @@ export class MasterEntityComponent implements OnInit {
       presetQueryInformation: [''],
       staticPageContent: [''],
       items: this.fb.array([]),
+    });
+
+    // Initialize edit item form
+    this.editItemForm = this.fb.group({
+      fieldName: [''],
+      displayName: [''],
+      orderNo: [''],
+      isGridColumn: [''],
+      isSearchable: [''],
+      clauseType: [''],
+      isSortable: [''],
+      fieldType: [''],
+      linkType: [''],
+      linkAction: [''],
+      fieldHtmlContent: [''],
+      enumValues: [''],
     });
   }
 
@@ -1484,6 +1512,68 @@ export class MasterEntityComponent implements OnInit {
     } else {
       this.toastr.warning('At least one item is required.');
     }
+  }
+
+  openEditModal(index: number) {
+    this.editItemIndex = index;
+    const items = this.form.get('items') as FormArray;
+    const currentItem = items.at(index);
+
+    // Create a separate form for editing
+    this.editItemForm = this.fb.group({
+      fieldName: [currentItem.get('fieldName')?.value, Validators.required],
+      displayName: [currentItem.get('displayName')?.value, Validators.required],
+      orderNo: [currentItem.get('orderNo')?.value, [Validators.required, Validators.min(0)]],
+      isGridColumn: [currentItem.get('isGridColumn')?.value, Validators.required],
+      isSearchable: [currentItem.get('isSearchable')?.value, Validators.required],
+      clauseType: [currentItem.get('clauseType')?.value, Validators.required],
+      isSortable: [currentItem.get('isSortable')?.value, Validators.required],
+      fieldType: [currentItem.get('fieldType')?.value, Validators.required],
+      linkType: [currentItem.get('linkType')?.value, Validators.required],
+      linkAction: [currentItem.get('linkAction')?.value],
+      fieldHtmlContent: [currentItem.get('fieldHtmlContent')?.value],
+      enumValues: [currentItem.get('enumValues')?.value],
+    });
+
+    this.setupLinkModeAutoUpdate(this.editItemForm);
+    this.isEditModalOpen = true;
+  }
+
+  closeEditModal() {
+    this.isEditModalOpen = false;
+    this.editItemIndex = null;
+    this.editItemForm = this.fb.group({});
+  }
+
+  submitEditModal() {
+    if (this.editItemForm.invalid) {
+      this.toastr.error('Please fill in all required fields correctly.');
+      return;
+    }
+
+    if (this.editItemIndex !== null) {
+      const items = this.form.get('items') as FormArray;
+      const itemToUpdate = items.at(this.editItemIndex);
+      itemToUpdate.patchValue(this.editItemForm.value);
+      this.toastr.success('Item updated successfully');
+      this.closeEditModal();
+    }
+  }
+
+  isEditFieldInvalid(field: string): boolean {
+    const control = this.editItemForm?.get(field);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  getEditErrorMessage(field: string): string {
+    const control = this.editItemForm?.get(field);
+    if (control?.hasError('required')) {
+      return 'This field is required';
+    }
+    if (control?.hasError('min')) {
+      return 'Value must be greater than or equal to 0';
+    }
+    return '';
   }
 
   get itemsControls() {
@@ -1952,15 +2042,89 @@ export class MasterEntityComponent implements OnInit {
     this.popupInformation = null;
   }
 
-  // Copy content from Monaco Editor
-  copyToClipboard() {
+  /**
+   * Standardized copy-to-clipboard method for all editor fields
+   * Copies selected text if available, otherwise copies entire content
+   * @param formControlName - The name of the form control containing the content to copy
+   */
+  copyEditorContent(formControlName: string): void {
+    // First, check if there's a text selection
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+
+    if (selectedText) {
+      // Copy the selected text
+      navigator.clipboard
+        .writeText(selectedText)
+        .then(() => {
+          this.toastr.success('Selection copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy selection:', err);
+          this.toastr.error('Failed to copy selection', 'Error');
+        });
+      return;
+    }
+
+    // If no selection, copy the entire content
+    const content = this.form.get(formControlName)?.value;
+
+    if (!content || content.trim() === '') {
+      this.toastr.warning('No content to copy', 'Warning');
+      return;
+    }
+
     navigator.clipboard
-      .writeText(this.popupInformation.data)
+      .writeText(content)
       .then(() => {
-        this.copied = true;
-        setTimeout(() => (this.copied = false), 3000);
+        this.toastr.success('Content copied to clipboard!', 'Success');
       })
-      .catch((err) => console.error('Failed to copy:', err));
+      .catch((err) => {
+        console.error('Failed to copy:', err);
+        this.toastr.error('Failed to copy content', 'Error');
+      });
+  }
+
+  /**
+   * Copy content from modal popup editor
+   * Copies selected text if available, otherwise copies entire content
+   */
+  copyModalContent(): void {
+    // First, check if there's a text selection
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+
+    if (selectedText) {
+      // Copy the selected text
+      navigator.clipboard
+        .writeText(selectedText)
+        .then(() => {
+          this.toastr.success('Selection copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy selection:', err);
+          this.toastr.error('Failed to copy selection', 'Error');
+        });
+      return;
+    }
+
+    // If no selection, copy the entire content
+    const content = this.popupInformation?.data;
+
+    if (!content || content.trim() === '') {
+      this.toastr.warning('No content to copy', 'Warning');
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(content)
+      .then(() => {
+        this.toastr.success('Content copied to clipboard!', 'Success');
+      })
+      .catch((err) => {
+        console.error('Failed to copy:', err);
+        this.toastr.error('Failed to copy content', 'Error');
+      });
   }
 
   // Function to switch tabs
