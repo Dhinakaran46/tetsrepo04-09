@@ -78,13 +78,13 @@
 
               <!-- Body -->
               <!-- Body -->
-              <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
+              <ng-scrollbar class="relative !h-[calc(42vh-40px)]" appearance="compact">
                 <div class="space-y-2 p-3">
                   <ng-container *ngIf="filterConditions.length === 0; else filterList">
                     <p class="text-app-text">{{ 'No filter applied' }}</p>
                   </ng-container>
                   <ng-template #filterList>
-                    <div *ngFor="let condition of filterConditions; let i = index" class="grid grid-cols-[auto_1fr_1fr_1fr_auto] items-center gap-1.5">
+                    <div *ngFor="let condition of filterConditions; let i = index" class="grid grid-cols-[auto_180px_150px_minmax(180px,1fr)_auto] items-center gap-1.5">
                       <div class="flex items-center justify-center">
                         <i *ngIf="!filterCondition" class="fa-solid fa-diamond text-xs text-warning"></i>
                         <i *ngIf="filterCondition" class="fa-solid fa-diamond text-xs text-info"></i>
@@ -125,7 +125,7 @@
                           [hideSelected]="true"
                           (search)="onAutocompleteSearch($event, i)"
                           (clear)="onAutocompleteClear(i)"
-                          class="custom-ng-select h-8"
+                          class="custom-ng-select"
                           appendTo="body"
                         >
                           <ng-template ng-notfound-tmp>
@@ -149,7 +149,7 @@
                           placeholder="{{ 'select' | translate }}"
                           appendTo="body"
                           (change)="onEnumChange($event, i)"
-                          class="custom-ng-select h-8"
+                          class="custom-ng-select"
                         >
                           <ng-template ng-option-tmp let-item="item" let-item$="item$">
                             <input type="checkbox" [ngModel]="item$.selected" [ngModelOptions]="{ standalone: true }" />
