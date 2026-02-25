@@ -106,28 +106,28 @@
       <div class="flex flex-col">
         <label class="mb-1 font-medium text-gray-700 dark:text-gray-300">Validated Started At:</label>
         <div class="rounded-md bg-gray-100 p-2 text-gray-900 dark:bg-gray-800 dark:text-white-light">
-          {{ commonData?.validation_started_at }}
+          {{ (commonData?.validation_started_at | datetime) || '-' }}
         </div>
       </div>
 
       <div class="flex flex-col">
         <label class="mb-1 font-medium text-gray-700 dark:text-gray-300">Validation Completed At:</label>
         <div class="rounded-md bg-gray-100 p-2 text-gray-900 dark:bg-gray-800 dark:text-white-light">
-          {{ commonData?.validation_completed_at }}
+          {{ (commonData?.validation_completed_at | datetime) || '-' }}
         </div>
       </div>
 
       <div class="flex flex-col">
         <label class="mb-1 font-medium text-gray-700 dark:text-gray-300">Processing Started At:</label>
         <div class="rounded-md bg-gray-100 p-2 text-gray-900 dark:bg-gray-800 dark:text-white-light">
-          {{ commonData?.processing_started_at }}
+          {{ (commonData?.processing_started_at | datetime) || '-' }}
         </div>
       </div>
 
       <div class="flex flex-col">
         <label class="mb-1 font-medium text-gray-700 dark:text-gray-300">Processing Completed At:</label>
         <div class="rounded-md bg-gray-100 p-2 text-gray-900 dark:bg-gray-800 dark:text-white-light">
-          {{ commonData?.processing_completed_at }}
+          {{ (commonData?.processing_completed_at | datetime) || '-' }}
         </div>
       </div>
     </div>
