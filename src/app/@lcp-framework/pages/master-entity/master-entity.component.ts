@@ -1192,7 +1192,7 @@ export class MasterEntityComponent implements OnInit {
   };
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
-  allMasterEntities: any[] = [];
+  allFormMasterEntities: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -1454,20 +1454,13 @@ export class MasterEntityComponent implements OnInit {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
     }
-    if (entityType == commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE) {
-      primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
-      this.form.get('primaryTable')?.disable();
-    } else {
-      this.form.get('primaryTable')?.enable();
-    }
     this.form.updateValueAndValidity();
   }
 
   onAssociatedEntityChange(selected: any) {
     if (!selected) return;
     this.form.patchValue({
-      associatedEntityName: selected.value, // full object
-      primaryTable: selected.primary_table || null, // set from object
+      associatedEntityName: selected.value,
     });
   }
 
@@ -2270,9 +2263,7 @@ export class MasterEntityComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           // Filter entities which has primary table as not null for  tree builder module
-          this.allMasterEntities = response.data.records.filter(
-            (entity: any) => entity?.primary_table && entity?.primary_table !== null && entity?.primary_table !== 'NULL' && entity?.primary_table !== 'null'
-          );
+          this.allFormMasterEntities = response.data.records.filter((entity: any) => entity.entity_type === 'form_builder_module');
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
             (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'

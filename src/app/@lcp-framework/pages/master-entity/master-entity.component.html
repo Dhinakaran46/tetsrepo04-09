@@ -90,7 +90,7 @@
             <ng-select
               id="associated_entity"
               formControlName="associatedEntityName"
-              [items]="allMasterEntities"
+              [items]="allFormMasterEntities"
               bindLabel="label"
               bindValue="value"
               [clearable]="false"
@@ -98,7 +98,7 @@
               [ngClass]="{ 'is-invalid': isFieldInvalid('associatedEntityName') }"
               (change)="onAssociatedEntityChange($event)"
             >
-              @for (item of allMasterEntities; track item.value) {
+              @for (item of allFormMasterEntities; track item.value) {
               <ng-option [value]="item">{{ item.label | translate }}</ng-option>
               }
             </ng-select>
@@ -132,9 +132,7 @@
             </div>
           </ng-container>
 
-          <ng-container
-            *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
-          >
+          <ng-container *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE].includes(form.get('entityType')?.value)">
             <div class="mt-0">
               <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
               <select
