@@ -1192,6 +1192,7 @@ export class MasterEntityComponent implements OnInit {
   };
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
+  allMasterEntities: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -1273,6 +1274,7 @@ export class MasterEntityComponent implements OnInit {
       statusId: [1],
       isAdminModule: [false],
       draftMode: [false],
+      associatedEntityName: [null],
       associateTable: [''],
       wizardType: [''],
       reportType: [this.commonConfig.REPORT_TYPES.LCP],
@@ -1452,8 +1454,21 @@ export class MasterEntityComponent implements OnInit {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
     }
-
+    if (entityType == commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE) {
+      primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
+      this.form.get('primaryTable')?.disable();
+    } else {
+      this.form.get('primaryTable')?.enable();
+    }
     this.form.updateValueAndValidity();
+  }
+
+  onAssociatedEntityChange(selected: any) {
+    if (!selected) return;
+    this.form.patchValue({
+      associatedEntityName: selected.value, // full object
+      primaryTable: selected.primary_table || null, // set from object
+    });
   }
 
   constructRedirectUrl() {
@@ -1627,6 +1642,7 @@ export class MasterEntityComponent implements OnInit {
             isAdminModule: entity.is_admin_module,
             draftMode: entity.draft_mode || false,
             entityType: entity.entity_type,
+            associatedEntityName: entity.associated_entity_name ? entity.associated_entity_name : null,
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
             reportInformation: entity.report_information ? this.prettyJSON(entity.report_information) : '',
             formInformation: entity.form_information ? this.prettyJSON(entity.form_information) : '',
@@ -1702,6 +1718,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.statusId && { status_id: formData.statusId }),
         ...(formData.isAdminModule && { is_admin_module: formData.isAdminModule ? formData.isAdminModule : false }),
         ...(formData.draftMode && { draft_mode: formData.draftMode ? formData.draftMode : false }),
+        ...(formData.associatedEntityName && { associated_entity_name: formData.associatedEntityName ?? null }),
         ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true) }),
         ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true) }),
         ...(formData.reportInformation && { report_information: this.prepareJSON(formData.reportInformation, true) }),
@@ -1785,6 +1802,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
         ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
         ...(formData.draftMode ? { draft_mode: formData.draftMode } : { draft_mode: false }),
+        ...(formData.associatedEntityName ? { associated_entity_name: formData.associatedEntityName } : { associated_entity_name: null }),
         ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true) } : { associated_tables: null }),
         ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation, true) } : { query_information: null }),
         ...(formData.reportInformation ? { report_information: this.prepareJSON(formData.reportInformation, true) } : { report_information: null }),
@@ -1914,7 +1932,7 @@ export class MasterEntityComponent implements OnInit {
   onSubmit() {
     this.submitted = true;
 
-    const formData = this.form.value;
+    const formData = this.form.getRawValue();
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
@@ -2231,11 +2249,16 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.entity_name', 'value'],
         ['master_entities.name', 'label'],
         ['master_entities.entity_type', 'entity_type'],
+        ['master_entities.primary_table', 'primary_table'],
       ],
     };
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
+          // Filter entities which has primary table as not null for  tree builder module
+          this.allMasterEntities = response.data.records.filter(
+            (entity: any) => entity?.primary_table && entity?.primary_table !== null && entity?.primary_table !== 'NULL' && entity?.primary_table !== 'null'
+          );
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
             (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
