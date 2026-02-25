@@ -436,6 +436,7 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
             }
             this.commonItemsConfig = data.table_config;
             resolve(data);
+            this.loading = false;
           } else {
             this.loading = false;
             resolve(null);

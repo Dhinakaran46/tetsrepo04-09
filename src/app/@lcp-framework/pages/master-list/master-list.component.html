@@ -207,7 +207,7 @@
   <ng-template #statusTemplate let-item>
     <span
       class="badge"
-      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color]"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color || '']"
     >
       {{ statuses[item.status].value | translate }}
     </span>
@@ -218,7 +218,7 @@
       class="badge"
       [ngClass]="[
         store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
-        processStatuses[item.process_status]?.border_color
+        processStatuses[item.process_status]?.border_color || ''
       ]"
     >
       {{ processStatuses[item.process_status].value | translate }}

@@ -37,6 +37,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   entity_type!: any;
   unique_id!: string | null;
   originaluid!: string | null;
+  routeGParams: Record<string, string> = {};
   defaultData: any = {};
   defaultDataParam!: any;
   uploadedFiles: string[] = [];
@@ -109,14 +110,22 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit() {
+    this.collectRouteGParams();
+
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
         const id = params.get('id');
         const uuid = params.get('uuid');
         const value = id || uuid;
 
+        this.collectRouteGParams();
+
         this.originaluid = value;
         this.unique_id = value;
+
+        if (Object.keys(this.routeGParams).length > 0) {
+          this.model = { ...this.model, ...this.routeGParams };
+        }
       });
     }
 
@@ -176,6 +185,59 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       this.processStatus = rawValue?.process_status || 'submitted';
       this.isDrafted = rawValue?.is_drafted || false;
     });
+  }
+
+  private collectRouteGParams() {
+    const mergedGParams: Record<string, string> = {};
+
+    const collectFromParams = (params: any) => {
+      const aggregatedGparam = params.get('gparam');
+      console.log(aggregatedGparam);
+      if (aggregatedGparam) {
+        try {
+          const decoded = decodeURIComponent(aggregatedGparam);
+          console.log(decoded);
+          const parsed = JSON.parse(decoded);
+          console.log(parsed);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.keys(parsed).forEach((key) => {
+              if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+                mergedGParams[key] = String(parsed[key]);
+              }
+            });
+          }
+        } catch {
+          try {
+            const parsed = JSON.parse(aggregatedGparam);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              Object.keys(parsed).forEach((key) => {
+                if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+                  mergedGParams[key] = String(parsed[key]);
+                }
+              });
+            }
+          } catch {}
+        }
+      }
+
+      params.keys.forEach((key: string) => {
+        if (key.startsWith('gparam_')) {
+          const value = params.get(key);
+          if (value !== null) {
+            mergedGParams[key] = value;
+          }
+        }
+      });
+    };
+
+    const pathParams = this.route.snapshot.paramMap;
+    collectFromParams(pathParams);
+
+    const queryParams = this.route.snapshot.queryParamMap;
+    collectFromParams(queryParams);
+
+    this.routeGParams = mergedGParams;
+    console.log(this.routeGParams);
   }
 
   ngAfterViewInit() {
@@ -804,6 +866,40 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     }
   }
 
+  private replaceGParamsInObject(obj: any): any {
+    console.log(obj);
+    if (!obj || Object.keys(this.routeGParams).length === 0) {
+      return obj;
+    }
+
+    const clonedObj = JSON.parse(JSON.stringify(obj));
+
+    const walk = (value: any): any => {
+      if (Array.isArray(value)) {
+        return value.map((item) => walk(item));
+      }
+
+      if (value && typeof value === 'object') {
+        Object.keys(value).forEach((key) => {
+          value[key] = walk(value[key]);
+        });
+        return value;
+      }
+
+      if (typeof value === 'string') {
+        return value.replace(/\$gparam_\d+/g, (match) => {
+          const paramKey = match.substring(1);
+          const replacement = this.routeGParams[paramKey];
+          return replacement !== undefined ? String(replacement) : match;
+        });
+      }
+
+      return value;
+    };
+
+    return walk(clonedObj);
+  }
+
   private resetForm() {
     const listParams = {
       company_id: 1,
@@ -830,13 +926,20 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           formEntity.add_query_information = this.parseJSONField(formEntity.add_query_information);
           formEntity.edit_query_information = this.parseJSONField(formEntity.edit_query_information);
           formEntity.preset_query_information = this.parseJSONField(formEntity.preset_query_information);
+
+          formEntity.query_information = this.replaceGParamsInObject(formEntity.query_information);
+          formEntity.form_information = this.replaceGParamsInObject(formEntity.form_information);
+          formEntity.add_query_information = this.replaceGParamsInObject(formEntity.add_query_information);
+          formEntity.edit_query_information = this.replaceGParamsInObject(formEntity.edit_query_information);
+          formEntity.preset_query_information = this.replaceGParamsInObject(formEntity.preset_query_information);
+
           this.formEntity = formEntity;
           this.listParams = this.formEntity.query_information;
 
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
 
-          this.model = { ...this.formEntity.form_information.model, unique_id: this.unique_id };
+          this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
 

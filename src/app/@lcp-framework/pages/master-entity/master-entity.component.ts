@@ -1781,7 +1781,7 @@ export class MasterEntityComponent implements OnInit {
           link_action: control.value.linkAction,
           link_mode,
           field_html_content: control.value.fieldHtmlContent,
-          enum_values: control.value.enumValues,
+          enum_values: this.prepareOptionalJSON(control.value.enumValues),
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1867,7 +1867,7 @@ export class MasterEntityComponent implements OnInit {
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
-          enum_values: control.value.enumValues,
+          enum_values: this.prepareOptionalJSON(control.value.enumValues),
           link_mode,
         };
       });
@@ -1925,6 +1925,19 @@ export class MasterEntityComponent implements OnInit {
     }
   }
 
+  prepareOptionalJSON(data: any, replace_param: boolean = false): string | null {
+    if (data === null || data === undefined) {
+      return null;
+    }
+
+    if (typeof data === 'string' && data.trim() === '') {
+      return null;
+    }
+
+    const source = typeof data === 'string' ? data : JSON.stringify(data);
+    return this.prepareJSON(source, replace_param);
+  }
+
   prettyJSON(data: any) {
     return JSON.stringify(JSON.parse(JSON.stringify(data)), null, 2);
   }
@@ -1934,6 +1947,7 @@ export class MasterEntityComponent implements OnInit {
 
     const formData = this.form.getRawValue();
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
+    console.log(payload);
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
