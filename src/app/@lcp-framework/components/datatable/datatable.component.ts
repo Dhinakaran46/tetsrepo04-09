@@ -362,23 +362,80 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         const val = this.getContextValue(chosen, context);
         return val === undefined
           ? chosen.replace(/^['"]|['"]$/g, '') // strip quotes if they used them
-          : String(val);
+          : this.formatHtmlTemplateValue(val);
       }
 
       // non-ternary: try to resolve as path/literal (supports row_object.name, value, etc.)
       const v = this.getContextValue(exp, context);
-      return v !== undefined && v !== null ? String(v) : '';
+      return v !== undefined && v !== null ? this.formatHtmlTemplateValue(v) : '';
     });
 
     // (optional) final pass for the explicit {{ value }} or {{ key }} placeholders
     if (key) {
       processedHtml = processedHtml
-        .replace(/\{\{\s*value\s*\}\}/g, String(primaryValue))
-        .replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), String(primaryValue));
+        .replace(/\{\{\s*value\s*\}\}/g, this.formatHtmlTemplateValue(primaryValue))
+        .replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), this.formatHtmlTemplateValue(primaryValue));
     }
 
     return this.sanitizer.bypassSecurityTrustHtml(processedHtml);
     //return processedHtml;
+  }
+
+  private formatHtmlTemplateValue(value: any): string {
+    if (value === undefined || value === null) {
+      return '';
+    }
+
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => this.formatHtmlTemplateValue(item))
+        .filter((item) => item !== '')
+        .join(', ');
+    }
+
+    if (typeof value === 'object') {
+      return Object.entries(value)
+        .map(([key, val]) => {
+          const translated = this.translate.instant(key);
+          if (translated && translated !== key) {
+            return translated;
+          }
+          return this.formatHtmlTemplateValue(val);
+        })
+        .filter((item) => item !== '')
+        .join(', ');
+    }
+
+    if (typeof value === 'string') {
+      const parts = value.split('|').map((part) => part.trim());
+      let hasKeyValuePattern = false;
+
+      const translatedParts = parts.map((part) => {
+        const colonIndex = part.indexOf(':');
+        if (colonIndex <= 0) {
+          return part;
+        }
+
+        const rawKey = part.slice(0, colonIndex).trim();
+        const rawValue = part.slice(colonIndex + 1).trim();
+
+        if (!/^[a-zA-Z0-9_.-]+$/.test(rawKey)) {
+          return part;
+        }
+
+        hasKeyValuePattern = true;
+        const translatedKey = this.translate.instant(rawKey);
+        const displayKey = translatedKey && translatedKey !== rawKey ? translatedKey : rawKey;
+
+        return `${displayKey}: ${rawValue}`;
+      });
+
+      if (hasKeyValuePattern) {
+        return translatedParts.join(' | ');
+      }
+    }
+
+    return String(value);
   }
 
   onHtmlCellClick(ev: MouseEvent) {

@@ -327,6 +327,11 @@ tbody td.sticky:is(.dark *) {
 // Ensure dropdown overlays are always above the filter container
 ::ng-deep .ng-dropdown-panel {
   z-index: 3000 !important;
+
+  .ng-option {
+    font-size: 0.75rem !important;
+    line-height: 1rem;
+  }
 }
 ::ng-deep .dropdown-list {
   z-index: 3000 !important;
@@ -452,13 +457,28 @@ tbody td.sticky:is(.dark *) {
       border-radius: 0.375rem;
       min-height: 32px;
       height: 32px;
+      font-size: 0.75rem;
 
       .ng-value-container {
         padding-left: 6px;
         padding-top: 0px;
 
+        .ng-value {
+          font-size: 0.75rem;
+          line-height: 1rem;
+        }
+
+        .ng-placeholder {
+          font-size: 0.75rem;
+        }
+
         .ng-input {
           top: 4px;
+
+          input {
+            font-size: 0.75rem;
+            line-height: 1rem;
+          }
         }
       }
     }

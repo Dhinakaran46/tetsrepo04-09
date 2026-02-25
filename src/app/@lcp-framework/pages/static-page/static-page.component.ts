@@ -34,6 +34,7 @@ export class StaticPageComponent {
   entity_type!: string | null;
   query_information!: any | null;
   static_page_content: string = '';
+  routeGParams: Record<string, string> = {};
 
   @Input() uuid!: string | null;
   @Input() entityName!: string;
@@ -41,8 +42,6 @@ export class StaticPageComponent {
   @Input() gridParams!: any;
   @Output() closeModal = new EventEmitter<void>();
 
-
-  
   private imageDelegationAttached = false;
 
   viewer = {
@@ -75,7 +74,6 @@ export class StaticPageComponent {
     if (this.viewer.open) this.prevImage();
   }
 
-
   constructor(
     private route: ActivatedRoute,
     public router: Router,
@@ -93,7 +91,6 @@ export class StaticPageComponent {
     registerHandlebarsHelpers(this.translate);
   }
 
-  
   ngAfterViewInit() {
     // Attach once; works even as innerHTML changes
     this.attachImageClickDelegation();
@@ -208,7 +205,6 @@ export class StaticPageComponent {
     el?.classList.replace('cursor-grabbing', 'cursor-grab');
   }
 
-
   setTab(tab: string) {
     this.currentTab = tab;
     this.loadData();
@@ -237,9 +233,12 @@ export class StaticPageComponent {
   }
 
   ngOnInit() {
+    this.collectRouteGParams();
+
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
         this.unique_id = params.get('id') || params.get('uuid');
+        this.collectRouteGParams();
       });
     }
     if (this.uuid) {
@@ -261,7 +260,6 @@ export class StaticPageComponent {
       this.titleService.setTitle(translateTitle);
     }
 
-    
     this.initStore();
     this.loadData();
   }
@@ -291,8 +289,8 @@ export class StaticPageComponent {
     this.gridApiService.getAllList(listParams).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
-          
           this.query_information = response.data.records[0].query_information;
+          this.query_information = this.replaceGParamsInObject(this.query_information);
           this.static_page_content = response.data.records[0].static_page_content;
 
           if (this.query_information) {
@@ -320,6 +318,84 @@ export class StaticPageComponent {
         this.router.navigate(['/dashboard']);
       }
     );
+  }
+
+  private collectRouteGParams() {
+    const mergedGParams: Record<string, string> = {};
+
+    const collectFromParams = (params: any) => {
+      const aggregatedGparam = params.get('gparam');
+      if (aggregatedGparam) {
+        try {
+          const decoded = decodeURIComponent(aggregatedGparam);
+          const parsed = JSON.parse(decoded);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.keys(parsed).forEach((key) => {
+              if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+                mergedGParams[key] = String(parsed[key]);
+              }
+            });
+          }
+        } catch {
+          try {
+            const parsed = JSON.parse(aggregatedGparam);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              Object.keys(parsed).forEach((key) => {
+                if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+                  mergedGParams[key] = String(parsed[key]);
+                }
+              });
+            }
+          } catch {}
+        }
+      }
+
+      params.keys.forEach((key: string) => {
+        if (key.startsWith('gparam_')) {
+          const value = params.get(key);
+          if (value !== null) {
+            mergedGParams[key] = value;
+          }
+        }
+      });
+    };
+
+    collectFromParams(this.route.snapshot.paramMap);
+    collectFromParams(this.route.snapshot.queryParamMap);
+
+    this.routeGParams = mergedGParams;
+  }
+
+  private replaceGParamsInObject(obj: any): any {
+    if (!obj || Object.keys(this.routeGParams).length === 0) {
+      return obj;
+    }
+
+    const walk = (value: any): any => {
+      if (Array.isArray(value)) {
+        return value.map((item) => walk(item));
+      }
+
+      if (value && typeof value === 'object') {
+        const out: any = {};
+        Object.keys(value).forEach((key) => {
+          out[key] = walk(value[key]);
+        });
+        return out;
+      }
+
+      if (typeof value === 'string') {
+        return value.replace(/\$gparam_\d+/g, (match) => {
+          const paramKey = match.substring(1);
+          const replacement = this.routeGParams[paramKey];
+          return replacement !== undefined ? String(replacement) : match;
+        });
+      }
+
+      return value;
+    };
+
+    return walk(obj);
   }
 
   private loadDefaultData() {

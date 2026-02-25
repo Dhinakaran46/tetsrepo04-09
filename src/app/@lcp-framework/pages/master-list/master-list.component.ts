@@ -631,6 +631,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportTable(item: any) {
+    console.log(item);
     if (this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_pdf) {
       this.loading = true;
       if (
@@ -649,7 +650,7 @@ export class MasterListComponent implements OnChanges {
           '$session_user_id',
           this.user_info.main.id
         );
-        const gridParams: any = {};
+        /*const gridParams: any = {};
         Object.keys(item).forEach((key) => {
           if (key.startsWith('gparam_')) {
             let temp_key = '$' + key;
@@ -658,7 +659,7 @@ export class MasterListComponent implements OnChanges {
         });
         if (this.grid_params || gridParams) {
           listParams.grid_params = this.grid_params || gridParams;
-        }
+        }*/
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
         this.gridApiService.getAllRecords(listParams).subscribe(
           (response) => {
@@ -993,7 +994,13 @@ export class MasterListComponent implements OnChanges {
 
   private async executeJob(inputObject: any): Promise<void> {
     if (inputObject.record_info.id) {
-      const job_query_information = this.localStorageService.replaceUniqueId(inputObject.query_information, '$unique_id', inputObject.record_info.id);
+      let job_query_information = this.localStorageService.replaceUniqueId(inputObject.query_information, '$unique_id', inputObject.record_info.id);
+
+      const gparams = this.collectRecordGParams(inputObject.record_info);
+      Object.keys(gparams).forEach((key) => {
+        job_query_information = this.localStorageService.replaceUniqueId(job_query_information, `$${key}`, gparams[key]);
+      });
+
       try {
         const response = await lastValueFrom(this.gridApiService.executeTransaction(job_query_information));
         if (!response.status) {
@@ -1003,6 +1010,48 @@ export class MasterListComponent implements OnChanges {
         throw error;
       }
     }
+  }
+
+  private collectRecordGParams(recordInfo: any): Record<string, any> {
+    const gparams: Record<string, any> = {};
+
+    if (!recordInfo || typeof recordInfo !== 'object') {
+      return gparams;
+    }
+
+    Object.keys(recordInfo).forEach((key) => {
+      if (key.startsWith('gparam_') && recordInfo[key] !== undefined && recordInfo[key] !== null) {
+        gparams[key] = recordInfo[key];
+      }
+    });
+
+    const aggregated = recordInfo.gparam;
+    if (typeof aggregated === 'string' && aggregated.trim()) {
+      try {
+        const decoded = decodeURIComponent(aggregated);
+        const parsed = JSON.parse(decoded);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          Object.keys(parsed).forEach((key) => {
+            if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+              gparams[key] = parsed[key];
+            }
+          });
+        }
+      } catch {
+        try {
+          const parsed = JSON.parse(aggregated);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.keys(parsed).forEach((key) => {
+              if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+                gparams[key] = parsed[key];
+              }
+            });
+          }
+        } catch {}
+      }
+    }
+
+    return gparams;
   }
 
   isDate(value: any): boolean {
@@ -1303,6 +1352,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   editItem(item: any) {
+    console.log(item);
     if (this.masterInfo.children.edit) {
       let targetRoute = this.masterInfo.children.edit.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
@@ -1310,6 +1360,19 @@ export class MasterListComponent implements OnChanges {
       } else if (targetRoute.includes(':id') && item.id) {
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
+
+      const gparamObject: Record<string, any> = {};
+      Object.keys(item).forEach((key) => {
+        if (key.startsWith('gparam_') && item[key] !== undefined && item[key] !== null) {
+          gparamObject[key] = item[key];
+        }
+      });
+
+      if (targetRoute.includes(':gparam')) {
+        const gparamString = encodeURIComponent(JSON.stringify(gparamObject));
+        targetRoute = targetRoute.replace(':gparam', gparamString);
+      }
+
       this.router.navigate([targetRoute]);
     }
   }
@@ -1736,6 +1799,17 @@ export class MasterListComponent implements OnChanges {
         targetRoute = targetRoute.replace(':uuid', item.uuid);
       } else if (targetRoute.includes(':id') && item.id) {
         targetRoute = targetRoute.replace(':id', item.uuid);
+      }
+      const gparamObject: Record<string, any> = {};
+      Object.keys(item).forEach((key) => {
+        if (key.startsWith('gparam_') && item[key] !== undefined && item[key] !== null) {
+          gparamObject[key] = item[key];
+        }
+      });
+
+      if (targetRoute.includes(':gparam')) {
+        const gparamString = encodeURIComponent(JSON.stringify(gparamObject));
+        targetRoute = targetRoute.replace(':gparam', gparamString);
       }
       this.router.navigate([targetRoute]);
     }
