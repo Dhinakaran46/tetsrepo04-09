@@ -696,7 +696,9 @@ export class MasterListComponent implements OnChanges {
   }
 
   private filterAndTransformData(headers: any[], records: any[]): any[] {
-    const filteredHeaders = headers.filter((header) => header.header !== 'id' && header.header !== 'uuid');
+    const filteredHeaders = headers.filter(
+      (header) => header.header !== 'id' && header.header !== 'uuid' && header.is_grid_column !== false && header.is_grid_column !== 'false'
+    );
 
     const transformedRecords = records.map((record) => {
       const transformedRecord: any = {};
@@ -1214,6 +1216,10 @@ export class MasterListComponent implements OnChanges {
   }
 
   previewFetchData(params: any) {
+    console.log(params);
+    delete params.group_by;
+    delete params.sort_columns;
+    delete params.includes;
     params.limit_range = this.previewResultsPerPage;
     this.gridApiService.getAllRecords(params).subscribe((response) => {
       if (response.status && response.code === 200) {
