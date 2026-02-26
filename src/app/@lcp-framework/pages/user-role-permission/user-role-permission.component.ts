@@ -546,6 +546,20 @@ export class UserRolePermissionComponent {
     return (entityGroup.get('children') as FormArray).controls as FormGroup[];
   }
 
+  isDashboardTab(group: FormGroup): boolean {
+    return group.get('menu_img')?.value === 'fa-folder-open';
+  }
+
+  isDashboardTabAllChecked(tabGroup: FormGroup): boolean {
+    const tabChildren = this.getChildrenControls(tabGroup);
+    return tabChildren.length > 0 && tabChildren.every((child) => this.isAllChecked(child));
+  }
+
+  toggleDashboardTabRights(tabGroup: FormGroup, checked: boolean): void {
+    const tabChildren = this.getChildrenControls(tabGroup);
+    tabChildren.forEach((child) => this.toggleAllRightsO(child, checked));
+  }
+
   mapPermissions() {
     if (this.mappingForm.invalid) {
       const key = 'please_select_all_the_required_fields';

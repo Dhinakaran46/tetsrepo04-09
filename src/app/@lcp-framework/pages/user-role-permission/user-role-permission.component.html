@@ -117,9 +117,9 @@
                       class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
                     />
                     <span class="leading-none" appDynamicFontSize="subtitle">{{ rightGroup.get('name')?.value | translate }}</span>
-                      <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value" >
-                        ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
-                      </span>
+                    <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value">
+                      ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
+                    </span>
                     <!------  -->
                   </label>
                 </ng-container>
@@ -135,10 +135,14 @@
                       [title]="childGroup.get('name')?.value | translate"
                     >
                       <input
-                        *ngIf="getSortedRightsControls(childGroup).length > 0"
+                        *ngIf="getSortedRightsControls(childGroup).length > 0 || isDashboardTab(childGroup)"
                         type="checkbox"
-                        [checked]="isAllChecked(childGroup)"
-                        (change)="toggleAllRights(childGroup, getCheckboxChecked($event))"
+                        [checked]="isDashboardTab(childGroup) ? isDashboardTabAllChecked(childGroup) : isAllChecked(childGroup)"
+                        (change)="
+                          isDashboardTab(childGroup)
+                            ? toggleDashboardTabRights(childGroup, getCheckboxChecked($event))
+                            : toggleAllRights(childGroup, getCheckboxChecked($event))
+                        "
                         class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
                       />
                       <i class="fas" [ngClass]="childGroup.get('menu_img')?.value"></i>
@@ -208,7 +212,7 @@
                                     />
                                     <span class="leading-none" appDynamicFontSize="body">{{ rightGroup.get('name')?.value | translate }}</span>
                                     <!-- Dashboard Grid Name -->
-                                    <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value" >
+                                    <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value">
                                       ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
                                     </span>
                                     <!-- Check if the permission name is 'child_details' and show the child_entity_name -->

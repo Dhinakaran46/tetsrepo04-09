@@ -833,7 +833,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
       if (type === 'datetime-local') {
-        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm:ss');
+        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm');
       } else if (type === 'date') {
         return this.timezoneService.transformDateOnly(value);
       }
@@ -881,17 +881,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
       let operator: string = '';
       let value: any = '';
+      let filterValue = key.value;
       if (!isNoValue) {
         if (type == 'datetime-local') {
-          const formattedDate: any = this.formatDateTime(key.value);
-          key.value = formattedDate;
+          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
         } else if (type == 'date') {
-          const formattedDate: any = this.formatDate(key.value);
-          key.value = formattedDate;
+          filterValue = this.formatDate(key.value);
         }
         operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
         value =
-          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, key.value?.trim());
+          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, filterValue?.trim());
       } else {
         operator = this.getNoValueOperatorSQL(key.operator);
       }
@@ -999,6 +998,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const columnType = this.getInputTypeForColumn(column);
     if (columnType === 'date' || columnType === 'datetime-local') {
       return '2099-12-31';
+    }
+    return null;
+  }
+
+  getStepForColumn(column: string): string | null {
+    const columnType = this.getInputTypeForColumn(column);
+    if (columnType === 'datetime-local') {
+      return '1';
     }
     return null;
   }
