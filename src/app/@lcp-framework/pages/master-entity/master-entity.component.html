@@ -1080,53 +1080,61 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <!-- Field Name -->
           <div>
-            <label class="required-mark mb-2 block text-sm font-medium">{{ 'table_field_name' | translate }}</label>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_name' | translate }}</label>
             <input
               type="text"
               formControlName="fieldName"
+              appDynamicFontSize="body"
               class="form-input w-full"
               placeholder="{{ 'table_field_name_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldName') }"
             />
-            <div *ngIf="isEditFieldInvalid('fieldName')" class="mt-1 text-sm text-danger">
+            <div *ngIf="isEditFieldInvalid('fieldName')" class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
               {{ getEditErrorMessage('fieldName') }}
             </div>
           </div>
 
           <!-- Display Name -->
           <div>
-            <label class="required-mark mb-2 block text-sm font-medium">{{ 'table_display_name' | translate }}</label>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_display_name' | translate }}</label>
             <input
               type="text"
               formControlName="displayName"
+              appDynamicFontSize="body"
               class="form-input w-full"
               placeholder="{{ 'table_display_name_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isEditFieldInvalid('displayName') }"
             />
-            <div *ngIf="isEditFieldInvalid('displayName')" class="mt-1 text-sm text-danger">
+            <div *ngIf="isEditFieldInvalid('displayName')" class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
               {{ getEditErrorMessage('displayName') }}
             </div>
           </div>
 
           <!-- Order No -->
           <div>
-            <label class="required-mark mb-2 block text-sm font-medium">{{ 'table_order_no' | translate }}</label>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_order_no' | translate }}</label>
             <input
               type="number"
               formControlName="orderNo"
+              appDynamicFontSize="body"
               class="form-input w-full"
               placeholder="{{ 'table_order_no_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isEditFieldInvalid('orderNo') }"
             />
-            <div *ngIf="isEditFieldInvalid('orderNo')" class="mt-1 text-sm text-danger">
+            <div *ngIf="isEditFieldInvalid('orderNo')" class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
               {{ getEditErrorMessage('orderNo') }}
             </div>
           </div>
 
           <!-- Is Grid Column -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'table_is_grid_column' | translate }}</label>
-            <select formControlName="isGridColumn" class="form-select w-full" [ngClass]="{ 'is-invalid': isEditFieldInvalid('isGridColumn') }">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_grid_column' | translate }}</label>
+            <select
+              formControlName="isGridColumn"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('isGridColumn') }"
+            >
               <option value="" disabled>{{ 'select_any' | translate }}</option>
               <option value="true">{{ 'yes' | translate }}</option>
               <option value="false">{{ 'no' | translate }}</option>
@@ -1135,8 +1143,13 @@
 
           <!-- Is Searchable -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'table_is_searchable' | translate }}</label>
-            <select formControlName="isSearchable" class="form-select w-full" [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSearchable') }">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_searchable' | translate }}</label>
+            <select
+              formControlName="isSearchable"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSearchable') }"
+            >
               <option value="" disabled>{{ 'select_any' | translate }}</option>
               <option value="true">{{ 'yes' | translate }}</option>
               <option value="false">{{ 'no' | translate }}</option>
@@ -1145,8 +1158,13 @@
 
           <!-- Clause Type -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'table_is_clause_type' | translate }}</label>
-            <select formControlName="clauseType" class="form-select w-full" [ngClass]="{ 'is-invalid': isEditFieldInvalid('clauseType') }">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_clause_type' | translate }}</label>
+            <select
+              formControlName="clauseType"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('clauseType') }"
+            >
               <option value="" disabled>{{ 'select_any' | translate }}</option>
               <option value="where">{{ 'where' | translate }}</option>
               <option value="having">{{ 'having' | translate }}</option>
@@ -1155,8 +1173,13 @@
 
           <!-- Is Sortable -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'table_is_sortable' | translate }}</label>
-            <select formControlName="isSortable" class="form-select w-full" [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSortable') }">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_sortable' | translate }}</label>
+            <select
+              formControlName="isSortable"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSortable') }"
+            >
               <option value="" disabled>{{ 'select_any' | translate }}</option>
               <option value="true">{{ 'yes' | translate }}</option>
               <option value="false">{{ 'no' | translate }}</option>
@@ -1165,8 +1188,13 @@
 
           <!-- Field Type -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'table_field_type' | translate }}</label>
-            <select formControlName="fieldType" class="form-select w-full" [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldType') }">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_type' | translate }}</label>
+            <select
+              formControlName="fieldType"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldType') }"
+            >
               <option value="" disabled>{{ 'select_any' | translate }}</option>
               <ng-container *ngFor="let fieldType of field_types">
                 <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
@@ -1176,8 +1204,13 @@
 
           <!-- Link Type -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'link_type' | translate }}</label>
-            <select formControlName="linkType" class="form-select w-full" [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkType') }">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'link_type' | translate }}</label>
+            <select
+              formControlName="linkType"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkType') }"
+            >
               <option value="none">{{ 'none' | translate }}</option>
               <option value="component">{{ 'component' | translate }}</option>
               <option value="child_grid">{{ 'child_grid' | translate }}</option>
@@ -1188,11 +1221,12 @@
 
           <!-- Link Action -->
           <div>
-            <label class="mb-2 block text-sm font-medium">{{ 'link_action' | translate }}</label>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'link_action' | translate }}</label>
             <ng-container [ngSwitch]="editItemForm.get('linkType')?.value">
               <select
                 *ngSwitchCase="'component'"
                 formControlName="linkAction"
+                appDynamicFontSize="body"
                 class="form-select w-full"
                 [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
               >
@@ -1204,6 +1238,7 @@
               <select
                 *ngSwitchCase="'child_grid'"
                 formControlName="linkAction"
+                appDynamicFontSize="body"
                 class="form-select w-full"
                 [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
               >
@@ -1215,6 +1250,7 @@
               <select
                 *ngSwitchCase="'popup_grid'"
                 formControlName="linkAction"
+                appDynamicFontSize="body"
                 class="form-select w-full"
                 [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
               >
@@ -1227,32 +1263,33 @@
                 *ngSwitchCase="'url'"
                 type="text"
                 formControlName="linkAction"
+                appDynamicFontSize="body"
                 class="form-input w-full"
                 placeholder="{{ 'enter_url' | translate }}"
                 [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
               />
-              <span *ngSwitchDefault class="form-input w-full bg-gray-100 text-gray-400">-</span>
+              <span *ngSwitchDefault class="form-input w-full bg-gray-100 text-gray-400" appDynamicFontSize="body">-</span>
             </ng-container>
           </div>
 
           <!-- HTML Content (full width) -->
           <div class="md:col-span-2">
-            <label class="mb-2 block text-sm font-medium">{{ 'html_content' | translate }}</label>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'html_content' | translate }}</label>
             <div class="modal-editor-container">
               <ngx-monaco-editor [options]="modalHtmlEditorOptions" formControlName="fieldHtmlContent" class="modal-monaco-editor"></ngx-monaco-editor>
             </div>
-            <div *ngIf="isEditFieldInvalid('fieldHtmlContent')" class="mt-1 text-sm text-danger">
+            <div *ngIf="isEditFieldInvalid('fieldHtmlContent')" class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
               {{ getEditErrorMessage('fieldHtmlContent') }}
             </div>
           </div>
 
           <!-- Enum Values (full width) -->
           <div class="md:col-span-2">
-            <label class="mb-2 block text-sm font-medium">{{ 'table_enum_values' | translate }}</label>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_enum_values' | translate }}</label>
             <div class="modal-editor-container">
               <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="enumValues" class="modal-monaco-editor"></ngx-monaco-editor>
             </div>
-            <div *ngIf="isEditFieldInvalid('enumValues')" class="mt-1 text-sm text-danger">
+            <div *ngIf="isEditFieldInvalid('enumValues')" class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
               {{ getEditErrorMessage('enumValues') }}
             </div>
           </div>
@@ -1262,8 +1299,8 @@
       <!-- Modal Footer -->
       <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
         <div class="flex items-center justify-end gap-3">
-          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">{{ 'cancel' | translate }}</button>
-          <button type="button" class="btn btn-primary" (click)="submitEditModal()" [disabled]="editItemForm.invalid">
+          <button type="button" class="btn btn-secondary" appDynamicFontSize="body" (click)="closeEditModal()">{{ 'cancel' | translate }}</button>
+          <button type="button" class="btn btn-primary" appDynamicFontSize="body" (click)="submitEditModal()" [disabled]="editItemForm.invalid">
             {{ 'submit' | translate }}
           </button>
         </div>

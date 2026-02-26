@@ -463,8 +463,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               return mainElem;
             })
           );
-          // Set the first tab as the active tab and initialize its cards
-          await this.setActiveTab(this.dashboardTabs[0].id);
+          // Set the first tab with at least one viewable card as active
+          const tabsWithActiveCards = this.getTabsWithActiveCards();
+          if (tabsWithActiveCards.length > 0) {
+            await this.setActiveTab(tabsWithActiveCards[0].id);
+          } else {
+            this.activeTabId = '';
+          }
         }
       },
       (error) => {
@@ -819,6 +824,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   getActiveCards(): Card[] {
     const activeTab = this.dashboardTabs.find((tab) => tab.id == this.activeTabId);
     return activeTab ? activeTab.cards : [];
+  }
+
+  getTabsWithActiveCards(): DashboardTab[] {
+    return this.dashboardTabs.filter((tab) => tab.cards?.some((card) => card?.permissions?.view));
   }
 
   async initStore() {
