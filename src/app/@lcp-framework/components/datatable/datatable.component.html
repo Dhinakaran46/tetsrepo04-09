@@ -173,6 +173,7 @@
                         [type]="condition?.inputType || 'text'"
                         class="form-input h-8 w-full text-xs text-gray-600"
                         [placeholder]="getPlaceholderForColumn(condition.field)"
+                        [attr.step]="getStepForColumn(condition.field)"
                         [attr.min]="getMinValueForColumn(condition.field)"
                         [attr.max]="getMaxValueForColumn(condition.field)"
                         [attr.pattern]="getPatternForColumn(condition.field)"

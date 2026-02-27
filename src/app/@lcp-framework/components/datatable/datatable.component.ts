@@ -833,7 +833,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
       if (type === 'datetime-local') {
-        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm');
+        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm:ss');
       } else if (type === 'date') {
         return this.timezoneService.transformDateOnly(value);
       }
@@ -884,7 +884,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       let filterValue = key.value;
       if (!isNoValue) {
         if (type == 'datetime-local') {
-          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
+          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
         } else if (type == 'date') {
           filterValue = this.formatDate(key.value);
         }

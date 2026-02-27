@@ -109,7 +109,7 @@ export class TimezoneService {
    * Transform a date to datetime format using the configured display_datetime_format
    */
   transformDateTime(date: any): string | null {
-    return this.transformDate(date, 'yyyy-MM-dd HH:mm');
+    return this.transformDate(date, 'yyyy-MM-dd HH:mm:ss');
   }
 
   /**
