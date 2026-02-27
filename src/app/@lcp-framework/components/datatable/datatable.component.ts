@@ -884,7 +884,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       let filterValue = key.value;
       if (!isNoValue) {
         if (type == 'datetime-local') {
-          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
+          //filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
+          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
         } else if (type == 'date') {
           filterValue = this.formatDate(key.value);
         }
