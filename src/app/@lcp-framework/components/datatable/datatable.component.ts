@@ -772,18 +772,39 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.currentSearchConditions = this.searchConditions[columnType] || [];
   }
 
-  async onOperatorChange(index: number) {
-    const column = this.filterConditions[index].field;
-    const operator = this.filterConditions[index].operator;
-    const data = this.filteredColumns.find((col) => col.field === column);
-    this.filterConditions[index].value = '';
-    this.filterConditions[index].enum_values = [];
-    const isEnum = this.isEnumValue(data, operator);
-    this.filterConditions[index].isEnum = isEnum;
-    if (isEnum) {
-      this.filterConditions[index].enumType = data.enum_values.type;
-      this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
+  async onOperatorChange(index: number, selectedOperator?: string) {
+    const condition = this.filterConditions[index];
+    if (!condition) return;
+
+    const selectedField = condition.field;
+    if (selectedOperator !== undefined) {
+      condition.operator = selectedOperator;
     }
+
+    const data = this.filteredColumns.find((col) => col.field === selectedField);
+    condition.field = selectedField;
+    const isNoValue = this.isNoValueOperator(condition.operator);
+    if (isNoValue) {
+      condition.value = '';
+      condition.enum_values = [];
+    }
+
+    const isEnum = this.isEnumValue(data, condition.operator);
+    condition.isEnum = isEnum;
+
+    if (isEnum && data?.enum_values) {
+      condition.value = '';
+      condition.enum_values = [];
+      condition.enumType = data.enum_values.type;
+      condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
+      return;
+    }
+
+    if (!isNoValue) {
+      condition.enum_values = [];
+    }
+    condition.enumType = '';
+    condition.enumValueOptions = [];
   }
 
   toggleMenu() {
