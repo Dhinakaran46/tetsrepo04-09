@@ -650,7 +650,7 @@ export class MasterListComponent implements OnChanges {
           '$session_user_id',
           this.user_info.main.id
         );
-        /*const gridParams: any = {};
+        const gridParams: any = {};
         Object.keys(item).forEach((key) => {
           if (key.startsWith('gparam_')) {
             let temp_key = '$' + key;
@@ -659,7 +659,7 @@ export class MasterListComponent implements OnChanges {
         });
         if (this.grid_params || gridParams) {
           listParams.grid_params = this.grid_params || gridParams;
-        }*/
+        }
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.uniqueId || '');
         this.gridApiService.getAllRecords(listParams).subscribe(
           (response) => {
@@ -697,7 +697,12 @@ export class MasterListComponent implements OnChanges {
 
   private filterAndTransformData(headers: any[], records: any[]): any[] {
     const filteredHeaders = headers.filter(
-      (header) => header.header !== 'id' && header.header !== 'uuid' && header.is_grid_column !== false && header.is_grid_column !== 'false'
+      (header) =>
+        header.header !== 'id' &&
+        header.header !== 'uuid' &&
+        !String(header.header || '').startsWith('gparam_') &&
+        header.is_grid_column !== false &&
+        header.is_grid_column !== 'false'
     );
 
     const transformedRecords = records.map((record) => {
