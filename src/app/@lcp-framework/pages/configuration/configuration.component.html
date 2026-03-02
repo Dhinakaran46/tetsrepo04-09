@@ -125,7 +125,7 @@
                       />
                     </td>
                     <td appDynamicFontSize="body" *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4">
-                      <input type="hidden" formControlName="config_value"  />
+                      <input type="hidden" formControlName="config_value" />
                       <select
                         formControlName="config_field_type"
                         appDynamicFontSize="body"
@@ -188,7 +188,7 @@
                           />
                         </ng-container>
                         <ng-container *ngSwitchCase="'single_select'">
-                          <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px;">
+                          <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
                             <ng-container *ngIf="!jsonEditorOpen[i]">
                               <ng-select
                                 [items]="getSelectOptions(config)"
@@ -198,9 +198,13 @@
                                 formControlName="config_value"
                                 appDynamicFontSize="body"
                                 class="custom-multiselect"
-                                style="width: 420px; min-width: 420px; max-width: 420px;"
+                                style="width: 420px; min-width: 420px; max-width: 420px"
                               ></ng-select>
-                              <button type="button" (click)="openJsonEditor(i)" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center;">
+                              <button
+                                type="button"
+                                (click)="openJsonEditor(i)"
+                                style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+                              >
                                 <i class="fa fa-code"></i>
                               </button>
                             </ng-container>
@@ -210,19 +214,57 @@
                                 rows="4"
                                 cols="48"
                                 placeholder="Paste JSON here"
-                                style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace;"
+                                style="
+                                  min-width: 220px;
+                                  min-height: 38px;
+                                  resize: vertical;
+                                  padding: 6px;
+                                  border-radius: 4px;
+                                  border: 1px solid #ccc;
+                                  font-family: monospace;
+                                "
                               ></textarea>
-                              <button type="button" (click)="applyJson(i, config)" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #4caf50; color: white; border: none; border-radius: 4px;">
+                              <button
+                                type="button"
+                                (click)="applyJson(i, config)"
+                                style="
+                                  margin-left: 4px;
+                                  height: 38px;
+                                  width: 38px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  background: #4caf50;
+                                  color: white;
+                                  border: none;
+                                  border-radius: 4px;
+                                "
+                              >
                                 <i class="fa fa-check"></i>
                               </button>
-                              <button type="button" (click)="jsonEditorOpen[i]=false" style="margin-left: 2px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #f44336; color: white; border: none; border-radius: 4px;">
+                              <button
+                                type="button"
+                                (click)="jsonEditorOpen[i] = false"
+                                style="
+                                  margin-left: 2px;
+                                  height: 38px;
+                                  width: 38px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  background: #f44336;
+                                  color: white;
+                                  border: none;
+                                  border-radius: 4px;
+                                "
+                              >
                                 <i class="fa fa-times"></i>
                               </button>
                             </ng-container>
                           </div>
                         </ng-container>
                         <ng-container *ngSwitchCase="'multiselect'">
-                          <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px;">
+                          <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
                             <ng-container *ngIf="!jsonEditorOpen[i]">
                               <ng-select
                                 [items]="getSelectOptions(config)"
@@ -232,9 +274,13 @@
                                 formControlName="config_value"
                                 appDynamicFontSize="body"
                                 class="custom-multiselect"
-                                style="width: 420px; min-width: 420px; max-width: 420px;"
+                                style="width: 420px; min-width: 420px; max-width: 420px"
                               ></ng-select>
-                              <button type="button" (click)="openJsonEditor(i)" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center;">
+                              <button
+                                type="button"
+                                (click)="openJsonEditor(i)"
+                                style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+                              >
                                 <i class="fa fa-code"></i>
                               </button>
                             </ng-container>
@@ -244,12 +290,50 @@
                                 rows="4"
                                 cols="48"
                                 placeholder="Paste JSON here"
-                                style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace;"
+                                style="
+                                  min-width: 220px;
+                                  min-height: 38px;
+                                  resize: vertical;
+                                  padding: 6px;
+                                  border-radius: 4px;
+                                  border: 1px solid #ccc;
+                                  font-family: monospace;
+                                "
                               ></textarea>
-                              <button type="button" (click)="applyJson(i, config)" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #4caf50; color: white; border: none; border-radius: 4px;">
+                              <button
+                                type="button"
+                                (click)="applyJson(i, config)"
+                                style="
+                                  margin-left: 4px;
+                                  height: 38px;
+                                  width: 38px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  background: #4caf50;
+                                  color: white;
+                                  border: none;
+                                  border-radius: 4px;
+                                "
+                              >
                                 <i class="fa fa-check"></i>
                               </button>
-                              <button type="button" (click)="jsonEditorOpen[i]=false" style="margin-left: 2px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #f44336; color: white; border: none; border-radius: 4px;">
+                              <button
+                                type="button"
+                                (click)="jsonEditorOpen[i] = false"
+                                style="
+                                  margin-left: 2px;
+                                  height: 38px;
+                                  width: 38px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  background: #f44336;
+                                  color: white;
+                                  border: none;
+                                  border-radius: 4px;
+                                "
+                              >
                                 <i class="fa fa-times"></i>
                               </button>
                             </ng-container>
@@ -286,6 +370,9 @@
                             appDynamicFontSize="body"
                             class="custom-multiselect"
                           ></ng-select>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'json'">
+                          <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="config_value" class="modal-monaco-editor"></ngx-monaco-editor>
                         </ng-container>
                       </ng-container>
                     </td>
@@ -437,7 +524,7 @@
             />
           </ng-container>
           <ng-container *ngSwitchCase="'single_select'">
-            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px;">
+            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
               <ng-container *ngIf="!jsonEditorOpenNew">
                 <ng-select
                   [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
@@ -446,9 +533,13 @@
                   bindValue="id"
                   formControlName="value"
                   class="custom-multiselect"
-                  style="width: 420px; min-width: 420px; max-width: 420px;"
+                  style="width: 420px; min-width: 420px; max-width: 420px"
                 ></ng-select>
-                <button type="button" (click)="jsonEditorOpenNew = true" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center;">
+                <button
+                  type="button"
+                  (click)="jsonEditorOpenNew = true"
+                  style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+                >
                   <i class="fa fa-code"></i>
                 </button>
               </ng-container>
@@ -458,19 +549,49 @@
                   rows="4"
                   cols="48"
                   placeholder="Paste JSON here"
-                  style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace;"
+                  style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace"
                 ></textarea>
-                <button type="button" (click)="applyJsonNew()" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #4caf50; color: white; border: none; border-radius: 4px;">
+                <button
+                  type="button"
+                  (click)="applyJsonNew()"
+                  style="
+                    margin-left: 4px;
+                    height: 38px;
+                    width: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #4caf50;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                  "
+                >
                   <i class="fa fa-check"></i>
                 </button>
-                <button type="button" (click)="cancelJsonNew()" style="margin-left: 2px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #f44336; color: white; border: none; border-radius: 4px;">
+                <button
+                  type="button"
+                  (click)="cancelJsonNew()"
+                  style="
+                    margin-left: 2px;
+                    height: 38px;
+                    width: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                  "
+                >
                   <i class="fa fa-times"></i>
                 </button>
               </ng-container>
             </div>
           </ng-container>
           <ng-container *ngSwitchCase="'multiselect'">
-            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px;">
+            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
               <ng-container *ngIf="!jsonEditorOpenNew">
                 <ng-select
                   [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
@@ -479,9 +600,13 @@
                   bindValue="id"
                   formControlName="value"
                   class="custom-multiselect"
-                  style="width: 420px; min-width: 420px; max-width: 420px;"
+                  style="width: 420px; min-width: 420px; max-width: 420px"
                 ></ng-select>
-                <button type="button" (click)="jsonEditorOpenNew = true" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center;">
+                <button
+                  type="button"
+                  (click)="jsonEditorOpenNew = true"
+                  style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+                >
                   <i class="fa fa-code"></i>
                 </button>
               </ng-container>
@@ -491,12 +616,42 @@
                   rows="4"
                   cols="48"
                   placeholder="Paste JSON here"
-                  style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace;"
+                  style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace"
                 ></textarea>
-                <button type="button" (click)="applyJsonNew()" style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #4caf50; color: white; border: none; border-radius: 4px;">
+                <button
+                  type="button"
+                  (click)="applyJsonNew()"
+                  style="
+                    margin-left: 4px;
+                    height: 38px;
+                    width: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #4caf50;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                  "
+                >
                   <i class="fa fa-check"></i>
                 </button>
-                <button type="button" (click)="cancelJsonNew()" style="margin-left: 2px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; background: #f44336; color: white; border: none; border-radius: 4px;">
+                <button
+                  type="button"
+                  (click)="cancelJsonNew()"
+                  style="
+                    margin-left: 2px;
+                    height: 38px;
+                    width: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                  "
+                >
                   <i class="fa fa-times"></i>
                 </button>
               </ng-container>
@@ -523,6 +678,9 @@
               placeholder="Select Datetime Format"
               class="custom-multiselect"
             ></ng-select>
+          </ng-container>
+          <ng-container *ngSwitchCase="'json'">
+            <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="value" class="modal-monaco-editor"></ngx-monaco-editor>
           </ng-container>
         </ng-container>
       </div>
