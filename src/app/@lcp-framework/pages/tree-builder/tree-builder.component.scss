@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  height: calc(100vh - 80px); // Adjust based on header height
+}
+
+.bg-primary-light {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-left: 3px solid var(--primary);
+}
+
+.accordion-content {
+  overflow: hidden;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2;
+  
+  &-primary {
+    @apply bg-primary text-white hover:opacity-90 focus:ring-primary;
+  }
+}
+
+// Dark mode support
+:host-context(.dark) {
+  .bg-primary-light {
+    background-color: rgba(var(--primary-rgb), 0.2);
+  }
+}

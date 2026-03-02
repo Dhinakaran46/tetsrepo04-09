@@ -110,7 +110,9 @@
             </div>
           </ng-container>
 
-          <ng-container *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE].includes(form.get('entityType')?.value)">
+          <ng-container
+            *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
+          >
             <div class="mt-0">
               <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
               <select

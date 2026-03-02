@@ -38,7 +38,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   unique_id!: string | null;
   originaluid!: string | null;
   routeGParams: Record<string, string> = {};
-  defaultData: any = {};
+  @Input() defaultData: any = {};
   defaultDataParam!: any;
   uploadedFiles: string[] = [];
   oldUploadedFiles: string[] = []; // after edit completion old fils should removed
