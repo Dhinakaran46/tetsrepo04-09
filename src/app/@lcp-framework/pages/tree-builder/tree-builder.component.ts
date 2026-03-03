@@ -106,7 +106,6 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     this.config = JSON.parse(this.localStorageService.getData('config'));
     this.route.data.pipe(takeUntil(this.destroy$)).subscribe((data) => {
       this.pageInfo = data['pageInfo'];
-      console.log('PageInfo from route data:', this.pageInfo);
       if (this.pageInfo) {
         this.permissions = this.pageInfo.permissions;
         this.EntityName = this.pageInfo.fullEntity;
@@ -137,7 +136,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       if (this.user_info.main?.policies) {
         this.policyData = this.user_info.main?.policies || null;
       }
-      console.log('Setting up page info with defaultPermission:', this.user_info);
+
       this.masterInfo = pageInfo;
 
       const masterListConfig = pageInfo;
@@ -199,7 +198,6 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   loadTreeData(payload: any = {}) {
-    console.log('Loading tree data for pageInfo:', this.pageInfo);
     this.loading = true;
     let query = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(
@@ -213,6 +211,12 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       '$session_user_id',
       this.user_info.main.id
     );
+    if (this.uniqueId) {
+      payload.unique_id = this.uniqueId;
+    }
+    if (this.uuid) {
+      payload.unique_id = this.uuid;
+    }
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
@@ -220,7 +224,8 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       payload.attached_policies = this.attachedPolicies;
     }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
-    this.gridApiService.getAllList(query).subscribe({
+    console.log('Final Query Payload for Tree Data:', query);
+    this.gridApiService.getAllRecords(query).subscribe({
       next: (res: any) => {
         if (res.code === 200 && res.status) {
           this.flatData = res.data.records;

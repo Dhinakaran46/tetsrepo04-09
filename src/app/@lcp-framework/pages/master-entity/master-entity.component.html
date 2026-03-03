@@ -740,7 +740,9 @@
       </div>
     </div>
 
-    <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+    <ng-container
+      *ngIf="['commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE', 'commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE']; includes: form.get('entityType')?.value"
+    >
       <div class="mt-5 flex flex-wrap justify-between">
         <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>
 
