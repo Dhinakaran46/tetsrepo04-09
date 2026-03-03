@@ -8,13 +8,11 @@ import { DateTime } from 'luxon';
 })
 export class TimezoneService {
   private defaultTimezone = 'UTC';
-  private defaultDateTimeFormat = 'yyyy-MM-dd HH:mm:ss';
+  //private defaultDateTimeFormat = 'yyyy-MM-dd HH:mm:ss';
+  private defaultDateTimeFormat = 'yyyy-MM-dd HH:mm';
   private config: any = null;
 
-  constructor(
-    private datePipe: DatePipe,
-    private localStorageService: LocalStorageService
-  ) {
+  constructor(private datePipe: DatePipe, private localStorageService: LocalStorageService) {
     this.loadConfig();
   }
 
@@ -52,7 +50,7 @@ export class TimezoneService {
   /**
    * Transform a date to the configured display timezone with custom format using Luxon
    */
-  transformDate(date: any, format?: string): string | null {
+  /*transformDate(date: any, format?: string): string | null {
     if (!date) {
       return null;
     }
@@ -64,6 +62,47 @@ export class TimezoneService {
       if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
         // Date only, treat as UTC midnight
         dt = DateTime.fromISO(date + 'T00:00:00', { zone: 'utc' });
+      } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/.test(date)) {
+        dt = DateTime.fromISO(date.replace(' ', 'T'), { zone: 'utc' });
+      } else if (typeof date === 'string' && date.endsWith('Z')) {
+        dt = DateTime.fromISO(date, { zone: 'utc' });
+      } else if (typeof date === 'string') {
+        // Try parse as ISO, fallback to JS Date
+        dt = DateTime.fromISO(date, { zone: 'utc' });
+        if (!dt.isValid) {
+          dt = DateTime.fromJSDate(new Date(date), { zone: 'utc' });
+        }
+      } else if (date instanceof Date) {
+        dt = DateTime.fromJSDate(date, { zone: 'utc' });
+      } else {
+        return null;
+      }
+      if (!dt.isValid) return null;
+      // Convert to target timezone
+      const zoned = dt.setZone(displayTimezone);
+      // Format using Luxon's tokens
+      return zoned.toFormat(this.mapFormat(displayFormat));
+    } catch (error) {
+      console.warn('Error transforming date with timezone:', error);
+      return null;
+    }
+  }*/
+
+  transformDate(date: any, format?: string): string | null {
+    if (!date) {
+      return null;
+    }
+    const displayTimezone = this.getDisplayTimezone();
+    const displayFormat = this.getDisplayDateTimeFormat() || format || this.defaultDateTimeFormat;
+    console.log(displayFormat);
+    try {
+      // Always parse as UTC
+      let dt: DateTime;
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        // Date only, treat as UTC midnight
+        dt = DateTime.fromISO(date + 'T00:00:00', { zone: 'utc' });
+      } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/.test(date)) {
+        dt = DateTime.fromISO(date.replace(' ', 'T'), { zone: 'utc' });
       } else if (typeof date === 'string' && date.endsWith('Z')) {
         dt = DateTime.fromISO(date, { zone: 'utc' });
       } else if (typeof date === 'string') {
@@ -96,8 +135,7 @@ export class TimezoneService {
     // Add more mappings if you use other tokens
     return format
       .replace(/a/g, 'a') // AM/PM
-      .replace(/Z/g, 'ZZ') // Timezone offset
-      ;
+      .replace(/Z/g, 'ZZ'); // Timezone offset
   }
 
   /**
@@ -111,7 +149,50 @@ export class TimezoneService {
    * Transform a date to datetime format using the configured display_datetime_format
    */
   transformDateTime(date: any): string | null {
-    return this.transformDate(date, this.getDisplayDateTimeFormat());
+    //return this.transformDate(date, 'yyyy-MM-dd HH:mm:ss');
+    return this.transformDate(date, 'yyyy-MM-dd HH:mm');
+  }
+
+  /**
+   * Convert datetime entered in display timezone (e.g. datetime-local input)
+   * to UTC format for backend filters.
+   * transformDisplayDateTimeToUTC(date: any, outputFormat: string = 'yyyy-MM-dd HH:mm:ss'): string | null {
+   */
+  transformDisplayDateTimeToUTC(date: any, outputFormat: string = 'yyyy-MM-dd HH:mm'): string | null {
+    if (!date) {
+      return null;
+    }
+
+    const displayTimezone = this.getDisplayTimezone();
+    try {
+      let dt: DateTime;
+
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(date)) {
+        dt = DateTime.fromISO(date, { zone: displayTimezone });
+      } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/.test(date)) {
+        dt = DateTime.fromISO(date.replace(' ', 'T'), { zone: displayTimezone });
+      } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        dt = DateTime.fromISO(date + 'T00:00:00', { zone: displayTimezone });
+      } else if (typeof date === 'string') {
+        dt = DateTime.fromISO(date, { setZone: true });
+        if (!dt.isValid) {
+          dt = DateTime.fromJSDate(new Date(date), { zone: displayTimezone });
+        }
+      } else if (date instanceof Date) {
+        dt = DateTime.fromJSDate(date);
+      } else {
+        return null;
+      }
+
+      if (!dt.isValid) {
+        return null;
+      }
+
+      return dt.setZone('utc').toFormat(this.mapFormat(outputFormat));
+    } catch (error) {
+      console.warn('Error converting display datetime to UTC:', error);
+      return null;
+    }
   }
 
   /**
@@ -180,7 +261,7 @@ export class TimezoneService {
   getConfig() {
     return {
       timezone: this.getDisplayTimezone(),
-      datetimeFormat: this.getDisplayDateTimeFormat()
+      datetimeFormat: this.getDisplayDateTimeFormat(),
     };
   }
-} 
+}

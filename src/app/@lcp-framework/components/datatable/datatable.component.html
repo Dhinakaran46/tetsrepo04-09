@@ -84,7 +84,10 @@
                     <p class="text-app-text">{{ 'No filter applied' }}</p>
                   </ng-container>
                   <ng-template #filterList>
-                    <div *ngFor="let condition of filterConditions; let i = index" class="grid grid-cols-[auto_180px_150px_minmax(180px,1fr)_auto] items-center gap-1.5">
+                    <div
+                      *ngFor="let condition of filterConditions; let i = index"
+                      class="grid grid-cols-[auto_180px_150px_minmax(180px,1fr)_auto] items-center gap-1.5"
+                    >
                       <div class="flex items-center justify-center">
                         <i *ngIf="!filterCondition" class="fa-solid fa-diamond text-xs text-warning"></i>
                         <i *ngIf="filterCondition" class="fa-solid fa-diamond text-xs text-info"></i>
@@ -175,6 +178,7 @@
                         [attr.pattern]="getPatternForColumn(condition.field)"
                         [required]="true"
                       />
+                      <!--[attr.step]="getStepForColumn(condition.field)"-->
                       <span *ngIf="isNoValueOperator(condition.operator)" class="form-input h-8 w-full bg-gray-100 text-xs text-gray-400 dark:bg-gray-700">
                         {{ 'no_value_required' | translate }}
                       </span>

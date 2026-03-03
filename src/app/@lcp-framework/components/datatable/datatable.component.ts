@@ -640,7 +640,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   async getEnumValues(columnData: any, operator: string): Promise<{ label: any; value: any }[]> {
     if (!columnData) return [];
 
-    const enumObj = columnData?.enum_values || [];
+    let enumObj = columnData?.enum_values ?? {};
+
+    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+      enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config?.[enumObj.config_key]) : {};
+
+      enumObj = enumObj;
+    }
 
     switch (enumObj?.type) {
       case 'master':
@@ -668,7 +674,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         }
         return enumObj.value.map((value: any) => ({
           label: enumObj.optionKey ? value[enumObj.optionKey] : value.label,
-          value: enumObj.optionvalue ? value[enumObj.optionvalue] : value.value,
+          value: enumObj.optionValue ? value[enumObj.optionValue] : value.value,
         }));
 
       case 'array':
@@ -764,26 +770,64 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.filterConditions[index].availableOperators = this.getOperatorsForColumn(column);
     this.filterConditions[index].inputType = this.getInputTypeForColumn(column);
     const isEnum = this.isEnumValue(data, operator);
+
     this.filterConditions[index].isEnum = isEnum;
     if (isEnum) {
-      this.filterConditions[index].enumType = data.enum_values.type;
+      let enumObj = data?.enum_values ?? {};
+
+      if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+        enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config?.[enumObj.config_key]) : {};
+      }
+      this.filterConditions[index].enumType = enumObj?.type || '';
+
       this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
     }
     this.currentSearchConditions = this.searchConditions[columnType] || [];
   }
 
-  async onOperatorChange(index: number) {
-    const column = this.filterConditions[index].field;
-    const operator = this.filterConditions[index].operator;
-    const data = this.filteredColumns.find((col) => col.field === column);
-    this.filterConditions[index].value = '';
-    this.filterConditions[index].enum_values = [];
-    const isEnum = this.isEnumValue(data, operator);
-    this.filterConditions[index].isEnum = isEnum;
-    if (isEnum) {
-      this.filterConditions[index].enumType = data.enum_values.type;
-      this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
+  async onOperatorChange(index: number, selectedOperator?: string) {
+    const condition = this.filterConditions[index];
+    if (!condition) return;
+
+    const selectedField = condition.field;
+    if (selectedOperator !== undefined) {
+      condition.operator = selectedOperator;
     }
+
+    const data = this.filteredColumns.find((col) => col.field === selectedField);
+    condition.field = selectedField;
+    const isNoValue = this.isNoValueOperator(condition.operator);
+    if (isNoValue) {
+      condition.value = '';
+      condition.enum_values = [];
+    }
+
+    const isEnum = this.isEnumValue(data, condition.operator);
+    condition.isEnum = isEnum;
+
+    if (isEnum && data?.enum_values) {
+      condition.value = '';
+      condition.enum_values = [];
+      let enumObj = data?.enum_values ?? {};
+      if (Array.isArray(enumObj)) {
+        enumObj = { type: 'array', value: enumObj };
+      }
+      if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+        enumObj = this.config?.[enumObj.config_key] ?? {};
+        if (Array.isArray(enumObj)) {
+          enumObj = { type: 'array', value: enumObj };
+        }
+      }
+      condition.enumType = enumObj?.type || '';
+      condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
+      return;
+    }
+
+    if (!isNoValue) {
+      condition.enum_values = [];
+    }
+    condition.enumType = '';
+    condition.enumValueOptions = [];
   }
 
   toggleMenu() {
@@ -842,22 +886,29 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   isEnumValue(columnData: any, operator: string): boolean {
+    console.log(columnData);
     if (!columnData) return false;
-    const enumObj = columnData?.enum_values || [];
+    let enumObj = columnData?.enum_values ?? {};
+    if (Array.isArray(enumObj)) {
+      enumObj = { type: 'array', value: enumObj };
+    }
+    console.log(enumObj);
+    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+      enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config[enumObj.config_key]) : {};
+      console.log(enumObj);
+      return true;
+      // enumObj = enumObj;
+    }
     switch (enumObj?.type) {
       case 'master':
         return operator === 'in' || operator === 'not_in';
-        break;
       case 'autocomplete':
         return operator === 'in' || operator === 'not_in';
-        break;
       case 'json':
       case 'array':
         return true;
-        break;
       default:
         return false;
-        break;
     }
   }
 
@@ -881,17 +932,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
       let operator: string = '';
       let value: any = '';
+      let filterValue = key.value;
       if (!isNoValue) {
         if (type == 'datetime-local') {
-          const formattedDate: any = this.formatDateTime(key.value);
-          key.value = formattedDate;
+          //filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
+          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
         } else if (type == 'date') {
-          const formattedDate: any = this.formatDate(key.value);
-          key.value = formattedDate;
+          filterValue = this.formatDate(key.value);
         }
         operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
         value =
-          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, key.value?.trim());
+          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, filterValue?.trim());
       } else {
         operator = this.getNoValueOperatorSQL(key.operator);
       }
@@ -999,6 +1050,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const columnType = this.getInputTypeForColumn(column);
     if (columnType === 'date' || columnType === 'datetime-local') {
       return '2099-12-31';
+    }
+    return null;
+  }
+
+  getStepForColumn(column: string): string | null {
+    const columnType = this.getInputTypeForColumn(column);
+    if (columnType === 'datetime-local') {
+      return '1';
     }
     return null;
   }

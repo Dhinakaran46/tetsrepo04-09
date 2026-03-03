@@ -16,6 +16,7 @@ import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import { TIMEZONE_LIST } from '../../shared/timezone/timezone-list';
 import { ChangeDetectorRef } from '@angular/core';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 
 interface TabConfiguration {
   id: number;
@@ -51,7 +52,7 @@ const DATETIME_FORMAT_LIST = [
 @Component({
   selector: 'app-user-configuration',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, CommonSharedModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, CommonSharedModule, MonacoEditorModule],
   templateUrl: './user-configuration.component.html',
   styleUrls: ['./user-configuration.component.scss'],
 })
@@ -72,8 +73,9 @@ export class UserConfigurationComponent implements OnInit {
   selectedUserId: number | null = null; // Track selected user
 
   gridpaginationdropdownList = ['5', '10', '15', '20', '25', '30', '40', '50', '60', '70', '80', '90', '100'];
-  fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'multiselect', 'single_select', 'time', 'timezone', 'datetimeformat'];
+  fieldTypeOptions = ['text', 'number', 'date', 'checkbox', 'file', 'multiselect', 'single_select', 'time', 'timezone', 'datetimeformat', 'json'];
   valueTypeOptions = ['static'];
+  modalJsonEditorOptions = { theme: 'vs-dark', language: 'json', tabSize: 2, insertSpaces: true, minimap: { enabled: false }, automaticLayout: true };
 
   update_json_schema: any = {
     print_query: true,
@@ -185,6 +187,7 @@ export class UserConfigurationComponent implements OnInit {
         case 'number':
         case 'date':
         case 'time':
+        case 'json':
           valueControl.setValidators([Validators.required]);
           break;
         case 'file':
@@ -356,7 +359,7 @@ export class UserConfigurationComponent implements OnInit {
 
   getconfig() {
     //const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories:{'0': 'ac16', '1': 'ac17'} } };
-    const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories: { '0': 'ac1', '1': 'ac2' } } };
+    const procedureParams = { proc_name: 'get_configurations_values_v1', params: { categories: { '0': 'ac1', '1': 'ac2', '2': 'ac30' } } };
 
     this.commonService.unAuthProcedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: any; message: string }) => {

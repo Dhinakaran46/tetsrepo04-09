@@ -1,79 +1,84 @@
 .advancedfiltercontainer {
-    min-width: 300px;
-    max-width: 100%;
-    width: 90%;
-    left: 50%;
-    transform: translateX(-50%);
-    right: auto;
-    z-index: 1000;
-    position: fixed;
-    top: 10%;
-    max-height: 60vh;
-    overflow-y: auto;
+  min-width: 300px;
+  max-width: 100%;
+  width: 90%;
+  left: 50%;
+  transform: translateX(-50%);
+  right: auto;
+  z-index: 1000;
+  position: fixed;
+  top: 10%;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+table thead tr th,
+table tfoot tr th,
+table tbody tr td {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+@media (min-width: 640px) {
+  .advancedfiltercontainer {
+    min-width: 500px;
+    width: 60%;
   }
-  
-  table thead tr th,
-  table tfoot tr th,
-  table tbody tr td {
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
+}
+
+@media (min-width: 1024px) {
+  .advancedfiltercontainer {
+    max-width: 600px;
+    width: 70%;
   }
-  @media (min-width: 640px) {
-    .advancedfiltercontainer {
-      min-width: 500px;
-      width: 60%;
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .advancedfiltercontainer {
-      max-width: 600px;
-      width: 70%;
-    }
-  }
-  
-  /* Add these styles to ensure the container is scrollable on smaller screens */
-  .advancedfiltercontainer .relative {
-    max-height: calc(80vh - 120px); /* Adjust based on your header and footer height */
-    overflow-y: auto;
-  }
-  
-  /* Adjust input and select fields for better mobile experience */
-  @media (max-width: 640px) {
-    .advancedfiltercontainer input,
-    .advancedfiltercontainer select {
-      width: 100%;
-      margin-bottom: 0.5rem;
-    }
-  
-    .advancedfiltercontainer .flex {
-      flex-direction: column;
-    }
-  
-    .advancedfiltercontainer .flex > * {
-      width: 100%;
-      margin-right: 0 !important;
-    }
-  }
-  
-  /* Ensure buttons are fully visible on mobile */
-  .advancedfiltercontainer .flex.items-center.justify-between {
-    flex-wrap: wrap;
-  }
-  
-  .advancedfiltercontainer .flex.items-center.justify-between > * {
+}
+
+/* Add these styles to ensure the container is scrollable on smaller screens */
+.advancedfiltercontainer .relative {
+  max-height: calc(80vh - 120px); /* Adjust based on your header and footer height */
+  overflow-y: auto;
+}
+
+/* Adjust input and select fields for better mobile experience */
+@media (max-width: 640px) {
+  .advancedfiltercontainer input,
+  .advancedfiltercontainer select {
+    width: 100%;
     margin-bottom: 0.5rem;
   }
-  
-  .panel {
-    margin: -15px;
-    padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+
+  .advancedfiltercontainer .flex {
+    flex-direction: column;
   }
-  .header-panel {
-    margin-top: -15px;
+
+  .advancedfiltercontainer .flex > * {
+    width: 100%;
+    margin-right: 0 !important;
   }
-  
-  .panel {
-    padding: 1.25rem 1.25rem 0.25rem 1.25rem;
-  }
-  
+}
+
+/* Ensure buttons are fully visible on mobile */
+.advancedfiltercontainer .flex.items-center.justify-between {
+  flex-wrap: wrap;
+}
+
+.advancedfiltercontainer .flex.items-center.justify-between > * {
+  margin-bottom: 0.5rem;
+}
+
+.panel {
+  margin: -15px;
+  padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+}
+.header-panel {
+  margin-top: -15px;
+}
+
+.panel {
+  padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+}
+
+.modal-monaco-editor {
+  width: 100%;
+  min-height: 180px;
+  display: block;
+}
