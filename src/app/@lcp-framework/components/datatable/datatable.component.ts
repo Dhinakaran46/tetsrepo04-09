@@ -640,18 +640,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   async getEnumValues(columnData: any, operator: string): Promise<{ label: any; value: any }[]> {
     if (!columnData) return [];
 
-    let enumObj = columnData?.enum_values ?? {};
-
-    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-      enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config?.[enumObj.config_key]) : {};
-
-      enumObj = enumObj;
-    }
+    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
 
     switch (enumObj?.type) {
       case 'master':
         if (enumObj?.value) {
           try {
+            console.log('Fetching master data for enum values with params:', enumObj.value);
             const response = await this.gridApiService.getListData(enumObj.value).toPromise();
             if (response.status && response.data?.records) {
               return response.data.records.map((option: any) => ({
@@ -700,7 +695,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (!activeCondition) return [];
 
     const columnData = this.filteredColumns.find((col) => col.field === activeCondition.field);
-    const enumObj = columnData?.enum_values || {};
+    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
 
     try {
       // Add search parameter to your API call
@@ -756,6 +751,33 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return this.inputTypes[columnType] || 'text';
   }
 
+  private resolveEnumConfig(enumSource: any): any {
+    let enumObj = enumSource ?? {};
+
+    if (Array.isArray(enumObj)) {
+      return { type: 'array', value: enumObj };
+    }
+
+    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+      const rawConfig = this.config?.[enumObj.config_key];
+      if (typeof rawConfig === 'string') {
+        try {
+          enumObj = JSON.parse(rawConfig);
+        } catch {
+          enumObj = {};
+        }
+      } else {
+        enumObj = rawConfig ?? {};
+      }
+    }
+
+    if (Array.isArray(enumObj)) {
+      enumObj = { type: 'array', value: enumObj };
+    }
+
+    return enumObj ?? {};
+  }
+
   async onColumnChange(event: Event, index: number) {
     // const target = event.target as HTMLSelectElement;
     // const column = target.value;
@@ -773,11 +795,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     this.filterConditions[index].isEnum = isEnum;
     if (isEnum) {
-      let enumObj = data?.enum_values ?? {};
-
-      if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-        enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config?.[enumObj.config_key]) : {};
-      }
+      const enumObj = this.resolveEnumConfig(data?.enum_values);
       this.filterConditions[index].enumType = enumObj?.type || '';
 
       this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
@@ -808,16 +826,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (isEnum && data?.enum_values) {
       condition.value = '';
       condition.enum_values = [];
-      let enumObj = data?.enum_values ?? {};
-      if (Array.isArray(enumObj)) {
-        enumObj = { type: 'array', value: enumObj };
-      }
-      if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-        enumObj = this.config?.[enumObj.config_key] ?? {};
-        if (Array.isArray(enumObj)) {
-          enumObj = { type: 'array', value: enumObj };
-        }
-      }
+      const enumObj = this.resolveEnumConfig(data?.enum_values);
       condition.enumType = enumObj?.type || '';
       condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
       return;
@@ -886,19 +895,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   isEnumValue(columnData: any, operator: string): boolean {
-    console.log(columnData);
     if (!columnData) return false;
-    let enumObj = columnData?.enum_values ?? {};
-    if (Array.isArray(enumObj)) {
-      enumObj = { type: 'array', value: enumObj };
-    }
-    console.log(enumObj);
-    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-      enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config[enumObj.config_key]) : {};
-      console.log(enumObj);
-      return true;
-      // enumObj = enumObj;
-    }
+    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
     switch (enumObj?.type) {
       case 'master':
         return operator === 'in' || operator === 'not_in';

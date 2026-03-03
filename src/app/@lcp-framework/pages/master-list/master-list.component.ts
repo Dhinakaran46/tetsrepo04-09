@@ -716,9 +716,9 @@ export class MasterListComponent implements OnChanges {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateOnly(record[header.header]);
         } else if (header.field_type_id == '7') {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateTime(record[header.header]);
-        } else if (header.header == 'status') {
+        } else if (header.header == 'status' && header.enum_values == null) {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
-        } else if (header.header == 'process_status') {
+        } else if (header.header == 'process_status' && header.enum_values == null) {
           transformedRecord[translatedHeader] = this.getProcessStatusTranslation(record[header.header]);
         } else {
           transformedRecord[translatedHeader] = record[header.header];
@@ -901,12 +901,12 @@ export class MasterListComponent implements OnChanges {
 
             // Adding custom templates
             this.headercolumns = this.headercolumns.map((item: any) => {
-              if (item.header === 'status') {
+              if (item.header === 'status' && item.enum_values == null) {
                 return {
                   ...item,
                   customTemplate: this.statusTemplate,
                 };
-              } else if (item.header === 'process_status') {
+              } else if (item.header === 'process_status' && item.enum_values == null) {
                 return {
                   ...item,
                   customTemplate: this.processStatusTemplate,
@@ -1258,12 +1258,12 @@ export class MasterListComponent implements OnChanges {
 
           // Adding custom templates
           this.previewHeaderColumns = this.previewHeaderColumns.map((item: any) => {
-            if (item.header === 'status') {
+            if (item.header === 'status' && item.enum_values == null) {
               return {
                 ...item,
                 customTemplate: this.statusTemplate,
               };
-            } else if (item.header === 'process_status') {
+            } else if (item.header === 'process_status' && item.enum_values == null) {
               return {
                 ...item,
                 customTemplate: this.processStatusTemplate,
