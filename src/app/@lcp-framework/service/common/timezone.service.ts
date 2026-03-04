@@ -88,13 +88,47 @@ export class TimezoneService {
     }
   }*/
 
+  transformDateForDT(date: any, format?: string): string | null {
+    if (!date) {
+      return null;
+    }
+
+    const displayTimezone = this.getDisplayTimezone();
+    const displayFormat = format || this.getDisplayDateTimeFormat();
+
+    try {
+      // If the input is a date-only string (e.g., '2025-06-25'), set time to 00:00:00
+      let dateObj: Date;
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        dateObj = new Date(date + 'T00:00:00');
+      } else {
+        dateObj = date instanceof Date ? date : new Date(date);
+      }
+      // If the date is invalid, return null
+      if (isNaN(dateObj.getTime())) {
+        return null;
+      }
+      // For UTC timezone, use the standard date pipe
+      if (displayTimezone === 'UTC') {
+        return this.datePipe.transform(dateObj, displayFormat, 'UTC');
+      }
+      // For other timezones, we need to convert the date
+      // This is a simplified approach - in a production environment,
+      // you might want to use a library like date-fns-tz or moment-timezone
+      return this.datePipe.transform(dateObj, displayFormat, displayTimezone);
+    } catch (error) {
+      console.warn('Error transforming date with timezone:', error);
+      // Fallback to standard date pipe
+      return this.datePipe.transform(date, displayFormat);
+    }
+  }
   transformDate(date: any, format?: string): string | null {
     if (!date) {
       return null;
     }
     const displayTimezone = this.getDisplayTimezone();
     const displayFormat = this.getDisplayDateTimeFormat() || format || this.defaultDateTimeFormat;
-    console.log(displayFormat);
+
     try {
       // Always parse as UTC
       let dt: DateTime;
@@ -142,7 +176,7 @@ export class TimezoneService {
    * Transform a date to date-only format in the configured timezone
    */
   transformDateOnly(date: any): string | null {
-    return this.transformDate(date, 'yyyy-MM-dd');
+    return this.transformDateForDT(date, 'yyyy-MM-dd');
   }
 
   /**
@@ -199,7 +233,8 @@ export class TimezoneService {
    * Transform a date to time-only format in the configured timezone
    */
   transformTimeOnly(date: any): string | null {
-    return this.transformDate(date, 'HH:mm:ss');
+    //return this.transformDateForDT(date, 'HH:mm:ss');
+    return this.transformDateForDT(date, 'HH:mm');
   }
 
   /**
