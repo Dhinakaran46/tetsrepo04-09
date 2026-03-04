@@ -714,6 +714,8 @@ export class MasterListComponent implements OnChanges {
         const translatedHeader = this.translate.instant(translationKey);
         if (header.field_type_id == '5') {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateOnly(record[header.header]);
+        } else if (header.field_type_id == '6') {
+          transformedRecord[translatedHeader] = this.timezoneService.transformTimeOnly(record[header.header]);
         } else if (header.field_type_id == '7') {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateTime(record[header.header]);
         } else if (header.header == 'status' && header.enum_values == null) {
@@ -947,6 +949,11 @@ export class MasterListComponent implements OnChanges {
                     if (headerItem.header === key) {
                       if (headerItem.field_type_id == 5) {
                         const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
+                      } else if (headerItem.field_type_id == 6) {
+                        const transformedDate = this.timezoneService.transformTimeOnly(formattedItem[key]);
                         if (transformedDate) {
                           formattedItem[key] = transformedDate;
                         }
@@ -1291,6 +1298,11 @@ export class MasterListComponent implements OnChanges {
                   if (headerItem.header === key) {
                     if (headerItem.field_type_id == 5) {
                       const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                      if (transformedDate) {
+                        formattedItem[key] = transformedDate;
+                      }
+                    } else if (headerItem.field_type_id == 6) {
+                      const transformedDate = this.timezoneService.transformTimeOnly(formattedItem[key]);
                       if (transformedDate) {
                         formattedItem[key] = transformedDate;
                       }

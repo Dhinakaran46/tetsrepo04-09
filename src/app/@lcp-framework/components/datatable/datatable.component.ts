@@ -279,8 +279,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   onEnumChange(selectedValues: any[], index: number) {
-    console.log('Selected enum values:', selectedValues);
-
     // If you still need select / deselect logic:
     const previous = this.previousSelections[index] || [];
 
@@ -881,6 +879,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return this.timezoneService.transformDateOnly(dateTime);
   }
 
+  formatTime(dateTime: any) {
+    return this.timezoneService.transformTimeOnly(dateTime);
+  }
+
   getConditionValue(index: number): string | null {
     const value = this.filterConditions[index].value;
     if (value) {
@@ -889,6 +891,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm:ss');
       } else if (type === 'date') {
         return this.timezoneService.transformDateOnly(value);
+      } else if (type === 'time') {
+        return this.timezoneService.transformDate(value, 'HH:mm:ss');
       }
     }
     return value;
@@ -896,7 +900,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   isEnumValue(columnData: any, operator: string): boolean {
     if (!columnData) return false;
-    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
+    let enumObj = columnData?.enum_values ?? {};
+    if (Array.isArray(enumObj)) {
+      enumObj = { type: 'array', value: enumObj };
+    }
+
+    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+      enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config[enumObj.config_key]) : {};
+
+      return true;
+      // enumObj = enumObj;
+    }
     switch (enumObj?.type) {
       case 'master':
         return operator === 'in' || operator === 'not_in';
@@ -935,9 +949,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         if (type == 'datetime-local') {
           //filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
           filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
+        } else if (type == 'time') {
+          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'HH:mm');
         } else if (type == 'date') {
           filterValue = this.formatDate(key.value);
         }
+
         operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
         value =
           enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, filterValue?.trim());
@@ -1054,7 +1071,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   getStepForColumn(column: string): string | null {
     const columnType = this.getInputTypeForColumn(column);
-    if (columnType === 'datetime-local') {
+    if (columnType === 'datetime-local' || columnType === 'time') {
       return '1';
     }
     return null;
