@@ -118,6 +118,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   autocompleteSearchSubject = new Subject<string>();
 
   search: any = '';
+  appliedCommonSearch: string = '';
+  isCommonSearchApplied: boolean = false;
   selectedColumns: any[] = [];
   selectedColumn = '';
   searchCondition: string = 'contains';
@@ -844,6 +846,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     }
   }
 
+  openAdvancedFilterMenu() {
+    this.isMenuOpen = true;
+    if (this.filterConditions.length == 0) {
+      this.addCondition();
+    }
+  }
+
   addCondition() {
     this.filterConditions.push({
       field: '',
@@ -872,6 +881,63 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.filterConditions = [];
     this.applyFilters();
   }
+
+  clearAllAppliedFilters() {
+    this.clearFilters();
+  }
+
+  removeAppliedFilter(index: number, event?: Event) {
+    event?.stopPropagation();
+    this.filterConditions.splice(index, 1);
+    this.applyFilters();
+  }
+
+  getFilterColumnLabel(field: string): string {
+    const col = this.filteredColumns.find((column) => column.field === field);
+    return col?.title || col?.previewTitle || field;
+  }
+
+  getFilterOperatorLabel(condition: FilterCondition): string {
+    const matched = condition?.availableOperators?.find((op) => op.value === condition.operator);
+    return matched?.label || condition.operator;
+  }
+
+  getFilterValueLabel(condition: FilterCondition): string {
+    const operatorLabel = this.getFilterOperatorLabel(condition);
+
+    if (this.isNoValueOperator(condition.operator)) {
+      return operatorLabel;
+    }
+
+    if (condition.enum_values?.length > 0) {
+      const values = condition.enum_values
+        .map((entry: any) => {
+          if (entry && typeof entry === 'object') {
+            return entry.label ?? entry.value ?? '';
+          }
+          return entry;
+        })
+        .filter((entry: any) => String(entry ?? '').trim() !== '')
+        .join(', ');
+
+      return `sa${operatorLabel} ${values}`.trim();
+    }
+
+    const value = String(condition.value ?? '').trim();
+    return `${operatorLabel} ${value}`.trim();
+  }
+
+  isAdvancedFilterApplied(condition: FilterCondition): boolean {
+    return !!condition?.field && (this.isNoValueOperator(condition.operator) || condition.value.trim() !== '' || condition.enum_values.length > 0);
+  }
+
+  getAppliedAdvancedFilterIndexes(): number[] {
+    return this.filterConditions
+      .map((condition, index) => ({ condition, index }))
+      .filter(({ condition }) => this.isAdvancedFilterApplied(condition))
+      .map(({ index }) => index);
+  }
+
   formatDateTime(dateTime: any) {
     return this.timezoneService.transformDateTime(dateTime);
   }
@@ -888,7 +954,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
       if (type === 'datetime-local') {
-        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm:ss');
+        return value;
       } else if (type === 'date') {
         return this.timezoneService.transformDateOnly(value);
       } else if (type === 'time') {
@@ -1212,69 +1278,95 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.searchInput.nativeElement.focus();
   }
 
+  private buildCommonSearchPayload(searchValue: string) {
+    let hereColumns = [...this.filteredColumns];
+    const items = [3, 4];
+    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+
+    const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
+
+    const whereData = whereSource
+      .filter((key: any) => key.clause_type === 'where')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+          value: this.addWildcards(this.searchCondition, searchValue),
+        };
+      });
+
+    const havingData = hereColumns
+      .filter((key: any) => key.clause_type === 'having')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+          value: this.addWildcards(this.searchCondition, searchValue),
+        };
+      });
+
+    return { whereData, havingData };
+  }
+  private buildCommonSearchPayloadLabelPurpose(searchValue: string) {
+    let hereColumns = [...this.filteredColumns];
+    const items = [3, 4];
+    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+
+    const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
+
+    const whereData = whereSource
+      .filter((key: any) => key.clause_type === 'where')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition,
+          value: searchValue,
+        };
+      });
+
+    const havingData = hereColumns
+      .filter((key: any) => key.clause_type === 'having')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition,
+          value: searchValue,
+        };
+      });
+
+    return { whereData, havingData };
+  }
+
+  getCommonSearchBadgeConditions(): Array<{ column_name: string; operator: string; value: any }> {
+    if (!this.isCommonSearchApplied || !this.appliedCommonSearch) {
+      return [];
+    }
+
+    const { whereData, havingData } = this.buildCommonSearchPayloadLabelPurpose(this.appliedCommonSearch);
+    return [...whereData, ...havingData];
+  }
+
+  getCommonSearchBadgeLabel(): string {
+    const conditions = this.getCommonSearchBadgeConditions();
+    return conditions.map((condition) => `${this.getFilterColumnLabel(condition.column_name)} : ${condition.operator} ${condition.value}`).join(' | ');
+  }
+
+  clearCommonSearchBadge(event?: Event) {
+    event?.stopPropagation();
+    this.search = '';
+    this.appliedCommonSearch = '';
+    this.isCommonSearchApplied = false;
+    this.onSearch();
+  }
+
   onSearch() {
     this.search = this.search.trim();
-    let hereColumns = [...this.filteredColumns];
+    const { whereData, havingData } = this.buildCommonSearchPayload(this.search);
+    const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
+    this.searchQuery.emit(fdata);
 
-    let items = [3, 4];
-    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
-    if (this.selectedColumns.length > 0) {
-      const whereData = this.selectedColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'where';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-
-      const havingData = hereColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'having';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-      const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
-      this.searchQuery.emit(fdata);
-      // this.loading = false;
-    } else {
-      //this.toastr.warning('Please select any column', 'Warning');
-
-      const whereData = hereColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'where';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-
-      const havingData = hereColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'having';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-      const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
-      this.searchQuery.emit(fdata);
-      //this.loading = false;
-    }
+    this.appliedCommonSearch = this.search;
+    this.isCommonSearchApplied = this.search.length > 0;
   }
   applyFilter() {
     if (this.selectedColumn && this.search) {
