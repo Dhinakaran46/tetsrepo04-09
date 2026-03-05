@@ -903,10 +903,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   getFilterValueLabel(condition: FilterCondition): string {
-    const operatorLabel = this.getFilterOperatorLabel(condition);
-
     if (this.isNoValueOperator(condition.operator)) {
-      return operatorLabel;
+      return '';
     }
 
     if (condition.enum_values?.length > 0) {
@@ -920,11 +918,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         .filter((entry: any) => String(entry ?? '').trim() !== '')
         .join(', ');
 
-      return `sa${operatorLabel} ${values}`.trim();
+      return values;
     }
 
     const value = String(condition.value ?? '').trim();
-    return `${operatorLabel} ${value}`.trim();
+    return value.replace('T', ' ').replace('Z', '');
   }
 
   isAdvancedFilterApplied(condition: FilterCondition): boolean {
