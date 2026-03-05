@@ -939,7 +939,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
 
-          this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id };
+          this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
 

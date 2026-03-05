@@ -596,7 +596,9 @@
               </div>
             </div>
 
-            <ng-container *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE].includes(form.get('entityType')?.value)">
+            <ng-container
+              *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
+            >
               <div class="mt-3">
                 <div class="flex flex-row gap-3">
                   <label for="associateTable" class="mb-2 block font-medium">{{ 'form_label_associated_tables' | translate }}</label>
@@ -741,7 +743,7 @@
     </div>
 
     <ng-container
-      *ngIf="['commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE', 'commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE']; includes: form.get('entityType')?.value"
+      *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
     >
       <div class="mt-5 flex flex-wrap justify-between">
         <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>

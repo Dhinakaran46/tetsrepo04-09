@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, AfterContentInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, AfterContentInit, EventEmitter, Output } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { GridApiService } from '../../service/common/grid.service';
@@ -9,10 +9,12 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TreeViewItemComponent } from './tree-view-item/tree-view-item.component';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { Subject, takeUntil } from 'rxjs';
+import { lastValueFrom, Subject, takeUntil } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Store } from '@ngrx/store';
 import { Title } from '@angular/platform-browser';
+import { MenuMapService } from '../../service/common/menu-map.service';
+import { commonConfig } from '../../config/common.config';
 
 interface FetchDataParams {
   entity_name: any;
@@ -39,6 +41,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   private destroy$ = new Subject<void>();
   @Input() grid_params: any = null;
   @Input() uuid: any = null;
+  @Output() deleteTriggred = new EventEmitter<any>();
   pageInfo: any;
   treeData: any[] = [];
   flatData: any[] = [];
@@ -62,7 +65,8 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   companyId: number;
   config!: any;
   query: any = '';
-  user_id: any;
+  userId: any;
+  primmaryTable: any;
   masterInfo: any;
   policyData: any = null;
   loading: boolean = false;
@@ -70,12 +74,13 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   noPermission: boolean = false;
   title: any = '';
   listQuery: any = '';
-  user_info: any;
+  userInfo: any;
   attachedPolicies: any[] = [];
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   commonSearchQuery: any = {};
   defaultQuery: any = '';
   isUUid: boolean = true;
+  grid_records_delete: any;
   constructor(
     private route: ActivatedRoute,
     private gridApiService: GridApiService,
@@ -84,7 +89,8 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     private translate: TranslateService,
     private toastr: ToastrService,
     private titleService: Title,
-    public storeData: Store<any>
+    public storeData: Store<any>,
+    private commonService: MenuMapService
   ) {
     this.initStore();
     this.route.paramMap.subscribe((params) => {
@@ -106,10 +112,11 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     this.config = JSON.parse(this.localStorageService.getData('config'));
     this.route.data.pipe(takeUntil(this.destroy$)).subscribe((data) => {
       this.pageInfo = data['pageInfo'];
+      console.log('Page Info from Route Data:', this.pageInfo);
       if (this.pageInfo) {
         this.permissions = this.pageInfo.permissions;
         this.EntityName = this.pageInfo.fullEntity;
-        // this.loadTreeData(this.pageInfo.ListQuery);
+        this.primmaryTable = this?.pageInfo?.additionalData?.primary_table || null;
       }
     });
   }
@@ -126,22 +133,23 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   setupPageInfo(pageInfo: any, defaultPermission: any) {
-    this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
+    this.userInfo = JSON.parse(this.localStorageService.getData('user_data'));
+    this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
     if (defaultPermission !== true) {
       this.noPermission = true;
       return;
     }
 
     if (pageInfo) {
-      if (this.user_info.main?.policies) {
-        this.policyData = this.user_info.main?.policies || null;
+      if (this.userInfo.main?.policies) {
+        this.policyData = this.userInfo.main?.policies || null;
       }
 
       this.masterInfo = pageInfo;
 
       const masterListConfig = pageInfo;
 
-      const translateTitle = this.translate.instant(masterListConfig.fullEntity);
+      const translateTitle = this.commonTranslate(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
 
       if (this.EntityName) {
@@ -159,7 +167,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       }
 
       this.fetchAttachedPolicies(this.listQuery);
-      this.loadTreeData(this.listQuery);
+      // this.loadTreeData(this.listQuery);
     } else {
       this.title = 'Default Title';
     }
@@ -175,7 +183,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       },
       (error) => {
         const key = 'error';
-        const errorMessage = this.translate.instant(key);
+        const errorMessage = this.commonTranslate(key);
         this.toastr.error(errorMessage, 'Error');
       },
       () => {
@@ -209,7 +217,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
         this.attachedPolicies
       ),
       '$session_user_id',
-      this.user_info.main.id
+      this.userInfo.main.id
     );
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
@@ -234,7 +242,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       },
       error: (err) => {
         console.error('Error loading tree data:', err);
-        this.toastr.error(this.translate.instant('error_loading_tree'));
+        this.toastr.error(this.commonTranslate('error_loading_tree'));
       },
       complete: () => {
         this.loading = false;
@@ -263,75 +271,52 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
 
   onNodeSelected(node: any) {
     this.selectedNode = node;
-    this.formType = 'edit';
-    this.formUuid = node.uuid;
-    this.formEntityName = this.pageInfo.children?.['edit']?.entity_name || this.pageInfo.fullEntity;
-    this.formEntityType = 'edit';
-    this.showForm = true;
+    if (this.permissions.edit) {
+      this.showForm = false;
+      setTimeout(() => {
+        this.formType = 'edit';
+        this.formUuid = node.uuid;
+        this.formEntityName = this.pageInfo.children?.['edit']?.entity_name || this.pageInfo.fullEntity;
+        this.formEntityType = 'edit';
+        this.showForm = true;
+      }, 0);
+    } else {
+      this.showForm = false;
+    }
   }
 
   onAddRoot() {
+    if (!this.permissions.create) {
+      this.toastr.warning(this.commonTranslate('no_permission_create'));
+      return;
+    }
     this.selectedNode = null;
-    this.formType = 'add';
-    this.formUuid = null;
-    this.formEntityName = this.pageInfo.children?.['add']?.entity_name || this.pageInfo.fullEntity;
-    this.formEntityType = 'add';
-    this.formDefaultData = { parent_id: null };
-    this.showForm = true;
+    this.showForm = false;
+    setTimeout(() => {
+      this.formType = 'add';
+      this.formUuid = null;
+      this.formEntityName = this.pageInfo.children?.['add']?.entity_name || this.pageInfo.fullEntity;
+      this.formEntityType = 'add';
+      this.formDefaultData = { parent_id: null };
+      this.showForm = true;
+    }, 0);
   }
 
   onAddChild(parent: any) {
-    this.selectedNode = null;
-    this.formType = 'add';
-    this.formUuid = null;
-    this.formEntityName = this.pageInfo.children?.['add']?.entity_name || this.pageInfo.fullEntity;
-    this.formEntityType = 'add';
-    this.formDefaultData = { parent_id: parent.id };
-    this.showForm = true;
-  }
-
-  async onDeleteNode(node: any) {
-    const result = await Swal.fire({
-      title: this.translate.instant('are_you_sure'),
-      text: this.translate.instant('delete_warning'),
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: this.translate.instant('yes_delete'),
-    });
-
-    if (result.isConfirmed) {
-      // Find all children recursively to delete?
-      // The framework usually handles Soft Delete. If it's a hierarchy, we might need a stored procedure.
-      // For now, let's use the executeRecords pattern for a single node or rely on backend triggers.
-      const idsToDelete = this.getRecursiveIds(node);
-
-      const deletePayload = {
-        action: ['update'],
-        table: [this.pageInfo.ListQuery.primary_table],
-        table_mapping: ['table1'],
-        data: {
-          table1: [{ status_id: 3, deleted_at: 'now()' }],
-        },
-        conditions: {
-          table1: [{ id: idsToDelete[0] }], // Simplified: Backend should handle children
-        },
-      };
-
-      // If the framework expects bulk delete:
-      // We'll iterate or use IN operator if the generic API supports it.
-      // Based on MenuItemComponent, it iterates.
-
-      for (const id of idsToDelete) {
-        await this.deleteSingleItem(id);
-      }
-
-      this.toastr.success(this.translate.instant('record_deleted_successfully'));
-      if (this.selectedNode?.id === node.id) {
-        this.showForm = false;
-        this.selectedNode = null;
-      }
-      this.loadTreeData();
+    if (!this.permissions.create) {
+      this.toastr.warning(this.commonTranslate('no_permission_create'));
+      return;
     }
+    this.selectedNode = null;
+    this.showForm = false;
+    setTimeout(() => {
+      this.formType = 'add';
+      this.formUuid = null;
+      this.formEntityName = this.pageInfo.children?.['add']?.entity_name || this.pageInfo.fullEntity;
+      this.formEntityType = 'add';
+      this.formDefaultData = { parent_id: parent.id };
+      this.showForm = true;
+    }, 0);
   }
 
   getRecursiveIds(node: any): number[] {
@@ -344,27 +329,179 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     return ids;
   }
 
-  async deleteSingleItem(id: number) {
-    const payload = {
-      action: ['update'],
-      table: [this.pageInfo.ListQuery.primary_table],
-      table_mapping: ['table1'],
-      data: {
-        table1: [{ status_id: 3, deleted_at: 'now()' }],
-      },
-      conditions: {
-        table1: [{ id: id }],
-      },
-    };
-    return this.gridApiService.executeRecords(payload).toPromise();
-  }
-
   onFormSuccess(event: any) {
-    this.toastr.success(this.translate.instant('record_saved_successfully'));
+    this.toastr.success(this.commonTranslate('record_saved_successfully'));
     this.loadTreeData();
     // Keep form open but maybe refresh it?
     if (this.formType === 'add') {
       this.showForm = false;
+    }
+  }
+
+  private async executeJob(inputObject: any): Promise<void> {
+    if (inputObject.record_info.id) {
+      let job_query_information = this.localStorageService.replaceUniqueId(inputObject.query_information, '$unique_id', inputObject.record_info.id);
+
+      const gparams = this.collectRecordGParams(inputObject.record_info);
+      Object.keys(gparams).forEach((key) => {
+        job_query_information = this.localStorageService.replaceUniqueId(job_query_information, `$${key}`, gparams[key]);
+      });
+
+      try {
+        const response = await lastValueFrom(this.gridApiService.executeTransaction(job_query_information));
+        if (!response.status) {
+          throw new Error(response.message);
+        }
+      } catch (error: any) {
+        throw error;
+      }
+    }
+  }
+
+  private collectRecordGParams(recordInfo: any): Record<string, any> {
+    const gparams: Record<string, any> = {};
+
+    if (!recordInfo || typeof recordInfo !== 'object') {
+      return gparams;
+    }
+
+    Object.keys(recordInfo).forEach((key) => {
+      if (key.startsWith('gparam_') && recordInfo[key] !== undefined && recordInfo[key] !== null) {
+        gparams[key] = recordInfo[key];
+      }
+    });
+
+    const aggregated = recordInfo.gparam;
+    if (typeof aggregated === 'string' && aggregated.trim()) {
+      try {
+        const decoded = decodeURIComponent(aggregated);
+        const parsed = JSON.parse(decoded);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          Object.keys(parsed).forEach((key) => {
+            if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+              gparams[key] = parsed[key];
+            }
+          });
+        }
+      } catch {
+        try {
+          const parsed = JSON.parse(aggregated);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.keys(parsed).forEach((key) => {
+              if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
+                gparams[key] = parsed[key];
+              }
+            });
+          }
+        } catch {}
+      }
+    }
+
+    return gparams;
+  }
+
+  commonTranslate(msg: any) {
+    return this.translate.instant(msg);
+  }
+
+  directDeleteItem(item: any) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      padding: '2em',
+    }).then(async (result) => {
+      if (result.value) {
+        try {
+          const jobResponse = await this.localStorageService.getMasterEntity({
+            record_info: item,
+            entity_name: this.masterInfo.children.delete.entity_name,
+            entity_type: this.masterInfo.children.delete.component_class_name,
+          });
+
+          if (jobResponse) {
+            await this.executeJob({ ...jobResponse, record_info: item });
+            Swal.fire({ title: 'Deleted!', text: 'Node has been deleted.', icon: 'success' });
+            this.deleteTriggred.emit();
+            this.loadTreeData(this.listQuery);
+          }
+        } catch (error: any) {
+          const key = 'error';
+          const errorMessage = this.commonTranslate(key);
+          this.toastr.error(errorMessage, error.message);
+        }
+      }
+    });
+  }
+
+  onDeleteNode(item: any) {
+    console.log('Delete action triggered for item:', item, this.masterInfo.children.delete);
+    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+      if (this.grid_records_delete == 'true') {
+        const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
+        this.commonService.procedureCall(procedureParams).subscribe({
+          next: (response: { code: number; status: boolean; data: any; message: string }) => {
+            if (response.code === 200 && response.status && response.data) {
+              const res = response.data?.[0]?.result || [];
+
+              if (Object.keys(res).length > 0) {
+                let htmlInput =
+                  `
+                    <span>` +
+                  this.commonTranslate('config_delete_msg_0') +
+                  `</span><br><br>
+                    <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                    <thead>
+                      <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px;">` +
+                  this.commonTranslate('config_delete_msg_1') +
+                  `</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">` +
+                  this.commonTranslate('config_delete_msg_2') +
+                  `</th>
+                      </tr> </thead><tbody>
+                  `;
+
+                Object.entries(res).forEach(([key, value]) => {
+                  htmlInput += `
+                      <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${key}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${value}</td>
+                      </tr>
+                    `;
+                });
+
+                htmlInput += `</tbody></table>`;
+
+                Swal.fire({
+                  title: `<span style="color: orange;">` + this.commonTranslate('config_delete_msg_3') + `!</span>`,
+                  html: htmlInput,
+                  customClass: {
+                    title: 'swal-title',
+                  },
+                });
+              } else {
+                this.directDeleteItem(item);
+              }
+            } else {
+              const key = 'error';
+              const errorMessage = this.commonTranslate(key);
+              this.toastr.error(errorMessage, 'Error');
+            }
+          },
+          error: (error) => {
+            console.error('Error fetching data:', error);
+            //this.loading = false;
+          },
+          complete: () => {
+            //this.loading = false;
+          },
+        });
+      } else {
+        this.directDeleteItem(item);
+      }
     }
   }
 }

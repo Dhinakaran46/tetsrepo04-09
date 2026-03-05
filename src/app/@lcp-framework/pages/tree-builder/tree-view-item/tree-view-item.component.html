@@ -1,11 +1,11 @@
 <li class="py-1">
   <div
-    class="flex items-center group rounded-md px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+    class="group flex cursor-pointer items-center rounded-md px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
     [class.bg-primary-light]="selectedNodeUuid === item.uuid"
     (click)="onSelect(item)"
   >
     <!-- Expand/Collapse Icon -->
-    <div class="w-6 flex items-center justify-center cursor-pointer" (click)="$event.stopPropagation(); toggleTreeview(item.id)">
+    <div class="flex w-6 cursor-pointer items-center justify-center" (click)="$event.stopPropagation(); toggleTreeview(item.id)">
       <i
         *ngIf="item.children && item.children.length > 0"
         class="fa-solid"
@@ -15,20 +15,23 @@
     </div>
 
     <!-- Folder/File Icon -->
-    <i class="fa-solid text-primary mr-2" [class.fa-folder]="item.children && item.children.length > 0" [class.fa-file]="!item.children || item.children.length === 0"></i>
+    <i
+      class="fa-solid mr-2 text-primary"
+      [class.fa-folder]="item.children && item.children.length > 0"
+      [class.fa-file]="!item.children || item.children.length === 0"
+    ></i>
 
     <!-- Node Name -->
     <span class="flex-grow text-sm font-medium">
       {{ item.name | translate }}
-      <span *ngIf="item.order_no !== null" class="ml-2 text-xs text-gray-400">({{ item.order_no }})</span>
     </span>
 
     <!-- Actions (Visible on Hover or if Selected) -->
-    <div class="hidden group-hover:flex items-center space-x-2 ml-2">
+    <div class="ml-2 hidden items-center space-x-2 group-hover:flex">
       <button
         *ngIf="permissions.create"
         type="button"
-        class="text-primary hover:text-primary-dark p-1"
+        class="hover:text-primary-dark p-1 text-primary"
         (click)="onAddChild($event, item)"
         title="{{ 'add_child' | translate }}"
       >
@@ -37,7 +40,7 @@
       <button
         *ngIf="permissions.delete"
         type="button"
-        class="text-danger hover:text-danger-dark p-1"
+        class="hover:text-danger-dark p-1 text-danger"
         (click)="onDelete($event, item)"
         title="{{ 'delete' | translate }}"
       >

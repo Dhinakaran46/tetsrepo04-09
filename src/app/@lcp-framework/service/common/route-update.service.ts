@@ -445,6 +445,10 @@ export class RouteUpdateService {
                   reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
                 },
                 children: children,
+                additionalData: {
+                  primary_table: routeData.primary_table,
+                  entity_id: routeData.entity_id,
+                },
               },
               defaultPermission: permissionListJSON[viewPermissionKey] || false,
               defaultKey: viewPermissionKey,
