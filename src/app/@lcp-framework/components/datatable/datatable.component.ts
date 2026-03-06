@@ -36,6 +36,7 @@ import { LoaderComponent } from '../loader/loader.component';
 import { AppendToBodyDirective } from './append-to-body.directive';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
+import { StaticPageComponent } from '../../pages/static-page/static-page.component';
 
 interface SearchCondition {
   id: string;
@@ -68,7 +69,7 @@ interface FilterCondition {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective, StaticPageComponent],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -124,6 +125,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   selectedColumn = '';
   searchCondition: string = 'contains';
   @Input() selectedItems: any[] = [];
+  @Input() headerStaticEntityName: string = '';
+  @Input() footerStaticEntityName: string = '';
+  @Input() staticPageUuid: string | null = null;
+  @Input() staticPageGridParams: any = null;
 
   totalPages: number = 1;
   filteredItems: any[] = [];
@@ -134,6 +139,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   isMenuOpen = false;
   filterCondition: any = true;
   filterConditions: Array<FilterCondition> = [];
+  appliedFilterCondition: any = true;
+  appliedFilterConditions: Array<FilterCondition> = [];
   selectedColumnType: any = 1;
   currentSearchConditions: any = [];
   field_types = commonConfig.field_types;
@@ -177,9 +184,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       case 'is_not_null':
         return 'IS NOT NULL';
       case 'in':
-        return 'IN';
+        return 'In';
       case 'not_in':
-        return 'NOT IN';
+        return 'Not In';
       default:
         return condition;
     }
@@ -251,6 +258,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   loadingpopup = false;
   noPopupPermission = false;
 
+  show_column_search = false;
+  show_common_search = false;
   constructor(
     private translate: TranslateService,
     private gridApiService: GridApiService,
@@ -265,6 +274,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sanitizer: DomSanitizer
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
+    console.log(this.config);
+    this.show_column_search = this.config.show_column_search == 'true' && this.config.show_column_search;
+    this.show_common_search = this.config.show_common_search == 'true' && this.config.show_common_search;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
@@ -841,16 +853,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
-    if (this.isMenuOpen && this.filterConditions.length == 0) {
-      this.addCondition();
+    if (this.isMenuOpen) {
+      this.syncDraftFiltersFromApplied();
     }
   }
 
   openAdvancedFilterMenu() {
     this.isMenuOpen = true;
-    if (this.filterConditions.length == 0) {
-      this.addCondition();
-    }
+    this.syncDraftFiltersFromApplied();
   }
 
   addCondition() {
@@ -888,7 +898,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   removeAppliedFilter(index: number, event?: Event) {
     event?.stopPropagation();
+    this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
     this.filterConditions.splice(index, 1);
+    this.filterCondition = this.appliedFilterCondition;
     this.applyFilters();
   }
 
@@ -929,11 +941,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return !!condition?.field && (this.isNoValueOperator(condition.operator) || condition.value.trim() !== '' || condition.enum_values.length > 0);
   }
 
-  getAppliedAdvancedFilterIndexes(): number[] {
-    return this.filterConditions
-      .map((condition, index) => ({ condition, index }))
-      .filter(({ condition }) => this.isAdvancedFilterApplied(condition))
-      .map(({ index }) => index);
+  getAppliedAdvancedFilters(): Array<FilterCondition> {
+    return this.appliedFilterConditions.filter((condition) => this.isAdvancedFilterApplied(condition));
+  }
+
+  onAdvancedFilterValueEnter(event: Event): void {
+    event.preventDefault();
+    if (this.isApplyButtonEnabled()) {
+      this.applyFilters();
+    }
   }
 
   formatDateTime(dateTime: any) {
@@ -998,6 +1014,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
   applyFilters() {
     this.removeEmptyFilters();
+    this.appliedFilterCondition = this.filterCondition;
+    this.appliedFilterConditions = this.cloneFilterConditions(this.filterConditions);
     this.isMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
@@ -1154,14 +1172,34 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   getNonEmptyFilterCount(): number {
-    return this.filterConditions.filter((filter) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0)
-      .length;
+    return this.getAppliedAdvancedFilters().length;
   }
 
   private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter(
       (filter: any) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0
     );
+  }
+
+  private cloneFilterCondition(condition: FilterCondition): FilterCondition {
+    return {
+      ...condition,
+      enum_values: [...(condition.enum_values || [])],
+      availableOperators: [...(condition.availableOperators || [])],
+      enumValueOptions: [...(condition.enumValueOptions || [])],
+    };
+  }
+
+  private cloneFilterConditions(conditions: Array<FilterCondition>): Array<FilterCondition> {
+    return conditions.map((condition) => this.cloneFilterCondition(condition));
+  }
+
+  private syncDraftFiltersFromApplied(): void {
+    this.filterCondition = this.appliedFilterCondition;
+    this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
+    if (this.filterConditions.length == 0) {
+      this.addCondition();
+    }
   }
   // Check if the operator doesn't require a value (is_empty, is_not_empty, is_null, is_not_null)
   isNoValueOperator(operator: string): boolean {
@@ -1174,6 +1212,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   cancelFilters() {
     this.isMenuOpen = false;
+    this.filterCondition = this.appliedFilterCondition;
+    this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
   }
 
   /* advanced search filter functions */

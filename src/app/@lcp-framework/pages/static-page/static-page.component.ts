@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { SafeHtmlPipe } from '../../pipes/safehtml/safe-html.pipe';
 import * as Handlebars from 'handlebars';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -23,7 +23,7 @@ import { TimezoneService } from '../../service/common/timezone.service';
   styleUrl: './static-page.component.scss',
   animations: [slideDownUp],
 })
-export class StaticPageComponent {
+export class StaticPageComponent implements OnChanges {
   currentAccordion: string = 'home';
   currentTab: string = 'home';
 
@@ -40,9 +40,11 @@ export class StaticPageComponent {
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
   @Input() gridParams!: any;
+  @Input() keyword: string = '';
   @Output() closeModal = new EventEmitter<void>();
 
   private imageDelegationAttached = false;
+  private lastLoadSignature: string = '';
 
   viewer = {
     open: false,
@@ -207,11 +209,11 @@ export class StaticPageComponent {
 
   setTab(tab: string) {
     this.currentTab = tab;
-    this.loadData();
+    this.requestLoadData();
   }
   setAccordion(index: any) {
     this.currentAccordion = index;
-    this.loadData();
+    this.requestLoadData();
   }
   attachEventListeners() {
     const tabLinks = document.querySelectorAll('a[data-tab]');
@@ -239,6 +241,7 @@ export class StaticPageComponent {
       this.route.paramMap.subscribe((params) => {
         this.unique_id = params.get('id') || params.get('uuid');
         this.collectRouteGParams();
+        this.requestLoadData();
       });
     }
     if (this.uuid) {
@@ -261,6 +264,45 @@ export class StaticPageComponent {
     }
 
     this.initStore();
+    if (this.entity_name) {
+      this.requestLoadData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['uuid']) {
+      this.unique_id = this.uuid || this.route.snapshot.paramMap.get('id') || this.route.snapshot.paramMap.get('uuid');
+    }
+
+    if (changes['entityName'] && this.entityName) {
+      this.entity_name = this.entityName;
+      const translateTitle = this.translate.instant(this.entity_name);
+      this.titleService.setTitle(translateTitle);
+    }
+
+    if ((changes['entityName'] || changes['uuid'] || changes['gridParams']) && this.entity_name) {
+      this.requestLoadData();
+    }
+  }
+
+  private requestLoadData() {
+    if (!this.entity_name) {
+      return;
+    }
+
+    const currentSignature = JSON.stringify({
+      entity_name: this.entity_name,
+      unique_id: this.unique_id || null,
+      gridParams: this.gridParams || null,
+      currentTab: this.currentTab,
+      currentAccordion: this.currentAccordion,
+    });
+
+    if (currentSignature === this.lastLoadSignature) {
+      return;
+    }
+
+    this.lastLoadSignature = currentSignature;
     this.loadData();
   }
 

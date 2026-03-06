@@ -171,6 +171,46 @@
             </div>
           </div>
 
+          <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+            <div class="mt-0">
+              <label for="header_entity_id" class="mb-2 block font-medium">Header Entity</label>
+              <select
+                id="header_entity_id"
+                formControlName="header_entity_id"
+                class="form-select w-full"
+                appDynamicFontSize="body"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('header_entity_id') }"
+              >
+                <option value="">{{ 'select_any' | translate }}</option>
+                <ng-container *ngFor="let entity of staticPageEntities">
+                  <option [value]="entity.value">{{ entity.label }}</option>
+                </ng-container>
+              </select>
+              <div *ngIf="isFieldInvalid('header_entity_id')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('header_entity_id') }}
+              </div>
+            </div>
+
+            <div class="mt-0">
+              <label for="footer_entity_id" class="mb-2 block font-medium">Footer Entity</label>
+              <select
+                id="footer_entity_id"
+                formControlName="footer_entity_id"
+                class="form-select w-full"
+                appDynamicFontSize="body"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('footer_entity_id') }"
+              >
+                <option value="">{{ 'select_any' | translate }}</option>
+                <ng-container *ngFor="let entity of staticPageEntities">
+                  <option [value]="entity.value">{{ entity.label }}</option>
+                </ng-container>
+              </select>
+              <div *ngIf="isFieldInvalid('footer_entity_id')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('footer_entity_id') }}
+              </div>
+            </div>
+          </ng-container>
+
           <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE">
             <div class="mt-0">
               <label for="draftMode" class="required-mark mb-2 block font-medium">{{ 'form_label_draft_mode' | translate }}</label>
