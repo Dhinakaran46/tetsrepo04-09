@@ -258,8 +258,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   loadingpopup = false;
   noPopupPermission = false;
 
-  show_column_search = false;
-  show_common_search = false;
+  show_column_search_keys = false;
+  show_common_search_keys = false;
   constructor(
     private translate: TranslateService,
     private gridApiService: GridApiService,
@@ -275,8 +275,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
     console.log(this.config);
-    this.show_column_search = this.config.show_column_search == 'true' && this.config.show_column_search;
-    this.show_common_search = this.config.show_common_search == 'true' && this.config.show_common_search;
+    this.show_column_search_keys = this.config.show_column_search_keys == 'true' && this.config.show_column_search_keys;
+    this.show_common_search_keys = this.config.show_common_search_keys == 'true' && this.config.show_common_search_keys;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
