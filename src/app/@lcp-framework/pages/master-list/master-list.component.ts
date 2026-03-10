@@ -647,6 +647,7 @@ export class MasterListComponent implements OnChanges {
       } else {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
+        query.start_index = 0;
         const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
         let listParams = this.localStorageService.replaceUniqueId(
           this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
@@ -845,8 +846,8 @@ export class MasterListComponent implements OnChanges {
       (response) => {
         if (response.status && response.code === 200) {
           this.entities = response.data?.entities || [];
-          this.headerStaticEntityName = response.data?.entities.header_entity_id;
-          this.footerStaticEntityName = response.data?.entities.footer_entity_id;
+          this.headerStaticEntityName = response.data?.entities?.header_entity_id;
+          this.footerStaticEntityName = response.data?.entities?.footer_entity_id;
 
           if (response.data.headers) {
             if (this.headercolumns.length == 0) {

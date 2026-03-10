@@ -55,6 +55,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   formEntityName: string = '';
   formEntityType: string = '';
   formDefaultData: any = {};
+  defaultFormModel: any = {};
 
   permissions: any = {
     create: false,
@@ -112,11 +113,13 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     this.config = JSON.parse(this.localStorageService.getData('config'));
     this.route.data.pipe(takeUntil(this.destroy$)).subscribe((data) => {
       this.pageInfo = data['pageInfo'];
-      console.log('Page Info from Route Data:', this.pageInfo);
       if (this.pageInfo) {
         this.permissions = this.pageInfo.permissions;
         this.EntityName = this.pageInfo.fullEntity;
         this.primmaryTable = this?.pageInfo?.additionalData?.primary_table || null;
+        if(this.pageInfo?.children?.['add']?.entity_name) {
+          this.setFormDefaultData(this.pageInfo?.children?.['add']?.entity_name);
+        }
       }
     });
   }
@@ -131,6 +134,50 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       this.setupPageInfo(this.pageInfo, defaultPermission);
     }
   }
+
+    private parseJSONField(value: any) {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch (error) {
+      console.error('JSON Parsing Error:', error);
+      return value;
+    }
+  }
+
+  private setFormDefaultData(entity_name: string) {
+    const listParams = {
+      company_id: 1,
+      print_query: false,
+      primary_table: 'master_entities',
+      start_index: 0,
+      limit_range: 1,
+      sort_columns: [['master_entities.id', 'desc']],
+      select_columns: [['master_entities.form_information']],
+      search_all: [
+        { column_name: 'master_entities.entity_name', operator: '=', value: entity_name },
+        { column_name: 'master_entities.entity_type', operator: '=', value: 'form_builder_module' },
+        { column_name: 'master_entities.status_id', operator: '=', value: '1' },
+      ],
+    };
+
+    this.gridApiService.getAllList(listParams).subscribe(
+      (response) => {
+        if (response.status && response.data?.records?.length > 0) {
+          let formEntity = response.data.records[0];
+          this.defaultFormModel = this.parseJSONField(formEntity.form_information)?.model || {};
+        } else {
+          this.toastr.error('Invalid entity details given.');
+
+        }
+      },
+      (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
 
   setupPageInfo(pageInfo: any, defaultPermission: any) {
     this.userInfo = JSON.parse(this.localStorageService.getData('user_data'));
@@ -232,7 +279,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       payload.attached_policies = this.attachedPolicies;
     }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
-    console.log('Final Query Payload for Tree Data:', query);
+
     this.gridApiService.getAllRecords(query).subscribe({
       next: (res: any) => {
         if (res.code === 200 && res.status) {
@@ -285,6 +332,26 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     }
   }
 
+ setParentId(obj: any, parentId: any = null) {
+  if (typeof obj !== "object" || obj === null) return;
+
+  for (const key in obj) {
+    const value = obj[key];
+
+    if (typeof value === "object" && value !== null) {
+
+      // set parent_id if exists
+      if ("parent_id" in value) {
+        value.parent_id = parentId;
+      }
+
+      // recursive call
+      this.setParentId(value, parentId);
+    }
+  }
+
+  return obj;
+}
   onAddRoot() {
     if (!this.permissions.create) {
       this.toastr.warning(this.commonTranslate('no_permission_create'));
@@ -314,7 +381,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       this.formUuid = null;
       this.formEntityName = this.pageInfo.children?.['add']?.entity_name || this.pageInfo.fullEntity;
       this.formEntityType = 'add';
-      this.formDefaultData = { parent_id: parent.id };
+      this.formDefaultData = this.setParentId(this.defaultFormModel, parent.id);
       this.showForm = true;
     }, 0);
   }
@@ -426,6 +493,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
             Swal.fire({ title: 'Deleted!', text: 'Node has been deleted.', icon: 'success' });
             this.deleteTriggred.emit();
             this.loadTreeData(this.listQuery);
+            this.showForm = false;
           }
         } catch (error: any) {
           const key = 'error';
@@ -437,7 +505,6 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   onDeleteNode(item: any) {
-    console.log('Delete action triggered for item:', item, this.masterInfo.children.delete);
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };

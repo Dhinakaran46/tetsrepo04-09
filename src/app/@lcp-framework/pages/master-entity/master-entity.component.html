@@ -108,6 +108,21 @@
                 </ng-select>
               </div>
             </div>
+            <div class="mt-0">
+              <label for="exportTemplateFileName" class="required-mark mb-2 block font-medium">{{ 'export_template_file_name' | translate }}</label>
+              <input
+                id="exportTemplateFileName"
+                type="text"
+                formControlName="exportTemplateFileName"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'export_template_file_name_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('exportTemplateFileName') }"
+              />
+              <div *ngIf="isFieldInvalid('exportTemplateFileName')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('exportTemplateFileName') }}
+              </div>
+            </div>
           </ng-container>
 
           <ng-container
