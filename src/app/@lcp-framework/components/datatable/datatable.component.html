@@ -319,6 +319,24 @@
             </button>
           </div>
 
+          <div class="flex flex-wrap items-center gap-2" *ngIf="shouldShowViewButtons()">
+            <button
+              type="button"
+              (click)="saveViewConfiguration()"
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold text-success dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-floppy-disk"></i>&nbsp;Save View
+            </button>
+
+            <button
+              type="button"
+              (click)="resetViewConfiguration()"
+              class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold text-danger dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-rotate-left"></i>&nbsp;Reset
+            </button>
+          </div>
+
           <!-- @if(isSchemaChunks) {
           <div class="p-2">
             <div class="align-items-center mb-3 flex justify-end gap-2">

@@ -103,7 +103,7 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
     },
   };
 
-  commonSearchQuery:any = {};
+  commonSearchQuery: any = {};
 
   isRunning: boolean = false;
   cronStatus: any;
@@ -130,14 +130,13 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    
     this.getCronJobs();
   }
 
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    
+
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
@@ -171,13 +170,11 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {}
 
-
   getCronJobs() {
     this.gridApiService.getCronJobs().subscribe((response: any) => {
       if (response.status) {
         this.cronStatus = response.data.cron_status?.jobs || {};
         this.isRunning = response.data.cron_status?.isRunning;
-        
       }
     });
   }
@@ -244,8 +241,7 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
         is_searchable: 'true',
         is_grid_column: 'true',
       },
-     
-     
+
       {
         header: 'cron_status',
         clause_type: 'where',
@@ -281,7 +277,7 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
 
   setDefaultQuery() {
     this.defaultQuery = {
-      cte:'WITH active_users AS ( SELECT username, status_id FROM users WHERE status_id = 3 )',
+      cte: 'WITH active_users AS ( SELECT username, status_id FROM users WHERE status_id = 3 )',
       print_query: true,
       company_id: 1,
       primary_table: 'scheduled_jobs',
@@ -333,7 +329,9 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.listQuery.sort_columns = [[this.column.field_value, this.column.sortDirection]];
+    const sortColumns = Array.isArray(column?.sortColumns) ? column.sortColumns : [this.column];
+    this.listQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.field_value, col.sortDirection]);
+    if (column?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
@@ -365,7 +363,9 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
       } else {
         clonedListQuery.search_any = [...orgListQuery.search_any];
       }
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
       return;
     }
     if (havingConditions.length > 0) {
@@ -393,7 +393,9 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
 
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_any = [...clonedListQuery.search_any];
@@ -406,7 +408,9 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
 
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
     }
   }
   searchData(input: any) {
@@ -419,7 +423,9 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
 
         clonedListQuery.search_any = [];
         clonedListQuery.search_any = [...orgListQuery.search_any];
-        this.fetchData(clonedListQuery);
+        if (!input?.skipFetch) {
+          this.fetchData(clonedListQuery);
+        }
         return;
       }
 
@@ -437,7 +443,9 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
     }
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
-    this.fetchData(clonedListQuery);
+    if (!input?.skipFetch) {
+      this.fetchData(clonedListQuery);
+    }
   }
 
   exportTable(item: any) {
@@ -460,7 +468,7 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
           .subscribe(
             (response) => {
               if (response.status && response.code === 200) {
-                if (response.data.records ) {
+                if (response.data.records) {
                   const filteredData = this.filterAndTransformData(this.headercolumns, response.data.records);
                   if (item.type == 'pdf') {
                     this.exportService.exportToPDF(filteredData, export_download);
@@ -542,8 +550,6 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
   }
 
   fetchColumns() {
-    
-
     this.selectcolumns = [
       {
         field: 'S.No',
@@ -553,7 +559,7 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
         enable: false,
         field_type_id: 1,
       },
-      
+
       {
         field: 'Status',
         title: 'Status',
@@ -655,13 +661,10 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
             }
           });
 
-          
           // Processing records
           if (response.data.records) {
-            
             this.items = response.data.records.map((item: any, index: any) => {
-              
-             item.cron_status = this.cronStatus?.[item.id]?.status || 'stopped'
+              item.cron_status = this.cronStatus?.[item.id]?.status || 'stopped';
 
               const formattedItem = { ...item };
               for (const key in formattedItem) {
@@ -738,7 +741,7 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id, this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {
@@ -950,18 +953,20 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
     window.open(fullUrl, '_blank');
   }
 
-  onPageChange(event: { page: number; start_index: number }) {
+  onPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = event.page;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = this.resultsPerPage;
+    if (event?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
-  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
+  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = 1;
     this.resultsPerPage = event.resultsPerPage;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
+    if (event?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
@@ -993,8 +998,6 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
     });
   }
 
- 
-
   restartCronJobs() {
     this.gridApiService.restartCronJobs().subscribe((response: any) => {
       if (response.status) {
@@ -1019,7 +1022,6 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
         this.loading = true;
         this.gridApiService.startCronJob(item.id).subscribe((response: any) => {
           if (response.status) {
-            
             this.cronStatus = response.data.jobs || {};
             this.isRunning = response.data.isRunning;
             this.fetchAttachedPolicies(this.listQuery);
@@ -1049,5 +1051,4 @@ export class CronSettingComponent implements AfterViewInit, OnDestroy {
       }
     });
   }
-  
 }

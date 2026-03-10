@@ -379,14 +379,18 @@ export class MasterListComponent implements OnChanges {
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.listQuery.sort_columns = [[this.column.header, this.column.sortDirection]];
+    const sortColumns = Array.isArray(column?.sortColumns) ? column.sortColumns : [this.column];
+    this.listQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.header, col.sortDirection]);
+    if (column?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
   previewSortColumn(previewColumn: any) {
     this.previewColumn = previewColumn;
     this.previewListQuery.limit_range = this.previewResultsPerPage;
-    this.previewListQuery.sort_columns = [[this.previewColumn.header, this.previewColumn.sortDirection]];
+    const sortColumns = Array.isArray(previewColumn?.sortColumns) ? previewColumn.sortColumns : [this.previewColumn];
+    this.previewListQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.header, col.sortDirection]);
+    if (previewColumn?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);
   }
 
@@ -431,7 +435,9 @@ export class MasterListComponent implements OnChanges {
       } else {
         clonedListQuery.search_any = [...orgListQuery.search_any];
       }
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
       return;
     }
 
@@ -475,7 +481,9 @@ export class MasterListComponent implements OnChanges {
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
 
-    this.fetchData(clonedListQuery);
+    if (!data?.skipFetch) {
+      this.fetchData(clonedListQuery);
+    }
   }
 
   previewAdvancedSearchData(data: any) {
@@ -502,7 +510,9 @@ export class MasterListComponent implements OnChanges {
       } else {
         previewClonedListQuery.search_any = [...orgListQuery.search_any];
       }
-      this.previewFetchData(previewClonedListQuery);
+      if (!data?.skipFetch) {
+        this.previewFetchData(previewClonedListQuery);
+      }
       return;
     }
     if (havingConditions.length > 0) {
@@ -523,7 +533,9 @@ export class MasterListComponent implements OnChanges {
       previewClonedListQuery.start_index = 0;
       this.previewCurrentPage = 1;
 
-      this.previewFetchData(previewClonedListQuery);
+      if (!data?.skipFetch) {
+        this.previewFetchData(previewClonedListQuery);
+      }
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         previewClonedListQuery.search_any = [...previewClonedListQuery.search_any];
@@ -533,7 +545,9 @@ export class MasterListComponent implements OnChanges {
       previewClonedListQuery.start_index = 0;
       this.previewCurrentPage = 1;
 
-      this.previewFetchData(previewClonedListQuery);
+      if (!data?.skipFetch) {
+        this.previewFetchData(previewClonedListQuery);
+      }
     }
   }
 
@@ -585,7 +599,9 @@ export class MasterListComponent implements OnChanges {
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
-    this.fetchData(clonedListQuery);
+    if (!input?.skipFetch) {
+      this.fetchData(clonedListQuery);
+    }
   }
 
   previewSearchData(input: any) {
@@ -630,7 +646,9 @@ export class MasterListComponent implements OnChanges {
     clonedPreviewListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
-    this.previewFetchData(clonedPreviewListQuery);
+    if (!input?.skipFetch) {
+      this.previewFetchData(clonedPreviewListQuery);
+    }
   }
 
   exportTable(item: any) {
@@ -1943,33 +1961,37 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  onPageChange(event: { page: number; start_index: number }) {
+  onPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = event.page;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = this.resultsPerPage;
+    if (event?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
-  previewOnPageChange(event: { page: number; start_index: number }) {
+  previewOnPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
     this.previewCurrentPage = event.page;
     this.previewListQuery.start_index = event.start_index;
     this.previewListQuery.limit_range = this.previewResultsPerPage;
+    if (event?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);
   }
 
-  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
+  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = 1;
     this.resultsPerPage = event.resultsPerPage;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
+    if (event?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
-  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
+  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.previewCurrentPage = 1;
     this.previewResultsPerPage = event.resultsPerPage;
     this.previewListQuery.start_index = event.start_index;
     this.previewListQuery.limit_range = event.resultsPerPage;
+    if (event?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);
   }
 

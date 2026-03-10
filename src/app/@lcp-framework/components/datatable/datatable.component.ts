@@ -66,6 +66,30 @@ interface FilterCondition {
   autocompleteSearchText: string;
 }
 
+interface GridViewState {
+  commonSearch: string;
+  searchCondition: string;
+  selectedSearchColumns: string[];
+  sortColumns: Array<{ key: string; direction: 'asc' | 'desc' }>;
+  hiddenColumns: string[];
+  resultsPerPage: number;
+  currentPage: number;
+  filterCondition: boolean;
+  appliedFilterConditions: Array<{
+    field: string;
+    operator: string;
+    value: string;
+    clause_type: string;
+    enum_values: any[];
+  }>;
+}
+
+interface UserSearchConfiguration {
+  entity_slug: string;
+  search_values: GridViewState;
+  updated_at: string;
+}
+
 @Component({
   selector: 'app-datatable',
   standalone: true,
@@ -108,9 +132,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
   @Output() customAction = new EventEmitter<any>();
-  @Output() pageChange = new EventEmitter<{ page: number; start_index: number }>();
+  @Output() pageChange = new EventEmitter<{ page: number; start_index: number; skipFetch?: boolean }>();
   @Output() exportType = new EventEmitter<{ type: string }>();
-  @Output() resultsPerPageChange = new EventEmitter<{ resultsPerPage: number; start_index: number }>();
+  @Output() resultsPerPageChange = new EventEmitter<{ resultsPerPage: number; start_index: number; skipFetch?: boolean }>();
   @Output() columnSort = new EventEmitter<any>();
   @Output() searchQuery = new EventEmitter<any>();
   @Output() advancedSearchQuery = new EventEmitter<any>();
@@ -260,6 +284,31 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   show_column_search_keys = false;
   show_common_search_keys = false;
+  private activeSortOrder: string[] = [];
+  hasSavedViewConfiguration: boolean = false;
+  private appliedSavedViewSlug: string | null = null;
+  private upsert_saved_view_json_schema: any = {
+    print_query: true,
+    action: ['hard_delete', 'insert'],
+    table: ['user_search_configurations', 'user_search_configurations'],
+    table_mapping: ['table1', 'table2'],
+    data: {
+      table2: [],
+    },
+    conditions: {
+      table1: [],
+    },
+  };
+
+  private delete_saved_view_json_schema: any = {
+    print_query: true,
+    action: ['hard_delete'],
+    table: ['user_search_configurations'],
+    table_mapping: ['table1'],
+    conditions: {
+      table1: [],
+    },
+  };
   constructor(
     private translate: TranslateService,
     private gridApiService: GridApiService,
@@ -627,6 +676,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
           this.cdr.detectChanges();
         }
       });
+
+    this.hasSavedViewConfiguration = this.getSavedViewConfiguration() !== null;
+    this.tryApplySavedView();
   }
 
   /* advanced search filter functions */
@@ -1261,8 +1313,355 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
               };
             }
           });
+
+        this.tryApplySavedView();
       });
     }
+
+    this.hasSavedViewConfiguration = this.getSavedViewConfiguration() !== null;
+    this.tryApplySavedView();
+  }
+
+  private getDefaultResultsPerPage(): number {
+    const defaultValue = Number(this.config?.grid_pagination_default);
+    return Number.isFinite(defaultValue) && defaultValue > 0 ? defaultValue : 10;
+  }
+
+  private getEntitySlug(): string {
+    return String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || 'default_entity');
+  }
+
+  private parseJsonSafe(value: any, fallback: any = null): any {
+    if (!value) return fallback;
+    if (typeof value === 'object') return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private getUserDataObject(): any {
+    const userDataRaw = this.localstore.getData('user_data');
+    return this.parseJsonSafe(userDataRaw, { main: {} }) || { main: {} };
+  }
+
+  private persistUserDataObject(userData: any): void {
+    const isEncrypted = this.config?.encrypt_local_storage === 'true';
+    const payload = JSON.stringify(userData);
+    if (isEncrypted) {
+      this.localstore.storeDataEncrypted('user_data', payload);
+    } else {
+      this.localstore.storeData('user_data', payload);
+    }
+    this.user_info = userData;
+  }
+
+  private getUserSearchConfigurations(): UserSearchConfiguration[] {
+    const userData = this.getUserDataObject();
+    const configs = userData?.main?.user_search_configurations;
+    return Array.isArray(configs) ? configs : [];
+  }
+
+  private setUserSearchConfigurations(configs: UserSearchConfiguration[]): void {
+    const userData = this.getUserDataObject();
+    userData.main = userData.main || {};
+    userData.main.user_search_configurations = configs;
+    this.persistUserDataObject(userData);
+  }
+
+  private buildCurrentGridViewState(): GridViewState {
+    const sortColumns = this.getSortedColumnsByPriority().map((col: any) => ({
+      key: this.getColumnUniqueKey(col),
+      direction: col.sortDirection as 'asc' | 'desc',
+    }));
+
+    const hiddenColumns = this.headercolumns
+      .filter((col: any) => col?.is_grid_column == 'true' && col?.colFilterHide)
+      .map((col: any) => this.getColumnUniqueKey(col));
+
+    const selectedSearchColumns = this.selectedColumns.map((column: any) => String(column?.field || ''));
+
+    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => ({
+      field: condition.field,
+      operator: condition.operator,
+      value: condition.value,
+      clause_type: condition.clause_type,
+      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
+    }));
+
+    return {
+      commonSearch: this.appliedCommonSearch || '',
+      searchCondition: this.searchCondition || 'contains',
+      selectedSearchColumns,
+      sortColumns,
+      hiddenColumns,
+      resultsPerPage: Number(this.resultsPerPage),
+      currentPage: Number(this.currentPage),
+      filterCondition: !!this.appliedFilterCondition,
+      appliedFilterConditions,
+    };
+  }
+
+  private hasActiveGridCustomizations(): boolean {
+    const state = this.buildCurrentGridViewState();
+    return !!(
+      state.commonSearch ||
+      state.selectedSearchColumns.length ||
+      state.sortColumns.length ||
+      state.hiddenColumns.length ||
+      state.appliedFilterConditions.length ||
+      state.searchCondition !== 'contains' ||
+      state.currentPage !== 1 ||
+      state.resultsPerPage !== this.getDefaultResultsPerPage()
+    );
+  }
+
+  shouldShowViewButtons(): boolean {
+    return this.hasActiveGridCustomizations() || this.hasSavedViewConfiguration;
+  }
+
+  private getSavedViewConfiguration(): UserSearchConfiguration | null {
+    const entitySlug = this.getEntitySlug();
+    const configs = this.getUserSearchConfigurations();
+    return configs.find((item: any) => item?.entity_slug === entitySlug || item?.key === entitySlug) || null;
+  }
+
+  saveViewConfiguration(): void {
+    const entity_slug = this.getEntitySlug();
+    const search_values = this.buildCurrentGridViewState();
+    const configs = this.getUserSearchConfigurations();
+    const updatedConfig: UserSearchConfiguration = {
+      entity_slug,
+      search_values,
+      updated_at: new Date().toISOString(),
+    };
+
+    const index = configs.findIndex((item: any) => item?.entity_slug === entity_slug || item?.key === entity_slug);
+    if (index >= 0) {
+      configs[index] = updatedConfig;
+    } else {
+      configs.push(updatedConfig);
+    }
+
+    this.setUserSearchConfigurations(configs);
+    this.persistSavedViewToDatabase(entity_slug, search_values);
+    this.hasSavedViewConfiguration = true;
+  }
+
+  resetViewConfiguration(): void {
+    const entitySlug = this.getEntitySlug();
+    const configs = this.getUserSearchConfigurations().filter((item: any) => item?.entity_slug !== entitySlug && item?.key !== entitySlug);
+    this.setUserSearchConfigurations(configs);
+    this.deleteSavedViewFromDatabase(entitySlug);
+    this.hasSavedViewConfiguration = false;
+    this.appliedSavedViewSlug = null;
+
+    this.search = '';
+    this.appliedCommonSearch = '';
+    this.isCommonSearchApplied = false;
+    this.searchCondition = 'contains';
+    this.selectedColumns = [];
+
+    this.filterCondition = true;
+    this.appliedFilterCondition = true;
+    this.filterConditions = [];
+    this.appliedFilterConditions = [];
+
+    this.activeSortOrder = [];
+    this.headercolumns.forEach((column: any) => {
+      column.sortDirection = '';
+      if (column.header !== 'table_column_sno') {
+        column.colFilterHide = false;
+      }
+    });
+
+    this.resultsPerPage = this.getDefaultResultsPerPage();
+    this.currentPage = 1;
+
+    const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
+    this.searchQuery.emit(emptySearch);
+    this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
+    this.columnSort.emit({ sortColumns: [], skipFetch: true });
+    this.resultsPerPageChange.emit({ resultsPerPage: this.resultsPerPage, start_index: 0, skipFetch: true });
+    this.pageChange.emit({ page: 1, start_index: 0 });
+
+    this.toastr.success('View reset successfully', 'Success');
+  }
+
+  private persistSavedViewToDatabase(entitySlug: string, searchValues: GridViewState): void {
+    const userData = this.getUserDataObject();
+    console.log(userData);
+    const userId = userData?.main?.id;
+    const companyId = userData?.main?.company_id;
+    console.log(companyId);
+
+    if (!userId) {
+      this.toastr.warning('Unable to save view in database for this user', 'Warning');
+      return;
+    }
+
+    this.upsert_saved_view_json_schema.conditions['table1'] = [
+      {
+        user_id: userId,
+        entity_slug: entitySlug,
+      },
+    ];
+
+    this.upsert_saved_view_json_schema.data['table2'] = [
+      {
+        user_id: userId,
+        //company_id: companyId,
+        entity_slug: entitySlug,
+        search_values: searchValues,
+        created_by: true,
+        created_at: true,
+        updated_by: true,
+        updated_at: true,
+      },
+    ];
+
+    this.gridApiService.executeRecords(this.upsert_saved_view_json_schema).subscribe({
+      next: (response: any) => {
+        if (response?.status && response?.code === 200) {
+          this.toastr.success('View saved in database successfully', 'Success');
+        } else {
+          this.toastr.error(response?.message || 'Failed to save view in database', 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error('Failed to save view in database', 'Error');
+      },
+    });
+  }
+
+  private deleteSavedViewFromDatabase(entitySlug: string): void {
+    const userData = this.getUserDataObject();
+    const userId = userData?.main?.id;
+
+    if (!userId) {
+      this.toastr.warning('Unable to reset saved view in database for this user', 'Warning');
+      return;
+    }
+
+    this.delete_saved_view_json_schema.conditions['table1'] = [
+      {
+        user_id: userId,
+        entity_slug: entitySlug,
+      },
+    ];
+
+    this.gridApiService.executeRecords(this.delete_saved_view_json_schema).subscribe({
+      next: (response: any) => {
+        if (response?.status && response?.code === 200) {
+          this.toastr.success('View reset in database successfully', 'Success');
+        } else {
+          this.toastr.error(response?.message || 'Failed to reset view in database', 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error('Failed to reset view in database', 'Error');
+      },
+    });
+  }
+
+  private tryApplySavedView(): void {
+    const savedConfig = this.getSavedViewConfiguration();
+    if (!savedConfig) return;
+
+    const state = (savedConfig as any).search_values || (savedConfig as any).state;
+    if (!state) return;
+
+    const currentSlug = this.getEntitySlug();
+    if (this.appliedSavedViewSlug === currentSlug) return;
+    if (!this.headercolumns?.length) return;
+
+    const selectedSearchColumns = state.selectedSearchColumns || [];
+    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) return;
+
+    this.appliedSavedViewSlug = currentSlug;
+    this.hasSavedViewConfiguration = true;
+
+    this.searchCondition = state.searchCondition || 'contains';
+
+    this.headercolumns.forEach((column: any) => {
+      const colKey = this.getColumnUniqueKey(column);
+      column.colFilterHide = (state.hiddenColumns || []).includes(colKey);
+      column.sortDirection = '';
+    });
+
+    this.activeSortOrder = [];
+    (state.sortColumns || []).forEach((sortItem: { key: string; direction: 'asc' | 'desc' }) => {
+      const column = this.headercolumns.find((col: any) => this.getColumnUniqueKey(col) === sortItem.key);
+      if (column && (sortItem.direction === 'asc' || sortItem.direction === 'desc')) {
+        column.sortDirection = sortItem.direction;
+        this.activeSortOrder.push(sortItem.key);
+      }
+    });
+
+    if (selectedSearchColumns.length > 0) {
+      this.selectedColumns = this.filteredColumns.filter((col: any) => selectedSearchColumns.includes(String(col?.field || '')));
+    } else {
+      this.selectedColumns = [];
+    }
+
+    const normalizedFilters: Array<FilterCondition> = (state.appliedFilterConditions || []).map((condition: any) => ({
+      field: condition.field || '',
+      operator: condition.operator || '',
+      value: condition.value || '',
+      clause_type: condition.clause_type || 'where',
+      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
+      availableOperators: this.getOperatorsForColumn(condition.field || ''),
+      inputType: this.getInputTypeForColumn(condition.field || ''),
+      isEnum: false,
+      enumType: '',
+      enumValueOptions: [],
+      autocompleteLoading: false,
+      autocompleteSearchText: '',
+    }));
+
+    this.filterCondition = state.filterCondition !== undefined ? !!state.filterCondition : true;
+    this.appliedFilterCondition = this.filterCondition;
+    this.filterConditions = this.cloneFilterConditions(normalizedFilters);
+    this.appliedFilterConditions = this.cloneFilterConditions(normalizedFilters);
+
+    this.resultsPerPage = Number(state.resultsPerPage) > 0 ? Number(state.resultsPerPage) : this.getDefaultResultsPerPage();
+    this.currentPage = Number(state.currentPage) > 0 ? Number(state.currentPage) : 1;
+
+    this.search = state.commonSearch || '';
+    this.appliedCommonSearch = this.search;
+    this.isCommonSearchApplied = this.search.length > 0;
+
+    if (this.search.length > 0) {
+      const { whereData, havingData } = this.buildCommonSearchPayload(this.search);
+      this.searchQuery.emit({ where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search }, skipFetch: true });
+    } else {
+      this.searchQuery.emit({ where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true });
+    }
+
+    if (this.appliedFilterConditions.length > 0) {
+      const condition = this.appliedFilterCondition ? 'AND' : 'OR';
+      const data = this.appliedFilterConditions.map((key: any) => ({
+        column_name: key.field,
+        operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
+        value: this.isNoValueOperator(key.operator)
+          ? this.getNoValueOperatorSQL(key.operator)
+          : key.enum_values?.length > 0
+          ? key.enum_values
+          : this.addWildcards(key.operator, key.value),
+        isAggregate: key?.clause_type === 'having',
+      }));
+      this.advancedSearchQuery.emit({ data, condition, skipFetch: true });
+    } else {
+      this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
+    }
+
+    this.columnSort.emit({ sortColumns: this.getSortedColumnsByPriority(), skipFetch: true });
+
+    this.resultsPerPageChange.emit({ resultsPerPage: Number(this.resultsPerPage), start_index: 0, skipFetch: true });
+
+    const start_index = (this.currentPage - 1) * Number(this.resultsPerPage);
+    this.pageChange.emit({ page: this.currentPage, start_index });
   }
 
   toggleColumnFilterHide(col: any) {
@@ -1442,19 +1841,38 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   get gridColumnCount(): number {
     return this.headercolumns.filter((column) => column.is_grid_column == 'true').length;
   }
+
+  private getColumnUniqueKey(column: any): string {
+    return String(column?.field_value ?? column?.field ?? column?.header ?? column?.title ?? '');
+  }
+
+  private getSortedColumnsByPriority(): any[] {
+    return this.activeSortOrder
+      .map((key) => this.headercolumns.find((col) => this.getColumnUniqueKey(col) === key && col.sortDirection))
+      .filter((col) => !!col);
+  }
+
   sortColumn(column: any) {
     if (column.is_grid_column == 'true' && column.is_sortable == 'true') {
-      // Reset sortDirection for all other columns
-      this.headercolumns.forEach((col) => {
-        if (col !== column) {
-          col.sortDirection = '';
+      const columnKey = this.getColumnUniqueKey(column);
+
+      if (!column.sortDirection) {
+        column.sortDirection = 'asc';
+        if (!this.activeSortOrder.includes(columnKey)) {
+          this.activeSortOrder.push(columnKey);
         }
-      });
+      } else if (column.sortDirection === 'asc') {
+        column.sortDirection = 'desc';
+        if (!this.activeSortOrder.includes(columnKey)) {
+          this.activeSortOrder.push(columnKey);
+        }
+      } else {
+        column.sortDirection = '';
+        this.activeSortOrder = this.activeSortOrder.filter((key) => key !== columnKey);
+      }
 
-      // Toggle current column sort direction
-      column.sortDirection = column.sortDirection === 'asc' ? 'desc' : 'asc';
-
-      this.columnSort.emit(column);
+      const sortedColumns = this.getSortedColumnsByPriority();
+      this.columnSort.emit({ ...column, sortColumns: sortedColumns });
     }
   }
 
