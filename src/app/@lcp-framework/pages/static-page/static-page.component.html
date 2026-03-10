@@ -1,31 +1,35 @@
-<div class="space-y-8">
-  <div class="grid grid-cols-1 gap-2 lg:grid-cols-1">
-    <div class="panel">
-      <div class="mb-5 flex items-center justify-between">
-        <h5 appDynamicFontSize="title" class="text-lg font-semibold dark:text-white-light">{{ entity_name | translate }}</h5>
+<ng-container *ngIf="keyword === 'plain'; else defaultStaticPageTemplate">
+  <div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
+</ng-container>
 
-        <button
-          *ngIf="!this.uuid && !isModal"
-          appDynamicFontSize="body"
-          type="button"
-          class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l"
-          (click)="location.back()"
-        >
-          {{ 'back' | translate }}
-        </button>
+<ng-template #defaultStaticPageTemplate>
+  <div class="space-y-8">
+    <div class="grid grid-cols-1 gap-2 lg:grid-cols-1">
+      <div class="panel">
+        <div class="mb-5 flex items-center justify-between">
+          <h5 appDynamicFontSize="title" class="static-page-content-title text-lg font-semibold dark:text-white-light">{{ entity_name | translate }}</h5>
 
-        <!--<button *ngIf=" isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
-          <i class="fa-solid fa-xmark"></i>
-        </button>-->
-      </div>
-      <div class="mb-5">
-        <div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
+          <button
+            *ngIf="!this.uuid && !isModal"
+            appDynamicFontSize="body"
+            type="button"
+            class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l"
+            (click)="location.back()"
+          >
+            {{ 'back' | translate }}
+          </button>
+
+          <!--<button *ngIf=" isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
+            <i class="fa-solid fa-xmark"></i>
+          </button>-->
+        </div>
+        <div class="mb-5">
+          <div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
-
+</ng-template>
 
 <!-- Image Viewer Modal -->
 <div *ngIf="viewer.open" class="fixed inset-0 z-[9999]">

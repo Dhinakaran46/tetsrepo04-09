@@ -191,6 +191,9 @@ export class MasterListComponent implements OnChanges {
   commonSearchQuery: any = {};
   grid_unique_id: any;
   popupComponentGridParams: any;
+  entities: any[] = [];
+  headerStaticEntityName: string = '';
+  footerStaticEntityName: string = '';
 
   constructor(
     private toastr: ToastrService,
@@ -714,11 +717,13 @@ export class MasterListComponent implements OnChanges {
         const translatedHeader = this.translate.instant(translationKey);
         if (header.field_type_id == '5') {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateOnly(record[header.header]);
+        } else if (header.field_type_id == '6') {
+          transformedRecord[translatedHeader] = this.timezoneService.transformTimeOnly(record[header.header]);
         } else if (header.field_type_id == '7') {
           transformedRecord[translatedHeader] = this.timezoneService.transformDateTime(record[header.header]);
-        } else if (header.header == 'status') {
+        } else if (header.header == 'status' && header.enum_values == null) {
           transformedRecord[translatedHeader] = this.getStatusTranslation(record[header.header]);
-        } else if (header.header == 'process_status') {
+        } else if (header.header == 'process_status' && header.enum_values == null) {
           transformedRecord[translatedHeader] = this.getProcessStatusTranslation(record[header.header]);
         } else {
           transformedRecord[translatedHeader] = record[header.header];
@@ -814,6 +819,7 @@ export class MasterListComponent implements OnChanges {
   fetchData(params: FetchDataParams) {
     this.gridloading = true;
     params.limit_range = this.resultsPerPage;
+    const effectiveUniqueId = this.selectedItemUuid || this.uniqueId || this.uuid || null;
     let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
       '$session_user_id',
@@ -822,10 +828,10 @@ export class MasterListComponent implements OnChanges {
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
+
     if (this.uuid) {
       payload.unique_id = this.uuid;
     }
-
     this.grid_unique_id = payload.unique_id;
 
     if (this.grid_params) {
@@ -838,6 +844,10 @@ export class MasterListComponent implements OnChanges {
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
+          this.entities = response.data?.entities || [];
+          this.headerStaticEntityName = response.data?.entities.header_entity_id;
+          this.footerStaticEntityName = response.data?.entities.footer_entity_id;
+
           if (response.data.headers) {
             if (this.headercolumns.length == 0) {
               const data = response.data.headers
@@ -901,12 +911,12 @@ export class MasterListComponent implements OnChanges {
 
             // Adding custom templates
             this.headercolumns = this.headercolumns.map((item: any) => {
-              if (item.header === 'status') {
+              if (item.header === 'status' && item.enum_values == null) {
                 return {
                   ...item,
                   customTemplate: this.statusTemplate,
                 };
-              } else if (item.header === 'process_status') {
+              } else if (item.header === 'process_status' && item.enum_values == null) {
                 return {
                   ...item,
                   customTemplate: this.processStatusTemplate,
@@ -950,6 +960,11 @@ export class MasterListComponent implements OnChanges {
                         if (transformedDate) {
                           formattedItem[key] = transformedDate;
                         }
+                      } else if (headerItem.field_type_id == 6) {
+                        const transformedDate = this.timezoneService.transformTimeOnly(formattedItem[key]);
+                        if (transformedDate) {
+                          formattedItem[key] = transformedDate;
+                        }
                       } else if (headerItem.field_type_id == 7) {
                         const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
                         if (transformedDate) {
@@ -974,6 +989,15 @@ export class MasterListComponent implements OnChanges {
                 Action: index + 1,
               };
             });
+
+            const selectedRecord = this.resolveRecordForStaticPageContext(response.data.records);
+            if (selectedRecord) {
+              if (!this.selectedItemUuid && selectedRecord.uuid) {
+                this.selectedItemUuid = selectedRecord.uuid;
+              }
+              this.popupComponentGridParams = this.extractGridParamsFromRecord(selectedRecord);
+            }
+
             this.totalItems = response.data.total_records;
             this.gridloading = false;
           } else {
@@ -982,6 +1006,9 @@ export class MasterListComponent implements OnChanges {
             this.gridloading = false;
           }
         } else {
+          this.entities = [];
+          this.headerStaticEntityName = '';
+          this.footerStaticEntityName = '';
           this.items = [];
           this.totalItems = 0;
           this.gridloading = false;
@@ -995,8 +1022,93 @@ export class MasterListComponent implements OnChanges {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
+        this.entities = [];
+        this.headerStaticEntityName = '';
+        this.footerStaticEntityName = '';
       }
     );
+  }
+
+  private resolveRecordForStaticPageContext(records: any[]): any | null {
+    if (!Array.isArray(records) || records.length === 0) {
+      return null;
+    }
+
+    if (this.selectedItemUuid) {
+      const selectedByState = records.find((record: any) => record?.uuid === this.selectedItemUuid);
+      if (selectedByState) {
+        return selectedByState;
+      }
+    }
+
+    const routeBasedUniqueId = this.uniqueId || this.uuid;
+    if (routeBasedUniqueId) {
+      const selectedByRoute = records.find((record: any) => record?.uuid === routeBasedUniqueId || record?.id == routeBasedUniqueId);
+      if (selectedByRoute) {
+        return selectedByRoute;
+      }
+    }
+
+    if (records.length === 1) {
+      return records[0];
+    }
+
+    return null;
+  }
+
+  private extractGridParamsFromRecord(record: any): any {
+    if (!record || typeof record !== 'object') {
+      return null;
+    }
+
+    const gridParams: any = {};
+    Object.keys(record).forEach((key) => {
+      if (key.startsWith('gparam_') && record[key] !== undefined && record[key] !== null) {
+        gridParams[`$${key}`] = record[key];
+      }
+    });
+
+    return Object.keys(gridParams).length ? gridParams : null;
+  }
+
+  private resolveStaticPageEntities(entities: any[]) {
+    if (!Array.isArray(entities) || entities.length === 0) {
+      this.headerStaticEntityName = '';
+      this.footerStaticEntityName = '';
+      return;
+    }
+
+    const currentEntityName = this.listQuery?.entity_name || this.entity_name || this.masterInfo?.ListQuery?.entity_name;
+    const currentEntity = entities.find(
+      (entity: any) =>
+        entity?.entity_name === currentEntityName ||
+        entity?.value === currentEntityName ||
+        entity?.name === currentEntityName ||
+        entity?.slug === currentEntityName
+    );
+
+    if (!currentEntity) {
+      this.headerStaticEntityName = '';
+      this.footerStaticEntityName = '';
+      return;
+    }
+
+    this.headerStaticEntityName = this.resolveEntityNameByIdentifier(entities, currentEntity?.header_entity_id);
+    console.log(this.headerStaticEntityName);
+    this.footerStaticEntityName = this.resolveEntityNameByIdentifier(entities, currentEntity?.footer_entity_id);
+  }
+
+  private resolveEntityNameByIdentifier(entities: any[], identifier: any): string {
+    if (!identifier) {
+      return '';
+    }
+
+    const entity = entities.find(
+      (item: any) =>
+        item?.id == identifier || item?.uuid == identifier || item?.entity_name == identifier || item?.value == identifier || item?.slug == identifier
+    );
+
+    return entity?.entity_name || entity?.value || '';
   }
 
   private async executeJob(inputObject: any): Promise<void> {
@@ -1258,12 +1370,12 @@ export class MasterListComponent implements OnChanges {
 
           // Adding custom templates
           this.previewHeaderColumns = this.previewHeaderColumns.map((item: any) => {
-            if (item.header === 'status') {
+            if (item.header === 'status' && item.enum_values == null) {
               return {
                 ...item,
                 customTemplate: this.statusTemplate,
               };
-            } else if (item.header === 'process_status') {
+            } else if (item.header === 'process_status' && item.enum_values == null) {
               return {
                 ...item,
                 customTemplate: this.processStatusTemplate,
@@ -1291,6 +1403,11 @@ export class MasterListComponent implements OnChanges {
                   if (headerItem.header === key) {
                     if (headerItem.field_type_id == 5) {
                       const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                      if (transformedDate) {
+                        formattedItem[key] = transformedDate;
+                      }
+                    } else if (headerItem.field_type_id == 6) {
+                      const transformedDate = this.timezoneService.transformTimeOnly(formattedItem[key]);
                       if (transformedDate) {
                         formattedItem[key] = transformedDate;
                       }

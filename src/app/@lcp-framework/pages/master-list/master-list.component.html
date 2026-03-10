@@ -32,6 +32,10 @@
     [unique_id]="uniqueId"
     (selectionChange)="onSelectionChange($event)"
     [selectedItems]="selectedItems"
+    [headerStaticEntityName]="headerStaticEntityName"
+    [footerStaticEntityName]="footerStaticEntityName"
+    [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
+    [staticPageGridParams]="popupComponentGridParams || grid_params"
   ></app-datatable>
 
   <ng-template #actionTemplate let-item>
@@ -445,6 +449,10 @@
             (advancedSearchQuery)="advancedSearchData($event)"
             (linkComponentClick)="onLinkComponentClick($event)"
             [unique_id]="uniqueId"
+            [headerStaticEntityName]="headerStaticEntityName"
+            [footerStaticEntityName]="footerStaticEntityName"
+            [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
+            [staticPageGridParams]="popupComponentGridParams || grid_params"
           >
           </app-datatable>
           <app-static-page

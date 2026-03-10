@@ -36,6 +36,7 @@ import { LoaderComponent } from '../loader/loader.component';
 import { AppendToBodyDirective } from './append-to-body.directive';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
+import { StaticPageComponent } from '../../pages/static-page/static-page.component';
 
 interface SearchCondition {
   id: string;
@@ -68,7 +69,7 @@ interface FilterCondition {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective, StaticPageComponent],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -118,10 +119,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   autocompleteSearchSubject = new Subject<string>();
 
   search: any = '';
+  appliedCommonSearch: string = '';
+  isCommonSearchApplied: boolean = false;
   selectedColumns: any[] = [];
   selectedColumn = '';
   searchCondition: string = 'contains';
   @Input() selectedItems: any[] = [];
+  @Input() headerStaticEntityName: string = '';
+  @Input() footerStaticEntityName: string = '';
+  @Input() staticPageUuid: string | null = null;
+  @Input() staticPageGridParams: any = null;
 
   totalPages: number = 1;
   filteredItems: any[] = [];
@@ -132,6 +139,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   isMenuOpen = false;
   filterCondition: any = true;
   filterConditions: Array<FilterCondition> = [];
+  appliedFilterCondition: any = true;
+  appliedFilterConditions: Array<FilterCondition> = [];
   selectedColumnType: any = 1;
   currentSearchConditions: any = [];
   field_types = commonConfig.field_types;
@@ -175,9 +184,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       case 'is_not_null':
         return 'IS NOT NULL';
       case 'in':
-        return 'IN';
+        return 'In';
       case 'not_in':
-        return 'NOT IN';
+        return 'Not In';
       default:
         return condition;
     }
@@ -249,6 +258,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   loadingpopup = false;
   noPopupPermission = false;
 
+  show_column_search_keys = false;
+  show_common_search_keys = false;
   constructor(
     private translate: TranslateService,
     private gridApiService: GridApiService,
@@ -263,6 +274,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sanitizer: DomSanitizer
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
+    console.log(this.config);
+    this.show_column_search_keys = this.config.show_column_search_keys == 'true' && this.config.show_column_search_keys;
+    this.show_common_search_keys = this.config.show_common_search_keys == 'true' && this.config.show_common_search_keys;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
@@ -279,8 +293,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   onEnumChange(selectedValues: any[], index: number) {
-    console.log('Selected enum values:', selectedValues);
-
     // If you still need select / deselect logic:
     const previous = this.previousSelections[index] || [];
 
@@ -640,18 +652,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   async getEnumValues(columnData: any, operator: string): Promise<{ label: any; value: any }[]> {
     if (!columnData) return [];
 
-    let enumObj = columnData?.enum_values ?? {};
-
-    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-      enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config?.[enumObj.config_key]) : {};
-
-      enumObj = enumObj;
-    }
+    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
 
     switch (enumObj?.type) {
       case 'master':
         if (enumObj?.value) {
           try {
+            console.log('Fetching master data for enum values with params:', enumObj.value);
             const response = await this.gridApiService.getListData(enumObj.value).toPromise();
             if (response.status && response.data?.records) {
               return response.data.records.map((option: any) => ({
@@ -700,7 +707,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (!activeCondition) return [];
 
     const columnData = this.filteredColumns.find((col) => col.field === activeCondition.field);
-    const enumObj = columnData?.enum_values || {};
+    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
 
     try {
       // Add search parameter to your API call
@@ -756,6 +763,33 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return this.inputTypes[columnType] || 'text';
   }
 
+  private resolveEnumConfig(enumSource: any): any {
+    let enumObj = enumSource ?? {};
+
+    if (Array.isArray(enumObj)) {
+      return { type: 'array', value: enumObj };
+    }
+
+    if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
+      const rawConfig = this.config?.[enumObj.config_key];
+      if (typeof rawConfig === 'string') {
+        try {
+          enumObj = JSON.parse(rawConfig);
+        } catch {
+          enumObj = {};
+        }
+      } else {
+        enumObj = rawConfig ?? {};
+      }
+    }
+
+    if (Array.isArray(enumObj)) {
+      enumObj = { type: 'array', value: enumObj };
+    }
+
+    return enumObj ?? {};
+  }
+
   async onColumnChange(event: Event, index: number) {
     // const target = event.target as HTMLSelectElement;
     // const column = target.value;
@@ -773,11 +807,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     this.filterConditions[index].isEnum = isEnum;
     if (isEnum) {
-      let enumObj = data?.enum_values ?? {};
-
-      if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-        enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config?.[enumObj.config_key]) : {};
-      }
+      const enumObj = this.resolveEnumConfig(data?.enum_values);
       this.filterConditions[index].enumType = enumObj?.type || '';
 
       this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
@@ -808,16 +838,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (isEnum && data?.enum_values) {
       condition.value = '';
       condition.enum_values = [];
-      let enumObj = data?.enum_values ?? {};
-      if (Array.isArray(enumObj)) {
-        enumObj = { type: 'array', value: enumObj };
-      }
-      if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
-        enumObj = this.config?.[enumObj.config_key] ?? {};
-        if (Array.isArray(enumObj)) {
-          enumObj = { type: 'array', value: enumObj };
-        }
-      }
+      const enumObj = this.resolveEnumConfig(data?.enum_values);
       condition.enumType = enumObj?.type || '';
       condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
       return;
@@ -832,9 +853,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
-    if (this.isMenuOpen && this.filterConditions.length == 0) {
-      this.addCondition();
+    if (this.isMenuOpen) {
+      this.syncDraftFiltersFromApplied();
     }
+  }
+
+  openAdvancedFilterMenu() {
+    this.isMenuOpen = true;
+    this.syncDraftFiltersFromApplied();
   }
 
   addCondition() {
@@ -865,6 +891,67 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.filterConditions = [];
     this.applyFilters();
   }
+
+  clearAllAppliedFilters() {
+    this.clearFilters();
+  }
+
+  removeAppliedFilter(index: number, event?: Event) {
+    event?.stopPropagation();
+    this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
+    this.filterConditions.splice(index, 1);
+    this.filterCondition = this.appliedFilterCondition;
+    this.applyFilters();
+  }
+
+  getFilterColumnLabel(field: string): string {
+    const col = this.filteredColumns.find((column) => column.field === field);
+    return col?.title || col?.previewTitle || field;
+  }
+
+  getFilterOperatorLabel(condition: FilterCondition): string {
+    const matched = condition?.availableOperators?.find((op) => op.value === condition.operator);
+    return matched?.label || condition.operator;
+  }
+
+  getFilterValueLabel(condition: FilterCondition): string {
+    if (this.isNoValueOperator(condition.operator)) {
+      return '';
+    }
+
+    if (condition.enum_values?.length > 0) {
+      const values = condition.enum_values
+        .map((entry: any) => {
+          if (entry && typeof entry === 'object') {
+            return entry.label ?? entry.value ?? '';
+          }
+          return entry;
+        })
+        .filter((entry: any) => String(entry ?? '').trim() !== '')
+        .join(', ');
+
+      return values;
+    }
+
+    const value = String(condition.value ?? '').trim();
+    return value.replace('T', ' ').replace('Z', '');
+  }
+
+  isAdvancedFilterApplied(condition: FilterCondition): boolean {
+    return !!condition?.field && (this.isNoValueOperator(condition.operator) || condition.value.trim() !== '' || condition.enum_values.length > 0);
+  }
+
+  getAppliedAdvancedFilters(): Array<FilterCondition> {
+    return this.appliedFilterConditions.filter((condition) => this.isAdvancedFilterApplied(condition));
+  }
+
+  onAdvancedFilterValueEnter(event: Event): void {
+    event.preventDefault();
+    if (this.isApplyButtonEnabled()) {
+      this.applyFilters();
+    }
+  }
+
   formatDateTime(dateTime: any) {
     return this.timezoneService.transformDateTime(dateTime);
   }
@@ -872,30 +959,35 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return this.timezoneService.transformDateOnly(dateTime);
   }
 
+  formatTime(dateTime: any) {
+    return this.timezoneService.transformTimeOnly(dateTime);
+  }
+
   getConditionValue(index: number): string | null {
     const value = this.filterConditions[index].value;
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
       if (type === 'datetime-local') {
-        return this.timezoneService.transformDate(value, 'yyyy-MM-ddTHH:mm:ss');
+        return value;
       } else if (type === 'date') {
         return this.timezoneService.transformDateOnly(value);
+      } else if (type === 'time') {
+        return this.timezoneService.transformDate(value, 'HH:mm:ss');
       }
     }
     return value;
   }
 
   isEnumValue(columnData: any, operator: string): boolean {
-    console.log(columnData);
     if (!columnData) return false;
     let enumObj = columnData?.enum_values ?? {};
     if (Array.isArray(enumObj)) {
       enumObj = { type: 'array', value: enumObj };
     }
-    console.log(enumObj);
+
     if (enumObj?.mode == 'from_config' && enumObj?.config_key) {
       enumObj = this.config?.[enumObj.config_key] ? JSON.parse(this.config[enumObj.config_key]) : {};
-      console.log(enumObj);
+
       return true;
       // enumObj = enumObj;
     }
@@ -922,6 +1014,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
   applyFilters() {
     this.removeEmptyFilters();
+    this.appliedFilterCondition = this.filterCondition;
+    this.appliedFilterConditions = this.cloneFilterConditions(this.filterConditions);
     this.isMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
@@ -937,9 +1031,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         if (type == 'datetime-local') {
           //filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
           filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
+        } else if (type == 'time') {
+          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'HH:mm');
         } else if (type == 'date') {
           filterValue = this.formatDate(key.value);
         }
+
         operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
         value =
           enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, filterValue?.trim());
@@ -1056,7 +1153,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   getStepForColumn(column: string): string | null {
     const columnType = this.getInputTypeForColumn(column);
-    if (columnType === 'datetime-local') {
+    if (columnType === 'datetime-local' || columnType === 'time') {
       return '1';
     }
     return null;
@@ -1075,14 +1172,34 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   getNonEmptyFilterCount(): number {
-    return this.filterConditions.filter((filter) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0)
-      .length;
+    return this.getAppliedAdvancedFilters().length;
   }
 
   private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter(
       (filter: any) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0
     );
+  }
+
+  private cloneFilterCondition(condition: FilterCondition): FilterCondition {
+    return {
+      ...condition,
+      enum_values: [...(condition.enum_values || [])],
+      availableOperators: [...(condition.availableOperators || [])],
+      enumValueOptions: [...(condition.enumValueOptions || [])],
+    };
+  }
+
+  private cloneFilterConditions(conditions: Array<FilterCondition>): Array<FilterCondition> {
+    return conditions.map((condition) => this.cloneFilterCondition(condition));
+  }
+
+  private syncDraftFiltersFromApplied(): void {
+    this.filterCondition = this.appliedFilterCondition;
+    this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
+    if (this.filterConditions.length == 0) {
+      this.addCondition();
+    }
   }
   // Check if the operator doesn't require a value (is_empty, is_not_empty, is_null, is_not_null)
   isNoValueOperator(operator: string): boolean {
@@ -1095,6 +1212,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   cancelFilters() {
     this.isMenuOpen = false;
+    this.filterCondition = this.appliedFilterCondition;
+    this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
   }
 
   /* advanced search filter functions */
@@ -1197,69 +1316,95 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.searchInput.nativeElement.focus();
   }
 
+  private buildCommonSearchPayload(searchValue: string) {
+    let hereColumns = [...this.filteredColumns];
+    const items = [3, 4];
+    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+
+    const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
+
+    const whereData = whereSource
+      .filter((key: any) => key.clause_type === 'where')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+          value: this.addWildcards(this.searchCondition, searchValue),
+        };
+      });
+
+    const havingData = hereColumns
+      .filter((key: any) => key.clause_type === 'having')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
+          value: this.addWildcards(this.searchCondition, searchValue),
+        };
+      });
+
+    return { whereData, havingData };
+  }
+  private buildCommonSearchPayloadLabelPurpose(searchValue: string) {
+    let hereColumns = [...this.filteredColumns];
+    const items = [3, 4];
+    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+
+    const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
+
+    const whereData = whereSource
+      .filter((key: any) => key.clause_type === 'where')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition,
+          value: searchValue,
+        };
+      });
+
+    const havingData = hereColumns
+      .filter((key: any) => key.clause_type === 'having')
+      .map((key: any) => {
+        return {
+          column_name: key.field,
+          operator: this.searchCondition,
+          value: searchValue,
+        };
+      });
+
+    return { whereData, havingData };
+  }
+
+  getCommonSearchBadgeConditions(): Array<{ column_name: string; operator: string; value: any }> {
+    if (!this.isCommonSearchApplied || !this.appliedCommonSearch) {
+      return [];
+    }
+
+    const { whereData, havingData } = this.buildCommonSearchPayloadLabelPurpose(this.appliedCommonSearch);
+    return [...whereData, ...havingData];
+  }
+
+  getCommonSearchBadgeLabel(): string {
+    const conditions = this.getCommonSearchBadgeConditions();
+    return conditions.map((condition) => `${this.getFilterColumnLabel(condition.column_name)} : ${condition.operator} ${condition.value}`).join(' | ');
+  }
+
+  clearCommonSearchBadge(event?: Event) {
+    event?.stopPropagation();
+    this.search = '';
+    this.appliedCommonSearch = '';
+    this.isCommonSearchApplied = false;
+    this.onSearch();
+  }
+
   onSearch() {
     this.search = this.search.trim();
-    let hereColumns = [...this.filteredColumns];
+    const { whereData, havingData } = this.buildCommonSearchPayload(this.search);
+    const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
+    this.searchQuery.emit(fdata);
 
-    let items = [3, 4];
-    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
-    if (this.selectedColumns.length > 0) {
-      const whereData = this.selectedColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'where';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-
-      const havingData = hereColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'having';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-      const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
-      this.searchQuery.emit(fdata);
-      // this.loading = false;
-    } else {
-      //this.toastr.warning('Please select any column', 'Warning');
-
-      const whereData = hereColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'where';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-
-      const havingData = hereColumns
-        .filter((key: any, index: any) => {
-          return key.clause_type === 'having';
-        })
-        .map((key: any, index: any) => {
-          return {
-            column_name: key.field,
-            operator: this.searchCondition ? this.mapConditionToSQL(this.searchCondition) : '=',
-            value: this.addWildcards(this.searchCondition, this.search),
-          };
-        });
-      const fdata = { where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search } };
-      this.searchQuery.emit(fdata);
-      //this.loading = false;
-    }
+    this.appliedCommonSearch = this.search;
+    this.isCommonSearchApplied = this.search.length > 0;
   }
   applyFilter() {
     if (this.selectedColumn && this.search) {

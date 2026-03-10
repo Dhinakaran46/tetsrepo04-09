@@ -1192,6 +1192,7 @@ export class MasterEntityComponent implements OnInit {
   };
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
+  staticPageEntities: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -1272,6 +1273,8 @@ export class MasterEntityComponent implements OnInit {
       primaryTable: [''],
       statusId: [1],
       isAdminModule: [false],
+      header_entity_id: [''],
+      footer_entity_id: [''],
       draftMode: [false],
       associateTable: [''],
       wizardType: [''],
@@ -1624,6 +1627,8 @@ export class MasterEntityComponent implements OnInit {
             primaryTable: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
             statusId: entity.status_id,
             isAdminModule: entity.is_admin_module,
+            header_entity_id: entity.header_entity_id,
+            footer_entity_id: entity.footer_entity_id,
             draftMode: entity.draft_mode || false,
             entityType: entity.entity_type,
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
@@ -1700,6 +1705,8 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.primaryTable && { primary_table: formData.primaryTable }),
         ...(formData.statusId && { status_id: formData.statusId }),
         ...(formData.isAdminModule && { is_admin_module: formData.isAdminModule ? formData.isAdminModule : false }),
+        ...(formData.header_entity_id && { header_entity_id: formData.header_entity_id }),
+        ...(formData.footer_entity_id && { footer_entity_id: formData.footer_entity_id }),
         ...(formData.draftMode && { draft_mode: formData.draftMode ? formData.draftMode : false }),
         ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true) }),
         ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true) }),
@@ -1783,6 +1790,8 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
         ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
+        ...(formData.header_entity_id ? { header_entity_id: formData.header_entity_id } : { header_entity_id: null }),
+        ...(formData.footer_entity_id ? { footer_entity_id: formData.footer_entity_id } : { footer_entity_id: null }),
         ...(formData.draftMode ? { draft_mode: formData.draftMode } : { draft_mode: false }),
         ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true) } : { associated_tables: null }),
         ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation, true) } : { query_information: null }),
@@ -2253,6 +2262,9 @@ export class MasterEntityComponent implements OnInit {
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
             (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+          );
+          this.staticPageEntities = response.data.records.filter(
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
           );
           // For 'child_process' linkType (only grid_builder_module)
           this.masterEntitiesForChildProcess = response.data.records.filter(

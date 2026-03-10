@@ -396,7 +396,7 @@ export const commonConfig: any = {
     3: 'text',
     4: 'text',
     5: 'date',
-    6: 'datetime-local',
+    6: 'time',
     7: 'datetime-local',
     8: 'number',
     9: 'number',
