@@ -173,6 +173,15 @@
   min-width: 120px;
 }
 
+.saved-view-toolbar .form-select {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.saved-view-toolbar button {
+  white-space: nowrap;
+}
+
 :is(.dark table thead tr),
 :is(.dark table tfoot tr) {
   background-color: var(--app-table-header-color, #1a2941) !important;
@@ -327,6 +336,33 @@ tbody td.sticky:is(.dark *) {
   .ng-option {
     font-size: 0.75rem !important;
     line-height: 1rem;
+  }
+}
+
+::ng-deep .my-view-ng-select {
+  .my-view-option-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .my-view-option-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .my-view-option-actions {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
+    visibility: visible;
+    opacity: 1;
   }
 }
 ::ng-deep .dropdown-list {

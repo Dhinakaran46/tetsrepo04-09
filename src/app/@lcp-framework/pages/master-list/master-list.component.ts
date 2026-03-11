@@ -194,6 +194,12 @@ export class MasterListComponent implements OnChanges {
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
+  private isGridBootstrapReady: boolean = false;
+  private pendingGridFetchRequest: boolean = false;
+  private queuedInitialFetchParams: FetchDataParams | null = null;
+  private hasInitialGridFetchStarted: boolean = false;
+  private savedViewInitialFallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  private ignoreNextSavedViewPageChange: boolean = false;
 
   constructor(
     private toastr: ToastrService,
@@ -382,7 +388,7 @@ export class MasterListComponent implements OnChanges {
     const sortColumns = Array.isArray(column?.sortColumns) ? column.sortColumns : [this.column];
     this.listQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.header, col.sortDirection]);
     if (column?.skipFetch) return;
-    this.fetchData(this.listQuery);
+    this.requestGridFetch(this.listQuery);
   }
 
   previewSortColumn(previewColumn: any) {
@@ -436,7 +442,7 @@ export class MasterListComponent implements OnChanges {
         clonedListQuery.search_any = [...orgListQuery.search_any];
       }
       if (!data?.skipFetch) {
-        this.fetchData(clonedListQuery);
+        this.requestGridFetch(clonedListQuery);
       }
       return;
     }
@@ -482,7 +488,7 @@ export class MasterListComponent implements OnChanges {
     this.currentPage = 1;
 
     if (!data?.skipFetch) {
-      this.fetchData(clonedListQuery);
+      this.requestGridFetch(clonedListQuery);
     }
   }
 
@@ -600,7 +606,7 @@ export class MasterListComponent implements OnChanges {
     this.currentPage = 1;
     this.previewCurrentPage = 1;
     if (!input?.skipFetch) {
-      this.fetchData(clonedListQuery);
+      this.requestGridFetch(clonedListQuery);
     }
   }
 
@@ -763,6 +769,14 @@ export class MasterListComponent implements OnChanges {
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
+    this.isGridBootstrapReady = false;
+    this.pendingGridFetchRequest = false;
+    this.queuedInitialFetchParams = null;
+    this.hasInitialGridFetchStarted = false;
+    if (this.savedViewInitialFallbackTimer) {
+      clearTimeout(this.savedViewInitialFallbackTimer);
+      this.savedViewInitialFallbackTimer = null;
+    }
     this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -777,9 +791,238 @@ export class MasterListComponent implements OnChanges {
       },
       () => {
         this.fetchColumns(this.listQuery);
+        this.isGridBootstrapReady = true;
+        const savedState = this.getSavedViewStateForCurrentEntity();
+        if (savedState) {
+          this.applySavedViewStateToListQuery(savedState);
+          this.ignoreNextSavedViewPageChange = true;
+        } else {
+          this.ignoreNextSavedViewPageChange = false;
+        }
+
+        this.pendingGridFetchRequest = false;
+        this.queuedInitialFetchParams = null;
         this.fetchData(this.listQuery);
       }
     );
+  }
+
+  private requestGridFetch(params: FetchDataParams): void {
+    if (!this.isGridBootstrapReady) {
+      this.pendingGridFetchRequest = true;
+      this.queuedInitialFetchParams = params;
+      return;
+    }
+
+    this.fetchData(params);
+  }
+
+  private flushPendingGridFetchRequest(): void {
+    if (!this.isGridBootstrapReady || !this.pendingGridFetchRequest) return;
+    const params = this.queuedInitialFetchParams || this.listQuery;
+    this.pendingGridFetchRequest = false;
+    this.queuedInitialFetchParams = null;
+    this.fetchData(params);
+  }
+
+  private hasSavedViewForCurrentEntity(): boolean {
+    try {
+      const isSaveFilterEnabled = this.config?.save_filter_condition == 'true' && this.config?.save_filter_condition;
+      if (!isSaveFilterEnabled) return false;
+
+      const userDataRaw = this.localStorageService.getData('user_data');
+      const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
+      const configurations = userData?.main?.user_search_configurations;
+      if (!Array.isArray(configurations) || configurations.length === 0) return false;
+
+      const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
+      if (!entitySlug) return false;
+
+      return configurations.some((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
+    } catch {
+      return false;
+    }
+  }
+
+  private getSavedViewStateForCurrentEntity(): any | null {
+    try {
+      const isSaveFilterEnabled = this.config?.save_filter_condition == 'true' && this.config?.save_filter_condition;
+      if (!isSaveFilterEnabled) return null;
+
+      const userDataRaw = this.localStorageService.getData('user_data');
+      const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
+      const configurations = Array.isArray(userData?.main?.user_search_configurations) ? userData.main.user_search_configurations : [];
+      if (!configurations.length) return null;
+
+      const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
+      if (!entitySlug) return null;
+
+      const entityViews = configurations.filter((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
+      if (!entityViews.length) return null;
+
+      const selectedView = entityViews.find((item: any) => !!item?.is_default) || entityViews[0];
+      return selectedView?.search_values || selectedView?.state || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private mapSearchOperator(condition: string): string {
+    switch ((condition || '').toLowerCase()) {
+      case 'contains':
+        return 'ILIKE';
+      case 'not_contains':
+        return 'NOT ILIKE';
+      case 'starts_with':
+      case 'ends_with':
+        return 'ILIKE';
+      case 'is_empty':
+        return '=';
+      case 'is_not_empty':
+        return '<>';
+      case 'in':
+        return 'IN';
+      case 'not_in':
+        return 'NOT IN';
+      case 'is_null':
+        return 'IS NULL';
+      case 'is_not_null':
+        return 'IS NOT NULL';
+      default:
+        return condition || '=';
+    }
+  }
+
+  private getNoValueOperatorSQL(operator: string): string {
+    switch ((operator || '').toLowerCase()) {
+      case 'is_null':
+        return 'IS NULL';
+      case 'is_empty':
+        return 'IS_EMPTY';
+      case 'is_not_null':
+        return 'IS NOT NULL';
+      case 'is_not_empty':
+        return 'IS_NOT_EMPTY';
+      default:
+        return '';
+    }
+  }
+
+  private addSearchWildcards(condition: string, value: any): any {
+    const normalized = (condition || '').toLowerCase();
+    const text = String(value ?? '');
+    switch ((condition || '').toLowerCase()) {
+      case 'contains':
+      case 'not_contains':
+        return `%${text}%`;
+      case 'starts_with':
+        return `${text}%`;
+      case 'ends_with':
+        return `%${text}`;
+      case 'in':
+      case 'not_in': {
+        if (Array.isArray(value)) {
+          return value;
+        }
+        return String(value || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      default:
+        return value;
+    }
+  }
+
+  private applySavedViewStateToListQuery(state: any): void {
+    if (!state || !this.listQuery || !this.defaultQuery) return;
+
+    const baseQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+    this.listQuery = {
+      ...baseQuery,
+      entity_name: this.listQuery.entity_name || baseQuery.entity_name,
+    };
+
+    const searchCondition = String(state?.searchCondition || 'contains');
+    const commonSearch = String(state?.commonSearch || '').trim();
+    const selectedSearchColumns = Array.isArray(state?.selectedSearchColumns) ? state.selectedSearchColumns.map((c: any) => String(c)) : [];
+
+    const defaultWhereColumns = Array.isArray(baseQuery?.search_any)
+      ? baseQuery.search_any.map((item: any) => String(item?.column_name || '')).filter(Boolean)
+      : [];
+
+    const whereColumns = selectedSearchColumns.length ? selectedSearchColumns : defaultWhereColumns;
+    if (commonSearch && whereColumns.length) {
+      const operator = this.mapSearchOperator(searchCondition);
+      const value = this.addSearchWildcards(searchCondition, commonSearch);
+      this.listQuery.search_any = whereColumns.map((column_name: string) => ({ column_name, operator, value }));
+      this.listQuery.search_all = [];
+    }
+
+    const savedFilters = Array.isArray(state?.appliedFilterConditions) ? state.appliedFilterConditions : [];
+    if (savedFilters.length) {
+      const whereFilters = savedFilters
+        .filter((item: any) => (item?.clause_type || 'where') !== 'having')
+        .map((item: any) => ({
+          column_name: item?.field,
+          operator: this.mapSearchOperator(item?.operator),
+          value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
+            ? this.getNoValueOperatorSQL(item?.operator)
+            : Array.isArray(item?.enum_values) && item.enum_values.length
+            ? item.enum_values
+            : this.addSearchWildcards(item?.operator, item?.value),
+        }))
+        .filter((item: any) => !!item.column_name);
+
+      const havingFilters = savedFilters
+        .filter((item: any) => (item?.clause_type || 'where') === 'having')
+        .map((item: any) => ({
+          column_name: item?.field,
+          operator: this.mapSearchOperator(item?.operator),
+          value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
+            ? this.getNoValueOperatorSQL(item?.operator)
+            : Array.isArray(item?.enum_values) && item.enum_values.length
+            ? item.enum_values
+            : this.addSearchWildcards(item?.operator, item?.value),
+        }))
+        .filter((item: any) => !!item.column_name);
+
+      const useAnd = state?.filterCondition !== undefined ? !!state.filterCondition : true;
+      if (whereFilters.length) {
+        if (useAnd) {
+          this.listQuery.search_all = [...(Array.isArray(baseQuery?.search_all) ? baseQuery.search_all : []), ...whereFilters];
+          this.listQuery.search_any = [];
+        } else {
+          this.listQuery.search_any = [...(Array.isArray(baseQuery?.search_any) ? baseQuery.search_any : []), ...whereFilters];
+          this.listQuery.search_all = [];
+        }
+      }
+
+      if (havingFilters.length) {
+        if (useAnd) {
+          this.listQuery.having_conditions = havingFilters;
+          this.listQuery.having_any_conditions = [];
+        } else {
+          this.listQuery.having_any_conditions = havingFilters;
+          this.listQuery.having_conditions = [];
+        }
+      }
+    }
+
+    const savedSortColumns = Array.isArray(state?.sortColumns) ? state.sortColumns : [];
+    if (savedSortColumns.length) {
+      this.listQuery.sort_columns = savedSortColumns.map((item: any) => [item?.key, item?.direction]).filter((item: any[]) => !!item[0] && !!item[1]);
+    }
+
+    const savedResultsPerPage = Number(state?.resultsPerPage);
+    if (savedResultsPerPage > 0) {
+      this.resultsPerPage = savedResultsPerPage;
+      this.listQuery.limit_range = savedResultsPerPage;
+    }
+
+    const savedCurrentPage = Number(state?.currentPage);
+    this.currentPage = savedCurrentPage > 0 ? savedCurrentPage : 1;
+    this.listQuery.start_index = (this.currentPage - 1) * Number(this.resultsPerPage || 10);
   }
 
   fetchColumns(params: FetchDataParams) {
@@ -835,6 +1078,11 @@ export class MasterListComponent implements OnChanges {
   }
 
   fetchData(params: FetchDataParams) {
+    this.hasInitialGridFetchStarted = true;
+    if (this.savedViewInitialFallbackTimer) {
+      clearTimeout(this.savedViewInitialFallbackTimer);
+      this.savedViewInitialFallbackTimer = null;
+    }
     this.gridloading = true;
     params.limit_range = this.resultsPerPage;
     const effectiveUniqueId = this.selectedItemUuid || this.uniqueId || this.uuid || null;
@@ -1961,12 +2209,25 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  onPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
+  onPageChange(event: { page: number; start_index: number; skipFetch?: boolean; source?: string }) {
+    if (event?.source === 'default-initial') {
+      if (this.savedViewInitialFallbackTimer) {
+        clearTimeout(this.savedViewInitialFallbackTimer);
+        this.savedViewInitialFallbackTimer = null;
+      }
+      return;
+    }
+
+    if (event?.source === 'saved-view' && this.ignoreNextSavedViewPageChange) {
+      this.ignoreNextSavedViewPageChange = false;
+      return;
+    }
+
     this.currentPage = event.page;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = this.resultsPerPage;
     if (event?.skipFetch) return;
-    this.fetchData(this.listQuery);
+    this.requestGridFetch(this.listQuery);
   }
 
   previewOnPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
@@ -1983,7 +2244,7 @@ export class MasterListComponent implements OnChanges {
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
     if (event?.skipFetch) return;
-    this.fetchData(this.listQuery);
+    this.requestGridFetch(this.listQuery);
   }
 
   previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
