@@ -562,6 +562,7 @@ export class MasterListComponent implements OnChanges {
     this.commonSearchQuery.search_any = [];
 
     const clonedListQuery = this.listQuery;
+    const orgListQuery = this.defaultQuery;
 
     // Handling search in "where" conditions
     if (input.where.data.length) {
@@ -574,13 +575,17 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (search === '') {
-        const orgListQuery = this.defaultQuery;
         clonedListQuery.search_any = [...orgListQuery.search_any];
       } else {
         clonedListQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
         this.commonSearchQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
       }
+    } else {
+      clonedListQuery.search_any = [...(orgListQuery.search_any || [])];
+      this.commonSearchQuery.search_any = [];
     }
+    console.log(clonedListQuery);
+    console.log(this.commonSearchQuery);
 
     // Handling search in "having" conditions
     if (input.having.data.length) {
@@ -600,11 +605,19 @@ export class MasterListComponent implements OnChanges {
         delete this.commonSearchQuery.having_any_conditions;
         delete clonedListQuery.having_any_conditions;
       }
+    } else {
+      if (Array.isArray(orgListQuery?.having_any_conditions)) {
+        clonedListQuery.having_any_conditions = [...orgListQuery.having_any_conditions];
+      } else {
+        delete clonedListQuery.having_any_conditions;
+      }
+      this.commonSearchQuery.having_any_conditions = [];
     }
 
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
+    console.log(clonedListQuery);
     if (!input?.skipFetch) {
       this.requestGridFetch(clonedListQuery);
     }
@@ -790,19 +803,21 @@ export class MasterListComponent implements OnChanges {
         this.toastr.error(errorMessage, 'Error');
       },
       () => {
-        this.fetchColumns(this.listQuery);
-        this.isGridBootstrapReady = true;
-        const savedState = this.getSavedViewStateForCurrentEntity();
-        if (savedState) {
-          this.applySavedViewStateToListQuery(savedState);
-          this.ignoreNextSavedViewPageChange = true;
-        } else {
-          this.ignoreNextSavedViewPageChange = false;
-        }
+        this.fetchColumns(this.listQuery).finally(() => {
+          this.isGridBootstrapReady = true;
+          const savedState = this.getSavedViewStateForCurrentEntity();
+          if (savedState) {
+            const normalizedSavedState = this.parseSavedViewState(savedState);
+            this.applySavedViewStateToListQuery(normalizedSavedState);
+            this.ignoreNextSavedViewPageChange = true;
+          } else {
+            this.ignoreNextSavedViewPageChange = false;
+          }
 
-        this.pendingGridFetchRequest = false;
-        this.queuedInitialFetchParams = null;
-        this.fetchData(this.listQuery);
+          this.pendingGridFetchRequest = false;
+          this.queuedInitialFetchParams = null;
+          this.fetchData(this.listQuery);
+        });
       }
     );
   }
@@ -813,7 +828,7 @@ export class MasterListComponent implements OnChanges {
       this.queuedInitialFetchParams = params;
       return;
     }
-
+    console.log(params);
     this.fetchData(params);
   }
 
@@ -861,10 +876,22 @@ export class MasterListComponent implements OnChanges {
       if (!entityViews.length) return null;
 
       const selectedView = entityViews.find((item: any) => !!item?.is_default) || entityViews[0];
-      return selectedView?.search_values || selectedView?.state || null;
+      return this.parseSavedViewState(selectedView?.search_values || selectedView?.state || null);
     } catch {
       return null;
     }
+  }
+
+  private parseSavedViewState(state: any): any | null {
+    if (!state) return null;
+    if (typeof state === 'string') {
+      try {
+        return JSON.parse(state);
+      } catch {
+        return null;
+      }
+    }
+    return state;
   }
 
   private mapSearchOperator(condition: string): string {
@@ -934,7 +961,40 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
+  private getInputTypeForSavedFilter(columnName: string): string {
+    const fieldTypeId = this.selectcolumns.find((column: any) => String(column?.field || column?.field_name || '') === String(columnName || ''))?.field_type_id;
+    switch (Number(fieldTypeId)) {
+      case 5:
+      case 10:
+        return 'date';
+      case 6:
+        return 'time';
+      case 7:
+        return 'datetime-local';
+      default:
+        return 'text';
+    }
+  }
+
+  private normalizeSavedFilterValue(columnName: string, operator: string, value: any): any {
+    let normalizedValue = value;
+    const inputType = this.getInputTypeForSavedFilter(columnName);
+
+    if (typeof normalizedValue === 'string') {
+      if (inputType === 'datetime-local' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(normalizedValue)) {
+        normalizedValue = this.timezoneService.transformDisplayDateTimeToUTC(normalizedValue, 'yyyy-MM-dd HH:mm') || normalizedValue;
+      } else if (inputType === 'time' && /^\d{2}:\d{2}(:\d{2})?$/.test(normalizedValue)) {
+        normalizedValue = this.timezoneService.transformDisplayDateTimeToUTC(normalizedValue, 'HH:mm') || normalizedValue;
+      } else if (inputType === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+        normalizedValue = this.timezoneService.transformDateOnly(normalizedValue) || normalizedValue;
+      }
+    }
+
+    return this.addSearchWildcards(operator, normalizedValue);
+  }
+
   private applySavedViewStateToListQuery(state: any): void {
+    state = this.parseSavedViewState(state);
     if (!state || !this.listQuery || !this.defaultQuery) return;
 
     const baseQuery = JSON.parse(JSON.stringify(this.defaultQuery));
@@ -951,12 +1011,18 @@ export class MasterListComponent implements OnChanges {
       ? baseQuery.search_any.map((item: any) => String(item?.column_name || '')).filter(Boolean)
       : [];
 
-    const whereColumns = selectedSearchColumns.length ? selectedSearchColumns : defaultWhereColumns;
+    const selectableWhereColumns = Array.isArray(this.selectcolumns)
+      ? this.selectcolumns
+          .filter((column: any) => column?.searchable && Number(column?.field_type_id) >= 3 && Number(column?.field_type_id) <= 4)
+          .map((column: any) => String(column?.field || column?.field_name || ''))
+          .filter(Boolean)
+      : [];
+
+    const whereColumns = selectedSearchColumns.length ? selectedSearchColumns : defaultWhereColumns.length ? defaultWhereColumns : selectableWhereColumns;
     if (commonSearch && whereColumns.length) {
       const operator = this.mapSearchOperator(searchCondition);
       const value = this.addSearchWildcards(searchCondition, commonSearch);
       this.listQuery.search_any = whereColumns.map((column_name: string) => ({ column_name, operator, value }));
-      this.listQuery.search_all = [];
     }
 
     const savedFilters = Array.isArray(state?.appliedFilterConditions) ? state.appliedFilterConditions : [];
@@ -970,7 +1036,7 @@ export class MasterListComponent implements OnChanges {
             ? this.getNoValueOperatorSQL(item?.operator)
             : Array.isArray(item?.enum_values) && item.enum_values.length
             ? item.enum_values
-            : this.addSearchWildcards(item?.operator, item?.value),
+            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
         }))
         .filter((item: any) => !!item.column_name);
 
@@ -983,7 +1049,7 @@ export class MasterListComponent implements OnChanges {
             ? this.getNoValueOperatorSQL(item?.operator)
             : Array.isArray(item?.enum_values) && item.enum_values.length
             ? item.enum_values
-            : this.addSearchWildcards(item?.operator, item?.value),
+            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
         }))
         .filter((item: any) => !!item.column_name);
 
@@ -1023,61 +1089,68 @@ export class MasterListComponent implements OnChanges {
     const savedCurrentPage = Number(state?.currentPage);
     this.currentPage = savedCurrentPage > 0 ? savedCurrentPage : 1;
     this.listQuery.start_index = (this.currentPage - 1) * Number(this.resultsPerPage || 10);
+    console.log(this.listQuery);
   }
 
-  fetchColumns(params: FetchDataParams) {
-    this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-          const data = response.data.records.map((key: any, index: any) => {
-            return {
-              field: key.field_name,
-              title: this.translate.instant(key.display_name),
-              sorting: key.is_sortable,
-              searchable: key.is_searchable,
-              enable: true,
-              ...key,
-            };
-          });
+  fetchColumns(params: FetchDataParams): Promise<void> {
+    return new Promise((resolve) => {
+      this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
+        (response) => {
+          if (response.status && response.code === 200) {
+            const data = response.data.records.map((key: any, index: any) => {
+              return {
+                field: key.field_name,
+                title: this.translate.instant(key.display_name),
+                sorting: key.is_sortable,
+                searchable: key.is_searchable,
+                enable: true,
+                ...key,
+              };
+            });
 
-          this.selectcolumns = [
-            {
-              field: 'S.No',
-              title: 'S.No',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 1,
-            },
-            ...data,
-            {
-              field: 'Status',
-              title: 'Status',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 1,
-            },
-            {
-              field: 'Action',
-              title: 'Action',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 0,
-            },
-          ];
-        }
-      },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-      }
-    );
+            this.selectcolumns = [
+              {
+                field: 'S.No',
+                title: 'S.No',
+                sorting: false,
+                searchable: false,
+                enable: false,
+                field_type_id: 1,
+              },
+              ...data,
+              {
+                field: 'Status',
+                title: 'Status',
+                sorting: false,
+                searchable: false,
+                enable: false,
+                field_type_id: 1,
+              },
+              {
+                field: 'Action',
+                title: 'Action',
+                sorting: false,
+                searchable: false,
+                enable: false,
+                field_type_id: 0,
+              },
+            ];
+          }
+        },
+        (error) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          resolve();
+        },
+        () => resolve()
+      );
+    });
   }
 
   fetchData(params: FetchDataParams) {
+    console.log('enter');
+    console.log(params);
     this.hasInitialGridFetchStarted = true;
     if (this.savedViewInitialFallbackTimer) {
       clearTimeout(this.savedViewInitialFallbackTimer);
@@ -1091,6 +1164,7 @@ export class MasterListComponent implements OnChanges {
       '$session_user_id',
       this.user_info.main.id
     );
+    console.log(payload);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
@@ -1107,6 +1181,7 @@ export class MasterListComponent implements OnChanges {
       payload.attached_policies = this.attachedPolicies;
     }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
+    console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {

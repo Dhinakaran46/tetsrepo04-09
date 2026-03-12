@@ -1056,7 +1056,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       } else if (type === 'date') {
         return this.timezoneService.transformDateOnly(value);
       } else if (type === 'time') {
-        return this.timezoneService.transformDate(value, 'HH:mm:ss');
+        const rawValue = String(value);
+        if (/^\d{2}:\d{2}(:\d{2})?$/.test(rawValue)) {
+          return rawValue.slice(0, 5);
+        }
+        return this.timezoneService.transformDate(value, 'HH:mm') || rawValue;
       }
     }
     return value;
@@ -1813,13 +1817,21 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   resetViewConfiguration(): void {
     if (!this.save_filter_condition) return;
-    const selectedView = this.getSelectedViewConfiguration();
-    if (selectedView?.search_values) {
+    const hasViews = this.shouldShowMyViews();
+    const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
+    console.log(selectedView);
+    console.log(hasViews);
+    if (hasViews && selectedView?.search_values) {
+      console.log('coming');
       this.appliedSavedViewSlug = null;
       this.scheduleTryApplySavedView();
       this.toastr.success('View reset successfully', 'Success');
       return;
     }
+
+    this.hasSavedViewConfiguration = false;
+    this.selectedViewName = '';
+    this.appliedSavedViewSlug = null;
 
     this.search = '';
     this.appliedCommonSearch = '';
@@ -1844,6 +1856,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.currentPage = 1;
 
     const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
+    console.log(emptySearch);
     this.searchQuery.emit(emptySearch);
     this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
     this.columnSort.emit({ sortColumns: [], skipFetch: true });
@@ -1885,7 +1898,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.gridApiService.executeRecords(this.upsert_saved_view_json_schema).subscribe({
       next: (response: any) => {
         if (response?.status && response?.code === 200) {
-          this.toastr.success('View saved in database successfully', 'Success');
+          //this.toastr.success('View saved in database successfully', 'Success');
         } else {
           this.toastr.error(response?.message || 'Failed to save view in database', 'Error');
         }
@@ -1916,7 +1929,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.gridApiService.executeRecords(this.delete_saved_view_json_schema).subscribe({
       next: (response: any) => {
         if (response?.status && response?.code === 200) {
-          this.toastr.success('View reset in database successfully', 'Success');
+          //this.toastr.success('View reset in database successfully', 'Success');
         } else {
           this.toastr.error(response?.message || 'Failed to reset view in database', 'Error');
         }
@@ -2010,16 +2023,32 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     if (this.appliedFilterConditions.length > 0) {
       const condition = this.appliedFilterCondition ? 'AND' : 'OR';
-      const data = this.appliedFilterConditions.map((key: any) => ({
-        column_name: key.field,
-        operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
-        value: this.isNoValueOperator(key.operator)
-          ? this.getNoValueOperatorSQL(key.operator)
-          : key.enum_values?.length > 0
-          ? key.enum_values
-          : this.addWildcards(key.operator, key.value),
-        isAggregate: key?.clause_type === 'having',
-      }));
+      const data = this.appliedFilterConditions.map((key: any) => {
+        const type = key.inputType || this.getInputTypeForColumn(key.field);
+        let filterValue = key.value;
+        if (!this.isNoValueOperator(key.operator)) {
+          if (type == 'datetime-local' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'yyyy-MM-dd HH:mm') || filterValue;
+          } else if (type == 'time' && /^\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'HH:mm') || filterValue;
+          } else if (type == 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(filterValue || ''))) {
+            filterValue = this.formatDate(filterValue);
+          }
+        }
+
+        const normalizedFilterValue = typeof filterValue === 'string' ? filterValue.trim() : filterValue;
+
+        return {
+          column_name: key.field,
+          operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
+          value: this.isNoValueOperator(key.operator)
+            ? this.getNoValueOperatorSQL(key.operator)
+            : key.enum_values?.length > 0
+            ? key.enum_values
+            : this.addWildcards(key.operator, normalizedFilterValue),
+          isAggregate: key?.clause_type === 'having',
+        };
+      });
       this.advancedSearchQuery.emit({ data, condition, skipFetch: true });
     } else {
       this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
