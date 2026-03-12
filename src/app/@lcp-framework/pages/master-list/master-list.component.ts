@@ -142,6 +142,7 @@ export class MasterListComponent implements OnChanges {
   config: any;
   attachedPolicies: any[] = [];
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+  adminUrl: any = '/#';
   statuses: any = {
     1: {
       value: 'table_status_val_0',
@@ -223,6 +224,8 @@ export class MasterListComponent implements OnChanges {
     private timezoneService: TimezoneService
   ) {
     this.initStore();
+    const url = this.localStorageService?.getData('base_app_url');
+    this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       const uuid = params.get('uuid');
@@ -400,7 +403,7 @@ export class MasterListComponent implements OnChanges {
     this.previewFetchData(this.previewListQuery);
   }
 
-  passwordModal(item: any) {
+  passwordModal(item: any, event?: MouseEvent) {
     //return;
     this.isItemModalOpen = true;
     this.user_id = item.uuid;
@@ -584,8 +587,8 @@ export class MasterListComponent implements OnChanges {
       clonedListQuery.search_any = [...(orgListQuery.search_any || [])];
       this.commonSearchQuery.search_any = [];
     }
-    console.log(clonedListQuery);
-    console.log(this.commonSearchQuery);
+    // console.log(clonedListQuery);
+    // console.log(this.commonSearchQuery);
 
     // Handling search in "having" conditions
     if (input.having.data.length) {
@@ -617,7 +620,7 @@ export class MasterListComponent implements OnChanges {
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
-    console.log(clonedListQuery);
+    // console.log(clonedListQuery);
     if (!input?.skipFetch) {
       this.requestGridFetch(clonedListQuery);
     }
@@ -671,7 +674,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportTable(item: any) {
-    console.log(item);
+    // console.log(item);
     if (this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_pdf) {
       this.loading = true;
       if (
@@ -684,7 +687,7 @@ export class MasterListComponent implements OnChanges {
       } else {
         const query = { ...this.listQuery };
         query.limit_range = 1000000;
-        const export_download = this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
+        query.start_index = 0;
         let listParams = this.localStorageService.replaceUniqueId(
           this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
           '$session_user_id',
@@ -707,8 +710,19 @@ export class MasterListComponent implements OnChanges {
               if (response.data.records && response.data.headers) {
                 const filteredData = this.filterAndTransformData(response.data.headers, response.data.records);
                 if (item.type == 'pdf') {
+                  const export_download =
+                    this.masterInfo?.children?.export_pdf?.export_template_file_name &&
+                    this.masterInfo?.children?.export_pdf?.export_template_file_name?.trim() !== ''
+                      ? this.masterInfo?.children?.export_pdf?.export_template_file_name
+                      : this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
+
                   this.exportService.exportToPDF(filteredData, export_download);
                 } else {
+                  const export_download =
+                    this.masterInfo?.children?.export_excel?.export_template_file_name &&
+                    this.masterInfo?.children?.export_excel?.export_template_file_name?.trim() !== ''
+                      ? this.masterInfo?.children?.export_excel?.export_template_file_name
+                      : this.masterInfo?.Listname.replace('_grid', '') + '_table_data';
                   this.exportService.exportToExcel(filteredData, export_download);
                 }
                 this.loading = false;
@@ -828,7 +842,7 @@ export class MasterListComponent implements OnChanges {
       this.queuedInitialFetchParams = params;
       return;
     }
-    console.log(params);
+    // console.log(params);
     this.fetchData(params);
   }
 
@@ -1089,7 +1103,7 @@ export class MasterListComponent implements OnChanges {
     const savedCurrentPage = Number(state?.currentPage);
     this.currentPage = savedCurrentPage > 0 ? savedCurrentPage : 1;
     this.listQuery.start_index = (this.currentPage - 1) * Number(this.resultsPerPage || 10);
-    console.log(this.listQuery);
+    // console.log(this.listQuery);
   }
 
   fetchColumns(params: FetchDataParams): Promise<void> {
@@ -1149,8 +1163,8 @@ export class MasterListComponent implements OnChanges {
   }
 
   fetchData(params: FetchDataParams) {
-    console.log('enter');
-    console.log(params);
+    // console.log('enter');
+    // console.log(params);
     this.hasInitialGridFetchStarted = true;
     if (this.savedViewInitialFallbackTimer) {
       clearTimeout(this.savedViewInitialFallbackTimer);
@@ -1164,7 +1178,7 @@ export class MasterListComponent implements OnChanges {
       '$session_user_id',
       this.user_info.main.id
     );
-    console.log(payload);
+    // console.log(payload);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
@@ -1181,13 +1195,13 @@ export class MasterListComponent implements OnChanges {
       payload.attached_policies = this.attachedPolicies;
     }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
-    console.log(payload);
+    // console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           this.entities = response.data?.entities || [];
-          this.headerStaticEntityName = response.data?.entities.header_entity_id;
-          this.footerStaticEntityName = response.data?.entities.footer_entity_id;
+          this.headerStaticEntityName = response.data?.entities?.header_entity_id;
+          this.footerStaticEntityName = response.data?.entities?.footer_entity_id;
 
           if (response.data.headers) {
             if (this.headercolumns.length == 0) {
@@ -1435,7 +1449,7 @@ export class MasterListComponent implements OnChanges {
     }
 
     this.headerStaticEntityName = this.resolveEntityNameByIdentifier(entities, currentEntity?.header_entity_id);
-    console.log(this.headerStaticEntityName);
+    // console.log(this.headerStaticEntityName);
     this.footerStaticEntityName = this.resolveEntityNameByIdentifier(entities, currentEntity?.footer_entity_id);
   }
 
@@ -1674,7 +1688,6 @@ export class MasterListComponent implements OnChanges {
   }
 
   previewFetchData(params: any) {
-    console.log(params);
     delete params.group_by;
     delete params.sort_columns;
     delete params.includes;
@@ -1820,8 +1833,7 @@ export class MasterListComponent implements OnChanges {
     this.selectedItemEntityType = null;
   }
 
-  editItem(item: any) {
-    console.log(item);
+  editItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.edit) {
       let targetRoute = this.masterInfo.children.edit.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
@@ -1842,7 +1854,12 @@ export class MasterListComponent implements OnChanges {
         targetRoute = targetRoute.replace(':gparam', gparamString);
       }
 
-      this.router.navigate([targetRoute]);
+      if (event && (event.ctrlKey || event.metaKey)) {
+        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        window.open(url, '_blank');
+      } else {
+        this.router.navigate([targetRoute]);
+      }
     }
   }
 
@@ -1985,7 +2002,7 @@ export class MasterListComponent implements OnChanges {
     reader.readAsArrayBuffer(blob);
   }
 
-  assignItem(item: any) {
+  assignItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.assign) {
       let targetRoute = this.masterInfo.children.assign.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
@@ -1993,7 +2010,13 @@ export class MasterListComponent implements OnChanges {
       } else if (targetRoute.includes(':id') && item.id) {
         targetRoute = targetRoute.replace(':id', item.uuid);
       }
-      this.router.navigate([targetRoute]);
+
+      if (event && (event.ctrlKey || event.metaKey)) {
+        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        window.open(url, '_blank');
+      } else {
+        this.router.navigate([targetRoute]);
+      }
     }
   }
 
@@ -2020,7 +2043,7 @@ export class MasterListComponent implements OnChanges {
     return filePath?.split('/').pop() || null;
   }
 
-  recordExport(item: any) {
+  recordExport(item: any, event?: MouseEvent) {
     if (item.downloadables) {
       this.downloadExcel(item.downloadables);
       return;
@@ -2085,7 +2108,7 @@ export class MasterListComponent implements OnChanges {
     return this.translate.instant(msg);
   }
 
-  printItem(item: any) {
+  printItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.print) {
       let targetRoute = this.masterInfo.children.print.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
@@ -2129,7 +2152,7 @@ export class MasterListComponent implements OnChanges {
     });
   }
 
-  generateVector(item: any) {
+  generateVector(item: any, event?: MouseEvent) {
     if (this.masterInfo.permissions.generate_vector) {
       Swal.fire({
         icon: 'info',
@@ -2161,7 +2184,7 @@ export class MasterListComponent implements OnChanges {
     }, 1000);
   }
 
-  emailResendItem(item: any) {
+  emailResendItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       Swal.fire({
         icon: 'info',
@@ -2193,7 +2216,7 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  deleteItem(item: any) {
+  deleteItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
@@ -2261,7 +2284,7 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  viewItem(item: any) {
+  viewItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.details) {
       let targetRoute = this.masterInfo.children.details.target;
       if (targetRoute.includes(':uuid') && item.uuid) {
@@ -2280,7 +2303,13 @@ export class MasterListComponent implements OnChanges {
         const gparamString = encodeURIComponent(JSON.stringify(gparamObject));
         targetRoute = targetRoute.replace(':gparam', gparamString);
       }
-      this.router.navigate([targetRoute]);
+
+      if (event && (event.ctrlKey || event.metaKey)) {
+        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        window.open(url, '_blank');
+      } else {
+        this.router.navigate([targetRoute]);
+      }
     }
   }
 

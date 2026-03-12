@@ -95,6 +95,7 @@ export const commonConfig: any = {
     QUERY_BUILDER_MODULE: 'query_builder_module',
     CAROUSEL_MODULE: 'carousel_module',
     COMMON_PERMISSION_MODULE: 'common_permission_module',
+    TREE_BUILDER_MODULE: 'tree_builder_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -128,6 +129,7 @@ export const commonConfig: any = {
     query_builder_module: 'querybuilder',
     carousel_module: 'carouselmodule',
     common_permission_module: 'commonpermissionmodule',
+    tree_builder_module: 'treebuildermodule',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -244,6 +246,7 @@ export const commonConfig: any = {
     { label: 'Query Builder Module', value: 'query_builder_module' },
     { label: 'Carousel Module', value: 'carousel_module' },
     { label: 'Common Permission Module', value: 'common_permission_module' },
+    { label: 'Tree Builder Module', value: 'tree_builder_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

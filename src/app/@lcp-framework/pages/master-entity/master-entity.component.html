@@ -64,7 +64,6 @@
               {{ getErrorMessage('entityType') }}
             </div>
           </div>
-
           <div class="mt-0">
             <label for="permissions" class="required-mark mb-2 block font-medium">{{ 'form_label_permissions' | translate }}</label>
             <ng-select
@@ -109,9 +108,26 @@
                 </ng-select>
               </div>
             </div>
+            <div class="mt-0">
+              <label for="exportTemplateFileName" class="required-mark mb-2 block font-medium">{{ 'export_template_file_name' | translate }}</label>
+              <input
+                id="exportTemplateFileName"
+                type="text"
+                formControlName="exportTemplateFileName"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="{{ 'export_template_file_name_placeholder' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('exportTemplateFileName') }"
+              />
+              <div *ngIf="isFieldInvalid('exportTemplateFileName')" class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('exportTemplateFileName') }}
+              </div>
+            </div>
           </ng-container>
 
-          <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+          <ng-container
+            *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
+          >
             <div class="mt-0">
               <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
               <select
@@ -600,7 +616,13 @@
         </ng-container>
 
         <ng-container
-          *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE].includes(form.get('entityType')?.value)"
+          *ngIf="
+            [
+              commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
+              commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE,
+              commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE
+            ].includes(form.get('entityType')?.value)
+          "
         >
           <div
             class="grid grid-cols-1 gap-2"
@@ -629,7 +651,9 @@
               </div>
             </div>
 
-            <ng-container *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE].includes(form.get('entityType')?.value)">
+            <ng-container
+              *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
+            >
               <div class="mt-3">
                 <div class="flex flex-row gap-3">
                   <label for="associateTable" class="mb-2 block font-medium">{{ 'form_label_associated_tables' | translate }}</label>
@@ -773,7 +797,9 @@
       </div>
     </div>
 
-    <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE">
+    <ng-container
+      *ngIf="[commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE].includes(form.get('entityType')?.value)"
+    >
       <div class="mt-5 flex flex-wrap justify-between">
         <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>
 

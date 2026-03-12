@@ -1295,6 +1295,7 @@ export class MasterEntityComponent implements OnInit {
       presetQueryInformation: [''],
       staticPageContent: [''],
       items: this.fb.array([]),
+      exportTemplateFileName: [''],
     });
 
     // Initialize edit item form
@@ -1455,7 +1456,6 @@ export class MasterEntityComponent implements OnInit {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
     }
-
     this.form.updateValueAndValidity();
   }
 
@@ -1649,6 +1649,7 @@ export class MasterEntityComponent implements OnInit {
             reload_timeout: entity.reload_timeout,
             dashboard_grid: entity.dashboard_grid,
             dashboard_wizard_options: entity.dashboard_wizard_options ? this.prettyJSON(entity.dashboard_wizard_options) : '',
+            exportTemplateFileName: entity.export_template_file_name || '',
           });
 
           const items = this.form.get('items') as FormArray;
@@ -1703,6 +1704,7 @@ export class MasterEntityComponent implements OnInit {
         name: formData.name,
         entity_name: entitySlug,
         entity_type: formData.entityType,
+        export_template_file_name: formData.exportTemplateFileName || null,
         ...(formData.primaryTable && { primary_table: formData.primaryTable }),
         ...(formData.statusId && { status_id: formData.statusId }),
         ...(formData.isAdminModule && { is_admin_module: formData.isAdminModule ? formData.isAdminModule : false }),
@@ -1788,6 +1790,7 @@ export class MasterEntityComponent implements OnInit {
       {
         name: formData.name,
         entity_type: formData.entityType,
+        export_template_file_name: formData.exportTemplateFileName || null,
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
         ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
@@ -1936,7 +1939,7 @@ export class MasterEntityComponent implements OnInit {
   onSubmit() {
     this.submitted = true;
 
-    const formData = this.form.value;
+    const formData = this.form.getRawValue();
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
     console.log(payload);
     this.gridApiService.executeRecords(payload).subscribe(
@@ -2254,6 +2257,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.entity_name', 'value'],
         ['master_entities.name', 'label'],
         ['master_entities.entity_type', 'entity_type'],
+        ['master_entities.primary_table', 'primary_table'],
       ],
     };
     this.gridApiService.getAllList(params).subscribe(
