@@ -224,7 +224,8 @@ export class MasterListComponent implements OnChanges {
     private timezoneService: TimezoneService
   ) {
     this.initStore();
-    this.adminUrl = JSON.parse(this.localStorageService.getData('base_app_url') || '/#');
+    const url = this.localStorageService?.getData('base_app_url');
+    this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       const uuid = params.get('uuid');
