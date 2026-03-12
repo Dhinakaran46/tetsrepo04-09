@@ -103,7 +103,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     },
   };
 
-  commonSearchQuery:any = {};
+  commonSearchQuery: any = {};
 
   constructor(
     private toastr: ToastrService,
@@ -128,7 +128,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
-    
+
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = parseInt(this.config.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
@@ -259,7 +259,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
   setDefaultQuery() {
     this.defaultQuery = {
-      cte:'WITH active_users AS ( SELECT username, status_id FROM users WHERE status_id = 3 )',
+      cte: 'WITH active_users AS ( SELECT username, status_id FROM users WHERE status_id = 3 )',
       print_query: true,
       company_id: 1,
       primary_table: 'child_processes',
@@ -311,7 +311,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.listQuery.sort_columns = [[this.column.field_value, this.column.sortDirection]];
+    const sortColumns = Array.isArray(column?.sortColumns) ? column.sortColumns : [this.column];
+    this.listQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.field_value, col.sortDirection]);
+    if (column?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
@@ -343,7 +345,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       } else {
         clonedListQuery.search_any = [...orgListQuery.search_any];
       }
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
       return;
     }
     if (havingConditions.length > 0) {
@@ -371,7 +375,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
 
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         clonedListQuery.search_any = [...clonedListQuery.search_any];
@@ -384,7 +390,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       clonedListQuery.start_index = 0;
       this.currentPage = 1;
 
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.fetchData(clonedListQuery);
+      }
     }
   }
   searchData(input: any) {
@@ -397,7 +405,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
         clonedListQuery.search_any = [];
         clonedListQuery.search_any = [...orgListQuery.search_any];
-        this.fetchData(clonedListQuery);
+        if (!input?.skipFetch) {
+          this.fetchData(clonedListQuery);
+        }
         return;
       }
 
@@ -415,7 +425,9 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     }
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
-    this.fetchData(clonedListQuery);
+    if (!input?.skipFetch) {
+      this.fetchData(clonedListQuery);
+    }
   }
 
   exportTable(item: any) {
@@ -438,7 +450,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
           .subscribe(
             (response) => {
               if (response.status && response.code === 200) {
-                if (response.data.records ) {
+                if (response.data.records) {
                   const filteredData = this.filterAndTransformData(this.headercolumns, response.data.records);
                   if (item.type == 'pdf') {
                     this.exportService.exportToPDF(filteredData, export_download);
@@ -751,7 +763,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
 
   exportItem(item: any) {
     if (this.masterInfo.children.export_excel) {
-      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id,this.commonSearchQuery).subscribe({
+      this.gridApiService.exportAllRecords(this.masterInfo.children.export_excel.id, this.commonSearchQuery).subscribe({
         next: (response: ExportResponse) => {
           try {
             const blob = new Blob([response.blob], {
@@ -963,18 +975,20 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     window.open(fullUrl, '_blank');
   }
 
-  onPageChange(event: { page: number; start_index: number }) {
+  onPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = event.page;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = this.resultsPerPage;
+    if (event?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
-  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
+  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = 1;
     this.resultsPerPage = event.resultsPerPage;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
+    if (event?.skipFetch) return;
     this.fetchData(this.listQuery);
   }
 
@@ -1013,5 +1027,4 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       }
     });
   }
-  
 }

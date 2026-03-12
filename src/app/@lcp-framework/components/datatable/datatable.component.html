@@ -17,6 +17,96 @@
     <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
       <div class="flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
         <div class="flex flex-col gap-2 md:flex-row md:items-center">
+          <div *ngIf="save_filter_condition" class="saved-view-toolbar flex flex-wrap items-center gap-1.5 rounded-md">
+            <span *ngIf="shouldShowMyViews()" class="px-1 text-xs font-semibold">My Views</span>
+
+            <div *ngIf="shouldShowMyViews()" class="flex items-center gap-2">
+              <div class="min-w-[220px] flex-1">
+                <ng-select
+                  #myViewsSelect
+                  bindLabel="view_name"
+                  bindValue="view_name"
+                  [items]="entityViews"
+                  [clearable]="false"
+                  [searchable]="false"
+                  [ngModel]="selectedViewName || null"
+                  (change)="onSavedViewSelectionChange($event)"
+                  placeholder="Select any"
+                  class="form-control my-view-ng-select"
+                >
+                  <ng-option [value]="null" [disabled]="true">Select any</ng-option>
+                  <ng-template ng-label-tmp let-item="item">
+                    <span class="my-view-option-label">{{ item.view_name || 'Default View' }}{{ item.is_default ? ' (Default)' : '' }}</span>
+                  </ng-template>
+                  <ng-template ng-option-tmp let-item="item" let-index="index">
+                    <div class="my-view-option-row">
+                      <span class="my-view-option-label">{{ item.view_name || 'Default View' }}{{ item.is_default ? ' (Default)' : '' }}</span>
+                      <div class="my-view-option-actions">
+                        <button type="button" class="btn btn-link ml-2 p-0" (click)="onEditViewOptionClick(item, $event)" tabindex="-1" ngxTippy="Edit View">
+                          <i class="fa fa-edit"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-link ml-2 p-0 text-danger"
+                          (click)="onDeleteViewOptionClick(item, $event)"
+                          tabindex="-1"
+                          ngxTippy="Delete View"
+                        >
+                          <i class="fa fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </ng-template>
+                </ng-select>
+              </div>
+            </div>
+
+            <button
+              *ngIf="!shouldShowMyViews() && showSaveViewButton()"
+              type="button"
+              (click)="saveViewConfiguration()"
+              class="flex h-8 items-center rounded-md border border-primary px-2.5 text-xs font-semibold text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-floppy-disk"></i>&nbsp;Save New
+            </button>
+
+            <button
+              *ngIf="!shouldShowMyViews() && showSaveViewButton()"
+              type="button"
+              (click)="resetViewConfiguration()"
+              class="flex h-8 items-center rounded-md border border-[#e0e6ed] px-2.5 text-xs font-semibold text-danger dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-rotate-left"></i>&nbsp;Clear
+            </button>
+
+            <button
+              *ngIf="shouldShowMyViews() && showSaveViewButton()"
+              type="button"
+              (click)="saveViewConfiguration()"
+              class="flex h-8 items-center rounded-md border border-primary px-2.5 text-xs font-semibold text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-plus"></i>&nbsp;Add New View
+            </button>
+
+            <button
+              *ngIf="shouldShowMyViews() && showSaveViewButton() && hasSelectedView()"
+              type="button"
+              (click)="updateSelectedViewConfiguration()"
+              class="flex h-8 items-center rounded-md border border-[#e0e6ed] px-2.5 text-xs font-semibold text-success dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-floppy-disk"></i>&nbsp;Update View
+            </button>
+
+            <button
+              *ngIf="shouldShowMyViews() && showSaveViewButton()"
+              type="button"
+              (click)="resetViewConfiguration()"
+              class="flex h-8 items-center rounded-md border border-[#e0e6ed] px-2.5 text-xs font-semibold text-danger dark:border-[#253b5c] dark:bg-[#1b2e4b]"
+            >
+              <i class="fa-solid fa-rotate-left"></i>&nbsp;Reset
+            </button>
+          </div>
+
           <div class="relative mb-2 flex-grow md:mb-0">
             <input
               #searchInput
@@ -831,6 +921,44 @@
         [gridParams]="staticPageGridParams"
         keyword="plain"
       ></app-static-page>
+    </div>
+  </div>
+</div>
+
+<div class="fixed inset-0 z-[70] overflow-y-auto" *ngIf="isViewConfigModalOpen">
+  <div class="fixed inset-0 bg-black/50" (click)="closeViewConfigurationModal()"></div>
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div class="relative w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-[#0e1726]">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-lg font-semibold">{{ isEditingViewConfig ? 'Edit View' : 'Save View' }}</h3>
+        <button type="button" class="text-lg text-gray-500" (click)="closeViewConfigurationModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <label class="mb-1 block text-sm font-semibold">View Name</label>
+        <input [(ngModel)]="viewFormName" type="text" class="form-input w-full" placeholder="Enter view name" />
+      </div>
+
+      <div class="mb-5">
+        <label class="mb-2 block text-sm font-semibold">Set as default view</label>
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 text-sm">
+            <input type="radio" name="setDefaultView" [value]="true" [(ngModel)]="viewFormSetAsDefault" />
+            Yes
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="radio" name="setDefaultView" [value]="false" [(ngModel)]="viewFormSetAsDefault" />
+            No
+          </label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="closeViewConfigurationModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitViewConfiguration()">Submit</button>
+      </div>
     </div>
   </div>
 </div>

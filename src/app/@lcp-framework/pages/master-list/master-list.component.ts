@@ -195,6 +195,12 @@ export class MasterListComponent implements OnChanges {
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
+  private isGridBootstrapReady: boolean = false;
+  private pendingGridFetchRequest: boolean = false;
+  private queuedInitialFetchParams: FetchDataParams | null = null;
+  private hasInitialGridFetchStarted: boolean = false;
+  private savedViewInitialFallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  private ignoreNextSavedViewPageChange: boolean = false;
 
   constructor(
     private toastr: ToastrService,
@@ -381,14 +387,18 @@ export class MasterListComponent implements OnChanges {
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.listQuery.sort_columns = [[this.column.header, this.column.sortDirection]];
-    this.fetchData(this.listQuery);
+    const sortColumns = Array.isArray(column?.sortColumns) ? column.sortColumns : [this.column];
+    this.listQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.header, col.sortDirection]);
+    if (column?.skipFetch) return;
+    this.requestGridFetch(this.listQuery);
   }
 
   previewSortColumn(previewColumn: any) {
     this.previewColumn = previewColumn;
     this.previewListQuery.limit_range = this.previewResultsPerPage;
-    this.previewListQuery.sort_columns = [[this.previewColumn.header, this.previewColumn.sortDirection]];
+    const sortColumns = Array.isArray(previewColumn?.sortColumns) ? previewColumn.sortColumns : [this.previewColumn];
+    this.previewListQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.header, col.sortDirection]);
+    if (previewColumn?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);
   }
 
@@ -433,7 +443,9 @@ export class MasterListComponent implements OnChanges {
       } else {
         clonedListQuery.search_any = [...orgListQuery.search_any];
       }
-      this.fetchData(clonedListQuery);
+      if (!data?.skipFetch) {
+        this.requestGridFetch(clonedListQuery);
+      }
       return;
     }
 
@@ -477,7 +489,9 @@ export class MasterListComponent implements OnChanges {
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
 
-    this.fetchData(clonedListQuery);
+    if (!data?.skipFetch) {
+      this.requestGridFetch(clonedListQuery);
+    }
   }
 
   previewAdvancedSearchData(data: any) {
@@ -504,7 +518,9 @@ export class MasterListComponent implements OnChanges {
       } else {
         previewClonedListQuery.search_any = [...orgListQuery.search_any];
       }
-      this.previewFetchData(previewClonedListQuery);
+      if (!data?.skipFetch) {
+        this.previewFetchData(previewClonedListQuery);
+      }
       return;
     }
     if (havingConditions.length > 0) {
@@ -525,7 +541,9 @@ export class MasterListComponent implements OnChanges {
       previewClonedListQuery.start_index = 0;
       this.previewCurrentPage = 1;
 
-      this.previewFetchData(previewClonedListQuery);
+      if (!data?.skipFetch) {
+        this.previewFetchData(previewClonedListQuery);
+      }
     } else {
       if (whereConditions.length === 1 && whereConditions[0].column_name === '') {
         previewClonedListQuery.search_any = [...previewClonedListQuery.search_any];
@@ -535,7 +553,9 @@ export class MasterListComponent implements OnChanges {
       previewClonedListQuery.start_index = 0;
       this.previewCurrentPage = 1;
 
-      this.previewFetchData(previewClonedListQuery);
+      if (!data?.skipFetch) {
+        this.previewFetchData(previewClonedListQuery);
+      }
     }
   }
 
@@ -544,6 +564,7 @@ export class MasterListComponent implements OnChanges {
     this.commonSearchQuery.search_any = [];
 
     const clonedListQuery = this.listQuery;
+    const orgListQuery = this.defaultQuery;
 
     // Handling search in "where" conditions
     if (input.where.data.length) {
@@ -556,13 +577,17 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (search === '') {
-        const orgListQuery = this.defaultQuery;
         clonedListQuery.search_any = [...orgListQuery.search_any];
       } else {
         clonedListQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
         this.commonSearchQuery.search_any = query.length === 1 && query[0].column_name === '' ? [] : [...query];
       }
+    } else {
+      clonedListQuery.search_any = [...(orgListQuery.search_any || [])];
+      this.commonSearchQuery.search_any = [];
     }
+    console.log(clonedListQuery);
+    console.log(this.commonSearchQuery);
 
     // Handling search in "having" conditions
     if (input.having.data.length) {
@@ -582,12 +607,22 @@ export class MasterListComponent implements OnChanges {
         delete this.commonSearchQuery.having_any_conditions;
         delete clonedListQuery.having_any_conditions;
       }
+    } else {
+      if (Array.isArray(orgListQuery?.having_any_conditions)) {
+        clonedListQuery.having_any_conditions = [...orgListQuery.having_any_conditions];
+      } else {
+        delete clonedListQuery.having_any_conditions;
+      }
+      this.commonSearchQuery.having_any_conditions = [];
     }
 
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
-    this.fetchData(clonedListQuery);
+    console.log(clonedListQuery);
+    if (!input?.skipFetch) {
+      this.requestGridFetch(clonedListQuery);
+    }
   }
 
   previewSearchData(input: any) {
@@ -632,7 +667,9 @@ export class MasterListComponent implements OnChanges {
     clonedPreviewListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
-    this.previewFetchData(clonedPreviewListQuery);
+    if (!input?.skipFetch) {
+      this.previewFetchData(clonedPreviewListQuery);
+    }
   }
 
   exportTable(item: any) {
@@ -758,6 +795,14 @@ export class MasterListComponent implements OnChanges {
   }
 
   fetchAttachedPolicies(params: FetchDataParams) {
+    this.isGridBootstrapReady = false;
+    this.pendingGridFetchRequest = false;
+    this.queuedInitialFetchParams = null;
+    this.hasInitialGridFetchStarted = false;
+    if (this.savedViewInitialFallbackTimer) {
+      clearTimeout(this.savedViewInitialFallbackTimer);
+      this.savedViewInitialFallbackTimer = null;
+    }
     this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -771,65 +816,359 @@ export class MasterListComponent implements OnChanges {
         this.toastr.error(errorMessage, 'Error');
       },
       () => {
-        this.fetchColumns(this.listQuery);
-        this.fetchData(this.listQuery);
+        this.fetchColumns(this.listQuery).finally(() => {
+          this.isGridBootstrapReady = true;
+          const savedState = this.getSavedViewStateForCurrentEntity();
+          if (savedState) {
+            const normalizedSavedState = this.parseSavedViewState(savedState);
+            this.applySavedViewStateToListQuery(normalizedSavedState);
+            this.ignoreNextSavedViewPageChange = true;
+          } else {
+            this.ignoreNextSavedViewPageChange = false;
+          }
+
+          this.pendingGridFetchRequest = false;
+          this.queuedInitialFetchParams = null;
+          this.fetchData(this.listQuery);
+        });
       }
     );
   }
 
-  fetchColumns(params: FetchDataParams) {
-    this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-          const data = response.data.records.map((key: any, index: any) => {
-            return {
-              field: key.field_name,
-              title: this.translate.instant(key.display_name),
-              sorting: key.is_sortable,
-              searchable: key.is_searchable,
-              enable: true,
-              ...key,
-            };
-          });
+  private requestGridFetch(params: FetchDataParams): void {
+    if (!this.isGridBootstrapReady) {
+      this.pendingGridFetchRequest = true;
+      this.queuedInitialFetchParams = params;
+      return;
+    }
+    console.log(params);
+    this.fetchData(params);
+  }
 
-          this.selectcolumns = [
-            {
-              field: 'S.No',
-              title: 'S.No',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 1,
-            },
-            ...data,
-            {
-              field: 'Status',
-              title: 'Status',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 1,
-            },
-            {
-              field: 'Action',
-              title: 'Action',
-              sorting: false,
-              searchable: false,
-              enable: false,
-              field_type_id: 0,
-            },
-          ];
-        }
-      },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
+  private flushPendingGridFetchRequest(): void {
+    if (!this.isGridBootstrapReady || !this.pendingGridFetchRequest) return;
+    const params = this.queuedInitialFetchParams || this.listQuery;
+    this.pendingGridFetchRequest = false;
+    this.queuedInitialFetchParams = null;
+    this.fetchData(params);
+  }
+
+  private hasSavedViewForCurrentEntity(): boolean {
+    try {
+      const isSaveFilterEnabled = this.config?.save_filter_condition == 'true' && this.config?.save_filter_condition;
+      if (!isSaveFilterEnabled) return false;
+
+      const userDataRaw = this.localStorageService.getData('user_data');
+      const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
+      const configurations = userData?.main?.user_search_configurations;
+      if (!Array.isArray(configurations) || configurations.length === 0) return false;
+
+      const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
+      if (!entitySlug) return false;
+
+      return configurations.some((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
+    } catch {
+      return false;
+    }
+  }
+
+  private getSavedViewStateForCurrentEntity(): any | null {
+    try {
+      const isSaveFilterEnabled = this.config?.save_filter_condition == 'true' && this.config?.save_filter_condition;
+      if (!isSaveFilterEnabled) return null;
+
+      const userDataRaw = this.localStorageService.getData('user_data');
+      const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
+      const configurations = Array.isArray(userData?.main?.user_search_configurations) ? userData.main.user_search_configurations : [];
+      if (!configurations.length) return null;
+
+      const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
+      if (!entitySlug) return null;
+
+      const entityViews = configurations.filter((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
+      if (!entityViews.length) return null;
+
+      const selectedView = entityViews.find((item: any) => !!item?.is_default) || entityViews[0];
+      return this.parseSavedViewState(selectedView?.search_values || selectedView?.state || null);
+    } catch {
+      return null;
+    }
+  }
+
+  private parseSavedViewState(state: any): any | null {
+    if (!state) return null;
+    if (typeof state === 'string') {
+      try {
+        return JSON.parse(state);
+      } catch {
+        return null;
       }
-    );
+    }
+    return state;
+  }
+
+  private mapSearchOperator(condition: string): string {
+    switch ((condition || '').toLowerCase()) {
+      case 'contains':
+        return 'ILIKE';
+      case 'not_contains':
+        return 'NOT ILIKE';
+      case 'starts_with':
+      case 'ends_with':
+        return 'ILIKE';
+      case 'is_empty':
+        return '=';
+      case 'is_not_empty':
+        return '<>';
+      case 'in':
+        return 'IN';
+      case 'not_in':
+        return 'NOT IN';
+      case 'is_null':
+        return 'IS NULL';
+      case 'is_not_null':
+        return 'IS NOT NULL';
+      default:
+        return condition || '=';
+    }
+  }
+
+  private getNoValueOperatorSQL(operator: string): string {
+    switch ((operator || '').toLowerCase()) {
+      case 'is_null':
+        return 'IS NULL';
+      case 'is_empty':
+        return 'IS_EMPTY';
+      case 'is_not_null':
+        return 'IS NOT NULL';
+      case 'is_not_empty':
+        return 'IS_NOT_EMPTY';
+      default:
+        return '';
+    }
+  }
+
+  private addSearchWildcards(condition: string, value: any): any {
+    const normalized = (condition || '').toLowerCase();
+    const text = String(value ?? '');
+    switch ((condition || '').toLowerCase()) {
+      case 'contains':
+      case 'not_contains':
+        return `%${text}%`;
+      case 'starts_with':
+        return `${text}%`;
+      case 'ends_with':
+        return `%${text}`;
+      case 'in':
+      case 'not_in': {
+        if (Array.isArray(value)) {
+          return value;
+        }
+        return String(value || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      default:
+        return value;
+    }
+  }
+
+  private getInputTypeForSavedFilter(columnName: string): string {
+    const fieldTypeId = this.selectcolumns.find((column: any) => String(column?.field || column?.field_name || '') === String(columnName || ''))?.field_type_id;
+    switch (Number(fieldTypeId)) {
+      case 5:
+      case 10:
+        return 'date';
+      case 6:
+        return 'time';
+      case 7:
+        return 'datetime-local';
+      default:
+        return 'text';
+    }
+  }
+
+  private normalizeSavedFilterValue(columnName: string, operator: string, value: any): any {
+    let normalizedValue = value;
+    const inputType = this.getInputTypeForSavedFilter(columnName);
+
+    if (typeof normalizedValue === 'string') {
+      if (inputType === 'datetime-local' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(normalizedValue)) {
+        normalizedValue = this.timezoneService.transformDisplayDateTimeToUTC(normalizedValue, 'yyyy-MM-dd HH:mm') || normalizedValue;
+      } else if (inputType === 'time' && /^\d{2}:\d{2}(:\d{2})?$/.test(normalizedValue)) {
+        normalizedValue = this.timezoneService.transformDisplayDateTimeToUTC(normalizedValue, 'HH:mm') || normalizedValue;
+      } else if (inputType === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+        normalizedValue = this.timezoneService.transformDateOnly(normalizedValue) || normalizedValue;
+      }
+    }
+
+    return this.addSearchWildcards(operator, normalizedValue);
+  }
+
+  private applySavedViewStateToListQuery(state: any): void {
+    state = this.parseSavedViewState(state);
+    if (!state || !this.listQuery || !this.defaultQuery) return;
+
+    const baseQuery = JSON.parse(JSON.stringify(this.defaultQuery));
+    this.listQuery = {
+      ...baseQuery,
+      entity_name: this.listQuery.entity_name || baseQuery.entity_name,
+    };
+
+    const searchCondition = String(state?.searchCondition || 'contains');
+    const commonSearch = String(state?.commonSearch || '').trim();
+    const selectedSearchColumns = Array.isArray(state?.selectedSearchColumns) ? state.selectedSearchColumns.map((c: any) => String(c)) : [];
+
+    const defaultWhereColumns = Array.isArray(baseQuery?.search_any)
+      ? baseQuery.search_any.map((item: any) => String(item?.column_name || '')).filter(Boolean)
+      : [];
+
+    const selectableWhereColumns = Array.isArray(this.selectcolumns)
+      ? this.selectcolumns
+          .filter((column: any) => column?.searchable && Number(column?.field_type_id) >= 3 && Number(column?.field_type_id) <= 4)
+          .map((column: any) => String(column?.field || column?.field_name || ''))
+          .filter(Boolean)
+      : [];
+
+    const whereColumns = selectedSearchColumns.length ? selectedSearchColumns : defaultWhereColumns.length ? defaultWhereColumns : selectableWhereColumns;
+    if (commonSearch && whereColumns.length) {
+      const operator = this.mapSearchOperator(searchCondition);
+      const value = this.addSearchWildcards(searchCondition, commonSearch);
+      this.listQuery.search_any = whereColumns.map((column_name: string) => ({ column_name, operator, value }));
+    }
+
+    const savedFilters = Array.isArray(state?.appliedFilterConditions) ? state.appliedFilterConditions : [];
+    if (savedFilters.length) {
+      const whereFilters = savedFilters
+        .filter((item: any) => (item?.clause_type || 'where') !== 'having')
+        .map((item: any) => ({
+          column_name: item?.field,
+          operator: this.mapSearchOperator(item?.operator),
+          value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
+            ? this.getNoValueOperatorSQL(item?.operator)
+            : Array.isArray(item?.enum_values) && item.enum_values.length
+            ? item.enum_values
+            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+        }))
+        .filter((item: any) => !!item.column_name);
+
+      const havingFilters = savedFilters
+        .filter((item: any) => (item?.clause_type || 'where') === 'having')
+        .map((item: any) => ({
+          column_name: item?.field,
+          operator: this.mapSearchOperator(item?.operator),
+          value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
+            ? this.getNoValueOperatorSQL(item?.operator)
+            : Array.isArray(item?.enum_values) && item.enum_values.length
+            ? item.enum_values
+            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+        }))
+        .filter((item: any) => !!item.column_name);
+
+      const useAnd = state?.filterCondition !== undefined ? !!state.filterCondition : true;
+      if (whereFilters.length) {
+        if (useAnd) {
+          this.listQuery.search_all = [...(Array.isArray(baseQuery?.search_all) ? baseQuery.search_all : []), ...whereFilters];
+          this.listQuery.search_any = [];
+        } else {
+          this.listQuery.search_any = [...(Array.isArray(baseQuery?.search_any) ? baseQuery.search_any : []), ...whereFilters];
+          this.listQuery.search_all = [];
+        }
+      }
+
+      if (havingFilters.length) {
+        if (useAnd) {
+          this.listQuery.having_conditions = havingFilters;
+          this.listQuery.having_any_conditions = [];
+        } else {
+          this.listQuery.having_any_conditions = havingFilters;
+          this.listQuery.having_conditions = [];
+        }
+      }
+    }
+
+    const savedSortColumns = Array.isArray(state?.sortColumns) ? state.sortColumns : [];
+    if (savedSortColumns.length) {
+      this.listQuery.sort_columns = savedSortColumns.map((item: any) => [item?.key, item?.direction]).filter((item: any[]) => !!item[0] && !!item[1]);
+    }
+
+    const savedResultsPerPage = Number(state?.resultsPerPage);
+    if (savedResultsPerPage > 0) {
+      this.resultsPerPage = savedResultsPerPage;
+      this.listQuery.limit_range = savedResultsPerPage;
+    }
+
+    const savedCurrentPage = Number(state?.currentPage);
+    this.currentPage = savedCurrentPage > 0 ? savedCurrentPage : 1;
+    this.listQuery.start_index = (this.currentPage - 1) * Number(this.resultsPerPage || 10);
+    console.log(this.listQuery);
+  }
+
+  fetchColumns(params: FetchDataParams): Promise<void> {
+    return new Promise((resolve) => {
+      this.gridApiService.getAllColumns({ entity_name: params.entity_name }).subscribe(
+        (response) => {
+          if (response.status && response.code === 200) {
+            const data = response.data.records.map((key: any, index: any) => {
+              return {
+                field: key.field_name,
+                title: this.translate.instant(key.display_name),
+                sorting: key.is_sortable,
+                searchable: key.is_searchable,
+                enable: true,
+                ...key,
+              };
+            });
+
+            this.selectcolumns = [
+              {
+                field: 'S.No',
+                title: 'S.No',
+                sorting: false,
+                searchable: false,
+                enable: false,
+                field_type_id: 1,
+              },
+              ...data,
+              {
+                field: 'Status',
+                title: 'Status',
+                sorting: false,
+                searchable: false,
+                enable: false,
+                field_type_id: 1,
+              },
+              {
+                field: 'Action',
+                title: 'Action',
+                sorting: false,
+                searchable: false,
+                enable: false,
+                field_type_id: 0,
+              },
+            ];
+          }
+        },
+        (error) => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          resolve();
+        },
+        () => resolve()
+      );
+    });
   }
 
   fetchData(params: FetchDataParams) {
+    console.log('enter');
+    console.log(params);
+    this.hasInitialGridFetchStarted = true;
+    if (this.savedViewInitialFallbackTimer) {
+      clearTimeout(this.savedViewInitialFallbackTimer);
+      this.savedViewInitialFallbackTimer = null;
+    }
     this.gridloading = true;
     params.limit_range = this.resultsPerPage;
     const effectiveUniqueId = this.selectedItemUuid || this.uniqueId || this.uuid || null;
@@ -838,6 +1177,7 @@ export class MasterListComponent implements OnChanges {
       '$session_user_id',
       this.user_info.main.id
     );
+    console.log(payload);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
@@ -854,6 +1194,7 @@ export class MasterListComponent implements OnChanges {
       payload.attached_policies = this.attachedPolicies;
     }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
+    console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -1971,33 +2312,50 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  onPageChange(event: { page: number; start_index: number }) {
+  onPageChange(event: { page: number; start_index: number; skipFetch?: boolean; source?: string }) {
+    if (event?.source === 'default-initial') {
+      if (this.savedViewInitialFallbackTimer) {
+        clearTimeout(this.savedViewInitialFallbackTimer);
+        this.savedViewInitialFallbackTimer = null;
+      }
+      return;
+    }
+
+    if (event?.source === 'saved-view' && this.ignoreNextSavedViewPageChange) {
+      this.ignoreNextSavedViewPageChange = false;
+      return;
+    }
+
     this.currentPage = event.page;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = this.resultsPerPage;
-    this.fetchData(this.listQuery);
+    if (event?.skipFetch) return;
+    this.requestGridFetch(this.listQuery);
   }
 
-  previewOnPageChange(event: { page: number; start_index: number }) {
+  previewOnPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
     this.previewCurrentPage = event.page;
     this.previewListQuery.start_index = event.start_index;
     this.previewListQuery.limit_range = this.previewResultsPerPage;
+    if (event?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);
   }
 
-  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
+  onResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.currentPage = 1;
     this.resultsPerPage = event.resultsPerPage;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
-    this.fetchData(this.listQuery);
+    if (event?.skipFetch) return;
+    this.requestGridFetch(this.listQuery);
   }
 
-  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number }) {
+  previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.previewCurrentPage = 1;
     this.previewResultsPerPage = event.resultsPerPage;
     this.previewListQuery.start_index = event.start_index;
     this.previewListQuery.limit_range = event.resultsPerPage;
+    if (event?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);
   }
 
