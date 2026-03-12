@@ -586,8 +586,8 @@ export class MasterListComponent implements OnChanges {
       clonedListQuery.search_any = [...(orgListQuery.search_any || [])];
       this.commonSearchQuery.search_any = [];
     }
-    console.log(clonedListQuery);
-    console.log(this.commonSearchQuery);
+    // console.log(clonedListQuery);
+    // console.log(this.commonSearchQuery);
 
     // Handling search in "having" conditions
     if (input.having.data.length) {
@@ -619,7 +619,7 @@ export class MasterListComponent implements OnChanges {
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
     this.previewCurrentPage = 1;
-    console.log(clonedListQuery);
+    // console.log(clonedListQuery);
     if (!input?.skipFetch) {
       this.requestGridFetch(clonedListQuery);
     }
@@ -673,7 +673,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   exportTable(item: any) {
-    console.log(item);
+    // console.log(item);
     if (this.masterInfo.permissions.export_excel || this.masterInfo.permissions.export_pdf) {
       this.loading = true;
       if (
@@ -841,7 +841,7 @@ export class MasterListComponent implements OnChanges {
       this.queuedInitialFetchParams = params;
       return;
     }
-    console.log(params);
+    // console.log(params);
     this.fetchData(params);
   }
 
@@ -1102,7 +1102,7 @@ export class MasterListComponent implements OnChanges {
     const savedCurrentPage = Number(state?.currentPage);
     this.currentPage = savedCurrentPage > 0 ? savedCurrentPage : 1;
     this.listQuery.start_index = (this.currentPage - 1) * Number(this.resultsPerPage || 10);
-    console.log(this.listQuery);
+    // console.log(this.listQuery);
   }
 
   fetchColumns(params: FetchDataParams): Promise<void> {
@@ -1162,8 +1162,8 @@ export class MasterListComponent implements OnChanges {
   }
 
   fetchData(params: FetchDataParams) {
-    console.log('enter');
-    console.log(params);
+    // console.log('enter');
+    // console.log(params);
     this.hasInitialGridFetchStarted = true;
     if (this.savedViewInitialFallbackTimer) {
       clearTimeout(this.savedViewInitialFallbackTimer);
@@ -1177,7 +1177,7 @@ export class MasterListComponent implements OnChanges {
       '$session_user_id',
       this.user_info.main.id
     );
-    console.log(payload);
+    // console.log(payload);
     if (this.uniqueId) {
       payload.unique_id = this.uniqueId;
     }
@@ -1194,7 +1194,7 @@ export class MasterListComponent implements OnChanges {
       payload.attached_policies = this.attachedPolicies;
     }
     payload = this.localStorageService.replaceUniqueId(payload, '$unique_id', this.uniqueId || '');
-    console.log(payload);
+    // console.log(payload);
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -1448,7 +1448,7 @@ export class MasterListComponent implements OnChanges {
     }
 
     this.headerStaticEntityName = this.resolveEntityNameByIdentifier(entities, currentEntity?.header_entity_id);
-    console.log(this.headerStaticEntityName);
+    // console.log(this.headerStaticEntityName);
     this.footerStaticEntityName = this.resolveEntityNameByIdentifier(entities, currentEntity?.footer_entity_id);
   }
 
