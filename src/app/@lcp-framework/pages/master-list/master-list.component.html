@@ -45,7 +45,7 @@
         href="javascript:void(0);"
         class="hover:text-primary"
         *ngIf="this.masterInfo.permissions.email_resend"
-        (click)="this.emailResendItem(item)"
+        (click)="this.emailResendItem(item, $event)"
         ngxTippy
         data-tippy-content="Resend Email"
         appDynamicFontSize="body"
@@ -56,7 +56,7 @@
         href="javascript:void(0);"
         class="hover:text-primary"
         *ngIf="this.masterInfo.permissions.details"
-        (click)="this.viewItem(item)"
+        (click)="this.viewItem(item, $event)"
         ngxTippy
         data-tippy-content="Details"
         appDynamicFontSize="body"
@@ -86,7 +86,7 @@
             ? item?.min_status != 'completed'
             : true)
         "
-        (click)="this.editItem(item)"
+        (click)="this.editItem(item, $event)"
         ngxTippy
         data-tippy-content="Edit"
       >
@@ -132,7 +132,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.delete"
-        (click)="this.deleteItem(item)"
+        (click)="this.deleteItem(item, $event)"
         ngxTippy
         data-tippy-content="Delete"
       >
@@ -144,7 +144,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.assign"
-        (click)="this.assignItem(item)"
+        (click)="this.assignItem(item, $event)"
         ngxTippy
         data-tippy-content="Assign"
       >
@@ -155,7 +155,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.print"
-        (click)="this.printItem(item)"
+        (click)="this.printItem(item, $event)"
         ngxTippy
         data-tippy-content="Print"
       >
@@ -167,7 +167,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.record_export || item?.downloadables != null"
-        (click)="this.recordExport(item)"
+        (click)="this.recordExport(item, $event)"
         ngxTippy
         data-tippy-content="Record Export"
       >
@@ -178,7 +178,7 @@
         class="hover:text-primary"
         appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.generate_vector"
-        (click)="this.generateVector(item)"
+        (click)="this.generateVector(item, $event)"
         ngxTippy
         data-tippy-content="Generate Vector"
       >
@@ -191,7 +191,7 @@
         [class.hover:text-primary]="item.password"
         appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.reset_password"
-        (click)="this.passwordModal(item)"
+        (click)="this.passwordModal(item, $event)"
         ngxTippy
         [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'"
       >

@@ -150,6 +150,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   };
 
   commonConfig = commonConfig;
+  config: any = null;
+  displayDateRangeFilter = false;
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
   @ViewChildren('powerBiContainer') powerBiContainers!: QueryList<ElementRef>;
@@ -209,7 +211,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
-
     // Set default date range
     this.dateRange = {
       fromDate: new Date('1950-01-01'),
@@ -313,7 +314,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     const userData = this.localstore.getData('user_data');
-
+    this.loadConfig();
     const permissionsList = userData ? JSON.parse(userData).permissions : null;
 
     this.permissionsList = permissionsList;
@@ -328,6 +329,11 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     //this.menuLoadService.fetchMenuData(this.companyId);
   }
 
+  loadConfig() {
+    this.config = JSON.parse(this.localstore.getData('config'));
+    this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
+    this.cdr.detectChanges();
+  }
   async loadDashboardWizards() {
     const db = (environment as any).DB || 'pg';
     let params: any;
@@ -428,7 +434,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         };
         break;
     }
-
     this.gridApiService.getAllList(params).subscribe(
       async (response) => {
         if (response.status && response.code === 200) {
@@ -535,7 +540,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       // re-run query if present
       if (card.query_information) {
         const queryInfo = JSON.parse(JSON.stringify(card.query_information));
-
         // Initialize grid_params if it doesn't exist
         if (!queryInfo.grid_params) {
           queryInfo.grid_params = {};
@@ -543,7 +547,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
         // Merge existing grid_params with the component's grid_params
         queryInfo.grid_params = { ...queryInfo.grid_params, ...this.grid_params };
-
         const queryString = JSON.stringify(queryInfo).replace(/\$session_user_id/g, this.userId);
         card.query_information = JSON.parse(queryString);
         card.data = await this.getQueryInfo(card.query_information);

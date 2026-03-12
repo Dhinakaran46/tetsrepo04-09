@@ -339,7 +339,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sanitizer: DomSanitizer
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
-    console.log(this.config);
 
     this.save_filter_condition = this.config.save_filter_condition == 'true' && this.config.save_filter_condition;
     this.show_column_search_keys = this.config.show_column_search_keys == 'true' && this.config.show_column_search_keys;
@@ -742,7 +741,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       case 'master':
         if (enumObj?.value) {
           try {
-            console.log('Fetching master data for enum values with params:', enumObj.value);
             const response = await this.gridApiService.getListData(enumObj.value).toPromise();
             if (response.status && response.data?.records) {
               return response.data.records.map((option: any) => ({

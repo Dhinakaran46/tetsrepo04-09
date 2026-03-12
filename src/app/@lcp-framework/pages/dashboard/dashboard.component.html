@@ -11,7 +11,7 @@
 </div>
 
 <br />
-<div class="flex w-full justify-end pr-4">
+<div *ngIf="displayDateRangeFilter" class="flex w-full justify-end pr-4">
   <div class="relative">
     <button
       (click)="showDateRangePicker = !showDateRangePicker"

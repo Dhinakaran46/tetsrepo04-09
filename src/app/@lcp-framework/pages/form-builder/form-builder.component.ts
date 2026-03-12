@@ -38,7 +38,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   unique_id!: string | null;
   originaluid!: string | null;
   routeGParams: Record<string, string> = {};
-  defaultData: any = {};
+  @Input() defaultData: any = {};
   defaultDataParam!: any;
   uploadedFiles: string[] = [];
   oldUploadedFiles: string[] = []; // after edit completion old fils should removed
@@ -192,13 +192,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
     const collectFromParams = (params: any) => {
       const aggregatedGparam = params.get('gparam');
-      console.log(aggregatedGparam);
       if (aggregatedGparam) {
         try {
           const decoded = decodeURIComponent(aggregatedGparam);
-          console.log(decoded);
           const parsed = JSON.parse(decoded);
-          console.log(parsed);
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
             Object.keys(parsed).forEach((key) => {
               if (key.startsWith('gparam_') && parsed[key] !== undefined && parsed[key] !== null) {
@@ -237,7 +234,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     collectFromParams(queryParams);
 
     this.routeGParams = mergedGParams;
-    console.log(this.routeGParams);
   }
 
   ngAfterViewInit() {
@@ -867,7 +863,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   private replaceGParamsInObject(obj: any): any {
-    console.log(obj);
     if (!obj || Object.keys(this.routeGParams).length === 0) {
       return obj;
     }
@@ -938,8 +933,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
-
-          this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id };
+            this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
 

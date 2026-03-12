@@ -1,0 +1,67 @@
+<li class="py-1">
+  <div
+    class="group flex cursor-pointer items-center rounded-md px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+    [class.bg-primary-light]="selectedNodeUuid === item.uuid"
+    (click)="onSelect(item)"
+  >
+    <!-- Expand/Collapse Icon -->
+    <div class="flex w-6 cursor-pointer items-center justify-center" (click)="$event.stopPropagation(); toggleTreeview(item.id)">
+      <i
+        *ngIf="item.children && item.children.length > 0"
+        class="fa-solid"
+        [class.fa-angle-right]="!isExpanded(item.id)"
+        [class.fa-angle-down]="isExpanded(item.id)"
+      ></i>
+    </div>
+
+    <!-- Folder/File Icon -->
+    <i
+      class="fa-solid mr-2 text-primary"
+      [class.fa-folder]="item.children && item.children.length > 0"
+      [class.fa-file]="!item.children || item.children.length === 0"
+    ></i>
+
+    <!-- Node Name -->
+    <span class="flex-grow text-sm font-medium">
+      {{ item.name | translate }}
+    </span>
+
+    <!-- Actions (Visible on Hover or if Selected) -->
+    <div class="ml-2 hidden items-center space-x-2 group-hover:flex">
+      <button
+        *ngIf="permissions.create"
+        type="button"
+        class="hover:text-primary-dark p-1 text-primary"
+        (click)="onAddChild($event, item)"
+        title="{{ 'add_child' | translate }}"
+      >
+        <i class="fa-solid fa-plus text-xs"></i>
+      </button>
+      <button
+        *ngIf="permissions.delete"
+        type="button"
+        class="hover:text-danger-dark p-1 text-danger"
+        (click)="onDelete($event, item)"
+        title="{{ 'delete' | translate }}"
+      >
+        <i class="fa-regular fa-trash-can text-xs"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Recursive Children -->
+  <div *ngIf="isExpanded(item.id)" [@slideDownUp] class="overflow-hidden">
+    <ul class="ml-6 border-l border-gray-200 dark:border-gray-700">
+      <app-tree-view-item
+        *ngFor="let child of getSortedChildren(item.children)"
+        [item]="child"
+        [treeview]="treeview"
+        [permissions]="permissions"
+        [selectedNodeUuid]="selectedNodeUuid"
+        (selectNode)="selectNode.emit($event)"
+        (deleteNode)="deleteNode.emit($event)"
+        (addChild)="addChild.emit($event)"
+      ></app-tree-view-item>
+    </ul>
+  </div>
+</li>
