@@ -200,6 +200,8 @@ export class MasterListComponent implements OnChanges {
   private hasInitialGridFetchStarted: boolean = false;
   private savedViewInitialFallbackTimer: ReturnType<typeof setTimeout> | null = null;
   private ignoreNextSavedViewPageChange: boolean = false;
+  private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
+  private save_grid_latest_state: boolean = false;
 
   constructor(
     private toastr: ToastrService,
@@ -263,6 +265,7 @@ export class MasterListComponent implements OnChanges {
 
   async ngAfterContentInit() {
     this.config = JSON.parse(this.localStorageService.getData('config'));
+    this.save_grid_latest_state = this.config?.save_grid_latest_state == 'true' && this.config?.save_grid_latest_state;
     let pageInfo: any;
     if (this.entity_name) {
       const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
@@ -842,7 +845,7 @@ export class MasterListComponent implements OnChanges {
 
   private hasSavedViewForCurrentEntity(): boolean {
     try {
-      const isSaveFilterEnabled = this.config?.save_filter_condition == 'true' && this.config?.save_filter_condition;
+      const isSaveFilterEnabled = this.config?.save_grid_views == 'true' && this.config?.save_grid_views;
       if (!isSaveFilterEnabled) return false;
 
       const userDataRaw = this.localStorageService.getData('user_data');
@@ -861,25 +864,53 @@ export class MasterListComponent implements OnChanges {
 
   private getSavedViewStateForCurrentEntity(): any | null {
     try {
-      const isSaveFilterEnabled = this.config?.save_filter_condition == 'true' && this.config?.save_filter_condition;
+      const isSaveFilterEnabled = this.config?.save_grid_views == 'true' && this.config?.save_grid_views;
       if (!isSaveFilterEnabled) return null;
-
-      const userDataRaw = this.localStorageService.getData('user_data');
-      const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
-      const configurations = Array.isArray(userData?.main?.user_search_configurations) ? userData.main.user_search_configurations : [];
-      if (!configurations.length) return null;
 
       const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
       if (!entitySlug) return null;
 
+      const tempState = this.getTempViewStateForEntity(entitySlug);
+
+      const userDataRaw = this.localStorageService.getData('user_data');
+      const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
+      const configurations = Array.isArray(userData?.main?.user_search_configurations) ? userData.main.user_search_configurations : [];
+      if (!configurations.length) return tempState;
+
       const entityViews = configurations.filter((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
-      if (!entityViews.length) return null;
+      if (!entityViews.length) return tempState;
 
       const selectedView = entityViews.find((item: any) => !!item?.is_default) || entityViews[0];
+      const selectedViewName = String(selectedView?.view_name || 'Default View')
+        .trim()
+        .toLowerCase();
+      const tempConfig = this.getTempViewConfigForEntity(entitySlug);
+      const tempViewName = String(tempConfig?.view_name || '')
+        .trim()
+        .toLowerCase();
+
+      if (tempState && tempViewName && tempViewName === selectedViewName) {
+        return tempState;
+      }
+
       return this.parseSavedViewState(selectedView?.search_values || selectedView?.state || null);
     } catch {
       return null;
     }
+  }
+
+  private getTempViewConfigForEntity(entitySlug: string): any | null {
+    if (!this.save_grid_latest_state) return null;
+    const rawTemp = this.localStorageService.getData(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY);
+    const parsedTemp = typeof rawTemp === 'string' ? this.parseSavedViewState(rawTemp) : rawTemp;
+    if (!Array.isArray(parsedTemp)) return null;
+
+    return parsedTemp.find((item: any) => String(item?.entity_slug || '') === entitySlug && !!item?.localstoreOnly) || null;
+  }
+
+  private getTempViewStateForEntity(entitySlug: string): any | null {
+    const tempConfig = this.getTempViewConfigForEntity(entitySlug);
+    return this.parseSavedViewState(tempConfig?.search_values || null);
   }
 
   private parseSavedViewState(state: any): any | null {
@@ -2314,7 +2345,9 @@ export class MasterListComponent implements OnChanges {
   }
 
   onResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
-    this.currentPage = 1;
+    const limit = Number(event?.resultsPerPage) > 0 ? Number(event.resultsPerPage) : 10;
+    const startIndex = Number(event?.start_index) >= 0 ? Number(event.start_index) : 0;
+    this.currentPage = Math.floor(startIndex / limit) + 1;
     this.resultsPerPage = event.resultsPerPage;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = event.resultsPerPage;
