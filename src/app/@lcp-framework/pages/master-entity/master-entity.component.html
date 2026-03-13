@@ -85,8 +85,10 @@
             </div>
           </div>
 
-          <ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.EXPORT_MODULE">
-            <div class="mt-0">
+          <ng-container
+            *ngIf="[commonConfig.ENTITY_TYPES.EXPORT_MODULE, commonConfig.ENTITY_TYPES.COMMON_PERMISSION_MODULE].includes(form.get('entityType')?.value)"
+          >
+            <div class="mt-0" *ngIf="[commonConfig.ENTITY_TYPES.EXPORT_MODULE].includes(form.get('entityType')?.value)">
               <label for="export_templates" class="required-mark mb-2 block font-medium"> {{ 'form_label_export_templates' | translate }}</label>
               <div class="mt-1.5 flex items-center space-x-2">
                 <!-- Wizard Group Select -->
