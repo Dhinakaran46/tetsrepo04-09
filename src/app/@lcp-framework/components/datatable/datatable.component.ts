@@ -15,6 +15,7 @@ import {
   ViewContainerRef,
   AfterViewChecked,
   HostListener,
+  OnDestroy,
 } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
@@ -94,6 +95,14 @@ interface UserSearchConfiguration {
   updated_at: string;
 }
 
+interface UserSearchConfigurationTemp {
+  entity_slug: string;
+  view_name: string;
+  localstoreOnly: boolean;
+  search_values: GridViewState;
+  updated_at: string;
+}
+
 @Component({
   selector: 'app-datatable',
   standalone: true,
@@ -107,7 +116,7 @@ interface UserSearchConfiguration {
     ]),
   ],
 })
-export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
   // Add this property to your component class:
   pendingPopupData: { item: any; entityName: string } | null = null;
 
@@ -287,7 +296,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   loadingpopup = false;
   noPopupPermission = false;
 
-  save_filter_condition = false;
+  save_grid_views = false;
+  save_grid_latest_state = false;
   show_column_search_keys = false;
   show_common_search_keys = false;
   private activeSortOrder: string[] = [];
@@ -295,6 +305,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   selectedViewName: string = '';
   isViewConfigModalOpen: boolean = false;
   isEditingViewConfig: boolean = false;
+  isEditingNoFilterView: boolean = false;
   isMyViewsMenuOpen: boolean = false;
   viewFormName: string = '';
   viewFormSetAsDefault: boolean = true;
@@ -303,6 +314,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   private appliedSavedViewSlug: string | null = null;
   private savedViewApplyScheduled = false;
   private initialFetchEmitted = false;
+  private pendingManualViewSelection = false;
+  private hasPersistedViewBeforeDestroy = false;
+  private readonly NO_FILTER_VIEW_NAME = 'No Filter';
+  private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
   private upsert_saved_view_json_schema: any = {
     print_query: true,
     action: ['hard_delete', 'insert'],
@@ -340,7 +355,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
 
-    this.save_filter_condition = this.config.save_filter_condition == 'true' && this.config.save_filter_condition;
+    this.save_grid_views = this.config.save_grid_views == 'true' && this.config.save_grid_views;
+    this.save_grid_latest_state = this.config.save_grid_latest_state == 'true' && this.config.save_grid_latest_state;
     this.show_column_search_keys = this.config.show_column_search_keys == 'true' && this.config.show_column_search_keys;
     this.show_common_search_keys = this.config.show_common_search_keys == 'true' && this.config.show_common_search_keys;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
@@ -356,6 +372,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       this.createColumnPopupChildMasterList(item, entityName);
       this.cdr.detectChanges(); // flush changes
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.hasPersistedViewBeforeDestroy) return;
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
   }
 
   onEnumChange(selectedValues: any[], index: number) {
@@ -701,9 +723,24 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   private emitInitialFetchIfNoSavedView(): void {
     if (this.initialFetchEmitted) return;
+    const entitySlug = this.getEntitySlug();
+    const tempApplyKey = `${entitySlug}::__temp__`;
     const hasEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title);
     if (!hasEntityContext) return;
     if (this.getSavedViewConfiguration()) return;
+
+    const tempState = this.getTempGridStateForCurrentGrid();
+    if (tempState) {
+      if (this.appliedSavedViewSlug === tempApplyKey) return;
+      if (this.canApplyGridState(tempState)) {
+        this.appliedSavedViewSlug = tempApplyKey;
+        this.hasSavedViewConfiguration = true;
+        this.applyGridState(tempState);
+      } else {
+        this.scheduleTryApplySavedView();
+      }
+      return;
+    }
 
     const page = Number(this.currentPage) > 0 ? Number(this.currentPage) : 1;
     const limit = Number(this.resultsPerPage) > 0 ? Number(this.resultsPerPage) : this.getDefaultResultsPerPage();
@@ -1409,13 +1446,145 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return Array.isArray(configs) ? configs : [];
   }
 
+  private getUserSearchConfigurationsTemp(): UserSearchConfigurationTemp[] {
+    if (!this.save_grid_latest_state) return [];
+    const rawTemp = this.localstore.getData(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY);
+    const parsed = this.parseJsonSafe(rawTemp, []);
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
+  private setUserSearchConfigurationsTemp(configs: UserSearchConfigurationTemp[]): void {
+    if (!this.save_grid_latest_state) return;
+    const payload = JSON.stringify(configs);
+    const isEncrypted = this.config?.encrypt_local_storage === 'true';
+    if (isEncrypted) {
+      this.localstore.storeDataEncrypted(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY, payload);
+      return;
+    }
+    this.localstore.storeData(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY, payload);
+  }
+
+  private getTempConfigurationForEntity(entitySlug: string): UserSearchConfigurationTemp | null {
+    if (!this.save_grid_latest_state) return null;
+    const tempConfigs = this.getUserSearchConfigurationsTemp();
+    return tempConfigs.find((item: any) => String(item?.entity_slug || '') === entitySlug) || null;
+  }
+
+  private getTempGridStateForCurrentGrid(): GridViewState | null {
+    const entitySlug = this.getEntitySlug();
+    const tempConfig = this.getTempConfigurationForEntity(entitySlug);
+    if (!tempConfig?.search_values || !tempConfig.localstoreOnly) return null;
+    return tempConfig.search_values;
+  }
+
+  private hasTempDraftForCurrentGrid(): boolean {
+    return !!this.getTempGridStateForCurrentGrid();
+  }
+
+  private hasTempChangesForCurrentGrid(): boolean {
+    const tempState = this.getTempGridStateForCurrentGrid();
+    if (!tempState) return false;
+    return !this.areGridStatesEqual(tempState, this.buildNoFilterGridViewState());
+  }
+
+  shouldShowNoFilterStyleActions(): boolean {
+    if (!this.save_grid_views) return false;
+    if (!this.hasTempChangesForCurrentGrid()) return false;
+
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return true;
+    return this.isNoFilterViewName(String(selectedView?.view_name || ''));
+  }
+
+  private canApplyGridState(state: GridViewState): boolean {
+    const selectedSearchColumns = state?.selectedSearchColumns || [];
+    if (!this.headercolumns?.length) return false;
+    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) return false;
+    return true;
+  }
+
+  private saveTempConfigurationForEntity(entitySlug: string, viewName: string, searchValues: GridViewState): void {
+    if (!this.save_grid_latest_state) return;
+    if (this.areGridStatesEqual(searchValues, this.buildNoFilterGridViewState())) {
+      this.clearTempConfigurationForEntity(entitySlug);
+      return;
+    }
+
+    const tempConfigs = this.getUserSearchConfigurationsTemp().filter((item: any) => String(item?.entity_slug || '') !== entitySlug);
+    tempConfigs.push({
+      entity_slug: entitySlug,
+      view_name: String(viewName || this.NO_FILTER_VIEW_NAME),
+      localstoreOnly: true,
+      search_values: searchValues,
+      updated_at: new Date().toISOString(),
+    });
+    this.setUserSearchConfigurationsTemp(tempConfigs);
+  }
+
+  private clearTempConfigurationForEntity(entitySlug: string): void {
+    if (!this.save_grid_latest_state) return;
+    const tempConfigs = this.getUserSearchConfigurationsTemp();
+    const nextTempConfigs = tempConfigs.filter((item: any) => String(item?.entity_slug || '') !== entitySlug);
+    if (nextTempConfigs.length === tempConfigs.length) return;
+    this.setUserSearchConfigurationsTemp(nextTempConfigs);
+  }
+
   private getEntityViews(): UserSearchConfiguration[] {
     const entitySlug = this.getEntitySlug();
     return this.getUserSearchConfigurations().filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
   }
 
+  private getConsolidatedEntityViews(entitySlug: string, persistedViews: UserSearchConfiguration[]): UserSearchConfiguration[] {
+    const normalizedViews = persistedViews.map((item: any) => ({
+      ...item,
+      entity_slug: entitySlug,
+      view_name: String(item?.view_name || 'Default View'),
+    }));
+
+    const tempConfig = this.getTempConfigurationForEntity(entitySlug);
+    if (!tempConfig?.localstoreOnly || !tempConfig?.search_values) {
+      return normalizedViews;
+    }
+
+    const tempViewName = String(tempConfig.view_name || this.NO_FILTER_VIEW_NAME)
+      .trim()
+      .toLowerCase();
+    const mergedViews = normalizedViews.map((item: UserSearchConfiguration) => {
+      const currentName = String(item?.view_name || 'Default View')
+        .trim()
+        .toLowerCase();
+      if (currentName !== tempViewName) {
+        return item;
+      }
+      return {
+        ...item,
+        search_values: tempConfig.search_values,
+        updated_at: tempConfig.updated_at || item.updated_at,
+      };
+    });
+
+    return mergedViews;
+  }
+
   private refreshEntityViews(): void {
-    this.entityViews = this.getEntityViews().map((item: UserSearchConfiguration) => ({
+    const entitySlug = this.getEntitySlug();
+    const allConfigs = this.getUserSearchConfigurations();
+    const currentEntityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug) as UserSearchConfiguration[];
+    const syncedViews = this.syncNoFilterViewForEntity(currentEntityViews);
+
+    if (syncedViews.changed) {
+      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      this.setUserSearchConfigurations([...otherConfigs, ...syncedViews.views]);
+      if (syncedViews.views.length > 0) {
+        this.persistSavedViewsToDatabase(entitySlug, syncedViews.views);
+      } else {
+        this.deleteSavedViewFromDatabase(entitySlug);
+      }
+    }
+
+    const consolidatedViews = this.getConsolidatedEntityViews(entitySlug, syncedViews.views);
+
+    this.entityViews = consolidatedViews.map((item: UserSearchConfiguration) => ({
       ...item,
       view_name: String(item?.view_name || 'Default View'),
     }));
@@ -1424,413 +1593,122 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       return;
     }
 
-    const hasSelection = this.entityViews.some((item: any) => String(item?.view_name || 'Default View') === this.selectedViewName);
+    const normalizedSelectedName = String(this.selectedViewName || '')
+      .trim()
+      .toLowerCase();
+    const hasSelection = this.entityViews.some(
+      (item: any) =>
+        String(item?.view_name || 'Default View')
+          .trim()
+          .toLowerCase() === normalizedSelectedName
+    );
     if (!hasSelection) {
       const defaultView = this.entityViews.find((item: any) => !!item?.is_default);
       this.selectedViewName = String(defaultView?.view_name || this.entityViews[0]?.view_name || 'Default View');
     }
   }
 
-  private setUserSearchConfigurations(configs: UserSearchConfiguration[]): void {
-    const userData = this.getUserDataObject();
-    userData.main = userData.main || {};
-    userData.main.user_search_configurations = configs;
-    this.persistUserDataObject(userData);
-  }
-
-  private buildCurrentGridViewState(): GridViewState {
-    const sortColumns = this.getSortedColumnsByPriority().map((col: any) => ({
-      key: this.getColumnUniqueKey(col),
-      direction: col.sortDirection as 'asc' | 'desc',
-    }));
-
-    const hiddenColumns = this.headercolumns
-      .filter((col: any) => col?.is_grid_column == 'true' && col?.colFilterHide)
-      .map((col: any) => this.getColumnUniqueKey(col));
-
-    const selectedSearchColumns = this.selectedColumns.map((column: any) => String(column?.field || ''));
-
-    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => ({
-      field: condition.field,
-      operator: condition.operator,
-      value: condition.value,
-      clause_type: condition.clause_type,
-      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
-    }));
-
-    return {
-      commonSearch: this.appliedCommonSearch || '',
-      searchCondition: this.searchCondition || 'contains',
-      selectedSearchColumns,
-      sortColumns,
-      hiddenColumns,
-      resultsPerPage: Number(this.resultsPerPage),
-      currentPage: Number(this.currentPage),
-      filterCondition: !!this.appliedFilterCondition,
-      appliedFilterConditions,
-    };
-  }
-
-  private hasActiveGridCustomizations(): boolean {
-    const state = this.buildCurrentGridViewState();
-    return !!(
-      state.commonSearch ||
-      state.selectedSearchColumns.length ||
-      state.sortColumns.length ||
-      state.hiddenColumns.length ||
-      state.appliedFilterConditions.length ||
-      state.searchCondition !== 'contains' ||
-      state.currentPage !== 1 ||
-      state.resultsPerPage !== this.getDefaultResultsPerPage()
+  private isNoFilterViewName(viewName: string): boolean {
+    return (
+      String(viewName || '')
+        .trim()
+        .toLowerCase() === this.NO_FILTER_VIEW_NAME.toLowerCase()
     );
   }
 
-  private normalizeGridState(state: any): GridViewState {
+  private buildNoFilterGridViewState(): GridViewState {
     return {
-      commonSearch: state?.commonSearch || '',
-      searchCondition: state?.searchCondition || 'contains',
-      selectedSearchColumns: Array.isArray(state?.selectedSearchColumns) ? state.selectedSearchColumns.map((item: any) => String(item)) : [],
-      sortColumns: Array.isArray(state?.sortColumns)
-        ? state.sortColumns.map((item: any) => ({ key: String(item?.key || ''), direction: item?.direction }))
-        : [],
-      hiddenColumns: Array.isArray(state?.hiddenColumns) ? state.hiddenColumns.map((item: any) => String(item)) : [],
-      resultsPerPage: Number(state?.resultsPerPage) > 0 ? Number(state.resultsPerPage) : this.getDefaultResultsPerPage(),
-      currentPage: Number(state?.currentPage) > 0 ? Number(state.currentPage) : 1,
-      filterCondition: !!state?.filterCondition,
-      appliedFilterConditions: Array.isArray(state?.appliedFilterConditions)
-        ? state.appliedFilterConditions.map((condition: any) => ({
-            field: condition?.field || '',
-            operator: condition?.operator || '',
-            value: condition?.value || '',
-            clause_type: condition?.clause_type || 'where',
-            enum_values: Array.isArray(condition?.enum_values) ? [...condition.enum_values] : [],
-          }))
-        : [],
+      commonSearch: '',
+      searchCondition: 'contains',
+      selectedSearchColumns: [],
+      sortColumns: [],
+      hiddenColumns: [],
+      resultsPerPage: this.getDefaultResultsPerPage(),
+      currentPage: 1,
+      filterCondition: true,
+      appliedFilterConditions: [],
     };
   }
 
-  private areGridStatesEqual(firstState: any, secondState: any): boolean {
-    return JSON.stringify(this.normalizeGridState(firstState)) === JSON.stringify(this.normalizeGridState(secondState));
-  }
+  private syncNoFilterViewForEntity(entityViews: UserSearchConfiguration[]): { views: UserSearchConfiguration[]; changed: boolean } {
+    const entitySlug = this.getEntitySlug();
+    const normalizedViews = entityViews.map((item: any) => ({
+      ...item,
+      entity_slug: entitySlug,
+      view_name: String(item?.view_name || 'Default View'),
+    }));
 
-  getSelectedViewConfiguration(): UserSearchConfiguration | null {
-    if (!this.save_filter_condition) return null;
-    if (!this.entityViews.length) return null;
+    let changed = false;
+    const regularViews = normalizedViews.filter((item: any) => !this.isNoFilterViewName(String(item?.view_name || '')));
+    const noFilterViews = normalizedViews.filter((item: any) => this.isNoFilterViewName(String(item?.view_name || '')));
 
-    if (this.selectedViewName) {
-      const selected = this.entityViews.find((item: any) => String(item?.view_name || 'Default View') === this.selectedViewName);
-      if (selected) return selected;
+    if (regularViews.length === 0) {
+      return { views: [], changed: noFilterViews.length > 0 };
     }
 
-    return this.entityViews.find((item: any) => !!item?.is_default) || this.entityViews[0] || null;
-  }
+    if (noFilterViews.length > 1) {
+      changed = true;
+    }
 
-  shouldShowMyViews(): boolean {
-    if (!this.save_filter_condition) return false;
-    return this.entityViews.length > 0;
-  }
-
-  hasSelectedView(): boolean {
-    return !!this.getSelectedViewConfiguration();
-  }
-
-  showSaveViewButton(): boolean {
-    if (!this.save_filter_condition) return false;
-    const selectedView = this.getSelectedViewConfiguration();
-    if (!selectedView) return this.hasActiveGridCustomizations();
-    const currentState = this.buildCurrentGridViewState();
-    return !this.areGridStatesEqual(currentState, selectedView.search_values);
-  }
-
-  isSelectedViewDefault(): boolean {
-    const selectedView = this.getSelectedViewConfiguration();
-    return !!selectedView?.is_default;
-  }
-
-  private getSavedViewConfiguration(): UserSearchConfiguration | null {
-    if (!this.save_filter_condition) return null;
-    return this.getSelectedViewConfiguration();
-  }
-
-  saveViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
-    this.isEditingViewConfig = false;
-    this.editingOriginalViewName = '';
-    this.viewFormName = '';
-    this.viewFormSetAsDefault = true;
-    this.isViewConfigModalOpen = true;
-  }
-
-  updateSelectedViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
-    const selectedView = this.getSelectedViewConfiguration();
-    if (!selectedView) return;
-
-    const entity_slug = this.getEntitySlug();
-    const selectedName = String(selectedView.view_name || 'Default View');
-    const search_values = this.buildCurrentGridViewState();
-    const allConfigs = this.getUserSearchConfigurations();
-
-    const nextConfigs = allConfigs.map((item: any) => {
-      const sameEntity = (item?.entity_slug || item?.key) === entity_slug;
-      const sameName = String(item?.view_name || 'Default View') === selectedName;
-      if (!sameEntity || !sameName) return item;
-
-      return {
-        ...item,
-        entity_slug,
-        view_name: selectedName,
-        is_default: !!item?.is_default,
-        search_values,
+    let noFilterView = noFilterViews[0];
+    const noFilterSearchValues = this.buildNoFilterGridViewState();
+    if (!noFilterView) {
+      noFilterView = {
+        entity_slug: entitySlug,
+        view_name: this.NO_FILTER_VIEW_NAME,
+        is_default: false,
+        search_values: noFilterSearchValues,
         updated_at: new Date().toISOString(),
       };
-    });
-
-    const entityViews = nextConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug) as UserSearchConfiguration[];
-    this.setUserSearchConfigurations(nextConfigs as UserSearchConfiguration[]);
-    this.persistSavedViewsToDatabase(entity_slug, entityViews);
-    this.appliedSavedViewSlug = null;
-    this.refreshEntityViews();
-    this.toastr.success('View updated successfully', 'Success');
-  }
-
-  openEditViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
-    const selectedView = this.getSelectedViewConfiguration();
-    if (!selectedView) return;
-
-    this.isEditingViewConfig = true;
-    this.editingOriginalViewName = String(selectedView.view_name || 'Default View');
-    this.viewFormName = this.editingOriginalViewName;
-    this.viewFormSetAsDefault = !!selectedView.is_default;
-    this.isViewConfigModalOpen = true;
-  }
-
-  openEditViewConfigurationByName(viewName: string): void {
-    if (!this.save_filter_condition) return;
-    const normalizedName = String(viewName || 'Default View').trim();
-    this.selectedViewName = normalizedName;
-
-    const selectedView = this.getEntityViews()
-      .map((item: UserSearchConfiguration) => ({ ...item, view_name: String(item?.view_name || 'Default View') }))
-      .find((item: any) => String(item?.view_name || 'Default View').trim() === normalizedName);
-    if (!selectedView) return;
-
-    this.isEditingViewConfig = true;
-    this.editingOriginalViewName = String(selectedView.view_name || 'Default View');
-    this.viewFormName = this.editingOriginalViewName;
-    this.viewFormSetAsDefault = !!selectedView.is_default;
-    this.isViewConfigModalOpen = true;
-  }
-
-  onEditViewOptionClick(view: string | UserSearchConfiguration, event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.closeMyViewsSelectDropdown();
-    const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
-    this.openEditViewConfigurationByName(viewName);
-  }
-
-  onDeleteViewOptionClick(view: string | UserSearchConfiguration, event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.closeMyViewsSelectDropdown();
-    const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
-    this.deleteViewConfigurationByName(viewName);
-    this.isMyViewsMenuOpen = false;
-  }
-
-  private closeMyViewsSelectDropdown(): void {
-    if (this.myViewsSelect && typeof this.myViewsSelect.close === 'function') {
-      this.myViewsSelect.close();
-    }
-  }
-
-  toggleMyViewsMenu(event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.isMyViewsMenuOpen = !this.isMyViewsMenuOpen;
-  }
-
-  selectMyView(viewName: string, event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.onSavedViewSelectionChange(viewName);
-    this.isMyViewsMenuOpen = false;
-  }
-
-  @HostListener('document:click')
-  onDocumentClick(): void {
-    this.isMyViewsMenuOpen = false;
-  }
-
-  closeViewConfigurationModal(): void {
-    this.isViewConfigModalOpen = false;
-  }
-
-  submitViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
-    const entity_slug = this.getEntitySlug();
-    const name = (this.viewFormName || '').trim();
-    if (!name) {
-      this.toastr.warning('View name is required', 'Warning');
-      return;
-    }
-
-    const search_values = this.buildCurrentGridViewState();
-    const allConfigs = this.getUserSearchConfigurations();
-    const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug);
-    const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entity_slug);
-
-    const lowerName = name.toLowerCase();
-    const duplicate = entityViews.find(
-      (item: any) =>
-        String(item?.view_name || 'Default View').toLowerCase() === lowerName && String(item?.view_name || 'Default View') !== this.editingOriginalViewName
-    );
-    if (duplicate) {
-      this.toastr.warning('View name already exists', 'Warning');
-      return;
-    }
-
-    let nextEntityViews: UserSearchConfiguration[] = [];
-    const updated_at = new Date().toISOString();
-
-    if (this.isEditingViewConfig) {
-      nextEntityViews = entityViews.map((item: any) => {
-        const currentName = String(item?.view_name || 'Default View');
-        if (currentName !== this.editingOriginalViewName) {
-          return {
-            ...item,
-            entity_slug,
-            view_name: currentName,
-            is_default: this.viewFormSetAsDefault ? false : !!item?.is_default,
-          };
-        }
-
-        return {
-          ...item,
-          entity_slug,
-          view_name: name,
-          is_default: this.viewFormSetAsDefault,
-          search_values,
-          updated_at,
-        };
-      });
+      changed = true;
     } else {
-      nextEntityViews = [
-        ...entityViews.map((item: any) => ({
-          ...item,
-          entity_slug,
-          view_name: String(item?.view_name || 'Default View'),
-          is_default: this.viewFormSetAsDefault ? false : !!item?.is_default,
-        })),
-        {
-          entity_slug,
-          view_name: name,
-          is_default: this.viewFormSetAsDefault,
-          search_values,
-          updated_at,
-        },
-      ];
+      const mergedNoFilterView = {
+        ...noFilterView,
+        entity_slug: entitySlug,
+        view_name: this.NO_FILTER_VIEW_NAME,
+        search_values: noFilterSearchValues,
+      };
+
+      if (JSON.stringify(mergedNoFilterView) !== JSON.stringify(noFilterView)) {
+        changed = true;
+      }
+      noFilterView = mergedNoFilterView;
     }
 
-    if (!nextEntityViews.some((item: any) => !!item?.is_default) && nextEntityViews.length > 0) {
-      nextEntityViews[0].is_default = true;
+    if (noFilterView.is_default) {
+      const anyRegularDefault = regularViews.some((item: any) => !!item?.is_default);
+      if (anyRegularDefault) {
+        changed = true;
+      }
+      regularViews.forEach((item: any) => {
+        item.is_default = false;
+      });
+    } else if (!regularViews.some((item: any) => !!item?.is_default)) {
+      regularViews[0].is_default = true;
+      changed = true;
     }
 
-    this.setUserSearchConfigurations([...otherConfigs, ...nextEntityViews]);
-    this.persistSavedViewsToDatabase(entity_slug, nextEntityViews);
-    this.hasSavedViewConfiguration = nextEntityViews.length > 0;
-    this.selectedViewName = name;
-    this.appliedSavedViewSlug = null;
-    this.closeViewConfigurationModal();
-    this.refreshEntityViews();
-    this.toastr.success(this.isEditingViewConfig ? 'View updated successfully' : 'View saved successfully', 'Success');
+    const nextViews = [...regularViews, noFilterView];
+    if (!nextViews.some((item: any) => !!item?.is_default)) {
+      nextViews[0].is_default = true;
+      changed = true;
+    }
+
+    return { views: nextViews, changed };
   }
 
-  onSavedViewSelectionChange(view: string | UserSearchConfiguration | null | undefined): void {
-    const nextViewName = typeof view === 'string' ? view : typeof view === 'object' && view !== null ? String((view as any).view_name || 'Default View') : '';
-
-    this.selectedViewName = String(nextViewName || '').trim();
-    this.appliedSavedViewSlug = null;
-    this.scheduleTryApplySavedView();
+  canDeleteViewOption(view: string | UserSearchConfiguration): boolean {
+    const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
+    return !this.isNoFilterViewName(viewName);
   }
 
-  deleteSelectedViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+  isSelectedNoFilterView(): boolean {
     const selectedView = this.getSelectedViewConfiguration();
-    if (!selectedView) return;
-
-    const selectedName = String(selectedView.view_name || 'Default View');
-
-    this.deleteViewConfigurationByName(selectedName);
+    if (!selectedView) return false;
+    return this.isNoFilterViewName(String(selectedView?.view_name || ''));
   }
 
-  deleteViewConfigurationByName(viewName: string): void {
-    if (!this.save_filter_condition) return;
-    const selectedName = String(viewName || 'Default View');
-    const entitySlug = this.getEntitySlug();
-    const allConfigs = this.getUserSearchConfigurations();
-    const targetView = allConfigs.find(
-      (item: any) => (item?.entity_slug || item?.key) === entitySlug && String(item?.view_name || 'Default View') === selectedName
-    );
-    if (!targetView) return;
-
-    Swal.fire({
-      icon: 'warning',
-      title: 'Are you sure?',
-      text: `Delete view "${selectedName}"?`,
-      showCancelButton: true,
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
-      padding: '2em',
-    }).then((result) => {
-      if (!result.isConfirmed && !result.value) return;
-
-      const allConfigs = this.getUserSearchConfigurations();
-      const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
-      const remainingEntityViews = entityViews.filter((item: any) => String(item?.view_name || 'Default View') !== selectedName);
-
-      if (targetView.is_default && remainingEntityViews.length > 0) {
-        remainingEntityViews[0].is_default = true;
-      }
-
-      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
-      this.setUserSearchConfigurations([...otherConfigs, ...remainingEntityViews]);
-
-      if (remainingEntityViews.length > 0) {
-        this.persistSavedViewsToDatabase(entitySlug, remainingEntityViews);
-      } else {
-        this.deleteSavedViewFromDatabase(entitySlug);
-      }
-
-      this.hasSavedViewConfiguration = remainingEntityViews.length > 0;
-      this.selectedViewName = String(remainingEntityViews.find((item: any) => !!item?.is_default)?.view_name || remainingEntityViews[0]?.view_name || '');
-      this.appliedSavedViewSlug = null;
-      this.refreshEntityViews();
-      this.resetViewConfiguration();
-      this.toastr.success('View deleted successfully', 'Success');
-    });
-  }
-
-  resetViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
-    const hasViews = this.shouldShowMyViews();
-    const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
-    console.log(selectedView);
-    console.log(hasViews);
-    if (hasViews && selectedView?.search_values) {
-      console.log('coming');
-      this.appliedSavedViewSlug = null;
-      this.scheduleTryApplySavedView();
-      this.toastr.success('View reset successfully', 'Success');
-      return;
-    }
-
-    this.hasSavedViewConfiguration = false;
-    this.selectedViewName = '';
-    this.appliedSavedViewSlug = null;
-
+  private applyNoFilterSelection(): void {
     this.search = '';
     this.appliedCommonSearch = '';
     this.isCommonSearchApplied = false;
@@ -1853,114 +1731,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.resultsPerPage = this.getDefaultResultsPerPage();
     this.currentPage = 1;
 
-    const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
-    console.log(emptySearch);
-    this.searchQuery.emit(emptySearch);
+    this.searchQuery.emit({ where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true });
     this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
     this.columnSort.emit({ sortColumns: [], skipFetch: true });
     this.resultsPerPageChange.emit({ resultsPerPage: this.resultsPerPage, start_index: 0, skipFetch: true });
-    this.pageChange.emit({ page: 1, start_index: 0 });
 
-    this.toastr.success('View reset successfully', 'Success');
+    this.initialFetchEmitted = true;
+    const source = this.pendingManualViewSelection ? 'saved-view-manual' : 'saved-view';
+    this.pendingManualViewSelection = false;
+    this.pageChange.emit({ page: 1, start_index: 0, source });
   }
 
-  private persistSavedViewsToDatabase(entitySlug: string, views: UserSearchConfiguration[]): void {
-    if (!this.save_filter_condition) return;
-    const userData = this.getUserDataObject();
-    const userId = userData?.main?.id;
-
-    if (!userId) {
-      this.toastr.warning('Unable to save view in database for this user', 'Warning');
-      return;
-    }
-
-    this.upsert_saved_view_json_schema.conditions['table1'] = [
-      {
-        user_id: userId,
-        entity_slug: entitySlug,
-      },
-    ];
-
-    this.upsert_saved_view_json_schema.data['table2'] = views.map((view: UserSearchConfiguration) => ({
-      user_id: userId,
-      entity_slug: entitySlug,
-      view_name: String(view?.view_name || 'Default View'),
-      is_default: !!view?.is_default,
-      search_values: view.search_values,
-      created_by: true,
-      created_at: true,
-      updated_by: true,
-      updated_at: true,
-    }));
-
-    this.gridApiService.executeRecords(this.upsert_saved_view_json_schema).subscribe({
-      next: (response: any) => {
-        if (response?.status && response?.code === 200) {
-          //this.toastr.success('View saved in database successfully', 'Success');
-        } else {
-          this.toastr.error(response?.message || 'Failed to save view in database', 'Error');
-        }
-      },
-      error: () => {
-        this.toastr.error('Failed to save view in database', 'Error');
-      },
-    });
-  }
-
-  private deleteSavedViewFromDatabase(entitySlug: string): void {
-    if (!this.save_filter_condition) return;
-    const userData = this.getUserDataObject();
-    const userId = userData?.main?.id;
-
-    if (!userId) {
-      this.toastr.warning('Unable to reset saved view in database for this user', 'Warning');
-      return;
-    }
-
-    this.delete_saved_view_json_schema.conditions['table1'] = [
-      {
-        user_id: userId,
-        entity_slug: entitySlug,
-      },
-    ];
-
-    this.gridApiService.executeRecords(this.delete_saved_view_json_schema).subscribe({
-      next: (response: any) => {
-        if (response?.status && response?.code === 200) {
-          //this.toastr.success('View reset in database successfully', 'Success');
-        } else {
-          this.toastr.error(response?.message || 'Failed to reset view in database', 'Error');
-        }
-      },
-      error: () => {
-        this.toastr.error('Failed to reset view in database', 'Error');
-      },
-    });
-  }
-
-  private tryApplySavedView(): void {
-    if (!this.save_filter_condition) {
-      this.hasSavedViewConfiguration = false;
-      return;
-    }
-    const savedConfig = this.getSavedViewConfiguration();
-    if (!savedConfig) return;
-
-    const state = (savedConfig as any).search_values || (savedConfig as any).state;
-    if (!state) return;
-
-    const currentSlug = this.getEntitySlug();
-    const activeViewName = String(savedConfig?.view_name || 'Default View');
-    const activeViewKey = `${currentSlug}::${activeViewName}`;
-    if (this.appliedSavedViewSlug === activeViewKey) return;
-    if (!this.headercolumns?.length) return;
-
+  private applyGridState(state: GridViewState): void {
     const selectedSearchColumns = state.selectedSearchColumns || [];
-    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) return;
-
-    this.appliedSavedViewSlug = activeViewKey;
-    this.hasSavedViewConfiguration = true;
-    this.selectedViewName = activeViewName;
 
     this.searchCondition = state.searchCondition || 'contains';
 
@@ -2054,11 +1837,714 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     this.columnSort.emit({ sortColumns: this.getSortedColumnsByPriority(), skipFetch: true });
 
-    this.resultsPerPageChange.emit({ resultsPerPage: Number(this.resultsPerPage), start_index: 0, skipFetch: true });
-
     const start_index = (this.currentPage - 1) * Number(this.resultsPerPage);
+    this.resultsPerPageChange.emit({ resultsPerPage: Number(this.resultsPerPage), start_index, skipFetch: true });
+
     this.initialFetchEmitted = true;
-    this.pageChange.emit({ page: this.currentPage, start_index, source: 'saved-view' });
+    const source = this.pendingManualViewSelection ? 'saved-view-manual' : 'saved-view';
+    this.pendingManualViewSelection = false;
+    this.pageChange.emit({ page: this.currentPage, start_index, source });
+  }
+
+  private tryApplyTempConfigurationForCurrentGrid(): boolean {
+    const state = this.getTempGridStateForCurrentGrid();
+    if (!state) return false;
+    if (!this.canApplyGridState(state)) return false;
+
+    this.applyGridState(state);
+    return true;
+  }
+
+  private setUserSearchConfigurations(configs: UserSearchConfiguration[]): void {
+    const userData = this.getUserDataObject();
+    userData.main = userData.main || {};
+    userData.main.user_search_configurations = configs;
+    this.persistUserDataObject(userData);
+  }
+
+  private buildCurrentGridViewState(): GridViewState {
+    const sortColumns = this.getSortedColumnsByPriority().map((col: any) => ({
+      key: this.getColumnUniqueKey(col),
+      direction: col.sortDirection as 'asc' | 'desc',
+    }));
+
+    const hiddenColumns = this.headercolumns
+      .filter((col: any) => col?.is_grid_column == 'true' && col?.colFilterHide)
+      .map((col: any) => this.getColumnUniqueKey(col));
+
+    const selectedSearchColumns = this.selectedColumns.map((column: any) => String(column?.field || ''));
+
+    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => ({
+      field: condition.field,
+      operator: condition.operator,
+      value: condition.value,
+      clause_type: condition.clause_type,
+      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
+    }));
+
+    return {
+      commonSearch: this.appliedCommonSearch || '',
+      searchCondition: this.searchCondition || 'contains',
+      selectedSearchColumns,
+      sortColumns,
+      hiddenColumns,
+      resultsPerPage: Number(this.resultsPerPage),
+      currentPage: Number(this.currentPage),
+      filterCondition: !!this.appliedFilterCondition,
+      appliedFilterConditions,
+    };
+  }
+
+  private hasActiveGridCustomizations(): boolean {
+    const state = this.buildCurrentGridViewState();
+    return !!(
+      state.commonSearch ||
+      state.selectedSearchColumns.length ||
+      state.sortColumns.length ||
+      state.hiddenColumns.length ||
+      state.appliedFilterConditions.length ||
+      state.searchCondition !== 'contains' ||
+      state.currentPage !== 1 ||
+      state.resultsPerPage !== this.getDefaultResultsPerPage()
+    );
+  }
+
+  private normalizeGridState(state: any): GridViewState {
+    return {
+      commonSearch: state?.commonSearch || '',
+      searchCondition: state?.searchCondition || 'contains',
+      selectedSearchColumns: Array.isArray(state?.selectedSearchColumns) ? state.selectedSearchColumns.map((item: any) => String(item)) : [],
+      sortColumns: Array.isArray(state?.sortColumns)
+        ? state.sortColumns.map((item: any) => ({ key: String(item?.key || ''), direction: item?.direction }))
+        : [],
+      hiddenColumns: Array.isArray(state?.hiddenColumns) ? state.hiddenColumns.map((item: any) => String(item)) : [],
+      resultsPerPage: Number(state?.resultsPerPage) > 0 ? Number(state.resultsPerPage) : this.getDefaultResultsPerPage(),
+      currentPage: Number(state?.currentPage) > 0 ? Number(state.currentPage) : 1,
+      filterCondition: !!state?.filterCondition,
+      appliedFilterConditions: Array.isArray(state?.appliedFilterConditions)
+        ? state.appliedFilterConditions.map((condition: any) => ({
+            field: condition?.field || '',
+            operator: condition?.operator || '',
+            value: condition?.value || '',
+            clause_type: condition?.clause_type || 'where',
+            enum_values: Array.isArray(condition?.enum_values) ? [...condition.enum_values] : [],
+          }))
+        : [],
+    };
+  }
+
+  private areGridStatesEqual(firstState: any, secondState: any): boolean {
+    return JSON.stringify(this.normalizeGridState(firstState)) === JSON.stringify(this.normalizeGridState(secondState));
+  }
+
+  getSelectedViewConfiguration(): UserSearchConfiguration | null {
+    if (!this.save_grid_views) return null;
+    if (!this.entityViews.length) return null;
+
+    if (this.selectedViewName) {
+      const normalizedSelectedName = String(this.selectedViewName || '')
+        .trim()
+        .toLowerCase();
+      const selected = this.entityViews.find(
+        (item: any) =>
+          String(item?.view_name || 'Default View')
+            .trim()
+            .toLowerCase() === normalizedSelectedName
+      );
+      if (selected) return selected;
+    }
+
+    return this.entityViews.find((item: any) => !!item?.is_default) || this.entityViews[0] || null;
+  }
+
+  shouldShowMyViews(): boolean {
+    if (!this.save_grid_views) return false;
+    return this.entityViews.length > 0;
+  }
+
+  hasSelectedView(): boolean {
+    return !!this.getSelectedViewConfiguration();
+  }
+
+  showSaveViewButton(): boolean {
+    if (!this.save_grid_views) return false;
+    if (this.shouldShowNoFilterStyleActions()) return true;
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return this.hasActiveGridCustomizations();
+    const currentState = this.buildCurrentGridViewState();
+    return !this.areGridStatesEqual(currentState, selectedView.search_values);
+  }
+
+  isSelectedViewDefault(): boolean {
+    const selectedView = this.getSelectedViewConfiguration();
+    return !!selectedView?.is_default;
+  }
+
+  private getSavedViewConfiguration(): UserSearchConfiguration | null {
+    if (!this.save_grid_views) return null;
+    return this.getSelectedViewConfiguration();
+  }
+
+  private persistCurrentSelectedViewStateAsDefault(): void {
+    if (!this.save_grid_views) return;
+
+    const selectedView = this.getSelectedViewConfiguration();
+    const entitySlug = this.getEntitySlug();
+    if (!selectedView) {
+      this.saveTempConfigurationForEntity(entitySlug, this.NO_FILTER_VIEW_NAME, this.buildCurrentGridViewState());
+      return;
+    }
+
+    const selectedViewName = String(selectedView?.view_name || 'Default View');
+    if (this.isNoFilterViewName(selectedViewName)) {
+      this.saveTempConfigurationForEntity(entitySlug, selectedViewName, this.buildCurrentGridViewState());
+
+      const allConfigs = this.getUserSearchConfigurations();
+      const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+      if (entityViews.length === 0) return;
+
+      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      const nextEntityViews = entityViews.map((item: any) => ({
+        ...item,
+        entity_slug: entitySlug,
+        view_name: String(item?.view_name || 'Default View'),
+        is_default: this.isNoFilterViewName(String(item?.view_name || 'Default View')),
+      }));
+
+      const syncedEntityViews = this.syncNoFilterViewForEntity(nextEntityViews).views;
+      this.setUserSearchConfigurations([...otherConfigs, ...syncedEntityViews]);
+      this.persistSavedViewsToDatabase(entitySlug, syncedEntityViews);
+      this.appliedSavedViewSlug = null;
+      this.refreshEntityViews();
+      return;
+    }
+
+    const allConfigs = this.getUserSearchConfigurations();
+    const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+    const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+    const searchValues = this.buildCurrentGridViewState();
+    const updatedAt = new Date().toISOString();
+
+    const nextEntityViews = entityViews.map((item: any) => {
+      const currentName = String(item?.view_name || 'Default View');
+      const isSelected = currentName === selectedViewName;
+
+      return {
+        ...item,
+        entity_slug: entitySlug,
+        view_name: currentName,
+        is_default: isSelected,
+        search_values: isSelected ? searchValues : item?.search_values,
+        updated_at: isSelected ? updatedAt : item?.updated_at,
+      };
+    });
+
+    const syncedEntityViews = this.syncNoFilterViewForEntity(nextEntityViews).views;
+    this.setUserSearchConfigurations([...otherConfigs, ...syncedEntityViews]);
+    this.persistSavedViewsToDatabase(entitySlug, syncedEntityViews);
+    this.clearTempConfigurationForEntity(entitySlug);
+    this.appliedSavedViewSlug = null;
+    this.refreshEntityViews();
+  }
+
+  onGridNavigationClick(): void {
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
+  }
+
+  onAddNewClick(): void {
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
+    this.customAction.emit('addNew');
+  }
+
+  saveViewConfiguration(): void {
+    if (!this.save_grid_views) return;
+    this.isEditingViewConfig = false;
+    this.isEditingNoFilterView = false;
+    this.editingOriginalViewName = '';
+    this.viewFormName = '';
+    this.viewFormSetAsDefault = true;
+    this.isViewConfigModalOpen = true;
+  }
+
+  updateSelectedViewConfiguration(): void {
+    if (!this.save_grid_views) return;
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return;
+
+    const entity_slug = this.getEntitySlug();
+    const selectedName = String(selectedView.view_name || 'Default View');
+    if (this.isNoFilterViewName(selectedName)) {
+      this.saveTempConfigurationForEntity(entity_slug, selectedName, this.buildCurrentGridViewState());
+      this.toastr.success('View updated successfully', 'Success');
+      return;
+    }
+
+    const search_values = this.buildCurrentGridViewState();
+    const allConfigs = this.getUserSearchConfigurations();
+
+    const nextConfigs = allConfigs.map((item: any) => {
+      const sameEntity = (item?.entity_slug || item?.key) === entity_slug;
+      const sameName = String(item?.view_name || 'Default View') === selectedName;
+      if (!sameEntity || !sameName) return item;
+
+      return {
+        ...item,
+        entity_slug,
+        view_name: selectedName,
+        is_default: !!item?.is_default,
+        search_values,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    const entityViews = nextConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug) as UserSearchConfiguration[];
+    this.setUserSearchConfigurations(nextConfigs as UserSearchConfiguration[]);
+    this.persistSavedViewsToDatabase(entity_slug, entityViews);
+    this.clearTempConfigurationForEntity(entity_slug);
+    this.appliedSavedViewSlug = null;
+    this.refreshEntityViews();
+    this.toastr.success('View updated successfully', 'Success');
+  }
+
+  openEditViewConfiguration(): void {
+    if (!this.save_grid_views) return;
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return;
+
+    const selectedName = String(selectedView.view_name || 'Default View');
+    this.isEditingViewConfig = true;
+    this.isEditingNoFilterView = this.isNoFilterViewName(selectedName);
+    this.editingOriginalViewName = selectedName;
+    this.viewFormName = this.editingOriginalViewName;
+    this.viewFormSetAsDefault = !!selectedView.is_default;
+    this.isViewConfigModalOpen = true;
+  }
+
+  openEditViewConfigurationByName(viewName: string): void {
+    if (!this.save_grid_views) return;
+    const normalizedName = String(viewName || 'Default View').trim();
+    this.selectedViewName = normalizedName;
+
+    const selectedView = this.getEntityViews()
+      .map((item: UserSearchConfiguration) => ({ ...item, view_name: String(item?.view_name || 'Default View') }))
+      .find((item: any) => String(item?.view_name || 'Default View').trim() === normalizedName);
+    if (!selectedView) return;
+
+    this.isEditingViewConfig = true;
+    this.isEditingNoFilterView = this.isNoFilterViewName(normalizedName);
+    this.editingOriginalViewName = String(selectedView.view_name || 'Default View');
+    this.viewFormName = this.editingOriginalViewName;
+    this.viewFormSetAsDefault = !!selectedView.is_default;
+    this.isViewConfigModalOpen = true;
+  }
+
+  onEditViewOptionClick(view: string | UserSearchConfiguration, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.closeMyViewsSelectDropdown();
+    const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
+    this.openEditViewConfigurationByName(viewName);
+  }
+
+  onDeleteViewOptionClick(view: string | UserSearchConfiguration, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.closeMyViewsSelectDropdown();
+    const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
+    if (this.isNoFilterViewName(viewName)) return;
+    this.deleteViewConfigurationByName(viewName);
+    this.isMyViewsMenuOpen = false;
+  }
+
+  private closeMyViewsSelectDropdown(): void {
+    if (this.myViewsSelect && typeof this.myViewsSelect.close === 'function') {
+      this.myViewsSelect.close();
+    }
+  }
+
+  toggleMyViewsMenu(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.isMyViewsMenuOpen = !this.isMyViewsMenuOpen;
+  }
+
+  selectMyView(viewName: string, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.onSavedViewSelectionChange(viewName);
+    this.isMyViewsMenuOpen = false;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isMyViewsMenuOpen = false;
+  }
+
+  closeViewConfigurationModal(): void {
+    this.isViewConfigModalOpen = false;
+    this.isEditingNoFilterView = false;
+  }
+
+  submitViewConfiguration(): void {
+    if (!this.save_grid_views) return;
+    const entity_slug = this.getEntitySlug();
+    const name = this.isEditingNoFilterView ? this.NO_FILTER_VIEW_NAME : (this.viewFormName || '').trim();
+    if (!name) {
+      this.toastr.warning('View name is required', 'Warning');
+      return;
+    }
+
+    const search_values = this.isEditingNoFilterView ? this.buildNoFilterGridViewState() : this.buildCurrentGridViewState();
+    const allConfigs = this.getUserSearchConfigurations();
+    const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug);
+    const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entity_slug);
+
+    const lowerName = name.toLowerCase();
+    const duplicate = entityViews.find(
+      (item: any) =>
+        String(item?.view_name || 'Default View').toLowerCase() === lowerName && String(item?.view_name || 'Default View') !== this.editingOriginalViewName
+    );
+    if (duplicate) {
+      this.toastr.warning('View name already exists', 'Warning');
+      return;
+    }
+
+    let nextEntityViews: UserSearchConfiguration[] = [];
+    const updated_at = new Date().toISOString();
+
+    if (this.isEditingViewConfig) {
+      nextEntityViews = entityViews.map((item: any) => {
+        const currentName = String(item?.view_name || 'Default View');
+        if (currentName !== this.editingOriginalViewName) {
+          return {
+            ...item,
+            entity_slug,
+            view_name: currentName,
+            is_default: this.viewFormSetAsDefault ? false : !!item?.is_default,
+          };
+        }
+
+        return {
+          ...item,
+          entity_slug,
+          view_name: name,
+          is_default: this.viewFormSetAsDefault,
+          search_values: this.isEditingNoFilterView ? this.buildNoFilterGridViewState() : search_values,
+          updated_at,
+        };
+      });
+    } else {
+      nextEntityViews = [
+        ...entityViews.map((item: any) => ({
+          ...item,
+          entity_slug,
+          view_name: String(item?.view_name || 'Default View'),
+          is_default: this.viewFormSetAsDefault ? false : !!item?.is_default,
+        })),
+        {
+          entity_slug,
+          view_name: name,
+          is_default: this.viewFormSetAsDefault,
+          search_values,
+          updated_at,
+        },
+      ];
+    }
+
+    if (!nextEntityViews.some((item: any) => !!item?.is_default) && nextEntityViews.length > 0) {
+      nextEntityViews[0].is_default = true;
+    }
+
+    const syncedEntityViews = this.syncNoFilterViewForEntity(nextEntityViews).views;
+
+    this.setUserSearchConfigurations([...otherConfigs, ...syncedEntityViews]);
+    this.persistSavedViewsToDatabase(entity_slug, syncedEntityViews);
+    this.clearTempConfigurationForEntity(entity_slug);
+    this.hasSavedViewConfiguration = syncedEntityViews.length > 0;
+    this.selectedViewName = name;
+    this.appliedSavedViewSlug = null;
+    this.closeViewConfigurationModal();
+    this.refreshEntityViews();
+    this.toastr.success(this.isEditingViewConfig ? 'View updated successfully' : 'View saved successfully', 'Success');
+  }
+
+  onSavedViewSelectionChange(view: string | UserSearchConfiguration | null | undefined): void {
+    const nextViewName = typeof view === 'string' ? view : typeof view === 'object' && view !== null ? String((view as any).view_name || 'Default View') : '';
+
+    this.selectedViewName = String(nextViewName || '').trim();
+    if (!this.selectedViewName) return;
+
+    const currentSlug = this.getEntitySlug();
+    const activeViewKey = `${currentSlug}::${this.selectedViewName}`;
+    this.pendingManualViewSelection = true;
+    if (this.isNoFilterViewName(this.selectedViewName)) {
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (tempState && this.canApplyGridState(tempState)) {
+        this.applyGridState(tempState);
+        this.appliedSavedViewSlug = activeViewKey;
+        return;
+      }
+      if (tempState) {
+        this.appliedSavedViewSlug = null;
+        this.scheduleTryApplySavedView();
+        return;
+      }
+      this.appliedSavedViewSlug = activeViewKey;
+      this.applyNoFilterSelection();
+      return;
+    }
+    this.appliedSavedViewSlug = null;
+    this.tryApplySavedView();
+    this.scheduleTryApplySavedView();
+  }
+
+  deleteSelectedViewConfiguration(): void {
+    if (!this.save_grid_views) return;
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return;
+
+    const selectedName = String(selectedView.view_name || 'Default View');
+
+    this.deleteViewConfigurationByName(selectedName);
+  }
+
+  deleteViewConfigurationByName(viewName: string): void {
+    if (!this.save_grid_views) return;
+    const selectedName = String(viewName || 'Default View');
+    if (this.isNoFilterViewName(selectedName)) return;
+    const entitySlug = this.getEntitySlug();
+    const allConfigs = this.getUserSearchConfigurations();
+    const targetView = allConfigs.find(
+      (item: any) => (item?.entity_slug || item?.key) === entitySlug && String(item?.view_name || 'Default View') === selectedName
+    );
+    if (!targetView) return;
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Are you sure?',
+      text: `Delete view "${selectedName}"?`,
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      padding: '2em',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+
+      const allConfigs = this.getUserSearchConfigurations();
+      const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+      const remainingEntityViews = entityViews.filter((item: any) => String(item?.view_name || 'Default View') !== selectedName);
+
+      if (targetView.is_default && remainingEntityViews.length > 0) {
+        remainingEntityViews[0].is_default = true;
+      }
+
+      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      this.setUserSearchConfigurations([...otherConfigs, ...remainingEntityViews]);
+
+      if (remainingEntityViews.length > 0) {
+        this.persistSavedViewsToDatabase(entitySlug, remainingEntityViews);
+      } else {
+        this.deleteSavedViewFromDatabase(entitySlug);
+      }
+
+      this.hasSavedViewConfiguration = remainingEntityViews.length > 0;
+      this.selectedViewName = String(remainingEntityViews.find((item: any) => !!item?.is_default)?.view_name || remainingEntityViews[0]?.view_name || '');
+      this.appliedSavedViewSlug = null;
+      this.refreshEntityViews();
+      this.resetViewConfiguration();
+      this.toastr.success('View deleted successfully', 'Success');
+    });
+  }
+
+  resetViewConfiguration(): void {
+    if (!this.save_grid_views) return;
+    const entitySlug = this.getEntitySlug();
+    this.clearTempConfigurationForEntity(entitySlug);
+
+    const hasViews = this.shouldShowMyViews();
+    const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
+    console.log(selectedView);
+    console.log(hasViews);
+    if (hasViews && selectedView?.search_values) {
+      console.log('coming');
+      this.appliedSavedViewSlug = null;
+      this.scheduleTryApplySavedView();
+      this.toastr.success('View reset successfully', 'Success');
+      return;
+    }
+
+    this.hasSavedViewConfiguration = false;
+    this.selectedViewName = '';
+    this.appliedSavedViewSlug = null;
+
+    this.search = '';
+    this.appliedCommonSearch = '';
+    this.isCommonSearchApplied = false;
+    this.searchCondition = 'contains';
+    this.selectedColumns = [];
+
+    this.filterCondition = true;
+    this.appliedFilterCondition = true;
+    this.filterConditions = [];
+    this.appliedFilterConditions = [];
+
+    this.activeSortOrder = [];
+    this.headercolumns.forEach((column: any) => {
+      column.sortDirection = '';
+      if (column.header !== 'table_column_sno') {
+        column.colFilterHide = false;
+      }
+    });
+
+    this.resultsPerPage = this.getDefaultResultsPerPage();
+    this.currentPage = 1;
+
+    const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
+    console.log(emptySearch);
+    this.searchQuery.emit(emptySearch);
+    this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
+    this.columnSort.emit({ sortColumns: [], skipFetch: true });
+    this.resultsPerPageChange.emit({ resultsPerPage: this.resultsPerPage, start_index: 0, skipFetch: true });
+    this.pageChange.emit({ page: 1, start_index: 0 });
+
+    this.toastr.success('View reset successfully', 'Success');
+  }
+
+  private persistSavedViewsToDatabase(entitySlug: string, views: UserSearchConfiguration[]): void {
+    if (!this.save_grid_views) return;
+    const userData = this.getUserDataObject();
+    const userId = userData?.main?.id;
+
+    if (!userId) {
+      this.toastr.warning('Unable to save view in database for this user', 'Warning');
+      return;
+    }
+
+    this.upsert_saved_view_json_schema.conditions['table1'] = [
+      {
+        user_id: userId,
+        entity_slug: entitySlug,
+      },
+    ];
+
+    this.upsert_saved_view_json_schema.data['table2'] = views.map((view: UserSearchConfiguration) => ({
+      user_id: userId,
+      entity_slug: entitySlug,
+      view_name: String(view?.view_name || 'Default View'),
+      is_default: !!view?.is_default,
+      search_values: view.search_values,
+      created_by: true,
+      created_at: true,
+      updated_by: true,
+      updated_at: true,
+    }));
+
+    this.gridApiService.executeRecords(this.upsert_saved_view_json_schema).subscribe({
+      next: (response: any) => {
+        if (response?.status && response?.code === 200) {
+          //this.toastr.success('View saved in database successfully', 'Success');
+        } else {
+          this.toastr.error(response?.message || 'Failed to save view in database', 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error('Failed to save view in database', 'Error');
+      },
+    });
+  }
+
+  private deleteSavedViewFromDatabase(entitySlug: string): void {
+    if (!this.save_grid_views) return;
+    const userData = this.getUserDataObject();
+    const userId = userData?.main?.id;
+
+    if (!userId) {
+      this.toastr.warning('Unable to reset saved view in database for this user', 'Warning');
+      return;
+    }
+
+    this.delete_saved_view_json_schema.conditions['table1'] = [
+      {
+        user_id: userId,
+        entity_slug: entitySlug,
+      },
+    ];
+
+    this.gridApiService.executeRecords(this.delete_saved_view_json_schema).subscribe({
+      next: (response: any) => {
+        if (response?.status && response?.code === 200) {
+          //this.toastr.success('View reset in database successfully', 'Success');
+        } else {
+          this.toastr.error(response?.message || 'Failed to reset view in database', 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error('Failed to reset view in database', 'Error');
+      },
+    });
+  }
+
+  private tryApplySavedView(): void {
+    if (!this.save_grid_views) {
+      this.hasSavedViewConfiguration = false;
+      return;
+    }
+    const currentSlug = this.getEntitySlug();
+    const tempApplyKey = `${currentSlug}::__temp__`;
+
+    const savedConfig = this.getSavedViewConfiguration();
+    if (!savedConfig) {
+      if (this.appliedSavedViewSlug === tempApplyKey) return;
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (!tempState) return;
+      if (this.canApplyGridState(tempState)) {
+        this.appliedSavedViewSlug = tempApplyKey;
+        this.hasSavedViewConfiguration = true;
+        this.applyGridState(tempState);
+      }
+      return;
+    }
+
+    const state = (savedConfig as any).search_values || (savedConfig as any).state;
+    if (!state) return;
+
+    const activeViewName = String(savedConfig?.view_name || 'Default View');
+    const activeViewKey = `${currentSlug}::${activeViewName}`;
+    if (this.appliedSavedViewSlug === activeViewKey) return;
+    if (this.isNoFilterViewName(activeViewName)) {
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (tempState && this.canApplyGridState(tempState)) {
+        this.appliedSavedViewSlug = activeViewKey;
+        this.hasSavedViewConfiguration = true;
+        this.selectedViewName = activeViewName;
+        this.applyGridState(tempState);
+        return;
+      }
+      if (tempState) return;
+      this.appliedSavedViewSlug = activeViewKey;
+      this.hasSavedViewConfiguration = true;
+      this.selectedViewName = activeViewName;
+      this.applyNoFilterSelection();
+      return;
+    }
+    if (!this.headercolumns?.length) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
+
+    const selectedSearchColumns = state.selectedSearchColumns || [];
+    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
+
+    this.appliedSavedViewSlug = activeViewKey;
+    this.hasSavedViewConfiguration = true;
+    this.selectedViewName = activeViewName;
+
+    this.applyGridState(state);
   }
 
   toggleColumnFilterHide(col: any) {
@@ -2415,6 +2901,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   onLinkComponentClick(col: any, item: any) {
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
     this.linkComponentClick.emit({ col, item });
   }
 
