@@ -84,6 +84,7 @@ interface GridViewState {
     value: string;
     clause_type: string;
     enum_values: any[];
+    enum_value_options?: Array<{ label: any; value: any }>;
   }>;
 }
 
@@ -314,6 +315,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private appliedSavedViewSlug: string | null = null;
   private savedViewApplyScheduled = false;
   private initialFetchEmitted = false;
+  private latestStateBootstrapSlug: string | null = null;
   private pendingManualViewSelection = false;
   private hasPersistedViewBeforeDestroy = false;
   private readonly NO_FILTER_VIEW_NAME = 'No Filter';
@@ -723,8 +725,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private emitInitialFetchIfNoSavedView(): void {
     if (this.initialFetchEmitted) return;
+    if (this.save_grid_latest_state && !this.save_grid_views) return;
     const entitySlug = this.getEntitySlug();
     const tempApplyKey = `${entitySlug}::__temp__`;
+    const hasStableEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name);
+    if (this.save_grid_latest_state && !this.save_grid_views && !hasStableEntityContext) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
     const hasEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title);
     if (!hasEntityContext) return;
     if (this.getSavedViewConfiguration()) return;
@@ -1317,6 +1325,81 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return conditions.map((condition) => this.cloneFilterCondition(condition));
   }
 
+  private normalizeEnumValues(values: any[]): any[] {
+    if (!Array.isArray(values)) return [];
+    return values.map((entry: any) => {
+      if (entry && typeof entry === 'object') {
+        if ('value' in entry) return entry.value;
+      }
+      return entry;
+    });
+  }
+
+  private normalizeEnumValueOptions(options: any[]): Array<{ label: any; value: any }> {
+    if (!Array.isArray(options)) return [];
+    return options
+      .map((entry: any) => {
+        if (entry && typeof entry === 'object') {
+          if ('value' in entry || 'label' in entry) {
+            return {
+              label: entry.label ?? entry.value ?? '',
+              value: entry.value ?? entry.label ?? '',
+            };
+          }
+          return null;
+        }
+        return {
+          label: entry,
+          value: entry,
+        };
+      })
+      .filter((entry): entry is { label: any; value: any } => !!entry);
+  }
+
+  private buildRestoredEnumOptions(savedOptions: any[], savedValues: any[]): Array<{ label: any; value: any }> {
+    const normalizedOptions = this.normalizeEnumValueOptions(savedOptions);
+    const optionMap = new Map<any, { label: any; value: any }>();
+
+    normalizedOptions.forEach((option) => {
+      optionMap.set(option.value, option);
+    });
+
+    if (Array.isArray(savedValues)) {
+      savedValues.forEach((entry: any) => {
+        const value = entry && typeof entry === 'object' ? (entry.value ?? entry.label ?? '') : entry;
+        const label = entry && typeof entry === 'object' ? (entry.label ?? entry.value ?? '') : entry;
+
+        if (!optionMap.has(value)) {
+          optionMap.set(value, { label, value });
+        }
+      });
+    }
+
+    return Array.from(optionMap.values());
+  }
+
+  private async hydrateEnumOptionsForRenderedFilters(): Promise<void> {
+    if (!Array.isArray(this.filterConditions) || this.filterConditions.length === 0) return;
+
+    for (let index = 0; index < this.filterConditions.length; index++) {
+      const condition = this.filterConditions[index];
+      if (!condition?.isEnum || !condition.field) continue;
+
+      const columnData = this.filteredColumns.find((col) => col.field === condition.field);
+      if (!columnData) continue;
+
+      const fetchedOptions = await this.getEnumValues(columnData, condition.operator);
+      const mergedOptions = this.buildRestoredEnumOptions(fetchedOptions, condition.enum_values || []);
+
+      condition.enumValueOptions = mergedOptions;
+      if (this.appliedFilterConditions[index]) {
+        this.appliedFilterConditions[index].enumValueOptions = [...mergedOptions];
+      }
+    }
+
+    this.cdr.detectChanges();
+  }
+
   private syncDraftFiltersFromApplied(): void {
     this.filterCondition = this.appliedFilterCondition;
     this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
@@ -1498,8 +1581,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private canApplyGridState(state: GridViewState): boolean {
     const selectedSearchColumns = state?.selectedSearchColumns || [];
+    const appliedFilterConditions = state?.appliedFilterConditions || [];
     if (!this.headercolumns?.length) return false;
     if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) return false;
+    if (appliedFilterConditions.length > 0 && !this.filteredColumns?.length) return false;
     return true;
   }
 
@@ -1768,25 +1853,36 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       this.selectedColumns = [];
     }
 
-    const normalizedFilters: Array<FilterCondition> = (state.appliedFilterConditions || []).map((condition: any) => ({
-      field: condition.field || '',
-      operator: condition.operator || '',
-      value: condition.value || '',
-      clause_type: condition.clause_type || 'where',
-      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
-      availableOperators: this.getOperatorsForColumn(condition.field || ''),
-      inputType: this.getInputTypeForColumn(condition.field || ''),
-      isEnum: false,
-      enumType: '',
-      enumValueOptions: [],
-      autocompleteLoading: false,
-      autocompleteSearchText: '',
-    }));
+    const normalizedFilters: Array<FilterCondition> = (state.appliedFilterConditions || []).map((condition: any) => {
+      const field = condition.field || '';
+      const operator = this.normalizeSavedOperator(condition.operator, condition.value);
+      const columnData = this.filteredColumns.find((col) => col.field === field);
+      const isEnum = this.isEnumValue(columnData, operator);
+      const enumObj = this.resolveEnumConfig(columnData?.enum_values);
+      const rawEnumValues = Array.isArray(condition.enum_values) ? [...condition.enum_values] : [];
+      const restoredEnumOptions = this.buildRestoredEnumOptions(condition.enum_value_options || [], rawEnumValues);
+
+      return {
+        field,
+        operator,
+        value: condition.value || '',
+        clause_type: condition.clause_type || 'where',
+        enum_values: this.normalizeEnumValues(rawEnumValues),
+        availableOperators: this.getOperatorsForColumn(field),
+        inputType: this.getInputTypeForColumn(field),
+        isEnum,
+        enumType: isEnum ? enumObj?.type || '' : '',
+        enumValueOptions: isEnum ? restoredEnumOptions : [],
+        autocompleteLoading: false,
+        autocompleteSearchText: '',
+      };
+    });
 
     this.filterCondition = state.filterCondition !== undefined ? !!state.filterCondition : true;
     this.appliedFilterCondition = this.filterCondition;
     this.filterConditions = this.cloneFilterConditions(normalizedFilters);
     this.appliedFilterConditions = this.cloneFilterConditions(normalizedFilters);
+    this.hydrateEnumOptionsForRenderedFilters();
 
     this.resultsPerPage = Number(state.resultsPerPage) > 0 ? Number(state.resultsPerPage) : this.getDefaultResultsPerPage();
     this.currentPage = Number(state.currentPage) > 0 ? Number(state.currentPage) : 1;
@@ -1880,6 +1976,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       value: condition.value,
       clause_type: condition.clause_type,
       enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
+      enum_value_options: Array.isArray(condition.enumValueOptions)
+        ? condition.enumValueOptions.map((entry: any) => ({
+            label: entry?.label ?? entry?.value ?? '',
+            value: entry?.value ?? entry?.label ?? '',
+          }))
+        : [],
     }));
 
     return {
@@ -1924,13 +2026,44 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       appliedFilterConditions: Array.isArray(state?.appliedFilterConditions)
         ? state.appliedFilterConditions.map((condition: any) => ({
             field: condition?.field || '',
-            operator: condition?.operator || '',
+            operator: this.normalizeSavedOperator(condition?.operator, condition?.value),
             value: condition?.value || '',
             clause_type: condition?.clause_type || 'where',
-            enum_values: Array.isArray(condition?.enum_values) ? [...condition.enum_values] : [],
+            enum_values: this.normalizeEnumValues(Array.isArray(condition?.enum_values) ? [...condition.enum_values] : []),
+            enum_value_options: this.normalizeEnumValueOptions(Array.isArray(condition?.enum_value_options) ? condition.enum_value_options : []),
           }))
         : [],
     };
+  }
+
+  private normalizeSavedOperator(operator: any, value: any): string {
+    const rawOperator = String(operator || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+
+    if (!rawOperator) return '';
+
+    if (rawOperator === 'in') return 'in';
+    if (rawOperator === 'not in') return 'not_in';
+    if (rawOperator === 'is null') return 'is_null';
+    if (rawOperator === 'is not null') return 'is_not_null';
+    if (rawOperator === 'is_empty') return 'is_empty';
+    if (rawOperator === 'is_not_empty') return 'is_not_empty';
+    if (rawOperator === 'not ilike' || rawOperator === 'not like') return 'not_contains';
+
+    if (rawOperator === 'ilike' || rawOperator === 'like') {
+      const normalizedValue = String(value ?? '').trim();
+      const hasLeadingWildcard = normalizedValue.startsWith('%');
+      const hasTrailingWildcard = normalizedValue.endsWith('%');
+
+      if (hasLeadingWildcard && hasTrailingWildcard) return 'contains';
+      if (!hasLeadingWildcard && hasTrailingWildcard) return 'starts_with';
+      if (hasLeadingWildcard && !hasTrailingWildcard) return 'ends_with';
+      return 'contains';
+    }
+
+    return rawOperator.replace(/\s+/g, '_');
   }
 
   private areGridStatesEqual(firstState: any, secondState: any): boolean {
@@ -1986,10 +2119,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   private persistCurrentSelectedViewStateAsDefault(): void {
-    if (!this.save_grid_views) return;
+    if (!this.save_grid_views && !this.save_grid_latest_state) return;
+
+    const entitySlug = this.getEntitySlug();
+    if (!this.save_grid_views) {
+      this.saveTempConfigurationForEntity(entitySlug, this.NO_FILTER_VIEW_NAME, this.buildCurrentGridViewState());
+      return;
+    }
 
     const selectedView = this.getSelectedViewConfiguration();
-    const entitySlug = this.getEntitySlug();
     if (!selectedView) {
       this.saveTempConfigurationForEntity(entitySlug, this.NO_FILTER_VIEW_NAME, this.buildCurrentGridViewState());
       return;
@@ -2488,7 +2626,53 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private tryApplySavedView(): void {
     if (!this.save_grid_views) {
-      this.hasSavedViewConfiguration = false;
+      const hasStableEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name);
+      if (this.save_grid_latest_state && !hasStableEntityContext) {
+        this.scheduleTryApplySavedView();
+        return;
+      }
+
+      const currentSlug = this.getEntitySlug();
+      if (this.save_grid_latest_state && this.latestStateBootstrapSlug === currentSlug) {
+        return;
+      }
+
+      const tempApplyKey = `${currentSlug}::__temp__`;
+      if (this.appliedSavedViewSlug === tempApplyKey) {
+        if (this.save_grid_latest_state) {
+          this.latestStateBootstrapSlug = currentSlug;
+        }
+        return;
+      }
+
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (!tempState) {
+        this.appliedSavedViewSlug = null;
+        this.hasSavedViewConfiguration = false;
+
+        if (!this.initialFetchEmitted) {
+          const page = Number(this.currentPage) > 0 ? Number(this.currentPage) : 1;
+          const limit = Number(this.resultsPerPage) > 0 ? Number(this.resultsPerPage) : this.getDefaultResultsPerPage();
+          this.initialFetchEmitted = true;
+          if (this.save_grid_latest_state) {
+            this.latestStateBootstrapSlug = currentSlug;
+          }
+          this.pageChange.emit({ page, start_index: (page - 1) * limit, source: 'default-initial' });
+        }
+        return;
+      }
+
+      if (!this.canApplyGridState(tempState)) {
+        this.scheduleTryApplySavedView();
+        return;
+      }
+
+      this.appliedSavedViewSlug = tempApplyKey;
+      this.hasSavedViewConfiguration = true;
+      if (this.save_grid_latest_state) {
+        this.latestStateBootstrapSlug = currentSlug;
+      }
+      this.applyGridState(tempState);
       return;
     }
     const currentSlug = this.getEntitySlug();
@@ -2536,6 +2720,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const selectedSearchColumns = state.selectedSearchColumns || [];
     if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
+
+    const appliedFilterConditions = state.appliedFilterConditions || [];
+    if (appliedFilterConditions.length > 0 && !this.filteredColumns?.length) {
       this.scheduleTryApplySavedView();
       return;
     }

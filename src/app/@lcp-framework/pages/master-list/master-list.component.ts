@@ -387,13 +387,13 @@ export class MasterListComponent implements OnChanges {
   }
 
   sortColumn(column: any) {
+    if (column?.skipFetch) return;
     this.column = column;
 
     //this.listQuery.start_index = this.currentPage;
     this.listQuery.limit_range = this.resultsPerPage;
     const sortColumns = Array.isArray(column?.sortColumns) ? column.sortColumns : [this.column];
     this.listQuery.sort_columns = sortColumns.filter((col: any) => col?.sortDirection).map((col: any) => [col.header, col.sortDirection]);
-    if (column?.skipFetch) return;
     this.requestGridFetch(this.listQuery);
   }
 
@@ -879,12 +879,17 @@ export class MasterListComponent implements OnChanges {
   private getSavedViewStateForCurrentEntity(): any | null {
     try {
       const isSaveFilterEnabled = this.config?.save_grid_views == 'true' && this.config?.save_grid_views;
-      if (!isSaveFilterEnabled) return null;
+      const isLatestStateEnabled = this.save_grid_latest_state;
+      if (!isSaveFilterEnabled && !isLatestStateEnabled) return null;
 
       const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
       if (!entitySlug) return null;
 
       const tempState = this.getTempViewStateForEntity(entitySlug);
+
+      if (!isSaveFilterEnabled) {
+        return tempState;
+      }
 
       const userDataRaw = this.localStorageService.getData('user_data');
       const userData = typeof userDataRaw === 'string' ? JSON.parse(userDataRaw || '{}') : userDataRaw || {};
