@@ -965,6 +965,8 @@ export class MasterListComponent implements OnChanges {
         return 'IS NULL';
       case 'is_not_null':
         return 'IS NOT NULL';
+      case 'between':
+        return 'BETWEEN';
       default:
         return condition || '=';
     }
@@ -1027,6 +1029,14 @@ export class MasterListComponent implements OnChanges {
   }
 
   private normalizeSavedFilterValue(columnName: string, operator: string, value: any): any {
+    if ((operator || '').toLowerCase() === 'between') {
+      if (Array.isArray(value)) return value;
+      if (value && typeof value === 'object' && 'start' in value && 'end' in value) {
+        return [value.start, value.end];
+      }
+      return value;
+    }
+
     let normalizedValue = value;
     const inputType = this.getInputTypeForSavedFilter(columnName);
 

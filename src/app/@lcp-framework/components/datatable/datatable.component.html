@@ -267,8 +267,60 @@
                         </ng-select>
                       </div>
 
+                      <!-- Flatpickr range picker for date / datetime-local -->
+                      <div
+                        *ngIf="
+                          !isNoValueOperator(condition.operator) &&
+                          !condition.isEnum &&
+                          isBetweenOperator(condition.operator) &&
+                          isSinglePickerRangeInputType(condition?.inputType || '')
+                        "
+                        class="w-full"
+                      >
+                        <input
+                          [value]="getBetweenDisplayValue(i)"
+                          (click)="openBetweenRangePicker(i, $event)"
+                          (keydown.enter)="onAdvancedFilterValueEnter($event)"
+                          type="text"
+                          class="form-input h-8 w-full text-xs text-gray-600"
+                          [placeholder]="condition?.inputType === 'datetime-local' ? 'Select datetime range' : 'Select date range'"
+                          readonly
+                        />
+                      </div>
+                      <!-- Native dual time inputs for time between -->
+                      <div
+                        *ngIf="
+                          !isNoValueOperator(condition.operator) &&
+                          !condition.isEnum &&
+                          isBetweenOperator(condition.operator) &&
+                          condition?.inputType === 'time'
+                        "
+                        class="flex w-full items-center gap-1"
+                      >
+                        <input
+                          [ngModel]="getBetweenValue(i, 'start')"
+                          (ngModelChange)="setBetweenValue(i, 'start', $event)"
+                          (keydown.enter)="onAdvancedFilterValueEnter($event)"
+                          type="time"
+                          class="form-input h-8 w-full text-xs text-gray-600"
+                          placeholder="Start time"
+                        />
+                        <span class="shrink-0 text-xs text-gray-400">to</span>
+                        <input
+                          [ngModel]="getBetweenValue(i, 'end')"
+                          (ngModelChange)="setBetweenValue(i, 'end', $event)"
+                          (keydown.enter)="onAdvancedFilterValueEnter($event)"
+                          type="time"
+                          class="form-input h-8 w-full text-xs text-gray-600"
+                          placeholder="End time"
+                        />
+                      </div>
                       <input
-                        *ngIf="!isNoValueOperator(condition.operator) && !condition.isEnum"
+                        *ngIf="
+                          !isNoValueOperator(condition.operator) &&
+                          !condition.isEnum &&
+                          !(isBetweenOperator(condition.operator) && isRangeInputType(condition?.inputType || ''))
+                        "
                         [ngModel]="getConditionValue(i)"
                         (ngModelChange)="setConditionValue(i, $event)"
                         (keydown.enter)="onAdvancedFilterValueEnter($event)"
