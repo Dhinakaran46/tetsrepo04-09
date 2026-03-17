@@ -66,15 +66,6 @@ export const routes: Routes = [
           defaultPermission: true,
         },
       },
-      // {
-      //   path: 'import',
-      //   component: ImportMasterComponent,
-      //   canDeactivate: [ImportConfirmDeactivateGuard],
-      //   title: 'Import Master',
-      //   data: {
-      //     defaultPermission: true,
-      //   },
-      // },
       {
         path: 'exampletable',
         component: ExampleClientDatatableComponent,

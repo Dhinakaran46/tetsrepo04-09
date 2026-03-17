@@ -54,6 +54,8 @@ export const commonConfig: any = {
     edit_cron_job: 'common/edit-cron-job',
     delete_cron_jobs: 'common/delete-cron-job',
 
+    migrate_master_entity: 'migrate/master-entity',
+
     syncTableSchema: 'openai/generate-schema-chunks',
     generateVector: 'openai/generate-vector',
     generateAiQuery: 'openai/generate-query',
@@ -72,6 +74,7 @@ export const commonConfig: any = {
     USER_ROLE_PERMISSION_MAP_MODULE: 'user_role_permission_map_module',
     MENU_MODULE: 'menu_module',
     IMPORT_MODULE: 'import_module',
+    MIGRATION_MODULE: 'migrate_entity',
     EXPORT_MODULE: 'export_module',
     ENTITY_FORM_MODULE: 'entity_form_module',
     LANGUAGE_CONTENTS_MODULE: 'language_contents_module',
@@ -108,6 +111,7 @@ export const commonConfig: any = {
     menu_module: 'menu',
     import_module: 'import',
     export_module: 'export',
+    migrate_entity: 'migrate',
     entity_form_module: 'entityform',
     language_contents_module: 'lang',
     configurations_module: 'config',
@@ -221,6 +225,7 @@ export const commonConfig: any = {
     { label: 'Entity User/Role Mapping Module', value: 'entity_user_role_map_module' },
     { label: 'User/Role Permission Mapping Module', value: 'user_role_permission_map_module' },
     { label: 'Menu Module', value: 'menu_module' },
+    { label: 'Migrate Module', value: 'migrate_entity' },
     { label: 'Import Module', value: 'import_module' },
     { label: 'Export Module', value: 'export_module' },
     { label: 'Entity Add/Edit Module', value: 'entity_form_module' },

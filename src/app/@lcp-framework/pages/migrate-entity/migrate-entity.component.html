@@ -1,0 +1,97 @@
+<div class="space-y-6">
+
+  <!-- 🔹 Tabs -->
+  <div class="flex border-b border-gray-200">
+    <button class="px-6 py-2 font-semibold transition"
+      [ngClass]="section === 'import' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
+      (click)="section = 'import'">
+      Import
+    </button>
+
+    <button class="px-6 py-2 font-semibold transition"
+      [ngClass]="section === 'export' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
+      (click)="section = 'export'">
+      Export
+    </button>
+  </div>
+
+  <!-- 🔹 Loader -->
+  <div *ngIf="isLoading" class="loader-overlay">
+    <div class="w-full max-w-md text-center">
+      <p *ngIf="progress > 0 && progress < 100" class="mb-2 font-semibold">
+        Processing... {{ progress }}%
+      </p>
+
+      <div *ngIf="progress > 0 && progress < 100" class="h-4 w-full rounded bg-gray-200">
+        <div class="h-4 rounded bg-primary" [style.width]="progress + '%'"></div>
+      </div>
+
+      <div *ngIf="progress === 0 || progress === 100" class="spinner mt-4"></div>
+    </div>
+  </div>
+
+  <!-- 🔹 Export -->
+  <div *ngIf="section === 'export'" class="panel">
+
+    <h2 class="mb-4 text-lg font-bold">Export Master Entity</h2>
+
+    <form [formGroup]="exportForm">
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+        <div>
+          <label class="mb-1 block">Type</label>
+          <select formControlName="type" class="form-select">
+            <option value="update">Update</option>
+            <option value="replace">Replace</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="mt-6 flex items-center gap-3">
+        <button type="button" (click)="exportData()" [disabled]="isLoading" class="btn btn-primary">
+          ⬇ Export
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- 🔹 Import -->
+  <div *ngIf="section === 'import'" class="panel">
+
+    <h2 class="mb-4 text-lg font-bold">Import Master Entity</h2>
+
+    <form [formGroup]="importForm">
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+        <div>
+          <label class="mb-1 block">Upload ZIP File</label>
+          <input type="file" (change)="onFileChange($event)" class="form-input" accept=".zip" #fileInput />
+        </div>
+
+      </div>
+
+      <!-- Selected file preview -->
+      <div *ngIf="file" class="mt-3 text-sm text-gray-600">
+        Selected: <span class="font-semibold">{{ file.name }}</span>
+      </div>
+
+      <div class="mt-6 flex items-center gap-3">
+        <button type="button" (click)="importData()" [disabled]="isLoading" class="btn btn-primary">
+          ⬆ Import
+        </button>
+      </div>
+
+    </form>
+
+    <!-- ✅ Success message -->
+    <div *ngIf="!isLoading && progress === 100" class="mt-6 rounded bg-green-100 p-4 text-green-700">
+      ✅ Import completed successfully
+    </div>
+
+  </div>
+
+</div>

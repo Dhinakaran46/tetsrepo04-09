@@ -282,4 +282,46 @@ export class GridApiService {
   getEntityDetails(entity_name: string): Observable<any> {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.entitydetails}/${entity_name}`);
   }
+
+  exportMasterEntity(params: any): Observable<ExportResponse> {
+    return this.cryptoHttp
+      .encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) => {
+          if (!response.body) {
+            throw new Error('No file received');
+          }
+
+          const blob = response.body;
+
+          const contentDisposition = response.headers.get('Content-Disposition');
+
+          let fileName = `master-entity-${Date.now()}.zip`;
+
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match?.[1]) {
+              fileName = match[1];
+            }
+          }
+
+          return { blob, fileName };
+        }),
+        catchError((error) => {
+          console.error('Export master entity error:', error);
+          throw error;
+        })
+      );
+  }
+
+  importMasterEntity(formData: FormData): Observable<any> {
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}`, formData, {
+      reportProgress: true,
+      observe: 'events', // 👈 required for progress bar
+    });
+  }
 }
