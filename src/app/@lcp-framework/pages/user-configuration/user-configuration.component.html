@@ -157,7 +157,8 @@
                         </ng-container>
                         <ng-container *ngSwitchCase="'date'">
                           <input
-                            type="date"
+                            type="text"
+                            appFlatpickr="date"
                             formControlName="config_value"
                             appDynamicFontSize="body"
                             class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
@@ -504,7 +505,8 @@
           </ng-container>
           <ng-container *ngSwitchCase="'date'">
             <input
-              type="date"
+              type="text"
+              appFlatpickr="date"
               id="value"
               formControlName="value"
               class="form-input mt-1 block w-10/12 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"

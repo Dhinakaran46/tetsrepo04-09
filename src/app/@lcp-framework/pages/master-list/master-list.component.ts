@@ -150,7 +150,7 @@ export class MasterListComponent implements OnChanges {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
-  accepted_parent_params: any[] = [];
+  accepted_parent_params: any = [];
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   adminUrl: any = '/#';
   statuses: any = {
@@ -390,12 +390,11 @@ export class MasterListComponent implements OnChanges {
       having_any_conditions: [],
     };
 
-    const acceptedParams = Array.isArray(this.accepted_parent_params) ? this.accepted_parent_params : [];
-    if (!acceptedParams.length || !this.parentGridFilters) {
+    const acceptedParams = this.normalizeAcceptedParentParams(this.accepted_parent_params);
+    const hasAcceptedParams = Object.values(acceptedParams).some((params) => params.size > 0);
+    if (!hasAcceptedParams || !this.parentGridFilters) {
       return empty;
     }
-
-    const acceptedTokens = new Set(acceptedParams.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
     const parentHavingAll = [
       ...(Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
       ...(Array.isArray(this.parentGridFilters.having_all) ? this.parentGridFilters.having_all : []),
@@ -406,10 +405,10 @@ export class MasterListComponent implements OnChanges {
     ];
 
     return {
-      search_all: this.filterAcceptedParentConditions(this.parentGridFilters.search_all, acceptedTokens),
-      search_any: this.filterAcceptedParentConditions(this.parentGridFilters.search_any, acceptedTokens),
-      having_conditions: this.filterAcceptedParentConditions(parentHavingAll, acceptedTokens),
-      having_any_conditions: this.filterAcceptedParentConditions(parentHavingAny, acceptedTokens),
+      search_all: this.filterAcceptedParentConditions(this.parentGridFilters.search_all, acceptedParams.search_all),
+      search_any: this.filterAcceptedParentConditions(this.parentGridFilters.search_any, acceptedParams.search_any),
+      having_conditions: this.filterAcceptedParentConditions(parentHavingAll, acceptedParams.having_conditions),
+      having_any_conditions: this.filterAcceptedParentConditions(parentHavingAny, acceptedParams.having_any_conditions),
     };
   }
 
@@ -463,6 +462,49 @@ export class MasterListComponent implements OnChanges {
       return this.normalizeFilterToken(value.column_name || value.field || value.name || value.value || value.key || '');
     }
     return this.normalizeFilterToken(value);
+  }
+
+  private normalizeAcceptedParentParams(value: any): {
+    search_all: Set<string>;
+    search_any: Set<string>;
+    having_conditions: Set<string>;
+    having_any_conditions: Set<string>;
+  } {
+    const empty = {
+      search_all: new Set<string>(),
+      search_any: new Set<string>(),
+      having_conditions: new Set<string>(),
+      having_any_conditions: new Set<string>(),
+    };
+
+    if (Array.isArray(value)) {
+      const tokens = new Set(value.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
+      return {
+        search_all: new Set(tokens),
+        search_any: new Set(tokens),
+        having_conditions: new Set(tokens),
+        having_any_conditions: new Set(tokens),
+      };
+    }
+
+    if (!value || typeof value !== 'object') {
+      return empty;
+    }
+
+    return {
+      search_all: this.createAcceptedParamTokenSet(value.search_all),
+      search_any: this.createAcceptedParamTokenSet(value.search_any),
+      having_conditions: this.createAcceptedParamTokenSet(value.having_conditions),
+      having_any_conditions: this.createAcceptedParamTokenSet(value.having_any_conditions),
+    };
+  }
+
+  private createAcceptedParamTokenSet(values: any): Set<string> {
+    if (!Array.isArray(values)) {
+      return new Set<string>();
+    }
+
+    return new Set(values.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
   }
 
   private mergeUniqueFilters(existingFilters: any, newFilters: any[]): any[] {
@@ -964,7 +1006,7 @@ export class MasterListComponent implements OnChanges {
         if (response.status && response.code === 200) {
           this.EntityName = params.entity_name;
           this.attachedPolicies = response.data.attached_policies || [];
-          this.accepted_parent_params = response.data.accepted_parent_params || [];
+          this.accepted_parent_params = response.data.accepted_parent_params || {};
         }
       },
       (error) => {

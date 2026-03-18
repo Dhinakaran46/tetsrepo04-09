@@ -17,6 +17,7 @@ import { Title } from '@angular/platform-browser';
 import { TIMEZONE_LIST } from '../../shared/timezone/timezone-list';
 import { ChangeDetectorRef } from '@angular/core';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
 
 interface TabConfiguration {
   id: number;
@@ -52,7 +53,7 @@ const DATETIME_FORMAT_LIST = [
 @Component({
   selector: 'app-configuration',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, CommonSharedModule, MonacoEditorModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, CommonSharedModule, MonacoEditorModule, FlatpickrDirective],
   templateUrl: './configuration.component.html',
   styleUrls: ['./configuration.component.scss'],
 })

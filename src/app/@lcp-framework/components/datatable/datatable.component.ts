@@ -35,10 +35,10 @@ import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
 import { LoaderComponent } from '../loader/loader.component';
-import { AppendToBodyDirective } from './append-to-body.directive';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
 import Swal from 'sweetalert2';
 import flatpickr from 'flatpickr';
 
@@ -108,7 +108,7 @@ interface UserSearchConfigurationTemp {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective, StaticPageComponent],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, StaticPageComponent, FlatpickrDirective],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -1331,8 +1331,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       case 'number':
         return 'Enter a number';
       case 'date':
-      case 'datetime-local':
         return 'YYYY-MM-DD';
+      case 'datetime-local':
+        return 'YYYY-MM-DD HH:mm';
       default:
         return 'Enter a value';
     }

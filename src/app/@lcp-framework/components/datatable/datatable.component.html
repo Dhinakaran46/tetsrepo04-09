@@ -320,6 +320,25 @@
                         *ngIf="
                           !isNoValueOperator(condition.operator) &&
                           !condition.isEnum &&
+                          !isBetweenOperator(condition.operator) &&
+                          isSinglePickerRangeInputType(condition?.inputType || '')
+                        "
+                        [ngModel]="getConditionValue(i)"
+                        (ngModelChange)="setConditionValue(i, $event)"
+                        (keydown.enter)="onAdvancedFilterValueEnter($event)"
+                        [appFlatpickr]="condition?.inputType || 'date'"
+                        type="text"
+                        class="form-input h-8 w-full text-xs text-gray-600"
+                        [placeholder]="getPlaceholderForColumn(condition.field)"
+                        [appFlatpickrMinDate]="getMinValueForColumn(condition.field)"
+                        [appFlatpickrMaxDate]="getMaxValueForColumn(condition.field)"
+                        [required]="true"
+                      />
+                      <input
+                        *ngIf="
+                          !isNoValueOperator(condition.operator) &&
+                          !condition.isEnum &&
+                          !isSinglePickerRangeInputType(condition?.inputType || '') &&
                           !(isBetweenOperator(condition.operator) && isRangeInputType(condition?.inputType || ''))
                         "
                         [ngModel]="getConditionValue(i)"
