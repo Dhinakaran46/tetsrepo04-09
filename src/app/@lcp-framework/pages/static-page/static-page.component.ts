@@ -11,14 +11,13 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 import { slideDownUp } from '../../shared/animations';
-import { IconArrowLeftComponent } from '../../shared/icon/icon-arrow-left';
 import { Title } from '@angular/platform-browser';
 import { TimezoneService } from '../../service/common/timezone.service';
 
 @Component({
   selector: 'app-static-page',
   standalone: true,
-  imports: [CommonSharedModule, SafeHtmlPipe, IconArrowLeftComponent],
+  imports: [CommonSharedModule, SafeHtmlPipe],
   templateUrl: './static-page.component.html',
   styleUrl: './static-page.component.scss',
   animations: [slideDownUp],
@@ -33,6 +32,7 @@ export class StaticPageComponent implements OnChanges {
   entity_name!: string;
   entity_type!: string | null;
   query_information!: any | null;
+  accepted_parent_params: any[] = [];
   static_page_content: string = '';
   routeGParams: Record<string, string> = {};
 
@@ -40,6 +40,13 @@ export class StaticPageComponent implements OnChanges {
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
   @Input() gridParams!: any;
+  @Input() parentGridFilters: {
+    search_all: any[];
+    search_any: any[];
+    having_conditions: any[];
+    having_any_conditions: any[];
+    columns?: any[];
+  } | null = null;
   @Input() keyword: string = '';
   @Output() closeModal = new EventEmitter<void>();
 
@@ -280,7 +287,7 @@ export class StaticPageComponent implements OnChanges {
       this.titleService.setTitle(translateTitle);
     }
 
-    if ((changes['entityName'] || changes['uuid'] || changes['gridParams']) && this.entity_name) {
+    if ((changes['entityName'] || changes['uuid'] || changes['gridParams'] || changes['parentGridFilters']) && this.entity_name) {
       this.requestLoadData();
     }
   }
@@ -294,6 +301,7 @@ export class StaticPageComponent implements OnChanges {
       entity_name: this.entity_name,
       unique_id: this.unique_id || null,
       gridParams: this.gridParams || null,
+      parentGridFilters: this.parentGridFilters || null,
       currentTab: this.currentTab,
       currentAccordion: this.currentAccordion,
     });
@@ -332,11 +340,12 @@ export class StaticPageComponent implements OnChanges {
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
           this.query_information = response.data.records[0].query_information;
+          this.accepted_parent_params = [];
           this.query_information = this.replaceGParamsInObject(this.query_information);
           this.static_page_content = response.data.records[0].static_page_content;
 
           if (this.query_information) {
-            this.loadDefaultData();
+            this.loadAcceptedParentParamsAndDefaultData();
           } else {
             //this.pageContent = this.static_page_content;
             this.pageContent = this.compileStaticContent(this.static_page_content, {
@@ -358,6 +367,30 @@ export class StaticPageComponent implements OnChanges {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.router.navigate(['/dashboard']);
+      }
+    );
+  }
+
+  private loadAcceptedParentParamsAndDefaultData() {
+    if (!this.entity_name) {
+      this.accepted_parent_params = [];
+      this.loadDefaultData();
+      return;
+    }
+
+    this.gridApiService.getAttachedPolicies({ entity_name: this.entity_name }).subscribe(
+      (response) => {
+        if (response?.status && response?.code === 200) {
+          this.accepted_parent_params = Array.isArray(response?.data?.accepted_parent_params) ? response.data.accepted_parent_params : [];
+        } else {
+          this.accepted_parent_params = Array.isArray(this.query_information?.accepted_parent_params) ? this.query_information.accepted_parent_params : [];
+        }
+      },
+      () => {
+        this.accepted_parent_params = Array.isArray(this.query_information?.accepted_parent_params) ? this.query_information.accepted_parent_params : [];
+      },
+      () => {
+        this.loadDefaultData();
       }
     );
   }
@@ -444,7 +477,9 @@ export class StaticPageComponent implements OnChanges {
     if (this.unique_id) {
       this.query_information = this.replaceUniqueId(this.query_information, '$unique_id', this.unique_id);
     }
+    this.query_information = this.mergeAcceptedParentFiltersIntoQueryInformation(this.query_information);
     this.query_information.grid_params = this.gridParams;
+    delete this.query_information?.accepted_parent_params;
     this.gridApiService.getAllList(this.query_information).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
@@ -470,6 +505,125 @@ export class StaticPageComponent implements OnChanges {
         this.router.navigate(['/dashboard']);
       }
     );
+  }
+
+  private mergeAcceptedParentFiltersIntoQueryInformation(queryInformation: any): any {
+    const matchedFilters = this.getAcceptedParentFilterMatches();
+    if (
+      matchedFilters.search_all.length === 0 &&
+      matchedFilters.search_any.length === 0 &&
+      matchedFilters.having_conditions.length === 0 &&
+      matchedFilters.having_any_conditions.length === 0
+    ) {
+      return queryInformation;
+    }
+
+    const mergedQueryInformation: any = {
+      ...(queryInformation || {}),
+    };
+
+    if (matchedFilters.search_all.length > 0) {
+      mergedQueryInformation.search_all = this.mergeUniqueFilters(queryInformation?.search_all, matchedFilters.search_all);
+    }
+
+    if (matchedFilters.search_any.length > 0) {
+      mergedQueryInformation.search_any = this.mergeUniqueFilters(queryInformation?.search_any, matchedFilters.search_any);
+    }
+
+    if (matchedFilters.having_conditions.length > 0) {
+      mergedQueryInformation.having_conditions = this.mergeUniqueFilters(queryInformation?.having_conditions, matchedFilters.having_conditions);
+    }
+
+    if (matchedFilters.having_any_conditions.length > 0) {
+      mergedQueryInformation.having_any_conditions = this.mergeUniqueFilters(queryInformation?.having_any_conditions, matchedFilters.having_any_conditions);
+    }
+
+    return mergedQueryInformation;
+  }
+
+  private getAcceptedParentFilterMatches(): {
+    search_all: any[];
+    search_any: any[];
+    having_conditions: any[];
+    having_any_conditions: any[];
+  } {
+    console.log(this.parentGridFilters);
+    const empty = {
+      search_all: [],
+      search_any: [],
+      having_conditions: [],
+      having_any_conditions: [],
+    };
+
+    const acceptedParams = Array.isArray(this.accepted_parent_params) ? this.accepted_parent_params : [];
+    if (!acceptedParams.length || !this.parentGridFilters) {
+      return empty;
+    }
+
+    const acceptedTokens = new Set(acceptedParams.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
+    const parentHavingAll = [
+      ...(Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
+      ...(Array.isArray((this.parentGridFilters as any).having_all) ? (this.parentGridFilters as any).having_all : []),
+    ];
+    const parentHavingAny = [
+      ...(Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
+      ...(Array.isArray((this.parentGridFilters as any).having_any) ? (this.parentGridFilters as any).having_any : []),
+    ];
+
+    return {
+      search_all: this.filterAcceptedParentConditions(this.parentGridFilters.search_all, acceptedTokens),
+      search_any: this.filterAcceptedParentConditions(this.parentGridFilters.search_any, acceptedTokens),
+      having_conditions: this.filterAcceptedParentConditions(parentHavingAll, acceptedTokens),
+      having_any_conditions: this.filterAcceptedParentConditions(parentHavingAny, acceptedTokens),
+    };
+  }
+
+  private filterAcceptedParentConditions(parentConditions: any, acceptedTokens: Set<string>): any[] {
+    const conditions = Array.isArray(parentConditions) ? parentConditions : [];
+    return conditions.filter((condition: any) => {
+      if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
+        return false;
+      }
+      const columnName = this.normalizeFilterToken(condition?.column_name);
+      return !!columnName && acceptedTokens.has(columnName);
+    });
+  }
+
+  private getAcceptedParamToken(value: any): string {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return this.normalizeFilterToken(value.column_name || value.field || value.name || value.value || value.key || '');
+    }
+    return this.normalizeFilterToken(value);
+  }
+
+  private mergeUniqueFilters(existingFilters: any, newFilters: any[]): any[] {
+    const existing = Array.isArray(existingFilters) ? [...existingFilters] : [];
+    const seen = new Set(existing.map((item: any) => this.getFilterSignature(item)));
+
+    for (const filter of newFilters) {
+      const signature = this.getFilterSignature(filter);
+      if (seen.has(signature)) continue;
+      existing.push(JSON.parse(JSON.stringify(filter)));
+      seen.add(signature);
+    }
+
+    return existing;
+  }
+
+  private getFilterSignature(filter: any): string {
+    return JSON.stringify({
+      column_name: String(filter?.column_name || ''),
+      operator: String(filter?.operator || ''),
+      value: filter?.value,
+      clause_type: String(filter?.clause_type || ''),
+    });
+  }
+
+  private normalizeFilterToken(value: any): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '');
   }
 
   // Helper function to replace <render-html> tags with inner HTML content

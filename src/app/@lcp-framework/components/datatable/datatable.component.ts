@@ -40,6 +40,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
 import Swal from 'sweetalert2';
+import flatpickr from 'flatpickr';
 
 interface SearchCondition {
   id: string;
@@ -57,7 +58,7 @@ interface InputTypes {
 interface FilterCondition {
   field: string;
   operator: string;
-  value: string;
+  value: any;
   clause_type: string;
   enum_values: any[];
   availableOperators: SearchCondition[];
@@ -81,7 +82,7 @@ interface GridViewState {
   appliedFilterConditions: Array<{
     field: string;
     operator: string;
-    value: string;
+    value: any;
     clause_type: string;
     enum_values: any[];
     enum_value_options?: Array<{ label: any; value: any }>;
@@ -143,6 +144,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() resultsPerPage: any = 10;
   @Input() column: any = '';
   @Input() query: any = '';
+  @Input() activeSearchAll: any[] = [];
+  @Input() activeSearchAny: any[] = [];
+  @Input() activeHavingAll: any[] = [];
+  @Input() activeHavingAny: any[] = [];
+  @Input() parentFilterColumns: any[] = [];
   @Output() delete = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
@@ -205,7 +211,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   mapConditionToSQL = (condition: any) => {
-    switch (condition) {
+    const normalizedCondition = String(condition ?? '')
+      .trim()
+      .toLowerCase();
+
+    switch (normalizedCondition) {
       case 'contains':
         return 'ILIKE';
       case 'not_contains':
@@ -226,8 +236,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         return 'IN';
       case 'not_in':
         return 'NOT IN';
+      case 'between':
+        return 'BETWEEN';
       default:
-        return condition;
+        return normalizedCondition || condition;
     }
   };
 
@@ -318,6 +330,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private latestStateBootstrapSlug: string | null = null;
   private pendingManualViewSelection = false;
   private hasPersistedViewBeforeDestroy = false;
+  private betweenRangePickers: { [key: number]: flatpickr.Instance } = {};
   private readonly NO_FILTER_VIEW_NAME = 'No Filter';
   private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
   private upsert_saved_view_json_schema: any = {
@@ -377,6 +390,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   ngOnDestroy(): void {
+    Object.keys(this.betweenRangePickers).forEach((key) => {
+      this.betweenRangePickers[Number(key)]?.destroy();
+    });
+    this.betweenRangePickers = {};
+
     if (this.hasPersistedViewBeforeDestroy) return;
     this.persistCurrentSelectedViewStateAsDefault();
     this.hasPersistedViewBeforeDestroy = true;
@@ -765,15 +783,23 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   getOperatorsForColumn(column: string): SearchCondition[] {
     const columnData = this.filteredColumns.find((col) => col.field === column);
     const columnType = columnData?.field_type_id;
+    const inputType = this.inputTypes[columnType] || 'text';
+    const supportsBetween = this.supportsBetweenInputType(inputType);
+    const withBetween = (ops: SearchCondition[]) => {
+      if (!supportsBetween) return ops;
+      if (ops.some((condition) => condition.value === 'between')) return ops;
+      return [...ops, { id: 'between', label: 'Between', value: 'between' }];
+    };
+
     if (columnData?.enum_values) {
       return [
         { id: '1', label: 'In', value: 'in' },
         { id: '2', label: 'Not In', value: 'not_in' },
       ];
     } else if (this.isAggregateFunction(column) && columnData?.clause_type !== 'having') {
-      return this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || [];
+      return withBetween(this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || []);
     } else {
-      return this.searchConditions[columnType] || [];
+      return withBetween(this.searchConditions[columnType] || []);
     }
   }
 
@@ -953,10 +979,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const data = this.filteredColumns.find((col) => col.field === selectedField);
     condition.field = selectedField;
+    condition.inputType = this.getInputTypeForColumn(selectedField);
     const isNoValue = this.isNoValueOperator(condition.operator);
     if (isNoValue) {
       condition.value = '';
       condition.enum_values = [];
+    } else if (this.isBetweenOperator(condition.operator)) {
+      condition.value = this.normalizeBetweenValue(condition.value);
+      condition.enum_values = [];
+    } else if (this.isRangeInputType(condition.inputType) && typeof condition.value === 'object') {
+      condition.value = '';
     }
 
     const isEnum = this.isEnumValue(data, condition.operator);
@@ -1060,12 +1092,32 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       return values;
     }
 
+    if (this.isBetweenOperator(condition.operator)) {
+      const range = this.normalizeBetweenValue(condition.value);
+      const start = String(range.start ?? '')
+        .trim()
+        .replace('T', ' ')
+        .replace('Z', '');
+      const end = String(range.end ?? '')
+        .trim()
+        .replace('T', ' ')
+        .replace('Z', '');
+      if (!start && !end) return '';
+      return `${start} - ${end}`;
+    }
+
     const value = String(condition.value ?? '').trim();
     return value.replace('T', ' ').replace('Z', '');
   }
 
   isAdvancedFilterApplied(condition: FilterCondition): boolean {
-    return !!condition?.field && (this.isNoValueOperator(condition.operator) || condition.value.trim() !== '' || condition.enum_values.length > 0);
+    return (
+      !!condition?.field &&
+      (this.isNoValueOperator(condition.operator) ||
+        this.hasRangeValue(condition) ||
+        String(condition.value ?? '').trim() !== '' ||
+        condition.enum_values.length > 0)
+    );
   }
 
   getAppliedAdvancedFilters(): Array<FilterCondition> {
@@ -1091,6 +1143,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   getConditionValue(index: number): string | null {
+    if (this.isBetweenOperator(this.filterConditions[index]?.operator)) {
+      return null;
+    }
+
     const value = this.filterConditions[index].value;
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
@@ -1136,6 +1192,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   setConditionValue(index: number, value: string): void {
+    if (this.isBetweenOperator(this.filterConditions[index]?.operator)) {
+      return;
+    }
+
     const type = this.filterConditions[index].inputType;
     if (type === 'datetime-local' || type === 'date') {
       this.filterConditions[index].value = value;
@@ -1152,27 +1212,38 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = key.inputType || this.getInputTypeForColumn(key.field);
-      const isNoValue = this.isNoValueOperator(key.operator);
+      const normalizedOperator = this.normalizeSavedOperator(key.operator, key.value);
+      const isNoValue = this.isNoValueOperator(normalizedOperator);
+      const isBetween = this.isBetweenOperator(normalizedOperator);
       const enum_values = key.enum_values;
 
       let operator: string = '';
       let value: any = '';
       let filterValue = key.value;
       if (!isNoValue) {
-        if (type == 'datetime-local') {
-          //filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
-          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
-        } else if (type == 'time') {
-          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'HH:mm');
-        } else if (type == 'date') {
-          filterValue = this.formatDate(key.value);
-        }
+        if (isBetween) {
+          const between = this.normalizeBetweenValue(key.value);
+          operator = this.mapConditionToSQL('between');
+          const formattedStart = this.formatFilterValueByType(type, between.start);
+          const formattedEnd = this.formatFilterValueByType(type, between.end);
+          value = [formattedStart, formattedEnd];
+        } else {
+          if (type == 'datetime-local') {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
+          } else if (type == 'time') {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'HH:mm');
+          } else if (type == 'date') {
+            filterValue = this.formatDate(key.value);
+          }
 
-        operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
-        value =
-          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, filterValue?.trim());
+          operator = normalizedOperator ? this.mapConditionToSQL(normalizedOperator) : '=';
+          value =
+            enum_values?.length > 0
+              ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e))
+              : this.addWildcards(normalizedOperator, typeof filterValue === 'string' ? filterValue.trim() : filterValue);
+        }
       } else {
-        operator = this.getNoValueOperatorSQL(key.operator);
+        operator = this.getNoValueOperatorSQL(normalizedOperator);
       }
 
       return {
@@ -1246,8 +1317,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   isApplyButtonEnabled(): boolean {
     return this.filterConditions.some((condition) => {
       const isNoValueOperator = this.isNoValueOperator(condition.operator);
-      const value = (condition.value ?? '').trim();
-      return condition.field && condition.operator && (isNoValueOperator || value !== '' || condition.enum_values?.length > 0);
+      const value = String(condition.value ?? '').trim();
+      const hasBetween = this.hasRangeValue(condition);
+      return condition.field && condition.operator && (isNoValueOperator || hasBetween || value !== '' || condition.enum_values?.length > 0);
     });
   }
   /*isApplyButtonEnabled(): boolean {
@@ -1308,13 +1380,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter(
-      (filter: any) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0
+      (filter: any) =>
+        this.isNoValueOperator(filter.operator) || this.hasRangeValue(filter) || String(filter.value ?? '').trim() !== '' || filter.enum_values?.length > 0
     );
   }
 
   private cloneFilterCondition(condition: FilterCondition): FilterCondition {
+    const clonedValue = condition?.value && typeof condition.value === 'object' && !Array.isArray(condition.value) ? { ...condition.value } : condition?.value;
+
     return {
       ...condition,
+      value: clonedValue,
       enum_values: [...(condition.enum_values || [])],
       availableOperators: [...(condition.availableOperators || [])],
       enumValueOptions: [...(condition.enumValueOptions || [])],
@@ -1366,8 +1442,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     if (Array.isArray(savedValues)) {
       savedValues.forEach((entry: any) => {
-        const value = entry && typeof entry === 'object' ? (entry.value ?? entry.label ?? '') : entry;
-        const label = entry && typeof entry === 'object' ? (entry.label ?? entry.value ?? '') : entry;
+        const value = entry && typeof entry === 'object' ? entry.value ?? entry.label ?? '' : entry;
+        const label = entry && typeof entry === 'object' ? entry.label ?? entry.value ?? '' : entry;
 
         if (!optionMap.has(value)) {
           optionMap.set(value, { label, value });
@@ -1409,8 +1485,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
   // Check if the operator doesn't require a value (is_empty, is_not_empty, is_null, is_not_null)
   isNoValueOperator(operator: string): boolean {
+    const normalizedOperator = String(operator || '')
+      .trim()
+      .toLowerCase();
     const noValueOperators = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'];
-    return noValueOperators.includes(operator);
+    return noValueOperators.includes(normalizedOperator);
   }
   /*private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter((filter: any) => filter.value.trim() !== '');
@@ -1865,7 +1944,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       return {
         field,
         operator,
-        value: condition.value || '',
+        value: this.isBetweenOperator(operator) ? this.normalizeBetweenValue(condition.value) : condition.value || '',
         clause_type: condition.clause_type || 'where',
         enum_values: this.normalizeEnumValues(rawEnumValues),
         availableOperators: this.getOperatorsForColumn(field),
@@ -1902,8 +1981,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       const condition = this.appliedFilterCondition ? 'AND' : 'OR';
       const data = this.appliedFilterConditions.map((key: any) => {
         const type = key.inputType || this.getInputTypeForColumn(key.field);
+        const normalizedOperator = this.normalizeSavedOperator(key.operator, key.value);
+        const isNoValue = this.isNoValueOperator(normalizedOperator);
+        const isBetween = this.isBetweenOperator(normalizedOperator);
+
         let filterValue = key.value;
-        if (!this.isNoValueOperator(key.operator)) {
+        if (!isNoValue && !isBetween) {
           if (type == 'datetime-local' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
             filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'yyyy-MM-dd HH:mm') || filterValue;
           } else if (type == 'time' && /^\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
@@ -1917,12 +2000,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
         return {
           column_name: key.field,
-          operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
-          value: this.isNoValueOperator(key.operator)
-            ? this.getNoValueOperatorSQL(key.operator)
+          operator: isBetween ? this.mapConditionToSQL('between') : normalizedOperator ? this.mapConditionToSQL(normalizedOperator) : '=',
+          value: isNoValue
+            ? this.getNoValueOperatorSQL(normalizedOperator)
+            : isBetween
+            ? [
+                this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).start),
+                this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).end),
+              ]
             : key.enum_values?.length > 0
             ? key.enum_values
-            : this.addWildcards(key.operator, normalizedFilterValue),
+            : this.addWildcards(normalizedOperator, normalizedFilterValue),
           isAggregate: key?.clause_type === 'having',
         };
       });
@@ -1970,19 +2058,25 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const selectedSearchColumns = this.selectedColumns.map((column: any) => String(column?.field || ''));
 
-    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => ({
-      field: condition.field,
-      operator: condition.operator,
-      value: condition.value,
-      clause_type: condition.clause_type,
-      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
-      enum_value_options: Array.isArray(condition.enumValueOptions)
-        ? condition.enumValueOptions.map((entry: any) => ({
-            label: entry?.label ?? entry?.value ?? '',
-            value: entry?.value ?? entry?.label ?? '',
-          }))
-        : [],
-    }));
+    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => {
+      const isBetween = this.isBetweenOperator(condition.operator);
+      const normalizedRange = this.normalizeBetweenValue(condition.value);
+      const normalizedValue = isBetween ? [normalizedRange.start, normalizedRange.end] : condition.value;
+
+      return {
+        field: condition.field,
+        operator: isBetween ? this.mapConditionToSQL('between') : condition.operator,
+        value: normalizedValue,
+        clause_type: condition.clause_type,
+        enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
+        enum_value_options: Array.isArray(condition.enumValueOptions)
+          ? condition.enumValueOptions.map((entry: any) => ({
+              label: entry?.label ?? entry?.value ?? '',
+              value: entry?.value ?? entry?.label ?? '',
+            }))
+          : [],
+      };
+    });
 
     return {
       commonSearch: this.appliedCommonSearch || '',
@@ -2027,7 +2121,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         ? state.appliedFilterConditions.map((condition: any) => ({
             field: condition?.field || '',
             operator: this.normalizeSavedOperator(condition?.operator, condition?.value),
-            value: condition?.value || '',
+            value: this.isBetweenOperator(this.normalizeSavedOperator(condition?.operator, condition?.value))
+              ? this.normalizeBetweenValue(condition?.value)
+              : condition?.value || '',
             clause_type: condition?.clause_type || 'where',
             enum_values: this.normalizeEnumValues(Array.isArray(condition?.enum_values) ? [...condition.enum_values] : []),
             enum_value_options: this.normalizeEnumValueOptions(Array.isArray(condition?.enum_value_options) ? condition.enum_value_options : []),
@@ -2046,6 +2142,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     if (rawOperator === 'in') return 'in';
     if (rawOperator === 'not in') return 'not_in';
+    if (rawOperator === 'between') return 'between';
     if (rawOperator === 'is null') return 'is_null';
     if (rawOperator === 'is not null') return 'is_not_null';
     if (rawOperator === 'is_empty') return 'is_empty';
@@ -2068,6 +2165,207 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private areGridStatesEqual(firstState: any, secondState: any): boolean {
     return JSON.stringify(this.normalizeGridState(firstState)) === JSON.stringify(this.normalizeGridState(secondState));
+  }
+
+  private supportsBetweenInputType(inputType: string): boolean {
+    return inputType === 'date' || inputType === 'datetime-local' || inputType === 'time';
+  }
+
+  isBetweenOperator(operator: string): boolean {
+    return (
+      String(operator || '')
+        .trim()
+        .toLowerCase() === 'between'
+    );
+  }
+
+  isRangeInputType(inputType: string): boolean {
+    return this.supportsBetweenInputType(inputType);
+  }
+
+  isSinglePickerRangeInputType(inputType: string): boolean {
+    return inputType === 'date' || inputType === 'datetime-local';
+  }
+
+  private normalizeBetweenValue(value: any): { start: string; end: string } {
+    if (Array.isArray(value)) {
+      return {
+        start: String(value[0] ?? ''),
+        end: String(value[1] ?? ''),
+      };
+    }
+
+    if (value && typeof value === 'object') {
+      return {
+        start: String(value.start ?? value.from ?? ''),
+        end: String(value.end ?? value.to ?? ''),
+      };
+    }
+
+    return { start: '', end: '' };
+  }
+
+  getBetweenValue(index: number, bound: 'start' | 'end'): string {
+    const condition = this.filterConditions[index];
+    if (!condition) return '';
+    const range = this.normalizeBetweenValue(condition.value);
+    return range[bound] || '';
+  }
+
+  setBetweenValue(index: number, bound: 'start' | 'end', value: string): void {
+    const condition = this.filterConditions[index];
+    if (!condition) return;
+    const range = this.normalizeBetweenValue(condition.value);
+    range[bound] = value;
+    condition.value = range;
+  }
+
+  getBetweenDisplayValue(index: number): string {
+    const condition = this.filterConditions[index];
+    if (!condition) return '';
+
+    const range = this.normalizeBetweenValue(condition.value);
+    const type = condition.inputType || this.getInputTypeForColumn(condition.field);
+    const start = this.toRangeDisplayPart(range.start, type);
+    const end = this.toRangeDisplayPart(range.end, type);
+
+    if (!start && !end) return '';
+    return `${start || ''} to ${end || ''}`.trim();
+  }
+
+  openBetweenRangePicker(index: number, event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (!target) return;
+
+    const condition = this.filterConditions[index];
+    if (!condition) return;
+
+    const type = condition.inputType || this.getInputTypeForColumn(condition.field);
+    const isTimeOnly = type === 'time';
+    const enableTime = type === 'datetime-local';
+    const dateFormat = isTimeOnly ? 'H:i' : enableTime ? 'Y-m-d H:i' : 'Y-m-d';
+    const range = this.normalizeBetweenValue(condition.value);
+    const defaultDate: Date[] = [];
+
+    const startDate = this.toDateFromRangePart(range.start, type);
+    const endDate = this.toDateFromRangePart(range.end, type);
+    if (startDate) defaultDate.push(startDate);
+    if (endDate) defaultDate.push(endDate);
+
+    if (this.betweenRangePickers[index]) {
+      this.betweenRangePickers[index].destroy();
+      delete this.betweenRangePickers[index];
+    }
+
+    const picker = flatpickr(target, {
+      mode: 'range',
+      enableTime: enableTime || isTimeOnly,
+      noCalendar: isTimeOnly,
+      time_24hr: true,
+      dateFormat,
+      defaultDate,
+      allowInput: false,
+      clickOpens: true,
+      onClose: (selectedDates: Date[]) => {
+        if (!Array.isArray(selectedDates) || selectedDates.length === 0) {
+          condition.value = { start: '', end: '' };
+          target.value = '';
+          return;
+        }
+
+        const start = this.formatRangeDateForValue(selectedDates[0], type);
+        const end = selectedDates[1] ? this.formatRangeDateForValue(selectedDates[1], type) : '';
+        condition.value = { start, end };
+        target.value = this.getBetweenDisplayValue(index);
+      },
+    });
+
+    this.betweenRangePickers[index] = picker;
+    picker.open();
+  }
+
+  private toDateFromRangePart(value: any, inputType: string): Date | null {
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+
+    if (inputType === 'time') {
+      const match = raw.match(/^(\d{2}):(\d{2})(?::\d{2})?$/);
+      if (!match) return null;
+
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+      if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+
+      const date = new Date();
+      date.setSeconds(0, 0);
+      date.setHours(hour, minute, 0, 0);
+      return date;
+    }
+
+    const normalized = raw.replace(' ', 'T');
+    const parsed = new Date(normalized);
+    if (isNaN(parsed.getTime())) return null;
+    return parsed;
+  }
+
+  private formatRangeDateForValue(date: Date, inputType: string): string {
+    const pad = (num: number) => String(num).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+
+    if (inputType === 'datetime-local') {
+      const hour = pad(date.getHours());
+      const minute = pad(date.getMinutes());
+      return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+
+    if (inputType === 'time') {
+      const hour = pad(date.getHours());
+      const minute = pad(date.getMinutes());
+      return `${hour}:${minute}`;
+    }
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private toRangeDisplayPart(value: any, inputType: string): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+
+    if (inputType === 'datetime-local') {
+      return raw.replace('T', ' ');
+    }
+
+    if (inputType === 'time') {
+      const match = raw.match(/^(\d{2}:\d{2})(?::\d{2})?$/);
+      return match ? match[1] : raw;
+    }
+
+    return raw;
+  }
+
+  private hasRangeValue(condition: FilterCondition): boolean {
+    if (!this.isBetweenOperator(condition?.operator)) return false;
+    const range = this.normalizeBetweenValue(condition?.value);
+    return String(range.start || '').trim() !== '' && String(range.end || '').trim() !== '';
+  }
+
+  private formatFilterValueByType(type: string, rawValue: any): any {
+    const value = String(rawValue ?? '').trim();
+    if (!value) return value;
+
+    if (type === 'datetime-local') {
+      return this.timezoneService.transformDisplayDateTimeToUTC(value, 'yyyy-MM-dd HH:mm');
+    }
+    if (type === 'time') {
+      return this.timezoneService.transformDisplayDateTimeToUTC(value, 'HH:mm');
+    }
+    if (type === 'date') {
+      return this.formatDate(value);
+    }
+
+    return value;
   }
 
   getSelectedViewConfiguration(): UserSearchConfiguration | null {
@@ -3140,6 +3438,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
     componentRef.instance.enableCheckBox = this.enableCheckBox;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
     componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
       this.selectionChange.emit(selectedItems);
     });
@@ -3186,6 +3485,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
@@ -3207,6 +3507,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
@@ -3216,6 +3517,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       }
     });
     componentRef.instance.grid_params = gridParams;
+  }
+
+  getParentGridFilterContext() {
+    return {
+      search_all: Array.isArray(this.activeSearchAll) ? JSON.parse(JSON.stringify(this.activeSearchAll)) : [],
+      search_any: Array.isArray(this.activeSearchAny) ? JSON.parse(JSON.stringify(this.activeSearchAny)) : [],
+      having_conditions: Array.isArray(this.activeHavingAll) ? JSON.parse(JSON.stringify(this.activeHavingAll)) : [],
+      having_any_conditions: Array.isArray(this.activeHavingAny) ? JSON.parse(JSON.stringify(this.activeHavingAny)) : [],
+      columns: Array.isArray(this.parentFilterColumns) ? JSON.parse(JSON.stringify(this.parentFilterColumns)) : [],
+    };
   }
 
   private replaceSearchTermInObject(obj: any, searchText: string): any {
