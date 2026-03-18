@@ -71,6 +71,15 @@ export class MasterListComponent implements OnChanges {
   @Input() popupEntityName: any = '';
   @Input() selectedItemUuid: string | null = null;
   @Input() grid_params: any = null;
+  @Input() parentGridFilters: {
+    search_all?: any[];
+    search_any?: any[];
+    having_conditions?: any[];
+    having_any_conditions?: any[];
+    having_all?: any[];
+    having_any?: any[];
+    columns?: any[];
+  } | null = null;
   @Input() set popupConfig(config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean } | null) {
     if (config) {
       this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
@@ -141,6 +150,7 @@ export class MasterListComponent implements OnChanges {
   grid_records_delete: any;
   config: any;
   attachedPolicies: any[] = [];
+  accepted_parent_params: any[] = [];
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   adminUrl: any = '/#';
   statuses: any = {
@@ -341,6 +351,148 @@ export class MasterListComponent implements OnChanges {
       .subscribe((d) => {
         this.store = d;
       });
+  }
+
+  private applyAcceptedParentFiltersToListQuery(): void {
+    if (!this.listQuery) {
+      return;
+    }
+
+    const matchedFilters = this.getAcceptedParentFilterMatches();
+
+    if (matchedFilters.search_all.length > 0) {
+      this.listQuery.search_all = this.mergeUniqueFilters(this.listQuery.search_all, matchedFilters.search_all);
+    }
+
+    if (matchedFilters.search_any.length > 0) {
+      this.listQuery.search_any = this.mergeUniqueFilters(this.listQuery.search_any, matchedFilters.search_any);
+    }
+
+    if (matchedFilters.having_conditions.length > 0) {
+      this.listQuery.having_conditions = this.mergeUniqueFilters(this.listQuery.having_conditions, matchedFilters.having_conditions);
+    }
+
+    if (matchedFilters.having_any_conditions.length > 0) {
+      this.listQuery.having_any_conditions = this.mergeUniqueFilters(this.listQuery.having_any_conditions, matchedFilters.having_any_conditions);
+    }
+  }
+
+  private getAcceptedParentFilterMatches(): {
+    search_all: any[];
+    search_any: any[];
+    having_conditions: any[];
+    having_any_conditions: any[];
+  } {
+    const empty = {
+      search_all: [],
+      search_any: [],
+      having_conditions: [],
+      having_any_conditions: [],
+    };
+
+    const acceptedParams = Array.isArray(this.accepted_parent_params) ? this.accepted_parent_params : [];
+    if (!acceptedParams.length || !this.parentGridFilters) {
+      return empty;
+    }
+
+    const acceptedTokens = new Set(acceptedParams.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
+    const parentHavingAll = [
+      ...(Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
+      ...(Array.isArray(this.parentGridFilters.having_all) ? this.parentGridFilters.having_all : []),
+    ];
+    const parentHavingAny = [
+      ...(Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
+      ...(Array.isArray(this.parentGridFilters.having_any) ? this.parentGridFilters.having_any : []),
+    ];
+
+    return {
+      search_all: this.filterAcceptedParentConditions(this.parentGridFilters.search_all, acceptedTokens),
+      search_any: this.filterAcceptedParentConditions(this.parentGridFilters.search_any, acceptedTokens),
+      having_conditions: this.filterAcceptedParentConditions(parentHavingAll, acceptedTokens),
+      having_any_conditions: this.filterAcceptedParentConditions(parentHavingAny, acceptedTokens),
+    };
+  }
+
+  private mergeAcceptedParentFiltersIntoParams(params: any): any {
+    const matchedFilters = this.getAcceptedParentFilterMatches();
+    if (
+      matchedFilters.search_all.length === 0 &&
+      matchedFilters.search_any.length === 0 &&
+      matchedFilters.having_conditions.length === 0 &&
+      matchedFilters.having_any_conditions.length === 0
+    ) {
+      return params;
+    }
+
+    const mergedParams: any = {
+      ...(params || {}),
+    };
+
+    if (matchedFilters.search_all.length > 0) {
+      mergedParams.search_all = this.mergeUniqueFilters(params?.search_all, matchedFilters.search_all);
+    }
+
+    if (matchedFilters.search_any.length > 0) {
+      mergedParams.search_any = this.mergeUniqueFilters(params?.search_any, matchedFilters.search_any);
+    }
+
+    if (matchedFilters.having_conditions.length > 0) {
+      mergedParams.having_conditions = this.mergeUniqueFilters(params?.having_conditions, matchedFilters.having_conditions);
+    }
+
+    if (matchedFilters.having_any_conditions.length > 0) {
+      mergedParams.having_any_conditions = this.mergeUniqueFilters(params?.having_any_conditions, matchedFilters.having_any_conditions);
+    }
+
+    return mergedParams;
+  }
+
+  private filterAcceptedParentConditions(parentConditions: any, acceptedTokens: Set<string>): any[] {
+    const conditions = Array.isArray(parentConditions) ? parentConditions : [];
+    return conditions.filter((condition: any) => {
+      if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
+        return false;
+      }
+      const columnName = this.normalizeFilterToken(condition?.column_name);
+      return !!columnName && acceptedTokens.has(columnName);
+    });
+  }
+
+  private getAcceptedParamToken(value: any): string {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return this.normalizeFilterToken(value.column_name || value.field || value.name || value.value || value.key || '');
+    }
+    return this.normalizeFilterToken(value);
+  }
+
+  private mergeUniqueFilters(existingFilters: any, newFilters: any[]): any[] {
+    const existing = Array.isArray(existingFilters) ? [...existingFilters] : [];
+    const seen = new Set(existing.map((item: any) => this.getFilterSignature(item)));
+
+    for (const filter of newFilters) {
+      const signature = this.getFilterSignature(filter);
+      if (seen.has(signature)) continue;
+      existing.push(JSON.parse(JSON.stringify(filter)));
+      seen.add(signature);
+    }
+
+    return existing;
+  }
+
+  private getFilterSignature(filter: any): string {
+    return JSON.stringify({
+      column_name: String(filter?.column_name || ''),
+      operator: String(filter?.operator || ''),
+      value: filter?.value,
+      clause_type: String(filter?.clause_type || ''),
+    });
+  }
+
+  private normalizeFilterToken(value: any): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '');
   }
 
   onChangePassword() {
@@ -812,6 +964,7 @@ export class MasterListComponent implements OnChanges {
         if (response.status && response.code === 200) {
           this.EntityName = params.entity_name;
           this.attachedPolicies = response.data.attached_policies || [];
+          this.accepted_parent_params = response.data.accepted_parent_params || [];
         }
       },
       (error) => {
@@ -830,6 +983,8 @@ export class MasterListComponent implements OnChanges {
           } else {
             this.ignoreNextSavedViewPageChange = false;
           }
+
+          this.applyAcceptedParentFiltersToListQuery();
 
           this.pendingGridFetchRequest = false;
           this.queuedInitialFetchParams = null;
@@ -1217,10 +1372,11 @@ export class MasterListComponent implements OnChanges {
       this.savedViewInitialFallbackTimer = null;
     }
     this.gridloading = true;
-    params.limit_range = this.resultsPerPage;
+    const effectiveParams = this.mergeAcceptedParentFiltersIntoParams(params);
+    effectiveParams.limit_range = this.resultsPerPage;
     const effectiveUniqueId = this.selectedItemUuid || this.uniqueId || this.uuid || null;
     let payload = this.localStorageService.replaceUniqueId(
-      this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
+      this.localStorageService.formatPayloadWithPolicyConditions(effectiveParams, this.policyData, this.attachedPolicies),
       '$session_user_id',
       this.user_info.main.id
     );

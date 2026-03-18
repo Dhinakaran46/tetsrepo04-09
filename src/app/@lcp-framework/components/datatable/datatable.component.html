@@ -11,6 +11,7 @@
         [entityName]="headerStaticEntityName"
         [isModal]="true"
         [gridParams]="staticPageGridParams"
+        [parentGridFilters]="getParentGridFilterContext()"
         keyword="plain"
       ></app-static-page>
     </div>
@@ -984,6 +985,7 @@
         [entityName]="footerStaticEntityName"
         [isModal]="true"
         [gridParams]="staticPageGridParams"
+        [parentGridFilters]="getParentGridFilterContext()"
         keyword="plain"
       ></app-static-page>
     </div>

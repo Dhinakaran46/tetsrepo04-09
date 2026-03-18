@@ -144,6 +144,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() resultsPerPage: any = 10;
   @Input() column: any = '';
   @Input() query: any = '';
+  @Input() activeSearchAll: any[] = [];
+  @Input() activeSearchAny: any[] = [];
+  @Input() activeHavingAll: any[] = [];
+  @Input() activeHavingAny: any[] = [];
+  @Input() parentFilterColumns: any[] = [];
   @Output() delete = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
@@ -2054,14 +2059,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const selectedSearchColumns = this.selectedColumns.map((column: any) => String(column?.field || ''));
 
     const appliedFilterConditions = this.appliedFilterConditions.map((condition) => {
-      const type = condition.inputType || this.getInputTypeForColumn(condition.field);
       const isBetween = this.isBetweenOperator(condition.operator);
-      const normalizedValue = isBetween
-        ? [
-            this.formatFilterValueByType(type, this.normalizeBetweenValue(condition.value).start),
-            this.formatFilterValueByType(type, this.normalizeBetweenValue(condition.value).end),
-          ]
-        : condition.value;
+      const normalizedRange = this.normalizeBetweenValue(condition.value);
+      const normalizedValue = isBetween ? [normalizedRange.start, normalizedRange.end] : condition.value;
 
       return {
         field: condition.field,
@@ -3438,6 +3438,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
     componentRef.instance.enableCheckBox = this.enableCheckBox;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
     componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
       this.selectionChange.emit(selectedItems);
     });
@@ -3484,6 +3485,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
@@ -3505,6 +3507,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
@@ -3514,6 +3517,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       }
     });
     componentRef.instance.grid_params = gridParams;
+  }
+
+  getParentGridFilterContext() {
+    return {
+      search_all: Array.isArray(this.activeSearchAll) ? JSON.parse(JSON.stringify(this.activeSearchAll)) : [],
+      search_any: Array.isArray(this.activeSearchAny) ? JSON.parse(JSON.stringify(this.activeSearchAny)) : [],
+      having_conditions: Array.isArray(this.activeHavingAll) ? JSON.parse(JSON.stringify(this.activeHavingAll)) : [],
+      having_any_conditions: Array.isArray(this.activeHavingAny) ? JSON.parse(JSON.stringify(this.activeHavingAny)) : [],
+      columns: Array.isArray(this.parentFilterColumns) ? JSON.parse(JSON.stringify(this.parentFilterColumns)) : [],
+    };
   }
 
   private replaceSearchTermInObject(obj: any, searchText: string): any {
