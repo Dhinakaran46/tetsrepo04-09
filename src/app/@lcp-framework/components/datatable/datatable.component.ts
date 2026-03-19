@@ -29,7 +29,7 @@ import { CommonSharedModule } from '../../shared/common/common.module';
 import { Store } from '@ngrx/store';
 import { commonConfig } from '../../config/common.config';
 
-import { DatePipe, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
@@ -38,7 +38,16 @@ import { LoaderComponent } from '../loader/loader.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
-import { FlatpickrModule } from '../../directives/flatpickr.module';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { CommonModule } from '@angular/common';
+import { NgScrollbarModule } from 'ngx-scrollbar';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { RouterModule } from '@angular/router';
+import { MenuModule } from 'headlessui-angular';
+import { NgxTippyModule } from 'ngx-tippy-wrapper';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 import Swal from 'sweetalert2';
 import flatpickr from 'flatpickr';
 
@@ -108,7 +117,23 @@ interface UserSearchConfigurationTemp {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, StaticPageComponent, FlatpickrModule],
+  imports: [
+    CommonModule,
+    NgMultiSelectDropDownModule,
+    BooleanStatusPipe,
+    LoaderComponent,
+    StaticPageComponent,
+    FlatpickrDirective,
+    NgScrollbarModule,
+    FormsModule,
+    ReactiveFormsModule,
+    TranslateModule,
+    RouterModule,
+    MenuModule,
+    NgxTippyModule,
+    NgSelectModule,
+    DynamicFontSizeDirective,
+  ],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -360,7 +385,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     private gridApiService: GridApiService,
     private toastr: ToastrService,
     public storeData: Store<any>,
-    public datePipe: DatePipe,
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
     public location: Location,
