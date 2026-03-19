@@ -7,11 +7,11 @@ import { environment } from '../../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { TranslateService } from '@ngx-translate/core';
-import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { FlatpickrModule } from '../../directives/flatpickr.module';
 
 @Component({
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule, FlatpickrDirective],
+  imports: [CommonSharedModule, ReactiveFormsModule, FlatpickrModule],
   providers: [DatePipe],
   templateUrl: './profile.component.html',
 })
