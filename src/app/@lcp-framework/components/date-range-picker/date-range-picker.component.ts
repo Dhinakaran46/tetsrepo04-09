@@ -1,9 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, AfterViewInit, SimpleChanges, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
-import { CommonSharedModule } from '../../shared/common/common.module';
-import { FlatpickrModule } from '../../directives/flatpickr.module';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 
 type QuickDateRange = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'thisYear' | 'defaultDate';
 
@@ -15,7 +15,7 @@ export interface DateRange {
 @Component({
   selector: 'app-date-range-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule, CommonSharedModule, FlatpickrModule],
+  imports: [CommonModule, FormsModule, FlatpickrDirective, TranslateModule],
   templateUrl: './date-range-picker.component.html',
   styleUrls: ['./date-range-picker.component.scss'],
 })

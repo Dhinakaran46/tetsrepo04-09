@@ -1,17 +1,17 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { CountryTimezoneService } from '../../service/common/country-timezone.service';
 import { environment } from '../../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
-import { CommonSharedModule } from '../../shared/common/common.module';
-import { TranslateService } from '@ngx-translate/core';
-import { FlatpickrModule } from '../../directives/flatpickr.module';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 
 @Component({
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule, FlatpickrModule],
+  imports: [CommonModule, ReactiveFormsModule, FlatpickrDirective, TranslateModule, DynamicFontSizeDirective],
   providers: [DatePipe],
   templateUrl: './profile.component.html',
 })

@@ -401,20 +401,21 @@ export class MasterListComponent implements OnChanges {
     if (!hasAcceptedParams || !this.parentGridFilters) {
       return empty;
     }
-    const parentHavingAll = [
+
+    const parentConditionPool = [
+      ...(Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []),
+      ...(Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []),
       ...(Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
       ...(Array.isArray(this.parentGridFilters.having_all) ? this.parentGridFilters.having_all : []),
-    ];
-    const parentHavingAny = [
       ...(Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
       ...(Array.isArray(this.parentGridFilters.having_any) ? this.parentGridFilters.having_any : []),
     ];
 
     return {
-      search_all: this.filterAcceptedParentConditions(this.parentGridFilters.search_all, acceptedParams.search_all),
-      search_any: this.filterAcceptedParentConditions(this.parentGridFilters.search_any, acceptedParams.search_any),
-      having_conditions: this.filterAcceptedParentConditions(parentHavingAll, acceptedParams.having_conditions),
-      having_any_conditions: this.filterAcceptedParentConditions(parentHavingAny, acceptedParams.having_any_conditions),
+      search_all: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.search_all),
+      search_any: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.search_any),
+      having_conditions: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.having_conditions),
+      having_any_conditions: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.having_any_conditions),
     };
   }
 
@@ -1418,10 +1419,8 @@ export class MasterListComponent implements OnChanges {
       if (whereFilters.length) {
         if (useAnd) {
           this.listQuery.search_all = [...(Array.isArray(baseQuery?.search_all) ? baseQuery.search_all : []), ...whereFilters];
-          this.listQuery.search_any = [];
         } else {
           this.listQuery.search_any = [...(Array.isArray(baseQuery?.search_any) ? baseQuery.search_any : []), ...whereFilters];
-          this.listQuery.search_all = [];
         }
       }
 
