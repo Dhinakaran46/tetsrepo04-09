@@ -49,6 +49,12 @@ interface FetchDataParams {
   includes: any;
 }
 
+interface AcceptedParentParamRule {
+  parentColumnToken: string;
+  currentColumnName: string;
+  condition?: string;
+}
+
 @Component({
   standalone: true,
   selector: 'master-list',
@@ -391,7 +397,7 @@ export class MasterListComponent implements OnChanges {
     };
 
     const acceptedParams = this.normalizeAcceptedParentParams(this.accepted_parent_params);
-    const hasAcceptedParams = Object.values(acceptedParams).some((params) => params.size > 0);
+    const hasAcceptedParams = Object.values(acceptedParams).some((params) => params.length > 0);
     if (!hasAcceptedParams || !this.parentGridFilters) {
       return empty;
     }
@@ -446,44 +452,122 @@ export class MasterListComponent implements OnChanges {
     return mergedParams;
   }
 
-  private filterAcceptedParentConditions(parentConditions: any, acceptedTokens: Set<string>): any[] {
+  private filterAcceptedParentConditions(parentConditions: any, acceptedRules: AcceptedParentParamRule[]): any[] {
     const conditions = Array.isArray(parentConditions) ? parentConditions : [];
-    return conditions.filter((condition: any) => {
+    if (!acceptedRules.length) {
+      return [];
+    }
+
+    const mappedConditions: any[] = [];
+    const seenSignatures = new Set<string>();
+
+    for (const condition of conditions) {
       if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
-        return false;
+        continue;
       }
-      const columnName = this.normalizeFilterToken(condition?.column_name);
-      return !!columnName && acceptedTokens.has(columnName);
-    });
+
+      const parentColumnToken = this.normalizeFilterToken(condition?.column_name);
+      if (!parentColumnToken) {
+        continue;
+      }
+
+      const matchedRules = acceptedRules.filter((rule) => rule.parentColumnToken === parentColumnToken);
+      if (!matchedRules.length) {
+        continue;
+      }
+
+      for (const rule of matchedRules) {
+        const mappedCondition = JSON.parse(JSON.stringify(condition));
+        mappedCondition.column_name = rule.currentColumnName;
+
+        if (rule.condition) {
+          mappedCondition.operator = rule.condition;
+        }
+
+        const signature = this.getFilterSignature(mappedCondition);
+        if (seenSignatures.has(signature)) {
+          continue;
+        }
+
+        seenSignatures.add(signature);
+        mappedConditions.push(mappedCondition);
+      }
+    }
+
+    return mappedConditions;
   }
 
-  private getAcceptedParamToken(value: any): string {
+  private parseAcceptedParentParamRule(value: any): AcceptedParentParamRule | null {
+    let parentColumnRaw: any;
+    let currentColumnRaw: any;
+    let conditionRaw: any;
+
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return this.normalizeFilterToken(value.column_name || value.field || value.name || value.value || value.key || '');
+      parentColumnRaw =
+        value.parent_column_name ??
+        value.parentColumnName ??
+        value.column_name ??
+        value.columnName ??
+        value.field ??
+        value.name ??
+        value.value ??
+        value.key ??
+        value.current_column_name ??
+        value.currentColumnName;
+
+      currentColumnRaw =
+        value.current_column_name ??
+        value.currentColumnName ??
+        value.column_name ??
+        value.columnName ??
+        value.field ??
+        value.name ??
+        value.value ??
+        value.key ??
+        value.parent_column_name ??
+        value.parentColumnName;
+
+      conditionRaw = value.condition ?? value.operator;
+    } else {
+      parentColumnRaw = value;
+      currentColumnRaw = value;
     }
-    return this.normalizeFilterToken(value);
+
+    const parentColumnToken = this.normalizeFilterToken(parentColumnRaw);
+    const currentColumnName = String(currentColumnRaw || '').trim();
+
+    if (!parentColumnToken || !currentColumnName) {
+      return null;
+    }
+
+    const condition = String(conditionRaw || '').trim();
+    return {
+      parentColumnToken,
+      currentColumnName,
+      ...(condition ? { condition } : {}),
+    };
   }
 
   private normalizeAcceptedParentParams(value: any): {
-    search_all: Set<string>;
-    search_any: Set<string>;
-    having_conditions: Set<string>;
-    having_any_conditions: Set<string>;
+    search_all: AcceptedParentParamRule[];
+    search_any: AcceptedParentParamRule[];
+    having_conditions: AcceptedParentParamRule[];
+    having_any_conditions: AcceptedParentParamRule[];
   } {
     const empty = {
-      search_all: new Set<string>(),
-      search_any: new Set<string>(),
-      having_conditions: new Set<string>(),
-      having_any_conditions: new Set<string>(),
+      search_all: [] as AcceptedParentParamRule[],
+      search_any: [] as AcceptedParentParamRule[],
+      having_conditions: [] as AcceptedParentParamRule[],
+      having_any_conditions: [] as AcceptedParentParamRule[],
     };
 
     if (Array.isArray(value)) {
-      const tokens = new Set(value.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
+      const rules = this.createAcceptedParamRuleList(value);
       return {
-        search_all: new Set(tokens),
-        search_any: new Set(tokens),
-        having_conditions: new Set(tokens),
-        having_any_conditions: new Set(tokens),
+        search_all: [...rules],
+        search_any: [...rules],
+        having_conditions: [...rules],
+        having_any_conditions: [...rules],
       };
     }
 
@@ -492,19 +576,39 @@ export class MasterListComponent implements OnChanges {
     }
 
     return {
-      search_all: this.createAcceptedParamTokenSet(value.search_all),
-      search_any: this.createAcceptedParamTokenSet(value.search_any),
-      having_conditions: this.createAcceptedParamTokenSet(value.having_conditions),
-      having_any_conditions: this.createAcceptedParamTokenSet(value.having_any_conditions),
+      search_all: this.createAcceptedParamRuleList(value.search_all),
+      search_any: this.createAcceptedParamRuleList(value.search_any),
+      having_conditions: this.createAcceptedParamRuleList(value.having_conditions),
+      having_any_conditions: this.createAcceptedParamRuleList(value.having_any_conditions),
     };
   }
 
-  private createAcceptedParamTokenSet(values: any): Set<string> {
+  private createAcceptedParamRuleList(values: any): AcceptedParentParamRule[] {
     if (!Array.isArray(values)) {
-      return new Set<string>();
+      return [];
     }
 
-    return new Set(values.map((param: any) => this.getAcceptedParamToken(param)).filter(Boolean));
+    const rules: AcceptedParentParamRule[] = [];
+    const seen = new Set<string>();
+
+    for (const param of values) {
+      const parsedRule = this.parseAcceptedParentParamRule(param);
+      if (!parsedRule) {
+        continue;
+      }
+
+      const signature = `${parsedRule.parentColumnToken}|${this.normalizeFilterToken(parsedRule.currentColumnName)}|${this.normalizeFilterToken(
+        parsedRule.condition || ''
+      )}`;
+      if (seen.has(signature)) {
+        continue;
+      }
+
+      seen.add(signature);
+      rules.push(parsedRule);
+    }
+
+    return rules;
   }
 
   private mergeUniqueFilters(existingFilters: any, newFilters: any[]): any[] {

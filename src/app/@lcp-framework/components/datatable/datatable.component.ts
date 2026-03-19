@@ -38,7 +38,7 @@ import { LoaderComponent } from '../loader/loader.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
-import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { FlatpickrModule } from '../../directives/flatpickr.module';
 import Swal from 'sweetalert2';
 import flatpickr from 'flatpickr';
 
@@ -108,7 +108,7 @@ interface UserSearchConfigurationTemp {
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, StaticPageComponent, FlatpickrDirective],
+  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, StaticPageComponent, FlatpickrModule],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [

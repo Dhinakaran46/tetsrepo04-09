@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
-import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { FlatpickrModule } from '../../directives/flatpickr.module';
 
 type QuickDateRange = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'thisYear' | 'defaultDate';
 
@@ -15,7 +15,7 @@ export interface DateRange {
 @Component({
   selector: 'app-date-range-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule, CommonSharedModule, FlatpickrDirective],
+  imports: [CommonModule, FormsModule, CommonSharedModule, FlatpickrModule],
   templateUrl: './date-range-picker.component.html',
   styleUrls: ['./date-range-picker.component.scss'],
 })
