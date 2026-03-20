@@ -31,8 +31,82 @@
       </svg>
     </div>
 
+    <!-- Voice Search Section -->
+    <div class="fixed bottom-20 z-50 ltr:right-6 rtl:left-6 flex flex-col items-center space-y-2">
+      <button class="btn btn-outline-primary rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary" 
+              (mousedown)="startRecording()" (mouseup)="stopRecordingAndSend()" (mouseleave)="stopRecordingAndSend()"
+              (touchstart)="startRecording()" (touchend)="stopRecordingAndSend()" (click)="$event.preventDefault()">
+        <i *ngIf="!isRecording && !audioBlob" class="fa fa-microphone"></i>
+        <i *ngIf="isRecording" class="fa fa-stop"></i>
+        <i *ngIf="!isRecording && audioBlob" class="fa fa-microphone"></i>
+      </button>
+    </div>
+
+    <!-- Transcription Preview - Enhanced UI -->
+    <div *ngIf="isTranscribing || hasTranscriptionData" class="fixed top-3/4 left-6 right-20 transform -translate-y-1/2 z-50">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-5 w-full relative backdrop-blur-sm border border-gray-100 dark:border-gray-700" style="min-height: 140px;">
+        <!-- Header with Close Button -->
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              <span *ngIf="isTranscribing" class="text-blue-600 dark:text-blue-400">Transcribing...</span>
+              <span *ngIf="!isTranscribing && displayedText" class="text-green-600 dark:text-green-400">Ready to Send</span>
+            </h3>
+          </div>
+          <button 
+            (click)="closeTranscriptionPreview()"
+            class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all duration-200 hover:rotate-90">
+            <i class="fas fa-times text-lg"></i>
+          </button>
+        </div>
+        
+        <div class="relative">
+          <div *ngIf="isTranscribing" class="relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20 rounded-xl"></div>
+            <textarea 
+              *ngIf="isTranscribing" 
+              class="w-full p-4 text-sm text-gray-700 dark:text-gray-200 bg-transparent border-2 border-blue-200 dark:border-blue-800 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+              style="height: 5.5rem;"
+              rows="5"
+              placeholder="Transcribing..."
+              readonly>
+              {{ transcribingText }}
+            </textarea>
+            <div class="absolute bottom-3 right-3">
+              <div class="flex space-x-1">
+                <div class="w-1 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                <div class="w-1 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-1 h-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="!isTranscribing && hasTranscriptionData" class="relative">
+            <textarea 
+              [(ngModel)]="displayedText" 
+              (keydown.enter)="$event.preventDefault(); sendTranscribedText()"
+              class="w-full p-4 text-sm text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-600 rounded-xl resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:border-green-400 transition-all duration-200 pr-16" 
+              rows="5"
+              placeholder="Edit transcription... (Press Enter to send)">
+            </textarea>
+            <div class="absolute bottom-3 right-3 flex items-center space-x-2">
+              <span class="text-xs text-gray-400 dark:text-gray-500">{{ displayedText.length }} chars</span>
+              <button 
+                (click)="sendTranscribedText()"
+                class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full p-2.5 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                <i class="fas fa-paper-plane text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div *ngIf="showTopButton"
       class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
+
+
       <button
         type="button"
         class="btn btn-outline-primary animate-pulse rounded-full bg-[#fafafa] p-2 dark:bg-[#060818] dark:hover:bg-primary"
