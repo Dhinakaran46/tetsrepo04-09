@@ -205,6 +205,7 @@ export class RouteUpdateService {
                 barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
                 common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
                 tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
+                target_keywords_embeddings_module: () => import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
               };
 
               const route: Route = {
@@ -401,6 +402,7 @@ export class RouteUpdateService {
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
             common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
             tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
+            target_keywords_embeddings_module: () => import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
           };
 
           const route: Route = {
