@@ -29,6 +29,8 @@ interface Language {
 interface Item {
   key1: string;
   language_content: Language[];
+  target_keywords_embeddings?: any;
+  is_target_keyword_updated?: number;
 }
 
 @Component({
@@ -604,5 +606,58 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
     this.totalPages = Math.ceil(this.totalItems / this.pageSize);
 
     return this.totalPages;
+  }
+
+  // Methods to determine embedding status
+  getItemFromGroup(group: AbstractControl): Item | undefined {
+    const keyValue = group.get('key1')?.value;
+    return this.allItems.find(item => item.key1 === keyValue);
+  }
+
+  getEmbeddingStatus(item: any): string {
+    if (!item) {
+      return 'unknown';
+    }
+    if (!item.target_keywords_embeddings) {
+      return 'not-embedded';
+    }
+    if (item.is_target_keyword_updated === 1) {
+      return 'pending';
+    }
+    return 'embedded';
+  }
+
+  getEmbeddingIcon(item: Item | undefined): string {
+    if (!item) {
+      return 'fa-solid fa-question text-gray-500';
+    }
+    const status = this.getEmbeddingStatus(item);
+    switch (status) {
+      case 'not-embedded':
+        return 'fa-solid fa-triangle-exclamation text-red-500';
+      case 'pending':
+        return 'fa-solid fa-clock text-yellow-500';
+      case 'embedded':
+        return 'fa-solid fa-check-circle text-green-500';
+      default:
+        return 'fa-solid fa-question text-gray-500';
+    }
+  }
+
+  getEmbeddingHoverText(item: Item | undefined): string {
+    if (!item) {
+      return 'Unknown Status';
+    }
+    const status = this.getEmbeddingStatus(item);
+    switch (status) {
+      case 'not-embedded':
+        return 'Not Embedded';
+      case 'pending':
+        return 'Yet To Be Updated';
+      case 'embedded':
+        return 'Embedded';
+      default:
+        return 'Unknown Status';
+    }
   }
 }
