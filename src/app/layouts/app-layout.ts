@@ -47,6 +47,8 @@ export class AppLayout {
   displayedText: string = '';
   fullTranscribedText: string = '';
   hasTranscriptionData: boolean = false;
+  micHoverText: string = 'Tap to hold & record';
+  showTooltip: boolean = false;
   ngOnInit() {
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const resn = JSON.parse(this.localstore.getData('config'));
