@@ -32,18 +32,29 @@
     </div>
 
     <!-- Voice Search Section -->
-    <div class="fixed bottom-20 z-50 ltr:right-6 rtl:left-6 flex flex-col items-center space-y-2">
-      <button class="btn btn-outline-primary rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary" 
-              (mousedown)="startRecording()" (mouseup)="stopRecordingAndSend()" (mouseleave)="stopRecordingAndSend()"
-              (touchstart)="startRecording()" (touchend)="stopRecordingAndSend()" (click)="$event.preventDefault()">
-        <i *ngIf="!isRecording && !audioBlob" class="fa fa-microphone"></i>
-        <i *ngIf="isRecording" class="fa fa-stop"></i>
-        <i *ngIf="!isRecording && audioBlob" class="fa fa-microphone"></i>
-      </button>
+    <div class="fixed bottom-20 z-50 ltr:right-12 rtl:left-6 flex flex-col items-center space-y-2">
+      <div class="relative">
+        <button class="btn btn-outline-primary rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary relative" 
+                (mousedown)="startRecording(); micHoverText = 'Release to translate'; showTooltip = true" (mouseup)="stopRecordingAndSend(); showTooltip = false" (mouseleave)="stopRecordingAndSend(); showTooltip = false"
+                (touchstart)="startRecording()" (touchend)="stopRecordingAndSend()" (click)="$event.preventDefault()"
+                (mouseenter)="micHoverText = isRecording ? 'Release to translate' : 'Hold & record'; showTooltip = true"
+                (mouseleave)="micHoverText = 'Hold & record'; showTooltip = false">
+          <i *ngIf="!isRecording && !audioBlob" class="fa fa-microphone"></i>
+          <i *ngIf="isRecording" class="fa fa-stop"></i>
+          <i *ngIf="!isRecording && audioBlob" class="fa fa-microphone"></i>
+        </button>
+        
+        <!-- Custom Tooltip -->
+        <div *ngIf="micHoverText && showTooltip" 
+             class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap transition-opacity duration-200">
+          {{ micHoverText }}
+          <div class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-2 h-2 bg-gray-800 rotate-45"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Transcription Preview - Enhanced UI -->
-    <div *ngIf="isTranscribing || hasTranscriptionData" class="fixed top-3/4 left-6 right-20 transform -translate-y-1/2 z-50">
+    <div *ngIf="isTranscribing || hasTranscriptionData" class="fixed top-3/4 left-6 right-32 transform -translate-y-1/2 z-50">
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-5 w-full relative backdrop-blur-sm border border-gray-100 dark:border-gray-700" style="min-height: 140px;">
         <!-- Header with Close Button -->
         <div class="flex items-center justify-between mb-3">
