@@ -18,6 +18,7 @@ interface AcceptedParentParamRule {
   parentColumnToken: string;
   currentColumnName: string;
   condition?: string;
+  applyBasedOnParent?: boolean;
 }
 
 @Component({
@@ -576,11 +577,19 @@ export class StaticPageComponent implements OnChanges {
     ];
 
     return {
-      search_all: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.search_all),
-      search_any: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.search_any),
-      having_conditions: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.having_conditions),
-      having_any_conditions: this.filterAcceptedParentConditions(parentConditionPool, acceptedParams.having_any_conditions),
+      search_all: this.filterBucketWithSource(acceptedParams.search_all, parentConditionPool, Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []),
+      search_any: this.filterBucketWithSource(acceptedParams.search_any, parentConditionPool, Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []),
+      having_conditions: this.filterBucketWithSource(acceptedParams.having_conditions, parentConditionPool, Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
+      having_any_conditions: this.filterBucketWithSource(acceptedParams.having_any_conditions, parentConditionPool, Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
     };
+  }
+
+  private filterBucketWithSource(rules: AcceptedParentParamRule[], parentConditionPool: any[], parentBucketConditions: any[]): any[] {
+    const poolRules = rules.filter((r) => !r.applyBasedOnParent);
+    const bucketRules = rules.filter((r) => r.applyBasedOnParent);
+    const fromPool = this.filterAcceptedParentConditions(parentConditionPool, poolRules);
+    const fromBucket = this.filterAcceptedParentConditions(parentBucketConditions, bucketRules);
+    return this.mergeUniqueFilters(fromPool, fromBucket);
   }
 
   private filterAcceptedParentConditions(parentConditions: any, acceptedRules: AcceptedParentParamRule[]): any[] {
@@ -672,10 +681,12 @@ export class StaticPageComponent implements OnChanges {
     }
 
     const condition = String(conditionRaw || '').trim();
+    const applyBasedOnParent = value && typeof value === 'object' ? (value.apply_based_on_parent ?? value.applyBasedOnParent) === true : false;
     return {
       parentColumnToken,
       currentColumnName,
       ...(condition ? { condition } : {}),
+      ...(applyBasedOnParent ? { applyBasedOnParent: true } : {}),
     };
   }
 
