@@ -49,6 +49,9 @@ export class AppLayout {
   hasTranscriptionData: boolean = false;
   micHoverText: string = 'Tap to hold & record';
   showTooltip: boolean = false;
+  isPreviewOpen: boolean = false;
+  isHolding: boolean = false;
+  holdTimer: any;
   ngOnInit() {
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const resn = JSON.parse(this.localstore.getData('config'));
@@ -156,6 +159,43 @@ export class AppLayout {
     }
   }
 
+  togglePreview() {
+    this.isPreviewOpen = !this.isPreviewOpen;
+    if (!this.isPreviewOpen) {
+      this.closeTranscriptionPreview();
+    }
+  }
+
+  startHold() {
+    this.isHolding = true;
+    this.holdTimer = setTimeout(() => {
+      if (this.isHolding) {
+        this.startRecording();
+        this.micHoverText = 'Release to translate';
+      }
+    }, 300); // Increased delay to better distinguish click from hold
+  }
+
+  endHold() {
+    if (this.isHolding && !this.isRecording) {
+      // this is the click, not a hold
+      setTimeout(() => {
+        if (!this.isRecording) {
+          this.togglePreview();
+        }
+      }, 50);
+    } else if (this.isRecording) {
+      this.stopRecordingAndSend();
+    }
+    this.isHolding = false;
+    clearTimeout(this.holdTimer);
+  }
+
+  handleMicClick(event: MouseEvent) {
+    // Prevent default to avoid interference with mouse events
+    event.preventDefault();
+  }
+
   async startVoiceSearch() {
     if (!this.isRecording) {
       this.startRecording();
@@ -197,7 +237,8 @@ export class AppLayout {
     this.transcribedText = '';
     this.fullTranscribedText = '';
     this.isTranscribing = false;
-    this.hasTranscriptionData = false; // Reset flag
+    this.hasTranscriptionData = false;
+    this.isPreviewOpen = false;
   }
 
   sendTranscribedText() {
@@ -220,6 +261,13 @@ export class AppLayout {
       }, (error) => {
         console.error('Search API error:', error);
       });
+    }
+  }
+
+  handleEnterKey(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendTranscribedText();
     }
   }
 
