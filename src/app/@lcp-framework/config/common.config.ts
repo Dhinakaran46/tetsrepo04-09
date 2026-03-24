@@ -63,7 +63,7 @@ export const commonConfig: any = {
     execute_child_process: 'common/execute-child-process',
     transcribe_audio: 'openai/transcribe-audio',
     search_menu_target_embeddings: 'openai/search-menu-target-embeddings',
-    generate_menu_embeddings: 'openai/generate-menu-embeddings'
+    generate_menu_embeddings: 'openai/generate-menu-embeddings',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -178,6 +178,7 @@ export const commonConfig: any = {
     POPUP_EDIT: 'popup_edit',
     POPUP_DETAILS: 'popup_details',
     RESET_PASSWORD: 'reset_password',
+    GET_CODE: 'get_code',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -216,6 +217,7 @@ export const commonConfig: any = {
     { label: 'Popup Edit', value: 'popup_edit' },
     { label: 'Popup Details', value: 'popup_details' },
     { label: 'Reset Password', value: 'reset_password' },
+    { label: 'Get Code', value: 'get_code' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },

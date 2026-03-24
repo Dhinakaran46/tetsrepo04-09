@@ -23,6 +23,7 @@ import { environment } from '../../../../environments/environment';
 // import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
 // import { EmailTemplateAssignmentComponent } from '../../pages/email-template-assignment/email-template-assignment.component';
 import { commonConfig } from '../../config/common.config';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -108,7 +109,8 @@ export class RouteUpdateService {
             barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
             common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
             tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
-            target_keywords_embeddings_module: () => import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+            target_keywords_embeddings_module: () =>
+              import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
           };
 
           const dynamicRoutes = routeDataArray
@@ -132,6 +134,7 @@ export class RouteUpdateService {
               const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
               const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
               const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
+              const getCodePermissionKey = `get_code_${routeData.entity_name}`;
 
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
@@ -243,7 +246,8 @@ export class RouteUpdateService {
                 barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
                 common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
                 tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
-                target_keywords_embeddings_module: () => import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+                target_keywords_embeddings_module: () =>
+                  import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
               };
 
               const route: Route = {
@@ -287,6 +291,7 @@ export class RouteUpdateService {
                       popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                       popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
                       reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
+                      get_code: permissionListJSON[getCodePermissionKey] || false,
                     },
                     children: children,
                   },
@@ -339,6 +344,7 @@ export class RouteUpdateService {
           const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
           const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
           const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
+          const getCodePermissionKey = `get_code_${routeData.entity_name}`;
 
           const idColumn = `${routeData.primary_table}.id`;
           const deletedAtColumn = `${routeData.primary_table}.status_id`;
@@ -439,7 +445,8 @@ export class RouteUpdateService {
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
             common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
             tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
-            target_keywords_embeddings_module: () => import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+            target_keywords_embeddings_module: () =>
+              import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
           };
 
           const route: Route = {
@@ -482,6 +489,7 @@ export class RouteUpdateService {
                   popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                   popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
                   reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
+                  get_code: permissionListJSON[getCodePermissionKey] || false,
                 },
                 children: children,
                 additionalData: {
