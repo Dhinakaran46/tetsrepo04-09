@@ -133,9 +133,7 @@ export class LanguageMappingComponent implements OnInit {
 
     this.languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
-      console.log('Reloaded');
     } else {
-      console.log('Initial Load');
     }
 
     const languageId = this.languageService.getLanguageId(this.languageCode);
@@ -172,7 +170,6 @@ export class LanguageMappingComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          
         }
       },
       error: (error) => {
@@ -319,7 +316,6 @@ export class LanguageMappingComponent implements OnInit {
     });
 
     if (result.isConfirmed) {
-     
       removableItems.push(keyName);
 
       if (removableItems.length > 0) {

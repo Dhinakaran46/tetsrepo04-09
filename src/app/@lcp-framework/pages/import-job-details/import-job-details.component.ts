@@ -80,7 +80,6 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
   private createGridComponent() {
     // Safety check - prevent multiple initializations
     if (this.gridInitialized) {
-      console.log('Grid already initialized, skipping...');
       return;
     }
 
@@ -121,8 +120,6 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
 
     // Trigger change detection
     this.cdr.detectChanges();
-
-    console.log('Grid component created successfully');
   }
 
   async initStore() {
@@ -275,9 +272,6 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
             .filter((k) => k !== 'errorstatus' && k !== 'errorMessages' && k !== 'errors' && k !== 'warnings')
             .map((k) => ({ key: k, label: k }));
 
-    console.log('Columns to export:', cols);
-    console.log('Sample row:', this.commonItems[0]);
-
     // Header row
     const header = cols.map((c: any) => c.label);
 
@@ -302,9 +296,6 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
         return this.stripHtml(value);
       });
     });
-
-    console.log('Header:', header);
-    console.log('First row data:', rows[0]);
 
     // Check if we have data
     if (rows.length === 0 || rows[0].length === 0) {
@@ -333,8 +324,6 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
       .slice(0, 40);
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
     const fileName = `${safeName || 'export'}-${stamp}.xlsx`;
-
-    console.log('Exporting to file:', fileName);
 
     // Trigger download
     XLSX.writeFile(wb, fileName);

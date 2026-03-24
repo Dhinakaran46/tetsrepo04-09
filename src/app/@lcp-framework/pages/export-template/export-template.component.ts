@@ -1392,7 +1392,7 @@ export class ExportTemplateComponent implements OnInit {
     Object.keys(this.form.controls).forEach((field) => {
       const control = this.form.get(field);
       if (control) {
-        console.log(`Field: ${field}, Status: ${control.status}, Errors: ${JSON.stringify(control.errors)}`);
+        console.warn(`Field: ${field}, Status: ${control.status}, Errors: ${JSON.stringify(control.errors)}`);
       }
     });
   }

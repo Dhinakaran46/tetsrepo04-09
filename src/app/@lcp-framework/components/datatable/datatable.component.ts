@@ -2826,10 +2826,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const hasViews = this.shouldShowMyViews();
     const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
-    console.log(selectedView);
-    console.log(hasViews);
+    
+    
     if (hasViews && selectedView?.search_values) {
-      console.log('coming');
+    
       this.appliedSavedViewSlug = null;
       this.scheduleTryApplySavedView();
       this.toastr.success('View reset successfully', 'Success');
@@ -2863,7 +2863,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.currentPage = 1;
 
     const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
-    console.log(emptySearch);
+    
     this.searchQuery.emit(emptySearch);
     this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
     this.columnSort.emit({ sortColumns: [], skipFetch: true });

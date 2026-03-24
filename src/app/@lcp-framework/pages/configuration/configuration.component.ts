@@ -224,13 +224,9 @@ export class ConfigurationComponent implements OnInit {
       this.companyId = parsedData.main?.company_id;
     }
   }
-  addNewItemFormArray(isFirstTime: boolean) {
-    console.log(isFirstTime);
-  }
+  addNewItemFormArray(isFirstTime: boolean) {}
 
-  prepareNewRecords() {
-    console.log('working');
-  }
+  prepareNewRecords() {}
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
@@ -617,7 +613,7 @@ export class ConfigurationComponent implements OnInit {
         }
       );
     } else {
-      console.log('Form is invalid');
+      console.warn('Form is invalid');
     }
   }
 
