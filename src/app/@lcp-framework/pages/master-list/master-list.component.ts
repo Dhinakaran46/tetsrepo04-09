@@ -27,6 +27,7 @@ import { OpenaiService } from '../../service/common/openai.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { saveAs } from 'file-saver';
 
@@ -59,7 +60,16 @@ interface AcceptedParentParamRule {
 @Component({
   standalone: true,
   selector: 'master-list',
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent, FormBuilderComponent],
+  imports: [
+    CommonSharedModule,
+    HttpClientModule,
+    DataTableComponent,
+    LoaderComponent,
+    ReactiveFormsModule,
+    StaticPageComponent,
+    FormBuilderComponent,
+    MonacoEditorModule,
+  ],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -121,6 +131,9 @@ export class MasterListComponent implements OnChanges {
   user_id: any;
   isItemModalOpen = false;
   changePasswordForm: FormGroup;
+  isGetCodeModalOpen = false;
+  getCodeForm: FormGroup;
+  modalJsonEditorOptions = { theme: 'vs-dark', language: 'json', readOnly: true, minimap: { enabled: false } };
   column: any = '';
   previewColumn: any = '';
   query: any = '';
@@ -264,6 +277,10 @@ export class MasterListComponent implements OnChanges {
       },
       { validators: this.passwordMatchValidator }
     );
+
+    this.getCodeForm = this.formBuilder.group({
+      codeContent: [''],
+    });
   }
 
   passwordValidator(control: AbstractControl): ValidationErrors | null {
@@ -413,10 +430,26 @@ export class MasterListComponent implements OnChanges {
     ];
 
     return {
-      search_all: this.filterBucketWithSource(acceptedParams.search_all, parentConditionPool, Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []),
-      search_any: this.filterBucketWithSource(acceptedParams.search_any, parentConditionPool, Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []),
-      having_conditions: this.filterBucketWithSource(acceptedParams.having_conditions, parentConditionPool, Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
-      having_any_conditions: this.filterBucketWithSource(acceptedParams.having_any_conditions, parentConditionPool, Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
+      search_all: this.filterBucketWithSource(
+        acceptedParams.search_all,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []
+      ),
+      search_any: this.filterBucketWithSource(
+        acceptedParams.search_any,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []
+      ),
+      having_conditions: this.filterBucketWithSource(
+        acceptedParams.having_conditions,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []
+      ),
+      having_any_conditions: this.filterBucketWithSource(
+        acceptedParams.having_any_conditions,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []
+      ),
     };
   }
 
@@ -984,6 +1017,444 @@ export class MasterListComponent implements OnChanges {
     if (!input?.skipFetch) {
       this.previewFetchData(clonedPreviewListQuery);
     }
+  }
+
+  private normalizeBoolean(value: any): boolean {
+    return value === true || value === 'true' || value === 1 || value === '1';
+  }
+
+  private buildGridBuilderLineItems(items: any[], companyId: number): any[] {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items
+      .filter((item: any) => {
+        const displayName = String(item?.display_name || '')
+          .trim()
+          .toLowerCase();
+        const fieldName = String(item?.field_name || '')
+          .trim()
+          .toLowerCase()
+          .split('.')
+          .pop();
+
+        return !['id', 'uuid', 'status_id'].includes(displayName) && !['id', 'uuid', 'status_id'].includes(String(fieldName || ''));
+      })
+      .map((item: any) => {
+        const lineItem: any = {
+          master_grid_id: 0,
+          field_name: item?.field_name || '',
+          display_name: item?.display_name || '',
+          order_no: item?.order_no ?? 0,
+          is_grid_column: this.normalizeBoolean(item?.is_grid_column),
+          is_searchable: this.normalizeBoolean(item?.is_searchable),
+          is_sortable: this.normalizeBoolean(item?.is_sortable),
+          field_type_id: Number(item?.field_type_id ?? 1),
+          company_id: companyId,
+        };
+
+        if (item?.clause_type) {
+          lineItem.clause_type = item.clause_type;
+        }
+
+        if (item?.enum_values !== undefined) {
+          lineItem.enum_values = item.enum_values;
+        }
+
+        if (item?.link_type) {
+          lineItem.link_type = item.link_type;
+        }
+
+        if (item?.link_action) {
+          lineItem.link_action = item.link_action;
+        }
+
+        if (item?.link_mode) {
+          lineItem.link_mode = item.link_mode;
+        }
+
+        return lineItem;
+      });
+  }
+
+  private buildGridBuilderModuleJson(record: any): any {
+    const companyId = Number(record?.company_id ?? 1);
+    return {
+      entity_name: record?.entity_name || '',
+      entity_type: record?.entity_type || '',
+      report_type: record?.report_type || 'lcp',
+      primary_table: record?.primary_table || '',
+      is_admin_module: this.normalizeBoolean(record?.is_admin_module),
+      draft_mode: this.normalizeBoolean(record?.draft_mode),
+      associated_tables: Array.isArray(record?.associated_tables) ? record.associated_tables : [],
+      associated_entity_name: record?.associated_entity_name ?? null,
+      associated_entity: record?.associated_entity ?? null,
+      children: Array.isArray(record?.children) ? record.children : [],
+      query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
+      form_information: record?.form_information && typeof record.form_information === 'object' ? record.form_information : null,
+      report_information: record?.report_information && typeof record.report_information === 'object' ? record.report_information : null,
+      add_query_information: record?.add_query_information && typeof record.add_query_information === 'object' ? record.add_query_information : null,
+      edit_query_information: record?.edit_query_information && typeof record.edit_query_information === 'object' ? record.edit_query_information : null,
+      preset_query_information:
+        record?.preset_query_information && typeof record.preset_query_information === 'object' ? record.preset_query_information : null,
+      static_page_content: record?.static_page_content ?? null,
+      header_entity_id: record?.header_entity_id ?? null,
+      footer_entity_id: record?.footer_entity_id ?? null,
+      export_template_id: record?.export_template_id ?? null,
+      export_template_file_name: record?.export_template_file_name ?? null,
+      dashboard_wizard_group_id: record?.dashboard_wizard_group_id ?? null,
+      dashboard_wizard_type: record?.dashboard_wizard_type ?? null,
+      dashboard_wizard_rows: record?.dashboard_wizard_rows ?? null,
+      dashboard_wizard_columns: record?.dashboard_wizard_columns ?? null,
+      dashboard_wizard_order_no: record?.dashboard_wizard_order_no ?? 0,
+      dashboard_wizard_options:
+        record?.dashboard_wizard_options && typeof record.dashboard_wizard_options === 'object' ? record.dashboard_wizard_options : null,
+      dashboard_grid: record?.dashboard_grid ?? null,
+      reload_timeout: record?.reload_timeout ?? null,
+      name: record?.name || '',
+      company_id: companyId,
+      lineitems: this.buildGridBuilderLineItems(record?.items, companyId),
+    };
+  }
+
+  private buildFormBuilderModuleJson(record: any): any {
+    // For form_builder_module and similar types:
+    // form_builder_module, email_template_assignment_module, ai_playground_module,
+    // query_builder_module, whatsapp_template_assignment_module,
+    // approval_workflow_assignment_module, static_page_builder_module
+    return {
+      name: record?.name || '',
+      entity_name: record?.entity_name || '',
+      entity_type: record?.entity_type || '',
+      primary_table: record?.primary_table || '',
+      form_information:
+        record?.form_information && typeof record.form_information === 'object'
+          ? record.form_information
+          : {
+              model: {},
+              fields: [],
+              options: {},
+            },
+      query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
+      add_query_information: record?.add_query_information && typeof record.add_query_information === 'object' ? record.add_query_information : null,
+      edit_query_information: record?.edit_query_information && typeof record.edit_query_information === 'object' ? record.edit_query_information : null,
+      preset_query_information:
+        record?.preset_query_information && typeof record.preset_query_information === 'object' ? record.preset_query_information : null,
+    };
+  }
+
+  private buildJobBuilderModuleJson(record: any): any {
+    // For job_builder_module type:
+    // Simpler structure focused on query_information for job execution
+    const jobJson: any = {
+      name: record?.name || '',
+      entity_name: record?.entity_name || '',
+      entity_type: record?.entity_type || '',
+      query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
+    };
+
+    // Include optional fields if they exist
+    if (record?.primary_table !== undefined && record?.primary_table !== null) {
+      jobJson.primary_table = record.primary_table;
+    }
+
+    if (record?.static_page_content !== undefined && record?.static_page_content !== null) {
+      jobJson.static_page_content = record.static_page_content;
+    }
+
+    return jobJson;
+  }
+
+  private buildTreeBuilderLineItems(items: any[], companyId: number): any[] {
+    // Tree builder includes all lineitems (no filtering like grid_builder)
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items.map((item: any) => {
+      const lineItem: any = {
+        master_grid_id: 0,
+        field_name: item?.field_name || '',
+        display_name: item?.display_name || '',
+        order_no: item?.order_no ?? 0,
+        is_grid_column: this.normalizeBoolean(item?.is_grid_column),
+        is_searchable: this.normalizeBoolean(item?.is_searchable),
+        is_sortable: this.normalizeBoolean(item?.is_sortable),
+        field_type_id: Number(item?.field_type_id ?? 1),
+        company_id: companyId,
+      };
+
+      if (item?.clause_type) {
+        lineItem.clause_type = item.clause_type;
+      }
+
+      if (item?.enum_values !== undefined) {
+        lineItem.enum_values = item.enum_values;
+      }
+
+      if (item?.link_type) {
+        lineItem.link_type = item.link_type;
+      }
+
+      if (item?.link_action) {
+        lineItem.link_action = item.link_action;
+      }
+
+      if (item?.link_mode) {
+        lineItem.link_mode = item.link_mode;
+      }
+
+      return lineItem;
+    });
+  }
+
+  private buildTreeBuilderModuleJson(record: any): any {
+    // For tree_builder_module type: includes all lineitems and status_id
+    const companyId = Number(record?.company_id ?? 1);
+    return {
+      name: record?.name || '',
+      entity_name: record?.entity_name || '',
+      entity_type: record?.entity_type || '',
+      primary_table: record?.primary_table || '',
+      query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
+      company_id: companyId,
+      status_id: record?.status_id ?? 1,
+      associated_tables: Array.isArray(record?.associated_tables) ? record.associated_tables : [],
+      lineitems: this.buildTreeBuilderLineItems(record?.items, companyId),
+    };
+  }
+
+  private buildGenericModuleJson(record: any): any {
+    // Generic handler for all remaining module types
+    // Includes optional fields conditionally based on existence
+    const companyId = Number(record?.company_id ?? 1);
+    const genericJson: any = {
+      name: record?.name || '',
+      entity_name: record?.entity_name || '',
+      entity_type: record?.entity_type || '',
+      company_id: companyId,
+      lineitems: Array.isArray(record?.items) ? this.buildTreeBuilderLineItems(record.items, companyId) : [],
+    };
+
+    // Add optional fields if they exist
+    if (record?.is_admin_module !== undefined && record?.is_admin_module !== null) {
+      genericJson.is_admin_module = this.normalizeBoolean(record.is_admin_module);
+    }
+
+    if (record?.primary_table !== undefined && record?.primary_table !== null) {
+      genericJson.primary_table = record.primary_table;
+    }
+
+    if (record?.static_page_content !== undefined && record?.static_page_content !== null) {
+      genericJson.static_page_content = record.static_page_content;
+    }
+
+    if (record?.query_information !== undefined && record?.query_information !== null && typeof record.query_information === 'object') {
+      genericJson.query_information = record.query_information;
+    }
+
+    if (record?.form_information !== undefined && record?.form_information !== null && typeof record.form_information === 'object') {
+      genericJson.form_information = record.form_information;
+    }
+
+    if (record?.add_query_information !== undefined && record?.add_query_information !== null && typeof record.add_query_information === 'object') {
+      genericJson.add_query_information = record.add_query_information;
+    }
+
+    if (record?.edit_query_information !== undefined && record?.edit_query_information !== null && typeof record.edit_query_information === 'object') {
+      genericJson.edit_query_information = record.edit_query_information;
+    }
+
+    if (record?.preset_query_information !== undefined && record?.preset_query_information !== null && typeof record.preset_query_information === 'object') {
+      genericJson.preset_query_information = record.preset_query_information;
+    }
+
+    if (record?.associated_tables !== undefined && record?.associated_tables !== null) {
+      genericJson.associated_tables = Array.isArray(record.associated_tables) ? record.associated_tables : [];
+    }
+
+    if (record?.export_template_id !== undefined && record?.export_template_id !== null) {
+      genericJson.export_template_id = record.export_template_id;
+    }
+
+    if (record?.export_template_file_name !== undefined && record?.export_template_file_name !== null) {
+      genericJson.export_template_file_name = record.export_template_file_name;
+    }
+
+    return genericJson;
+  }
+
+  private buildDashboardWizardBuilderModuleJson(record: any): any {
+    // For dashboard_wizard_builder_module type
+    // Focused on dashboard configuration with query and static content
+    return {
+      name: record?.name || '',
+      entity_name: record?.entity_name || '',
+      entity_type: record?.entity_type || '',
+      query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
+      static_page_content: record?.static_page_content ?? null,
+      dashboard_wizard_type: record?.dashboard_wizard_type || 'static',
+      dashboard_wizard_rows: record?.dashboard_wizard_rows ?? 1,
+      dashboard_wizard_columns: record?.dashboard_wizard_columns ?? 1,
+      dashboard_wizard_order_no: record?.dashboard_wizard_order_no ?? 0,
+      dashboard_wizard_options: record?.dashboard_wizard_options ?? null,
+    };
+  }
+
+  private transformGetCodeRecords(records: any[]): any {
+    if (!Array.isArray(records) || records.length === 0) {
+      return [];
+    }
+
+    const formBuilderTypes = [
+      'form_builder_module',
+      'email_template_assignment_module',
+      'ai_playground_module',
+      'query_builder_module',
+      'whatsapp_template_assignment_module',
+      'approval_workflow_assignment_module',
+      'static_page_builder_module',
+    ];
+
+    const genericModuleTypes = [
+      'common_permission_module',
+      'export_module',
+      'transfer_data_module',
+      'user_role_policy_module',
+      'policy_add_edit_module',
+      'import_module',
+      'approval_requests_module',
+      'approval_requests_tracking_module',
+      'about_lcp_form_module',
+      'cron_setting_module',
+      'child_process_setting_module',
+      'carousel_module',
+      'barcode_print_module',
+      'target_keywords_embeddings_module',
+      'export_template_module',
+      'menu_module',
+      'entity_user_role_map_module',
+      'entity_form_module',
+      'language_contents_module',
+      'help_page_module',
+      'configurations_module',
+      'user_configurations_module',
+    ];
+
+    const transformed = records.map((record: any) => {
+      const entityType = record?.entity_type || '';
+
+      if (entityType === 'dashboard_wizard_builder_module') {
+        return this.buildDashboardWizardBuilderModuleJson(record);
+      }
+
+      if (entityType === 'tree_builder_module') {
+        return this.buildTreeBuilderModuleJson(record);
+      }
+
+      if (entityType === 'job_builder_module') {
+        return this.buildJobBuilderModuleJson(record);
+      }
+
+      if (formBuilderTypes.includes(entityType)) {
+        return this.buildFormBuilderModuleJson(record);
+      }
+
+      if (genericModuleTypes.includes(entityType)) {
+        return this.buildGenericModuleJson(record);
+      }
+
+      // Default to grid_builder_module style for other types
+      return this.buildGridBuilderModuleJson(record);
+    });
+
+    return transformed.length === 1 ? transformed[0] : transformed;
+  }
+
+  getCode(item: any, event?: MouseEvent) {
+    if (item) {
+      const listParams = {
+        company_id: 1,
+        print_query: true,
+        primary_table: 'master_entities',
+        start_index: 0,
+        limit_range: 1,
+        sort_columns: [['master_entities.id', 'desc']],
+        search_all: [
+          {
+            value: item.id,
+            operator: '=',
+            column_name: 'master_entities.id',
+          },
+        ],
+        select_columns: [
+          ['master_entities.*'],
+
+          [
+            "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values))) END",
+            'items',
+          ],
+        ],
+        includes: [
+          {
+            table_name: 'master_entity_line_items',
+            join_type: 'LEFT',
+            join_condition: `master_entities.id = master_entity_line_items.master_grid_id`,
+          },
+        ],
+        group_by: ['master_entities.id'],
+      };
+
+      this.gridApiService.getAllList(listParams).subscribe((response) => {
+        if (response.status && response.code === 200) {
+          const records = response?.data?.records || [];
+          const transformedData = this.transformGetCodeRecords(records);
+          this.getCodeForm.patchValue({ codeContent: JSON.stringify(transformedData, null, 2) });
+          this.isGetCodeModalOpen = true;
+        }
+      });
+    }
+  }
+
+  closeGetCodeModal() {
+    this.isGetCodeModalOpen = false;
+    this.getCodeForm.reset({ codeContent: '' });
+  }
+
+  copyGetCodeContent(): void {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+
+    if (selectedText) {
+      navigator.clipboard
+        .writeText(selectedText)
+        .then(() => {
+          this.toastr.success('Selection copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy selection:', err);
+          this.toastr.error('Failed to copy selection', 'Error');
+        });
+      return;
+    }
+
+    const content = this.getCodeForm.get('codeContent')?.value;
+
+    if (!content || String(content).trim() === '') {
+      this.toastr.warning('No content to copy', 'Warning');
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(content)
+      .then(() => {
+        this.toastr.success('Content copied to clipboard!', 'Success');
+      })
+      .catch((err) => {
+        console.error('Failed to copy:', err);
+        this.toastr.error('Failed to copy content', 'Error');
+      });
   }
 
   exportTable(item: any) {

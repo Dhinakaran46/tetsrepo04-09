@@ -147,6 +147,27 @@
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
+        *ngIf="this.masterInfo.permissions.get_code"
+        (click)="this.getCode(item, $event)"
+        ngxTippy
+        data-tippy-content="Get Code"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.8"
+          stroke="currentColor"
+          [ngClass]="store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5'"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 21 12l-3.75 5.25M6.75 6.75 3 12l3.75 5.25M14.25 3l-4.5 18" />
+        </svg>
+      </a>
+
+      <a
+        href="javascript:void(0);"
+        class="hover:text-primary"
+        appDynamicFontSize="body"
         *ngIf="this.masterInfo.permissions.assign"
         (click)="this.assignItem(item, $event)"
         ngxTippy
@@ -277,6 +298,70 @@
 </div>
 
 <app-loader *ngIf="loading"></app-loader>
+
+<!-- Get Code Modal -->
+<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isGetCodeModalOpen">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
+    >
+      <!-- Modal Header -->
+      <div
+        class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6"
+        style="
+          background-color: var(--app-table-header-color, var(--app-sidebar-bg-color));
+          border-color: var(--app-table-border-color, var(--app-border-color));
+        "
+      >
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">Code</h3>
+          <button
+            type="button"
+            class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
+            (click)="closeGetCodeModal()"
+          >
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="px-4 py-4 sm:px-6">
+        <form [formGroup]="getCodeForm">
+          <div class="modal-monaco-editor-wrapper relative" style="height: 450px">
+            <button
+              type="button"
+              class="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-blue-700"
+              (click)="copyGetCodeContent()"
+              title="Copy to clipboard"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-3.5 w-3.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 0 1 3 20.625V10.125C3 9.504 3.504 9 4.125 9H7.5m8.25 8.25h4.125c.621 0 1.125-.504 1.125-1.125V5.625A1.125 1.125 0 0 0 19.875 4.5H9.375c-.621 0-1.125.504-1.125 1.125V9m7.5 8.25H9.375A1.125 1.125 0 0 1 8.25 16.125V9m7.5 8.25V9"
+                />
+              </svg>
+              <span>Copy</span>
+            </button>
+            <ngx-monaco-editor
+              [options]="modalJsonEditorOptions"
+              formControlName="codeContent"
+              class="modal-monaco-editor"
+              style="height: 100%"
+            ></ngx-monaco-editor>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Line Items Modal -->
 <div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">

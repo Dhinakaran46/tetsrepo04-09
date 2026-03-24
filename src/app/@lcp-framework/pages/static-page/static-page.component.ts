@@ -577,10 +577,26 @@ export class StaticPageComponent implements OnChanges {
     ];
 
     return {
-      search_all: this.filterBucketWithSource(acceptedParams.search_all, parentConditionPool, Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []),
-      search_any: this.filterBucketWithSource(acceptedParams.search_any, parentConditionPool, Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []),
-      having_conditions: this.filterBucketWithSource(acceptedParams.having_conditions, parentConditionPool, Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
-      having_any_conditions: this.filterBucketWithSource(acceptedParams.having_any_conditions, parentConditionPool, Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
+      search_all: this.filterBucketWithSource(
+        acceptedParams.search_all,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []
+      ),
+      search_any: this.filterBucketWithSource(
+        acceptedParams.search_any,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []
+      ),
+      having_conditions: this.filterBucketWithSource(
+        acceptedParams.having_conditions,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []
+      ),
+      having_any_conditions: this.filterBucketWithSource(
+        acceptedParams.having_any_conditions,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []
+      ),
     };
   }
 
