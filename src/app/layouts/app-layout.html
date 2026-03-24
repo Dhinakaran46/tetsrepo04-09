@@ -32,29 +32,36 @@
     </div>
 
     <!-- Voice Search Section -->
-    <div class="fixed bottom-20 z-50 ltr:right-12 rtl:left-6 flex flex-col items-center space-y-2">
+    <div class="fixed bottom-20 z-50 ltr:right-8 rtl:left-6 flex flex-col items-center space-y-2">
       <div class="relative">
         <button class="btn btn-outline-primary rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary relative" 
-                (mousedown)="startRecording(); micHoverText = 'Release to translate'; showTooltip = true" (mouseup)="stopRecordingAndSend(); showTooltip = false" (mouseleave)="stopRecordingAndSend(); showTooltip = false"
-                (touchstart)="startRecording()" (touchend)="stopRecordingAndSend()" (click)="$event.preventDefault()"
-                (mouseenter)="micHoverText = isRecording ? 'Release to translate' : 'Hold & record'; showTooltip = true"
-                (mouseleave)="micHoverText = 'Hold & record'; showTooltip = false">
-          <i *ngIf="!isRecording && !audioBlob" class="fa fa-microphone"></i>
+                (mousedown)="startHold(); micHoverText = 'Release to translate'; showTooltip = true" 
+                (mouseup)="endHold(); showTooltip = false" 
+                (mouseleave)="endHold(); showTooltip = false"
+                (touchstart)="startHold()" 
+                (touchend)="endHold()" 
+                (mouseenter)="micHoverText = isRecording ? 'Release to translate' : (isPreviewOpen ? 'Click to close' : 'Click to open or hold to record'); showTooltip = true"
+                (mouseleave)="micHoverText = 'Click to open or hold to record'; showTooltip = false">
+          <i *ngIf="!isRecording && !audioBlob" [class]="isPreviewOpen ? 'fa fa-times' : 'fa fa-microphone'"></i>
           <i *ngIf="isRecording" class="fa fa-stop"></i>
           <i *ngIf="!isRecording && audioBlob" class="fa fa-microphone"></i>
         </button>
         
         <!-- Custom Tooltip -->
         <div *ngIf="micHoverText && showTooltip" 
-             class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap transition-opacity duration-200">
+             class="absolute bottom-full right-0 mb-3 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg z-10 whitespace-nowrap max-w-[220px] text-center pointer-events-none">
           {{ micHoverText }}
-          <div class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-2 h-2 bg-gray-800 rotate-45"></div>
+
+          <div class="absolute top-full right-4 w-0 h-0 
+              border-l-4 border-r-4 border-t-4 
+              border-transparent border-t-gray-800">
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Transcription Preview - Enhanced UI -->
-    <div *ngIf="isTranscribing || hasTranscriptionData" class="fixed top-3/4 left-6 right-32 transform -translate-y-1/2 z-50">
+    <div *ngIf="isPreviewOpen || isTranscribing || hasTranscriptionData" class="fixed top-3/4 left-6 right-32 transform -translate-y-1/2 z-50">
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-5 w-full relative backdrop-blur-sm border border-gray-100 dark:border-gray-700" style="min-height: 140px;">
         <!-- Header with Close Button -->
         <div class="flex items-center justify-between mb-3">
@@ -93,10 +100,28 @@
             </div>
           </div>
           
+          <div *ngIf="!isTranscribing && !hasTranscriptionData && isPreviewOpen" class="relative">
+            <textarea 
+              [(ngModel)]="displayedText" 
+              (keydown)="handleEnterKey($event)"
+              class="w-full p-4 text-sm text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-600 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-all duration-200 pr-16" 
+              rows="5"
+              placeholder="Type your message here... (Press Enter to send)">
+            </textarea>
+            <div class="absolute bottom-3 right-3 flex items-center space-x-2">
+              <span class="text-xs text-gray-400 dark:text-gray-500">{{ displayedText.length }} chars</span>
+              <button 
+                (click)="sendTranscribedText()"
+                class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full p-2.5 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                <i class="fas fa-paper-plane text-sm"></i>
+              </button>
+            </div>
+          </div>
+          
           <div *ngIf="!isTranscribing && hasTranscriptionData" class="relative">
             <textarea 
               [(ngModel)]="displayedText" 
-              (keydown.enter)="$event.preventDefault(); sendTranscribedText()"
+              (keydown)="handleEnterKey($event)"
               class="w-full p-4 text-sm text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-600 rounded-xl resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:border-green-400 transition-all duration-200 pr-16" 
               rows="5"
               placeholder="Edit transcription... (Press Enter to send)">
