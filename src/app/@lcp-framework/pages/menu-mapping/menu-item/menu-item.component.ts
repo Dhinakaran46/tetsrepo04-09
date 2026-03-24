@@ -168,7 +168,7 @@ export class MenuItemComponent {
         this.menuMapService.executeRecords(deleteEntityType).subscribe({
           next: (response: any) => {
             if (response.code === 200 && response.status) {
-              console.log(`Menu item with id ${id} deleted successfully.`);
+              console.warn(`Menu item with id ${id} deleted successfully.`);
             } else {
               console.error(`Failed to delete menu item with id ${id}.`);
             }
@@ -188,7 +188,5 @@ export class MenuItemComponent {
 
     this.menuService.loadMenus(this.menu_id);
     this.menuLoadService.serviceMenus(this.companyId);
-
-   
   }
 }

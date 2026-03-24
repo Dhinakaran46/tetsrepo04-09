@@ -137,9 +137,7 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
 
     this.languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
-      console.log('Reloaded');
     } else {
-      console.log('Initial Load');
     }
 
     const languageId = this.languageService.getLanguageId(this.languageCode);
@@ -176,7 +174,6 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-          
         }
       },
       error: (error) => {
@@ -310,57 +307,53 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
   }
 
   async generateVector(keyName: string) {
-      
-      // Get the form group for this key
-      const itemsArray = this.langMapForm.get('items') as FormArray;
-      const targetGroup = itemsArray.controls.find(control => control.get('key1')?.value === keyName);
-      
-      if (!targetGroup) {
-        console.error('Target group not found for key:', keyName);
-        return;
+    // Get the form group for this key
+    const itemsArray = this.langMapForm.get('items') as FormArray;
+    const targetGroup = itemsArray.controls.find((control) => control.get('key1')?.value === keyName);
+
+    if (!targetGroup) {
+      console.error('Target group not found for key:', keyName);
+      return;
+    }
+
+    // Construct payload array for each language
+    const payload = [];
+    const controlNames = this.getControlNames(targetGroup);
+
+    for (const controlName of controlNames) {
+      const languageId = controlName.split('_')[0];
+      const keywords = targetGroup.get(controlName)?.value;
+
+      if (keywords && keywords.trim()) {
+        // Determine language code based on language_id
+        const languageCode = languageId === '1' ? 'en-GB' : 'ar-QA';
+
+        payload.push({
+          target: keyName,
+          keywords: keywords,
+          language_code: languageCode,
+        });
       }
-      
-      // Construct payload array for each language
-      const payload = [];
-      const controlNames = this.getControlNames(targetGroup);
-      
-      for (const controlName of controlNames) {
-        const languageId = controlName.split('_')[0];
-        const keywords = targetGroup.get(controlName)?.value;
-        
-        if (keywords && keywords.trim()) {
-          // Determine language code based on language_id
-          const languageCode = languageId === '1' ? 'en-GB' : 'ar-QA';
-          
-          payload.push({
-            target: keyName,
-            keywords: keywords,
-            language_code: languageCode
-          });
-        }
-      }
-      
-      if (payload.length === 0) {
-        console.warn('No keywords found to generate vectors for');
-        return;
-      }
-      
-      
-      this.openaiService.generateMenuEmbeddings(payload).subscribe({
-        next: (response) => {
-          console.log('Vector generated successfully:', response);
-          const key = 'vector_generation_success';
-          const successMessage = this.translate.instant(key);
-          this.toastr.success(successMessage);
-        },
-        error: (error) => {
-          console.error('Error generating vector:', error);
-          const key = 'vector_generation_error';
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage);
-        }
-      });
-    
+    }
+
+    if (payload.length === 0) {
+      console.warn('No keywords found to generate vectors for');
+      return;
+    }
+
+    this.openaiService.generateMenuEmbeddings(payload).subscribe({
+      next: (response) => {
+        const key = 'vector_generation_success';
+        const successMessage = this.translate.instant(key);
+        this.toastr.success(successMessage);
+      },
+      error: (error) => {
+        console.error('Error generating vector:', error);
+        const key = 'vector_generation_error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage);
+      },
+    });
   }
 
   async removeItem1(keyName: string) {
@@ -377,7 +370,6 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
     });
 
     if (result.isConfirmed) {
-     
       removableItems.push(keyName);
 
       if (removableItems.length > 0) {
@@ -611,7 +603,7 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
   // Methods to determine embedding status
   getItemFromGroup(group: AbstractControl): Item | undefined {
     const keyValue = group.get('key1')?.value;
-    return this.allItems.find(item => item.key1 === keyValue);
+    return this.allItems.find((item) => item.key1 === keyValue);
   }
 
   getEmbeddingStatus(item: any): string {

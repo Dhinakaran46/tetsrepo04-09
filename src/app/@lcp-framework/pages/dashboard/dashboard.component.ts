@@ -239,7 +239,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         if (instance.element) {
           instance.element.remove(); // Removes the element from the DOM
         } else {
-          console.log(`Element at index ${index} not found`);
+          console.warn(`Element at index ${index} not found`);
         }
       }
     });

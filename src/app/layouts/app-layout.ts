@@ -126,7 +126,7 @@ export class AppLayout {
     this.displayedText = '';
     const words = text.split(' ');
     let currentWordIndex = 0;
-    
+
     const typeNextWord = () => {
       if (currentWordIndex < words.length) {
         if (currentWordIndex > 0) {
@@ -137,7 +137,7 @@ export class AppLayout {
         setTimeout(typeNextWord, 1100); // Adjust speed as needed
       }
     };
-    
+
     typeNextWord();
   }
 
@@ -243,24 +243,26 @@ export class AppLayout {
 
   sendTranscribedText() {
     if (this.displayedText && this.displayedText.trim()) {
-      this.openaiService.searchMenuTargetEmbeddings({ query: this.displayedText.trim() }).subscribe((res) => {
-        
-        // Check if response is successful and has results
-        if (res.code === 200 && res.status === true && res.data?.results?.length > 0) {
-          const firstResult = res.data.results[0];
-          const targetRoute = firstResult.target;
-          
-          // Navigate to the target route
-          this.router.navigate([targetRoute]);
-          
-          // Close the transcription preview after navigation
-          this.closeTranscriptionPreview();
-        } else {
-          console.log('No results found or API error');
+      this.openaiService.searchMenuTargetEmbeddings({ query: this.displayedText.trim() }).subscribe(
+        (res) => {
+          // Check if response is successful and has results
+          if (res.code === 200 && res.status === true && res.data?.results?.length > 0) {
+            const firstResult = res.data.results[0];
+            const targetRoute = firstResult.target;
+
+            // Navigate to the target route
+            this.router.navigate([targetRoute]);
+
+            // Close the transcription preview after navigation
+            this.closeTranscriptionPreview();
+          } else {
+            console.warn('No results found or API error');
+          }
+        },
+        (error) => {
+          console.error('Search API error:', error);
         }
-      }, (error) => {
-        console.error('Search API error:', error);
-      });
+      );
     }
   }
 
@@ -278,21 +280,23 @@ export class AppLayout {
       this.fullTranscribedText = ''; // Clear previous text
       const formData = new FormData();
       formData.append('audio', this.audioBlob, 'recording.wav');
-      // console.log("Sending audio...", formData);
-      this.openaiService.transcribeAudio(formData).subscribe((res) => {
-        // Store the transcribed text and start word-by-word animation
-        const transcribedResult = res.data?.transcription?.processedText || res.data?.transcription?.originalText || 'Transcription not available';
-        this.transcribedText = transcribedResult;
-        this.isTranscribing = false;
-        this.hasTranscriptionData = true; // Set flag to keep preview open
-        this.typeWordByWord(transcribedResult);
 
-      }, (error) => {
-        console.error('Transcription error:', error);
-        this.transcribedText = 'Transcription failed';
-        this.displayedText = 'Transcription failed';
-        this.isTranscribing = false;
-      });
+      this.openaiService.transcribeAudio(formData).subscribe(
+        (res) => {
+          // Store the transcribed text and start word-by-word animation
+          const transcribedResult = res.data?.transcription?.processedText || res.data?.transcription?.originalText || 'Transcription not available';
+          this.transcribedText = transcribedResult;
+          this.isTranscribing = false;
+          this.hasTranscriptionData = true; // Set flag to keep preview open
+          this.typeWordByWord(transcribedResult);
+        },
+        (error) => {
+          console.error('Transcription error:', error);
+          this.transcribedText = 'Transcription failed';
+          this.displayedText = 'Transcription failed';
+          this.isTranscribing = false;
+        }
+      );
     }
   }
 }

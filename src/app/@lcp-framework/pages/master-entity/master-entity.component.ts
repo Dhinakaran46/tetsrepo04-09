@@ -1941,7 +1941,7 @@ export class MasterEntityComponent implements OnInit {
 
     const formData = this.form.getRawValue();
     const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
-    console.log(payload);
+
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
@@ -1983,7 +1983,7 @@ export class MasterEntityComponent implements OnInit {
     Object.keys(this.form.controls).forEach((field) => {
       const control = this.form.get(field);
       if (control) {
-        console.log(`Field: ${field}, Status: ${control.status}, Errors: ${JSON.stringify(control.errors)}`);
+        console.warn(`Field: ${field}, Status: ${control.status}, Errors: ${JSON.stringify(control.errors)}`);
       }
     });
   }
@@ -2026,7 +2026,7 @@ export class MasterEntityComponent implements OnInit {
       if (field.hasError('min')) {
         return `Minimum value is ${field.errors?.['min'].min}`;
       }
-      // console.log('field.errors', field.errors);
+
       if (field.hasError('invalidJson')) {
         return field.errors?.['invalidJson']?.message || `Invalid JSON Syntax.`;
       }

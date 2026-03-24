@@ -377,7 +377,6 @@ export class UserRolePermissionComponent {
     return (entityGroup.get('rights') as FormArray).controls as FormGroup[];
   }
   onCheckboxChange(rightGroup: FormGroup, event: Event, parentGroup: FormGroup) {
-    console.log(parentGroup);
     const rightsArray = parentGroup.get('rights') as FormArray;
     const viewControl: any = rightsArray.at(0).get('selected'); // Assuming 'View' is at index 0
     const isChecked = rightGroup.get('selected')?.value;
@@ -412,7 +411,7 @@ export class UserRolePermissionComponent {
 
       // Iterate over all entityGroups (getEntitiesControls)
       this.getEntitiesControls().forEach((entityGroup: FormGroup) => {
-        console.log('entityGroup:', entityGroup);
+        
 
         // Check the rights and children recursively
         this.checkEntityIdInRightsAndChildren(entityGroup, entityIdToMatch, isChecked);
@@ -425,9 +424,6 @@ export class UserRolePermissionComponent {
     const rightsArray = entityGroup.get('rights');
     const childrenArray = entityGroup.get('children');
 
-    console.log('Checking rights:', rightsArray);
-    console.log('Checking children:', childrenArray);
-
     // Check rights array for matching entity_id
     if (rightsArray instanceof FormArray) {
       rightsArray.controls.forEach((right: AbstractControl) => {
@@ -435,9 +431,7 @@ export class UserRolePermissionComponent {
         const rightEntityId = rightFormGroup.get('entity_id')?.value;
         if (rightEntityId === entityIdToMatch) {
           if (isChecked) {
-            console.log('Matching entity_id found in rights. Checking the box.');
           } else {
-            console.log('Matching entity_id found in rights. Unchecking the box.');
           }
           rightFormGroup.get('selected')?.setValue(isChecked);
 
@@ -456,9 +450,7 @@ export class UserRolePermissionComponent {
         // Check if this child's entity_id matches
         if (childEntityId === entityIdToMatch) {
           if (isChecked) {
-            console.log('Matching entity_id found in children. Checking the box.');
           } else {
-            console.log('Matching entity_id found in children. Unchecking the box.');
           }
           childFormGroup.get('selected')?.setValue(isChecked);
         }
@@ -471,9 +463,7 @@ export class UserRolePermissionComponent {
             const childRightEntityId = childRightFormGroup.get('entity_id')?.value;
             if (childRightEntityId === entityIdToMatch) {
               if (isChecked) {
-                console.log('Matching entity_id found in child rights. Checking the box.');
               } else {
-                console.log('Matching entity_id found in child rights. Unchecking the box.');
               }
               childRightFormGroup.get('selected')?.setValue(isChecked);
 
@@ -524,7 +514,6 @@ export class UserRolePermissionComponent {
   }
 
   getSortedRightsControls(entityGroup: FormGroup) {
-    //console.log('entityGroup:', entityGroup);
     const rightsControls = this.getRightsControls(entityGroup);
 
     if (rightsControls) {

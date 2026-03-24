@@ -233,13 +233,9 @@ export class UserConfigurationComponent implements OnInit {
       this.companyId = parsedData.main?.company_id;
     }
   }
-  addNewItemFormArray(isFirstTime: boolean) {
-    console.log(isFirstTime);
-  }
+  addNewItemFormArray(isFirstTime: boolean) {}
 
-  prepareNewRecords() {
-    console.log('working');
-  }
+  prepareNewRecords() {}
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
@@ -640,7 +636,6 @@ export class UserConfigurationComponent implements OnInit {
         }
       );
     } else {
-      console.log('Form is invalid');
     }
   }
 
@@ -759,7 +754,6 @@ export class UserConfigurationComponent implements OnInit {
       this.newConfigForm.get('config_select_json')?.setValue(JSON.stringify(parsedJson));
     }
 
-    console.log(this.insert_particular_schema);
     this.gridApiService.executeRecordsConfig(this.insert_particular_schema).subscribe(
       (response: any) => {
         if (response.status && response.code === 200) {

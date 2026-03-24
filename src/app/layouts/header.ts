@@ -166,9 +166,7 @@ export class HeaderComponent implements OnInit {
 
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
-      console.log('Reloaded');
     } else {
-      console.log('Initial Load');
     }
 
     const languageId = this.languageService.getLanguageId(languageCode);
@@ -225,10 +223,8 @@ export class HeaderComponent implements OnInit {
         const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
 
         if (hasTargetOrChildren) {
-          //console.log(" Rendering item (link_type=4, has target/children):", item);
           return true;
         } else {
-          //console.log("Skipping item (link_type=4, no target/children):", item);
           return false;
         }
       }

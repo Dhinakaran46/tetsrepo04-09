@@ -118,7 +118,7 @@ export class LocalStorageService implements OnInit {
       localStorage.removeItem(this.getScopedKey('config'));
       localStorage.removeItem(this.getScopedKey('menu_id'));
     } catch (error: any) {
-      console.log('Logout Error: ', error);
+      console.warn('Logout Error: ', error);
     }
   }
 
@@ -326,9 +326,8 @@ export class LocalStorageService implements OnInit {
   }
 
   formatPayloadWithPolicyConditions(payload: any, data: any, attachedPolicies: any[]) {
-    console.log(payload);
     if (!data || !attachedPolicies.length) return payload;
-    console.log('------------comes');
+
     for (let policy of attachedPolicies) {
       if (!data[policy]) continue;
       const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns', 'filtered_columns'];
@@ -339,7 +338,7 @@ export class LocalStorageService implements OnInit {
         }
       }
     }
-    console.log(payload);
+
     const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'filtered_columns'];
     objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
 
@@ -349,7 +348,7 @@ export class LocalStorageService implements OnInit {
     if (payload.sort_columns) {
       payload.sort_columns = this.removeDuplicateData(payload.sort_columns);
     }
-    console.log(payload);
+
     return payload;
   }
 }
