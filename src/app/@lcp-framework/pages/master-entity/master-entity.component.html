@@ -1008,7 +1008,8 @@
                         [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkType') }"
                       >
                         <option value="none">{{ 'none' | translate }}</option>
-                        <option value="component">{{ 'component' | translate }}</option>
+                        <option value="component">{{ 'popup_component' | translate }}</option>
+                        <option value="child_component">{{ 'child_component' | translate }}</option>
                         <option value="child_grid">{{ 'child_grid' | translate }}</option>
                         <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
                         <option value="url">{{ 'url' | translate }}</option>
@@ -1022,7 +1023,20 @@
                     <div class="mb-2">
                       <ng-container [ngSwitch]="item.get('linkType')?.value">
                         <select
-                          *ngSwitchCase="'component'"
+                          *ngSwitchCase="linkTypeComponentCase"
+                          [id]="'linkAction' + i"
+                          formControlName="linkAction"
+                          appDynamicFontSize="body"
+                          class="form-select w-full"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                        >
+                          <option value="">{{ 'select_any' | translate }}</option>
+                          <ng-container *ngFor="let entity of masterEntities">
+                            <option [value]="entity.value">{{ entity.label }}</option>
+                          </ng-container>
+                        </select>
+                        <select
+                          *ngSwitchCase="linkTypeChildComponentCase"
                           [id]="'linkAction' + i"
                           formControlName="linkAction"
                           appDynamicFontSize="body"

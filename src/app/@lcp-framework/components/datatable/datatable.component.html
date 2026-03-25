@@ -742,10 +742,24 @@
                             </ng-container>
 
                             <ng-template #maybePopupGridHtml>
-                              <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeUrlHtml">
+                              <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeChildComponentHtml">
                                 <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
                                   <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
                                 </span>
+                              </ng-container>
+                            </ng-template>
+
+                            <ng-template #maybeChildComponentHtml>
+                              <ng-container *ngIf="col.link_type === 'child_component'; else maybeUrlHtml">
+                                <button
+                                  type="button"
+                                  class="expand-collapse-btn ml-1"
+                                  style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
+                                  (click)="onChildComponentExpandClick(item, col, row_index + 1)"
+                                >
+                                  <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                  <div [innerHTML]="getProcessedHtmlContent(tpl, item, col)" (click)="onHtmlCellClick($event)"></div>
+                                </button>
                               </ng-container>
                             </ng-template>
 
@@ -803,10 +817,23 @@
                               </span>
                             </ng-container>
                             <ng-template #maybePopupGrid>
-                              <ng-container *ngIf="col.link_type === 'popup_grid'; else notComponent">
+                              <ng-container *ngIf="col.link_type === 'popup_grid'; else maybeChildComponent">
                                 <span class="block cursor-pointer truncate text-primary underline" (click)="onLinkPopupGridClick(item, col)">
                                   {{ item[col.header] | booleanStatus }}
                                 </span>
+                              </ng-container>
+                            </ng-template>
+                            <ng-template #maybeChildComponent>
+                              <ng-container *ngIf="col.link_type === 'child_component'; else notComponent">
+                                <button
+                                  type="button"
+                                  class="expand-collapse-btn ml-1"
+                                  style="background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer"
+                                  (click)="onChildComponentExpandClick(item, col, row_index + 1)"
+                                >
+                                  <i class="fa" [ngClass]="isColumnChildGridExpanded(row_index + 1, col) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                  {{ item[col.header] | booleanStatus }}
+                                </button>
                               </ng-container>
                             </ng-template>
                             <ng-template #notComponent>
@@ -867,13 +894,38 @@
                       </div>
                     </td>
                   </tr>
-                  <!-- Add for each column child grid -->
+                  <!-- Add for each column child link type -->
                   <ng-container *ngFor="let col of headercolumns">
-                    <tr *ngIf="col.link_type === 'child_grid' && isColumnChildGridExpanded(row_index + 1, col)">
+                    <tr *ngIf="(col.link_type === 'child_grid' || col.link_type === 'child_component') && isColumnChildGridExpanded(row_index + 1, col)">
                       <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
                         <div class="bg-gray-50 p-4">
-                          <!-- Column child content -->
-                          <ng-template #columnChildMasterListContainer></ng-template>
+                          <ng-container
+                            *ngIf="
+                              col.link_type === 'child_grid' || (col.link_type === 'child_component' && getChildComponentMode(col) === 'popup_grid');
+                              else childComponentExpandedContent
+                            "
+                          >
+                            <ng-template #columnChildMasterListContainer></ng-template>
+                          </ng-container>
+                          <ng-template #childComponentExpandedContent>
+                            <app-static-page
+                              *ngIf="getChildComponentMode(col) === 'popup_details'"
+                              [uuid]="getChildComponentUuid(item, col)"
+                              [entityName]="col.link_action"
+                              [isModal]="true"
+                              [gridParams]="getGridParamsFromItem(item)"
+                              [parentGridFilters]="getParentGridFilterContext()"
+                              keyword="plain"
+                            ></app-static-page>
+
+                            <app-form-builder
+                              *ngIf="getChildComponentMode(col) === 'popup_add' || getChildComponentMode(col) === 'popup_edit'"
+                              [uuid]="getChildComponentUuid(item, col)"
+                              [entityName]="col.link_action"
+                              [isModal]="true"
+                              (closeModal)="clearAllExpandedGrids()"
+                            ></app-form-builder>
+                          </ng-template>
                         </div>
                       </td>
                     </tr>
