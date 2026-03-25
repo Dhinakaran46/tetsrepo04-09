@@ -16,6 +16,8 @@ import {
   AfterViewChecked,
   HostListener,
   OnDestroy,
+  Optional,
+  Host,
 } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
@@ -174,6 +176,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() activeHavingAll: any[] = [];
   @Input() activeHavingAny: any[] = [];
   @Input() parentFilterColumns: any[] = [];
+  @Input() parentGridFilters: {
+    search_all?: any[];
+    search_any?: any[];
+    having_conditions?: any[];
+    having_any_conditions?: any[];
+    having_all?: any[];
+    having_any?: any[];
+    columns?: any[];
+    grid_params?: any;
+  } | null = null;
   @Output() delete = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
@@ -199,6 +211,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() footerStaticEntityName: string = '';
   @Input() staticPageUuid: string | null = null;
   @Input() staticPageGridParams: any = null;
+  @Input() attachedPolicies: any[] = [];
 
   totalPages: number = 1;
   filteredItems: any[] = [];
@@ -217,6 +230,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   inputTypes: InputTypes = commonConfig.field_type;
   searchConditions: SearchConditions = commonConfig.search_conditions;
   isSchemaChunks: boolean = false;
+  policyData: any = null;
 
   // Quick fix - minimal required settings
   filterDropdownSettings: any = {
@@ -326,6 +340,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
   @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
   @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
+
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
   @Input() isViewPopupOpen: boolean = false;
@@ -390,7 +405,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     public location: Location,
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    @Optional() @Host() private parentMasterList: MasterListComponent
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
 
@@ -399,6 +415,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.show_column_search_keys = this.config.show_column_search_keys == 'true' && this.config.show_column_search_keys;
     this.show_common_search_keys = this.config.show_common_search_keys == 'true' && this.config.show_common_search_keys;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    if (this.user_info.main?.policies) {
+      this.policyData = this.user_info.main?.policies || null;
+    }
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
   }
@@ -785,7 +804,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       if (this.canApplyGridState(tempState)) {
         this.appliedSavedViewSlug = tempApplyKey;
         this.hasSavedViewConfiguration = true;
-        this.applyGridState(tempState);
+        setTimeout(() => {
+          this.applyGridState(tempState);
+        }, 0);
       } else {
         this.scheduleTryApplySavedView();
       }
@@ -796,7 +817,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const limit = Number(this.resultsPerPage) > 0 ? Number(this.resultsPerPage) : this.getDefaultResultsPerPage();
 
     this.initialFetchEmitted = true;
-    this.pageChange.emit({ page, start_index: (page - 1) * limit, source: 'default-initial' });
+    setTimeout(() => {
+      this.pageChange.emit({ page, start_index: (page - 1) * limit, source: 'default-initial' });
+    }, 0);
   }
 
   /* advanced search filter functions */
@@ -826,17 +849,80 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       return withBetween(this.searchConditions[columnType] || []);
     }
   }
+  private applyGparamsToPayload(payload: any): any {
+    if (!payload) return payload;
+
+    const combinedParams = this.getCombinedGridParams();
+
+    if (Object.keys(combinedParams).length === 0) return payload;
+
+    let result = payload;
+    Object.keys(combinedParams).forEach((key) => {
+      const paramKey = key.startsWith('$') ? key : `$${key}`;
+      result = this.localstore.replaceUniqueId(result, paramKey, combinedParams[key]);
+    });
+    return result;
+  }
+
+  public getCombinedGridParams(): any {
+    let combinedParams: any = {};
+
+    // 1. Pull from recursively passed parent filters if available
+    if (this.parentGridFilters?.grid_params) {
+      Object.assign(combinedParams, this.parentGridFilters.grid_params);
+    }
+
+    // 2. Pull from immediate parent MasterListComponent instance if available
+    if (this.parentMasterList?.grid_params) {
+      Object.assign(combinedParams, this.parentMasterList.grid_params);
+    }
+
+    // 3. Current local staticPageGridParams (e.g. from parent row item)
+    if (this.staticPageGridParams) {
+      Object.assign(combinedParams, this.staticPageGridParams);
+    }
+
+    return combinedParams;
+  }
 
   async getEnumValues(columnData: any, operator: string): Promise<{ label: any; value: any }[]> {
     if (!columnData) return [];
 
-    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
+    // Always resolve the enum config from the raw column or enum_values object
+    // If columnData already has enum_values, resolve from it; otherwise treat columnData as already resolved
+    let enumObj: any;
+    if (columnData?.enum_values !== undefined) {
+      // caller passed the raw column definition (most common path from onColumnChange)
+      enumObj = this.resolveEnumConfig(columnData.enum_values);
+    } else {
+      // caller already resolved (backward compat) — wrap bare arrays
+      enumObj = Array.isArray(columnData) ? { type: 'array', value: columnData } : columnData;
+    }
+
+    if (!enumObj || !enumObj.type) return [];
+
+    // IMPORTANT: deep-clone the value so we never mutate the original enum config.
+    // formatPayloadWithPolicyConditions and formatEnumColumnFilters both mutate the payload
+    // in-place, which would permanently add extra search conditions on every call.
+    const clonedValue = enumObj['value'] ? JSON.parse(JSON.stringify(enumObj['value'])) : enumObj['value'];
+
+    // Use the enum payload's OWN attached_policies (not the grid's this.attachedPolicies)
+    // to look up policy conditions. Using the grid's policies would inject wrong table
+    // conditions (e.g., ticket-context joins) into unrelated enum dropdown queries.
+    const enumAttachedPolicies: string[] = clonedValue?.attached_policies ?? [];
+    const beforeReplace = this.localstore.replaceUniqueId(
+      enumAttachedPolicies.length ? this.localstore.formatPayloadWithPolicyConditions(clonedValue, this.policyData, enumAttachedPolicies) : clonedValue,
+      '$session_user_id',
+      this.user_info.main.id
+    );
+
+    const resolvedValue = this.applyGparamsToPayload(beforeReplace);
 
     switch (enumObj?.type) {
       case 'master':
-        if (enumObj?.value) {
+        if (resolvedValue) {
           try {
-            const response = await this.gridApiService.getListData(enumObj.value).toPromise();
+            const response = await this.gridApiService.getListData(resolvedValue).toPromise();
             if (response.status && response.data?.records) {
               return response.data.records.map((option: any) => ({
                 label: enumObj.optionKey ? option[enumObj.optionKey] : option.label,
@@ -853,19 +939,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       case 'autocomplete':
         return [];
       case 'json':
-        if (!enumObj?.value || !Array.isArray(enumObj.value)) {
+        if (!resolvedValue || !Array.isArray(resolvedValue)) {
           return [];
         }
-        return enumObj.value.map((value: any) => ({
+        return resolvedValue.map((value: any) => ({
           label: enumObj.optionKey ? value[enumObj.optionKey] : value.label,
           value: enumObj.optionValue ? value[enumObj.optionValue] : value.value,
         }));
 
       case 'array':
-        if (!enumObj?.value || !Array.isArray(enumObj.value)) {
+        if (!resolvedValue || !Array.isArray(resolvedValue)) {
           return [];
         }
-        return enumObj.value.map((value: any) => ({
+        return resolvedValue.map((value: any) => ({
           label: value.trim() ?? '',
           value: value.trim() ?? '',
         }));
@@ -888,9 +974,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     try {
       // Add search parameter to your API call
-      let params: any = enumObj.value || {}; // is an object
+      // Clone params first so we don't mutate the resolved enum config
+      let params: any = enumObj.value ? JSON.parse(JSON.stringify(enumObj.value)) : {};
       params = this.replaceSearchTermInObject(params, searchTerm);
-
+      // Use the enum's OWN attached_policies, not the grid's
+      const enumAttachedPolicies: string[] = params?.attached_policies ?? [];
+      const beforeReplace = this.localstore.replaceUniqueId(
+        enumAttachedPolicies.length ? this.localstore.formatPayloadWithPolicyConditions(params, this.policyData, enumAttachedPolicies) : params,
+        '$session_user_id',
+        this.user_info.main.id
+      );
+      params = this.applyGparamsToPayload(beforeReplace);
       const response = await this.gridApiService.getListData(params).toPromise();
       if (response.status && response.data?.records) {
         return response.data.records.map((option: any) => ({
@@ -941,7 +1035,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   private resolveEnumConfig(enumSource: any): any {
-    let enumObj = enumSource ?? {};
+    // Deep-clone the source so we never mutate the original column definition.
+    // Without this, formatEnumColumnFilters mutates enumObj.value in-place which
+    // permanently adds extra search conditions / includes on subsequent calls.
+    let enumObj: any;
+    try {
+      enumObj = enumSource ? JSON.parse(JSON.stringify(enumSource)) : {};
+    } catch {
+      enumObj = enumSource ?? {};
+    }
 
     if (Array.isArray(enumObj)) {
       return { type: 'array', value: enumObj };
@@ -956,7 +1058,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
           enumObj = {};
         }
       } else {
-        enumObj = rawConfig ?? {};
+        // also deep-clone config values to prevent mutation
+        try {
+          enumObj = rawConfig ? JSON.parse(JSON.stringify(rawConfig)) : {};
+        } catch {
+          enumObj = rawConfig ?? {};
+        }
       }
     }
 
@@ -964,6 +1071,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       enumObj = { type: 'array', value: enumObj };
     }
 
+    if (enumSource?.filter) {
+      enumObj.value = this.localstore.formatEnumColumnFilters(enumObj.value, enumSource?.filter || null);
+    }
     return enumObj ?? {};
   }
 
@@ -986,8 +1096,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (isEnum) {
       const enumObj = this.resolveEnumConfig(data?.enum_values);
       this.filterConditions[index].enumType = enumObj?.type || '';
-
-      this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
+      // Pass raw column data — getEnumValues will resolve internally
+      const res = await this.getEnumValues(data, operator);
+      this.filterConditions[index].enumValueOptions = res;
     }
     this.currentSearchConditions = this.searchConditions[columnType] || [];
   }
@@ -1023,6 +1134,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       condition.enum_values = [];
       const enumObj = this.resolveEnumConfig(data?.enum_values);
       condition.enumType = enumObj?.type || '';
+      // Pass raw column data — getEnumValues will resolve internally
       condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
       return;
     }
@@ -1481,7 +1593,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private async hydrateEnumOptionsForRenderedFilters(): Promise<void> {
     if (!Array.isArray(this.filterConditions) || this.filterConditions.length === 0) return;
-
     for (let index = 0; index < this.filterConditions.length; index++) {
       const condition = this.filterConditions[index];
       if (!condition?.isEnum || !condition.field) continue;
@@ -2826,10 +2937,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const hasViews = this.shouldShowMyViews();
     const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
-    
-    
+
     if (hasViews && selectedView?.search_values) {
-    
       this.appliedSavedViewSlug = null;
       this.scheduleTryApplySavedView();
       this.toastr.success('View reset successfully', 'Success');
@@ -2863,7 +2972,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.currentPage = 1;
 
     const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
-    
+
     this.searchQuery.emit(emptySearch);
     this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
     this.columnSort.emit({ sortColumns: [], skipFetch: true });
@@ -3545,12 +3654,29 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   getParentGridFilterContext() {
+    // Merge THIS level's active filters with the incoming parentGridFilters so the
+    // full chain propagates to deeper (level-3+) grids.
+    // Without this, a level-2 grid would only pass its own filters to level-3,
+    // silently dropping all level-1 filters.
+    const ancestorSearchAll = Array.isArray(this.parentGridFilters?.search_all) ? this.parentGridFilters.search_all : [];
+    const ancestorSearchAny = Array.isArray(this.parentGridFilters?.search_any) ? this.parentGridFilters.search_any : [];
+    const ancestorHavingAll = Array.isArray(this.parentGridFilters?.having_conditions) ? this.parentGridFilters.having_conditions : [];
+    const ancestorHavingAny = Array.isArray(this.parentGridFilters?.having_any_conditions) ? this.parentGridFilters.having_any_conditions : [];
+    const ancestorColumns = Array.isArray(this.parentGridFilters?.columns) ? this.parentGridFilters.columns : [];
+
+    const ownSearchAll = Array.isArray(this.activeSearchAll) ? JSON.parse(JSON.stringify(this.activeSearchAll)) : [];
+    const ownSearchAny = Array.isArray(this.activeSearchAny) ? JSON.parse(JSON.stringify(this.activeSearchAny)) : [];
+    const ownHavingAll = Array.isArray(this.activeHavingAll) ? JSON.parse(JSON.stringify(this.activeHavingAll)) : [];
+    const ownHavingAny = Array.isArray(this.activeHavingAny) ? JSON.parse(JSON.stringify(this.activeHavingAny)) : [];
+    const ownColumns = Array.isArray(this.parentFilterColumns) ? JSON.parse(JSON.stringify(this.parentFilterColumns)) : [];
+
     return {
-      search_all: Array.isArray(this.activeSearchAll) ? JSON.parse(JSON.stringify(this.activeSearchAll)) : [],
-      search_any: Array.isArray(this.activeSearchAny) ? JSON.parse(JSON.stringify(this.activeSearchAny)) : [],
-      having_conditions: Array.isArray(this.activeHavingAll) ? JSON.parse(JSON.stringify(this.activeHavingAll)) : [],
-      having_any_conditions: Array.isArray(this.activeHavingAny) ? JSON.parse(JSON.stringify(this.activeHavingAny)) : [],
-      columns: Array.isArray(this.parentFilterColumns) ? JSON.parse(JSON.stringify(this.parentFilterColumns)) : [],
+      search_all: [...ancestorSearchAll, ...ownSearchAll],
+      search_any: [...ancestorSearchAny, ...ownSearchAny],
+      having_conditions: [...ancestorHavingAll, ...ownHavingAll],
+      having_any_conditions: [...ancestorHavingAny, ...ownHavingAny],
+      columns: [...ancestorColumns, ...ownColumns],
+      grid_params: this.getCombinedGridParams(),
     };
   }
 

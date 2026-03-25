@@ -732,7 +732,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   private replaceDataPlaceholders(obj: any, model: any, required: boolean = true, draft_mode: boolean): any {
     const result = JSON.parse(JSON.stringify(obj)); // Deep copy to avoid mutating the original object
     // const placeholderPattern = /\$(.+)/;
-    const placeholderPattern = /^\$(.+)/;
+    const placeholderPattern = /\$([a-zA-Z0-9_.]+)/;
 
     const replaceInObject = (item: any, context: any = model): any => {
       if (Array.isArray(item)) {
@@ -776,17 +776,18 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           const firstPlaceholder = placeholdersInTable[0];
           const firstKeyMatchKey: any = Object.keys(firstPlaceholder).find((key) => {
             const value = firstPlaceholder[key];
-            return typeof value === 'string' && value.startsWith('$');
+            return typeof value === 'string' && value.includes('$');
           });
-          const firstKeyMatch =
-            firstPlaceholder && firstKeyMatchKey && firstPlaceholder[firstKeyMatchKey] && firstPlaceholder[firstKeyMatchKey].match(placeholderPattern);
+
+          const value = firstPlaceholder[firstKeyMatchKey];
+          const firstKeyMatch = value ? value.match(/\$([a-zA-Z0-9_.]+)/) : null;
           // const firstKeyMatch = firstPlaceholder && firstPlaceholder[Object.keys(firstPlaceholder)[0]].match(placeholderPattern);
           if (firstKeyMatch) {
             const firstKey = firstKeyMatch[1].split('.')[0];
             const key = firstKeyMatch[1].split('.')[1];
             if (model[firstKey] && Array.isArray(model[firstKey])) {
-              result.data[tableKey] = model[firstKey].map((detail: any) => {
-                const tableTemplate = JSON.parse(JSON.stringify(placeholdersInTable[0]));
+              result.data[tableKey] = model[firstKey].map((detail: any, i: number) => {
+                const tableTemplate = JSON.parse(JSON.stringify(placeholdersInTable[i] || placeholdersInTable[0]));
                 return replaceInObject(tableTemplate, { [firstKey]: detail });
               });
             } else if (model[firstKey] && model[firstKey][key] && Array.isArray(model[firstKey][key])) {
@@ -933,7 +934,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
           this.transParam =
             this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
-            this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
+          this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
 

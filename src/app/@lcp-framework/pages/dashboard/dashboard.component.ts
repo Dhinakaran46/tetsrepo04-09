@@ -152,6 +152,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   commonConfig = commonConfig;
   config: any = null;
   displayDateRangeFilter = false;
+
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
   @ViewChildren('powerBiContainer') powerBiContainers!: QueryList<ElementRef>;

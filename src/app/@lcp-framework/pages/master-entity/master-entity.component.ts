@@ -1491,7 +1491,7 @@ export class MasterEntityComponent implements OnInit {
   addItem() {
     const items = this.form.get('items') as FormArray;
     const group = this.fb.group({
-      fieldName: ['', [Validators.required, Validators.maxLength(100)]],
+      fieldName: ['', [Validators.required, Validators.maxLength(1000)]],
       displayName: ['', [Validators.required, Validators.maxLength(100)]],
       orderNo: ['', [Validators.required, Validators.min(0)]],
       isGridColumn: ['true', Validators.required],

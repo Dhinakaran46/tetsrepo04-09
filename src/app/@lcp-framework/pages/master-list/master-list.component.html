@@ -40,6 +40,8 @@
     [footerStaticEntityName]="footerStaticEntityName"
     [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
     [staticPageGridParams]="popupComponentGridParams || grid_params"
+    [attachedPolicies]="attachedPolicies"
+    [parentGridFilters]="parentGridFilters"
   ></app-datatable>
 
   <ng-template #actionTemplate let-item>
@@ -510,6 +512,10 @@
             (advancedSearchQuery)="previewAdvancedSearchData($event)"
             (linkComponentClick)="onLinkComponentClick($event)"
             [permissions]="false"
+            [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
+            [staticPageGridParams]="popupComponentGridParams || grid_params"
+            [attachedPolicies]="attachedPolicies"
+            [parentGridFilters]="parentGridFilters"
           >
           </app-datatable>
         </ng-container>
@@ -550,12 +556,15 @@
             [footerStaticEntityName]="footerStaticEntityName"
             [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
             [staticPageGridParams]="popupComponentGridParams || grid_params"
+            [attachedPolicies]="attachedPolicies"
+            [parentGridFilters]="parentGridFilters"
           >
           </app-datatable>
           <app-static-page
             *ngIf="popupName == 'popup_details'"
             [uuid]="selectedItemUuid"
             [entityName]="popupEntityName"
+            [parentGridFilters]="getCurrentGridFilters()"
             [isModal]="true"
             [gridParams]="popupComponentGridParams"
             (closeModal)="closeViewPopup()"
