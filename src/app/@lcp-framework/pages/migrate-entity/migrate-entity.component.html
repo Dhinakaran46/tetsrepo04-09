@@ -31,28 +31,109 @@
   </div>
 
   <!-- 🔹 Export -->
-  <div *ngIf="section === 'export'" class="panel">
+  <div *ngIf="section === 'export'" class="panel p-5 rounded-lg shadow-sm bg-white">
 
-    <h2 class="mb-4 text-lg font-bold">Export Master Entity</h2>
+    <h2 class="mb-5 text-lg font-bold border-b pb-2">
+      Export Master Entity
+    </h2>
 
     <form [formGroup]="exportForm">
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <!-- Type + Company -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div>
-          <label class="mb-1 block">Type</label>
-          <select formControlName="type" class="form-select">
+          <label class="block mb-1 font-medium">Type</label>
+          <select formControlName="type" class="form-select w-full">
             <option value="update">Update</option>
             <option value="replace">Replace</option>
           </select>
         </div>
 
+        <div>
+          <!-- <label class="block mb-1 font-medium">Company</label>
+          <input type="number" formControlName="companyId" class="form-input w-full" /> -->
+        </div>
+
       </div>
 
+      <!-- Divider -->
+      <div class="my-6 border-t"></div>
+
+      <!-- Dynamic Checkbox Section -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <label class="block font-semibold text-gray-700">
+            Select Modules to Export
+          </label>
+          <div class="flex gap-3">
+            <button type="button" class="px-3 py-1 text-sm font-medium btn btn-outline-primary transition"
+              (click)="toggleAll(true)">
+              Select All
+            </button>
+            <button type="button" class="px-3 py-1 text-sm font-medium btn btn-outline-primary transition"
+              (click)="toggleAll(false)">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let item of checkboxOptions"
+            class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            [class.cursor-pointer]="!expandedItems[item.control]"
+            (click)="!expandedItems[item.control] && toggleCheckbox(item.control)">
+
+            <!-- Header -->
+            <div class="flex items-start gap-3 p-4 hover:bg-gray-50 transition">
+              <input type="checkbox" [formControlName]="item.control"
+                class="form-checkbox h-4 w-4 text-blue-600 mt-1 pointer-events-none" />
+
+              <div class="flex-1">
+                <span class="text-sm font-semibold text-gray-800 block">
+                  {{ item.label }}
+                </span>
+                <span *ngIf="item.description" class="text-xs text-gray-500 mt-1 block">
+                  {{ item.description }}
+                </span>
+
+                <!-- Expand/Collapse Button - Separate click handler -->
+                <div class="flex items-center gap-2 mt-2 expand-button" (click)="toggleExpand(item.control, $event)">
+                  <span class="text-xs text-gray-400">
+                    {{ item.tables?.length || 0 }} tables
+                  </span>
+                  <span class="text-xs text-gray-400">
+                    <i class="fas" [class.fa-chevron-down]="expandedItems[item.control]"
+                      [class.fa-chevron-right]="!expandedItems[item.control]"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expanded Content -->
+            <div *ngIf="expandedItems[item.control]" class="border-t bg-gray-50 p-3 max-h-48 overflow-y-auto">
+              <div class="grid grid-cols-1 gap-1">
+                <div *ngFor="let table of item.tables"
+                  class="text-xs text-gray-600 py-1 px-2 rounded hover:bg-gray-100">
+                  {{ table }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action -->
       <div class="mt-6 flex items-center gap-3">
-        <button type="button" (click)="exportData()" [disabled]="isLoading" class="btn btn-primary">
-          ⬇ Export
+
+        <button type="button" (click)="exportData()" [disabled]="isLoading"
+          class="btn btn-primary px-5 py-2 flex items-center gap-2">
+
+          <span *ngIf="!isLoading">⬇ Export</span>
+          <span *ngIf="isLoading">Exporting...</span>
+
         </button>
+
       </div>
 
     </form>

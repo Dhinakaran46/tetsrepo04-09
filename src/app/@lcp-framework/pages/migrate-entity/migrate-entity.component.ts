@@ -11,6 +11,14 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../service/common/auth.service';
 import { IdleService } from '../../service/common/idle.service';
 
+type CheckboxOption = {
+  label: string;
+  control: string;
+  default?: boolean;
+  tables?: string[];
+  description?: string;
+};
+
 @Component({
   selector: 'app-migrate-entity',
   standalone: true,
@@ -26,6 +34,55 @@ export class MigrateEntityComponent {
   public progress = 0;
   userData!: any;
 
+  expandedItems: { [key: string]: boolean } = {};
+  checkboxOptions: CheckboxOption[] = [
+    {
+      label: 'Masters',
+      control: 'includeMasters',
+      default: false,
+      tables: [
+        'statuses',
+        'field_types',
+        'action_types',
+        'entity_types',
+        'menu_types',
+        'menus',
+        'phone_country_codes',
+        'financial_years',
+        'document_sequences',
+        'wizard_groups',
+        'wizard_types',
+        'barcode_templates',
+      ],
+      description: 'Only update option will be applied.',
+    },
+    {
+      label: 'Themes',
+      control: 'includeThemes',
+      default: false,
+      tables: ['themes', 'theme_line_items', 'theme_attributes'],
+      description: 'Only update option will be applied.',
+    },
+    {
+      label: 'Configurations',
+      control: 'includeConfigurations',
+      default: false,
+      tables: ['app_category_types', 'app_categories', 'app_configurations', 'app_user_configurations'],
+    },
+    {
+      label: 'Languages',
+      control: 'includeLanguages',
+      default: false,
+      tables: ['languages', 'language_contents'],
+      description: 'Only update option will be applied for languages & replace for languages contents.',
+    },
+    {
+      label: 'Master Entities',
+      control: 'includeMasterEntities',
+      default: false,
+      tables: ['master_entities', 'master_entity_line_items', 'permissions', 'role_permissions', 'user_permissions', 'menu_items'],
+    },
+  ];
   exportForm: FormGroup;
   importForm: FormGroup;
 
@@ -41,7 +98,12 @@ export class MigrateEntityComponent {
     private idleService: IdleService
   ) {
     this.userData = JSON.parse(this.localstore.getData('user_data'));
+    const checkboxControls = this.checkboxOptions.reduce((acc, item) => {
+      acc[item.control] = [item.default ?? false];
+      return acc;
+    }, {} as any);
     this.exportForm = this.fb.group({
+      ...checkboxControls,
       companyId: [this.userData?.main?.company_id || 1, Validators.required],
       type: ['update', Validators.required],
     });
@@ -69,6 +131,22 @@ export class MigrateEntityComponent {
   }
 
   // ---------------- EXPORT ----------------
+  toggleCheckbox(controlName: string) {
+    const currentValue = this.exportForm.get(controlName)?.value;
+    this.exportForm.get(controlName)?.setValue(!currentValue);
+  }
+
+  toggleExpand(controlName: string, event: Event) {
+    event.stopPropagation(); // Prevent card click from toggling checkbox
+    this.expandedItems[controlName] = !this.expandedItems[controlName];
+  }
+
+  toggleAll(value: boolean) {
+    this.checkboxOptions.forEach((opt) => {
+      this.exportForm.get(opt.control)?.setValue(value);
+    });
+  }
+
   exportData() {
     if (this.exportForm.invalid) {
       this.toastr.error('Fill required fields');
@@ -78,7 +156,7 @@ export class MigrateEntityComponent {
     this.progress = 0;
     this.isLoading = true;
 
-    this.api.exportMasterEntity(this.exportForm.value).subscribe({
+    this.api.exportEntity(this.exportForm.value).subscribe({
       next: (res) => {
         const url = window.URL.createObjectURL(res.blob);
         const a = document.createElement('a');
@@ -91,8 +169,8 @@ export class MigrateEntityComponent {
         this.toastr.success('Export successful');
         this.isLoading = false;
       },
-      error: () => {
-        this.toastr.error('Export failed');
+      error: (e) => {
+        this.toastr.error(e.message || 'Export failed');
         this.isLoading = false;
       },
     });
@@ -129,17 +207,25 @@ export class MigrateEntityComponent {
     this.api.importMasterEntity(formData).subscribe({
       next: (event: any) => {
         if (event.type === HttpEventType.Response) {
-          this.toastr.success('Import successful');
-          this.isLoading = false;
+          const result = event.body;
+          const message = result.message;
 
-          this.importForm.reset();
-          this.file = null;
-          if (this.fileInput) {
-            this.fileInput.nativeElement.value = '';
+          if (result.status) {
+            this.toastr.success(message || 'Import successful');
+            this.isLoading = false;
+
+            this.importForm.reset();
+            this.file = null;
+            if (this.fileInput) {
+              this.fileInput.nativeElement.value = '';
+            }
+            setTimeout(() => {
+              this.logout();
+            }, 5000); // wait for 2 seconds before logging out
+          } else {
+            this.toastr.error(message || 'Import successful');
+            this.isLoading = false;
           }
-          setTimeout(() => {
-            this.logout();
-          }, 5000); // wait for 2 seconds before logging out
         }
       },
       error: () => {
