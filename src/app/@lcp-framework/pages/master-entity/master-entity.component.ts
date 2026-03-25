@@ -58,6 +58,8 @@ export function viewMandatoryValidator(): ValidatorFn {
   ],
 })
 export class MasterEntityComponent implements OnInit {
+  readonly linkTypeComponentCase = 'component';
+  readonly linkTypeChildComponentCase = 'child_component';
   store: any;
   form!: FormGroup;
   items: any = [];
@@ -1747,7 +1749,7 @@ export class MasterEntityComponent implements OnInit {
       const items = itemsArray.controls.map((control: any) => {
         const linkActionValue = control.value.linkAction;
         let link_mode = 'none';
-        if (control.value.linkType === 'component') {
+        if (control.value.linkType === 'component' || control.value.linkType === 'child_component') {
           const entity = this.masterEntities.find((e: any) => e.value === linkActionValue);
           if (entity) {
             if (entity.entity_type === 'static_page_builder_module') {
@@ -1755,7 +1757,7 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
             } else if (entity.entity_type === 'grid_builder_module') {
-              link_mode = 'child_grid';
+              link_mode = control.value.linkType === 'child_component' ? 'popup_grid' : 'child_grid';
             }
           }
         }
@@ -1836,7 +1838,7 @@ export class MasterEntityComponent implements OnInit {
       const items = itemsArray.controls.map((control: any) => {
         const linkActionValue = control.value.linkAction;
         let link_mode = 'none';
-        if (control.value.linkType === 'component') {
+        if (control.value.linkType === 'component' || control.value.linkType === 'child_component') {
           const entity = this.masterEntities.find((e: any) => e.value === linkActionValue);
           if (entity) {
             if (entity.entity_type === 'static_page_builder_module') {
@@ -1844,7 +1846,7 @@ export class MasterEntityComponent implements OnInit {
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
             } else if (entity.entity_type === 'grid_builder_module') {
-              link_mode = 'child_grid';
+              link_mode = control.value.linkType === 'child_component' ? 'popup_grid' : 'child_grid';
             }
           }
         }
@@ -2294,7 +2296,7 @@ export class MasterEntityComponent implements OnInit {
     const setLinkMode = (entityName: string) => {
       const type = linkTypeControl?.value;
       let entity;
-      if (type === 'component') {
+      if (type === 'component' || type === 'child_component') {
         entity = this.masterEntities.find((e: any) => e.value === entityName);
       } else if (type === 'popup_grid') {
         entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
@@ -2306,6 +2308,8 @@ export class MasterEntityComponent implements OnInit {
           (group as any)._linkMode = 'popup_details';
         } else if (entity.entity_type === 'form_builder_module') {
           (group as any)._linkMode = 'popup_edit';
+        } else if (entity.entity_type === 'grid_builder_module' && type === 'child_component') {
+          (group as any)._linkMode = 'popup_grid';
         } else {
           (group as any)._linkMode = 'none';
         }
@@ -2319,7 +2323,12 @@ export class MasterEntityComponent implements OnInit {
     }
     // Subscribe to changes
     linkActionControl?.valueChanges.subscribe((entityName: string) => {
-      if (linkTypeControl?.value === 'component' || linkTypeControl?.value === 'child_grid' || linkTypeControl?.value === 'popup_grid') {
+      if (
+        linkTypeControl?.value === 'component' ||
+        linkTypeControl?.value === 'child_component' ||
+        linkTypeControl?.value === 'child_grid' ||
+        linkTypeControl?.value === 'popup_grid'
+      ) {
         setLinkMode(entityName);
       } else {
         (group as any)._linkMode = 'none';
@@ -2327,7 +2336,7 @@ export class MasterEntityComponent implements OnInit {
     });
     // Also update on linkType change
     linkTypeControl?.valueChanges.subscribe((type: string) => {
-      if (type !== 'component' && type !== 'child_grid' && type !== 'popup_grid') {
+      if (type !== 'component' && type !== 'child_component' && type !== 'child_grid' && type !== 'popup_grid') {
         (group as any)._linkMode = 'none';
       } else {
         setLinkMode(linkActionControl?.value);
