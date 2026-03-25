@@ -34,6 +34,7 @@ import { LocalStorageService } from '../../service/common/local-storage.service'
 import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
+import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
 import { LoaderComponent } from '../loader/loader.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
@@ -123,6 +124,7 @@ interface UserSearchConfigurationTemp {
     BooleanStatusPipe,
     LoaderComponent,
     StaticPageComponent,
+    FormBuilderComponent,
     FlatpickrDirective,
     NgScrollbarModule,
     FormsModule,
@@ -146,6 +148,7 @@ interface UserSearchConfigurationTemp {
 export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
   // Add this property to your component class:
   pendingPopupData: { item: any; entityName: string } | null = null;
+  private childComponentResolvedModes: Record<string, string> = {};
 
   expandedItem: any = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
@@ -2826,10 +2829,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const hasViews = this.shouldShowMyViews();
     const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
-    
-    
+
     if (hasViews && selectedView?.search_values) {
-    
       this.appliedSavedViewSlug = null;
       this.scheduleTryApplySavedView();
       this.toastr.success('View reset successfully', 'Success');
@@ -2863,7 +2864,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.currentPage = 1;
 
     const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
-    
+
     this.searchQuery.emit(emptySearch);
     this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
     this.columnSort.emit({ sortColumns: [], skipFetch: true });
@@ -3446,13 +3447,135 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     }
 
     this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
-    setTimeout(() => {
-      this.createColumnChildMasterList(item, col.link_action);
-    }, 250);
+    if (col?.link_type === 'child_grid') {
+      setTimeout(() => {
+        this.createColumnChildMasterList(item, col.link_action);
+      }, 250);
+    }
+  }
+
+  onChildComponentExpandClick(item: any, col: any, row_index: number) {
+    if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header) {
+      this.clearAllExpandedGrids();
+      return;
+    }
+
+    if (this.expandedItem) {
+      this.clearAllExpandedGrids();
+    }
+
+    if (this.expandedColumnChildGrid) {
+      this.clearAllExpandedGrids();
+    }
+
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
+
+    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
+
+    const resolvedMode = this.getChildComponentMode(col);
+    if (resolvedMode === 'popup_grid') {
+      setTimeout(() => {
+        this.createColumnChildMasterList(item, col.link_action);
+      }, 250);
+    }
   }
 
   isColumnChildGridExpanded(row_index: number, col: any): boolean {
     return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header;
+  }
+
+  getChildComponentMode(col: any): string {
+    const normalizedMode = this.normalizeChildComponentMode(col?.link_mode);
+    if (normalizedMode) {
+      if (col?.link_action) {
+        this.childComponentResolvedModes[col.link_action] = normalizedMode;
+      }
+      return normalizedMode;
+    }
+
+    const entityName = col?.link_action;
+    if (entityName && this.childComponentResolvedModes[entityName]) {
+      return this.childComponentResolvedModes[entityName];
+    }
+
+    const inferredMode = this.inferChildComponentMode(entityName);
+    if (entityName && inferredMode) {
+      this.childComponentResolvedModes[entityName] = inferredMode;
+      return inferredMode;
+    }
+
+    return 'popup_details';
+  }
+
+  getChildComponentUuid(item: any, col: any): string | null {
+    return this.getChildComponentMode(col) === 'popup_add' ? null : item?.uuid || null;
+  }
+
+  getGridParamsFromItem(item: any): any {
+    const gridParams: any = {};
+    Object.keys(item || {}).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        const temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    return gridParams;
+  }
+
+  private normalizeChildComponentMode(linkMode: any): string | null {
+    const mode = typeof linkMode === 'string' ? linkMode.trim() : '';
+
+    if (!mode || mode === 'none') {
+      return null;
+    }
+
+    if (mode === 'child_grid') {
+      return 'popup_grid';
+    }
+
+    if (mode === 'popup_create') {
+      return 'popup_add';
+    }
+
+    if (mode === 'popup_details' || mode === 'popup_add' || mode === 'popup_edit' || mode === 'popup_grid') {
+      return mode;
+    }
+
+    return null;
+  }
+
+  private inferChildComponentMode(entityName: string | undefined): string | null {
+    if (!entityName) {
+      return null;
+    }
+
+    const userDataRaw = this.localstore.getData('user_data');
+    if (!userDataRaw || userDataRaw === 'undefined') {
+      return null;
+    }
+
+    try {
+      const userData = JSON.parse(userDataRaw);
+      const routeInfo = userData?.unorgmenuList?.find((item: any) => item?.entity_name === entityName && item?.component_class_name);
+      const componentClassName = routeInfo?.component_class_name;
+
+      if (componentClassName === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE) {
+        return 'popup_grid';
+      }
+
+      if (componentClassName === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
+        return 'popup_edit';
+      }
+
+      if (componentClassName === commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE) {
+        return 'popup_details';
+      }
+    } catch (error) {
+      return null;
+    }
+
+    return null;
   }
 
   createChildMasterList(item: any, entityName: string, row_index: number) {

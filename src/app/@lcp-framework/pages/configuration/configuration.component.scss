@@ -12,11 +12,35 @@
   overflow-y: auto;
 }
 
+.config-table-wrapper {
+  width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar on the tab strip */
+.tab-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+.tab-scroll-container {
+  scrollbar-width: none;
+}
+
 table thead tr th,
 table tfoot tr th,
 table tbody tr td {
   padding-top: 0.35rem;
   padding-bottom: 0.35rem;
+}
+
+/* Tablet: reduce table cell padding */
+@media (max-width: 1023px) {
+  table thead tr th,
+  table tfoot tr th,
+  table tbody tr td {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 }
 @media (min-width: 640px) {
   .advancedfiltercontainer {
