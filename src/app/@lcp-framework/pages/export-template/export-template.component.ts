@@ -105,7 +105,7 @@ export class ExportTemplateComponent implements OnInit {
   submitted = false;
   commonConfig = commonConfig;
   existing_actions: string[] = [];
-  redirect_url: string = 'export_template';
+  redirect_url: string = 'export-template';
   rowsLength: number = 26;
 
   lineItemForm!: FormGroup;
@@ -1360,7 +1360,6 @@ export class ExportTemplateComponent implements OnInit {
 
           const successMessage = this.translate.instant(key);
           this.toastr.success(successMessage);
-
           this.router.navigate([this.redirect_url]);
         } else {
           const key = response.message;
