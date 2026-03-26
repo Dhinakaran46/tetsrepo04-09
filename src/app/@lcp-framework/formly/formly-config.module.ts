@@ -84,6 +84,7 @@ export const search_conditions: any = commonConfig.search_conditions;
           config: {
             key: 'status_id',
             type: 'radio',
+            defaultValue: 1,
             props: {
               label: 'Status',
               required: true,

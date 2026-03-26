@@ -338,7 +338,25 @@ export class LocalStorageService implements OnInit {
         }
       }
     }
+    const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'filtered_columns'];
+    objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
 
+    if (payload.group_by) {
+      payload.group_by = this.removeDuplicateStringsOrNumbers(payload.group_by);
+    }
+    if (payload.sort_columns) {
+      payload.sort_columns = this.removeDuplicateData(payload.sort_columns);
+    }
+    return payload;
+  }
+
+  formatEnumColumnFilters(payload: any, data: any) {
+    if (!data) return payload;
+    const fields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'group_by', 'sort_columns', 'filtered_columns'];
+
+    for (const field of fields) {
+      if (data[field]) payload[field] = [...(payload[field] || []), ...data[field]];
+    }
     const objectFields = ['includes', 'search_all', 'search_any', 'having_any_conditions', 'having_conditions', 'filtered_columns'];
     objectFields.forEach((field) => (payload[field] &&= this.removeDuplicateObjects(payload[field])));
 

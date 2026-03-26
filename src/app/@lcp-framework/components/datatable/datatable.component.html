@@ -10,7 +10,7 @@
         [uuid]="staticPageUuid"
         [entityName]="headerStaticEntityName"
         [isModal]="true"
-        [gridParams]="staticPageGridParams"
+        [gridParams]="getCombinedGridParams()"
         [parentGridFilters]="getParentGridFilterContext()"
         keyword="plain"
       ></app-static-page>
@@ -1055,7 +1055,7 @@
         [uuid]="staticPageUuid"
         [entityName]="footerStaticEntityName"
         [isModal]="true"
-        [gridParams]="staticPageGridParams"
+        [gridParams]="getCombinedGridParams()"
         [parentGridFilters]="getParentGridFilterContext()"
         keyword="plain"
       ></app-static-page>

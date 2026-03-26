@@ -48,11 +48,14 @@ export class StaticPageComponent implements OnChanges {
   @Input() isModal: boolean = false;
   @Input() gridParams!: any;
   @Input() parentGridFilters: {
-    search_all: any[];
-    search_any: any[];
-    having_conditions: any[];
-    having_any_conditions: any[];
+    search_all?: any[];
+    search_any?: any[];
+    having_conditions?: any[];
+    having_any_conditions?: any[];
+    having_all?: any[];
+    having_any?: any[];
     columns?: any[];
+    grid_params?: any;
   } | null = null;
   @Input() keyword: string = '';
   @Output() closeModal = new EventEmitter<void>();
@@ -250,11 +253,13 @@ export class StaticPageComponent implements OnChanges {
 
   ngOnInit() {
     this.collectRouteGParams();
+    this.collectRouteParentGridFilters();
 
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
         this.unique_id = params.get('id') || params.get('uuid');
         this.collectRouteGParams();
+        this.collectRouteParentGridFilters();
         this.requestLoadData();
       });
     }
@@ -448,8 +453,36 @@ export class StaticPageComponent implements OnChanges {
     this.routeGParams = mergedGParams;
   }
 
+  private collectRouteParentGridFilters() {
+    if (!this.parentGridFilters || Object.keys(this.parentGridFilters).length === 0) {
+      const parentGridFiltersStr = this.route.snapshot.queryParamMap.get('parentGridFilters');
+      if (parentGridFiltersStr) {
+        try {
+          const parsed = JSON.parse(parentGridFiltersStr);
+          if (parsed && typeof parsed === 'object') {
+            this.parentGridFilters = { ...this.parentGridFilters, ...parsed };
+          }
+        } catch (e) {
+          console.error('Failed to parse parentGridFilters from route', e);
+        }
+      }
+    }
+  }
+
   private replaceGParamsInObject(obj: any): any {
-    if (!obj || Object.keys(this.routeGParams).length === 0) {
+    if (!obj) {
+      return obj;
+    }
+
+    const combinedGParams: Record<string, any> = { ...this.routeGParams };
+    if (this.gridParams && typeof this.gridParams === 'object') {
+      Object.keys(this.gridParams).forEach((key) => {
+        const cleanKey = key.startsWith('$') ? key.substring(1) : key;
+        combinedGParams[cleanKey] = this.gridParams[key];
+      });
+    }
+
+    if (Object.keys(combinedGParams).length === 0) {
       return obj;
     }
 
@@ -469,7 +502,7 @@ export class StaticPageComponent implements OnChanges {
       if (typeof value === 'string') {
         return value.replace(/\$gparam_\d+/g, (match) => {
           const paramKey = match.substring(1);
-          const replacement = this.routeGParams[paramKey];
+          const replacement = combinedGParams[paramKey];
           return replacement !== undefined ? String(replacement) : match;
         });
       }

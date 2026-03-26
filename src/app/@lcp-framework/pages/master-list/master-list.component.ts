@@ -96,6 +96,7 @@ export class MasterListComponent implements OnChanges {
     having_all?: any[];
     having_any?: any[];
     columns?: any[];
+    grid_params?: any;
   } | null = null;
   @Input() set popupConfig(config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean } | null) {
     if (config) {
@@ -222,6 +223,7 @@ export class MasterListComponent implements OnChanges {
   commonSearchQuery: any = {};
   grid_unique_id: any;
   popupComponentGridParams: any;
+  popupParentGridFilters: any = null;
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
@@ -2403,6 +2405,16 @@ export class MasterListComponent implements OnChanges {
     this.popupEntityName = this.masterInfo.children.popup_edit.entity_name;
     this.isViewPopupOpen = true;
 
+    // Extract gparams from item
+    const gridParams: any = {};
+    Object.keys(item).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        let temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    this.popupComponentGridParams = gridParams;
+
     setTimeout(() => {
       this.loadingpopup = false;
     }, 500);
@@ -2438,24 +2450,6 @@ export class MasterListComponent implements OnChanges {
       this.previewCurrentPage = 1;
       this.previewResultsPerPage = 10;
     }
-  }
-
-  newfetchAttachedPolicies(params: any) {
-    this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
-      (response) => {
-        if (response.status && response.code === 200) {
-        }
-      },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-      },
-      () => {
-        this.previewFetchColumns(params);
-        this.previewFetchData(params);
-      }
-    );
   }
 
   previewFetchColumns(params: any) {
@@ -2639,6 +2633,17 @@ export class MasterListComponent implements OnChanges {
       this.selectedItemUuid = item.uuid;
       this.popupEntityName = this.masterInfo.children.popup_details.entity_name;
       this.isViewPopupOpen = true;
+
+      // Extract gparams from item
+      const gridParams: any = {};
+      Object.keys(item).forEach((key) => {
+        if (key.startsWith('gparam_')) {
+          let temp_key = '$' + key;
+          gridParams[temp_key] = item[key];
+        }
+      });
+      this.popupComponentGridParams = gridParams;
+
       setTimeout(() => {
         this.loadingpopup = false;
       }, 500);
@@ -2683,6 +2688,18 @@ export class MasterListComponent implements OnChanges {
       } else {
         this.router.navigate([targetRoute]);
       }
+    }
+  }
+
+  adjustHours(item: any) {
+    if (this.masterInfo.children.adjust_hours) {
+      let targetRoute = this.masterInfo.children.adjust_hours.target;
+      if (targetRoute.includes(':uuid') && item.uuid) {
+        targetRoute = targetRoute.replace(':uuid', item.uuid);
+      } else if (targetRoute.includes(':id') && item.id) {
+        targetRoute = targetRoute.replace(':id', item.uuid);
+      }
+      this.router.navigate([targetRoute]);
     }
   }
 
@@ -3106,6 +3123,15 @@ export class MasterListComponent implements OnChanges {
       }
     }
   }
+  public getCurrentGridFilters() {
+    return {
+      search_all: this.listQuery?.search_all || [],
+      search_any: this.listQuery?.search_any || [],
+      having_conditions: this.listQuery?.having_conditions || [],
+      having_any_conditions: this.listQuery?.having_any_conditions || [],
+      grid_params: this.grid_params,
+    };
+  }
 
   viewItem(item: any, event?: MouseEvent) {
     if (this.masterInfo.children.details) {
@@ -3127,11 +3153,17 @@ export class MasterListComponent implements OnChanges {
         targetRoute = targetRoute.replace(':gparam', gparamString);
       }
 
+      let queryParams: any = {};
+      const currentFilters = this.getCurrentGridFilters();
+      if (currentFilters && Object.keys(currentFilters).length > 0) {
+        queryParams['parentGridFilters'] = JSON.stringify(currentFilters);
+      }
+
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute], { queryParams }));
         window.open(url, '_blank');
       } else {
-        this.router.navigate([targetRoute]);
+        this.router.navigate([targetRoute], { queryParams });
       }
     }
   }
@@ -3221,6 +3253,7 @@ export class MasterListComponent implements OnChanges {
         }
       });
       this.popupComponentGridParams = gridParams;
+      this.popupParentGridFilters = this.getCurrentGridFilters();
 
       this.popupName = mode;
       this.selectedItemUuid = event.item.uuid;
