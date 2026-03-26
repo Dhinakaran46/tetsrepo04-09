@@ -85,7 +85,8 @@ export class FormlyRepeatTableFieldComponent extends FieldArrayType implements O
   initializeDynamicForm() {
     const group: { [key: string]: FormControl } = {};
     this.getFieldGroup().forEach((field: any) => {
-      group[field.key] = new FormControl(field.defaultValue || ''); // Use field default value if available
+      if (!field || !field.key) return;
+      group[field.key] = new FormControl(field.defaultValue || '');
     });
     this.editForm = new FormGroup(group);
   }

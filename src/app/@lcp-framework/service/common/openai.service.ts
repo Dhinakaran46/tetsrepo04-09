@@ -55,7 +55,7 @@ export class OpenaiService {
   generateAiContent(data: any): Observable<ApiResponce> {
     return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiContent}`, data);
   }
-  
+
   transcribeAudio(data: any): Observable<ApiResponce> {
     return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.transcribe_audio}`, data);
   }
