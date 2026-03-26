@@ -39,7 +39,7 @@ export class CarouselComponent implements OnInit {
   submitted = false;
   tables_list: any = [];
   commonConfig: any;
-  redirect_url = 'carousel_template';
+  redirect_url = 'carousel-template';
 
   lineItemForm!: FormGroup;
   selectedItem: any = null;
@@ -135,7 +135,6 @@ export class CarouselComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    
     this.id = this.route.snapshot.params['id'] || this.route.snapshot.params['uuid'];
     this.initForm();
     this.fetchAllTables();

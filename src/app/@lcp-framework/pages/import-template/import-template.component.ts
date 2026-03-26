@@ -105,7 +105,7 @@ export class ImportTemplateComponent implements OnInit {
   submitted = false;
   commonConfig = commonConfig;
   existing_actions: string[] = [];
-  redirect_url: string = 'import_template';
+  redirect_url: string = 'import-template';
   rowsLength: number = 26;
 
   lineItemForm!: FormGroup;
