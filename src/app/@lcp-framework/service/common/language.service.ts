@@ -11,18 +11,18 @@ export class LanguageService {
 
   constructor(private authservice: AuthService, private localstore: LocalStorageService, private http: HttpClient) {}
 
-  private getLanguageIdFromCode(code: string): number {
+  private getLanguageIdFromCode(code: string): any {
     switch (code) {
       case 'en':
-        return 1;
+        return 'en-GB';
       case 'ae':
-        return 2;
+        return 'ar-QA';
       default:
-        return 1; // Default to en
+        return 'en-GB'; // Default to en
     }
   }
 
-  public getLanguageId(code: string): number {
+  public getLanguageId(code: string): any {
     return this.getLanguageIdFromCode(code);
   }
 
