@@ -4,11 +4,10 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { GridApiService } from '../../service/common/grid.service';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CommonSharedModule } from '../../shared/common/common.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { commonConfig } from '../../config/common.config';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
@@ -17,6 +16,10 @@ import { Title } from '@angular/platform-browser';
 import { TIMEZONE_LIST } from '../../shared/timezone/timezone-list';
 import { ChangeDetectorRef } from '@angular/core';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
+import { NgScrollbarModule } from 'ngx-scrollbar';
+import { MenuModule } from 'headlessui-angular';
 
 interface TabConfiguration {
   id: number;
@@ -52,7 +55,18 @@ const DATETIME_FORMAT_LIST = [
 @Component({
   selector: 'app-user-configuration',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgSelectModule, CommonSharedModule, MonacoEditorModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NgSelectModule,
+    MonacoEditorModule,
+    FlatpickrDirective,
+    TranslateModule,
+    DynamicFontSizeDirective,
+    NgScrollbarModule,
+    MenuModule,
+  ],
   templateUrl: './user-configuration.component.html',
   styleUrls: ['./user-configuration.component.scss'],
 })
@@ -219,13 +233,9 @@ export class UserConfigurationComponent implements OnInit {
       this.companyId = parsedData.main?.company_id;
     }
   }
-  addNewItemFormArray(isFirstTime: boolean) {
-    console.log(isFirstTime);
-  }
+  addNewItemFormArray(isFirstTime: boolean) {}
 
-  prepareNewRecords() {
-    console.log('working');
-  }
+  prepareNewRecords() {}
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
@@ -626,7 +636,6 @@ export class UserConfigurationComponent implements OnInit {
         }
       );
     } else {
-      console.log('Form is invalid');
     }
   }
 
@@ -745,7 +754,6 @@ export class UserConfigurationComponent implements OnInit {
       this.newConfigForm.get('config_select_json')?.setValue(JSON.stringify(parsedJson));
     }
 
-    console.log(this.insert_particular_schema);
     this.gridApiService.executeRecordsConfig(this.insert_particular_schema).subscribe(
       (response: any) => {
         if (response.status && response.code === 200) {

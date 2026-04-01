@@ -152,6 +152,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   commonConfig = commonConfig;
   config: any = null;
   displayDateRangeFilter = false;
+
   store: any;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
   @ViewChildren('powerBiContainer') powerBiContainers!: QueryList<ElementRef>;
@@ -239,7 +240,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         if (instance.element) {
           instance.element.remove(); // Removes the element from the DOM
         } else {
-          console.log(`Element at index ${index} not found`);
+          console.warn(`Element at index ${index} not found`);
         }
       }
     });

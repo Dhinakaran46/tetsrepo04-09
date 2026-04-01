@@ -1,37 +1,17 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { IconHomeComponent } from '../../shared/icon/icon-home';
-import { IconDollarSignCircleComponent } from '../../shared/icon/icon-dollar-sign-circle';
-import { IconUserComponent } from '../../shared/icon/icon-user';
-import { IconPhoneComponent } from '../../shared/icon/icon-phone';
-import { IconLinkedinComponent } from '../../shared/icon/icon-linkedin';
-import { IconFacebookComponent } from '../../shared/icon/icon-facebook';
-import { IconGithubComponent } from '../../shared/icon/icon-github';
-import { IconTwitterComponent } from '../../shared/icon/icon-twitter';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { CountryTimezoneService } from '../../service/common/country-timezone.service';
-import { IconLockDotsInRefreshComponent } from '../../shared/icon/icon-lock-dots-in-refresh';
 import { environment } from '../../../../environments/environment';
 import { ToastrService } from 'ngx-toastr';
-import { CommonSharedModule } from '../../shared/common/common.module';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 
 @Component({
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    ReactiveFormsModule,
-    IconHomeComponent,
-    IconDollarSignCircleComponent,
-    IconUserComponent,
-    IconPhoneComponent,
-    IconLinkedinComponent,
-    IconFacebookComponent,
-    IconGithubComponent,
-    IconTwitterComponent,
-    IconLockDotsInRefreshComponent,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, FlatpickrDirective, TranslateModule, DynamicFontSizeDirective],
   providers: [DatePipe],
   templateUrl: './profile.component.html',
 })

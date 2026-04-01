@@ -111,9 +111,7 @@ export class ResetpwdComponent {
   ngOnInit() {
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
-      console.log('Reloaded');
     } else {
-      console.log('Initial Load');
     }
 
     const languageId = this.languageService.getLanguageId(languageCode);

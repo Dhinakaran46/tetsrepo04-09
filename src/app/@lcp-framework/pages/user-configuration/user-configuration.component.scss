@@ -12,6 +12,66 @@
   overflow-y: auto;
 }
 
+.user-config-table-wrapper {
+  width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar on the tab strip - the inline styles handle the actual scroll */
+.tab-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+.tab-scroll-container {
+  scrollbar-width: none;
+}
+
+.file-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.file-input-row .form-input {
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+.select-editor-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-height: 48px;
+  width: 100%;
+}
+
+.select-editor-control {
+  width: min(420px, 100%);
+  min-width: 220px;
+}
+
+.json-editor-textarea {
+  min-width: 220px;
+  min-height: 38px;
+  width: 100%;
+  resize: vertical;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-family: monospace;
+}
+
+.icon-action-btn {
+  margin-left: 2px;
+  height: 38px;
+  width: 38px;
+  min-width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 table thead tr th,
 table tfoot tr th,
 table tbody tr td {
@@ -38,6 +98,16 @@ table tbody tr td {
   overflow-y: auto;
 }
 
+/* Tablet: reduce table cell padding so inputs are not squished */
+@media (max-width: 1023px) {
+  table thead tr th,
+  table tfoot tr th,
+  table tbody tr td {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
 /* Adjust input and select fields for better mobile experience */
 @media (max-width: 640px) {
   .advancedfiltercontainer input,
@@ -54,6 +124,42 @@ table tbody tr td {
     width: 100%;
     margin-right: 0 !important;
   }
+
+  .advancedfiltercontainer {
+    width: calc(100% - 1rem);
+    min-width: auto;
+    left: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    top: 5%;
+    max-height: 85vh;
+  }
+
+  .select-editor-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .select-editor-control {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .json-editor-textarea {
+    min-width: 100%;
+  }
+
+  .icon-action-btn {
+    margin-left: 0;
+  }
+
+  table thead tr th,
+  table tfoot tr th,
+  table tbody tr td {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    white-space: nowrap;
+  }
 }
 
 /* Ensure buttons are fully visible on mobile */
@@ -69,6 +175,7 @@ table tbody tr td {
   margin: -15px;
   padding: 1.25rem 1.25rem 0.25rem 1.25rem;
 }
+
 .header-panel {
   margin-top: -15px;
 }

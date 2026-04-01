@@ -23,6 +23,7 @@ import { environment } from '../../../../environments/environment';
 // import { UserRolePolicyComponent } from '../../pages/user-role-policy/user-role-policy.component';
 // import { EmailTemplateAssignmentComponent } from '../../pages/email-template-assignment/email-template-assignment.component';
 import { commonConfig } from '../../config/common.config';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -70,11 +71,53 @@ export class RouteUpdateService {
     return new Observable((observer) => {
       this.getPermissionListJSON().subscribe((permissionListJSON) => {
         if (permissionListJSON) {
+          const componentMap: any = {
+            grid_builder_module: () => import('../../pages/master-list/master-list.component').then((m) => m.MasterListComponent),
+            menu_module: () => import('../../pages/menu-mapping/menu-mapping.component').then((m) => m.MenuMappingComponent),
+            static_page_builder_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
+            form_builder_module: () => import('../../pages/form-builder/form-builder.component').then((m) => m.FormBuilderComponent),
+            entity_user_role_map_module: () =>
+              import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
+            entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
+            about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
+            ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
+            query_builder_module: () => import('../../pages/query-builder/query-builder.component').then((m) => m.QueryBuilderComponent),
+            language_contents_module: () => import('../../pages/language-mapping/language-mapping.component').then((m) => m.LanguageMappingComponent),
+            job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
+            export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
+            configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
+            user_configurations_module: () => import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
+            cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
+            import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
+            import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
+            export_template_module: () => import('../../pages/export-template/export-template.component').then((m) => m.ExportTemplateComponent),
+            import_job_detail_module: () => import('../../pages/import-job-details/import-job-details.component').then((m) => m.ImportJobDetailsComponent),
+            policy_add_edit_module: () => import('../../pages/policy/policy.component').then((m) => m.PolicyComponent),
+            user_role_policy_module: () => import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
+            email_template_assignment_module: () =>
+              import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
+            whatsapp_template_assignment_module: () =>
+              import('../../pages/whatsapp-template-assignment/whatsapp-template-assignment.component').then((m) => m.WhatsappTemplateAssignmentComponent),
+            approval_workflow_assignment_module: () =>
+              import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
+            approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
+            approval_requests_tracking_module: () =>
+              import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
+            child_process_setting_module: () =>
+              import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
+            carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
+            barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
+            common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
+            tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
+            target_keywords_embeddings_module: () =>
+              import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+          };
+
           const dynamicRoutes = routeDataArray
             .filter((routeData: any) => routeData.entity_name && routeData.component_class_name)
+            .filter((routeData: any) => !!componentMap[routeData.component_class_name])
             .map((routeData: any) => {
               const viewPermissionKey = `view_${routeData.entity_name}`;
-
               const createPermissionKey = `add_${routeData.entity_name}`;
               const editPermissionKey = `edit_${routeData.entity_name}`;
               const deletePermissionKey = `delete_${routeData.entity_name}`;
@@ -91,12 +134,11 @@ export class RouteUpdateService {
               const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
               const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
               const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
+              const getCodePermissionKey = `get_code_${routeData.entity_name}`;
 
-              const idColumn = `${routeData.primary_table}.id`;
               const deletedAtColumn = `${routeData.primary_table}.status_id`;
               const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
 
-              const sortCol = [[idColumn, 'desc']];
               const searchAllCol = [
                 {
                   column_name: deletedAtColumn,
@@ -137,7 +179,6 @@ export class RouteUpdateService {
                 finalAllCol = searchAllCol;
               }
 
-              //const children = routeDataArray.filter((childRoute) => childRoute.parent_id === routeData.id && childRoute.action_slug);
               const children = routeDataArray.reduce((acc, childRoute) => {
                 if (childRoute.parent_id === routeData.id && childRoute.action_slug) {
                   acc[childRoute.action_slug] = childRoute;
@@ -206,12 +247,13 @@ export class RouteUpdateService {
                 barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
                 common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
                 tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
+                target_keywords_embeddings_module: () =>
+                  import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
               };
 
               const route: Route = {
                 path: targetPath,
-
-                loadComponent: componentMap[routeData.component_class_name] || null,
+                loadComponent: componentMap[routeData.component_class_name],
                 title: routeData.entity_name,
                 data: {
                   pageInfo: {
@@ -250,6 +292,7 @@ export class RouteUpdateService {
                       popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                       popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
                       reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
+                      get_code: permissionListJSON[getCodePermissionKey] || false,
                     },
                     children: children,
                   },
@@ -302,6 +345,7 @@ export class RouteUpdateService {
           const popupEditPermissionKey = `popup_edit_${routeData.entity_name}`;
           const popupDetailsPermissionKey = `popup_details_${routeData.entity_name}`;
           const resetPasswordPermissionKey = `reset_password_${routeData.entity_name}`;
+          const getCodePermissionKey = `get_code_${routeData.entity_name}`;
 
           const idColumn = `${routeData.primary_table}.id`;
           const deletedAtColumn = `${routeData.primary_table}.status_id`;
@@ -403,6 +447,8 @@ export class RouteUpdateService {
             carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
             common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
             tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
+            target_keywords_embeddings_module: () =>
+              import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
           };
 
           const route: Route = {
@@ -445,6 +491,7 @@ export class RouteUpdateService {
                   popup_edit: permissionListJSON[popupEditPermissionKey] || false,
                   popup_details: permissionListJSON[popupDetailsPermissionKey] || false,
                   reset_password: permissionListJSON[resetPasswordPermissionKey] || false,
+                  get_code: permissionListJSON[getCodePermissionKey] || false,
                 },
                 children: children,
                 additionalData: {

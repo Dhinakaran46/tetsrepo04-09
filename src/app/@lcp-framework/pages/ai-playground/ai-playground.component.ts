@@ -104,7 +104,7 @@ export class AiPlaygroundComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.log('err', err);
+        console.warn('err', err);
       },
     });
   }

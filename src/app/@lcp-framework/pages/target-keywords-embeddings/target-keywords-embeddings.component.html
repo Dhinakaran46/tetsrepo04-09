@@ -69,8 +69,13 @@
                 <ng-container [formGroupName]="i">
                   <tr *ngIf="group.get('isShow')?.value">
                     <td appDynamicFontSize="body">
-                      <label class="text-xs">{{ group.get('key1')?.value
-                        }}</label>
+                      <div class="inline-flex items-baseline gap-2">
+                        <i 
+                          [class]="getEmbeddingIcon(getItemFromGroup(group))"
+                          [ngxTippy]="getEmbeddingHoverText(getItemFromGroup(group))">
+                        </i>
+                        <label class="text-xs">{{ group.get('key1')?.value }}</label>
+                      </div>
                     </td>
                     <ng-container
                       *ngFor="let controlName of getControlNames(group)">
@@ -83,13 +88,23 @@
                           class="form-input py-1.5 text-xs w-full text-gray-600 ng-tns-c617364992-2 md:text-xs md:pr-10"
                           [value]="group.get(controlName)?.value"
                           (input)="onInputChange($event, group.get(controlName))"
-                          [attr.readonly]="!masterInfo?.permissions?.edit ? true : null" />
+                          />
+                          <!-- [attr.readonly]="!masterInfo?.permissions?.edit ? true : null" -->
                       </td>
                     </ng-container>
                     <td class="text-center">
-                      <button *ngIf="this.masterInfo?.permissions?.delete"
+                      <button type="button" 
+                        (click)="generateVector(group.get('key1')?.value)"
+                        class="text-blue-500 mr-4"
+                        ngxTippy="Generate Vector">
+                          <i class="fa-solid fa-diagram-project text-sm"></i>        
+                      </button>
+                      <!-- *ngIf="this.masterInfo?.permissions?.delete" -->
+                      <button 
                         (click)="removeItem1(group.get('key1')?.value)"
+                        ngxTippy="Delete"
                         class="text-red-500">
+                        <!-- <i class="fa-solid fa-xmark text-sm"></i> -->
                          <i class="fa-solid fa-trash-can"></i>
                       </button>
                     </td>

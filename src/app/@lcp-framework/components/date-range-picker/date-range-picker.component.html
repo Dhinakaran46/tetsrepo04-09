@@ -1,14 +1,15 @@
-<div class="date-range-picker w-full p-4 bg-white dark:bg-gray-800 rounded-lg">
-  <div class="flex items-end justify-between w-full gap-3">
+<div class="date-range-picker w-full rounded-lg bg-white p-4 dark:bg-gray-800">
+  <div class="flex w-full items-end justify-between gap-3">
     <!-- Quick date range selector -->
     <div class="w-56 flex-shrink-0">
-      <label class="text-primary mb-1">
+      <label class="mb-1 text-primary">
         {{ 'select_date' | translate }}
       </label>
-      <select 
+      <select
         [ngModel]="selectedQuickRange"
         (ngModelChange)="onQuickDateSelect($event)"
-        class="w-full rounded-md border border-gray-300 dark:border-gray-600 shadow-sm pl-3 pr-8 py-2 bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+        class="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-700 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+      >
         <option [ngValue]="''" disabled>Select range</option>
         <option [value]="'today'">Today</option>
         <option [value]="'yesterday'">Yesterday</option>
@@ -25,57 +26,50 @@
 
     <!-- From Date -->
     <div class="w-40 flex-shrink-0">
-      <label class="text-primary mb-1">
-        {{'from_date' | translate}}
+      <label class="mb-1 text-primary">
+        {{ 'from_date' | translate }}
       </label>
       <input
         #fromDateInput
-        type="date"
+        type="text"
+        appFlatpickr="date"
         [value]="pendingDateRange.fromDate ? formatDateForInput(pendingDateRange.fromDate) : ''"
-        [max]="pendingDateRange.toDate ? formatDateForInput(pendingDateRange.toDate) : maxDate"
+        [appFlatpickrMaxDate]="pendingDateRange.toDate ? formatDateForInput(pendingDateRange.toDate) : maxDate"
         (change)="onFromDateChange($event)"
-        class="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
       />
     </div>
-    
+
     <!-- To Date -->
     <div class="w-40 flex-shrink-0">
-      <label class="text-primary mb-1">
-        {{'to_date' | translate}}
+      <label class="mb-1 text-primary">
+        {{ 'to_date' | translate }}
       </label>
       <input
         #toDateInput
-        type="date"
+        type="text"
+        appFlatpickr="date"
         [value]="pendingDateRange.toDate ? formatDateForInput(pendingDateRange.toDate) : ''"
-        [min]="pendingDateRange.fromDate ? formatDateForInput(pendingDateRange.fromDate) : minToDate"
-        [max]="maxDate"
+        [appFlatpickrMinDate]="pendingDateRange.fromDate ? formatDateForInput(pendingDateRange.fromDate) : minToDate"
+        [appFlatpickrMaxDate]="maxDate"
         [disabled]="!pendingDateRange.fromDate"
         (change)="onToDateChange($event)"
-        class="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
       />
     </div>
-    
+
     <!-- Buttons -->
-    <div class="flex items-end gap-2 flex-shrink-0">
-        <button
-          type="button"
-          (click)="onSubmit()"
-          [disabled]="!pendingDateRange.fromDate || !pendingDateRange.toDate"
-          class="px-4 py-2 btn btn-primary"
-        >
-          <span class="flex items-center">
-            {{ 'apply' | translate }}
-          </span>
-        </button>
-        <button
-          type="button"
-          (click)="clearQuickRange()"
-          class="px-4 py-2 btn btn-danger"
-        >
-          <span class="flex items-center">
-            {{'reset' | translate}}
-          </span>
-        </button>
-      </div>
+    <div class="flex flex-shrink-0 items-end gap-2">
+      <button type="button" (click)="onSubmit()" [disabled]="!pendingDateRange.fromDate || !pendingDateRange.toDate" class="btn btn-primary px-4 py-2">
+        <span class="flex items-center">
+          {{ 'apply' | translate }}
+        </span>
+      </button>
+      <button type="button" (click)="clearQuickRange()" class="btn btn-danger px-4 py-2">
+        <span class="flex items-center">
+          {{ 'reset' | translate }}
+        </span>
+      </button>
+    </div>
   </div>
 </div>

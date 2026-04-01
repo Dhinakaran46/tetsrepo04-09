@@ -63,6 +63,9 @@ export const commonConfig: any = {
     generateVectorForTable: 'openai/generate-vector-for-table',
     generateAiContent: 'openai/generate-query-json',
     execute_child_process: 'common/execute-child-process',
+    transcribe_audio: 'openai/transcribe-audio',
+    search_menu_target_embeddings: 'openai/search-menu-target-embeddings',
+    generate_menu_embeddings: 'openai/generate-menu-embeddings',
   },
   ENTITY_TYPES: {
     GRID_BUILDER_MODULE: 'grid_builder_module',
@@ -99,6 +102,7 @@ export const commonConfig: any = {
     CAROUSEL_MODULE: 'carousel_module',
     COMMON_PERMISSION_MODULE: 'common_permission_module',
     TREE_BUILDER_MODULE: 'tree_builder_module',
+    TARGET_KEYWORDS_EMBEDDINGS_MODULE: 'target_keywords_embeddings_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -134,6 +138,7 @@ export const commonConfig: any = {
     carousel_module: 'carouselmodule',
     common_permission_module: 'commonpermissionmodule',
     tree_builder_module: 'treebuildermodule',
+    target_keywords_embeddings_module: 'targetkeywordsembeddingsmodule',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -177,6 +182,7 @@ export const commonConfig: any = {
     POPUP_EDIT: 'popup_edit',
     POPUP_DETAILS: 'popup_details',
     RESET_PASSWORD: 'reset_password',
+    GET_CODE: 'get_code',
   },
   status_type: [
     { label: 'Active', value: 1 },
@@ -215,6 +221,7 @@ export const commonConfig: any = {
     { label: 'Popup Edit', value: 'popup_edit' },
     { label: 'Popup Details', value: 'popup_details' },
     { label: 'Reset Password', value: 'reset_password' },
+    { label: 'Get Code', value: 'get_code' },
   ],
   entity_types: [
     { label: 'Grid Builder Module', value: 'grid_builder_module' },
@@ -252,6 +259,7 @@ export const commonConfig: any = {
     { label: 'Carousel Module', value: 'carousel_module' },
     { label: 'Common Permission Module', value: 'common_permission_module' },
     { label: 'Tree Builder Module', value: 'tree_builder_module' },
+    { label: 'Target Keywords Embeddings Module', value: 'target_keywords_embeddings_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

@@ -17,6 +17,7 @@ import Swal from 'sweetalert2';
 import { LanguageService } from '../../service/common/language.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
+import { OpenaiService } from '../../service/common/openai.service';
 
 interface Language {
   description: string | null;
@@ -28,14 +29,16 @@ interface Language {
 interface Item {
   key1: string;
   language_content: Language[];
+  target_keywords_embeddings?: any;
+  is_target_keyword_updated?: number;
 }
 
 @Component({
-  selector: 'app-language-mapping',
+  selector: 'app-target-keywords-embeddings',
   standalone: true,
   imports: [LoaderComponent, CommonSharedModule, DataTableComponent, ReactiveFormsModule, SearchPipe],
-  templateUrl: './language-mapping.component.html',
-  styleUrl: './language-mapping.component.scss',
+  templateUrl: './target-keywords-embeddings.component.html',
+  styleUrl: './target-keywords-embeddings.component.scss',
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -43,7 +46,7 @@ interface Item {
     ]),
   ],
 })
-export class LanguageMappingComponent implements OnInit {
+export class TargetKeywordsEmbeddingsComponent implements OnInit {
   store: any;
   userId: any;
   companyId: any;
@@ -68,7 +71,7 @@ export class LanguageMappingComponent implements OnInit {
   update_json_schema: any = {
     // it will be removed
     action: ['hard_delete', 'insert'],
-    table: ['language_contents', 'language_contents'],
+    table: ['route_keywords_embeddings', 'route_keywords_embeddings'],
     table_mapping: ['table1', 'table2'],
     data: {
       table2: [],
@@ -81,7 +84,7 @@ export class LanguageMappingComponent implements OnInit {
   delete_json_schema: any = {
     // it will be removed
     action: ['hard_delete'],
-    table: ['language_contents'],
+    table: ['route_keywords_embeddings'],
     table_mapping: ['table1'],
     conditions: {
       table1: [],
@@ -103,7 +106,8 @@ export class LanguageMappingComponent implements OnInit {
     private route: ActivatedRoute,
     private languageService: LanguageService,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private openaiService: OpenaiService
   ) {
     this.langMapForm = this.formBuilder.group({
       items: this.formBuilder.array([]),
@@ -157,7 +161,7 @@ export class LanguageMappingComponent implements OnInit {
 
   fetchData() {
     this.loading = true;
-    const procedureParams = { proc_name: 'get_key_language_contents', params: { company_id: this.companyId } };
+    const procedureParams = { proc_name: 'get_key_menu_target', params: { company_id: this.companyId } };
 
     this.commonService.procedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: { result: Item[] }[]; message: string }) => {
@@ -302,6 +306,56 @@ export class LanguageMappingComponent implements OnInit {
     this.getAddFormItems.splice(index, 1);
   }
 
+  async generateVector(keyName: string) {
+    // Get the form group for this key
+    const itemsArray = this.langMapForm.get('items') as FormArray;
+    const targetGroup = itemsArray.controls.find((control) => control.get('key1')?.value === keyName);
+
+    if (!targetGroup) {
+      console.error('Target group not found for key:', keyName);
+      return;
+    }
+
+    // Construct payload array for each language
+    const payload = [];
+    const controlNames = this.getControlNames(targetGroup);
+
+    for (const controlName of controlNames) {
+      const languageId = controlName.split('_')[0];
+      const keywords = targetGroup.get(controlName)?.value;
+
+      if (keywords && keywords.trim()) {
+        // Determine language code based on language_id
+        const languageCode = languageId === '1' ? 'en-GB' : 'ar-QA';
+
+        payload.push({
+          target: keyName,
+          keywords: keywords,
+          language_code: languageCode,
+        });
+      }
+    }
+
+    if (payload.length === 0) {
+      console.warn('No keywords found to generate vectors for');
+      return;
+    }
+
+    this.openaiService.generateMenuEmbeddings(payload).subscribe({
+      next: (response) => {
+        const key = 'vector_generation_success';
+        const successMessage = this.translate.instant(key);
+        this.toastr.success(successMessage);
+      },
+      error: (error) => {
+        console.error('Error generating vector:', error);
+        const key = 'vector_generation_error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage);
+      },
+    });
+  }
+
   async removeItem1(keyName: string) {
     let removableItems: string[] = [];
 
@@ -326,7 +380,7 @@ export class LanguageMappingComponent implements OnInit {
 
   deleteRecords(postData: any) {
     const removable_items = postData.map((item: any) => ({
-      key_content: item,
+      target: item,
     }));
 
     this.delete_json_schema.conditions['table1'] = removable_items;
@@ -423,13 +477,14 @@ export class LanguageMappingComponent implements OnInit {
   saveRecords(postData: any) {
     const removable_items = postData.map((item: any) => ({
       language_id: item.language_id,
-      key_content: item.key,
+      target: item.key,
     }));
 
     const insertable_items = postData.map((item: any) => ({
       language_id: item.language_id,
-      key_content: item.key,
-      values: item.value,
+      target: item.key,
+      target_keywords: item.value,
+      is_target_keyword_updated: 1,
     }));
 
     this.update_json_schema.conditions['table1'] = removable_items;
@@ -543,5 +598,58 @@ export class LanguageMappingComponent implements OnInit {
     this.totalPages = Math.ceil(this.totalItems / this.pageSize);
 
     return this.totalPages;
+  }
+
+  // Methods to determine embedding status
+  getItemFromGroup(group: AbstractControl): Item | undefined {
+    const keyValue = group.get('key1')?.value;
+    return this.allItems.find((item) => item.key1 === keyValue);
+  }
+
+  getEmbeddingStatus(item: any): string {
+    if (!item) {
+      return 'unknown';
+    }
+    if (!item.target_keywords_embeddings) {
+      return 'not-embedded';
+    }
+    if (item.is_target_keyword_updated === 1) {
+      return 'pending';
+    }
+    return 'embedded';
+  }
+
+  getEmbeddingIcon(item: Item | undefined): string {
+    if (!item) {
+      return 'fa-solid fa-question text-gray-500';
+    }
+    const status = this.getEmbeddingStatus(item);
+    switch (status) {
+      case 'not-embedded':
+        return 'fa-solid fa-triangle-exclamation text-red-500';
+      case 'pending':
+        return 'fa-solid fa-clock text-yellow-500';
+      case 'embedded':
+        return 'fa-solid fa-check-circle text-green-500';
+      default:
+        return 'fa-solid fa-question text-gray-500';
+    }
+  }
+
+  getEmbeddingHoverText(item: Item | undefined): string {
+    if (!item) {
+      return 'Unknown Status';
+    }
+    const status = this.getEmbeddingStatus(item);
+    switch (status) {
+      case 'not-embedded':
+        return 'Not Embedded';
+      case 'pending':
+        return 'Yet To Be Updated';
+      case 'embedded':
+        return 'Embedded';
+      default:
+        return 'Unknown Status';
+    }
   }
 }

@@ -15,6 +15,9 @@ import {
   ViewContainerRef,
   AfterViewChecked,
   HostListener,
+  OnDestroy,
+  Optional,
+  Host,
 } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
@@ -28,17 +31,28 @@ import { CommonSharedModule } from '../../shared/common/common.module';
 import { Store } from '@ngrx/store';
 import { commonConfig } from '../../config/common.config';
 
-import { DatePipe, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
+import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
 import { LoaderComponent } from '../loader/loader.component';
-import { AppendToBodyDirective } from './append-to-body.directive';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiResponce, GridApiService } from '../../service/common/grid.service';
 import { StaticPageComponent } from '../../pages/static-page/static-page.component';
+import { FlatpickrDirective } from '../../directives/flatpickr.directive';
+import { CommonModule } from '@angular/common';
+import { NgScrollbarModule } from 'ngx-scrollbar';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { RouterModule } from '@angular/router';
+import { MenuModule } from 'headlessui-angular';
+import { NgxTippyModule } from 'ngx-tippy-wrapper';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 import Swal from 'sweetalert2';
+import flatpickr from 'flatpickr';
 
 interface SearchCondition {
   id: string;
@@ -56,7 +70,7 @@ interface InputTypes {
 interface FilterCondition {
   field: string;
   operator: string;
-  value: string;
+  value: any;
   clause_type: string;
   enum_values: any[];
   availableOperators: SearchCondition[];
@@ -80,9 +94,10 @@ interface GridViewState {
   appliedFilterConditions: Array<{
     field: string;
     operator: string;
-    value: string;
+    value: any;
     clause_type: string;
     enum_values: any[];
+    enum_value_options?: Array<{ label: any; value: any }>;
   }>;
 }
 
@@ -94,10 +109,35 @@ interface UserSearchConfiguration {
   updated_at: string;
 }
 
+interface UserSearchConfigurationTemp {
+  entity_slug: string;
+  view_name: string;
+  localstoreOnly: boolean;
+  search_values: GridViewState;
+  updated_at: string;
+}
+
 @Component({
   selector: 'app-datatable',
   standalone: true,
-  imports: [CommonSharedModule, NgMultiSelectDropDownModule, BooleanStatusPipe, LoaderComponent, AppendToBodyDirective, StaticPageComponent],
+  imports: [
+    CommonModule,
+    NgMultiSelectDropDownModule,
+    BooleanStatusPipe,
+    LoaderComponent,
+    StaticPageComponent,
+    FormBuilderComponent,
+    FlatpickrDirective,
+    NgScrollbarModule,
+    FormsModule,
+    ReactiveFormsModule,
+    TranslateModule,
+    RouterModule,
+    MenuModule,
+    NgxTippyModule,
+    NgSelectModule,
+    DynamicFontSizeDirective,
+  ],
   templateUrl: './datatable.component.html',
   styleUrl: './datatable.component.scss',
   animations: [
@@ -107,9 +147,10 @@ interface UserSearchConfiguration {
     ]),
   ],
 })
-export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
   // Add this property to your component class:
   pendingPopupData: { item: any; entityName: string } | null = null;
+  private childComponentResolvedModes: Record<string, string> = {};
 
   expandedItem: any = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
@@ -133,6 +174,21 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Input() resultsPerPage: any = 10;
   @Input() column: any = '';
   @Input() query: any = '';
+  @Input() activeSearchAll: any[] = [];
+  @Input() activeSearchAny: any[] = [];
+  @Input() activeHavingAll: any[] = [];
+  @Input() activeHavingAny: any[] = [];
+  @Input() parentFilterColumns: any[] = [];
+  @Input() parentGridFilters: {
+    search_all?: any[];
+    search_any?: any[];
+    having_conditions?: any[];
+    having_any_conditions?: any[];
+    having_all?: any[];
+    having_any?: any[];
+    columns?: any[];
+    grid_params?: any;
+  } | null = null;
   @Output() delete = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
@@ -158,6 +214,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @Input() footerStaticEntityName: string = '';
   @Input() staticPageUuid: string | null = null;
   @Input() staticPageGridParams: any = null;
+  @Input() attachedPolicies: any[] = [];
 
   totalPages: number = 1;
   filteredItems: any[] = [];
@@ -176,6 +233,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   inputTypes: InputTypes = commonConfig.field_type;
   searchConditions: SearchConditions = commonConfig.search_conditions;
   isSchemaChunks: boolean = false;
+  policyData: any = null;
 
   // Quick fix - minimal required settings
   filterDropdownSettings: any = {
@@ -195,7 +253,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   mapConditionToSQL = (condition: any) => {
-    switch (condition) {
+    const normalizedCondition = String(condition ?? '')
+      .trim()
+      .toLowerCase();
+
+    switch (normalizedCondition) {
       case 'contains':
         return 'ILIKE';
       case 'not_contains':
@@ -216,8 +278,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
         return 'IN';
       case 'not_in':
         return 'NOT IN';
+      case 'between':
+        return 'BETWEEN';
       default:
-        return condition;
+        return normalizedCondition || condition;
     }
   };
 
@@ -279,6 +343,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
   @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
   @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
+
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
   @Input() isViewPopupOpen: boolean = false;
@@ -287,7 +352,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   loadingpopup = false;
   noPopupPermission = false;
 
-  save_filter_condition = false;
+  save_grid_views = false;
+  save_grid_latest_state = false;
   show_column_search_keys = false;
   show_common_search_keys = false;
   private activeSortOrder: string[] = [];
@@ -295,6 +361,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   selectedViewName: string = '';
   isViewConfigModalOpen: boolean = false;
   isEditingViewConfig: boolean = false;
+  isEditingNoFilterView: boolean = false;
   isMyViewsMenuOpen: boolean = false;
   viewFormName: string = '';
   viewFormSetAsDefault: boolean = true;
@@ -303,6 +370,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   private appliedSavedViewSlug: string | null = null;
   private savedViewApplyScheduled = false;
   private initialFetchEmitted = false;
+  private latestStateBootstrapSlug: string | null = null;
+  private pendingManualViewSelection = false;
+  private hasPersistedViewBeforeDestroy = false;
+  private betweenRangePickers: { [key: number]: flatpickr.Instance } = {};
+  private readonly NO_FILTER_VIEW_NAME = 'No Filter';
+  private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
   private upsert_saved_view_json_schema: any = {
     print_query: true,
     action: ['hard_delete', 'insert'],
@@ -330,20 +403,24 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private gridApiService: GridApiService,
     private toastr: ToastrService,
     public storeData: Store<any>,
-    public datePipe: DatePipe,
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
     public location: Location,
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    @Optional() @Host() private parentMasterList: MasterListComponent
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
 
-    this.save_filter_condition = this.config.save_filter_condition == 'true' && this.config.save_filter_condition;
+    this.save_grid_views = this.config.save_grid_views == 'true' && this.config.save_grid_views;
+    this.save_grid_latest_state = this.config.save_grid_latest_state == 'true' && this.config.save_grid_latest_state;
     this.show_column_search_keys = this.config.show_column_search_keys == 'true' && this.config.show_column_search_keys;
     this.show_common_search_keys = this.config.show_common_search_keys == 'true' && this.config.show_common_search_keys;
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    if (this.user_info.main?.policies) {
+      this.policyData = this.user_info.main?.policies || null;
+    }
     this.paginationOptions = this.config.grid_pagination_dropdown.split(',').map((item: any) => +item);
     this.initStore();
   }
@@ -356,6 +433,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       this.createColumnPopupChildMasterList(item, entityName);
       this.cdr.detectChanges(); // flush changes
     }
+  }
+
+  ngOnDestroy(): void {
+    Object.keys(this.betweenRangePickers).forEach((key) => {
+      this.betweenRangePickers[Number(key)]?.destroy();
+    });
+    this.betweenRangePickers = {};
+
+    if (this.hasPersistedViewBeforeDestroy) return;
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
   }
 
   onEnumChange(selectedValues: any[], index: number) {
@@ -701,15 +789,40 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   private emitInitialFetchIfNoSavedView(): void {
     if (this.initialFetchEmitted) return;
+    if (this.save_grid_latest_state && !this.save_grid_views) return;
+    const entitySlug = this.getEntitySlug();
+    const tempApplyKey = `${entitySlug}::__temp__`;
+    const hasStableEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name);
+    if (this.save_grid_latest_state && !this.save_grid_views && !hasStableEntityContext) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
     const hasEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title);
     if (!hasEntityContext) return;
     if (this.getSavedViewConfiguration()) return;
+
+    const tempState = this.getTempGridStateForCurrentGrid();
+    if (tempState) {
+      if (this.appliedSavedViewSlug === tempApplyKey) return;
+      if (this.canApplyGridState(tempState)) {
+        this.appliedSavedViewSlug = tempApplyKey;
+        this.hasSavedViewConfiguration = true;
+        setTimeout(() => {
+          this.applyGridState(tempState);
+        }, 0);
+      } else {
+        this.scheduleTryApplySavedView();
+      }
+      return;
+    }
 
     const page = Number(this.currentPage) > 0 ? Number(this.currentPage) : 1;
     const limit = Number(this.resultsPerPage) > 0 ? Number(this.resultsPerPage) : this.getDefaultResultsPerPage();
 
     this.initialFetchEmitted = true;
-    this.pageChange.emit({ page, start_index: (page - 1) * limit, source: 'default-initial' });
+    setTimeout(() => {
+      this.pageChange.emit({ page, start_index: (page - 1) * limit, source: 'default-initial' });
+    }, 0);
   }
 
   /* advanced search filter functions */
@@ -720,28 +833,99 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   getOperatorsForColumn(column: string): SearchCondition[] {
     const columnData = this.filteredColumns.find((col) => col.field === column);
     const columnType = columnData?.field_type_id;
+    const inputType = this.inputTypes[columnType] || 'text';
+    const supportsBetween = this.supportsBetweenInputType(inputType);
+    const withBetween = (ops: SearchCondition[]) => {
+      if (!supportsBetween) return ops;
+      if (ops.some((condition) => condition.value === 'between')) return ops;
+      return [...ops, { id: 'between', label: 'Between', value: 'between' }];
+    };
+
     if (columnData?.enum_values) {
       return [
         { id: '1', label: 'In', value: 'in' },
         { id: '2', label: 'Not In', value: 'not_in' },
       ];
     } else if (this.isAggregateFunction(column) && columnData?.clause_type !== 'having') {
-      return this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || [];
+      return withBetween(this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || []);
     } else {
-      return this.searchConditions[columnType] || [];
+      return withBetween(this.searchConditions[columnType] || []);
     }
+  }
+  private applyGparamsToPayload(payload: any): any {
+    if (!payload) return payload;
+
+    const combinedParams = this.getCombinedGridParams();
+
+    if (Object.keys(combinedParams).length === 0) return payload;
+
+    let result = payload;
+    Object.keys(combinedParams).forEach((key) => {
+      const paramKey = key.startsWith('$') ? key : `$${key}`;
+      result = this.localstore.replaceUniqueId(result, paramKey, combinedParams[key]);
+    });
+    return result;
+  }
+
+  public getCombinedGridParams(): any {
+    let combinedParams: any = {};
+
+    // 1. Pull from recursively passed parent filters if available
+    if (this.parentGridFilters?.grid_params) {
+      Object.assign(combinedParams, this.parentGridFilters.grid_params);
+    }
+
+    // 2. Pull from immediate parent MasterListComponent instance if available
+    if (this.parentMasterList?.grid_params) {
+      Object.assign(combinedParams, this.parentMasterList.grid_params);
+    }
+
+    // 3. Current local staticPageGridParams (e.g. from parent row item)
+    if (this.staticPageGridParams) {
+      Object.assign(combinedParams, this.staticPageGridParams);
+    }
+
+    return combinedParams;
   }
 
   async getEnumValues(columnData: any, operator: string): Promise<{ label: any; value: any }[]> {
     if (!columnData) return [];
 
-    const enumObj = this.resolveEnumConfig(columnData?.enum_values);
+    // Always resolve the enum config from the raw column or enum_values object
+    // If columnData already has enum_values, resolve from it; otherwise treat columnData as already resolved
+    let enumObj: any;
+    if (columnData?.enum_values !== undefined) {
+      // caller passed the raw column definition (most common path from onColumnChange)
+      enumObj = this.resolveEnumConfig(columnData.enum_values);
+    } else {
+      // caller already resolved (backward compat) — wrap bare arrays
+      enumObj = Array.isArray(columnData) ? { type: 'array', value: columnData } : columnData;
+    }
+
+    if (!enumObj || !enumObj.type) return [];
+
+    // IMPORTANT: deep-clone the value so we never mutate the original enum config.
+    // formatPayloadWithPolicyConditions and formatEnumColumnFilters both mutate the payload
+    // in-place, which would permanently add extra search conditions on every call.
+    const clonedValue = enumObj['value'] ? JSON.parse(JSON.stringify(enumObj['value'])) : enumObj['value'];
+
+    // Use the enum payload's OWN attached_policies (not the grid's this.attachedPolicies)
+    // to look up policy conditions. Using the grid's policies would inject wrong table
+    // conditions (e.g., ticket-context joins) into unrelated enum dropdown queries.
+    const enumAttachedPolicies: string[] = clonedValue?.attached_policies ?? [];
+    const beforeReplace = this.localstore.replaceUniqueId(
+      enumAttachedPolicies.length ? this.localstore.formatPayloadWithPolicyConditions(clonedValue, this.policyData, enumAttachedPolicies) : clonedValue,
+      '$session_user_id',
+      this.user_info.main.id
+    );
+
+    const resolvedValue = this.applyGparamsToPayload(beforeReplace);
 
     switch (enumObj?.type) {
       case 'master':
-        if (enumObj?.value) {
+        if (resolvedValue) {
           try {
-            const response = await this.gridApiService.getListData(enumObj.value).toPromise();
+            const response = await this.gridApiService.getListData(resolvedValue).toPromise();
             if (response.status && response.data?.records) {
               return response.data.records.map((option: any) => ({
                 label: enumObj.optionKey ? option[enumObj.optionKey] : option.label,
@@ -758,19 +942,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       case 'autocomplete':
         return [];
       case 'json':
-        if (!enumObj?.value || !Array.isArray(enumObj.value)) {
+        if (!resolvedValue || !Array.isArray(resolvedValue)) {
           return [];
         }
-        return enumObj.value.map((value: any) => ({
+        return resolvedValue.map((value: any) => ({
           label: enumObj.optionKey ? value[enumObj.optionKey] : value.label,
           value: enumObj.optionValue ? value[enumObj.optionValue] : value.value,
         }));
 
       case 'array':
-        if (!enumObj?.value || !Array.isArray(enumObj.value)) {
+        if (!resolvedValue || !Array.isArray(resolvedValue)) {
           return [];
         }
-        return enumObj.value.map((value: any) => ({
+        return resolvedValue.map((value: any) => ({
           label: value.trim() ?? '',
           value: value.trim() ?? '',
         }));
@@ -793,9 +977,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     try {
       // Add search parameter to your API call
-      let params: any = enumObj.value || {}; // is an object
+      // Clone params first so we don't mutate the resolved enum config
+      let params: any = enumObj.value ? JSON.parse(JSON.stringify(enumObj.value)) : {};
       params = this.replaceSearchTermInObject(params, searchTerm);
-
+      // Use the enum's OWN attached_policies, not the grid's
+      const enumAttachedPolicies: string[] = params?.attached_policies ?? [];
+      const beforeReplace = this.localstore.replaceUniqueId(
+        enumAttachedPolicies.length ? this.localstore.formatPayloadWithPolicyConditions(params, this.policyData, enumAttachedPolicies) : params,
+        '$session_user_id',
+        this.user_info.main.id
+      );
+      params = this.applyGparamsToPayload(beforeReplace);
       const response = await this.gridApiService.getListData(params).toPromise();
       if (response.status && response.data?.records) {
         return response.data.records.map((option: any) => ({
@@ -846,7 +1038,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   private resolveEnumConfig(enumSource: any): any {
-    let enumObj = enumSource ?? {};
+    // Deep-clone the source so we never mutate the original column definition.
+    // Without this, formatEnumColumnFilters mutates enumObj.value in-place which
+    // permanently adds extra search conditions / includes on subsequent calls.
+    let enumObj: any;
+    try {
+      enumObj = enumSource ? JSON.parse(JSON.stringify(enumSource)) : {};
+    } catch {
+      enumObj = enumSource ?? {};
+    }
 
     if (Array.isArray(enumObj)) {
       return { type: 'array', value: enumObj };
@@ -861,7 +1061,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
           enumObj = {};
         }
       } else {
-        enumObj = rawConfig ?? {};
+        // also deep-clone config values to prevent mutation
+        try {
+          enumObj = rawConfig ? JSON.parse(JSON.stringify(rawConfig)) : {};
+        } catch {
+          enumObj = rawConfig ?? {};
+        }
       }
     }
 
@@ -869,6 +1074,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       enumObj = { type: 'array', value: enumObj };
     }
 
+    if (enumSource?.filter) {
+      enumObj.value = this.localstore.formatEnumColumnFilters(enumObj.value, enumSource?.filter || null);
+    }
     return enumObj ?? {};
   }
 
@@ -891,8 +1099,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (isEnum) {
       const enumObj = this.resolveEnumConfig(data?.enum_values);
       this.filterConditions[index].enumType = enumObj?.type || '';
-
-      this.filterConditions[index].enumValueOptions = await this.getEnumValues(data, operator);
+      // Pass raw column data — getEnumValues will resolve internally
+      const res = await this.getEnumValues(data, operator);
+      this.filterConditions[index].enumValueOptions = res;
     }
     this.currentSearchConditions = this.searchConditions[columnType] || [];
   }
@@ -908,10 +1117,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     const data = this.filteredColumns.find((col) => col.field === selectedField);
     condition.field = selectedField;
+    condition.inputType = this.getInputTypeForColumn(selectedField);
     const isNoValue = this.isNoValueOperator(condition.operator);
     if (isNoValue) {
       condition.value = '';
       condition.enum_values = [];
+    } else if (this.isBetweenOperator(condition.operator)) {
+      condition.value = this.normalizeBetweenValue(condition.value);
+      condition.enum_values = [];
+    } else if (this.isRangeInputType(condition.inputType) && typeof condition.value === 'object') {
+      condition.value = '';
     }
 
     const isEnum = this.isEnumValue(data, condition.operator);
@@ -922,6 +1137,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       condition.enum_values = [];
       const enumObj = this.resolveEnumConfig(data?.enum_values);
       condition.enumType = enumObj?.type || '';
+      // Pass raw column data — getEnumValues will resolve internally
       condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
       return;
     }
@@ -1015,12 +1231,32 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       return values;
     }
 
+    if (this.isBetweenOperator(condition.operator)) {
+      const range = this.normalizeBetweenValue(condition.value);
+      const start = String(range.start ?? '')
+        .trim()
+        .replace('T', ' ')
+        .replace('Z', '');
+      const end = String(range.end ?? '')
+        .trim()
+        .replace('T', ' ')
+        .replace('Z', '');
+      if (!start && !end) return '';
+      return `${start} - ${end}`;
+    }
+
     const value = String(condition.value ?? '').trim();
     return value.replace('T', ' ').replace('Z', '');
   }
 
   isAdvancedFilterApplied(condition: FilterCondition): boolean {
-    return !!condition?.field && (this.isNoValueOperator(condition.operator) || condition.value.trim() !== '' || condition.enum_values.length > 0);
+    return (
+      !!condition?.field &&
+      (this.isNoValueOperator(condition.operator) ||
+        this.hasRangeValue(condition) ||
+        String(condition.value ?? '').trim() !== '' ||
+        condition.enum_values.length > 0)
+    );
   }
 
   getAppliedAdvancedFilters(): Array<FilterCondition> {
@@ -1046,6 +1282,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   getConditionValue(index: number): string | null {
+    if (this.isBetweenOperator(this.filterConditions[index]?.operator)) {
+      return null;
+    }
+
     const value = this.filterConditions[index].value;
     if (value) {
       const type = this.getInputTypeForColumn(this.filterConditions[index].field);
@@ -1091,6 +1331,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   setConditionValue(index: number, value: string): void {
+    if (this.isBetweenOperator(this.filterConditions[index]?.operator)) {
+      return;
+    }
+
     const type = this.filterConditions[index].inputType;
     if (type === 'datetime-local' || type === 'date') {
       this.filterConditions[index].value = value;
@@ -1107,27 +1351,38 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
       const type = key.inputType || this.getInputTypeForColumn(key.field);
-      const isNoValue = this.isNoValueOperator(key.operator);
+      const normalizedOperator = this.normalizeSavedOperator(key.operator, key.value);
+      const isNoValue = this.isNoValueOperator(normalizedOperator);
+      const isBetween = this.isBetweenOperator(normalizedOperator);
       const enum_values = key.enum_values;
 
       let operator: string = '';
       let value: any = '';
       let filterValue = key.value;
       if (!isNoValue) {
-        if (type == 'datetime-local') {
-          //filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm:ss');
-          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
-        } else if (type == 'time') {
-          filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'HH:mm');
-        } else if (type == 'date') {
-          filterValue = this.formatDate(key.value);
-        }
+        if (isBetween) {
+          const between = this.normalizeBetweenValue(key.value);
+          operator = this.mapConditionToSQL('between');
+          const formattedStart = this.formatFilterValueByType(type, between.start);
+          const formattedEnd = this.formatFilterValueByType(type, between.end);
+          value = [formattedStart, formattedEnd];
+        } else {
+          if (type == 'datetime-local') {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'yyyy-MM-dd HH:mm');
+          } else if (type == 'time') {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(key.value, 'HH:mm');
+          } else if (type == 'date') {
+            filterValue = this.formatDate(key.value);
+          }
 
-        operator = key.operator ? this.mapConditionToSQL(key.operator) : '=';
-        value =
-          enum_values?.length > 0 ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e)) : this.addWildcards(key.operator, filterValue?.trim());
+          operator = normalizedOperator ? this.mapConditionToSQL(normalizedOperator) : '=';
+          value =
+            enum_values?.length > 0
+              ? enum_values.map((e: any) => (typeof e === 'object' ? e.value : e))
+              : this.addWildcards(normalizedOperator, typeof filterValue === 'string' ? filterValue.trim() : filterValue);
+        }
       } else {
-        operator = this.getNoValueOperatorSQL(key.operator);
+        operator = this.getNoValueOperatorSQL(normalizedOperator);
       }
 
       return {
@@ -1201,8 +1456,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   isApplyButtonEnabled(): boolean {
     return this.filterConditions.some((condition) => {
       const isNoValueOperator = this.isNoValueOperator(condition.operator);
-      const value = (condition.value ?? '').trim();
-      return condition.field && condition.operator && (isNoValueOperator || value !== '' || condition.enum_values?.length > 0);
+      const value = String(condition.value ?? '').trim();
+      const hasBetween = this.hasRangeValue(condition);
+      return condition.field && condition.operator && (isNoValueOperator || hasBetween || value !== '' || condition.enum_values?.length > 0);
     });
   }
   /*isApplyButtonEnabled(): boolean {
@@ -1214,8 +1470,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       case 'number':
         return 'Enter a number';
       case 'date':
-      case 'datetime-local':
         return 'YYYY-MM-DD';
+      case 'datetime-local':
+        return 'YYYY-MM-DD HH:mm';
       default:
         return 'Enter a value';
     }
@@ -1263,13 +1520,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter(
-      (filter: any) => this.isNoValueOperator(filter.operator) || filter.value.trim() !== '' || filter.enum_values?.length > 0
+      (filter: any) =>
+        this.isNoValueOperator(filter.operator) || this.hasRangeValue(filter) || String(filter.value ?? '').trim() !== '' || filter.enum_values?.length > 0
     );
   }
 
   private cloneFilterCondition(condition: FilterCondition): FilterCondition {
+    const clonedValue = condition?.value && typeof condition.value === 'object' && !Array.isArray(condition.value) ? { ...condition.value } : condition?.value;
+
     return {
       ...condition,
+      value: clonedValue,
       enum_values: [...(condition.enum_values || [])],
       availableOperators: [...(condition.availableOperators || [])],
       enumValueOptions: [...(condition.enumValueOptions || [])],
@@ -1278,6 +1539,80 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   private cloneFilterConditions(conditions: Array<FilterCondition>): Array<FilterCondition> {
     return conditions.map((condition) => this.cloneFilterCondition(condition));
+  }
+
+  private normalizeEnumValues(values: any[]): any[] {
+    if (!Array.isArray(values)) return [];
+    return values.map((entry: any) => {
+      if (entry && typeof entry === 'object') {
+        if ('value' in entry) return entry.value;
+      }
+      return entry;
+    });
+  }
+
+  private normalizeEnumValueOptions(options: any[]): Array<{ label: any; value: any }> {
+    if (!Array.isArray(options)) return [];
+    return options
+      .map((entry: any) => {
+        if (entry && typeof entry === 'object') {
+          if ('value' in entry || 'label' in entry) {
+            return {
+              label: entry.label ?? entry.value ?? '',
+              value: entry.value ?? entry.label ?? '',
+            };
+          }
+          return null;
+        }
+        return {
+          label: entry,
+          value: entry,
+        };
+      })
+      .filter((entry): entry is { label: any; value: any } => !!entry);
+  }
+
+  private buildRestoredEnumOptions(savedOptions: any[], savedValues: any[]): Array<{ label: any; value: any }> {
+    const normalizedOptions = this.normalizeEnumValueOptions(savedOptions);
+    const optionMap = new Map<any, { label: any; value: any }>();
+
+    normalizedOptions.forEach((option) => {
+      optionMap.set(option.value, option);
+    });
+
+    if (Array.isArray(savedValues)) {
+      savedValues.forEach((entry: any) => {
+        const value = entry && typeof entry === 'object' ? entry.value ?? entry.label ?? '' : entry;
+        const label = entry && typeof entry === 'object' ? entry.label ?? entry.value ?? '' : entry;
+
+        if (!optionMap.has(value)) {
+          optionMap.set(value, { label, value });
+        }
+      });
+    }
+
+    return Array.from(optionMap.values());
+  }
+
+  private async hydrateEnumOptionsForRenderedFilters(): Promise<void> {
+    if (!Array.isArray(this.filterConditions) || this.filterConditions.length === 0) return;
+    for (let index = 0; index < this.filterConditions.length; index++) {
+      const condition = this.filterConditions[index];
+      if (!condition?.isEnum || !condition.field) continue;
+
+      const columnData = this.filteredColumns.find((col) => col.field === condition.field);
+      if (!columnData) continue;
+
+      const fetchedOptions = await this.getEnumValues(columnData, condition.operator);
+      const mergedOptions = this.buildRestoredEnumOptions(fetchedOptions, condition.enum_values || []);
+
+      condition.enumValueOptions = mergedOptions;
+      if (this.appliedFilterConditions[index]) {
+        this.appliedFilterConditions[index].enumValueOptions = [...mergedOptions];
+      }
+    }
+
+    this.cdr.detectChanges();
   }
 
   private syncDraftFiltersFromApplied(): void {
@@ -1289,8 +1624,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
   // Check if the operator doesn't require a value (is_empty, is_not_empty, is_null, is_not_null)
   isNoValueOperator(operator: string): boolean {
+    const normalizedOperator = String(operator || '')
+      .trim()
+      .toLowerCase();
     const noValueOperators = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'];
-    return noValueOperators.includes(operator);
+    return noValueOperators.includes(normalizedOperator);
   }
   /*private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter((filter: any) => filter.value.trim() !== '');
@@ -1409,13 +1747,147 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     return Array.isArray(configs) ? configs : [];
   }
 
+  private getUserSearchConfigurationsTemp(): UserSearchConfigurationTemp[] {
+    if (!this.save_grid_latest_state) return [];
+    const rawTemp = this.localstore.getData(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY);
+    const parsed = this.parseJsonSafe(rawTemp, []);
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
+  private setUserSearchConfigurationsTemp(configs: UserSearchConfigurationTemp[]): void {
+    if (!this.save_grid_latest_state) return;
+    const payload = JSON.stringify(configs);
+    const isEncrypted = this.config?.encrypt_local_storage === 'true';
+    if (isEncrypted) {
+      this.localstore.storeDataEncrypted(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY, payload);
+      return;
+    }
+    this.localstore.storeData(this.USER_SEARCH_CONFIGURATIONS_TEMP_KEY, payload);
+  }
+
+  private getTempConfigurationForEntity(entitySlug: string): UserSearchConfigurationTemp | null {
+    if (!this.save_grid_latest_state) return null;
+    const tempConfigs = this.getUserSearchConfigurationsTemp();
+    return tempConfigs.find((item: any) => String(item?.entity_slug || '') === entitySlug) || null;
+  }
+
+  private getTempGridStateForCurrentGrid(): GridViewState | null {
+    const entitySlug = this.getEntitySlug();
+    const tempConfig = this.getTempConfigurationForEntity(entitySlug);
+    if (!tempConfig?.search_values || !tempConfig.localstoreOnly) return null;
+    return tempConfig.search_values;
+  }
+
+  private hasTempDraftForCurrentGrid(): boolean {
+    return !!this.getTempGridStateForCurrentGrid();
+  }
+
+  private hasTempChangesForCurrentGrid(): boolean {
+    const tempState = this.getTempGridStateForCurrentGrid();
+    if (!tempState) return false;
+    return !this.areGridStatesEqual(tempState, this.buildNoFilterGridViewState());
+  }
+
+  shouldShowNoFilterStyleActions(): boolean {
+    if (!this.save_grid_views) return false;
+    if (!this.hasTempChangesForCurrentGrid()) return false;
+
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return true;
+    return this.isNoFilterViewName(String(selectedView?.view_name || ''));
+  }
+
+  private canApplyGridState(state: GridViewState): boolean {
+    const selectedSearchColumns = state?.selectedSearchColumns || [];
+    const appliedFilterConditions = state?.appliedFilterConditions || [];
+    if (!this.headercolumns?.length) return false;
+    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) return false;
+    if (appliedFilterConditions.length > 0 && !this.filteredColumns?.length) return false;
+    return true;
+  }
+
+  private saveTempConfigurationForEntity(entitySlug: string, viewName: string, searchValues: GridViewState): void {
+    if (!this.save_grid_latest_state) return;
+    if (this.areGridStatesEqual(searchValues, this.buildNoFilterGridViewState())) {
+      this.clearTempConfigurationForEntity(entitySlug);
+      return;
+    }
+
+    const tempConfigs = this.getUserSearchConfigurationsTemp().filter((item: any) => String(item?.entity_slug || '') !== entitySlug);
+    tempConfigs.push({
+      entity_slug: entitySlug,
+      view_name: String(viewName || this.NO_FILTER_VIEW_NAME),
+      localstoreOnly: true,
+      search_values: searchValues,
+      updated_at: new Date().toISOString(),
+    });
+    this.setUserSearchConfigurationsTemp(tempConfigs);
+  }
+
+  private clearTempConfigurationForEntity(entitySlug: string): void {
+    if (!this.save_grid_latest_state) return;
+    const tempConfigs = this.getUserSearchConfigurationsTemp();
+    const nextTempConfigs = tempConfigs.filter((item: any) => String(item?.entity_slug || '') !== entitySlug);
+    if (nextTempConfigs.length === tempConfigs.length) return;
+    this.setUserSearchConfigurationsTemp(nextTempConfigs);
+  }
+
   private getEntityViews(): UserSearchConfiguration[] {
     const entitySlug = this.getEntitySlug();
     return this.getUserSearchConfigurations().filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
   }
 
+  private getConsolidatedEntityViews(entitySlug: string, persistedViews: UserSearchConfiguration[]): UserSearchConfiguration[] {
+    const normalizedViews = persistedViews.map((item: any) => ({
+      ...item,
+      entity_slug: entitySlug,
+      view_name: String(item?.view_name || 'Default View'),
+    }));
+
+    const tempConfig = this.getTempConfigurationForEntity(entitySlug);
+    if (!tempConfig?.localstoreOnly || !tempConfig?.search_values) {
+      return normalizedViews;
+    }
+
+    const tempViewName = String(tempConfig.view_name || this.NO_FILTER_VIEW_NAME)
+      .trim()
+      .toLowerCase();
+    const mergedViews = normalizedViews.map((item: UserSearchConfiguration) => {
+      const currentName = String(item?.view_name || 'Default View')
+        .trim()
+        .toLowerCase();
+      if (currentName !== tempViewName) {
+        return item;
+      }
+      return {
+        ...item,
+        search_values: tempConfig.search_values,
+        updated_at: tempConfig.updated_at || item.updated_at,
+      };
+    });
+
+    return mergedViews;
+  }
+
   private refreshEntityViews(): void {
-    this.entityViews = this.getEntityViews().map((item: UserSearchConfiguration) => ({
+    const entitySlug = this.getEntitySlug();
+    const allConfigs = this.getUserSearchConfigurations();
+    const currentEntityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug) as UserSearchConfiguration[];
+    const syncedViews = this.syncNoFilterViewForEntity(currentEntityViews);
+
+    if (syncedViews.changed) {
+      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      this.setUserSearchConfigurations([...otherConfigs, ...syncedViews.views]);
+      if (syncedViews.views.length > 0) {
+        this.persistSavedViewsToDatabase(entitySlug, syncedViews.views);
+      } else {
+        this.deleteSavedViewFromDatabase(entitySlug);
+      }
+    }
+
+    const consolidatedViews = this.getConsolidatedEntityViews(entitySlug, syncedViews.views);
+
+    this.entityViews = consolidatedViews.map((item: UserSearchConfiguration) => ({
       ...item,
       view_name: String(item?.view_name || 'Default View'),
     }));
@@ -1424,11 +1896,286 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       return;
     }
 
-    const hasSelection = this.entityViews.some((item: any) => String(item?.view_name || 'Default View') === this.selectedViewName);
+    const normalizedSelectedName = String(this.selectedViewName || '')
+      .trim()
+      .toLowerCase();
+    const hasSelection = this.entityViews.some(
+      (item: any) =>
+        String(item?.view_name || 'Default View')
+          .trim()
+          .toLowerCase() === normalizedSelectedName
+    );
     if (!hasSelection) {
       const defaultView = this.entityViews.find((item: any) => !!item?.is_default);
       this.selectedViewName = String(defaultView?.view_name || this.entityViews[0]?.view_name || 'Default View');
     }
+  }
+
+  private isNoFilterViewName(viewName: string): boolean {
+    return (
+      String(viewName || '')
+        .trim()
+        .toLowerCase() === this.NO_FILTER_VIEW_NAME.toLowerCase()
+    );
+  }
+
+  private buildNoFilterGridViewState(): GridViewState {
+    return {
+      commonSearch: '',
+      searchCondition: 'contains',
+      selectedSearchColumns: [],
+      sortColumns: [],
+      hiddenColumns: [],
+      resultsPerPage: this.getDefaultResultsPerPage(),
+      currentPage: 1,
+      filterCondition: true,
+      appliedFilterConditions: [],
+    };
+  }
+
+  private syncNoFilterViewForEntity(entityViews: UserSearchConfiguration[]): { views: UserSearchConfiguration[]; changed: boolean } {
+    const entitySlug = this.getEntitySlug();
+    const normalizedViews = entityViews.map((item: any) => ({
+      ...item,
+      entity_slug: entitySlug,
+      view_name: String(item?.view_name || 'Default View'),
+    }));
+
+    let changed = false;
+    const regularViews = normalizedViews.filter((item: any) => !this.isNoFilterViewName(String(item?.view_name || '')));
+    const noFilterViews = normalizedViews.filter((item: any) => this.isNoFilterViewName(String(item?.view_name || '')));
+
+    if (regularViews.length === 0) {
+      return { views: [], changed: noFilterViews.length > 0 };
+    }
+
+    if (noFilterViews.length > 1) {
+      changed = true;
+    }
+
+    let noFilterView = noFilterViews[0];
+    const noFilterSearchValues = this.buildNoFilterGridViewState();
+    if (!noFilterView) {
+      noFilterView = {
+        entity_slug: entitySlug,
+        view_name: this.NO_FILTER_VIEW_NAME,
+        is_default: false,
+        search_values: noFilterSearchValues,
+        updated_at: new Date().toISOString(),
+      };
+      changed = true;
+    } else {
+      const mergedNoFilterView = {
+        ...noFilterView,
+        entity_slug: entitySlug,
+        view_name: this.NO_FILTER_VIEW_NAME,
+        search_values: noFilterSearchValues,
+      };
+
+      if (JSON.stringify(mergedNoFilterView) !== JSON.stringify(noFilterView)) {
+        changed = true;
+      }
+      noFilterView = mergedNoFilterView;
+    }
+
+    if (noFilterView.is_default) {
+      const anyRegularDefault = regularViews.some((item: any) => !!item?.is_default);
+      if (anyRegularDefault) {
+        changed = true;
+      }
+      regularViews.forEach((item: any) => {
+        item.is_default = false;
+      });
+    } else if (!regularViews.some((item: any) => !!item?.is_default)) {
+      regularViews[0].is_default = true;
+      changed = true;
+    }
+
+    const nextViews = [...regularViews, noFilterView];
+    if (!nextViews.some((item: any) => !!item?.is_default)) {
+      nextViews[0].is_default = true;
+      changed = true;
+    }
+
+    return { views: nextViews, changed };
+  }
+
+  canDeleteViewOption(view: string | UserSearchConfiguration): boolean {
+    const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
+    return !this.isNoFilterViewName(viewName);
+  }
+
+  isSelectedNoFilterView(): boolean {
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) return false;
+    return this.isNoFilterViewName(String(selectedView?.view_name || ''));
+  }
+
+  private applyNoFilterSelection(): void {
+    this.search = '';
+    this.appliedCommonSearch = '';
+    this.isCommonSearchApplied = false;
+    this.searchCondition = 'contains';
+    this.selectedColumns = [];
+
+    this.filterCondition = true;
+    this.appliedFilterCondition = true;
+    this.filterConditions = [];
+    this.appliedFilterConditions = [];
+
+    this.activeSortOrder = [];
+    this.headercolumns.forEach((column: any) => {
+      column.sortDirection = '';
+      if (column.header !== 'table_column_sno') {
+        column.colFilterHide = false;
+      }
+    });
+
+    this.resultsPerPage = this.getDefaultResultsPerPage();
+    this.currentPage = 1;
+
+    this.searchQuery.emit({ where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true });
+    this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
+    this.columnSort.emit({ sortColumns: [], skipFetch: true });
+    this.resultsPerPageChange.emit({ resultsPerPage: this.resultsPerPage, start_index: 0, skipFetch: true });
+
+    this.initialFetchEmitted = true;
+    const source = this.pendingManualViewSelection ? 'saved-view-manual' : 'saved-view';
+    this.pendingManualViewSelection = false;
+    this.pageChange.emit({ page: 1, start_index: 0, source });
+  }
+
+  private applyGridState(state: GridViewState): void {
+    const selectedSearchColumns = state.selectedSearchColumns || [];
+
+    this.searchCondition = state.searchCondition || 'contains';
+
+    this.headercolumns.forEach((column: any) => {
+      const colKey = this.getColumnUniqueKey(column);
+      column.colFilterHide = (state.hiddenColumns || []).includes(colKey);
+      column.sortDirection = '';
+    });
+
+    this.activeSortOrder = [];
+    (state.sortColumns || []).forEach((sortItem: { key: string; direction: 'asc' | 'desc' }) => {
+      const column = this.headercolumns.find((col: any) => this.getColumnUniqueKey(col) === sortItem.key);
+      if (column && (sortItem.direction === 'asc' || sortItem.direction === 'desc')) {
+        column.sortDirection = sortItem.direction;
+        this.activeSortOrder.push(sortItem.key);
+      }
+    });
+
+    if (selectedSearchColumns.length > 0) {
+      this.selectedColumns = this.filteredColumns.filter((col: any) => selectedSearchColumns.includes(String(col?.field || '')));
+    } else {
+      this.selectedColumns = [];
+    }
+
+    const normalizedFilters: Array<FilterCondition> = (state.appliedFilterConditions || []).map((condition: any) => {
+      const field = condition.field || '';
+      const operator = this.normalizeSavedOperator(condition.operator, condition.value);
+      const columnData = this.filteredColumns.find((col) => col.field === field);
+      const isEnum = this.isEnumValue(columnData, operator);
+      const enumObj = this.resolveEnumConfig(columnData?.enum_values);
+      const rawEnumValues = Array.isArray(condition.enum_values) ? [...condition.enum_values] : [];
+      const restoredEnumOptions = this.buildRestoredEnumOptions(condition.enum_value_options || [], rawEnumValues);
+
+      return {
+        field,
+        operator,
+        value: this.isBetweenOperator(operator) ? this.normalizeBetweenValue(condition.value) : condition.value || '',
+        clause_type: condition.clause_type || 'where',
+        enum_values: this.normalizeEnumValues(rawEnumValues),
+        availableOperators: this.getOperatorsForColumn(field),
+        inputType: this.getInputTypeForColumn(field),
+        isEnum,
+        enumType: isEnum ? enumObj?.type || '' : '',
+        enumValueOptions: isEnum ? restoredEnumOptions : [],
+        autocompleteLoading: false,
+        autocompleteSearchText: '',
+      };
+    });
+
+    this.filterCondition = state.filterCondition !== undefined ? !!state.filterCondition : true;
+    this.appliedFilterCondition = this.filterCondition;
+    this.filterConditions = this.cloneFilterConditions(normalizedFilters);
+    this.appliedFilterConditions = this.cloneFilterConditions(normalizedFilters);
+    this.hydrateEnumOptionsForRenderedFilters();
+
+    this.resultsPerPage = Number(state.resultsPerPage) > 0 ? Number(state.resultsPerPage) : this.getDefaultResultsPerPage();
+    this.currentPage = Number(state.currentPage) > 0 ? Number(state.currentPage) : 1;
+
+    this.search = state.commonSearch || '';
+    this.appliedCommonSearch = this.search;
+    this.isCommonSearchApplied = this.search.length > 0;
+
+    if (this.search.length > 0) {
+      const { whereData, havingData } = this.buildCommonSearchPayload(this.search);
+      this.searchQuery.emit({ where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search }, skipFetch: true });
+    } else {
+      this.searchQuery.emit({ where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true });
+    }
+
+    if (this.appliedFilterConditions.length > 0) {
+      const condition = this.appliedFilterCondition ? 'AND' : 'OR';
+      const data = this.appliedFilterConditions.map((key: any) => {
+        const type = key.inputType || this.getInputTypeForColumn(key.field);
+        const normalizedOperator = this.normalizeSavedOperator(key.operator, key.value);
+        const isNoValue = this.isNoValueOperator(normalizedOperator);
+        const isBetween = this.isBetweenOperator(normalizedOperator);
+
+        let filterValue = key.value;
+        if (!isNoValue && !isBetween) {
+          if (type == 'datetime-local' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'yyyy-MM-dd HH:mm') || filterValue;
+          } else if (type == 'time' && /^\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
+            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'HH:mm') || filterValue;
+          } else if (type == 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(filterValue || ''))) {
+            filterValue = this.formatDate(filterValue);
+          }
+        }
+
+        const normalizedFilterValue = typeof filterValue === 'string' ? filterValue.trim() : filterValue;
+
+        return {
+          column_name: key.field,
+          operator: isBetween ? this.mapConditionToSQL('between') : normalizedOperator ? this.mapConditionToSQL(normalizedOperator) : '=',
+          value: isNoValue
+            ? this.getNoValueOperatorSQL(normalizedOperator)
+            : isBetween
+            ? [
+                this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).start),
+                this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).end),
+              ]
+            : key.enum_values?.length > 0
+            ? key.enum_values
+            : this.addWildcards(normalizedOperator, normalizedFilterValue),
+          isAggregate: key?.clause_type === 'having',
+        };
+      });
+      this.advancedSearchQuery.emit({ data, condition, skipFetch: true });
+    } else {
+      this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
+    }
+
+    this.columnSort.emit({ sortColumns: this.getSortedColumnsByPriority(), skipFetch: true });
+
+    const start_index = (this.currentPage - 1) * Number(this.resultsPerPage);
+    this.resultsPerPageChange.emit({ resultsPerPage: Number(this.resultsPerPage), start_index, skipFetch: true });
+
+    this.initialFetchEmitted = true;
+    const source = this.pendingManualViewSelection ? 'saved-view-manual' : 'saved-view';
+    this.pendingManualViewSelection = false;
+    this.pageChange.emit({ page: this.currentPage, start_index, source });
+  }
+
+  private tryApplyTempConfigurationForCurrentGrid(): boolean {
+    const state = this.getTempGridStateForCurrentGrid();
+    if (!state) return false;
+    if (!this.canApplyGridState(state)) return false;
+
+    this.applyGridState(state);
+    return true;
   }
 
   private setUserSearchConfigurations(configs: UserSearchConfiguration[]): void {
@@ -1450,13 +2197,25 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     const selectedSearchColumns = this.selectedColumns.map((column: any) => String(column?.field || ''));
 
-    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => ({
-      field: condition.field,
-      operator: condition.operator,
-      value: condition.value,
-      clause_type: condition.clause_type,
-      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
-    }));
+    const appliedFilterConditions = this.appliedFilterConditions.map((condition) => {
+      const isBetween = this.isBetweenOperator(condition.operator);
+      const normalizedRange = this.normalizeBetweenValue(condition.value);
+      const normalizedValue = isBetween ? [normalizedRange.start, normalizedRange.end] : condition.value;
+
+      return {
+        field: condition.field,
+        operator: isBetween ? this.mapConditionToSQL('between') : condition.operator,
+        value: normalizedValue,
+        clause_type: condition.clause_type,
+        enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
+        enum_value_options: Array.isArray(condition.enumValueOptions)
+          ? condition.enumValueOptions.map((entry: any) => ({
+              label: entry?.label ?? entry?.value ?? '',
+              value: entry?.value ?? entry?.label ?? '',
+            }))
+          : [],
+      };
+    });
 
     return {
       commonSearch: this.appliedCommonSearch || '',
@@ -1500,25 +2259,268 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       appliedFilterConditions: Array.isArray(state?.appliedFilterConditions)
         ? state.appliedFilterConditions.map((condition: any) => ({
             field: condition?.field || '',
-            operator: condition?.operator || '',
-            value: condition?.value || '',
+            operator: this.normalizeSavedOperator(condition?.operator, condition?.value),
+            value: this.isBetweenOperator(this.normalizeSavedOperator(condition?.operator, condition?.value))
+              ? this.normalizeBetweenValue(condition?.value)
+              : condition?.value || '',
             clause_type: condition?.clause_type || 'where',
-            enum_values: Array.isArray(condition?.enum_values) ? [...condition.enum_values] : [],
+            enum_values: this.normalizeEnumValues(Array.isArray(condition?.enum_values) ? [...condition.enum_values] : []),
+            enum_value_options: this.normalizeEnumValueOptions(Array.isArray(condition?.enum_value_options) ? condition.enum_value_options : []),
           }))
         : [],
     };
+  }
+
+  private normalizeSavedOperator(operator: any, value: any): string {
+    const rawOperator = String(operator || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+
+    if (!rawOperator) return '';
+
+    if (rawOperator === 'in') return 'in';
+    if (rawOperator === 'not in') return 'not_in';
+    if (rawOperator === 'between') return 'between';
+    if (rawOperator === 'is null') return 'is_null';
+    if (rawOperator === 'is not null') return 'is_not_null';
+    if (rawOperator === 'is_empty') return 'is_empty';
+    if (rawOperator === 'is_not_empty') return 'is_not_empty';
+    if (rawOperator === 'not ilike' || rawOperator === 'not like') return 'not_contains';
+
+    if (rawOperator === 'ilike' || rawOperator === 'like') {
+      const normalizedValue = String(value ?? '').trim();
+      const hasLeadingWildcard = normalizedValue.startsWith('%');
+      const hasTrailingWildcard = normalizedValue.endsWith('%');
+
+      if (hasLeadingWildcard && hasTrailingWildcard) return 'contains';
+      if (!hasLeadingWildcard && hasTrailingWildcard) return 'starts_with';
+      if (hasLeadingWildcard && !hasTrailingWildcard) return 'ends_with';
+      return 'contains';
+    }
+
+    return rawOperator.replace(/\s+/g, '_');
   }
 
   private areGridStatesEqual(firstState: any, secondState: any): boolean {
     return JSON.stringify(this.normalizeGridState(firstState)) === JSON.stringify(this.normalizeGridState(secondState));
   }
 
+  private supportsBetweenInputType(inputType: string): boolean {
+    return inputType === 'date' || inputType === 'datetime-local' || inputType === 'time';
+  }
+
+  isBetweenOperator(operator: string): boolean {
+    return (
+      String(operator || '')
+        .trim()
+        .toLowerCase() === 'between'
+    );
+  }
+
+  isRangeInputType(inputType: string): boolean {
+    return this.supportsBetweenInputType(inputType);
+  }
+
+  isSinglePickerRangeInputType(inputType: string): boolean {
+    return inputType === 'date' || inputType === 'datetime-local';
+  }
+
+  private normalizeBetweenValue(value: any): { start: string; end: string } {
+    if (Array.isArray(value)) {
+      return {
+        start: String(value[0] ?? ''),
+        end: String(value[1] ?? ''),
+      };
+    }
+
+    if (value && typeof value === 'object') {
+      return {
+        start: String(value.start ?? value.from ?? ''),
+        end: String(value.end ?? value.to ?? ''),
+      };
+    }
+
+    return { start: '', end: '' };
+  }
+
+  getBetweenValue(index: number, bound: 'start' | 'end'): string {
+    const condition = this.filterConditions[index];
+    if (!condition) return '';
+    const range = this.normalizeBetweenValue(condition.value);
+    return range[bound] || '';
+  }
+
+  setBetweenValue(index: number, bound: 'start' | 'end', value: string): void {
+    const condition = this.filterConditions[index];
+    if (!condition) return;
+    const range = this.normalizeBetweenValue(condition.value);
+    range[bound] = value;
+    condition.value = range;
+  }
+
+  getBetweenDisplayValue(index: number): string {
+    const condition = this.filterConditions[index];
+    if (!condition) return '';
+
+    const range = this.normalizeBetweenValue(condition.value);
+    const type = condition.inputType || this.getInputTypeForColumn(condition.field);
+    const start = this.toRangeDisplayPart(range.start, type);
+    const end = this.toRangeDisplayPart(range.end, type);
+
+    if (!start && !end) return '';
+    return `${start || ''} to ${end || ''}`.trim();
+  }
+
+  openBetweenRangePicker(index: number, event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (!target) return;
+
+    const condition = this.filterConditions[index];
+    if (!condition) return;
+
+    const type = condition.inputType || this.getInputTypeForColumn(condition.field);
+    const isTimeOnly = type === 'time';
+    const enableTime = type === 'datetime-local';
+    const dateFormat = isTimeOnly ? 'H:i' : enableTime ? 'Y-m-d H:i' : 'Y-m-d';
+    const range = this.normalizeBetweenValue(condition.value);
+    const defaultDate: Date[] = [];
+
+    const startDate = this.toDateFromRangePart(range.start, type);
+    const endDate = this.toDateFromRangePart(range.end, type);
+    if (startDate) defaultDate.push(startDate);
+    if (endDate) defaultDate.push(endDate);
+
+    if (this.betweenRangePickers[index]) {
+      this.betweenRangePickers[index].destroy();
+      delete this.betweenRangePickers[index];
+    }
+
+    const picker = flatpickr(target, {
+      mode: 'range',
+      enableTime: enableTime || isTimeOnly,
+      noCalendar: isTimeOnly,
+      time_24hr: true,
+      dateFormat,
+      defaultDate,
+      allowInput: false,
+      clickOpens: true,
+      onClose: (selectedDates: Date[]) => {
+        if (!Array.isArray(selectedDates) || selectedDates.length === 0) {
+          condition.value = { start: '', end: '' };
+          target.value = '';
+          return;
+        }
+
+        const start = this.formatRangeDateForValue(selectedDates[0], type);
+        const end = selectedDates[1] ? this.formatRangeDateForValue(selectedDates[1], type) : '';
+        condition.value = { start, end };
+        target.value = this.getBetweenDisplayValue(index);
+      },
+    });
+
+    this.betweenRangePickers[index] = picker;
+    picker.open();
+  }
+
+  private toDateFromRangePart(value: any, inputType: string): Date | null {
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+
+    if (inputType === 'time') {
+      const match = raw.match(/^(\d{2}):(\d{2})(?::\d{2})?$/);
+      if (!match) return null;
+
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+      if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+
+      const date = new Date();
+      date.setSeconds(0, 0);
+      date.setHours(hour, minute, 0, 0);
+      return date;
+    }
+
+    const normalized = raw.replace(' ', 'T');
+    const parsed = new Date(normalized);
+    if (isNaN(parsed.getTime())) return null;
+    return parsed;
+  }
+
+  private formatRangeDateForValue(date: Date, inputType: string): string {
+    const pad = (num: number) => String(num).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+
+    if (inputType === 'datetime-local') {
+      const hour = pad(date.getHours());
+      const minute = pad(date.getMinutes());
+      return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+
+    if (inputType === 'time') {
+      const hour = pad(date.getHours());
+      const minute = pad(date.getMinutes());
+      return `${hour}:${minute}`;
+    }
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private toRangeDisplayPart(value: any, inputType: string): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+
+    if (inputType === 'datetime-local') {
+      return raw.replace('T', ' ');
+    }
+
+    if (inputType === 'time') {
+      const match = raw.match(/^(\d{2}:\d{2})(?::\d{2})?$/);
+      return match ? match[1] : raw;
+    }
+
+    return raw;
+  }
+
+  private hasRangeValue(condition: FilterCondition): boolean {
+    if (!this.isBetweenOperator(condition?.operator)) return false;
+    const range = this.normalizeBetweenValue(condition?.value);
+    return String(range.start || '').trim() !== '' && String(range.end || '').trim() !== '';
+  }
+
+  private formatFilterValueByType(type: string, rawValue: any): any {
+    const value = String(rawValue ?? '').trim();
+    if (!value) return value;
+
+    if (type === 'datetime-local') {
+      return this.timezoneService.transformDisplayDateTimeToUTC(value, 'yyyy-MM-dd HH:mm');
+    }
+    if (type === 'time') {
+      return this.timezoneService.transformDisplayDateTimeToUTC(value, 'HH:mm');
+    }
+    if (type === 'date') {
+      return this.formatDate(value);
+    }
+
+    return value;
+  }
+
   getSelectedViewConfiguration(): UserSearchConfiguration | null {
-    if (!this.save_filter_condition) return null;
+    if (!this.save_grid_views) return null;
     if (!this.entityViews.length) return null;
 
     if (this.selectedViewName) {
-      const selected = this.entityViews.find((item: any) => String(item?.view_name || 'Default View') === this.selectedViewName);
+      const normalizedSelectedName = String(this.selectedViewName || '')
+        .trim()
+        .toLowerCase();
+      const selected = this.entityViews.find(
+        (item: any) =>
+          String(item?.view_name || 'Default View')
+            .trim()
+            .toLowerCase() === normalizedSelectedName
+      );
       if (selected) return selected;
     }
 
@@ -1526,7 +2528,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   shouldShowMyViews(): boolean {
-    if (!this.save_filter_condition) return false;
+    if (!this.save_grid_views) return false;
     return this.entityViews.length > 0;
   }
 
@@ -1535,7 +2537,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   showSaveViewButton(): boolean {
-    if (!this.save_filter_condition) return false;
+    if (!this.save_grid_views) return false;
+    if (this.shouldShowNoFilterStyleActions()) return true;
     const selectedView = this.getSelectedViewConfiguration();
     if (!selectedView) return this.hasActiveGridCustomizations();
     const currentState = this.buildCurrentGridViewState();
@@ -1548,13 +2551,92 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   private getSavedViewConfiguration(): UserSearchConfiguration | null {
-    if (!this.save_filter_condition) return null;
+    if (!this.save_grid_views) return null;
     return this.getSelectedViewConfiguration();
   }
 
+  private persistCurrentSelectedViewStateAsDefault(): void {
+    if (!this.save_grid_views && !this.save_grid_latest_state) return;
+
+    const entitySlug = this.getEntitySlug();
+    if (!this.save_grid_views) {
+      this.saveTempConfigurationForEntity(entitySlug, this.NO_FILTER_VIEW_NAME, this.buildCurrentGridViewState());
+      return;
+    }
+
+    const selectedView = this.getSelectedViewConfiguration();
+    if (!selectedView) {
+      this.saveTempConfigurationForEntity(entitySlug, this.NO_FILTER_VIEW_NAME, this.buildCurrentGridViewState());
+      return;
+    }
+
+    const selectedViewName = String(selectedView?.view_name || 'Default View');
+    if (this.isNoFilterViewName(selectedViewName)) {
+      this.saveTempConfigurationForEntity(entitySlug, selectedViewName, this.buildCurrentGridViewState());
+
+      const allConfigs = this.getUserSearchConfigurations();
+      const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+      if (entityViews.length === 0) return;
+
+      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      const nextEntityViews = entityViews.map((item: any) => ({
+        ...item,
+        entity_slug: entitySlug,
+        view_name: String(item?.view_name || 'Default View'),
+        is_default: this.isNoFilterViewName(String(item?.view_name || 'Default View')),
+      }));
+
+      const syncedEntityViews = this.syncNoFilterViewForEntity(nextEntityViews).views;
+      this.setUserSearchConfigurations([...otherConfigs, ...syncedEntityViews]);
+      this.persistSavedViewsToDatabase(entitySlug, syncedEntityViews);
+      this.appliedSavedViewSlug = null;
+      this.refreshEntityViews();
+      return;
+    }
+
+    const allConfigs = this.getUserSearchConfigurations();
+    const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+    const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+    const searchValues = this.buildCurrentGridViewState();
+    const updatedAt = new Date().toISOString();
+
+    const nextEntityViews = entityViews.map((item: any) => {
+      const currentName = String(item?.view_name || 'Default View');
+      const isSelected = currentName === selectedViewName;
+
+      return {
+        ...item,
+        entity_slug: entitySlug,
+        view_name: currentName,
+        is_default: isSelected,
+        search_values: isSelected ? searchValues : item?.search_values,
+        updated_at: isSelected ? updatedAt : item?.updated_at,
+      };
+    });
+
+    const syncedEntityViews = this.syncNoFilterViewForEntity(nextEntityViews).views;
+    this.setUserSearchConfigurations([...otherConfigs, ...syncedEntityViews]);
+    this.persistSavedViewsToDatabase(entitySlug, syncedEntityViews);
+    this.clearTempConfigurationForEntity(entitySlug);
+    this.appliedSavedViewSlug = null;
+    this.refreshEntityViews();
+  }
+
+  onGridNavigationClick(): void {
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
+  }
+
+  onAddNewClick(): void {
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
+    this.customAction.emit('addNew');
+  }
+
   saveViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     this.isEditingViewConfig = false;
+    this.isEditingNoFilterView = false;
     this.editingOriginalViewName = '';
     this.viewFormName = '';
     this.viewFormSetAsDefault = true;
@@ -1562,12 +2644,18 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   updateSelectedViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const selectedView = this.getSelectedViewConfiguration();
     if (!selectedView) return;
 
     const entity_slug = this.getEntitySlug();
     const selectedName = String(selectedView.view_name || 'Default View');
+    if (this.isNoFilterViewName(selectedName)) {
+      this.saveTempConfigurationForEntity(entity_slug, selectedName, this.buildCurrentGridViewState());
+      this.toastr.success('View updated successfully', 'Success');
+      return;
+    }
+
     const search_values = this.buildCurrentGridViewState();
     const allConfigs = this.getUserSearchConfigurations();
 
@@ -1589,25 +2677,28 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const entityViews = nextConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug) as UserSearchConfiguration[];
     this.setUserSearchConfigurations(nextConfigs as UserSearchConfiguration[]);
     this.persistSavedViewsToDatabase(entity_slug, entityViews);
+    this.clearTempConfigurationForEntity(entity_slug);
     this.appliedSavedViewSlug = null;
     this.refreshEntityViews();
     this.toastr.success('View updated successfully', 'Success');
   }
 
   openEditViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const selectedView = this.getSelectedViewConfiguration();
     if (!selectedView) return;
 
+    const selectedName = String(selectedView.view_name || 'Default View');
     this.isEditingViewConfig = true;
-    this.editingOriginalViewName = String(selectedView.view_name || 'Default View');
+    this.isEditingNoFilterView = this.isNoFilterViewName(selectedName);
+    this.editingOriginalViewName = selectedName;
     this.viewFormName = this.editingOriginalViewName;
     this.viewFormSetAsDefault = !!selectedView.is_default;
     this.isViewConfigModalOpen = true;
   }
 
   openEditViewConfigurationByName(viewName: string): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const normalizedName = String(viewName || 'Default View').trim();
     this.selectedViewName = normalizedName;
 
@@ -1617,6 +2708,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     if (!selectedView) return;
 
     this.isEditingViewConfig = true;
+    this.isEditingNoFilterView = this.isNoFilterViewName(normalizedName);
     this.editingOriginalViewName = String(selectedView.view_name || 'Default View');
     this.viewFormName = this.editingOriginalViewName;
     this.viewFormSetAsDefault = !!selectedView.is_default;
@@ -1636,6 +2728,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     event?.stopPropagation();
     this.closeMyViewsSelectDropdown();
     const viewName = typeof view === 'string' ? view : String(view?.view_name || 'Default View');
+    if (this.isNoFilterViewName(viewName)) return;
     this.deleteViewConfigurationByName(viewName);
     this.isMyViewsMenuOpen = false;
   }
@@ -1666,18 +2759,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
   closeViewConfigurationModal(): void {
     this.isViewConfigModalOpen = false;
+    this.isEditingNoFilterView = false;
   }
 
   submitViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const entity_slug = this.getEntitySlug();
-    const name = (this.viewFormName || '').trim();
+    const name = this.isEditingNoFilterView ? this.NO_FILTER_VIEW_NAME : (this.viewFormName || '').trim();
     if (!name) {
       this.toastr.warning('View name is required', 'Warning');
       return;
     }
 
-    const search_values = this.buildCurrentGridViewState();
+    const search_values = this.isEditingNoFilterView ? this.buildNoFilterGridViewState() : this.buildCurrentGridViewState();
     const allConfigs = this.getUserSearchConfigurations();
     const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug);
     const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entity_slug);
@@ -1712,7 +2806,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
           entity_slug,
           view_name: name,
           is_default: this.viewFormSetAsDefault,
-          search_values,
+          search_values: this.isEditingNoFilterView ? this.buildNoFilterGridViewState() : search_values,
           updated_at,
         };
       });
@@ -1738,9 +2832,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       nextEntityViews[0].is_default = true;
     }
 
-    this.setUserSearchConfigurations([...otherConfigs, ...nextEntityViews]);
-    this.persistSavedViewsToDatabase(entity_slug, nextEntityViews);
-    this.hasSavedViewConfiguration = nextEntityViews.length > 0;
+    const syncedEntityViews = this.syncNoFilterViewForEntity(nextEntityViews).views;
+
+    this.setUserSearchConfigurations([...otherConfigs, ...syncedEntityViews]);
+    this.persistSavedViewsToDatabase(entity_slug, syncedEntityViews);
+    this.clearTempConfigurationForEntity(entity_slug);
+    this.hasSavedViewConfiguration = syncedEntityViews.length > 0;
     this.selectedViewName = name;
     this.appliedSavedViewSlug = null;
     this.closeViewConfigurationModal();
@@ -1752,12 +2849,34 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     const nextViewName = typeof view === 'string' ? view : typeof view === 'object' && view !== null ? String((view as any).view_name || 'Default View') : '';
 
     this.selectedViewName = String(nextViewName || '').trim();
+    if (!this.selectedViewName) return;
+
+    const currentSlug = this.getEntitySlug();
+    const activeViewKey = `${currentSlug}::${this.selectedViewName}`;
+    this.pendingManualViewSelection = true;
+    if (this.isNoFilterViewName(this.selectedViewName)) {
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (tempState && this.canApplyGridState(tempState)) {
+        this.applyGridState(tempState);
+        this.appliedSavedViewSlug = activeViewKey;
+        return;
+      }
+      if (tempState) {
+        this.appliedSavedViewSlug = null;
+        this.scheduleTryApplySavedView();
+        return;
+      }
+      this.appliedSavedViewSlug = activeViewKey;
+      this.applyNoFilterSelection();
+      return;
+    }
     this.appliedSavedViewSlug = null;
+    this.tryApplySavedView();
     this.scheduleTryApplySavedView();
   }
 
   deleteSelectedViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const selectedView = this.getSelectedViewConfiguration();
     if (!selectedView) return;
 
@@ -1767,8 +2886,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   deleteViewConfigurationByName(viewName: string): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const selectedName = String(viewName || 'Default View');
+    if (this.isNoFilterViewName(selectedName)) return;
     const entitySlug = this.getEntitySlug();
     const allConfigs = this.getUserSearchConfigurations();
     const targetView = allConfigs.find(
@@ -1814,13 +2934,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   resetViewConfiguration(): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
+    const entitySlug = this.getEntitySlug();
+    this.clearTempConfigurationForEntity(entitySlug);
+
     const hasViews = this.shouldShowMyViews();
     const selectedView = hasViews ? this.getSelectedViewConfiguration() : null;
-    console.log(selectedView);
-    console.log(hasViews);
+
     if (hasViews && selectedView?.search_values) {
-      console.log('coming');
       this.appliedSavedViewSlug = null;
       this.scheduleTryApplySavedView();
       this.toastr.success('View reset successfully', 'Success');
@@ -1854,7 +2975,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     this.currentPage = 1;
 
     const emptySearch = { where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true };
-    console.log(emptySearch);
+
     this.searchQuery.emit(emptySearch);
     this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
     this.columnSort.emit({ sortColumns: [], skipFetch: true });
@@ -1865,7 +2986,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   private persistSavedViewsToDatabase(entitySlug: string, views: UserSearchConfiguration[]): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const userData = this.getUserDataObject();
     const userId = userData?.main?.id;
 
@@ -1908,7 +3029,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   private deleteSavedViewFromDatabase(entitySlug: string): void {
-    if (!this.save_filter_condition) return;
+    if (!this.save_grid_views) return;
     const userData = this.getUserDataObject();
     const userId = userData?.main?.id;
 
@@ -1939,126 +3060,116 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   private tryApplySavedView(): void {
-    if (!this.save_filter_condition) {
-      this.hasSavedViewConfiguration = false;
+    if (!this.save_grid_views) {
+      const hasStableEntityContext = !!(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name);
+      if (this.save_grid_latest_state && !hasStableEntityContext) {
+        this.scheduleTryApplySavedView();
+        return;
+      }
+
+      const currentSlug = this.getEntitySlug();
+      if (this.save_grid_latest_state && this.latestStateBootstrapSlug === currentSlug) {
+        return;
+      }
+
+      const tempApplyKey = `${currentSlug}::__temp__`;
+      if (this.appliedSavedViewSlug === tempApplyKey) {
+        if (this.save_grid_latest_state) {
+          this.latestStateBootstrapSlug = currentSlug;
+        }
+        return;
+      }
+
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (!tempState) {
+        this.appliedSavedViewSlug = null;
+        this.hasSavedViewConfiguration = false;
+
+        if (!this.initialFetchEmitted) {
+          const page = Number(this.currentPage) > 0 ? Number(this.currentPage) : 1;
+          const limit = Number(this.resultsPerPage) > 0 ? Number(this.resultsPerPage) : this.getDefaultResultsPerPage();
+          this.initialFetchEmitted = true;
+          if (this.save_grid_latest_state) {
+            this.latestStateBootstrapSlug = currentSlug;
+          }
+          this.pageChange.emit({ page, start_index: (page - 1) * limit, source: 'default-initial' });
+        }
+        return;
+      }
+
+      if (!this.canApplyGridState(tempState)) {
+        this.scheduleTryApplySavedView();
+        return;
+      }
+
+      this.appliedSavedViewSlug = tempApplyKey;
+      this.hasSavedViewConfiguration = true;
+      if (this.save_grid_latest_state) {
+        this.latestStateBootstrapSlug = currentSlug;
+      }
+      this.applyGridState(tempState);
       return;
     }
+    const currentSlug = this.getEntitySlug();
+    const tempApplyKey = `${currentSlug}::__temp__`;
+
     const savedConfig = this.getSavedViewConfiguration();
-    if (!savedConfig) return;
+    if (!savedConfig) {
+      if (this.appliedSavedViewSlug === tempApplyKey) return;
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (!tempState) return;
+      if (this.canApplyGridState(tempState)) {
+        this.appliedSavedViewSlug = tempApplyKey;
+        this.hasSavedViewConfiguration = true;
+        this.applyGridState(tempState);
+      }
+      return;
+    }
 
     const state = (savedConfig as any).search_values || (savedConfig as any).state;
     if (!state) return;
 
-    const currentSlug = this.getEntitySlug();
     const activeViewName = String(savedConfig?.view_name || 'Default View');
     const activeViewKey = `${currentSlug}::${activeViewName}`;
     if (this.appliedSavedViewSlug === activeViewKey) return;
-    if (!this.headercolumns?.length) return;
+    if (this.isNoFilterViewName(activeViewName)) {
+      const tempState = this.getTempGridStateForCurrentGrid();
+      if (tempState && this.canApplyGridState(tempState)) {
+        this.appliedSavedViewSlug = activeViewKey;
+        this.hasSavedViewConfiguration = true;
+        this.selectedViewName = activeViewName;
+        this.applyGridState(tempState);
+        return;
+      }
+      if (tempState) return;
+      this.appliedSavedViewSlug = activeViewKey;
+      this.hasSavedViewConfiguration = true;
+      this.selectedViewName = activeViewName;
+      this.applyNoFilterSelection();
+      return;
+    }
+    if (!this.headercolumns?.length) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
 
     const selectedSearchColumns = state.selectedSearchColumns || [];
-    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) return;
+    if (selectedSearchColumns.length > 0 && !this.filteredColumns?.length) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
+
+    const appliedFilterConditions = state.appliedFilterConditions || [];
+    if (appliedFilterConditions.length > 0 && !this.filteredColumns?.length) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
 
     this.appliedSavedViewSlug = activeViewKey;
     this.hasSavedViewConfiguration = true;
     this.selectedViewName = activeViewName;
 
-    this.searchCondition = state.searchCondition || 'contains';
-
-    this.headercolumns.forEach((column: any) => {
-      const colKey = this.getColumnUniqueKey(column);
-      column.colFilterHide = (state.hiddenColumns || []).includes(colKey);
-      column.sortDirection = '';
-    });
-
-    this.activeSortOrder = [];
-    (state.sortColumns || []).forEach((sortItem: { key: string; direction: 'asc' | 'desc' }) => {
-      const column = this.headercolumns.find((col: any) => this.getColumnUniqueKey(col) === sortItem.key);
-      if (column && (sortItem.direction === 'asc' || sortItem.direction === 'desc')) {
-        column.sortDirection = sortItem.direction;
-        this.activeSortOrder.push(sortItem.key);
-      }
-    });
-
-    if (selectedSearchColumns.length > 0) {
-      this.selectedColumns = this.filteredColumns.filter((col: any) => selectedSearchColumns.includes(String(col?.field || '')));
-    } else {
-      this.selectedColumns = [];
-    }
-
-    const normalizedFilters: Array<FilterCondition> = (state.appliedFilterConditions || []).map((condition: any) => ({
-      field: condition.field || '',
-      operator: condition.operator || '',
-      value: condition.value || '',
-      clause_type: condition.clause_type || 'where',
-      enum_values: Array.isArray(condition.enum_values) ? [...condition.enum_values] : [],
-      availableOperators: this.getOperatorsForColumn(condition.field || ''),
-      inputType: this.getInputTypeForColumn(condition.field || ''),
-      isEnum: false,
-      enumType: '',
-      enumValueOptions: [],
-      autocompleteLoading: false,
-      autocompleteSearchText: '',
-    }));
-
-    this.filterCondition = state.filterCondition !== undefined ? !!state.filterCondition : true;
-    this.appliedFilterCondition = this.filterCondition;
-    this.filterConditions = this.cloneFilterConditions(normalizedFilters);
-    this.appliedFilterConditions = this.cloneFilterConditions(normalizedFilters);
-
-    this.resultsPerPage = Number(state.resultsPerPage) > 0 ? Number(state.resultsPerPage) : this.getDefaultResultsPerPage();
-    this.currentPage = Number(state.currentPage) > 0 ? Number(state.currentPage) : 1;
-
-    this.search = state.commonSearch || '';
-    this.appliedCommonSearch = this.search;
-    this.isCommonSearchApplied = this.search.length > 0;
-
-    if (this.search.length > 0) {
-      const { whereData, havingData } = this.buildCommonSearchPayload(this.search);
-      this.searchQuery.emit({ where: { data: whereData, search: this.search }, having: { data: havingData, search: this.search }, skipFetch: true });
-    } else {
-      this.searchQuery.emit({ where: { data: [], search: '' }, having: { data: [], search: '' }, skipFetch: true });
-    }
-
-    if (this.appliedFilterConditions.length > 0) {
-      const condition = this.appliedFilterCondition ? 'AND' : 'OR';
-      const data = this.appliedFilterConditions.map((key: any) => {
-        const type = key.inputType || this.getInputTypeForColumn(key.field);
-        let filterValue = key.value;
-        if (!this.isNoValueOperator(key.operator)) {
-          if (type == 'datetime-local' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
-            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'yyyy-MM-dd HH:mm') || filterValue;
-          } else if (type == 'time' && /^\d{2}:\d{2}(:\d{2})?$/.test(String(filterValue || ''))) {
-            filterValue = this.timezoneService.transformDisplayDateTimeToUTC(filterValue, 'HH:mm') || filterValue;
-          } else if (type == 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(filterValue || ''))) {
-            filterValue = this.formatDate(filterValue);
-          }
-        }
-
-        const normalizedFilterValue = typeof filterValue === 'string' ? filterValue.trim() : filterValue;
-
-        return {
-          column_name: key.field,
-          operator: key.operator ? this.mapConditionToSQL(key.operator) : '=',
-          value: this.isNoValueOperator(key.operator)
-            ? this.getNoValueOperatorSQL(key.operator)
-            : key.enum_values?.length > 0
-            ? key.enum_values
-            : this.addWildcards(key.operator, normalizedFilterValue),
-          isAggregate: key?.clause_type === 'having',
-        };
-      });
-      this.advancedSearchQuery.emit({ data, condition, skipFetch: true });
-    } else {
-      this.advancedSearchQuery.emit({ data: [], condition: 'AND', skipFetch: true });
-    }
-
-    this.columnSort.emit({ sortColumns: this.getSortedColumnsByPriority(), skipFetch: true });
-
-    this.resultsPerPageChange.emit({ resultsPerPage: Number(this.resultsPerPage), start_index: 0, skipFetch: true });
-
-    const start_index = (this.currentPage - 1) * Number(this.resultsPerPage);
-    this.initialFetchEmitted = true;
-    this.pageChange.emit({ page: this.currentPage, start_index, source: 'saved-view' });
+    this.applyGridState(state);
   }
 
   toggleColumnFilterHide(col: any) {
@@ -2415,6 +3526,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
   }
 
   onLinkComponentClick(col: any, item: any) {
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
     this.linkComponentClick.emit({ col, item });
   }
 
@@ -2445,13 +3558,135 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     }
 
     this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
-    setTimeout(() => {
-      this.createColumnChildMasterList(item, col.link_action);
-    }, 250);
+    if (col?.link_type === 'child_grid') {
+      setTimeout(() => {
+        this.createColumnChildMasterList(item, col.link_action);
+      }, 250);
+    }
+  }
+
+  onChildComponentExpandClick(item: any, col: any, row_index: number) {
+    if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header) {
+      this.clearAllExpandedGrids();
+      return;
+    }
+
+    if (this.expandedItem) {
+      this.clearAllExpandedGrids();
+    }
+
+    if (this.expandedColumnChildGrid) {
+      this.clearAllExpandedGrids();
+    }
+
+    this.persistCurrentSelectedViewStateAsDefault();
+    this.hasPersistedViewBeforeDestroy = true;
+
+    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
+
+    const resolvedMode = this.getChildComponentMode(col);
+    if (resolvedMode === 'popup_grid') {
+      setTimeout(() => {
+        this.createColumnChildMasterList(item, col.link_action);
+      }, 250);
+    }
   }
 
   isColumnChildGridExpanded(row_index: number, col: any): boolean {
     return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header;
+  }
+
+  getChildComponentMode(col: any): string {
+    const normalizedMode = this.normalizeChildComponentMode(col?.link_mode);
+    if (normalizedMode) {
+      if (col?.link_action) {
+        this.childComponentResolvedModes[col.link_action] = normalizedMode;
+      }
+      return normalizedMode;
+    }
+
+    const entityName = col?.link_action;
+    if (entityName && this.childComponentResolvedModes[entityName]) {
+      return this.childComponentResolvedModes[entityName];
+    }
+
+    const inferredMode = this.inferChildComponentMode(entityName);
+    if (entityName && inferredMode) {
+      this.childComponentResolvedModes[entityName] = inferredMode;
+      return inferredMode;
+    }
+
+    return 'popup_details';
+  }
+
+  getChildComponentUuid(item: any, col: any): string | null {
+    return this.getChildComponentMode(col) === 'popup_add' ? null : item?.uuid || null;
+  }
+
+  getGridParamsFromItem(item: any): any {
+    const gridParams: any = {};
+    Object.keys(item || {}).forEach((key) => {
+      if (key.startsWith('gparam_')) {
+        const temp_key = '$' + key;
+        gridParams[temp_key] = item[key];
+      }
+    });
+    return gridParams;
+  }
+
+  private normalizeChildComponentMode(linkMode: any): string | null {
+    const mode = typeof linkMode === 'string' ? linkMode.trim() : '';
+
+    if (!mode || mode === 'none') {
+      return null;
+    }
+
+    if (mode === 'child_grid') {
+      return 'popup_grid';
+    }
+
+    if (mode === 'popup_create') {
+      return 'popup_add';
+    }
+
+    if (mode === 'popup_details' || mode === 'popup_add' || mode === 'popup_edit' || mode === 'popup_grid') {
+      return mode;
+    }
+
+    return null;
+  }
+
+  private inferChildComponentMode(entityName: string | undefined): string | null {
+    if (!entityName) {
+      return null;
+    }
+
+    const userDataRaw = this.localstore.getData('user_data');
+    if (!userDataRaw || userDataRaw === 'undefined') {
+      return null;
+    }
+
+    try {
+      const userData = JSON.parse(userDataRaw);
+      const routeInfo = userData?.unorgmenuList?.find((item: any) => item?.entity_name === entityName && item?.component_class_name);
+      const componentClassName = routeInfo?.component_class_name;
+
+      if (componentClassName === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE) {
+        return 'popup_grid';
+      }
+
+      if (componentClassName === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
+        return 'popup_edit';
+      }
+
+      if (componentClassName === commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE) {
+        return 'popup_details';
+      }
+    } catch (error) {
+      return null;
+    }
+
+    return null;
   }
 
   createChildMasterList(item: any, entityName: string, row_index: number) {
@@ -2462,6 +3697,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
     componentRef.instance.enableCheckBox = this.enableCheckBox;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
     componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
       this.selectionChange.emit(selectedItems);
     });
@@ -2508,6 +3744,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
@@ -2529,6 +3766,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
+    componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
     const gridParams: any = {};
     Object.keys(item).forEach((key) => {
@@ -2538,6 +3776,33 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
       }
     });
     componentRef.instance.grid_params = gridParams;
+  }
+
+  getParentGridFilterContext() {
+    // Merge THIS level's active filters with the incoming parentGridFilters so the
+    // full chain propagates to deeper (level-3+) grids.
+    // Without this, a level-2 grid would only pass its own filters to level-3,
+    // silently dropping all level-1 filters.
+    const ancestorSearchAll = Array.isArray(this.parentGridFilters?.search_all) ? this.parentGridFilters.search_all : [];
+    const ancestorSearchAny = Array.isArray(this.parentGridFilters?.search_any) ? this.parentGridFilters.search_any : [];
+    const ancestorHavingAll = Array.isArray(this.parentGridFilters?.having_conditions) ? this.parentGridFilters.having_conditions : [];
+    const ancestorHavingAny = Array.isArray(this.parentGridFilters?.having_any_conditions) ? this.parentGridFilters.having_any_conditions : [];
+    const ancestorColumns = Array.isArray(this.parentGridFilters?.columns) ? this.parentGridFilters.columns : [];
+
+    const ownSearchAll = Array.isArray(this.activeSearchAll) ? JSON.parse(JSON.stringify(this.activeSearchAll)) : [];
+    const ownSearchAny = Array.isArray(this.activeSearchAny) ? JSON.parse(JSON.stringify(this.activeSearchAny)) : [];
+    const ownHavingAll = Array.isArray(this.activeHavingAll) ? JSON.parse(JSON.stringify(this.activeHavingAll)) : [];
+    const ownHavingAny = Array.isArray(this.activeHavingAny) ? JSON.parse(JSON.stringify(this.activeHavingAny)) : [];
+    const ownColumns = Array.isArray(this.parentFilterColumns) ? JSON.parse(JSON.stringify(this.parentFilterColumns)) : [];
+
+    return {
+      search_all: [...ancestorSearchAll, ...ownSearchAll],
+      search_any: [...ancestorSearchAny, ...ownSearchAny],
+      having_conditions: [...ancestorHavingAll, ...ownHavingAll],
+      having_any_conditions: [...ancestorHavingAny, ...ownHavingAny],
+      columns: [...ancestorColumns, ...ownColumns],
+      grid_params: this.getCombinedGridParams(),
+    };
   }
 
   private replaceSearchTermInObject(obj: any, searchText: string): any {

@@ -399,11 +399,9 @@ export class EmailTemplateAssignmentComponent implements OnInit {
   }
 
   clearUserTagValues(formGroup: any, type?: 'cc' | 'main') {
-    console.log('type : ', type);
     if (type === 'cc') {
       formGroup.controls['email_to']?.reset();
     } else {
-      console.log('type 1: ', type);
       formGroup.controls['notification_to']?.reset();
     }
     formGroup.controls['email_tag_mail'].reset();

@@ -55,4 +55,16 @@ export class OpenaiService {
   generateAiContent(data: any): Observable<ApiResponce> {
     return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generateAiContent}`, data);
   }
+
+  transcribeAudio(data: any): Observable<ApiResponce> {
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.transcribe_audio}`, data);
+  }
+
+  searchMenuTargetEmbeddings(data: any): Observable<ApiResponce> {
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.search_menu_target_embeddings}`, data);
+  }
+
+  generateMenuEmbeddings(data: any): Observable<ApiResponce> {
+    return this.http.post<ApiResponce>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.generate_menu_embeddings}`, data);
+  }
 }

@@ -11,14 +11,20 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
 import { slideDownUp } from '../../shared/animations';
-import { IconArrowLeftComponent } from '../../shared/icon/icon-arrow-left';
 import { Title } from '@angular/platform-browser';
 import { TimezoneService } from '../../service/common/timezone.service';
+
+interface AcceptedParentParamRule {
+  parentColumnToken: string;
+  currentColumnName: string;
+  condition?: string;
+  applyBasedOnParent?: boolean;
+}
 
 @Component({
   selector: 'app-static-page',
   standalone: true,
-  imports: [CommonSharedModule, SafeHtmlPipe, IconArrowLeftComponent],
+  imports: [CommonSharedModule, SafeHtmlPipe],
   templateUrl: './static-page.component.html',
   styleUrl: './static-page.component.scss',
   animations: [slideDownUp],
@@ -33,6 +39,7 @@ export class StaticPageComponent implements OnChanges {
   entity_name!: string;
   entity_type!: string | null;
   query_information!: any | null;
+  accepted_parent_params: any = [];
   static_page_content: string = '';
   routeGParams: Record<string, string> = {};
 
@@ -40,6 +47,16 @@ export class StaticPageComponent implements OnChanges {
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
   @Input() gridParams!: any;
+  @Input() parentGridFilters: {
+    search_all?: any[];
+    search_any?: any[];
+    having_conditions?: any[];
+    having_any_conditions?: any[];
+    having_all?: any[];
+    having_any?: any[];
+    columns?: any[];
+    grid_params?: any;
+  } | null = null;
   @Input() keyword: string = '';
   @Output() closeModal = new EventEmitter<void>();
 
@@ -236,11 +253,13 @@ export class StaticPageComponent implements OnChanges {
 
   ngOnInit() {
     this.collectRouteGParams();
+    this.collectRouteParentGridFilters();
 
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
         this.unique_id = params.get('id') || params.get('uuid');
         this.collectRouteGParams();
+        this.collectRouteParentGridFilters();
         this.requestLoadData();
       });
     }
@@ -280,7 +299,7 @@ export class StaticPageComponent implements OnChanges {
       this.titleService.setTitle(translateTitle);
     }
 
-    if ((changes['entityName'] || changes['uuid'] || changes['gridParams']) && this.entity_name) {
+    if ((changes['entityName'] || changes['uuid'] || changes['gridParams'] || changes['parentGridFilters']) && this.entity_name) {
       this.requestLoadData();
     }
   }
@@ -294,6 +313,7 @@ export class StaticPageComponent implements OnChanges {
       entity_name: this.entity_name,
       unique_id: this.unique_id || null,
       gridParams: this.gridParams || null,
+      parentGridFilters: this.parentGridFilters || null,
       currentTab: this.currentTab,
       currentAccordion: this.currentAccordion,
     });
@@ -332,11 +352,12 @@ export class StaticPageComponent implements OnChanges {
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
           this.query_information = response.data.records[0].query_information;
+          this.accepted_parent_params = [];
           this.query_information = this.replaceGParamsInObject(this.query_information);
           this.static_page_content = response.data.records[0].static_page_content;
 
           if (this.query_information) {
-            this.loadDefaultData();
+            this.loadAcceptedParentParamsAndDefaultData();
           } else {
             //this.pageContent = this.static_page_content;
             this.pageContent = this.compileStaticContent(this.static_page_content, {
@@ -358,6 +379,30 @@ export class StaticPageComponent implements OnChanges {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.router.navigate(['/dashboard']);
+      }
+    );
+  }
+
+  private loadAcceptedParentParamsAndDefaultData() {
+    if (!this.entity_name) {
+      this.accepted_parent_params = [];
+      this.loadDefaultData();
+      return;
+    }
+
+    this.gridApiService.getAttachedPolicies({ entity_name: this.entity_name }).subscribe(
+      (response) => {
+        if (response?.status && response?.code === 200) {
+          this.accepted_parent_params = response?.data?.accepted_parent_params || {};
+        } else {
+          this.accepted_parent_params = this.query_information?.accepted_parent_params || {};
+        }
+      },
+      () => {
+        this.accepted_parent_params = this.query_information?.accepted_parent_params || {};
+      },
+      () => {
+        this.loadDefaultData();
       }
     );
   }
@@ -408,8 +453,36 @@ export class StaticPageComponent implements OnChanges {
     this.routeGParams = mergedGParams;
   }
 
+  private collectRouteParentGridFilters() {
+    if (!this.parentGridFilters || Object.keys(this.parentGridFilters).length === 0) {
+      const parentGridFiltersStr = this.route.snapshot.queryParamMap.get('parentGridFilters');
+      if (parentGridFiltersStr) {
+        try {
+          const parsed = JSON.parse(parentGridFiltersStr);
+          if (parsed && typeof parsed === 'object') {
+            this.parentGridFilters = { ...this.parentGridFilters, ...parsed };
+          }
+        } catch (e) {
+          console.error('Failed to parse parentGridFilters from route', e);
+        }
+      }
+    }
+  }
+
   private replaceGParamsInObject(obj: any): any {
-    if (!obj || Object.keys(this.routeGParams).length === 0) {
+    if (!obj) {
+      return obj;
+    }
+
+    const combinedGParams: Record<string, any> = { ...this.routeGParams };
+    if (this.gridParams && typeof this.gridParams === 'object') {
+      Object.keys(this.gridParams).forEach((key) => {
+        const cleanKey = key.startsWith('$') ? key.substring(1) : key;
+        combinedGParams[cleanKey] = this.gridParams[key];
+      });
+    }
+
+    if (Object.keys(combinedGParams).length === 0) {
       return obj;
     }
 
@@ -429,7 +502,7 @@ export class StaticPageComponent implements OnChanges {
       if (typeof value === 'string') {
         return value.replace(/\$gparam_\d+/g, (match) => {
           const paramKey = match.substring(1);
-          const replacement = this.routeGParams[paramKey];
+          const replacement = combinedGParams[paramKey];
           return replacement !== undefined ? String(replacement) : match;
         });
       }
@@ -444,7 +517,9 @@ export class StaticPageComponent implements OnChanges {
     if (this.unique_id) {
       this.query_information = this.replaceUniqueId(this.query_information, '$unique_id', this.unique_id);
     }
+    this.query_information = this.mergeAcceptedParentFiltersIntoQueryInformation(this.query_information);
     this.query_information.grid_params = this.gridParams;
+    delete this.query_information?.accepted_parent_params;
     this.gridApiService.getAllList(this.query_information).subscribe(
       (response) => {
         if (response.status && response.data?.records?.length > 0) {
@@ -470,6 +545,291 @@ export class StaticPageComponent implements OnChanges {
         this.router.navigate(['/dashboard']);
       }
     );
+  }
+
+  private mergeAcceptedParentFiltersIntoQueryInformation(queryInformation: any): any {
+    const matchedFilters = this.getAcceptedParentFilterMatches();
+    if (
+      matchedFilters.search_all.length === 0 &&
+      matchedFilters.search_any.length === 0 &&
+      matchedFilters.having_conditions.length === 0 &&
+      matchedFilters.having_any_conditions.length === 0
+    ) {
+      return queryInformation;
+    }
+
+    const mergedQueryInformation: any = {
+      ...(queryInformation || {}),
+    };
+
+    if (matchedFilters.search_all.length > 0) {
+      mergedQueryInformation.search_all = this.mergeUniqueFilters(queryInformation?.search_all, matchedFilters.search_all);
+    }
+
+    if (matchedFilters.search_any.length > 0) {
+      mergedQueryInformation.search_any = this.mergeUniqueFilters(queryInformation?.search_any, matchedFilters.search_any);
+    }
+
+    if (matchedFilters.having_conditions.length > 0) {
+      mergedQueryInformation.having_conditions = this.mergeUniqueFilters(queryInformation?.having_conditions, matchedFilters.having_conditions);
+    }
+
+    if (matchedFilters.having_any_conditions.length > 0) {
+      mergedQueryInformation.having_any_conditions = this.mergeUniqueFilters(queryInformation?.having_any_conditions, matchedFilters.having_any_conditions);
+    }
+
+    return mergedQueryInformation;
+  }
+
+  private getAcceptedParentFilterMatches(): {
+    search_all: any[];
+    search_any: any[];
+    having_conditions: any[];
+    having_any_conditions: any[];
+  } {
+    const empty = {
+      search_all: [],
+      search_any: [],
+      having_conditions: [],
+      having_any_conditions: [],
+    };
+
+    const acceptedParams = this.normalizeAcceptedParentParams(this.accepted_parent_params);
+    const hasAcceptedParams = Object.values(acceptedParams).some((params) => params.length > 0);
+    if (!hasAcceptedParams || !this.parentGridFilters) {
+      return empty;
+    }
+
+    const parentConditionPool = [
+      ...(Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []),
+      ...(Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []),
+      ...(Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []),
+      ...(Array.isArray((this.parentGridFilters as any).having_all) ? (this.parentGridFilters as any).having_all : []),
+      ...(Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []),
+      ...(Array.isArray((this.parentGridFilters as any).having_any) ? (this.parentGridFilters as any).having_any : []),
+    ];
+
+    return {
+      search_all: this.filterBucketWithSource(
+        acceptedParams.search_all,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []
+      ),
+      search_any: this.filterBucketWithSource(
+        acceptedParams.search_any,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []
+      ),
+      having_conditions: this.filterBucketWithSource(
+        acceptedParams.having_conditions,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []
+      ),
+      having_any_conditions: this.filterBucketWithSource(
+        acceptedParams.having_any_conditions,
+        parentConditionPool,
+        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []
+      ),
+    };
+  }
+
+  private filterBucketWithSource(rules: AcceptedParentParamRule[], parentConditionPool: any[], parentBucketConditions: any[]): any[] {
+    const poolRules = rules.filter((r) => !r.applyBasedOnParent);
+    const bucketRules = rules.filter((r) => r.applyBasedOnParent);
+    const fromPool = this.filterAcceptedParentConditions(parentConditionPool, poolRules);
+    const fromBucket = this.filterAcceptedParentConditions(parentBucketConditions, bucketRules);
+    return this.mergeUniqueFilters(fromPool, fromBucket);
+  }
+
+  private filterAcceptedParentConditions(parentConditions: any, acceptedRules: AcceptedParentParamRule[]): any[] {
+    const conditions = Array.isArray(parentConditions) ? parentConditions : [];
+    if (!acceptedRules.length) {
+      return [];
+    }
+
+    const mappedConditions: any[] = [];
+    const seenSignatures = new Set<string>();
+
+    for (const condition of conditions) {
+      if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
+        continue;
+      }
+
+      const parentColumnToken = this.normalizeFilterToken(condition?.column_name);
+      if (!parentColumnToken) {
+        continue;
+      }
+
+      const matchedRules = acceptedRules.filter((rule) => rule.parentColumnToken === parentColumnToken);
+      if (!matchedRules.length) {
+        continue;
+      }
+
+      for (const rule of matchedRules) {
+        const mappedCondition = JSON.parse(JSON.stringify(condition));
+        mappedCondition.column_name = rule.currentColumnName;
+
+        if (rule.condition) {
+          mappedCondition.operator = rule.condition;
+        }
+
+        const signature = this.getFilterSignature(mappedCondition);
+        if (seenSignatures.has(signature)) {
+          continue;
+        }
+
+        seenSignatures.add(signature);
+        mappedConditions.push(mappedCondition);
+      }
+    }
+
+    return mappedConditions;
+  }
+
+  private parseAcceptedParentParamRule(value: any): AcceptedParentParamRule | null {
+    let parentColumnRaw: any;
+    let currentColumnRaw: any;
+    let conditionRaw: any;
+
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      parentColumnRaw =
+        value.parent_column_name ??
+        value.parentColumnName ??
+        value.column_name ??
+        value.columnName ??
+        value.field ??
+        value.name ??
+        value.value ??
+        value.key ??
+        value.current_column_name ??
+        value.currentColumnName;
+
+      currentColumnRaw =
+        value.current_column_name ??
+        value.currentColumnName ??
+        value.column_name ??
+        value.columnName ??
+        value.field ??
+        value.name ??
+        value.value ??
+        value.key ??
+        value.parent_column_name ??
+        value.parentColumnName;
+
+      conditionRaw = value.condition ?? value.operator;
+    } else {
+      parentColumnRaw = value;
+      currentColumnRaw = value;
+    }
+
+    const parentColumnToken = this.normalizeFilterToken(parentColumnRaw);
+    const currentColumnName = String(currentColumnRaw || '').trim();
+
+    if (!parentColumnToken || !currentColumnName) {
+      return null;
+    }
+
+    const condition = String(conditionRaw || '').trim();
+    const applyBasedOnParent = value && typeof value === 'object' ? (value.apply_based_on_parent ?? value.applyBasedOnParent) === true : false;
+    return {
+      parentColumnToken,
+      currentColumnName,
+      ...(condition ? { condition } : {}),
+      ...(applyBasedOnParent ? { applyBasedOnParent: true } : {}),
+    };
+  }
+
+  private normalizeAcceptedParentParams(value: any): {
+    search_all: AcceptedParentParamRule[];
+    search_any: AcceptedParentParamRule[];
+    having_conditions: AcceptedParentParamRule[];
+    having_any_conditions: AcceptedParentParamRule[];
+  } {
+    const empty = {
+      search_all: [] as AcceptedParentParamRule[],
+      search_any: [] as AcceptedParentParamRule[],
+      having_conditions: [] as AcceptedParentParamRule[],
+      having_any_conditions: [] as AcceptedParentParamRule[],
+    };
+
+    if (Array.isArray(value)) {
+      const rules = this.createAcceptedParamRuleList(value);
+      return {
+        search_all: [...rules],
+        search_any: [...rules],
+        having_conditions: [...rules],
+        having_any_conditions: [...rules],
+      };
+    }
+
+    if (!value || typeof value !== 'object') {
+      return empty;
+    }
+
+    return {
+      search_all: this.createAcceptedParamRuleList(value.search_all),
+      search_any: this.createAcceptedParamRuleList(value.search_any),
+      having_conditions: this.createAcceptedParamRuleList(value.having_conditions),
+      having_any_conditions: this.createAcceptedParamRuleList(value.having_any_conditions),
+    };
+  }
+
+  private createAcceptedParamRuleList(values: any): AcceptedParentParamRule[] {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    const rules: AcceptedParentParamRule[] = [];
+    const seen = new Set<string>();
+
+    for (const param of values) {
+      const parsedRule = this.parseAcceptedParentParamRule(param);
+      if (!parsedRule) {
+        continue;
+      }
+
+      const signature = `${parsedRule.parentColumnToken}|${this.normalizeFilterToken(parsedRule.currentColumnName)}|${this.normalizeFilterToken(
+        parsedRule.condition || ''
+      )}`;
+      if (seen.has(signature)) {
+        continue;
+      }
+
+      seen.add(signature);
+      rules.push(parsedRule);
+    }
+
+    return rules;
+  }
+
+  private mergeUniqueFilters(existingFilters: any, newFilters: any[]): any[] {
+    const existing = Array.isArray(existingFilters) ? [...existingFilters] : [];
+    const seen = new Set(existing.map((item: any) => this.getFilterSignature(item)));
+
+    for (const filter of newFilters) {
+      const signature = this.getFilterSignature(filter);
+      if (seen.has(signature)) continue;
+      existing.push(JSON.parse(JSON.stringify(filter)));
+      seen.add(signature);
+    }
+
+    return existing;
+  }
+
+  private getFilterSignature(filter: any): string {
+    return JSON.stringify({
+      column_name: String(filter?.column_name || ''),
+      operator: String(filter?.operator || ''),
+      value: filter?.value,
+      clause_type: String(filter?.clause_type || ''),
+    });
+  }
+
+  private normalizeFilterToken(value: any): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '');
   }
 
   // Helper function to replace <render-html> tags with inner HTML content

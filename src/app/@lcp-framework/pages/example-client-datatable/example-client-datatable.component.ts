@@ -190,12 +190,9 @@ export class ExampleClientDatatableComponent implements OnInit {
   ngOnInit(): void {}
 
   // Event Handlers
-  onDataChange(data: any[]): void {
-    console.log('Data changed:', data);
-  }
+  onDataChange(data: any[]): void {}
 
   onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
-    
     this.tableData.sort((a: any, b: any) => {
       const aVal = a[sort.column];
       const bVal = b[sort.column];
@@ -208,26 +205,18 @@ export class ExampleClientDatatableComponent implements OnInit {
     });
   }
 
-  onPageChange(page: number): void {
-    console.log('Page changed:', page);
-  }
+  onPageChange(page: number): void {}
 
-  onPageSizeChange(pageSize: number): void {
-    console.log('Page size changed:', pageSize);
-  }
+  onPageSizeChange(pageSize: number): void {}
 
-  onSearch(searchTerm: any): void {
-    console.log('Search term:', searchTerm.value);
-  }
+  onSearch(searchTerm: any): void {}
 
   // Action Handlers
   editItem(item: any): void {
     this.toastr.info(`Editing item: ${item.code}`);
-    
   }
 
   deleteItem(item: any): void {
     this.toastr.warning(`Deleting item: ${item.code}`);
-    
   }
 }

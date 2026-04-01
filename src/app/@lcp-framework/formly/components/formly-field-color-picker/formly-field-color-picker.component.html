@@ -5,6 +5,25 @@
     </div>
   </div>
 
+  <div class="rgb-control">
+    <div class="rgb-input-group">
+      <label for="rInput">R:</label>
+      <input id="rInput" type="number" min="0" max="255" [value]="rValue" (change)="onRChange($event)" class="rgb-input" />
+    </div>
+    <div class="rgb-input-group">
+      <label for="gInput">G:</label>
+      <input id="gInput" type="number" min="0" max="255" [value]="gValue" (change)="onGChange($event)" class="rgb-input" />
+    </div>
+    <div class="rgb-input-group">
+      <label for="bInput">B:</label>
+      <input id="bInput" type="number" min="0" max="255" [value]="bValue" (change)="onBChange($event)" class="rgb-input" />
+    </div>
+    <div class="rgb-input-group">
+      <label for="aInput">A:</label>
+      <input id="aInput" type="number" min="0" max="1" step="0.01" [value]="alphaValue" (change)="onAlphaChange($event)" class="rgb-input alpha-input-field" />
+    </div>
+  </div>
+
   <div class="color-value">
     {{ formControlAsFormControl.value || 'Select a color' }}
   </div>
