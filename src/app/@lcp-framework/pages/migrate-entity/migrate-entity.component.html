@@ -82,7 +82,7 @@
           <div *ngFor="let item of checkboxOptions"
             class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             [class.cursor-pointer]="!expandedItems[item.control]"
-            (click)="!expandedItems[item.control] && toggleCheckbox(item.control)">
+            (click)="!expandedItems[item.control] && toggleCheckbox(item.control, item.dipendentOptions || [])">
 
             <!-- Header -->
             <div class="flex items-start gap-3 p-4 hover:bg-gray-50 transition">

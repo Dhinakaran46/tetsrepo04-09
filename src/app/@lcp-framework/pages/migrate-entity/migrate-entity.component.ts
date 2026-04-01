@@ -17,6 +17,7 @@ type CheckboxOption = {
   default?: boolean;
   tables?: string[];
   description?: string;
+  dipendentOptions?: string[]; // controls that are dependent on this option
 };
 
 @Component({
@@ -57,6 +58,27 @@ export class MigrateEntityComponent {
       description: 'Only update option will be applied.',
     },
     {
+      label: 'Users',
+      control: 'includeUsers',
+      default: false,
+      tables: [
+        'users',
+        'user_details',
+        'roles',
+        'user_roles',
+        'user_permissions',
+        'role_permissions',
+        'designations',
+        'departments',
+        'policies',
+        'user_policies',
+        'role_policies',
+      ],
+      dipendentOptions: ['includeMasterEntities'],
+      description:
+        'Only update option will be applied for users table. For updating user_permissions & role_permissions, please select master entities as well with users.',
+    },
+    {
       label: 'Themes',
       control: 'includeThemes',
       default: false,
@@ -81,6 +103,21 @@ export class MigrateEntityComponent {
       control: 'includeMasterEntities',
       default: false,
       tables: ['master_entities', 'master_entity_line_items', 'permissions', 'role_permissions', 'user_permissions', 'menu_items'],
+    },
+    {
+      label: 'Notification Configurations',
+      control: 'includeNotifications',
+      default: false,
+      tables: [
+        'notification_template_process',
+        'notification_template_tags',
+        'notification_template_recipient_tags',
+        'notification_template_process_tags_mapping',
+        'notification_templates',
+        'notification_template_assignments',
+        'email_template_cc_bcc',
+      ],
+      description: 'Only update option will be applied.',
     },
   ];
   exportForm: FormGroup;
@@ -131,9 +168,14 @@ export class MigrateEntityComponent {
   }
 
   // ---------------- EXPORT ----------------
-  toggleCheckbox(controlName: string) {
+  toggleCheckbox(controlName: string, dependentOptions: string[] = []) {
     const currentValue = this.exportForm.get(controlName)?.value;
     this.exportForm.get(controlName)?.setValue(!currentValue);
+    if (dependentOptions.length > 0 && !currentValue) {
+      dependentOptions.forEach((opt) => {
+        this.exportForm.get(opt)?.setValue(true);
+      });
+    }
   }
 
   toggleExpand(controlName: string, event: Event) {
@@ -219,9 +261,9 @@ export class MigrateEntityComponent {
             if (this.fileInput) {
               this.fileInput.nativeElement.value = '';
             }
-            setTimeout(() => {
-              this.logout();
-            }, 5000); // wait for 2 seconds before logging out
+            // setTimeout(() => {
+            //   this.logout();
+            // }, 5000); // wait for 2 seconds before logging out
           } else {
             this.toastr.error(message || 'Import successful');
             this.isLoading = false;
