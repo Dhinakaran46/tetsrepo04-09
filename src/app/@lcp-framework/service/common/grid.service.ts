@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { from, Observable, of, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { commonConfig } from '../../config/common.config';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { CryptoHttpService } from '../crypto-http.service';
 export interface ApiResponce {
   code: number;
@@ -281,5 +281,113 @@ export class GridApiService {
 
   getEntityDetails(entity_name: string): Observable<any> {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.entitydetails}/${entity_name}`);
+  }
+
+  exportEntity(params: any): Observable<ExportResponse> {
+    return this.cryptoHttp
+      .encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        switchMap((response: HttpResponse<Blob>): Observable<ExportResponse> => {
+          if (!response.body) {
+            return throwError(() => new Error('No file received'));
+          }
+
+          const contentType = response.headers.get('Content-Type');
+
+          // 🔥 Handle JSON error inside blob
+          if (contentType && contentType.includes('application/json')) {
+            return from(response.body.text()).pipe(
+              switchMap((text) => {
+                try {
+                  const json = JSON.parse(text);
+                  return throwError(() => new Error(json.message || 'Server error'));
+                } catch {
+                  return throwError(() => new Error('Invalid error response from server'));
+                }
+              })
+            );
+          }
+
+          // ✅ Normal file response
+          const blob = response.body;
+          const contentDisposition = response.headers.get('Content-Disposition');
+
+          let fileName = `entity-${Date.now()}.zip`;
+
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match?.[1]) {
+              fileName = match[1];
+            }
+          }
+
+          return of({ blob, fileName });
+        }),
+        catchError((error) => {
+          console.error('Export master entity error:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  exportEntityAsZip(uuid: string): Observable<ExportResponse> {
+    return this.cryptoHttp
+      .encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}/${uuid}`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        switchMap((response: HttpResponse<Blob>): Observable<ExportResponse> => {
+          if (!response.body) {
+            return throwError(() => new Error('No file received'));
+          }
+
+          const contentType = response.headers.get('Content-Type');
+
+          // 🔥 Handle JSON error inside blob
+          if (contentType && contentType.includes('application/json')) {
+            return from(response.body.text()).pipe(
+              switchMap((text) => {
+                try {
+                  const json = JSON.parse(text);
+                  return throwError(() => new Error(json.message || 'Server error'));
+                } catch {
+                  return throwError(() => new Error('Invalid error response from server'));
+                }
+              })
+            );
+          }
+
+          // ✅ Normal file response
+          const blob = response.body;
+          const contentDisposition = response.headers.get('Content-Disposition');
+
+          let fileName = `master-entity-${Date.now()}.zip`;
+
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match?.[1]) {
+              fileName = match[1];
+            }
+          }
+
+          return of({ blob, fileName });
+        }),
+        catchError((error) => {
+          console.error('Export master entity error:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  importMasterEntity(formData: FormData): Observable<any> {
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}`, formData, {
+      reportProgress: true,
+      observe: 'events', // 👈 required for progress bar
+    });
   }
 }

@@ -756,6 +756,26 @@ export class MasterListComponent implements OnChanges {
     this.isItemModalOpen = true;
     this.user_id = item.uuid;
   }
+
+  exportEntityAsZip(item: any, event?: MouseEvent) {
+    this.gridApiService.exportEntityAsZip(item.uuid).subscribe({
+      next: (res: any) => {
+        const url = window.URL.createObjectURL(res.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = res.fileName;
+        a.click();
+
+        window.URL.revokeObjectURL(url); // ✅ important cleanup
+
+        this.toastr.success('Export successful');
+      },
+      error: (e: any) => {
+        this.toastr.error(e.message || 'Export failed');
+      },
+    });
+  }
+
   cancelResetPwd() {
     this.changePasswordForm.reset();
     this.isItemModalOpen = false;

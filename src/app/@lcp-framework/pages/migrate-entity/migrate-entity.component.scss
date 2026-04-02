@@ -1,0 +1,27 @@
+/* Add to your global styles or component styles */
+.max-h-48 {
+  max-height: 12rem;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for better UX */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
