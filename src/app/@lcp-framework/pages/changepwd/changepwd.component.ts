@@ -15,6 +15,14 @@ import { TranslateService } from '@ngx-translate/core';
 export class ChangePwdComponent implements OnInit {
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   changePasswordForm: FormGroup;
+  passwordStrength = {
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasSpecialChar: false,
+    hasNumericChar: false,
+  };
+  allConditionsMet = false;
 
   constructor(private apiService: ProfileApiService, private formBuilder: FormBuilder, private toastr: ToastrService, private translate: TranslateService) {
     this.changePasswordForm = this.formBuilder.group(
@@ -25,6 +33,11 @@ export class ChangePwdComponent implements OnInit {
       },
       { validators: this.passwordMatchValidator }
     );
+
+    this.changePasswordForm.get('new_password')?.valueChanges.subscribe((value) => {
+      this.checkPasswordStrength(value);
+      this.toggleSubmitButton();
+    });
   }
 
   ngOnInit(): void {}
@@ -36,8 +49,10 @@ export class ChangePwdComponent implements OnInit {
       return null;
     }
     const hasUpperCase = /[A-Z]/.test(value);
+    const hasLowerCase = /[a-z]/.test(value);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const isValid = hasUpperCase && hasSpecialChar;
+    const hasNumericChar = /\d/.test(value);
+    const isValid = hasUpperCase && hasLowerCase && hasSpecialChar && hasNumericChar;
     return !isValid ? { passwordInvalid: true } : null;
   }
 
@@ -46,6 +61,46 @@ export class ChangePwdComponent implements OnInit {
     const newPassword = group.get('new_password')?.value;
     const confirmNewPassword = group.get('confirm_new_password')?.value;
     return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
+  }
+
+  checkPasswordStrength(value: string) {
+    if (value) {
+      this.passwordStrength.hasMinLength = value.length >= 8;
+      this.passwordStrength.hasUpperCase = /[A-Z]/.test(value);
+      this.passwordStrength.hasLowerCase = /[a-z]/.test(value);
+      this.passwordStrength.hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+      this.passwordStrength.hasNumericChar = /\d/.test(value);
+      this.allConditionsMet =
+        this.passwordStrength.hasMinLength &&
+        this.passwordStrength.hasUpperCase &&
+        this.passwordStrength.hasLowerCase &&
+        this.passwordStrength.hasSpecialChar &&
+        this.passwordStrength.hasNumericChar;
+      return;
+    }
+
+    this.passwordStrength = {
+      hasMinLength: false,
+      hasUpperCase: false,
+      hasLowerCase: false,
+      hasSpecialChar: false,
+      hasNumericChar: false,
+    };
+    this.allConditionsMet = false;
+  }
+
+  toggleSubmitButton() {
+    const canSubmit =
+      this.passwordStrength.hasMinLength &&
+      this.passwordStrength.hasUpperCase &&
+      this.passwordStrength.hasLowerCase &&
+      this.passwordStrength.hasSpecialChar &&
+      this.passwordStrength.hasNumericChar;
+    if (canSubmit) {
+      this.changePasswordForm.get('new_password')?.setErrors(null);
+    } else {
+      this.changePasswordForm.get('new_password')?.setErrors({ passwordInvalid: true });
+    }
   }
 
   // Method to handle password change
