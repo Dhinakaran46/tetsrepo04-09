@@ -132,6 +132,14 @@ export class MasterListComponent implements OnChanges {
   user_id: any;
   isItemModalOpen = false;
   changePasswordForm: FormGroup;
+  passwordStrength = {
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasSpecialChar: false,
+    hasNumericChar: false,
+  };
+  allConditionsMet = false;
   isGetCodeModalOpen = false;
   getCodeForm: FormGroup;
   modalJsonEditorOptions = { theme: 'vs-dark', language: 'json', readOnly: true, minimap: { enabled: false } };
@@ -280,6 +288,11 @@ export class MasterListComponent implements OnChanges {
       { validators: this.passwordMatchValidator }
     );
 
+    this.changePasswordForm.get('new_password')?.valueChanges.subscribe((value) => {
+      this.checkPasswordStrength(value);
+      this.toggleSubmitButton();
+    });
+
     this.getCodeForm = this.formBuilder.group({
       codeContent: [''],
     });
@@ -291,8 +304,10 @@ export class MasterListComponent implements OnChanges {
       return null;
     }
     const hasUpperCase = /[A-Z]/.test(value);
+    const hasLowerCase = /[a-z]/.test(value);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const isValid = hasUpperCase && hasSpecialChar;
+    const hasNumericChar = /\d/.test(value);
+    const isValid = hasUpperCase && hasLowerCase && hasSpecialChar && hasNumericChar;
     return !isValid ? { passwordInvalid: true } : null;
   }
 
@@ -300,6 +315,56 @@ export class MasterListComponent implements OnChanges {
     const newPassword = group.get('new_password')?.value;
     const confirmNewPassword = group.get('confirm_new_password')?.value;
     return newPassword === confirmNewPassword ? null : { passwordsMismatch: true };
+  }
+
+  checkPasswordStrength(value: string) {
+    if (value) {
+      this.passwordStrength.hasMinLength = value.length >= 8;
+      this.passwordStrength.hasUpperCase = /[A-Z]/.test(value);
+      this.passwordStrength.hasLowerCase = /[a-z]/.test(value);
+      this.passwordStrength.hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+      this.passwordStrength.hasNumericChar = /\d/.test(value);
+      this.allConditionsMet =
+        this.passwordStrength.hasMinLength &&
+        this.passwordStrength.hasUpperCase &&
+        this.passwordStrength.hasLowerCase &&
+        this.passwordStrength.hasSpecialChar &&
+        this.passwordStrength.hasNumericChar;
+      return;
+    }
+
+    this.passwordStrength = {
+      hasMinLength: false,
+      hasUpperCase: false,
+      hasLowerCase: false,
+      hasSpecialChar: false,
+      hasNumericChar: false,
+    };
+    this.allConditionsMet = false;
+  }
+
+  toggleSubmitButton() {
+    const canSubmit =
+      this.passwordStrength.hasMinLength &&
+      this.passwordStrength.hasUpperCase &&
+      this.passwordStrength.hasLowerCase &&
+      this.passwordStrength.hasSpecialChar &&
+      this.passwordStrength.hasNumericChar;
+    const control = this.changePasswordForm.get('new_password');
+
+    if (!control) {
+      return;
+    }
+
+    if (canSubmit) {
+      if (control.errors?.['passwordInvalid']) {
+        const { passwordInvalid, ...remainingErrors } = control.errors;
+        control.setErrors(Object.keys(remainingErrors).length ? remainingErrors : null);
+      }
+      return;
+    }
+
+    control.setErrors({ ...(control.errors || {}), passwordInvalid: true });
   }
 
   async ngAfterContentInit() {
@@ -755,6 +820,7 @@ export class MasterListComponent implements OnChanges {
     //return;
     this.isItemModalOpen = true;
     this.user_id = item.uuid;
+    this.checkPasswordStrength('');
   }
 
   exportEntityAsZip(item: any, event?: MouseEvent) {
@@ -778,6 +844,7 @@ export class MasterListComponent implements OnChanges {
 
   cancelResetPwd() {
     this.changePasswordForm.reset();
+    this.checkPasswordStrength('');
     this.isItemModalOpen = false;
   }
   advancedSearchData(data: any) {

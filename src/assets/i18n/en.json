@@ -232,7 +232,7 @@
     "FORM_OLD_PWD": "Old Password",
     "FORM_OLD_PWD_REQ_MSG": "Old Password is required",
     "FORM_NEW_PWD": "New Password",
-    "FORM_NEW_PWD_REQ_MSG": "New Password must be at least 8 characters long, contain one capital letter, and one special character",
+    "FORM_NEW_PWD_REQ_MSG": "New Password must be at least 8 characters long, contain one capital letter, one lowercase letter, one number, and one special character",
     "FORM_CONFIRM_NEW_PWD": "Confirm New Password",
     "FORM_CONFIRM_NEW_PWD_REQ_MSG": "New Password and Confirm New Password do not match",
     "FORM_SUBMIT_BTN": "Change Password"

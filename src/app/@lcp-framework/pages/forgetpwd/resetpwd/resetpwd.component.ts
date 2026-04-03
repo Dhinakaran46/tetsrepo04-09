@@ -72,6 +72,7 @@ export class ResetpwdComponent {
   passwordStrength = {
     hasMinLength: false,
     hasUpperCase: false,
+    hasLowerCase: false,
     hasSpecialChar: false,
     hasNumericChar: false,
   };
@@ -134,9 +135,10 @@ export class ResetpwdComponent {
       return null;
     }
     const hasUpperCase = /[A-Z]/.test(value);
+    const hasLowerCase = /[a-z]/.test(value);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
     const hasNumericChar = /\d/.test(value);
-    const isValid = hasUpperCase && hasSpecialChar && hasNumericChar;
+    const isValid = hasUpperCase && hasLowerCase && hasSpecialChar && hasNumericChar;
     return !isValid ? { passwordInvalid: true } : null;
   }
 
@@ -167,11 +169,13 @@ export class ResetpwdComponent {
     if (value) {
       this.passwordStrength.hasMinLength = value.length >= 8;
       this.passwordStrength.hasUpperCase = /[A-Z]/.test(value);
+      this.passwordStrength.hasLowerCase = /[a-z]/.test(value);
       this.passwordStrength.hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
       this.passwordStrength.hasNumericChar = /\d/.test(value);
       this.allConditionsMet =
         this.passwordStrength.hasMinLength &&
         this.passwordStrength.hasUpperCase &&
+        this.passwordStrength.hasLowerCase &&
         this.passwordStrength.hasSpecialChar &&
         this.passwordStrength.hasNumericChar;
     }
@@ -198,7 +202,8 @@ export class ResetpwdComponent {
   }
 
   toggleSubmitButton() {
-    const canSubmit = this.passwordStrength.hasMinLength && this.passwordStrength.hasUpperCase && this.passwordStrength.hasSpecialChar;
+    const canSubmit =
+      this.passwordStrength.hasMinLength && this.passwordStrength.hasUpperCase && this.passwordStrength.hasLowerCase && this.passwordStrength.hasSpecialChar;
     if (canSubmit) {
       this.resetPwdForm.get('new_password')?.setErrors(null);
     } else {
