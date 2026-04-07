@@ -2960,6 +2960,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   recordExport(item: any, event?: MouseEvent) {
+    console.log('Record export triggered for item:', item);
     if (item.downloadables) {
       this.downloadExcel(item.downloadables);
       return;

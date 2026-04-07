@@ -24,6 +24,7 @@ export class AppLayout {
   store: any;
   showTopButton = false;
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+  enableVoiceSearch = false;
   constructor(
     private renderer: Renderer2,
     public translate: TranslateService,
@@ -52,10 +53,26 @@ export class AppLayout {
   isPreviewOpen: boolean = false;
   isHolding: boolean = false;
   holdTimer: any;
+
+  private isConfigFlagEnabled(value: unknown): boolean {
+    return value === true || value === 'true';
+  }
+
   ngOnInit() {
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
-    const resn = JSON.parse(this.localstore.getData('config'));
-    this.changeFavicon(apiUrl + '/' + resn.favicon);
+    const configRaw = this.localstore.getData('config');
+    if (configRaw) {
+      try {
+        const config = JSON.parse(configRaw);
+        this.enableVoiceSearch = this.isConfigFlagEnabled(config?.enable_voice_search);
+        if (config?.favicon) {
+          this.changeFavicon(apiUrl + '/' + config.favicon);
+        }
+      } catch (error) {
+        this.enableVoiceSearch = false;
+      }
+    }
+
     this.initAnimation();
     this.toggleLoader();
     this.startTypingAnimation();
