@@ -54,6 +54,7 @@ export class MigrateEntityComponent {
         'wizard_groups',
         'wizard_types',
         'barcode_templates',
+        'data_transfer_queries',
       ],
       description: 'Only update option will be applied.',
     },
@@ -109,14 +110,12 @@ export class MigrateEntityComponent {
       control: 'includeExportTemplates',
       default: false,
       tables: ['export_templates', 'export_template_line_items', 'export_template_queries'],
-      description: 'Export templates excel file should be moved to assets folder separately.',
     },
     {
       label: 'Import Templates',
       control: 'includeImportTemplates',
       default: false,
       tables: ['import_templates', 'import_template_line_items', 'import_template_queries'],
-      description: 'Import templates excel file should be moved to assets folder separately.',
     },
     {
       label: 'Notification Configurations',
@@ -132,6 +131,12 @@ export class MigrateEntityComponent {
         'email_template_cc_bcc',
       ],
       description: 'Only update option will be applied.',
+    },
+    {
+      label: 'Approval Workflow',
+      control: 'includeApprovalWorkflows',
+      default: false,
+      tables: ['approval_workflows', 'approval_workflow_approver_tags', 'approval_workflow_assignments'],
     },
   ];
   exportForm: FormGroup;
