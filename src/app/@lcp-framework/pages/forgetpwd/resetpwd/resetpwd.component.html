@@ -43,17 +43,8 @@
     </div>
     <div *ngIf="isSubmitted && resetPwdForm.controls['new_password'].hasError('required')" class="text-danger">{{ 'new_pwd_req' | translate }}</div>
 
-    <div class="passwordCharMatch" *ngIf="resetPwdForm.controls['new_password'].touched && !allConditionsMet">
-      <div class="text-green-500" *ngIf="passwordStrength.hasMinLength">✓ {{ 'password_validation_message_1' | translate }}</div>
-      <div class="text-red-500" *ngIf="!passwordStrength.hasMinLength">✗ {{ 'password_validation_message_2' | translate }}</div>
-      <div class="text-green-500" *ngIf="passwordStrength.hasUpperCase">✓ {{ 'password_validation_message_3' | translate }}</div>
-      <div class="text-red-500" *ngIf="!passwordStrength.hasUpperCase">✗ {{ 'password_validation_message_4' | translate }}</div>
-      <div class="text-green-500" *ngIf="passwordStrength.hasLowerCase">✓ {{ 'password_validation_message_9' | translate }}</div>
-      <div class="text-red-500" *ngIf="!passwordStrength.hasLowerCase">✗ {{ 'password_validation_message_10' | translate }}</div>
-      <div class="text-green-500" *ngIf="passwordStrength.hasSpecialChar">✓ {{ 'password_validation_message_5' | translate }}</div>
-      <div class="text-red-500" *ngIf="!passwordStrength.hasSpecialChar">✗ {{ 'password_validation_message_6' | translate }}</div>
-      <div class="text-green-500" *ngIf="passwordStrength.hasNumericChar">✓ {{ 'password_validation_message_7' | translate }}</div>
-      <div class="text-red-500" *ngIf="!passwordStrength.hasNumericChar">✗ {{ 'password_validation_message_8' | translate }}</div>
+    <div class="passwordCharMatch text-red-500" *ngIf="resetPwdForm.controls['new_password'].touched && !allConditionsMet">
+      {{ passwordValidationMessage }}
     </div>
   </div>
 

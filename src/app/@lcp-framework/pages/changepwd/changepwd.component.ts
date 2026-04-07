@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 @Component({
   standalone: true,
@@ -15,20 +16,47 @@ import { TranslateService } from '@ngx-translate/core';
 export class ChangePwdComponent implements OnInit {
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   changePasswordForm: FormGroup;
-  passwordStrength = {
-    hasMinLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasSpecialChar: false,
-    hasNumericChar: false,
-  };
+  passwordValidationPattern: RegExp = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+  passwordValidationMessage = 'Password must include uppercase, lowercase, number, special character, and be at least 8 characters long.';
   allConditionsMet = false;
 
-  constructor(private apiService: ProfileApiService, private formBuilder: FormBuilder, private toastr: ToastrService, private translate: TranslateService) {
+  private parsePasswordValidationRegexp(pattern: string): RegExp {
+    // Accept both plain regex strings and slash-delimited strings (/.../flags).
+    const literalMatch = pattern.match(/^\/(.*)\/([a-z]*)$/i);
+    if (literalMatch) {
+      return new RegExp(literalMatch[1], literalMatch[2]);
+    }
+    return new RegExp(pattern);
+  }
+
+  constructor(
+    private apiService: ProfileApiService,
+    private formBuilder: FormBuilder,
+    private toastr: ToastrService,
+    private translate: TranslateService,
+    private localstore: LocalStorageService
+  ) {
+    const conf = this.localstore.getData('config');
+    console.log('config:', conf);
+    if (conf) {
+      try {
+        const common_conf: any = JSON.parse(conf);
+        console.log('Parsed config:', common_conf);
+        if (common_conf?.password_validation_regexp) {
+          this.passwordValidationPattern = this.parsePasswordValidationRegexp(common_conf.password_validation_regexp);
+        }
+        if (common_conf?.password_validation_message) {
+          this.passwordValidationMessage = common_conf.password_validation_message;
+        }
+      } catch (error) {
+        // Keep fallback regex and message if config is unavailable or malformed.
+      }
+    }
+
     this.changePasswordForm = this.formBuilder.group(
       {
         old_password: ['', Validators.required],
-        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+        new_password: ['', [Validators.required, this.passwordValidator]],
         confirm_new_password: ['', Validators.required],
       },
       { validators: this.passwordMatchValidator }
@@ -43,18 +71,14 @@ export class ChangePwdComponent implements OnInit {
   ngOnInit(): void {}
 
   // Custom validator to check password pattern
-  passwordValidator(control: AbstractControl): ValidationErrors | null {
+  passwordValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     if (!value) {
       return null;
     }
-    const hasUpperCase = /[A-Z]/.test(value);
-    const hasLowerCase = /[a-z]/.test(value);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const hasNumericChar = /\d/.test(value);
-    const isValid = hasUpperCase && hasLowerCase && hasSpecialChar && hasNumericChar;
+    const isValid = this.passwordValidationPattern.test(value);
     return !isValid ? { passwordInvalid: true } : null;
-  }
+  };
 
   // Custom validator to check if new password and confirm new password match
   passwordMatchValidator(group: FormGroup): ValidationErrors | null {
@@ -64,38 +88,12 @@ export class ChangePwdComponent implements OnInit {
   }
 
   checkPasswordStrength(value: string) {
-    if (value) {
-      this.passwordStrength.hasMinLength = value.length >= 8;
-      this.passwordStrength.hasUpperCase = /[A-Z]/.test(value);
-      this.passwordStrength.hasLowerCase = /[a-z]/.test(value);
-      this.passwordStrength.hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-      this.passwordStrength.hasNumericChar = /\d/.test(value);
-      this.allConditionsMet =
-        this.passwordStrength.hasMinLength &&
-        this.passwordStrength.hasUpperCase &&
-        this.passwordStrength.hasLowerCase &&
-        this.passwordStrength.hasSpecialChar &&
-        this.passwordStrength.hasNumericChar;
-      return;
-    }
-
-    this.passwordStrength = {
-      hasMinLength: false,
-      hasUpperCase: false,
-      hasLowerCase: false,
-      hasSpecialChar: false,
-      hasNumericChar: false,
-    };
-    this.allConditionsMet = false;
+    this.allConditionsMet = !!value && this.passwordValidationPattern.test(value);
   }
 
   toggleSubmitButton() {
-    const canSubmit =
-      this.passwordStrength.hasMinLength &&
-      this.passwordStrength.hasUpperCase &&
-      this.passwordStrength.hasLowerCase &&
-      this.passwordStrength.hasSpecialChar &&
-      this.passwordStrength.hasNumericChar;
+    const passwordValue = this.changePasswordForm.get('new_password')?.value || '';
+    const canSubmit = !!passwordValue && this.passwordValidationPattern.test(passwordValue);
     if (canSubmit) {
       this.changePasswordForm.get('new_password')?.setErrors(null);
     } else {
