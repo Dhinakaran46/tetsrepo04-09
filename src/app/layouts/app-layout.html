@@ -40,7 +40,7 @@
     </div>
 
     <!-- Voice Search Section -->
-    <div class="fixed bottom-20 z-50 flex flex-col items-center space-y-2 ltr:right-8 rtl:left-6">
+    <div *ngIf="enableVoiceSearch" class="fixed bottom-20 z-50 flex flex-col items-center space-y-2 ltr:right-8 rtl:left-6">
       <div class="relative">
         <button
           class="btn btn-outline-primary relative rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary"
@@ -70,7 +70,10 @@
     </div>
 
     <!-- Transcription Preview - Enhanced UI -->
-    <div *ngIf="isPreviewOpen || isTranscribing || hasTranscriptionData" class="fixed left-6 right-32 top-3/4 z-50 -translate-y-1/2 transform">
+    <div
+      *ngIf="enableVoiceSearch && (isPreviewOpen || isTranscribing || hasTranscriptionData)"
+      class="fixed left-6 right-32 top-3/4 z-50 -translate-y-1/2 transform"
+    >
       <div
         class="relative w-full rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800"
         style="min-height: 140px"

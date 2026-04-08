@@ -7,7 +7,7 @@ import { Router, Route, Routes } from '@angular/router';
 // import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
 
 import { LocalStorageService } from './local-storage.service';
-import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
+import { audit, BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 // import { MasterEntityComponent } from '../../pages/master-entity/master-entity.component';
 // import { LanguageMappingComponent } from '../../pages/language-mapping/language-mapping.component';
 // import { DocumentationComponent } from '../../pages/documentation/documentation.component';
@@ -112,6 +112,8 @@ export class RouteUpdateService {
             tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
             target_keywords_embeddings_module: () =>
               import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+            audit_log_management_module: () =>
+              import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
           };
 
           const dynamicRoutes = routeDataArray
@@ -250,6 +252,8 @@ export class RouteUpdateService {
                 tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
                 target_keywords_embeddings_module: () =>
                   import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+                audit_log_management_module: () =>
+                  import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
               };
 
               const route: Route = {
@@ -450,6 +454,8 @@ export class RouteUpdateService {
             tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
             target_keywords_embeddings_module: () =>
               import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
+            audit_log_management_module: () =>
+              import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
           };
 
           const route: Route = {

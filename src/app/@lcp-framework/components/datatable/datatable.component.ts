@@ -2982,7 +2982,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.resultsPerPageChange.emit({ resultsPerPage: this.resultsPerPage, start_index: 0, skipFetch: true });
     this.pageChange.emit({ page: 1, start_index: 0 });
 
-    this.toastr.success('View reset successfully', 'Success');
+    //this.toastr.success('View reset successfully', 'Success');
   }
 
   private persistSavedViewsToDatabase(entitySlug: string, views: UserSearchConfiguration[]): void {
