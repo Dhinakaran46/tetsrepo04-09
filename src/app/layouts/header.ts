@@ -1,4 +1,4 @@
-import { Component, OnInit, Type } from '@angular/core';
+import { Component, HostListener, OnInit, Type } from '@angular/core';
 import { CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';
@@ -7,6 +7,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { TranslateService } from '@ngx-translate/core';
+import { ToastrService } from 'ngx-toastr';
 
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { AuthService } from '../@lcp-framework/service/common/auth.service';
@@ -22,6 +23,11 @@ import { NgComponentOutlet } from '@angular/common';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
 import { IdleService } from '../@lcp-framework/service/common/idle.service';
+import { WebSocketSubject } from 'rxjs/webSocket';
+import { TimezoneService } from '../@lcp-framework/service/common/timezone.service';
+import { ApiResponce, GridApiService } from '../@lcp-framework/service/common/grid.service';
+import { htmlToPlainText } from '../@lcp-framework/shared/utils/html-text.util';
+import { FirebaseService } from '../@lcp-framework/service/firebase.service';
 
 interface MenuItem {
   id: number;
@@ -54,6 +60,7 @@ interface MenuItem {
 })
 export class HeaderComponent implements OnInit {
   private adList: { component: Type<any>; inputs?: any }[] = [];
+  private socket$!: WebSocketSubject<any>;
 
   userId: any;
   companyId: any;
@@ -64,26 +71,6 @@ export class HeaderComponent implements OnInit {
   menuItems: MenuItem[] = [];
   store: any;
   search = false;
-  notifications = [
-    {
-      id: 1,
-      profile: '<i class="fas fa-circle-user"></i>',
-      message: '<strong class="text-sm mr-1">John Doe</strong>invite you to <strong>Prototyping</strong>',
-      time: '45 min ago',
-    },
-    {
-      id: 2,
-      profile: '<i class="fas fa-circle-user"></i>',
-      message: '<strong class="text-sm mr-1">Adam Nolan</strong>mentioned you to <strong>UX Basics</strong>',
-      time: '9h Ago',
-    },
-    {
-      id: 3,
-      profile: '<i class="fas fa-circle-user"></i>',
-      message: '<strong class="text-sm mr-1">Anna Morgan</strong>Upload a file',
-      time: '9h Ago',
-    },
-  ];
   messages = [
     {
       id: 1,
@@ -125,9 +112,11 @@ export class HeaderComponent implements OnInit {
   user_info: any;
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
+  showNotifications: boolean = false;
 
   constructor(
     public translate: TranslateService,
+    private toastr: ToastrService,
     public storeData: Store<any>,
     public router: Router,
     private appSetting: AppService,
@@ -136,7 +125,10 @@ export class HeaderComponent implements OnInit {
     private localstore: LocalStorageService,
     private languageService: LanguageService,
     private menuLoadService: MenuLoadService,
-    private idleService: IdleService
+    private idleService: IdleService,
+    private timezoneService: TimezoneService,
+    private gridApiService: GridApiService,
+    private firebaseService: FirebaseService
   ) {
     this.initStore();
   }
@@ -149,6 +141,12 @@ export class HeaderComponent implements OnInit {
       });
   }
 
+  ngOnDestroy() {
+    if (this.socket$) {
+      this.socket$.complete();
+    }
+  }
+
   ngOnInit() {
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.config = JSON.parse(this.localstore.getData('config'));
@@ -158,6 +156,27 @@ export class HeaderComponent implements OnInit {
     //     this.setActiveDropdown();
     //   }
     // });
+
+    if (this.user_info?.main?.user_id) {
+      if (this.config?.enable_socket_push_notification === 'true') {
+        const socketUrl = (environment as any).WS_URL || 'ws://localhost:8089';
+        console.log('this.userData.main', this.user_info.main);
+        this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.user_info.main.user_id}`);
+
+        this.socket$.subscribe({
+          next: (data: any) => {
+            this.toastr.info(data.message, '');
+            console.log('WebSocket message received:', data);
+          },
+          error: (err) => {
+            console.error('WebSocket error', err);
+          },
+        });
+      } else {
+        this.firebaseService.init(this.config);
+        this.firebaseService.listen(this.user_info?.main?.user_id);
+      }
+    }
 
     if (this.user_info) {
       this.userId = this.user_info.main?.id;
@@ -357,5 +376,196 @@ export class HeaderComponent implements OnInit {
     } catch (error: any) {
       console.error('Logout Error: ', error);
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleOutsideClick(event: any) {
+    const clickedInsideDropdown = event.target.closest('.notification-dropdown');
+    const clickedInsideBox = event.target.closest('.notification-dropdown-box');
+
+    if (!clickedInsideDropdown && !clickedInsideBox) {
+      this.showNotifications = false;
+      this.activeTab = this.tabs[0];
+    }
+  }
+
+  toggleDropdown(): void {
+    this.activeTab = this.tabs[0];
+    if (this.showNotifications == false) {
+      this.fetchNotifications(this.activeTab.key);
+    }
+    this.showNotifications = !this.showNotifications;
+  }
+
+  tabs = [
+    {
+      key: 'push_notification',
+      icon: 'fa-regular fa-bell',
+    },
+    {
+      key: 'sms',
+      icon: 'fa-solid fa-comment-sms',
+    },
+    {
+      key: 'email',
+      icon: 'fa-regular fa-envelope',
+    },
+    {
+      key: 'whatsapp',
+      icon: 'fa-brands fa-whatsapp',
+    },
+  ];
+
+  activeTab = this.tabs[0];
+
+  selectTab(tab: any) {
+    this.activeTab = tab;
+    this.fetchNotifications(tab.key);
+  }
+
+  notifications: any[] = [];
+
+  formatDateTime(dateTime: any) {
+    return this.timezoneService.transformDateTime(dateTime);
+  }
+
+  loadingNotificationData: boolean = false;
+
+  fetchNotifications(notification_type: string) {
+    this.notifications = [];
+    this.loadingNotificationData = true;
+    return;
+    const search_all: any[] = [
+      {
+        column_name: 'notification_jobs.notification_type',
+        operator: '=',
+        value: notification_type,
+      },
+      {
+        column_name: 'notification_jobs.company_id',
+        operator: '=',
+        value: 1,
+      },
+    ];
+
+    if (notification_type === 'push_notification') {
+      search_all.push({
+        column_name: 'notification_jobs.notification_status_id',
+        operator: '=',
+        value: 'ac11',
+      });
+    }
+
+    let email = this.user_info.main.email;
+
+    const search_any: any[] = [
+      {
+        column_name: 'notification_jobs.notification_to',
+        operator: '=',
+        value: email,
+      },
+      {
+        column_name: 'notification_jobs.notification_cc',
+        operator: '=',
+        value: email,
+      },
+      {
+        column_name: 'notification_jobs.notification_bcc',
+        operator: '=',
+        value: email,
+      },
+    ];
+
+    const param: any = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'notification_jobs',
+      search_all,
+      search_any,
+      select_columns: [
+        ['notification_jobs.notification_content', 'notification_content'],
+        ['notification_jobs.notification_subject', 'notification_subject'],
+        ['notification_jobs.sent_at', 'sent_at'],
+      ],
+      sort_columns: [['notification_jobs.sent_at', 'desc']],
+      limit_range: 5,
+      start_index: 0,
+    };
+
+    this.gridApiService.getListData(param).subscribe({
+      next: (response: any) => {
+        if (response.status) {
+          this.notifications = response.data?.records || [];
+          this.notifications.forEach((notification: any) => {
+            notification.notification_content = htmlToPlainText(notification.notification_content);
+          });
+        } else {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code}, ${errorMessage}`);
+        }
+      },
+      error: (error: any) => {
+        this.notifications = [];
+        const errorMessage = this.translate.instant('error');
+        this.toastr.error(errorMessage, 'Error');
+      },
+      complete: () => {
+        this.loadingNotificationData = false;
+      },
+    });
+  }
+
+  markPushNotificationAsread(actionType?: string) {
+    this.loadingNotificationData = true;
+    let param: any = {
+      table: ['notification_jobs'],
+      action: ['update'],
+      data: {
+        table1: [
+          {
+            notification_status_id: 'ac10',
+            updated_at: true,
+          },
+        ],
+      },
+      conditions: {
+        table1: [
+          {
+            notification_type: 'push_notification',
+            notification_status_id: 'ac11',
+          },
+        ],
+      },
+      table_mapping: ['table1'],
+    };
+    this.gridApiService.executeTransaction(param).subscribe(
+      (response: ApiResponce) => {
+        if (response.status) {
+          if (!actionType) {
+            const key = 'marked_notifications_as_read';
+            const successMessage = this.translate.instant(key);
+            this.toastr.success(successMessage, 'Success');
+          }
+        } else if (!response.status) {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+        }
+      },
+      (error: any) => {
+        const key = 'error_mapping_role_permissions';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  navigateToNotifications() {
+    this.toggleDropdown();
+    if (this.activeTab.key === 'push_notification') {
+      this.markPushNotificationAsread('triggerRead');
+    }
+    this.router.navigate(['/notifications']);
   }
 }
