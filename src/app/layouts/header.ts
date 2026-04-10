@@ -434,7 +434,6 @@ export class HeaderComponent implements OnInit {
   fetchNotifications(notification_type: string) {
     this.notifications = [];
     this.loadingNotificationData = true;
-    return;
     const search_all: any[] = [
       {
         column_name: 'notification_jobs.notification_type',
