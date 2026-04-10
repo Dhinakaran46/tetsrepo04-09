@@ -283,55 +283,58 @@ export class GridApiService {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.entitydetails}/${entity_name}`);
   }
 
-  exportEntity(params: any): Observable<ExportResponse> {
-    return this.cryptoHttp
-      .encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}`, {
-        params,
-        responseType: 'blob',
-        observe: 'response',
-      })
-      .pipe(
-        switchMap((response: HttpResponse<Blob>): Observable<ExportResponse> => {
-          if (!response.body) {
-            return throwError(() => new Error('No file received'));
-          }
-
-          const contentType = response.headers.get('Content-Type');
-
-          // 🔥 Handle JSON error inside blob
-          if (contentType && contentType.includes('application/json')) {
-            return from(response.body.text()).pipe(
-              switchMap((text) => {
-                try {
-                  const json = JSON.parse(text);
-                  return throwError(() => new Error(json.message || 'Server error'));
-                } catch {
-                  return throwError(() => new Error('Invalid error response from server'));
-                }
-              })
-            );
-          }
-
-          // ✅ Normal file response
-          const blob = response.body;
-          const contentDisposition = response.headers.get('Content-Disposition');
-
-          let fileName = `entity-${Date.now()}.zip`;
-
-          if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (match?.[1]) {
-              fileName = match[1];
-            }
-          }
-
-          return of({ blob, fileName });
-        }),
-        catchError((error) => {
-          console.error('Export master entity error:', error);
-          return throwError(() => error);
+  exportEntity(params: any, exportType: 'download' | 'save' = 'save'): Observable<ExportResponse | any> {
+    if (exportType === 'download') {
+      return this.cryptoHttp
+        .encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_entity_export}?export=true`, params, {
+          responseType: 'blob',
+          observe: 'response',
         })
-      );
+        .pipe(
+          switchMap((response: HttpResponse<Blob>): Observable<ExportResponse> => {
+            if (!response.body) {
+              return throwError(() => new Error('No file received'));
+            }
+
+            const contentType = response.headers.get('Content-Type');
+
+            // 🔥 Handle JSON error inside blob
+            if (contentType && contentType.includes('application/json')) {
+              return from(response.body.text()).pipe(
+                switchMap((text) => {
+                  try {
+                    const json = JSON.parse(text);
+                    return throwError(() => new Error(json.message || 'Server error'));
+                  } catch {
+                    return throwError(() => new Error('Invalid error response from server'));
+                  }
+                })
+              );
+            }
+
+            // ✅ Normal file response
+            const blob = response.body;
+            const contentDisposition = response.headers.get('Content-Disposition');
+
+            let fileName = `entity-${Date.now()}.zip`;
+
+            if (contentDisposition) {
+              const match = contentDisposition.match(/filename="?([^"]+)"?/);
+              if (match?.[1]) {
+                fileName = match[1];
+              }
+            }
+
+            return of({ blob, fileName });
+          }),
+          catchError((error) => {
+            console.error('Export master entity error:', error);
+            return throwError(() => error);
+          })
+        );
+    } else {
+      return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_entity_export}`, params);
+    }
   }
 
   exportEntityAsZip(uuid: string): Observable<ExportResponse> {
@@ -384,10 +387,14 @@ export class GridApiService {
       );
   }
 
-  importMasterEntity(formData: FormData): Observable<any> {
-    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_master_entity}`, formData, {
-      reportProgress: true,
-      observe: 'events', // 👈 required for progress bar
-    });
+  importEntity(formData: FormData, preview: boolean = true): Observable<any> {
+    if (preview) {
+      return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_entity_import}?preview=true`, formData);
+    } else {
+      return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.migrate_entity_import}?preview=false`, formData, {
+        reportProgress: true,
+        observe: 'events',
+      });
+    }
   }
 }

@@ -54,6 +54,8 @@ export const commonConfig: any = {
     edit_cron_job: 'common/edit-cron-job',
     delete_cron_jobs: 'common/delete-cron-job',
 
+    migrate_entity_export: 'migrate/export-entity',
+    migrate_entity_import: 'migrate/import-entity',
     migrate_master_entity: 'migrate/master-entity',
 
     syncTableSchema: 'openai/generate-schema-chunks',
