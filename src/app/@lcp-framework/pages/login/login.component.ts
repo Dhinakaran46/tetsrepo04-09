@@ -394,7 +394,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
   // Copy of getconfig from AuthLayout
   getconfig(userId?: number) {
     // Prepare params for the procedure
-    const params: any = { categories: { '0': 'ac1', '1': 'ac2', '2': 'ac30', '3': 'ac5' } };
+    const params: any = { categories: { '0': 'ac1', '1': 'ac2', '2': 'ac30' } };
     if (userId !== undefined && userId !== null) {
       params.user_id = userId; // Add user_id if provided
       //params.categories = { '0': 'ac16', '1': 'ac17' };
