@@ -132,13 +132,8 @@ export class MasterListComponent implements OnChanges {
   user_id: any;
   isItemModalOpen = false;
   changePasswordForm: FormGroup;
-  passwordStrength = {
-    hasMinLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasSpecialChar: false,
-    hasNumericChar: false,
-  };
+  passwordValidationPattern: RegExp = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+  passwordValidationMessage = 'Password must include uppercase, lowercase, number, special character, and be at least 8 characters long.';
   allConditionsMet = false;
   isGetCodeModalOpen = false;
   getCodeForm: FormGroup;
@@ -244,6 +239,15 @@ export class MasterListComponent implements OnChanges {
   private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
   private save_grid_latest_state: boolean = false;
 
+  private parsePasswordValidationRegexp(pattern: string): RegExp {
+    // Accept both plain regex strings and slash-delimited strings (/.../flags).
+    const literalMatch = pattern.match(/^\/(.*)\/([a-z]*)$/i);
+    if (literalMatch) {
+      return new RegExp(literalMatch[1], literalMatch[2]);
+    }
+    return new RegExp(pattern);
+  }
+
   constructor(
     private toastr: ToastrService,
     private gridApiService: GridApiService,
@@ -280,9 +284,24 @@ export class MasterListComponent implements OnChanges {
       this.uniqueId = value;
     });
 
+    const conf = this.localStorageService?.getData('config');
+    if (conf) {
+      try {
+        const common_conf: any = JSON.parse(conf);
+        if (common_conf?.password_validation_regexp) {
+          this.passwordValidationPattern = this.parsePasswordValidationRegexp(common_conf.password_validation_regexp);
+        }
+        if (common_conf?.password_validation_message) {
+          this.passwordValidationMessage = common_conf.password_validation_message;
+        }
+      } catch (error) {
+        // Keep fallback regex and message if config is unavailable or malformed.
+      }
+    }
+
     this.changePasswordForm = this.formBuilder.group(
       {
-        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+        new_password: ['', [Validators.required, this.passwordValidator]],
         confirm_new_password: ['', Validators.required],
       },
       { validators: this.passwordMatchValidator }
@@ -298,18 +317,14 @@ export class MasterListComponent implements OnChanges {
     });
   }
 
-  passwordValidator(control: AbstractControl): ValidationErrors | null {
+  passwordValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     if (!value) {
       return null;
     }
-    const hasUpperCase = /[A-Z]/.test(value);
-    const hasLowerCase = /[a-z]/.test(value);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const hasNumericChar = /\d/.test(value);
-    const isValid = hasUpperCase && hasLowerCase && hasSpecialChar && hasNumericChar;
+    const isValid = this.passwordValidationPattern.test(value);
     return !isValid ? { passwordInvalid: true } : null;
-  }
+  };
 
   passwordMatchValidator(group: FormGroup): ValidationErrors | null {
     const newPassword = group.get('new_password')?.value;
@@ -318,38 +333,12 @@ export class MasterListComponent implements OnChanges {
   }
 
   checkPasswordStrength(value: string) {
-    if (value) {
-      this.passwordStrength.hasMinLength = value.length >= 8;
-      this.passwordStrength.hasUpperCase = /[A-Z]/.test(value);
-      this.passwordStrength.hasLowerCase = /[a-z]/.test(value);
-      this.passwordStrength.hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-      this.passwordStrength.hasNumericChar = /\d/.test(value);
-      this.allConditionsMet =
-        this.passwordStrength.hasMinLength &&
-        this.passwordStrength.hasUpperCase &&
-        this.passwordStrength.hasLowerCase &&
-        this.passwordStrength.hasSpecialChar &&
-        this.passwordStrength.hasNumericChar;
-      return;
-    }
-
-    this.passwordStrength = {
-      hasMinLength: false,
-      hasUpperCase: false,
-      hasLowerCase: false,
-      hasSpecialChar: false,
-      hasNumericChar: false,
-    };
-    this.allConditionsMet = false;
+    this.allConditionsMet = !!value && this.passwordValidationPattern.test(value);
   }
 
   toggleSubmitButton() {
-    const canSubmit =
-      this.passwordStrength.hasMinLength &&
-      this.passwordStrength.hasUpperCase &&
-      this.passwordStrength.hasLowerCase &&
-      this.passwordStrength.hasSpecialChar &&
-      this.passwordStrength.hasNumericChar;
+    const passwordValue = this.changePasswordForm.get('new_password')?.value || '';
+    const canSubmit = !!passwordValue && this.passwordValidationPattern.test(passwordValue);
     const control = this.changePasswordForm.get('new_password');
 
     if (!control) {
@@ -2971,6 +2960,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   recordExport(item: any, event?: MouseEvent) {
+    console.log('Record export triggered for item:', item);
     if (item.downloadables) {
       this.downloadExcel(item.downloadables);
       return;
