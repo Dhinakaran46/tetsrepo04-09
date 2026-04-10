@@ -105,6 +105,20 @@ export class MigrateEntityComponent {
       tables: ['master_entities', 'master_entity_line_items', 'permissions', 'role_permissions', 'user_permissions', 'menu_items'],
     },
     {
+      label: 'Export Templates',
+      control: 'includeExportTemplates',
+      default: false,
+      tables: ['export_templates', 'export_template_line_items', 'export_template_queries'],
+      description: 'Export templates excel file should be moved to assets folder separately.',
+    },
+    {
+      label: 'Import Templates',
+      control: 'includeImportTemplates',
+      default: false,
+      tables: ['import_templates', 'import_template_line_items', 'import_template_queries'],
+      description: 'Import templates excel file should be moved to assets folder separately.',
+    },
+    {
       label: 'Notification Configurations',
       control: 'includeNotifications',
       default: false,

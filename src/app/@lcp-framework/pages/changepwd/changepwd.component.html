@@ -30,7 +30,7 @@
                   changePasswordForm.get('new_password')?.errors?.['passwordInvalid']
                 "
                 >
-                  Password must include at least 8 characters, one uppercase letter, and one special character.
+                  <!-- {{ passwordValidationMessage }}-->
                 </ng-container>
                 <!--<ng-container
                   *ngIf="
@@ -39,6 +39,10 @@
                 >
                   Password must be at least 8 characters long.
                 </ng-container>-->
+              </div>
+
+              <div class="passwordCharMatch text-red-500" *ngIf="changePasswordForm.controls['new_password'].touched && !allConditionsMet">
+                {{ passwordValidationMessage }}
               </div>
             </div>
             <div>
@@ -58,9 +62,7 @@
           <button appDynamicFontSize="body" type="submit" class="btn btn-primary">
             {{ 'form_submit_btn' | translate }}
           </button>
-          <p class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
-            <strong>Note:</strong> Password must contain at least 8 characters, including one uppercase letter and one special character.
-          </p>
+          <p class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400"><strong>Note:</strong> {{ passwordValidationMessage }}</p>
         </div>
       </form>
     </div>

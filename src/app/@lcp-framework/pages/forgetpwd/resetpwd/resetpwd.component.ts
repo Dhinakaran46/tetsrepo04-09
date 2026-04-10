@@ -69,14 +69,19 @@ export class ResetpwdComponent {
   cnfPasswordVisible = false;
   cnficonClicked = false;
 
-  passwordStrength = {
-    hasMinLength: false,
-    hasUpperCase: false,
-    hasSpecialChar: false,
-    hasNumericChar: false,
-  };
+  passwordValidationPattern: RegExp = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+  passwordValidationMessage = 'Password must include uppercase, lowercase, number, special character, and be at least 8 characters long.';
 
   allConditionsMet = false;
+
+  private parsePasswordValidationRegexp(pattern: string): RegExp {
+    // Accept both plain regex strings and slash-delimited strings (/.../flags).
+    const literalMatch = pattern.match(/^\/(.*)\/([a-z]*)$/i);
+    if (literalMatch) {
+      return new RegExp(literalMatch[1], literalMatch[2]);
+    }
+    return new RegExp(pattern);
+  }
 
   constructor(
     private formBuilder: FormBuilder,
@@ -93,10 +98,26 @@ export class ResetpwdComponent {
     private languageService: LanguageService
   ) {
     this.initStore();
+
+    const conf: any = this.localstore.getData('config');
+    if (conf) {
+      try {
+        const common_conf: any = JSON.parse(conf);
+        if (common_conf?.password_validation_regexp) {
+          this.passwordValidationPattern = this.parsePasswordValidationRegexp(common_conf.password_validation_regexp);
+        }
+        if (common_conf?.password_validation_message) {
+          this.passwordValidationMessage = common_conf.password_validation_message;
+        }
+      } catch (error) {
+        // Keep fallback regex and message if config is unavailable or malformed.
+      }
+    }
+
     this.resetPwdForm = this.formBuilder.group(
       {
         otp: ['', Validators.required],
-        new_password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+        new_password: ['', [Validators.required, this.passwordValidator]],
         confirm_new_password: ['', Validators.required],
       },
       { validators: this.passwordMatchValidator }
@@ -128,17 +149,14 @@ export class ResetpwdComponent {
   }
 
   // Custom validator to check password pattern
-  passwordValidator(control: AbstractControl): ValidationErrors | null {
+  passwordValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     if (!value) {
       return null;
     }
-    const hasUpperCase = /[A-Z]/.test(value);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-    const hasNumericChar = /\d/.test(value);
-    const isValid = hasUpperCase && hasSpecialChar && hasNumericChar;
+    const isValid = this.passwordValidationPattern.test(value);
     return !isValid ? { passwordInvalid: true } : null;
-  }
+  };
 
   // Custom validator to check if new password and confirm new password match
   passwordMatchValidator(group: FormGroup): ValidationErrors | null {
@@ -164,17 +182,7 @@ export class ResetpwdComponent {
   }
 
   checkPasswordStrength(value: string) {
-    if (value) {
-      this.passwordStrength.hasMinLength = value.length >= 8;
-      this.passwordStrength.hasUpperCase = /[A-Z]/.test(value);
-      this.passwordStrength.hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-      this.passwordStrength.hasNumericChar = /\d/.test(value);
-      this.allConditionsMet =
-        this.passwordStrength.hasMinLength &&
-        this.passwordStrength.hasUpperCase &&
-        this.passwordStrength.hasSpecialChar &&
-        this.passwordStrength.hasNumericChar;
-    }
+    this.allConditionsMet = !!value && this.passwordValidationPattern.test(value);
   }
 
   async initStore() {
@@ -198,7 +206,8 @@ export class ResetpwdComponent {
   }
 
   toggleSubmitButton() {
-    const canSubmit = this.passwordStrength.hasMinLength && this.passwordStrength.hasUpperCase && this.passwordStrength.hasSpecialChar;
+    const passwordValue = this.resetPwdForm.get('new_password')?.value || '';
+    const canSubmit = !!passwordValue && this.passwordValidationPattern.test(passwordValue);
     if (canSubmit) {
       this.resetPwdForm.get('new_password')?.setErrors(null);
     } else {
