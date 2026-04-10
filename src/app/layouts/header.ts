@@ -160,7 +160,6 @@ export class HeaderComponent implements OnInit {
     if (this.user_info?.main?.user_id) {
       if (this.config?.enable_socket_push_notification === 'true') {
         const socketUrl = (environment as any).WS_URL || 'ws://localhost:8089';
-        console.log('this.userData.main', this.user_info.main);
         this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.user_info.main.user_id}`);
 
         this.socket$.subscribe({
