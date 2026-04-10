@@ -71,9 +71,9 @@
 
             @if (!loadingNotificationData && notifications.length > 0 && activeTab.key === 'push_notification') {
             <div class="flex justify-end items-center w-full px-3 border-b border-gray-200 pb-1">
-              <button class="text-xs text-blue-600 hover:text-blue-700" (click)="markPushNotificationAsread()"
-                [disabled]="notifications.length === 0">
-                {{'mark_all_as_read' | translate}}
+              <button class="text-xs hover:opacity-80 disabled:opacity-50" [style.color]="'var(--app-header-bg-color)'"
+                (click)="markPushNotificationAsread()">
+                {{ 'mark_all_as_read' | translate }}
               </button>
             </div>
             }
@@ -136,10 +136,10 @@
             </div>
             }
             <div class="flex justify-center items-center px-4 pt-2 border-t border-gray-200">
-              <button (click)="navigateToNotifications()"
-                class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+              <button (click)="navigateToNotifications()" class="flex items-center gap-2 text-sm hover:opacity-80"
+                style="color: var(--app-header-bg-color);">
                 <i class="fa fa-eye"></i>
-                {{'view_all' | translate}}
+                {{ 'view_all' | translate }}
               </button>
             </div>
 
