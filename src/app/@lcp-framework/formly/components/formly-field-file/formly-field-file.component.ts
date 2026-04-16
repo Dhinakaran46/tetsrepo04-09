@@ -5,6 +5,7 @@ import { environment } from '../../../../../environments/environment';
 // import 'file-upload-with-preview/dist/style.css';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-field-file',
   templateUrl: './formly-field-file.component.html',
   styleUrls: ['./formly-field-file.component.scss'],

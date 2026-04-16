@@ -6,6 +6,7 @@ import { GridApiService } from '../../../service/common/grid.service';
 import { FormControl } from '@angular/forms';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-field-autocomplete',
   templateUrl: './formly-field-autocomplete.component.html',
   styleUrls: ['./formly-field-autocomplete.component.scss'],

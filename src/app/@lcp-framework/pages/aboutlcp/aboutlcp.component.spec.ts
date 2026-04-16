@@ -8,6 +8,7 @@ describe('AboutlcpComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [AboutlcpComponent]
     })
     .compileComponents();

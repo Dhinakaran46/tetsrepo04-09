@@ -8,6 +8,7 @@ describe('QueryBuilderComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [QueryBuilderComponent]
     })
     .compileComponents();

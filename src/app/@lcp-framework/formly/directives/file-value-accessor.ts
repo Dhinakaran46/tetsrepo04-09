@@ -2,6 +2,7 @@ import { Directive, Renderer2, ElementRef, Input, OnChanges, SimpleChanges } fro
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
 @Directive({
+  standalone: false,
   selector: 'input[type=file].formly-file',
   host: {
     '(change)': 'onChange($event.target.files)',

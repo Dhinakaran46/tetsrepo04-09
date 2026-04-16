@@ -33,6 +33,7 @@ describe('AuditLogManagementComponent', () => {
     };
 
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [AuditLogManagementComponent],
       providers: [
         { provide: GridApiService, useValue: gridApiServiceStub },

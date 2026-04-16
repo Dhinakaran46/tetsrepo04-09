@@ -8,6 +8,7 @@ describe('EmailTemplateAssignmentComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [EmailTemplateAssignmentComponent]
     })
     .compileComponents();

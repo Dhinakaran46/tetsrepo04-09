@@ -8,6 +8,7 @@ describe('WhatsappTemplateAssignmentComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [WhatsappTemplateAssignmentComponent]
     })
     .compileComponents();

@@ -8,6 +8,7 @@ describe('ExampleClientDatatableComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [ExampleClientDatatableComponent]
     })
     .compileComponents();

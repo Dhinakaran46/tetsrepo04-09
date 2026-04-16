@@ -8,6 +8,7 @@ describe('AiPlaygroundComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [AiPlaygroundComponent]
     })
     .compileComponents();

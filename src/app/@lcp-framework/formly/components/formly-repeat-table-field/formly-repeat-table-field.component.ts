@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-repeat-table-field',
   templateUrl: './formly-repeat-table-field.component.html',
   styleUrl: './formly-repeat-table-field.component.scss',

@@ -8,6 +8,7 @@ describe('CarouselComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [CarouselComponent]
     })
     .compileComponents();

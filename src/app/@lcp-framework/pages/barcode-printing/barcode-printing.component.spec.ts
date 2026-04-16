@@ -8,6 +8,7 @@ describe('BarcodePrintingComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [BarcodePrintingComponent]
     })
     .compileComponents();

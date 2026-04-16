@@ -5,6 +5,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-display-list',
   templateUrl: './formly-display-list.component.html',
   styleUrls: ['./formly-display-list.component.scss'],

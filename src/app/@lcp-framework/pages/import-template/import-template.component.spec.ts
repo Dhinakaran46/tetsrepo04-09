@@ -8,6 +8,7 @@ describe('ImportTemplateComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [ImportTemplateComponent]
     })
     .compileComponents();

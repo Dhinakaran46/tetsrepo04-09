@@ -8,6 +8,7 @@ describe('ApiBaseUrlComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [ApiBaseUrlComponent]
     })
     .compileComponents();

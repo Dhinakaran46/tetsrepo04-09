@@ -8,6 +8,7 @@ describe('ConfigurationComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [ConfigurationComponent]
     })
     .compileComponents();

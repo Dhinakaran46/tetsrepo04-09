@@ -8,6 +8,7 @@ import { LocalStorageService } from '../../../service/common/local-storage.servi
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-field-select-from-db',
   templateUrl: './formly-field-select-from-db.component.html',
   styleUrls: ['./formly-field-select-from-db.component.scss'],

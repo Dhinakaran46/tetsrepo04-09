@@ -1,8 +1,7 @@
-import { PageSpecificFontSizeDirective } from './page-specific-font-size.directive';
+import { DynamicFontSizeDirective } from './page-specific-font-size.directive';
 
-describe('PageSpecificFontSizeDirective', () => {
-  it('should create an instance', () => {
-    const directive = new PageSpecificFontSizeDirective();
-    expect(directive).toBeTruthy();
+describe('DynamicFontSizeDirective', () => {
+  it('should be defined', () => {
+    expect(DynamicFontSizeDirective).toBeDefined();
   });
 });

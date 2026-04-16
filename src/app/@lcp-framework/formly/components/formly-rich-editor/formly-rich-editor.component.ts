@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-rich-editor',
   templateUrl: './formly-rich-editor.component.html',
   styleUrl: './formly-rich-editor.component.scss',

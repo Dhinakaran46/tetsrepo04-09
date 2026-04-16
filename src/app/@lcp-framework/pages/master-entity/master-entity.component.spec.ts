@@ -8,6 +8,7 @@ describe('MasterEntityComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      teardown: { destroyAfterEach: true },
       imports: [MasterEntityComponent],
     }).compileComponents();
 
