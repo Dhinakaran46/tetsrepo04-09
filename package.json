@@ -22,7 +22,7 @@
     "@angular/service-worker": "^18.2.14",
     "@bhplugin/ng-datatable": "^0.1.0",
     "@ng-select/ng-select": "^12.0.7",
-    "@ngrx/store": "^17.0.0",
+    "@ngrx/store": "^18.1.1",
     "@ngx-formly/bootstrap": "^6.3.6",
     "@ngx-formly/core": "^6.3.6",
     "@ngx-translate/core": "^14.0.0",
