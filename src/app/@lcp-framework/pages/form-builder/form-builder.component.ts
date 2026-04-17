@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChildren, QueryList, AfterViewInit } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { GridApiService } from '../../service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
@@ -24,7 +25,7 @@ import { FormlyFieldSelectFromDbComponent } from '../../formly/components/formly
   styleUrls: ['./form-builder.component.scss'],
 })
 export class FormBuilderComponent implements OnInit, AfterViewInit {
-  store: any;
+  store: any = initialState;
   formEntity: any;
   form = new FormGroup({});
   options: FormlyFormOptions = {};
@@ -244,7 +245,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdRef.detectChanges();
+        });
       });
   }
 
@@ -999,6 +1003,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.fields = this.processFields(fieldsJson);
             this.setDefaultData();
             this.titleChange();
+            this.cdRef.markForCheck();
           }
         } else {
           this.toastr.error('Invalid entity details given.');
@@ -1047,6 +1052,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.defaultData = fieldsJson;
           }
           this.applyAvailableDataToForm(fieldsJson, formControl);
+          this.cdRef.markForCheck();
         } else if (!response.status) {
           this.toastr.error('Invalid entity details given.');
           this.router.navigate(['/dashboard']);

@@ -5,30 +5,38 @@
       <div class="relative inline-flex align-middle">
         <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5" (click)="location.back()">Back</button>
         <!-- Process Button (only valid items) -->
+        @if (canProcess() && !hasErrors()) {
         <button
-          *ngIf="canProcess() && !hasErrors()"
           appDynamicFontSize="body"
           type="button"
           class="btn btn-success mr-5"
           [disabled]="isProcessing || commonData?.job_status !== 'validated'"
           (click)="processJob(false)"
         >
-          <span *ngIf="!isProcessing">Process</span>
-          <span *ngIf="isProcessing">Processing...</span>
+          @if (!isProcessing) {
+          <span>Process</span>
+          } @if (isProcessing) {
+          <span>Processing...</span>
+          }
         </button>
+        }
 
         <!-- Ignore Errors and Process Button -->
+        @if (canProcessWithErrors()) {
         <button
-          *ngIf="canProcessWithErrors()"
           appDynamicFontSize="body"
           type="button"
           class="btn btn-warning mr-5"
           [disabled]="isProcessing || commonData?.job_status !== 'validated'"
           (click)="processJob(true)"
         >
-          <span *ngIf="!isProcessing">Ignore Errors & Process</span>
-          <span *ngIf="isProcessing">Processing...</span>
+          @if (!isProcessing) {
+          <span>Ignore Errors & Process</span>
+          } @if (isProcessing) {
+          <span>Processing...</span>
+          }
         </button>
+        }
         <!-- Download Excel -->
         <!--<button appDynamicFontSize="body" type="button" class="btn btn-primary" (click)="exportToExcel()">Download Excel</button>-->
       </div>
@@ -133,9 +141,9 @@
     </div>
   </div>
 
-  <div class="rounded-lg bg-white shadow-md" *ngIf="sheet_data && sheet_data?.ind_row_datas">
+  @if (sheet_data && sheet_data?.ind_row_datas) {
+  <div class="rounded-lg bg-white shadow-md">
     <h2 class="mb-4 text-lg font-bold">{{ 'individual_fields_data' | translate }}</h2>
-
     <!-- Table layout for displaying fields -->
     <table class="w-full border border-gray-300">
       <thead>
@@ -147,43 +155,58 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let fieldKey of getIndividualFieldKeys()">
+        @for (fieldKey of getIndividualFieldKeys(); track fieldKey) {
+        <tr>
           <td class="border px-4 py-2 font-medium text-gray-700">
             {{ sheet_data.individual_header_details[fieldKey].display_name || fieldKey }}
-            <span class="text-danger" *ngIf="!sheet_data.individual_header_details[fieldKey]?.is_nullable">*</span>
+            @if (!sheet_data.individual_header_details[fieldKey]?.is_nullable) {
+            <span class="text-danger">*</span>
+            }
           </td>
           <td class="border px-4 py-2">
             {{ sheet_data.ind_row_datas.columns[fieldKey] || 'N/A' }}
           </td>
           <td class="border px-4 py-2">
-            <ul *ngIf="sheet_data.ind_row_datas.errors[fieldKey]?.length || 0 > 0" class="list-inside list-disc text-red-500">
-              <li *ngFor="let error of sheet_data.ind_row_datas.errors[fieldKey]">
+            @if (sheet_data.ind_row_datas.errors[fieldKey]?.length || 0 > 0) {
+            <ul class="list-inside list-disc text-red-500">
+              @for (error of sheet_data.ind_row_datas.errors[fieldKey]; track error) {
+              <li>
                 {{ error.message }}
               </li>
+              }
             </ul>
+            }
           </td>
           <td class="border px-4 py-2">
-            <ul *ngIf="sheet_data.ind_row_datas.warnings[fieldKey]?.length || 0 > 0" class="list-inside list-disc text-yellow-500">
-              <li *ngFor="let warning of sheet_data.ind_row_datas.warnings[fieldKey]">
+            @if (sheet_data.ind_row_datas.warnings[fieldKey]?.length || 0 > 0) {
+            <ul class="list-inside list-disc text-yellow-500">
+              @for (warning of sheet_data.ind_row_datas.warnings[fieldKey]; track warning) {
+              <li>
                 {{ warning.message }}
               </li>
+              }
             </ul>
+            }
           </td>
         </tr>
+        }
       </tbody>
     </table>
   </div>
+  }
 
   <div class="panel mt-5">
     <ng-template #gridContainer></ng-template>
     <!--<app-client-datatable
-      [data]="commonItems"
-      [config]="commonItemsConfig"
-      (dataChange)="onItemsDataChange($event)"
-      (sortChange)="onItemsSortChange($event)"
-    ></app-client-datatable>-->
+    [data]="commonItems"
+    [config]="commonItemsConfig"
+    (dataChange)="onItemsDataChange($event)"
+    (sortChange)="onItemsSortChange($event)"
+  ></app-client-datatable>-->
     <!-- </div> -->
   </div>
 </div>
 
-<app-loader *ngIf="loading"></app-loader>
+@if (loading) {
+<app-loader></app-loader>
+}

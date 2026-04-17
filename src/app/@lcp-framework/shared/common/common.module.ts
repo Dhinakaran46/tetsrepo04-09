@@ -4,7 +4,8 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterModule } from '@angular/router';
-import { MenuModule } from 'headlessui-angular';
+// headlessui-angular (MenuModule) removed: experimental package (0.0.x), never used in templates.
+// All menu toggling uses plain Angular (isMenuOpen boolean + toggleMenu()). Removed in Angular 21 upgrade (task 11.5).
 import { NgxTippyModule } from 'ngx-tippy-wrapper';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrderByPipe } from '../../pipes/order-by/order-by.pipe';
@@ -20,7 +21,6 @@ import { JsonValidatorDirective } from '../../directives/json-validator.directiv
     FormsModule,
     TranslateModule,
     RouterModule,
-    MenuModule,
     NgxTippyModule,
     NgSelectModule,
     OrderByPipe,
@@ -35,7 +35,6 @@ import { JsonValidatorDirective } from '../../directives/json-validator.directiv
     FormsModule,
     TranslateModule,
     RouterModule,
-    MenuModule,
     NgxTippyModule,
     NgSelectModule,
     OrderByPipe,

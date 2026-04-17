@@ -33,7 +33,6 @@ import { AutocompleteFormComponent } from '../../components/autocomplete-form/au
     FormsModule,
     CommonModule,
     NgSelectModule,
-    AutocompleteFormComponent,
   ],
   templateUrl: './approval-workflow-assignment.component.html',
   styleUrl: './approval-workflow-assignment.component.scss',

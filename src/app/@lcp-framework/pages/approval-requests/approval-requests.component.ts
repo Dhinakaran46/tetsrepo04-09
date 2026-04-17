@@ -1,8 +1,8 @@
 import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
-import { HttpClientModule } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -50,7 +50,7 @@ interface FetchDataParams {
 @Component({
   selector: 'app-approval-requests',
   standalone: true,
-  imports: [CommonSharedModule, HttpClientModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
+  imports: [CommonSharedModule, DataTableComponent, LoaderComponent, ReactiveFormsModule],
   templateUrl: './approval-requests.component.html',
   styleUrl: './approval-requests.component.scss',
   animations: [
@@ -62,7 +62,7 @@ interface FetchDataParams {
   providers: [DatePipe],
 })
 export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
-  store: any;
+  store: any = initialState;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   @ViewChild('approvalStatusTemplate') approvalStatusTemplate!: TemplateRef<any>;
@@ -154,10 +154,10 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     private fb: FormBuilder,
     private timezoneService: TimezoneService
   ) {
-    this.initStore();
   }
 
   ngAfterViewInit() {
+    this.initStore();
     this.config = JSON.parse(this.localStorageService.getData('config'));
     const pageInfo = this.route.snapshot.data['pageInfo'] || '';
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
@@ -903,7 +903,10 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 
@@ -1444,15 +1447,18 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             });
             this.totalItems = response.data.total_records;
             this.gridloading = false;
+            this.cdr.markForCheck();
           } else {
             this.items = [];
             this.totalItems = 0;
             this.gridloading = false;
+            this.cdr.markForCheck();
           }
         } else {
           this.items = [];
           this.totalItems = 0;
           this.gridloading = false;
+          this.cdr.markForCheck();
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
@@ -1463,6 +1469,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
+        this.cdr.markForCheck();
       }
     );
   }

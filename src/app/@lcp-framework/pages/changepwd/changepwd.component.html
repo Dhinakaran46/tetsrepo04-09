@@ -14,46 +14,45 @@
             <div>
               <label for="old_password" class="form-label">{{ 'form_label_old_pwd' | translate }}</label>
               <input type="password" formControlName="old_password" class="form-input" id="old_password" />
-              <div *ngIf="changePasswordForm.get('old_password')?.invalid && changePasswordForm.get('old_password')?.touched" class="text-red-500">
+              @if (changePasswordForm.get('old_password')?.invalid && changePasswordForm.get('old_password')?.touched) {
+              <div class="text-red-500">
                 {{ 'form_old_pwd_req_msg' | translate }}
               </div>
+              }
             </div>
             <div>
               <label for="new_password" class="form-label">{{ 'form_label_new_pwd' | translate }}</label>
               <input type="password" formControlName="new_password" class="form-input" id="new_password" />
               <!--<div *ngIf="changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched" class="text-red-500">
-                {{ 'form_label_confirm_new_pwd' | translate }}
-              </div>-->
-              <div *ngIf="changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched" class="text-red-500">
-                <ng-container
-                  *ngIf="
-                  changePasswordForm.get('new_password')?.errors?.['passwordInvalid']
-                "
-                >
-                  <!-- {{ passwordValidationMessage }}-->
-                </ng-container>
+              {{ 'form_label_confirm_new_pwd' | translate }}
+            </div>-->
+              @if (changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched) {
+              <div class="text-red-500">
+                @if ( changePasswordForm.get('new_password')?.errors?.['passwordInvalid'] ) {
+                <!-- {{ passwordValidationMessage }}-->
+                }
                 <!--<ng-container
                   *ngIf="
                   changePasswordForm.get('new_password')?.errors?.['minlength']
                 "
                 >
-                  Password must be at least 8 characters long.
-                </ng-container>-->
+                Password must be at least 8 characters long.
+              </ng-container>-->
               </div>
-
-              <div class="passwordCharMatch text-red-500" *ngIf="changePasswordForm.controls['new_password'].touched && !allConditionsMet">
+              } @if (changePasswordForm.controls['new_password'].touched && !allConditionsMet) {
+              <div class="passwordCharMatch text-red-500">
                 {{ passwordValidationMessage }}
               </div>
+              }
             </div>
             <div>
               <label for="confirm_new_password" class="form-label">{{ 'form_label_confirm_new_pwd' | translate }}</label>
               <input type="password" formControlName="confirm_new_password" class="form-input" id="confirm_new_password" />
-              <div
-                *ngIf="changePasswordForm.get('confirm_new_password')?.invalid && changePasswordForm.get('confirm_new_password')?.touched"
-                class="text-red-500"
-              >
+              @if (changePasswordForm.get('confirm_new_password')?.invalid && changePasswordForm.get('confirm_new_password')?.touched) {
+              <div class="text-red-500">
                 {{ 'form_confirm_new_pwd_req_msg' | translate }}
               </div>
+              }
             </div>
           </div>
         </div>

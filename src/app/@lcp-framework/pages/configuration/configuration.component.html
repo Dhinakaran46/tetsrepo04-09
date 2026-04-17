@@ -3,14 +3,11 @@
     <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
       <div class="py-1.5 text-xs font-bold dark:text-white-light" appDynamicFontSize="subtitle">{{ title_key | translate }}</div>
       <div class="hidden lg:ml-auto lg:flex lg:items-center lg:gap-2">
-        <button
-          *ngIf="masterInfo?.permissions?.create"
-          (click)="toggleMenu()"
-          type="button"
-          class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none"
-        >
+        @if (masterInfo?.permissions?.create) {
+        <button (click)="toggleMenu()" type="button" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none">
           <i class="fa-solid fa-plus"></i> &nbsp;{{ 'form_button_add' | translate }}
         </button>
+        }
         <button type="submit" class="rounded-md bg-orange-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none">
           {{ 'submit' | translate }}
         </button>
@@ -22,8 +19,8 @@
         class="tab-scroll-container"
         style="display: flex; flex-wrap: nowrap; width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none"
       >
+        @for (tab of tabs; track tab) {
         <a
-          *ngFor="let tab of tabs"
           href="javascript:;"
           style="white-space: nowrap; flex-shrink: 0; min-width: max-content"
           class="-mb-[1px] flex items-center border border-transparent p-3.5 py-2 outline-none transition duration-300 hover:text-danger"
@@ -32,17 +29,15 @@
         >
           {{ tab.name }}
         </a>
+        }
       </div>
 
       <div class="mb-1 flex flex-row flex-wrap items-center gap-2 lg:hidden">
-        <button
-          *ngIf="masterInfo?.permissions?.create"
-          (click)="toggleMenu()"
-          type="button"
-          class="mb-1 mr-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none"
-        >
+        @if (masterInfo?.permissions?.create) {
+        <button (click)="toggleMenu()" type="button" class="mb-1 mr-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none">
           <i class="fa-solid fa-plus"></i> &nbsp;{{ 'form_button_add' | translate }}
         </button>
+        }
         <button type="submit" class="mb-1 rounded-md bg-orange-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none">
           {{ 'submit' | translate }}
         </button>
@@ -50,384 +45,366 @@
     </div>
 
     <div class="flex-1 pt-2 text-sm">
-      <ng-container *ngFor="let tab of tabs">
-        <div *ngIf="currentTab == tab.name" [formGroupName]="tab.name">
-          <ng-container formArrayName="configurations">
-            <div class="config-table-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch">
-              <table style="min-width: 800px" class="table-hover relative w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th
-                      *ngIf="masterInfo?.permissions?.edit"
-                      class="w-[10%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300"
+      @for (tab of tabs; track tab) { @if (currentTab == tab.name) {
+      <div [formGroupName]="tab.name">
+        <ng-container formArrayName="configurations">
+          <div class="config-table-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch">
+            <table style="min-width: 800px" class="table-hover relative w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  @if (masterInfo?.permissions?.edit) {
+                  <th class="w-[10%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'config_table_field_orderno' | translate }}
+                  </th>
+                  } @if (masterInfo?.permissions?.edit) {
+                  <th class="w-[10%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'config_table_field_categorytype' | translate }}
+                  </th>
+                  }
+                  <th class="w-36 px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'config_table_field_label' | translate }}
+                  </th>
+                  @if (masterInfo?.permissions?.edit) {
+                  <th class="w-[12%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'config_table_field_valuetype' | translate }}
+                  </th>
+                  }
+                  <th class="w-36 px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'config_table_field_value' | translate }}
+                  </th>
+                  @if (masterInfo?.permissions?.edit) {
+                  <th class="w-[12%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'display_config_label' | translate }}
+                  </th>
+                  } @if (masterInfo?.permissions?.edit) {
+                  <th class="w-[10%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                    {{ 'table_action' | translate }}
+                  </th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+                @for (config of getConfigurationsArray(tab.name).controls; track config; let i = $index) { @if (masterInfo?.permissions?.edit ||
+                config.get('display_config')?.value) {
+                <tr [formGroupName]="i">
+                  @if (masterInfo?.permissions?.edit) {
+                  <td class="whitespace-nowrap px-6 py-4" appDynamicFontSize="body">
+                    <input
+                      type="number"
+                      formControlName="order_no"
                       appDynamicFontSize="body"
-                    >
-                      {{ 'config_table_field_orderno' | translate }}
-                    </th>
-                    <th
-                      *ngIf="masterInfo?.permissions?.edit"
-                      class="w-[10%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                  </td>
+                  } @if (masterInfo?.permissions?.edit) {
+                  <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
+                    <select
+                      formControlName="config_value_type"
                       appDynamicFontSize="body"
+                      class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
                     >
-                      {{ 'config_table_field_categorytype' | translate }}
-                    </th>
-                    <th class="w-36 px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
-                      {{ 'config_table_field_label' | translate }}
-                    </th>
-                    <th
-                      *ngIf="masterInfo?.permissions?.edit"
-                      class="w-[12%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300"
+                      @for (option of valueTypeOptions; track option) {
+                      <option [value]="option">{{ option }}</option>
+                      }
+                    </select>
+                  </td>
+                  }
+                  <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
+                    @if (!masterInfo?.permissions?.edit) {
+                    <input
+                      [readOnly]="!masterInfo?.permissions?.edit"
+                      type="text"
+                      (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                      value="{{ config.get('config_key')?.value | translate }}"
                       appDynamicFontSize="body"
-                    >
-                      {{ 'config_table_field_valuetype' | translate }}
-                    </th>
-                    <th class="w-36 px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
-                      {{ 'config_table_field_value' | translate }}
-                    </th>
-                    <th
-                      *ngIf="masterInfo?.permissions?.edit"
-                      class="w-[12%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                      [ngClass]="{ 'border-none': !masterInfo?.permissions?.edit }"
+                    />
+                    } @if (masterInfo?.permissions?.edit) {
+                    <input
+                      [readOnly]="!masterInfo?.permissions?.edit"
+                      type="text"
+                      (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                      formControlName="config_key"
                       appDynamicFontSize="body"
-                    >
-                      {{ 'display_config_label' | translate }}
-                    </th>
-                    <th
-                      *ngIf="masterInfo?.permissions?.edit"
-                      class="w-[10%] px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                      [ngClass]="{ 'border-none': !masterInfo?.permissions?.edit }"
+                    />
+                    }
+                  </td>
+                  @if (masterInfo?.permissions?.edit) {
+                  <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
+                    <input type="hidden" formControlName="config_value" />
+                    <select
+                      formControlName="config_field_type"
                       appDynamicFontSize="body"
+                      (change)="onFieldTypeChange(tab.name, i)"
+                      class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
                     >
-                      {{ 'table_action' | translate }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                  <ng-container *ngFor="let config of getConfigurationsArray(tab.name).controls; let i = index">
-                    <tr *ngIf="masterInfo?.permissions?.edit || config.get('display_config')?.value" [formGroupName]="i">
-                      <td *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4" appDynamicFontSize="body">
-                        <input
-                          type="number"
-                          formControlName="order_no"
-                          appDynamicFontSize="body"
-                          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                        />
-                      </td>
-                      <td appDynamicFontSize="body" *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4">
-                        <select
-                          formControlName="config_value_type"
-                          appDynamicFontSize="body"
-                          class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                        >
-                          <option *ngFor="let option of valueTypeOptions" [value]="option">{{ option }}</option>
-                        </select>
-                      </td>
-                      <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
-                        <input
-                          *ngIf="!masterInfo?.permissions?.edit"
-                          [readOnly]="!masterInfo?.permissions?.edit"
-                          type="text"
-                          (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
-                          value="{{ config.get('config_key')?.value | translate }}"
-                          appDynamicFontSize="body"
-                          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                          [ngClass]="{ 'border-none': !masterInfo?.permissions?.edit }"
-                        />
-                        <input
-                          *ngIf="masterInfo?.permissions?.edit"
-                          [readOnly]="!masterInfo?.permissions?.edit"
-                          type="text"
-                          (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
-                          formControlName="config_key"
-                          appDynamicFontSize="body"
-                          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                          [ngClass]="{ 'border-none': !masterInfo?.permissions?.edit }"
-                        />
-                      </td>
-                      <td appDynamicFontSize="body" *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4">
-                        <input type="hidden" formControlName="config_value" />
-                        <select
-                          formControlName="config_field_type"
-                          appDynamicFontSize="body"
-                          (change)="onFieldTypeChange(tab.name, i)"
-                          class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                        >
-                          <option *ngFor="let option of fieldTypeOptions" [value]="option">{{ option }}</option>
-                        </select>
-                      </td>
-                      <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
-                        <ng-container [ngSwitch]="config.get('config_field_type')?.value">
-                          <ng-container *ngSwitchCase="'text'">
-                            <input
-                              type="text"
-                              formControlName="config_value"
-                              appDynamicFontSize="body"
-                              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                            />
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'date'">
-                            <input
-                              type="text"
-                              appFlatpickr="date"
-                              formControlName="config_value"
-                              appDynamicFontSize="body"
-                              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                            />
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'file'">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%">
-                              <div *ngIf="config.get('config_value')?.value" class="h-12 w-12 flex-shrink-0">
-                                <img
-                                  class="h-full w-full bg-slate-200 object-cover"
-                                  [src]="apiUrl + '/' + config.get('config_value')?.value"
-                                  alt="Loaded Image"
-                                />
-                              </div>
-                              <input
-                                type="file"
-                                appDynamicFontSize="body"
-                                (change)="onFileChange($event, tab.name, i)"
-                                class="form-input mt-1 block flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                                style="flex: 1"
-                              />
-                            </div>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'number'">
-                            <input
-                              type="number"
-                              formControlName="config_value"
-                              appDynamicFontSize="body"
-                              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                            />
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'checkbox'">
-                            <input
-                              type="checkbox"
-                              formControlName="config_value"
-                              appDynamicFontSize="body"
-                              class="form-checkbox h-4 w-4 border-gray-300 text-red-500 dark:border-gray-600 dark:bg-gray-800"
-                            />
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'single_select'">
-                            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
-                              <ng-container *ngIf="!jsonEditorOpen[i]">
-                                <ng-select
-                                  [items]="getSelectOptions(config)"
-                                  [multiple]="false"
-                                  bindLabel="name"
-                                  bindValue="id"
-                                  formControlName="config_value"
-                                  appDynamicFontSize="body"
-                                  class="custom-multiselect"
-                                  style="width: min(420px, 100%); min-width: 220px"
-                                ></ng-select>
-                                <button
-                                  type="button"
-                                  (click)="openJsonEditor(i)"
-                                  style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
-                                >
-                                  <i class="fa fa-code"></i>
-                                </button>
-                              </ng-container>
-                              <ng-container *ngIf="jsonEditorOpen[i]">
-                                <textarea
-                                  formControlName="config_select_json"
-                                  rows="4"
-                                  cols="48"
-                                  placeholder="Paste JSON here"
-                                  style="
-                                    min-width: 220px;
-                                    min-height: 38px;
-                                    resize: vertical;
-                                    padding: 6px;
-                                    border-radius: 4px;
-                                    border: 1px solid #ccc;
-                                    font-family: monospace;
-                                  "
-                                ></textarea>
-                                <button
-                                  type="button"
-                                  (click)="applyJson(i, config)"
-                                  style="
-                                    margin-left: 4px;
-                                    height: 38px;
-                                    width: 38px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    background: #4caf50;
-                                    color: white;
-                                    border: none;
-                                    border-radius: 4px;
-                                  "
-                                >
-                                  <i class="fa fa-check"></i>
-                                </button>
-                                <button
-                                  type="button"
-                                  (click)="jsonEditorOpen[i] = false"
-                                  style="
-                                    margin-left: 2px;
-                                    height: 38px;
-                                    width: 38px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    background: #f44336;
-                                    color: white;
-                                    border: none;
-                                    border-radius: 4px;
-                                  "
-                                >
-                                  <i class="fa fa-times"></i>
-                                </button>
-                              </ng-container>
-                            </div>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'multiselect'">
-                            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
-                              <ng-container *ngIf="!jsonEditorOpen[i]">
-                                <ng-select
-                                  [items]="getSelectOptions(config)"
-                                  [multiple]="true"
-                                  bindLabel="name"
-                                  bindValue="id"
-                                  formControlName="config_value"
-                                  appDynamicFontSize="body"
-                                  class="custom-multiselect"
-                                  style="width: min(420px, 100%); min-width: 220px"
-                                ></ng-select>
-                                <button
-                                  type="button"
-                                  (click)="openJsonEditor(i)"
-                                  style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
-                                >
-                                  <i class="fa fa-code"></i>
-                                </button>
-                              </ng-container>
-                              <ng-container *ngIf="jsonEditorOpen[i]">
-                                <textarea
-                                  formControlName="config_select_json"
-                                  rows="4"
-                                  cols="48"
-                                  placeholder="Paste JSON here"
-                                  style="
-                                    min-width: 220px;
-                                    min-height: 38px;
-                                    resize: vertical;
-                                    padding: 6px;
-                                    border-radius: 4px;
-                                    border: 1px solid #ccc;
-                                    font-family: monospace;
-                                  "
-                                ></textarea>
-                                <button
-                                  type="button"
-                                  (click)="applyJson(i, config)"
-                                  style="
-                                    margin-left: 4px;
-                                    height: 38px;
-                                    width: 38px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    background: #4caf50;
-                                    color: white;
-                                    border: none;
-                                    border-radius: 4px;
-                                  "
-                                >
-                                  <i class="fa fa-check"></i>
-                                </button>
-                                <button
-                                  type="button"
-                                  (click)="jsonEditorOpen[i] = false"
-                                  style="
-                                    margin-left: 2px;
-                                    height: 38px;
-                                    width: 38px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    background: #f44336;
-                                    color: white;
-                                    border: none;
-                                    border-radius: 4px;
-                                  "
-                                >
-                                  <i class="fa fa-times"></i>
-                                </button>
-                              </ng-container>
-                            </div>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'time'">
-                            <input
-                              type="time"
-                              formControlName="config_value"
-                              appDynamicFontSize="body"
-                              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                            />
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'timezone'">
-                            <ng-select
-                              [items]="timezoneList"
-                              bindLabel="label"
-                              bindValue="name"
-                              formControlName="config_value"
-                              [searchable]="true"
-                              placeholder="Select Timezone"
-                              appDynamicFontSize="body"
-                              class="custom-multiselect"
-                            ></ng-select>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'datetimeformat'">
-                            <ng-select
-                              [items]="datetimeFormatList"
-                              bindLabel="label"
-                              bindValue="value"
-                              formControlName="config_value"
-                              [searchable]="true"
-                              placeholder="Select Datetime Format"
-                              appDynamicFontSize="body"
-                              class="custom-multiselect"
-                            ></ng-select>
-                          </ng-container>
-                          <ng-container *ngSwitchCase="'json'">
-                            <ngx-monaco-editor
-                              [options]="modalJsonEditorOptions"
-                              formControlName="config_value"
-                              class="modal-monaco-editor"
-                            ></ngx-monaco-editor>
-                          </ng-container>
-                        </ng-container>
-                      </td>
-                      <td appDynamicFontSize="body" *ngIf="masterInfo?.permissions?.edit" class="whitespace-nowrap px-6 py-4">
-                        <select
-                          formControlName="display_config"
-                          appDynamicFontSize="body"
-                          class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                        >
-                          <option [value]="true">{{ 'config_table_display_config_yes' | translate }}</option>
-                          <option [value]="false">{{ 'config_table_display_config_no' | translate }}</option>
-                        </select>
-                      </td>
-                      <td *ngIf="masterInfo?.permissions?.edit" appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
-                        <button type="button" (click)="removeItem(tab.name, i)" class="text-red-500">
-                          <i class="fa-solid fa-xmark text-xl"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </ng-container>
-                </tbody>
-              </table>
-            </div>
-          </ng-container>
-        </div>
-      </ng-container>
+                      @for (option of fieldTypeOptions; track option) {
+                      <option [value]="option">{{ option }}</option>
+                      }
+                    </select>
+                  </td>
+                  }
+                  <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
+                    @switch (config.get('config_field_type')?.value) { @case ('text') {
+                    <input
+                      type="text"
+                      formControlName="config_value"
+                      appDynamicFontSize="body"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    } @case ('date') {
+                    <input
+                      type="text"
+                      appFlatpickr="date"
+                      formControlName="config_value"
+                      appDynamicFontSize="body"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    } @case ('file') {
+                    <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%">
+                      @if (config.get('config_value')?.value) {
+                      <div class="h-12 w-12 flex-shrink-0">
+                        <img class="h-full w-full bg-slate-200 object-cover" [src]="apiUrl + '/' + config.get('config_value')?.value" alt="Loaded Image" />
+                      </div>
+                      }
+                      <input
+                        type="file"
+                        appDynamicFontSize="body"
+                        (change)="onFileChange($event, tab.name, i)"
+                        class="form-input mt-1 block flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                        style="flex: 1"
+                      />
+                    </div>
+                    } @case ('number') {
+                    <input
+                      type="number"
+                      formControlName="config_value"
+                      appDynamicFontSize="body"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    } @case ('checkbox') {
+                    <input
+                      type="checkbox"
+                      formControlName="config_value"
+                      appDynamicFontSize="body"
+                      class="form-checkbox h-4 w-4 border-gray-300 text-red-500 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    } @case ('single_select') {
+                    <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
+                      @if (!jsonEditorOpen[i]) {
+                      <ng-select
+                        [items]="getSelectOptions(config)"
+                        [multiple]="false"
+                        bindLabel="name"
+                        bindValue="id"
+                        formControlName="config_value"
+                        appDynamicFontSize="body"
+                        class="custom-multiselect"
+                        style="width: min(420px, 100%); min-width: 220px"
+                      ></ng-select>
+                      <button
+                        type="button"
+                        (click)="openJsonEditor(i)"
+                        style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+                      >
+                        <i class="fa fa-code"></i>
+                      </button>
+                      } @if (jsonEditorOpen[i]) {
+                      <textarea
+                        formControlName="config_select_json"
+                        rows="4"
+                        cols="48"
+                        placeholder="Paste JSON here"
+                        style="
+                          min-width: 220px;
+                          min-height: 38px;
+                          resize: vertical;
+                          padding: 6px;
+                          border-radius: 4px;
+                          border: 1px solid #ccc;
+                          font-family: monospace;
+                        "
+                      ></textarea>
+                      <button
+                        type="button"
+                        (click)="applyJson(i, config)"
+                        style="
+                          margin-left: 4px;
+                          height: 38px;
+                          width: 38px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: #4caf50;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                        "
+                      >
+                        <i class="fa fa-check"></i>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="jsonEditorOpen[i] = false"
+                        style="
+                          margin-left: 2px;
+                          height: 38px;
+                          width: 38px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: #f44336;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                        "
+                      >
+                        <i class="fa fa-times"></i>
+                      </button>
+                      }
+                    </div>
+                    } @case ('multiselect') {
+                    <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
+                      @if (!jsonEditorOpen[i]) {
+                      <ng-select
+                        [items]="getSelectOptions(config)"
+                        [multiple]="true"
+                        bindLabel="name"
+                        bindValue="id"
+                        formControlName="config_value"
+                        appDynamicFontSize="body"
+                        class="custom-multiselect"
+                        style="width: min(420px, 100%); min-width: 220px"
+                      ></ng-select>
+                      <button
+                        type="button"
+                        (click)="openJsonEditor(i)"
+                        style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+                      >
+                        <i class="fa fa-code"></i>
+                      </button>
+                      } @if (jsonEditorOpen[i]) {
+                      <textarea
+                        formControlName="config_select_json"
+                        rows="4"
+                        cols="48"
+                        placeholder="Paste JSON here"
+                        style="
+                          min-width: 220px;
+                          min-height: 38px;
+                          resize: vertical;
+                          padding: 6px;
+                          border-radius: 4px;
+                          border: 1px solid #ccc;
+                          font-family: monospace;
+                        "
+                      ></textarea>
+                      <button
+                        type="button"
+                        (click)="applyJson(i, config)"
+                        style="
+                          margin-left: 4px;
+                          height: 38px;
+                          width: 38px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: #4caf50;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                        "
+                      >
+                        <i class="fa fa-check"></i>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="jsonEditorOpen[i] = false"
+                        style="
+                          margin-left: 2px;
+                          height: 38px;
+                          width: 38px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: #f44336;
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                        "
+                      >
+                        <i class="fa fa-times"></i>
+                      </button>
+                      }
+                    </div>
+                    } @case ('time') {
+                    <input
+                      type="time"
+                      formControlName="config_value"
+                      appDynamicFontSize="body"
+                      class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    } @case ('timezone') {
+                    <ng-select
+                      [items]="timezoneList"
+                      bindLabel="label"
+                      bindValue="name"
+                      formControlName="config_value"
+                      [searchable]="true"
+                      placeholder="Select Timezone"
+                      appDynamicFontSize="body"
+                      class="custom-multiselect"
+                    ></ng-select>
+                    } @case ('datetimeformat') {
+                    <ng-select
+                      [items]="datetimeFormatList"
+                      bindLabel="label"
+                      bindValue="value"
+                      formControlName="config_value"
+                      [searchable]="true"
+                      placeholder="Select Datetime Format"
+                      appDynamicFontSize="body"
+                      class="custom-multiselect"
+                    ></ng-select>
+                    } @case ('json') {
+                    <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="config_value" class="modal-monaco-editor"></ngx-monaco-editor>
+                    } }
+                  </td>
+                  @if (masterInfo?.permissions?.edit) {
+                  <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
+                    <select
+                      formControlName="display_config"
+                      appDynamicFontSize="body"
+                      class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                    >
+                      <option [value]="true">{{ 'config_table_display_config_yes' | translate }}</option>
+                      <option [value]="false">{{ 'config_table_display_config_no' | translate }}</option>
+                    </select>
+                  </td>
+                  } @if (masterInfo?.permissions?.edit) {
+                  <td appDynamicFontSize="body" class="whitespace-nowrap px-6 py-4">
+                    <button type="button" (click)="removeItem(tab.name, i)" class="text-red-500">
+                      <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                  </td>
+                  }
+                </tr>
+                } }
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </div>
+      } }
     </div>
   </div>
 </form>
 
+@if (isMenuOpen) {
 <div
-  *ngIf="isMenuOpen"
   aria-labelledby="options-menu"
   aria-orientation="vertical"
   class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
@@ -445,10 +422,11 @@
           formControlName="tab"
           class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
         >
-          <option *ngFor="let tab of tabs" [value]="tab.category_id + '_' + tab.name">{{ tab.name }}</option>
+          @for (tab of tabs; track tab) {
+          <option [value]="tab.category_id + '_' + tab.name">{{ tab.name }}</option>
+          }
         </select>
       </div>
-
       <div class="mb-4">
         <label for="valueType" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_categorytype' | translate }}</label>
         <select
@@ -456,10 +434,11 @@
           formControlName="valueType"
           class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
         >
-          <option *ngFor="let option of valueTypeOptions" [value]="option">{{ option }}</option>
+          @for (option of valueTypeOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+          }
         </select>
       </div>
-
       <div class="mb-4">
         <label for="key" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_orderno' | translate }}</label>
         <input
@@ -469,7 +448,6 @@
           class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
         />
       </div>
-
       <div class="mb-4">
         <label for="key" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_label' | translate }}</label>
         <input
@@ -480,7 +458,6 @@
           class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
         />
       </div>
-
       <div class="mb-4">
         <label for="keyType" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_valuetype' | translate }}</label>
         <select
@@ -488,10 +465,11 @@
           formControlName="keyType"
           class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
         >
-          <option *ngFor="let option of fieldTypeOptions" [value]="option">{{ option }}</option>
+          @for (option of fieldTypeOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+          }
         </select>
       </div>
-
       <div class="mb-4">
         <label for="display_config" class="block text-sm font-medium text-gray-700">{{ 'display_config_label' | translate }}</label>
         <select
@@ -503,222 +481,206 @@
           <option [value]="false">{{ 'config_table_display_config_no' | translate }}</option>
         </select>
       </div>
-
       <div class="mb-4">
         <label for="value" class="block text-sm font-medium text-gray-700">{{ 'config_table_field_value' | translate }}</label>
-        <ng-container [ngSwitch]="newConfigForm.get('keyType')?.value">
-          <ng-container *ngSwitchCase="'text'">
-            <input
-              type="text"
-              id="value"
-              formControlName="value"
-              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
-            />
-          </ng-container>
-          <ng-container *ngSwitchCase="'number'">
-            <input
-              type="number"
-              id="value"
-              formControlName="value"
-              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
-            />
-          </ng-container>
-          <ng-container *ngSwitchCase="'date'">
-            <input
-              type="text"
-              appFlatpickr="date"
-              id="value"
-              formControlName="value"
-              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
-            />
-          </ng-container>
-          <ng-container *ngSwitchCase="'time'">
-            <input
-              type="time"
-              id="value"
-              formControlName="value"
-              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
-            />
-          </ng-container>
-          <ng-container *ngSwitchCase="'file'">
-            <input
-              type="file"
-              id="value"
-              formControlName="value"
-              class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
-            />
-          </ng-container>
-          <ng-container *ngSwitchCase="'checkbox'">
-            <input
-              type="checkbox"
-              id="value"
-              formControlName="value"
-              class="form-checkbox h-4 w-4 border-gray-300 text-red-500 dark:border-gray-600 dark:bg-gray-800"
-            />
-          </ng-container>
-          <ng-container *ngSwitchCase="'single_select'">
-            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
-              <ng-container *ngIf="!jsonEditorOpenNew">
-                <ng-select
-                  [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
-                  [multiple]="false"
-                  bindLabel="name"
-                  bindValue="id"
-                  formControlName="value"
-                  class="custom-multiselect"
-                  style="width: min(420px, 100%); min-width: 220px"
-                ></ng-select>
-                <button
-                  type="button"
-                  (click)="jsonEditorOpenNew = true"
-                  style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
-                >
-                  <i class="fa fa-code"></i>
-                </button>
-              </ng-container>
-              <ng-container *ngIf="jsonEditorOpenNew">
-                <textarea
-                  formControlName="config_select_json"
-                  rows="4"
-                  cols="48"
-                  placeholder="Paste JSON here"
-                  style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace"
-                ></textarea>
-                <button
-                  type="button"
-                  (click)="applyJsonNew()"
-                  style="
-                    margin-left: 4px;
-                    height: 38px;
-                    width: 38px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #4caf50;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                  "
-                >
-                  <i class="fa fa-check"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="cancelJsonNew()"
-                  style="
-                    margin-left: 2px;
-                    height: 38px;
-                    width: 38px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #f44336;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                  "
-                >
-                  <i class="fa fa-times"></i>
-                </button>
-              </ng-container>
-            </div>
-          </ng-container>
-          <ng-container *ngSwitchCase="'multiselect'">
-            <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
-              <ng-container *ngIf="!jsonEditorOpenNew">
-                <ng-select
-                  [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
-                  [multiple]="true"
-                  bindLabel="name"
-                  bindValue="id"
-                  formControlName="value"
-                  class="custom-multiselect"
-                  style="width: min(420px, 100%); min-width: 220px"
-                ></ng-select>
-                <button
-                  type="button"
-                  (click)="jsonEditorOpenNew = true"
-                  style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
-                >
-                  <i class="fa fa-code"></i>
-                </button>
-              </ng-container>
-              <ng-container *ngIf="jsonEditorOpenNew">
-                <textarea
-                  formControlName="config_select_json"
-                  rows="4"
-                  cols="48"
-                  placeholder="Paste JSON here"
-                  style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace"
-                ></textarea>
-                <button
-                  type="button"
-                  (click)="applyJsonNew()"
-                  style="
-                    margin-left: 4px;
-                    height: 38px;
-                    width: 38px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #4caf50;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                  "
-                >
-                  <i class="fa fa-check"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="cancelJsonNew()"
-                  style="
-                    margin-left: 2px;
-                    height: 38px;
-                    width: 38px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #f44336;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                  "
-                >
-                  <i class="fa fa-times"></i>
-                </button>
-              </ng-container>
-            </div>
-          </ng-container>
-          <ng-container *ngSwitchCase="'timezone'">
-            <ng-select
-              [items]="timezoneList"
-              bindLabel="label"
-              bindValue="name"
-              formControlName="value"
-              [searchable]="true"
-              placeholder="Select Timezone"
-              class="custom-multiselect"
-            ></ng-select>
-          </ng-container>
-          <ng-container *ngSwitchCase="'datetimeformat'">
-            <ng-select
-              [items]="datetimeFormatList"
-              bindLabel="label"
-              bindValue="value"
-              formControlName="value"
-              [searchable]="true"
-              placeholder="Select Datetime Format"
-              class="custom-multiselect"
-            ></ng-select>
-          </ng-container>
-          <ng-container *ngSwitchCase="'json'">
-            <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="value" class="modal-monaco-editor"></ngx-monaco-editor>
-          </ng-container>
-        </ng-container>
+        @switch (newConfigForm.get('keyType')?.value) { @case ('text') {
+        <input
+          type="text"
+          id="value"
+          formControlName="value"
+          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
+        />
+        } @case ('number') {
+        <input
+          type="number"
+          id="value"
+          formControlName="value"
+          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
+        />
+        } @case ('date') {
+        <input
+          type="text"
+          appFlatpickr="date"
+          id="value"
+          formControlName="value"
+          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
+        />
+        } @case ('time') {
+        <input
+          type="time"
+          id="value"
+          formControlName="value"
+          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
+        />
+        } @case ('file') {
+        <input
+          type="file"
+          id="value"
+          formControlName="value"
+          class="form-input mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
+        />
+        } @case ('checkbox') {
+        <input
+          type="checkbox"
+          id="value"
+          formControlName="value"
+          class="form-checkbox h-4 w-4 border-gray-300 text-red-500 dark:border-gray-600 dark:bg-gray-800"
+        />
+        } @case ('single_select') {
+        <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
+          @if (!jsonEditorOpenNew) {
+          <ng-select
+            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
+            [multiple]="false"
+            bindLabel="name"
+            bindValue="id"
+            formControlName="value"
+            class="custom-multiselect"
+            style="width: min(420px, 100%); min-width: 220px"
+          ></ng-select>
+          <button
+            type="button"
+            (click)="jsonEditorOpenNew = true"
+            style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+          >
+            <i class="fa fa-code"></i>
+          </button>
+          } @if (jsonEditorOpenNew) {
+          <textarea
+            formControlName="config_select_json"
+            rows="4"
+            cols="48"
+            placeholder="Paste JSON here"
+            style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace"
+          ></textarea>
+          <button
+            type="button"
+            (click)="applyJsonNew()"
+            style="
+              margin-left: 4px;
+              height: 38px;
+              width: 38px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 4px;
+            "
+          >
+            <i class="fa fa-check"></i>
+          </button>
+          <button
+            type="button"
+            (click)="cancelJsonNew()"
+            style="
+              margin-left: 2px;
+              height: 38px;
+              width: 38px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #f44336;
+              color: white;
+              border: none;
+              border-radius: 4px;
+            "
+          >
+            <i class="fa fa-times"></i>
+          </button>
+          }
+        </div>
+        } @case ('multiselect') {
+        <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
+          @if (!jsonEditorOpenNew) {
+          <ng-select
+            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
+            [multiple]="true"
+            bindLabel="name"
+            bindValue="id"
+            formControlName="value"
+            class="custom-multiselect"
+            style="width: min(420px, 100%); min-width: 220px"
+          ></ng-select>
+          <button
+            type="button"
+            (click)="jsonEditorOpenNew = true"
+            style="margin-left: 4px; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center"
+          >
+            <i class="fa fa-code"></i>
+          </button>
+          } @if (jsonEditorOpenNew) {
+          <textarea
+            formControlName="config_select_json"
+            rows="4"
+            cols="48"
+            placeholder="Paste JSON here"
+            style="min-width: 220px; min-height: 38px; resize: vertical; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-family: monospace"
+          ></textarea>
+          <button
+            type="button"
+            (click)="applyJsonNew()"
+            style="
+              margin-left: 4px;
+              height: 38px;
+              width: 38px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 4px;
+            "
+          >
+            <i class="fa fa-check"></i>
+          </button>
+          <button
+            type="button"
+            (click)="cancelJsonNew()"
+            style="
+              margin-left: 2px;
+              height: 38px;
+              width: 38px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #f44336;
+              color: white;
+              border: none;
+              border-radius: 4px;
+            "
+          >
+            <i class="fa fa-times"></i>
+          </button>
+          }
+        </div>
+        } @case ('timezone') {
+        <ng-select
+          [items]="timezoneList"
+          bindLabel="label"
+          bindValue="name"
+          formControlName="value"
+          [searchable]="true"
+          placeholder="Select Timezone"
+          class="custom-multiselect"
+        ></ng-select>
+        } @case ('datetimeformat') {
+        <ng-select
+          [items]="datetimeFormatList"
+          bindLabel="label"
+          bindValue="value"
+          formControlName="value"
+          [searchable]="true"
+          placeholder="Select Datetime Format"
+          class="custom-multiselect"
+        ></ng-select>
+        } @case ('json') {
+        <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="value" class="modal-monaco-editor"></ngx-monaco-editor>
+        } }
       </div>
     </ng-scrollbar>
-
     <div class="flex items-center justify-between border-t border-gray-200 p-4">
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-4">
         <button
@@ -737,3 +699,4 @@
     </div>
   </form>
 </div>
+}

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { importProvidersFrom } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AutocompleteFormComponent } from './autocomplete-form.component';
 
 describe('AutocompleteFormComponent', () => {
@@ -9,10 +10,10 @@ describe('AutocompleteFormComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       teardown: { destroyAfterEach: true },
-      imports: [AutocompleteFormComponent]
-    })
-    .compileComponents();
-    
+      imports: [AutocompleteFormComponent],
+      providers: [importProvidersFrom(TranslateModule.forRoot())],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AutocompleteFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

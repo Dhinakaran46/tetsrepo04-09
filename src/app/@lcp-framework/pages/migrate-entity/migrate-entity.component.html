@@ -1,178 +1,153 @@
 <div class="space-y-6">
-
   <!-- 🔹 Tabs -->
   <div class="flex border-b border-gray-200">
-    <button class="px-6 py-2 font-semibold transition"
+    <button
+      class="px-6 py-2 font-semibold transition"
       [ngClass]="section === 'import' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
-      (click)="section = 'import'">
+      (click)="section = 'import'"
+    >
       Import
     </button>
 
-    <button class="px-6 py-2 font-semibold transition"
+    <button
+      class="px-6 py-2 font-semibold transition"
       [ngClass]="section === 'export' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
-      (click)="section = 'export'">
+      (click)="section = 'export'"
+    >
       Export
     </button>
   </div>
 
   <!-- 🔹 Loader -->
-  <div *ngIf="isLoading" class="loader-overlay">
+  @if (isLoading) {
+  <div class="loader-overlay">
     <div class="w-full max-w-md text-center">
-      <p *ngIf="progress > 0 && progress < 100" class="mb-2 font-semibold">
-        Processing... {{ progress }}%
-      </p>
-
-      <div *ngIf="progress > 0 && progress < 100" class="h-4 w-full rounded bg-gray-200">
+      @if (progress > 0 && progress < 100) {
+      <p class="mb-2 font-semibold">Processing... {{ progress }}%</p>
+      } @if (progress > 0 && progress < 100) {
+      <div class="h-4 w-full rounded bg-gray-200">
         <div class="h-4 rounded bg-primary" [style.width]="progress + '%'"></div>
       </div>
-
-      <div *ngIf="progress === 0 || progress === 100" class="spinner mt-4"></div>
+      } @if (progress === 0 || progress === 100) {
+      <div class="spinner mt-4"></div>
+      }
     </div>
   </div>
+  }
 
   <!-- 🔹 Export -->
-  <div *ngIf="section === 'export'" class="panel p-5 rounded-lg shadow-sm bg-white">
-
-    <h2 class="mb-5 text-lg font-bold border-b pb-2">
-      Export Master Entity
-    </h2>
-
+  @if (section === 'export') {
+  <div class="panel rounded-lg bg-white p-5 shadow-sm">
+    <h2 class="mb-5 border-b pb-2 text-lg font-bold">Export Master Entity</h2>
     <form [formGroup]="exportForm">
-
       <!-- Type + Company -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="block mb-1 font-medium">Type</label>
+          <label class="mb-1 block font-medium">Type</label>
           <select formControlName="type" class="form-select w-full">
             <option value="update">Update</option>
             <option value="replace">Replace</option>
           </select>
         </div>
-
         <div>
           <!-- <label class="block mb-1 font-medium">Company</label>
-          <input type="number" formControlName="companyId" class="form-input w-full" /> -->
+            <input type="number" formControlName="companyId" class="form-input w-full" /> -->
         </div>
-
       </div>
-
       <!-- Divider -->
       <div class="my-6 border-t"></div>
-
       <!-- Dynamic Checkbox Section -->
       <div>
-        <div class="flex items-center justify-between mb-4">
-          <label class="block font-semibold text-gray-700">
-            Select Modules to Export
-          </label>
+        <div class="mb-4 flex items-center justify-between">
+          <label class="block font-semibold text-gray-700"> Select Modules to Export </label>
           <div class="flex gap-3">
-            <button type="button" class="px-3 py-1 text-sm font-medium btn btn-outline-primary transition"
-              (click)="toggleAll(true)">
-              Select All
-            </button>
-            <button type="button" class="px-3 py-1 text-sm font-medium btn btn-outline-primary transition"
-              (click)="toggleAll(false)">
-              Clear
-            </button>
+            <button type="button" class="btn btn-outline-primary px-3 py-1 text-sm font-medium transition" (click)="toggleAll(true)">Select All</button>
+            <button type="button" class="btn btn-outline-primary px-3 py-1 text-sm font-medium transition" (click)="toggleAll(false)">Clear</button>
           </div>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div *ngFor="let item of checkboxOptions"
-            class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          @for (item of checkboxOptions; track item) {
+          <div
+            class="overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
             [class.cursor-pointer]="!expandedItems[item.control]"
-            (click)="!expandedItems[item.control] && toggleCheckbox(item.control, item.dipendentOptions || [])">
-
+            (click)="!expandedItems[item.control] && toggleCheckbox(item.control, item.dipendentOptions || [])"
+          >
             <!-- Header -->
-            <div class="flex items-start gap-3 p-4 hover:bg-gray-50 transition">
-              <input type="checkbox" [formControlName]="item.control"
-                class="form-checkbox h-4 w-4 text-blue-600 mt-1 pointer-events-none" />
-
+            <div class="flex items-start gap-3 p-4 transition hover:bg-gray-50">
+              <input type="checkbox" [formControlName]="item.control" class="form-checkbox pointer-events-none mt-1 h-4 w-4 text-blue-600" />
               <div class="flex-1">
-                <span class="text-sm font-semibold text-gray-800 block">
+                <span class="block text-sm font-semibold text-gray-800">
                   {{ item.label }}
                 </span>
-                <span *ngIf="item.description" class="text-xs text-gray-500 mt-1 block">
+                @if (item.description) {
+                <span class="mt-1 block text-xs text-gray-500">
                   {{ item.description }}
                 </span>
-
+                }
                 <!-- Expand/Collapse Button - Separate click handler -->
-                <div class="flex items-center gap-2 mt-2 expand-button" (click)="toggleExpand(item.control, $event)">
+                <div class="expand-button mt-2 flex items-center gap-2" (click)="toggleExpand(item.control, $event)">
+                  <span class="text-xs text-gray-400"> {{ item.tables?.length || 0 }} tables </span>
                   <span class="text-xs text-gray-400">
-                    {{ item.tables?.length || 0 }} tables
-                  </span>
-                  <span class="text-xs text-gray-400">
-                    <i class="fas" [class.fa-chevron-down]="expandedItems[item.control]"
-                      [class.fa-chevron-right]="!expandedItems[item.control]"></i>
+                    <i class="fas" [class.fa-chevron-down]="expandedItems[item.control]" [class.fa-chevron-right]="!expandedItems[item.control]"></i>
                   </span>
                 </div>
               </div>
             </div>
-
             <!-- Expanded Content -->
-            <div *ngIf="expandedItems[item.control]" class="border-t bg-gray-50 p-3 max-h-48 overflow-y-auto">
+            @if (expandedItems[item.control]) {
+            <div class="max-h-48 overflow-y-auto border-t bg-gray-50 p-3">
               <div class="grid grid-cols-1 gap-1">
-                <div *ngFor="let table of item.tables"
-                  class="text-xs text-gray-600 py-1 px-2 rounded hover:bg-gray-100">
+                @for (table of item.tables; track table) {
+                <div class="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100">
                   {{ table }}
                 </div>
+                }
               </div>
             </div>
+            }
           </div>
+          }
         </div>
       </div>
-
       <!-- Action -->
       <div class="mt-6 flex items-center gap-3">
-
-        <button type="button" (click)="exportData()" [disabled]="isLoading"
-          class="btn btn-primary px-5 py-2 flex items-center gap-2">
-
-          <span *ngIf="!isLoading">⬇ Export</span>
-          <span *ngIf="isLoading">Exporting...</span>
-
+        <button type="button" (click)="exportData()" [disabled]="isLoading" class="btn btn-primary flex items-center gap-2 px-5 py-2">
+          @if (!isLoading) {
+          <span>⬇ Export</span>
+          } @if (isLoading) {
+          <span>Exporting...</span>
+          }
         </button>
-
       </div>
-
     </form>
   </div>
+  }
 
   <!-- 🔹 Import -->
-  <div *ngIf="section === 'import'" class="panel">
-
+  @if (section === 'import') {
+  <div class="panel">
     <h2 class="mb-4 text-lg font-bold">Import Master Entity</h2>
-
     <form [formGroup]="importForm">
-
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
         <div>
           <label class="mb-1 block">Upload ZIP File</label>
           <input type="file" (change)="onFileChange($event)" class="form-input" accept=".zip" #fileInput />
         </div>
-
       </div>
-
       <!-- Selected file preview -->
-      <div *ngIf="file" class="mt-3 text-sm text-gray-600">
+      @if (file) {
+      <div class="mt-3 text-sm text-gray-600">
         Selected: <span class="font-semibold">{{ file.name }}</span>
       </div>
-
+      }
       <div class="mt-6 flex items-center gap-3">
-        <button type="button" (click)="importData()" [disabled]="isLoading" class="btn btn-primary">
-          ⬆ Import
-        </button>
+        <button type="button" (click)="importData()" [disabled]="isLoading" class="btn btn-primary">⬆ Import</button>
       </div>
-
     </form>
-
     <!-- ✅ Success message -->
-    <div *ngIf="!isLoading && progress === 100" class="mt-6 rounded bg-green-100 p-4 text-green-700">
-      ✅ Import completed successfully
-    </div>
-
+    @if (!isLoading && progress === 100) {
+    <div class="mt-6 rounded bg-green-100 p-4 text-green-700">✅ Import completed successfully</div>
+    }
   </div>
-
+  }
 </div>

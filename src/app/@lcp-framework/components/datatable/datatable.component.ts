@@ -47,7 +47,8 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterModule } from '@angular/router';
-import { MenuModule } from 'headlessui-angular';
+// headlessui-angular (MenuModule) removed: experimental package (0.0.x), never used in templates.
+// All menu toggling uses plain Angular (isMenuOpen boolean + toggleMenu()). Removed in Angular 21 upgrade (task 11.5).
 import { NgxTippyModule } from 'ngx-tippy-wrapper';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
@@ -133,7 +134,6 @@ interface UserSearchConfigurationTemp {
     ReactiveFormsModule,
     TranslateModule,
     RouterModule,
-    MenuModule,
     NgxTippyModule,
     NgSelectModule,
     DynamicFontSizeDirective,
@@ -3757,6 +3757,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     setTimeout(() => {
       this.loadingpopup = false;
+      this.cdr.detectChanges();
     }, 500);
   }
   createColumnChildMasterList(item: any, entityName: string) {

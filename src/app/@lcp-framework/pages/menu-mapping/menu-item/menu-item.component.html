@@ -1,11 +1,12 @@
 <li class="py-[5px]">
   <button type="button" class="flex" (click)="toggleTreeview(item.id)">
+    @if (item.children && item.children.length > 0) {
     <i
       class="fa-solid fa-angle-down relative inline h-5 w-5 text-primary ltr:mr-2 rtl:ml-2"
-      *ngIf="item.children && item.children.length > 0"
       [class.fa-angle-down]="!isExpanded(item.id)"
       [class.fa-angle-up]="isExpanded(item.id)"
     ></i>
+    }
     <i class="fa-solid fa-folder relative inline text-primary ltr:mr-2 rtl:ml-2"></i>
     <span class="rounded-full border border-primary px-2 text-primary">{{ formatOrderNumber(item.order_no) }}</span>
     <a href="javascript:;" (click)="selectMenu(item)" class="px-2 text-primary hover:underline">
@@ -15,9 +16,13 @@
       <i class="fa-regular fa-trash-can h-5 w-5 shrink-0 text-sm text-danger ltr:mr-1.5 rtl:ml-1.5"></i>
     </span>
   </button>
-  <div *ngIf="isExpanded(item.id)" [@slideDownUp]="isExpanded(item.id) ? 'open' : 'closed'" class="accordion-content">
+  @if (isExpanded(item.id)) {
+  <div [@slideDownUp]="isExpanded(item.id) ? 'open' : 'closed'" class="accordion-content">
     <ul class="ltr:pl-14 rtl:pr-14">
-      <app-menu-item *ngFor="let child of item.children" [item]="child" [treeview]="treeview"></app-menu-item>
+      @for (child of item.children; track child) {
+      <app-menu-item [item]="child" [treeview]="treeview"></app-menu-item>
+      }
     </ul>
   </div>
+  }
 </li>

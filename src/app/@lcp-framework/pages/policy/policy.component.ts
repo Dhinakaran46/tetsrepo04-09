@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +12,7 @@ import { Store } from '@ngrx/store';
 import { FormlyConfigModule } from '../../formly/formly-config.module';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { LoaderComponent } from '../../components/loader/loader.component';
-import { DatePipe, Location, CommonModule } from '@angular/common';
+import { DatePipe, Location } from '@angular/common';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { EditorComponent } from 'ngx-monaco-editor-v2';
 import { animate, style, transition, trigger } from '@angular/animations';
@@ -19,7 +20,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 @Component({
   selector: 'app-policy',
   standalone: true,
-  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule, LoaderComponent, FormlyConfigModule, CommonModule],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule, LoaderComponent, FormlyConfigModule],
   templateUrl: './policy.component.html',
   styleUrl: './policy.component.scss',
   providers: [DatePipe],
@@ -33,7 +34,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 export class PolicyComponent implements OnInit {
   policyForm!: FormGroup;
   userData: any;
-  store: any;
+  store: any = initialState;
   loading = false;
   unique_id!: string | null;
   title: any = '';
@@ -147,7 +148,10 @@ export class PolicyComponent implements OnInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

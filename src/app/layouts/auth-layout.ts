@@ -1,19 +1,17 @@
-import { Component, Renderer2 } from '@angular/core';
+import { ChangeDetectorRef, Component, Renderer2 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { CopyrightComponent } from '../@lcp-framework/components/copyright/copyright.component';
-import { LoaderComponent } from '../@lcp-framework/components/loader/loader.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { MenuMapService } from '../@lcp-framework/service/common/menu-map.service';
 import { ToastrService } from 'ngx-toastr';
+import { initialState } from '../store/index.reducer';
 import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
-import { IconCaretDownComponent } from '../@lcp-framework/shared/icon/icon-caret-down';
 import { GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { ThemeService } from '../@lcp-framework/service/common/theme.service';
 
@@ -21,7 +19,7 @@ import { ThemeService } from '../@lcp-framework/service/common/theme.service';
   selector: 'app-root',
   templateUrl: './auth-layout.html',
   standalone: true,
-  imports: [CommonSharedModule, RouterModule, LoaderComponent, CopyrightComponent, IconCaretDownComponent],
+  imports: [CommonSharedModule, RouterModule],
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -35,7 +33,8 @@ export class AuthLayout {
   currYear: number = new Date().getFullYear();
   companyId: number = 1;
   loading = false;
-  store: any;
+  store: any = initialState;
+  isLoading = true;
   showTopButton = false;
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   logo: any;
@@ -56,10 +55,9 @@ export class AuthLayout {
     public translate: TranslateService,
     private localstore: LocalStorageService,
     private gridApiService: GridApiService,
-    private themeService: ThemeService
-  ) {
-    this.initStore();
-  }
+    private themeService: ThemeService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   // Auto-slide function
   startAutoSlide() {
@@ -83,6 +81,8 @@ export class AuthLayout {
   headerClass = '';
 
   ngOnInit() {
+    this.initStore();
+
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
     } else {
@@ -209,6 +209,7 @@ export class AuthLayout {
             this.copyrightContent = res.footer_content;
 
             this.localstore.storeData('config', JSON.stringify(res));
+            this.cdr.markForCheck();
           }
         } else {
           const key = 'error';
@@ -238,11 +239,19 @@ export class AuthLayout {
     }
   }
 
+  changeLanguageByCode(code: string) {
+    const item = this.store.languageList?.find((language: any) => language.code === code);
+    if (item) {
+      this.changeLanguage(item);
+    }
+  }
+
   toggleLoader() {
-    this.storeData.dispatch({ type: 'toggleMainLoader', payload: true });
+    // Hide loader immediately in next tick (not after 500ms)
     setTimeout(() => {
+      this.isLoading = false;
       this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
-    }, 500);
+    }, 0);
   }
 
   ngOnDestroy() {
@@ -253,7 +262,7 @@ export class AuthLayout {
     window.removeEventListener('scroll', () => {});
   }
 
-  async initStore() {
+  initStore() {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
@@ -272,6 +281,7 @@ export class AuthLayout {
         const themeData = JSON.stringify(response.data);
         this.localstore.storeData('theme_info', themeData);
         this.themeService.applyThemeFromLocalStorage();
+        this.cdr.markForCheck();
       }
     });
   }

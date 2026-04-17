@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
   selector: 'app-menu-item',
   standalone: true,
-  imports: [CommonSharedModule, layoutIconModule, IconFolderComponent],
+  imports: [CommonSharedModule, layoutIconModule],
   templateUrl: './menu-item.component.html',
   styleUrl: './menu-item.component.scss',
   animations: [

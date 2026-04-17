@@ -3,7 +3,8 @@
   [ngClass]="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass]"
 >
   <!-- screen loader -->
-  <div *ngIf="store.isShowMainLoader" class="screen_loader animate__animated fixed inset-0 z-[60] grid place-content-center bg-[#fafafa] dark:bg-[#060818]">
+  @if (isLoading) {
+  <div class="screen_loader animate__animated fixed inset-0 z-[60] grid place-content-center bg-[#fafafa] dark:bg-[#060818]">
     <svg width="64" height="64" viewBox="0 0 135 135" xmlns="http://www.w3.org/2000/svg" fill="#4361ee">
       <path
         d="M67.447 58c5.523 0 10-4.477 10-10s-4.477-10-10-10-10 4.477-10 10 4.477 10 10 10zm9.448 9.447c0 5.523 4.477 10 10 10 5.522 0 10-4.477 10-10s-4.478-10-10-10c-5.523 0-10 4.477-10 10zm-9.448 9.448c-5.523 0-10 4.477-10 10 0 5.522 4.477 10 10 10s10-4.478 10-10c0-5.523-4.477-10-10-10zM58 67.447c0-5.523-4.477-10-10-10s-10 4.477-10 10 4.477 10 10 10 10-4.477 10-10z"
@@ -17,9 +18,11 @@
       </path>
     </svg>
   </div>
+  }
 
   <div class="text-black dark:text-white-dark">
-    <div *ngIf="showTopButton" class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
+    @if (showTopButton) {
+    <div class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
       <button
         type="button"
         class="btn btn-outline-primary animate-pulse rounded-full bg-[#fafafa] p-2 dark:bg-[#060818] dark:hover:bg-primary"
@@ -40,16 +43,20 @@
         </svg>
       </button>
     </div>
+    }
 
     <div>
       <div class="absolute inset-0">
-        <img *ngIf="authentication_background_1" [src]="apiUrl + '/' + authentication_background_1" alt="image" class="h-full w-full object-cover" />
-        <img *ngIf="!authentication_background_1" src="assets/images/auth/bg-gradient.png" alt="image" class="h-full w-full object-cover" />
+        @if (authentication_background_1) {
+        <img [src]="apiUrl + '/' + authentication_background_1" alt="image" class="h-full w-full object-cover" />
+        } @if (!authentication_background_1) {
+        <img src="assets/images/auth/bg-gradient.png" alt="image" class="h-full w-full object-cover" />
+        }
       </div>
 
       <!--<div
-        class="relative flex min-h-screen items-center justify-center bg-[url(/assets/images/auth/map.png)] bg-cover bg-center bg-no-repeat px-4 py-4 dark:bg-[#060818]"
-      >-->
+          class="relative flex min-h-screen items-center justify-center bg-[url(/assets/images/auth/map.png)] bg-cover bg-center bg-no-repeat px-4 py-4 dark:bg-[#060818]"
+          >-->
       <div
         class="relative flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat px-4 py-4 dark:bg-[#060818]"
         [ngStyle]="{
@@ -57,9 +64,9 @@
   }"
       >
         <!--  <img src="assets/images/auth/coming-soon-object1.png" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
-        <img src="assets/images/auth/coming-soon-object2.png" alt="image" class="absolute left-24 top-0 h-40 md:left-[30%]" />
-        <img src="assets/images/auth/coming-soon-object3.png" alt="image" class="absolute right-0 top-0 h-[300px]" />
-        <img src="assets/images/auth/polygon-object.svg" alt="image" class="absolute bottom-0 end-[28%]" />-->
+            <img src="assets/images/auth/coming-soon-object2.png" alt="image" class="absolute left-24 top-0 h-40 md:left-[30%]" />
+            <img src="assets/images/auth/coming-soon-object3.png" alt="image" class="absolute right-0 top-0 h-[300px]" />
+            <img src="assets/images/auth/polygon-object.svg" alt="image" class="absolute bottom-0 end-[28%]" />-->
         <div
           class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[658px] lg:flex-row lg:gap-10 xl:gap-0"
         >
@@ -68,16 +75,17 @@
             class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(244,210,222)_0%,rgba(200,209,252)_100%)] p-5 lg:inline-flex lg:max-w-[835px] ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
           >
             <!--<div
-            class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(239,18,98,1)_0%,rgba(67,97,238,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
-          >-->
+                class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(239,18,98,1)_0%,rgba(67,97,238,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
+                >-->
             <!--<div
-              class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent xl:w-16 ltr:-right-10 ltr:bg-gradient-to-r ltr:xl:-right-20 rtl:-left-10 rtl:bg-gradient-to-l rtl:xl:-left-20"
-            ></div>-->
+                class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent xl:w-16 ltr:-right-10 ltr:bg-gradient-to-r ltr:xl:-right-20 rtl:-left-10 rtl:bg-gradient-to-l rtl:xl:-left-20"
+              ></div>-->
 
             <!-- Title and Description above Carousel -->
 
             <div class="ltr:xl:-skew-x-[0deg] rtl:xl:skew-x-[0deg]">
-              <div class="relative mx-auto w-full max-w-[835px]" *ngIf="mediaItems?.length">
+              @if (mediaItems?.length) {
+              <div class="relative mx-auto w-full max-w-[835px]">
                 <!-- Title and Description Above Carousel -->
                 <div class="mb-6 text-center">
                   <!--<h1 class="mb-2 text-3xl font-bold">Create, Translate, and Personalize <span class="text-primary">Videos in Minutes</span></h1>-->
@@ -88,9 +96,11 @@
                 <div class="carousel-container">
                   <div class="relative">
                     <!-- Display Media (Image or Video) -->
-                    <div *ngIf="!mediaItems[activeIndex].video_url" class="w-full">
+                    @if (!mediaItems[activeIndex].video_url) {
+                    <div class="w-full">
                       <!-- Check if clickable_link exists, then wrap image in anchor tag -->
-                      <a *ngIf="mediaItems[activeIndex].clickable_link" [href]="mediaItems[activeIndex].clickable_link" target="_blank">
+                      @if (mediaItems[activeIndex].clickable_link) {
+                      <a [href]="mediaItems[activeIndex].clickable_link" target="_blank">
                         <img
                           [src]="mediaItems[activeIndex].image_url"
                           alt="Carousel Image"
@@ -98,7 +108,8 @@
                           style="border-radius: 12px"
                         />
                       </a>
-                      <div *ngIf="!mediaItems[activeIndex].clickable_link">
+                      } @if (!mediaItems[activeIndex].clickable_link) {
+                      <div>
                         <img
                           [src]="mediaItems[activeIndex].image_url"
                           alt="Carousel Image"
@@ -106,11 +117,13 @@
                           style="border-radius: 12px"
                         />
                       </div>
+                      }
                     </div>
-
-                    <div *ngIf="mediaItems[activeIndex].video_url" class="w-full">
+                    } @if (mediaItems[activeIndex].video_url) {
+                    <div class="w-full">
                       <!-- Check if clickable_link exists, then wrap video in anchor tag -->
-                      <a *ngIf="mediaItems[activeIndex].clickable_link" [href]="mediaItems[activeIndex].clickable_link" target="_blank">
+                      @if (mediaItems[activeIndex].clickable_link) {
+                      <a [href]="mediaItems[activeIndex].clickable_link" target="_blank">
                         <video
                           [src]="mediaItems[activeIndex].video_url"
                           preload="auto"
@@ -122,10 +135,12 @@
                           style="height: 100%; border-radius: 12px"
                         ></video>
                       </a>
+                      }
                       <!--  [poster]="apiUrl + '/' + this.authentication_banner"
-                      loop  
-                      -->
-                      <div *ngIf="!mediaItems[activeIndex].clickable_link">
+                                loop
+                                -->
+                      @if (!mediaItems[activeIndex].clickable_link) {
+                      <div>
                         <video
                           [src]="mediaItems[activeIndex].video_url"
                           preload="auto"
@@ -137,22 +152,23 @@
                           style="height: 100%; border-radius: 12px"
                         ></video>
                       </div>
+                      }
                     </div>
-
+                    }
                     <!-- Carousel Navigation Arrows -->
                     <!--<button (click)="prevItem()" class="absolute left-0 top-1/2 -translate-y-1/2 transform text-4xl text-white">
-                      <i class="fa fa-arrow-left"></i>
-                    </button>
-                    <button (click)="nextItem()" class="absolute right-0 top-1/2 -translate-y-1/2 transform text-4xl text-white">
-                      <i class="fa fa-arrow-right"></i>
-                    </button>-->
+                            <i class="fa fa-arrow-left"></i>
+                          </button>
+                          <button (click)="nextItem()" class="absolute right-0 top-1/2 -translate-y-1/2 transform text-4xl text-white">
+                            <i class="fa fa-arrow-right"></i>
+                          </button>-->
                   </div>
                 </div>
-
                 <!-- Carousel Indicators -->
-                <div *ngIf="mediaItems?.length > 1" class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
+                @if (mediaItems?.length > 1) {
+                <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
+                  @for (item of mediaItems; track item; let i = $index) {
                   <span
-                    *ngFor="let item of mediaItems; let i = index"
                     [ngClass]="{
                       'bg-primary': i === activeIndex,
                       'bg-white dark:bg-black': i !== activeIndex
@@ -160,16 +176,17 @@
                     class="h-2.5 w-2.5 cursor-pointer rounded-full"
                     (click)="activeIndex = i"
                   ></span>
+                  }
                 </div>
+                }
               </div>
-
-              <div class="relative mx-auto w-full max-w-[835px]" *ngIf="mediaItems?.length == 0">
+              } @if (mediaItems?.length == 0) {
+              <div class="relative mx-auto w-full max-w-[835px]">
                 <!-- Title and Description Above Carousel -->
                 <!--<div class="mb-6 text-center">
-                  
-                  <h1 class="mb-2 text-3xl font-bold">....</h1>
-                  <p class="text-lg opacity-80">.................</p>
-                </div>-->
+                      <h1 class="mb-2 text-3xl font-bold">....</h1>
+                      <p class="text-lg opacity-80">.................</p>
+                    </div>-->
                 <!-- Carousel Images / Videos -->
                 <div class="carousel-container">
                   <div class="relative">
@@ -184,11 +201,10 @@
                     </div>
                   </div>
                 </div>
-
                 <!-- Carousel Indicators -->
                 <div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2" style="margin: -11px">
+                  @for (item of mediaItems; track item; let i = $index) {
                   <span
-                    *ngFor="let item of mediaItems; let i = index"
                     [ngClass]="{
                       'bg-primary': i === activeIndex,
                       'bg-white dark:bg-black': i !== activeIndex
@@ -196,23 +212,25 @@
                     class="h-2.5 w-2.5 cursor-pointer rounded-full"
                     (click)="activeIndex = i"
                   ></span>
+                  }
                 </div>
               </div>
+              }
 
               <!--<div class="relative flex min-h-screen items-center justify-center">
-                <img
-                  *ngIf="authentication_banner"
-                  [src]="apiUrl + '/' + this.authentication_banner"
-                  alt="Cover Image"
-                  class="h-[522px] w-[522px] object-contain"
-                />
-                <img *ngIf="!authentication_banner" src="assets/images/auth/login.svg" alt="Cover Image" class="h-[522px] w-[522px] object-contain" />
-              </div>-->
+                  <img
+                    *ngIf="authentication_banner"
+                    [src]="apiUrl + '/' + this.authentication_banner"
+                    alt="Cover Image"
+                    class="h-[522px] w-[522px] object-contain"
+                    />
+                    <img *ngIf="!authentication_banner" src="assets/images/auth/login.svg" alt="Cover Image" class="h-[522px] w-[522px] object-contain" />
+                  </div>-->
 
               <!--<div class="relative flex min-h-screen items-center justify-center">
-                <img *ngIf="authentication_banner" [src]="apiUrl + '/' + this.authentication_banner" alt="Cover Image" class="h-full w-full object-cover" />
-                <img *ngIf="!authentication_banner" src="assets/images/auth/login.svg" alt="Cover Image" class="h-full w-full object-cover" />
-              </div>-->
+                  <img *ngIf="authentication_banner" [src]="apiUrl + '/' + this.authentication_banner" alt="Cover Image" class="h-full w-full object-cover" />
+                  <img *ngIf="!authentication_banner" src="assets/images/auth/login.svg" alt="Cover Image" class="h-full w-full object-cover" />
+                </div>-->
             </div>
           </div>
 
@@ -225,40 +243,17 @@
               </a>
             </div>
             <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
-              <div class="dropdown ms-auto w-max">
-                <div hlMenu>
-                  <button
-                    type="button"
-                    hlMenuButton
-                    class="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark hover:border-primary hover:text-primary dark:bg-black"
-                  >
-                    <div>
-                      <img [src]="'assets/images/flags/' + store.locale.toUpperCase() + '.svg'" alt="image" class="h-5 w-5 rounded-full object-cover" />
-                    </div>
-                    <div class="text-base font-bold uppercase">{{ store.locale }}</div>
-                    <span class="shrink-0">
-                      <icon-caret-down />
-                    </span>
-                  </button>
-                  <ul
-                    *hlMenuItems
-                    @toggleAnimation
-                    class="top-11 grid w-[280px] grid-cols-2 gap-2 !px-2 font-semibold text-dark dark:text-white-dark dark:text-white-light/90 ltr:-right-14 sm:ltr:-right-2 rtl:-left-14 sm:rtl:-left-2"
-                  >
-                    <li *ngFor="let item of store.languageList">
-                      <button
-                        *hlMenuItem="let menuItem"
-                        type="button"
-                        class="w-full hover:text-primary"
-                        [ngClass]="{ 'bg-primary/10 text-primary': translate.currentLang === item.code }"
-                        (click)="changeLanguage(item)"
-                      >
-                        <img class="h-5 w-5 rounded-full object-cover" [src]="'assets/images/flags/' + item.code.toUpperCase() + '.svg'" alt="" />
-                        <span class="ltr:ml-3 rtl:mr-3">{{ item.name }}</span>
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+              <div class="ms-auto flex items-center gap-2 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark dark:bg-black">
+                <img [src]="'assets/images/flags/' + store.locale.toUpperCase() + '.svg'" alt="image" class="h-5 w-5 rounded-full object-cover" />
+                <select
+                  class="bg-transparent text-base font-bold uppercase outline-none"
+                  [value]="store.locale"
+                  (change)="changeLanguageByCode($any($event.target).value)"
+                >
+                  @for (item of store.languageList; track item) {
+                  <option [value]="item.code">{{ item.name }}</option>
+                  }
+                </select>
               </div>
             </div>
             <div class="w-full max-w-[440px]">

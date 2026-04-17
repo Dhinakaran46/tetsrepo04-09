@@ -4,22 +4,20 @@ import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
 
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { AuthService } from '../@lcp-framework/service/common/auth.service';
+import { initialState } from '../store/index.reducer';
 import { environment } from '../@lcp-framework/../../environments/environment';
-import { MenuItemComponent } from './menu-item-component';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { commonConfig } from '../@lcp-framework/config/common.config';
-import { IconMenuDashboardComponent } from '../@lcp-framework/shared/icon/menu/icon-menu-dashboard';
-import { NgComponentOutlet } from '@angular/common';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
 import { IdleService } from '../@lcp-framework/service/common/idle.service';
@@ -48,7 +46,7 @@ interface MenuItem {
   templateUrl: './header.html',
   styleUrl: './common.scss',
   standalone: true,
-  imports: [CommonSharedModule, NgComponentOutlet, MenuItemComponent, IconMenuDashboardComponent],
+  imports: [CommonSharedModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   animations: [
     trigger('toggleAnimation', [
@@ -69,7 +67,7 @@ export class HeaderComponent implements OnInit {
   menu_types: any = [];
 
   menuItems: MenuItem[] = [];
-  store: any;
+  store: any = initialState;
   search = false;
   messages = [
     {
@@ -113,6 +111,8 @@ export class HeaderComponent implements OnInit {
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
   showNotifications: boolean = false;
+  showLanguageMenu = false;
+  showProfileMenu = false;
 
   constructor(
     public translate: TranslateService,
@@ -129,9 +129,7 @@ export class HeaderComponent implements OnInit {
     private timezoneService: TimezoneService,
     private gridApiService: GridApiService,
     private firebaseService: FirebaseService
-  ) {
-    this.initStore();
-  }
+  ) {}
 
   async initStore() {
     this.storeData
@@ -148,6 +146,7 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.initStore();
     this.user_info = JSON.parse(this.localstore.getData('user_data'));
     this.config = JSON.parse(this.localstore.getData('config'));
     // this.setActiveDropdown();
@@ -188,7 +187,11 @@ export class HeaderComponent implements OnInit {
     }
 
     const languageId = this.languageService.getLanguageId(languageCode);
-    this.languageService.fetchLanguageData(this.companyId, languageId);
+
+    // Defer async service calls to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.languageService.fetchLanguageData(this.companyId, languageId);
+    }, 0);
 
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -328,6 +331,9 @@ export class HeaderComponent implements OnInit {
   }
 
   getProfileInfo() {
+    if (!this.user_info?.main) {
+      return { profile_pic: 'assets/images/user.png', name: '', email: '' };
+    }
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     let profile_pic = this.user_info.main.profile_pic;
     profile_pic = profile_pic && profile_pic !== 'null' ? apiUrl + '/' + profile_pic : 'assets/images/user.png';
@@ -343,6 +349,7 @@ export class HeaderComponent implements OnInit {
   changeLanguage(item: any) {
     this.translate.use(item.code);
     this.appSetting.toggleLanguage(item);
+    this.showLanguageMenu = false;
     if (this.store.locale?.toLowerCase() === 'ae') {
       this.storeData.dispatch({ type: 'toggleRTL', payload: 'rtl' });
       this.languageService.serviceChangeLanguage(this.companyId, item.code.toLowerCase());
@@ -352,11 +359,24 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  toggleLanguageMenu(event: Event) {
+    event.stopPropagation();
+    this.showLanguageMenu = !this.showLanguageMenu;
+    this.showProfileMenu = false;
+  }
+
+  toggleProfileMenu(event: Event) {
+    event.stopPropagation();
+    this.showProfileMenu = !this.showProfileMenu;
+    this.showLanguageMenu = false;
+  }
+
   hasVisibleChildren(item: any): boolean {
     return item.children && item.children.some((child: any) => child.link_type !== 2 && child.link_type !== 5);
   }
 
   logout() {
+    this.showProfileMenu = false;
     try {
       this.authService.logout().subscribe({
         next: (response) => {
@@ -381,10 +401,20 @@ export class HeaderComponent implements OnInit {
   handleOutsideClick(event: any) {
     const clickedInsideDropdown = event.target.closest('.notification-dropdown');
     const clickedInsideBox = event.target.closest('.notification-dropdown-box');
+    const clickedInsideLanguageMenu = event.target.closest('.language-dropdown');
+    const clickedInsideProfileMenu = event.target.closest('.profile-dropdown');
 
     if (!clickedInsideDropdown && !clickedInsideBox) {
       this.showNotifications = false;
       this.activeTab = this.tabs[0];
+    }
+
+    if (!clickedInsideLanguageMenu) {
+      this.showLanguageMenu = false;
+    }
+
+    if (!clickedInsideProfileMenu) {
+      this.showProfileMenu = false;
     }
   }
 

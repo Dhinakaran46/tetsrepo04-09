@@ -13,23 +13,23 @@ describe('AuditLogManagementComponent', () => {
 
   beforeEach(async () => {
     const gridApiServiceStub = {
-      getAllTables: jasmine.createSpy('getAllTables').and.returnValue(of({ data: [] })),
-      getAllList: jasmine.createSpy('getAllList').and.returnValue(of({ status: true, data: { records: [] } })),
-      executeTransaction: jasmine.createSpy('executeTransaction').and.returnValue(of({ status: true })),
+      getAllTables: vi.fn().mockReturnValue(of({ data: [] })),
+      getAllList: vi.fn().mockReturnValue(of({ status: true, data: { records: [] } })),
+      executeTransaction: vi.fn().mockReturnValue(of({ status: true })),
     };
 
     const toastrStub = {
-      success: jasmine.createSpy('success'),
-      error: jasmine.createSpy('error'),
-      warning: jasmine.createSpy('warning'),
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
     };
 
     const translateStub = {
-      instant: jasmine.createSpy('instant').and.callFake((key: string) => key),
+      instant: vi.fn().mockImplementation((key: string) => key),
     };
 
     const titleStub = {
-      setTitle: jasmine.createSpy('setTitle'),
+      setTitle: vi.fn(),
     };
 
     await TestBed.configureTestingModule({

@@ -1,26 +1,17 @@
 <div>
   <div class="toolbar">
-    <button
-      *ngIf="to['preview'] || false"
-      type="button"
-      (click)="showPreview()"
-      class="btn btn-sm"
-      [ngClass]="{ 'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode }"
-    >
+    @if (to['preview'] || false) {
+    <button type="button" (click)="showPreview()" class="btn btn-sm" [ngClass]="{ 'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode }">
       {{ 'PREVIEW' }}
     </button>
-    <button
-      *ngIf="to['html-editor'] || false"
-      type="button"
-      (click)="toggleHtmlEdit()"
-      class="btn btn-sm"
-      [ngClass]="{ 'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode }"
-    >
+    } @if (to['html-editor'] || false) {
+    <button type="button" (click)="toggleHtmlEdit()" class="btn btn-sm" [ngClass]="{ 'btn-outline-dark': isHtmlMode, 'btn-dark': !isHtmlMode }">
       {{ isHtmlMode ? 'BACK' : 'EDIT HTML' }}
     </button>
+    }
   </div>
+  @if (!isHtmlMode) {
   <quill-editor
-    *ngIf="!isHtmlMode"
     #quillEditor
     [formControl]="formControl"
     [formlyAttributes]="field"
@@ -30,8 +21,8 @@
     [style.height.px]="to['rows'] ? to['rows'] * 24 : 200"
   >
   </quill-editor>
+  } @if (isHtmlMode) {
   <ngx-monaco-editor
-    *ngIf="isHtmlMode"
     #htmlEditor
     [options]="editorOptions"
     [style.height.px]="(to['rows'] ? to['rows'] * 24 : 200) + 50"
@@ -39,13 +30,14 @@
     [formControl]="formControl"
   >
   </ngx-monaco-editor>
+  }
 </div>
 
 <!--Preview Modal-->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="preview">
+@if (preview) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -63,7 +55,6 @@
           </button>
         </div>
       </div>
-
       <!-- Modal Content -->
       <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
         <!--preview-->
@@ -72,3 +63,4 @@
     </div>
   </div>
 </div>
+}

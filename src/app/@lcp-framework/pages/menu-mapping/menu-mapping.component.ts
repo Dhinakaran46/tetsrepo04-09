@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -85,7 +85,8 @@ export class MenuMappingComponent implements OnInit {
     private http: HttpClient,
     private menuLoadService: MenuLoadService,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
     this.menu_id = this.localStorageService.getData('menu_id');
 
@@ -232,6 +233,7 @@ export class MenuMappingComponent implements OnInit {
           } else {
             this.selectedOptionName = '';
           }
+          this.cdr.markForCheck();
         }
       },
       error: (error) => {
@@ -624,17 +626,20 @@ export class MenuMappingComponent implements OnInit {
               } else {
                 this.toastr.warning('This URL is already in use. Please try another URL.');
                 this.loading = false;
+                this.cdr.markForCheck();
               }
             } else {
               this.saveMenuData(formData, currentDate);
             }
           } else {
             this.loading = false;
+            this.cdr.markForCheck();
           }
         },
         error: (error) => {
           console.error('Error fetching URL details:', error);
           this.loading = false;
+          this.cdr.markForCheck();
         },
       });
     } else {

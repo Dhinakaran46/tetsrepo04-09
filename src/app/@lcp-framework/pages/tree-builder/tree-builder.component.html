@@ -1,10 +1,12 @@
 <div class="flex h-full flex-col space-y-4">
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ pageInfo?.title | translate }}</h1>
-    <button *ngIf="permissions.create" (click)="onAddRoot()" class="btn btn-primary flex items-center space-x-2">
+    @if (permissions.create) {
+    <button (click)="onAddRoot()" class="btn btn-primary flex items-center space-x-2">
       <i class="fa-solid fa-plus"></i>
       <span>{{ 'add_root_node' | translate }}</span>
     </button>
+    }
   </div>
 
   <div class="grid flex-grow grid-cols-1 gap-6 overflow-hidden md:grid-cols-3">
@@ -16,9 +18,10 @@
       </div>
 
       <div class="flex-grow overflow-y-auto p-4">
-        <ul *ngIf="treeData.length > 0; else noData">
+        @if (treeData.length > 0) {
+        <ul>
+          @for (item of treeData; track item) {
           <app-tree-view-item
-            *ngFor="let item of treeData"
             [item]="item"
             [treeview]="treeview"
             [permissions]="permissions"
@@ -27,32 +30,35 @@
             (deleteNode)="onDeleteNode($event)"
             (addChild)="onAddChild($event)"
           ></app-tree-view-item>
+          }
         </ul>
-        <ng-template #noData>
-          <div class="flex h-40 flex-col items-center justify-center text-gray-400">
-            <i class="fa-solid fa-folder-open mb-2 text-3xl"></i>
-            <p>{{ 'no_nodes_found' | translate }}</p>
-          </div>
-        </ng-template>
+        } @else {
+        <div class="flex h-40 flex-col items-center justify-center text-gray-400">
+          <i class="fa-solid fa-folder-open mb-2 text-3xl"></i>
+          <p>{{ 'no_nodes_found' | translate }}</p>
+        </div>
+        }
       </div>
     </div>
 
     <!-- Right Pane: Form Builder -->
     <div class="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 md:col-span-2">
-      <div *ngIf="showForm; else selectPlaceholder" class="flex h-full flex-col">
+      @if (showForm) {
+      <div class="flex h-full flex-col">
         <div class="flex items-center justify-between border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
           <div class="flex items-center">
             <i class="fa-solid fa-edit mr-2 text-primary" [class.fa-plus]="formType === 'add'"></i>
             <span class="text-sm font-semibold uppercase tracking-wider text-gray-500">
               {{ (formType === 'add' ? 'add_node' : 'edit_node') | translate }}
-              <span *ngIf="selectedNode" class="ml-1 font-normal text-gray-400"> - {{ selectedNode.name }}</span>
+              @if (selectedNode) {
+              <span class="ml-1 font-normal text-gray-400"> - {{ selectedNode.name }}</span>
+              }
             </span>
           </div>
           <button (click)="showForm = false" class="text-gray-400 hover:text-danger">
             <i class="fa-solid fa-times"></i>
           </button>
         </div>
-
         <div class="flex-grow overflow-y-auto p-6">
           <app-form-builder
             [entityName]="formEntityName"
@@ -63,18 +69,22 @@
           ></app-form-builder>
         </div>
       </div>
-
-      <ng-template #selectPlaceholder>
-        <div class="flex h-full flex-col items-center justify-center p-10 text-center text-gray-400">
-          <i class="fa-solid fa-i-cursor mb-4 text-5xl opacity-20"></i>
-          <h3 *ngIf="permissions.edit" class="mb-2 text-lg font-medium text-gray-600 dark:text-gray-400">{{ 'select_a_node_to_edit' | translate }}</h3>
-          <h3 *ngIf="!permissions.edit" class="mb-2 text-lg font-medium text-gray-600 dark:text-gray-400">{{ 'select_a_node_to_view' | translate }}</h3>
-          <p class="max-w-xs">{{ 'select_node_instruction' | translate }}</p>
-          <button *ngIf="permissions.create" (click)="onAddRoot()" class="mt-6 font-medium text-primary hover:underline">
-            {{ 'or_create_a_new_root_node' | translate }}
-          </button>
-        </div>
-      </ng-template>
+      } @else {
+      <div class="flex h-full flex-col items-center justify-center p-10 text-center text-gray-400">
+        <i class="fa-solid fa-i-cursor mb-4 text-5xl opacity-20"></i>
+        @if (permissions.edit) {
+        <h3 class="mb-2 text-lg font-medium text-gray-600 dark:text-gray-400">{{ 'select_a_node_to_edit' | translate }}</h3>
+        } @if (!permissions.edit) {
+        <h3 class="mb-2 text-lg font-medium text-gray-600 dark:text-gray-400">{{ 'select_a_node_to_view' | translate }}</h3>
+        }
+        <p class="max-w-xs">{{ 'select_node_instruction' | translate }}</p>
+        @if (permissions.create) {
+        <button (click)="onAddRoot()" class="mt-6 font-medium text-primary hover:underline">
+          {{ 'or_create_a_new_root_node' | translate }}
+        </button>
+        }
+      </div>
+      }
     </div>
   </div>
 </div>

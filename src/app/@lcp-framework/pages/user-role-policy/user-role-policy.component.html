@@ -23,7 +23,8 @@
           </ul>
         </div>
 
-        <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('policy_type')?.value === 'role'">
+        @if (mappingForm.get('policy_type')?.value === 'role') {
+        <div class="align-center inline-contents relative justify-center">
           <select
             appDynamicFontSize="body"
             id="role"
@@ -32,11 +33,13 @@
             (change)="getPolicyList()"
           >
             <option value>{{ 'select_any' | translate }}</option>
-            <option *ngFor="let role of roleList" [value]="role.id">{{ role.name }}</option>
+            @for (role of roleList; track role) {
+            <option [value]="role.id">{{ role.name }}</option>
+            }
           </select>
         </div>
-
-        <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('policy_type')?.value === 'user'">
+        } @if (mappingForm.get('policy_type')?.value === 'user') {
+        <div class="align-center inline-contents relative justify-center">
           <select
             appDynamicFontSize="body"
             id="user"
@@ -45,9 +48,12 @@
             (change)="getPolicyList()"
           >
             <option value>{{ 'select_any' | translate }}</option>
-            <option *ngFor="let user of userList" [value]="user.id">{{ user.name }}</option>
+            @for (user of userList; track user) {
+            <option [value]="user.id">{{ user.name }}</option>
+            }
           </select>
         </div>
+        }
       </div>
     </div>
   </div>

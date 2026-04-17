@@ -38,9 +38,11 @@
               placeholder="{{ 'form_label_name_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
             />
-            <div *ngIf="isFieldInvalid('name')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('name')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('name') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -54,9 +56,11 @@
               placeholder="{{ 'form_label_slug_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('slug') }"
             />
-            <div *ngIf="isFieldInvalid('slug')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('slug')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('slug') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -70,9 +74,11 @@
               placeholder="{{ 'form_label_description_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('description') }"
             />
-            <div *ngIf="isFieldInvalid('description')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('description')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('description') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -88,9 +94,11 @@
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
               </label>
             </div>
-            <div *ngIf="isFieldInvalid('status_id')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('status_id')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('status_id') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -102,16 +110,20 @@
               <option value="scheduled">Scheduled</option>
             </select>
 
-            <div *ngIf="isFieldInvalid('job_type')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('job_type')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('job_type') }}
             </div>
+            }
           </div>
 
           <!-- Add batch process count input -->
-          <div *ngIf="form.get('job_type')?.value === 'scheduled'" class="mt-0">
+          @if (form.get('job_type')?.value === 'scheduled') {
+          <div class="mt-0">
             <label for="batch_process_count" class="required-mark mb-2 block font-medium">Batch Process Count</label>
             <input type="number" id="batch_process_count" formControlName="batch_process_count" class="form-input block sm:text-sm" min="1" />
           </div>
+          }
         </div>
         <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-6">
           <!-- New Integer Fields -->
@@ -126,9 +138,11 @@
               placeholder="{{ 'form_label_max_row_count_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('max_row_count') }"
             />
-            <div *ngIf="isFieldInvalid('max_row_count')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('max_row_count')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('max_row_count') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -142,9 +156,11 @@
               placeholder="{{ 'form_label_header_row_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('header_row') }"
             />
-            <div *ngIf="isFieldInvalid('header_row')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('header_row')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('header_row') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -158,9 +174,11 @@
               placeholder="{{ 'form_label_data_start_row_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('data_start_row') }"
             />
-            <div *ngIf="isFieldInvalid('data_start_row')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('data_start_row')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('data_start_row') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -174,9 +192,11 @@
               placeholder="{{ 'form_label_data_end_row_placeholder' | translate }}"
               [ngClass]="{ 'is-invalid': isFieldInvalid('data_end_row') }"
             />
-            <div *ngIf="isFieldInvalid('data_end_row')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('data_end_row')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('data_end_row') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -192,9 +212,11 @@
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
               </label>
             </div>
-            <div *ngIf="isFieldInvalid('ignore_error_rows')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('ignore_error_rows')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('ignore_error_rows') }}
             </div>
+            }
           </div>
 
           <div class="mt-0">
@@ -210,9 +232,11 @@
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
               </label>
             </div>
-            <div *ngIf="isFieldInvalid('is_admin_module')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('is_admin_module')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('is_admin_module') }}
             </div>
+            }
           </div>
 
           <!-- Send mail radio button -->
@@ -243,24 +267,29 @@
                 <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
               </label>
             </div>
-            <div *ngIf="isFieldInvalid('is_send_mail')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('is_send_mail')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('is_send_mail') }}
             </div>
+            }
           </div>
 
-          <div class="mt-0" *ngIf="showEmailProcessSlug">
+          @if (showEmailProcessSlug) {
+          <div class="mt-0">
             <label for="email_process_slug" class="required-mark mb-2 block font-medium">{{ 'form_label_email_process_slug' | translate }}</label>
-
             <select id="email_process_slug" formControlName="email_process_slug" class="form-select block sm:text-sm">
               <option disabled selected value="">Select Email Process</option>
-
-              <option *ngFor="let row of emailprocesslist" [value]="row.slug">{{ row.name }}</option>
+              @for (row of emailprocesslist; track row) {
+              <option [value]="row.slug">{{ row.name }}</option>
+              }
             </select>
-
-            <div *ngIf="isFieldInvalid('email_process_slug')" class="invalid-feedback mt-1 text-danger">
+            @if (isFieldInvalid('email_process_slug')) {
+            <div class="invalid-feedback mt-1 text-danger">
               {{ getErrorMessage('email_process_slug') }}
             </div>
+            }
           </div>
+          }
         </div>
       </div>
     </div>
@@ -289,10 +318,10 @@
 </div>
 
 <!-- Line Items Modal -->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">
+@if (isItemModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -314,7 +343,6 @@
           </button>
         </div>
       </div>
-
       <!-- Line Items Modal Content Section -->
       <div class="px-4 py-4 sm:px-6">
         <form [formGroup]="lineItemForm" (ngSubmit)="onLineItemSubmit()" class="space-y-6">
@@ -333,12 +361,13 @@
                   class="form-input w-full"
                   [ngClass]="{ 'border-red-500': isLineItemFieldInvalid('field_name') }"
                 />
-                <div *ngIf="isLineItemFieldInvalid('field_name')" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                @if (isLineItemFieldInvalid('field_name')) {
+                <div class="mt-1 text-sm text-red-600 dark:text-red-400">
                   {{ getLineItemErrorMessage('field_name') }}
                 </div>
+                }
               </div>
             </div>
-
             <!-- Display Name -->
             <div class="col-span-1">
               <label for="display_name" class="required-mark form-label">
@@ -348,7 +377,6 @@
                 <input id="display_name" type="text" formControlName="display_name" class="form-input w-full" />
               </div>
             </div>
-
             <!-- Order Number -->
             <div class="col-span-1">
               <label for="order_no" class="required-mark form-label">
@@ -358,7 +386,6 @@
                 <input id="order_no" type="number" formControlName="order_no" class="form-input w-full" />
               </div>
             </div>
-
             <!-- Field Table -->
             <div class="col-span-1">
               <label for="field_table" class="required-mark form-label">
@@ -367,11 +394,12 @@
               <div class="mt-1">
                 <select id="field_table" formControlName="field_table" class="form-select block sm:text-sm">
                   <option value>Select Table</option>
-                  <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
+                  @for (table of tables_list; track table) {
+                  <option [value]="table">{{ table }}</option>
+                  }
                 </select>
               </div>
             </div>
-
             <!-- Field Type -->
             <div class="col-span-1">
               <label for="field_type_id" class="required-mark form-label">
@@ -380,11 +408,12 @@
               <div class="mt-1">
                 <select id="field_type_id" formControlName="field_type_id" class="form-select block sm:text-sm">
                   <option value>Select Field Type</option>
-                  <option *ngFor="let type of field_types" [value]="type.value">{{ type.label | translate }}</option>
+                  @for (type of field_types; track type) {
+                  <option [value]="type.value">{{ type.label | translate }}</option>
+                  }
                 </select>
               </div>
             </div>
-
             <!-- Default Value -->
             <div class="col-span-1">
               <label for="default_value" class="form-label">
@@ -394,7 +423,6 @@
                 <input id="default_value" type="text" formControlName="default_value" class="form-input w-full" />
               </div>
             </div>
-
             <!-- Regular Expression -->
             <div class="col-span-1">
               <label for="check_reg_exp" class="form-label">
@@ -405,7 +433,6 @@
               </div>
             </div>
           </div>
-
           <!-- Checkbox Groups -->
           <div class="space-y-6">
             <!-- First Checkbox Group -->
@@ -419,7 +446,6 @@
                 />
                 <label for="is_nullable" class="form-label">{{ 'form_label_is_nullable' | translate }}</label>
               </div>
-
               <div class="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -430,7 +456,6 @@
                 <label for="is_multiple" class="form-label">{{ 'form_label_is_multiple' | translate }}</label>
               </div>
             </div>
-
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <!-- Enum Section -->
               <div class="flex items-center space-x-3">
@@ -442,8 +467,8 @@
                 />
                 <label for="is_enum" class="form-label">{{ 'form_label_is_enum' | translate }}</label>
               </div>
-
-              <div *ngIf="lineItemForm.get('is_enum')?.value" class="col-span-1">
+              @if (lineItemForm.get('is_enum')?.value) {
+              <div class="col-span-1">
                 <label for="enum_values" class="form-label">
                   {{ 'form_label_enum_values' | translate }}
                 </label>
@@ -451,8 +476,8 @@
                   <input id="enum_values" type="text" formControlName="enum_values" class="form-input w-full" />
                 </div>
               </div>
+              }
             </div>
-
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <!-- Individual Section -->
               <div class="flex items-center space-x-3">
@@ -464,9 +489,9 @@
                 />
                 <label for="is_individual" class="form-label">{{ 'form_label_is_individual' | translate }}</label>
               </div>
-
               <!-- Individual Column Section - Only shown when is_individual is checked -->
-              <div *ngIf="lineItemForm.get('is_individual')?.value" class="flex items-center space-x-3">
+              @if (lineItemForm.get('is_individual')?.value) {
+              <div class="flex items-center space-x-3">
                 <label for="individual_column" class="form-label">
                   {{ 'form_label_individual_column' | translate }}
                 </label>
@@ -474,8 +499,8 @@
                   <input id="individual_column" type="text" formControlName="individual_column" class="form-input w-full" />
                 </div>
               </div>
+              }
             </div>
-
             <!-- Foreign Key Section -->
             <div class="space-y-4">
               <div class="flex items-center space-x-3">
@@ -487,8 +512,8 @@
                 />
                 <label for="is_foreign" class="form-label">{{ 'form_label_is_foreign' | translate }}</label>
               </div>
-
-              <div *ngIf="lineItemForm.get('is_foreign')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              @if (lineItemForm.get('is_foreign')?.value) {
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div class="col-span-1">
                   <label for="foreign_table" class="form-label">
                     {{ 'form_label_foreign_table' | translate }}
@@ -496,11 +521,12 @@
                   <div class="mt-1">
                     <select id="foreign_table" formControlName="foreign_table" class="form-select block sm:text-sm">
                       <option value>Select Table</option>
-                      <option *ngFor="let table of tables_list" [value]="table">{{ table }}</option>
+                      @for (table of tables_list; track table) {
+                      <option [value]="table">{{ table }}</option>
+                      }
                     </select>
                   </div>
                 </div>
-
                 <div class="col-span-1">
                   <label for="foreign_column" class="form-label">
                     {{ 'form_label_foreign_column' | translate }}
@@ -509,7 +535,6 @@
                     <input id="foreign_column" type="text" formControlName="foreign_column" class="form-input w-full" />
                   </div>
                 </div>
-
                 <div class="col-span-1 flex items-center space-x-3">
                   <input
                     type="checkbox"
@@ -522,7 +547,8 @@
                   </label>
                 </div>
               </div>
-              <div *ngIf="lineItemForm.get('is_foreign')?.value" class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
+              } @if (lineItemForm.get('is_foreign')?.value) {
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-1">
                 <div class="col-span-1">
                   <label for="foreign_query" class="form-label">
                     {{ 'form_label_foreign_query' | translate }}
@@ -532,8 +558,8 @@
                   </div>
                 </div>
               </div>
+              }
             </div>
-
             <div class="space-y-4">
               <div class="flex items-center space-x-3">
                 <input
@@ -556,47 +582,46 @@
                 </div>
               </div>
             </div>
-
             <div class="space-y-4">
               <div class="col-span-full">
                 <label class="form-label">Expression Rules</label>
-
-                <div formArrayName="expression_rules" *ngIf="expressionRules && expressionRules.length > 0">
-                  <div *ngFor="let rule of expressionRules.controls; let i = index" [formGroupName]="i" class="mb-3 grid grid-cols-2 gap-4">
+                @if (expressionRules && expressionRules.length > 0) {
+                <div formArrayName="expression_rules">
+                  @for (rule of expressionRules.controls; track rule; let i = $index) {
+                  <div [formGroupName]="i" class="mb-3 grid grid-cols-2 gap-4">
                     <input type="text" formControlName="expression" class="form-input" placeholder="Expression" />
                     <input type="text" formControlName="message" class="form-input" placeholder="Validation message" />
                     <div class="col-span-2 text-right">
                       <button type="button" class="text-sm text-red-600" (click)="removeExpressionRule(i)">Remove</button>
                     </div>
                   </div>
+                  }
                 </div>
-
+                }
                 <button type="button" class="btn btn-sm bg-green-600 text-white" (click)="addExpressionRule()">+ Add Expression Rule</button>
               </div>
             </div>
-
             <!-- Query Rules Section -->
-<div class="space-y-4 mt-6">
-  <div class="col-span-full">
-    <label class="form-label">Query Rules</label>
-
-    <div formArrayName="query_rules" *ngIf="queryRules && queryRules.length > 0">
-      <div *ngFor="let rule of queryRules.controls; let i = index" [formGroupName]="i" class="mb-3 grid grid-cols-2 gap-4">
-        <textarea formControlName="query" rows="3" class="form-textarea" placeholder="Enter Query"></textarea>
-        <input type="text" formControlName="message" class="form-input" placeholder="Validation message" />
-        <div class="col-span-2 text-right">
-          <button type="button" class="text-sm text-red-600" (click)="removeQueryRule(i)">Remove</button>
-        </div>
-      </div>
-    </div>
-
-    <button type="button" class="btn btn-sm bg-green-600 text-white" (click)="addQueryRule()">+ Add Query Rule</button>
-  </div>
-</div>
-
-
+            <div class="mt-6 space-y-4">
+              <div class="col-span-full">
+                <label class="form-label">Query Rules</label>
+                @if (queryRules && queryRules.length > 0) {
+                <div formArrayName="query_rules">
+                  @for (rule of queryRules.controls; track rule; let i = $index) {
+                  <div [formGroupName]="i" class="mb-3 grid grid-cols-2 gap-4">
+                    <textarea formControlName="query" rows="3" class="form-textarea" placeholder="Enter Query"></textarea>
+                    <input type="text" formControlName="message" class="form-input" placeholder="Validation message" />
+                    <div class="col-span-2 text-right">
+                      <button type="button" class="text-sm text-red-600" (click)="removeQueryRule(i)">Remove</button>
+                    </div>
+                  </div>
+                  }
+                </div>
+                }
+                <button type="button" class="btn btn-sm bg-green-600 text-white" (click)="addQueryRule()">+ Add Query Rule</button>
+              </div>
+            </div>
           </div>
-
           <!-- Form Actions -->
           <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
             <button
@@ -619,12 +644,13 @@
     </div>
   </div>
 </div>
+}
 
 <!-- Line Queries Modal -->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isQueryModalOpen">
+@if (isQueryModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -646,7 +672,6 @@
           </button>
         </div>
       </div>
-
       <!-- Modal Content -->
       <div class="max-h-[calc(90vh-10rem)] overflow-y-auto px-4 py-4 sm:px-6">
         <form [formGroup]="lineQueryForm" (ngSubmit)="onLineQuerySubmit()" class="space-y-4">
@@ -657,14 +682,12 @@
               </label>
               <input id="query_name" type="text" formControlName="query_name" class="form-input w-full" />
             </div>
-
             <div class="space-y-2">
               <label for="order_no" class="required-mark form-label">
                 {{ 'form_label_order_no' | translate }}
               </label>
               <input id="order_no" type="number" formControlName="order_no" class="form-input w-full" />
             </div>
-
             <div class="flex items-center space-x-3">
               <input
                 type="checkbox"
@@ -674,7 +697,6 @@
               />
               <label for="allow_multiple" class="form-label">{{ 'form_label_allow_multiple' | translate }}</label>
             </div>
-
             <div class="flex items-center space-x-3">
               <input
                 type="checkbox"
@@ -694,7 +716,6 @@
               <label for="before_lineitems" class="form-label">{{ 'form_label_before_lineitems' | translate }}</label>
             </div>
           </div>
-
           <!-- Query String Textarea -->
           <div class="space-y-2">
             <label for="query_string" class="required-mark form-label">
@@ -702,7 +723,6 @@
             </label>
             <textarea id="query_string" formControlName="query_string" rows="17" class="form-textarea"></textarea>
           </div>
-
           <!-- Form Actions -->
           <div class="sticky bottom-0 flex justify-end space-x-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
             <button
@@ -725,3 +745,4 @@
     </div>
   </div>
 </div>
+}

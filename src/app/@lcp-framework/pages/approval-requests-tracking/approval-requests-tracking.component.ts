@@ -20,7 +20,6 @@ import { TimezoneService } from '../../service/common/timezone.service';
   imports: [
     FormlyModule,
     CommonSharedModule,
-    LoaderComponent,
     FormlyBootstrapModule,
     ReactiveFormsModule,
     FormlyConfigModule,

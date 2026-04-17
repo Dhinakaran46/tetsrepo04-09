@@ -24,53 +24,53 @@
     </div>
     <div class="flex justify-center p-5">
       <div class="relative flex w-full max-w-3xl flex-col">
-        <ng-container *ngFor="let step of approvalSteps; let last = last">
-          <div class="flex">
-            <div class="mr-6 flex flex-col items-center">
-              <!-- Dot -->
-              <div
-                class="h-4 w-4 rounded-full border-2 border-white"
-                [ngClass]="{
-                  'bg-green-500': step.review_status === 'approval_completed',
-                  'bg-yellow-400': step.review_status === 'pending',
-                  'bg-gray-400': step.review_status === 'approval_needed',
-                  'bg-red-400': step.review_status === 'approval_rejected',
-                  'bg-purple-400': step.review_status === 'void'
-                }"
-              ></div>
-
-              <!-- Line below dot (only if not last) -->
-              <div *ngIf="!last" class="my-1 w-0.5 flex-1 bg-gray-300"></div>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 space-y-1">
-              <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <p class="text-base font-medium" appDynamicFontSize="body">Approver {{ step.approver_order_no }}</p>
-                <div>
-                  <span
-                    appDynamicFontSize="body"
-                    class="inline-block rounded px-3 py-1 text-xs font-semibold"
-                    [ngClass]="{
-                      'bg-green-100 text-green-800': step.review_status === 'approval_completed',
-                      'bg-yellow-100 text-yellow-800': step.review_status === 'pending',
-                      'bg-gray-200 text-gray-800': step.review_status === 'approval_needed',
-                      'bg-red-100 text-red-800': step.review_status === 'approval_rejected',
-                      'bg-purple-100 text-purple-800': step.review_status === 'void'
-                    }"
-                  >
-                    {{ reviewStatuses[step.review_status] }}
-                  </span>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Type: {{ approverTypes[step.approver_type] }}</p>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Assigned At: {{ formatDate(step?.assigned_at) || 'N/A' }}</p>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Processed At: {{ formatDate(step?.processed_at) || 'N/A' }}</p>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Reviewed By: {{ step?.reviewed_by || 'N/A' }}</p>
-              <p class="text-sm text-gray-600" appDynamicFontSize="body">Reason: {{ step?.reason || 'N/A' }}</p>
-            </div>
+        @for (step of approvalSteps; track step; let last = $last) {
+        <div class="flex">
+          <div class="mr-6 flex flex-col items-center">
+            <!-- Dot -->
+            <div
+              class="h-4 w-4 rounded-full border-2 border-white"
+              [ngClass]="{
+                'bg-green-500': step.review_status === 'approval_completed',
+                'bg-yellow-400': step.review_status === 'pending',
+                'bg-gray-400': step.review_status === 'approval_needed',
+                'bg-red-400': step.review_status === 'approval_rejected',
+                'bg-purple-400': step.review_status === 'void'
+              }"
+            ></div>
+            <!-- Line below dot (only if not last) -->
+            @if (!last) {
+            <div class="my-1 w-0.5 flex-1 bg-gray-300"></div>
+            }
           </div>
-        </ng-container>
+          <!-- Content -->
+          <div class="flex-1 space-y-1">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+              <p class="text-base font-medium" appDynamicFontSize="body">Approver {{ step.approver_order_no }}</p>
+              <div>
+                <span
+                  appDynamicFontSize="body"
+                  class="inline-block rounded px-3 py-1 text-xs font-semibold"
+                  [ngClass]="{
+                    'bg-green-100 text-green-800': step.review_status === 'approval_completed',
+                    'bg-yellow-100 text-yellow-800': step.review_status === 'pending',
+                    'bg-gray-200 text-gray-800': step.review_status === 'approval_needed',
+                    'bg-red-100 text-red-800': step.review_status === 'approval_rejected',
+                    'bg-purple-100 text-purple-800': step.review_status === 'void'
+                  }"
+                >
+                  {{ reviewStatuses[step.review_status] }}
+                </span>
+              </div>
+            </div>
+            <p class="text-sm text-gray-600" appDynamicFontSize="body">Type: {{ approverTypes[step.approver_type] }}</p>
+            <p class="text-sm text-gray-600" appDynamicFontSize="body">Assigned At: {{ formatDate(step?.assigned_at) || 'N/A' }}</p>
+            <p class="text-sm text-gray-600" appDynamicFontSize="body">Processed At: {{ formatDate(step?.processed_at) || 'N/A' }}</p>
+            <p class="text-sm text-gray-600" appDynamicFontSize="body">Reviewed By: {{ step?.reviewed_by || 'N/A' }}</p>
+            <p class="text-sm text-gray-600" appDynamicFontSize="body">Reason: {{ step?.reason || 'N/A' }}</p>
+          </div>
+        </div>
+        }
       </div>
     </div>
   </div>

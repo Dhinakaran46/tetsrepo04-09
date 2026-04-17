@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, AfterViewInit, SimpleChanges, OnChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { FlatpickrDirective } from '../../directives/flatpickr.directive';
@@ -15,7 +15,7 @@ export interface DateRange {
 @Component({
   selector: 'app-date-range-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule, FlatpickrDirective, TranslateModule],
+  imports: [FormsModule, FlatpickrDirective, TranslateModule],
   templateUrl: './date-range-picker.component.html',
   styleUrls: ['./date-range-picker.component.scss'],
 })

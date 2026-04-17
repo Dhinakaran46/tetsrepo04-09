@@ -1,99 +1,104 @@
 <div class="formly-repeat">
-  <div class="grid" *ngFor="let field of field.fieldGroup; let i = index">
-    <ng-container *ngIf="isFormGroup(field); else singleField">
-      <div class="flex gap-4">
-        <div *ngFor="let fg of field.fieldGroup" class="flex-1" [ngClass]="{ 'hidden': fg.className === 'hidden' }">
-          <formly-field [field]="fg"></formly-field>
-        </div>
-        <div class="flex-none">
-          <div class="md:col-span-1 flex items-center justify-center h-full">
-            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button"
-              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-primary" (click)="add()">
-              {{ props['addText'] || '+' }}
-            </button>
-            <button *ngIf="i !== 0" type="button"
-              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-danger" (click)="remove(i)">
-              {{ props['removeText'] || '-' }}
-            </button>
-          </div>
+  @for (field of field.fieldGroup; track field; let i = $index) {
+  <div class="grid">
+    @if (isFormGroup(field)) {
+    <div class="flex gap-4">
+      @for (fg of field.fieldGroup; track fg) {
+      <div class="flex-1" [ngClass]="{ hidden: fg.className === 'hidden' }">
+        <formly-field [field]="fg"></formly-field>
+      </div>
+      }
+      <div class="flex-none">
+        <div class="flex h-full items-center justify-center md:col-span-1">
+          @if (i === 0) {
+          <button [disabled]="isAddDisabled()" type="button" class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="add()">
+            {{ props['addText'] || '+' }}
+          </button>
+          } @if (i !== 0) {
+          <button type="button" class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="remove(i)">
+            {{ props['removeText'] || '-' }}
+          </button>
+          }
         </div>
       </div>
-    </ng-container>
-    <ng-template #singleField>
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <formly-field [field]="field"></formly-field>
-        </div>
-        <div class="flex-none">
-          <div class="md:col-span-1 flex items-center justify-center h-full">
-            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button"
-              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-primary" (click)="add()">
-              {{ props['addText'] || '+' }}
-            </button>
-            <button *ngIf="i !== 0" type="button"
-              class="rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold btn-danger" (click)="remove(i)">
-              {{ props['removeText'] || '-' }}
-            </button>
-          </div>
+    </div>
+    } @else {
+    <div class="flex gap-4">
+      <div class="flex-1">
+        <formly-field [field]="field"></formly-field>
+      </div>
+      <div class="flex-none">
+        <div class="flex h-full items-center justify-center md:col-span-1">
+          @if (i === 0) {
+          <button [disabled]="isAddDisabled()" type="button" class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="add()">
+            {{ props['addText'] || '+' }}
+          </button>
+          } @if (i !== 0) {
+          <button type="button" class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="remove(i)">
+            {{ props['removeText'] || '-' }}
+          </button>
+          }
         </div>
       </div>
-    </ng-template>
+    </div>
+    }
   </div>
+  }
 </div>
 
 <!-- <div>
-  <div class="grid" *ngFor="let field of field.fieldGroup; let i = index">
-    <ng-container *ngIf="isFormGroup(field); else singleField">
-      <table class="table-auto w-full">
-        <thead>
-          <tr>
-            <ng-container *ngFor="let fg of field.fieldGroup">
-              <th *ngIf="i === 0" class="px-4 py-2" [ngClass]="{ 'hidden': fg.className === 'hidden' }">{{
-                fg.props?.label }}</th>
-            </ng-container>
-            <th class="px-4 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <ng-container *ngFor="let fg of field.fieldGroup">
-              <td class="border px-4 py-2" [ngClass]="{ 'hidden': fg.className === 'hidden' }">
-                <formly-field [field]="fg"></formly-field>
-              </td>
-            </ng-container>
-            <td class="border px-4 py-2">
-              <div class="flex items-center justify-center">
-                <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button" class="btn btn-primary"
-                  (click)="add()">
-                  {{ props['addText'] || '+' }}
-                </button>
-                <button *ngIf="i !== 0" type="button" class="btn btn-danger" (click)="remove(i)">
-                  {{ props['removeText'] || '-' }}
-                </button>
-              </div>
+<div class="grid" *ngFor="let field of field.fieldGroup; let i = index">
+  <ng-container *ngIf="isFormGroup(field); else singleField">
+    <table class="table-auto w-full">
+      <thead>
+        <tr>
+          <ng-container *ngFor="let fg of field.fieldGroup">
+            <th *ngIf="i === 0" class="px-4 py-2" [ngClass]="{ 'hidden': fg.className === 'hidden' }">{{
+            fg.props?.label }}</th>
+          </ng-container>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <ng-container *ngFor="let fg of field.fieldGroup">
+            <td class="border px-4 py-2" [ngClass]="{ 'hidden': fg.className === 'hidden' }">
+              <formly-field [field]="fg"></formly-field>
             </td>
-          </tr>
-        </tbody>
-      </table>
-    </ng-container>
+          </ng-container>
+          <td class="border px-4 py-2">
+            <div class="flex items-center justify-center">
+              <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button" class="btn btn-primary"
+                (click)="add()">
+                {{ props['addText'] || '+' }}
+              </button>
+              <button *ngIf="i !== 0" type="button" class="btn btn-danger" (click)="remove(i)">
+                {{ props['removeText'] || '-' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-container>
 
-    <ng-template #singleField>
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <formly-field [field]="field"></formly-field>
-        </div>
-        <div class="flex-none">
-          <div class="md:col-span-1 flex items-center justify-center">
-            <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button" class="btn btn-primary" (click)="add()"
-              >
-              {{ props['addText'] || '+' }}
-            </button>
-            <button *ngIf="i !== 0" type="button" class="btn btn-danger" (click)="remove(i)" >
-              {{ props['removeText'] || '-' }}
-            </button>
-          </div>
+  <ng-template #singleField>
+    <div class="flex gap-4">
+      <div class="flex-1">
+        <formly-field [field]="field"></formly-field>
+      </div>
+      <div class="flex-none">
+        <div class="md:col-span-1 flex items-center justify-center">
+          <button [disabled]="isAddDisabled()" *ngIf="i === 0" type="button" class="btn btn-primary" (click)="add()"
+            >
+            {{ props['addText'] || '+' }}
+          </button>
+          <button *ngIf="i !== 0" type="button" class="btn btn-danger" (click)="remove(i)" >
+            {{ props['removeText'] || '-' }}
+          </button>
         </div>
       </div>
-    </ng-template>
-  </div>
+    </div>
+  </ng-template>
+</div>
 </div> -->

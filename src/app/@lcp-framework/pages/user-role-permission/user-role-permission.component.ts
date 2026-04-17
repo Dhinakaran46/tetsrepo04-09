@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -53,11 +53,6 @@ interface IPermission {
   imports: [
     CommonSharedModule,
     ReactiveFormsModule,
-    OrderByControlPipe,
-    IconFolderComponent,
-    IconMinusComponent,
-    IconFolderPlusComponent,
-    IconFolderMinusComponent,
   ],
   templateUrl: './user-role-permission.component.html',
   styleUrl: './user-role-permission.component.scss',
@@ -78,7 +73,8 @@ export class UserRolePermissionComponent {
     public translate: TranslateService,
     private commonService: MenuMapService,
     private localStorageService: LocalStorageService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
     this.mappingForm = this.fb.group({
       permission_type: ['user', Validators.required],
@@ -685,8 +681,10 @@ export class UserRolePermissionComponent {
           const records = (response.data.length && response.data[0].result) || [];
           this.entityList = this.mapPermissionsToHierarchy(records);
           this.populateEntities(this.entityList);
+          setTimeout(() => this.cdr.detectChanges());
         } else if (!response.status) {
           this.entityList = [];
+          this.cdr.detectChanges();
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
@@ -745,8 +743,10 @@ export class UserRolePermissionComponent {
       (response: ApiResponce) => {
         if (response.status) {
           this.roleList = response.data?.records || [];
+          setTimeout(() => this.cdr.detectChanges());
         } else if (!response.status) {
           this.roleList = [];
+          this.cdr.detectChanges();
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
@@ -794,6 +794,7 @@ export class UserRolePermissionComponent {
       (response: ApiResponce) => {
         if (response.status) {
           this.userList = response.data?.records || [];
+          setTimeout(() => this.cdr.detectChanges());
         } else if (!response.status) {
           this.userList = [];
           const key = response.message;

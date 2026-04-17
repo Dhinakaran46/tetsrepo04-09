@@ -1,4 +1,4 @@
-import { DatePipe, CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileApiService } from '../../service/user/profile-api.service';
@@ -11,7 +11,7 @@ import { DynamicFontSizeDirective } from '../../directives/page-specific-font-si
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FlatpickrDirective, TranslateModule, DynamicFontSizeDirective],
+  imports: [ReactiveFormsModule, FlatpickrDirective, TranslateModule, DynamicFontSizeDirective],
   providers: [DatePipe],
   templateUrl: './profile.component.html',
 })

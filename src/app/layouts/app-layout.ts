@@ -7,9 +7,9 @@ import { RouterModule } from '@angular/router';
 import { SidebarComponent } from './sidebar';
 import { ThemeCustomizerComponent } from './theme-customizer';
 import { HeaderComponent } from './header';
-import { FooterComponent } from './footer';
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { FormsModule } from '@angular/forms';
+import { initialState } from '../store/index.reducer';
 import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { OpenaiService } from '../@lcp-framework/service/common/openai.service';
@@ -18,10 +18,11 @@ import { OpenaiService } from '../@lcp-framework/service/common/openai.service';
   selector: 'app-root',
   templateUrl: './app-layout.html',
   standalone: true,
-  imports: [CommonSharedModule, RouterModule, SidebarComponent, ThemeCustomizerComponent, HeaderComponent, FooterComponent, TranslateModule, FormsModule],
+  imports: [CommonSharedModule, RouterModule, SidebarComponent, ThemeCustomizerComponent, HeaderComponent, TranslateModule, FormsModule],
 })
 export class AppLayout {
-  store: any;
+  store: any = initialState;
+  isLoading = true;
   showTopButton = false;
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   enableVoiceSearch = false;
@@ -33,9 +34,7 @@ export class AppLayout {
     private router: Router,
     private localstore: LocalStorageService,
     private openaiService: OpenaiService
-  ) {
-    this.initStore();
-  }
+  ) {}
   headerClass = '';
 
   mediaRecorder: any;
@@ -59,6 +58,7 @@ export class AppLayout {
   }
 
   ngOnInit() {
+    this.initStore();
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const configRaw = this.localstore.getData('config');
     if (configRaw) {
@@ -97,8 +97,8 @@ export class AppLayout {
       }
     });
 
-    const ele: any = document.querySelector('.animation');
-    ele.addEventListener('animationend', () => {
+    const ele: HTMLElement | null = document.querySelector('.animation');
+    ele?.addEventListener('animationend', () => {
       this.service.changeAnimation('remove');
     });
   }
@@ -109,13 +109,14 @@ export class AppLayout {
   }
 
   toggleLoader() {
-    this.storeData.dispatch({ type: 'toggleMainLoader', payload: true });
+    // Hide loader immediately in next tick (not after 500ms)
     setTimeout(() => {
+      this.isLoading = false;
       this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
-    }, 500);
+    }, 0);
   }
 
-  async initStore() {
+  initStore() {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {

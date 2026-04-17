@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconXComponent } from '../../shared/icon/icon-x';
@@ -69,13 +70,6 @@ interface ExcelRow extends Array<any> {
   imports: [
     CommonSharedModule,
     MonacoEditorModule,
-    IconXComponent,
-    IconSendComponent,
-    IconSaveComponent,
-    IconEyeComponent,
-    IconDownloadComponent,
-    IconXCircleComponent,
-    IconPlusCircleComponent,
     ReactiveFormsModule,
     ClientDatatableComponent,
   ],
@@ -90,7 +84,7 @@ interface ExcelRow extends Array<any> {
   ],
 })
 export class ExportTemplateComponent implements OnInit {
-  store: any;
+  store: any = initialState;
   form!: FormGroup;
   commonFile: any;
   items: any = [];
@@ -306,12 +300,13 @@ export class ExportTemplateComponent implements OnInit {
     private translate: TranslateService,
     private titleService: Title,
     private http: HttpClient,
-    private zone: NgZone
+    private zone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
   }
 
   ngOnInit() {
+    this.initStore();
     this.id = this.route.snapshot.params['uuid'] || null;
     this.initForm();
     //this.constructRedirectUrl();
@@ -337,7 +332,10 @@ export class ExportTemplateComponent implements OnInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

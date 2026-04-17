@@ -4,26 +4,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from '../../service/common/app.service';
-import { IconCaretDownComponent } from '../../shared/icon/icon-caret-down';
-
-import { IconMailComponent } from '../../shared/icon/icon-mail';
-import { IconLockDotsComponent } from '../../shared/icon/icon-lock-dots';
-import { IconInstagramComponent } from '../../shared/icon/icon-instagram';
-import { IconFacebookCircleComponent } from '../../shared/icon/icon-facebook-circle';
-import { IconTwitterComponent } from '../../shared/icon/icon-twitter';
-import { IconGoogleComponent } from '../../shared/icon/icon-google';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
-import { LoaderComponent } from '../../components/loader/loader.component';
 
 import { AuthService } from '../../service/common/auth.service';
 import { CommonSharedModule } from '../../shared/common/common.module';
-import { IconEyeComponent } from '../../shared/icon/icon-eye';
-import { CopyrightComponent } from '../../components/copyright/copyright.component';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { ThemeService } from '../../service/common/theme.service';
+import { initialState } from '../../../store/index.reducer';
 
 interface MenuItem {
   id: number;
@@ -80,20 +70,7 @@ function organizeMenu(menuList: MenuItem[]): MenuItem[] {
   standalone: true,
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  imports: [
-    CommonSharedModule,
-    ReactiveFormsModule,
-    IconEyeComponent,
-    IconCaretDownComponent,
-    IconMailComponent,
-    IconLockDotsComponent,
-    IconInstagramComponent,
-    IconFacebookCircleComponent,
-    IconTwitterComponent,
-    IconGoogleComponent,
-    LoaderComponent,
-    CopyrightComponent,
-  ],
+  imports: [CommonSharedModule, ReactiveFormsModule],
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -109,7 +86,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
   subscribe = false;
 
   loading = false;
-  store: any;
+  store: any = initialState;
   loginForm: FormGroup;
   isSubmitted = false;
 
@@ -138,14 +115,19 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     private commonService: MenuMapService,
     private themeService: ThemeService
   ) {
-    this.initStore();
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/)]],
       password: ['', [Validators.required]],
       subscribe: [false],
     });
 
-    const commonRememberMe = JSON.parse(this.localstore.getData('rememberme'));
+    let commonRememberMe: any = null;
+    try {
+      const rememberMeRaw = this.localstore.getData('rememberme');
+      commonRememberMe = rememberMeRaw ? JSON.parse(rememberMeRaw) : null;
+    } catch {
+      commonRememberMe = null;
+    }
     const rememberMe = commonRememberMe ? commonRememberMe.rememberMe === 'true' : false;
 
     if (rememberMe) {
@@ -158,6 +140,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.initStore();
     // document.documentElement.classList.add('login-page');
     this.loginForm.controls['email'].statusChanges.subscribe((status) => {
       if (this.isSubmitted) {
@@ -184,7 +167,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     return this.loginForm.controls;
   }
 
-  async initStore() {
+  initStore() {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
@@ -295,8 +278,12 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
 
             // Store the user data along with permissions and menu lists
             const conf: any = this.localstore.getData('config');
-
-            const enc_config: any = JSON.parse(conf);
+            let enc_config: any = null;
+            try {
+              enc_config = conf ? JSON.parse(conf) : null;
+            } catch {
+              enc_config = null;
+            }
             this.localstore.storeData('base_app_url', JSON.stringify(response.data.base_app_url));
             this.localstore.storeData('version_info', JSON.stringify(response.data.version_info));
             if (response.data.theme_info) {

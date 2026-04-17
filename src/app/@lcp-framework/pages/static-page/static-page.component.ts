@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { SafeHtmlPipe } from '../../pipes/safehtml/safe-html.pipe';
 import * as Handlebars from 'handlebars';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -102,10 +102,10 @@ export class StaticPageComponent implements OnChanges {
     public location: Location,
     public translate: TranslateService,
     private titleService: Title,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
+    private cdr: ChangeDetectorRef
   ) {
     this.store$ = this.store.pipe(select('index'));
-    this.initStore();
 
     registerHandlebarsHelpers(this.translate);
   }
@@ -367,6 +367,7 @@ export class StaticPageComponent implements OnChanges {
 
             setTimeout(() => {
               this.attachEventListeners();
+              this.cdr.detectChanges();
             }, 0);
           }
         } else {
@@ -536,6 +537,7 @@ export class StaticPageComponent implements OnChanges {
               currentAccordion: this.currentAccordion,
             });
           }
+          this.cdr.detectChanges();
         }
       },
       (error) => {

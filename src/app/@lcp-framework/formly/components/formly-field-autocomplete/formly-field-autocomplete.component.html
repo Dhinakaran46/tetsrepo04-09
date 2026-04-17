@@ -16,9 +16,10 @@
     >
     </ng-select>
   </div>
-  <div class="flex-none" *ngIf="getAddEditForm()">
-    <button 
-      type="button" 
+  @if (getAddEditForm()) {
+  <div class="flex-none">
+    <button
+      type="button"
       class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-3 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
       (click)="openNestedFormModal(getAddEditForm() || '', getFieldKey())"
       [title]="'Add new ' + (getAddEditForm() || '')"
@@ -26,4 +27,5 @@
       <i class="fa-solid fa-plus"></i>
     </button>
   </div>
+  }
 </div>

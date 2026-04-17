@@ -5,8 +5,6 @@ import { slideDownUp } from '../@lcp-framework/shared/animations';
 
 import { TranslateService } from '@ngx-translate/core';
 
-import { IconMenuDashboardComponent } from '../@lcp-framework/shared/icon/menu/icon-menu-dashboard';
-
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { commonConfig } from '../@lcp-framework/config/common.config';
@@ -14,6 +12,7 @@ import { commonConfig } from '../@lcp-framework/config/common.config';
 import { catchError, map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
+import { initialState } from '../store/index.reducer';
 import { environment } from '../../environments/environment';
 
 interface MenuItem {
@@ -32,7 +31,7 @@ interface MenuItem {
 @Component({
   selector: 'sidebar',
   standalone: true,
-  imports: [CommonSharedModule, IconMenuDashboardComponent],
+  imports: [CommonSharedModule],
   templateUrl: './sidebar.html',
   animations: [slideDownUp],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -44,7 +43,7 @@ export class SidebarComponent {
 
   menuItems: MenuItem[] = [];
   active = false;
-  store: any;
+  store: any = initialState;
   activeDropdown: string[] = [];
   parentDropdown: string = '';
   user_info: any;
@@ -60,15 +59,14 @@ export class SidebarComponent {
     public router: Router,
     private localstore: LocalStorageService,
     private menuLoadService: MenuLoadService
-  ) {
-    this.initStore();
-  }
+  ) {}
   async initStore() {
+    await Promise.resolve();
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
         this.store = d;
-        
+
         if (this.store.menu == 'horizontal') {
           this.showssmenu = true;
         } else {
@@ -82,6 +80,7 @@ export class SidebarComponent {
   }
 
   ngOnInit() {
+    this.initStore();
     this.config = JSON.parse(this.localstore.getData('config'));
     const userData = this.localstore.getData('user_data');
 

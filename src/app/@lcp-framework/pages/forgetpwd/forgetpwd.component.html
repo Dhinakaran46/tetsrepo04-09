@@ -1,4 +1,4 @@
-<div class="mb-10 login-form">
+<div class="login-form mb-10">
   <h1 class="text-3xl uppercase !leading-snug md:text-4xl">{{ 'title_forget_password' | translate }}</h1>
   <p class="text-base font-bold leading-normal text-white-dark">{{ 'description_forget_password' | translate }}</p>
 </div>
@@ -19,22 +19,26 @@
         <i class="fa-solid fa-envelope"></i>
       </span>
     </div>
-    <div *ngIf="isSubmitted && fgForm.controls['email'].hasError('pattern')" class="text-danger">
+    @if (isSubmitted && fgForm.controls['email'].hasError('pattern')) {
+    <div class="text-danger">
       {{ 'form_email_valid_msg' | translate }}
     </div>
-    <div *ngIf="isSubmitted && fgForm.controls['email'].hasError('required')" class="text-danger">
+    } @if (isSubmitted && fgForm.controls['email'].hasError('required')) {
+    <div class="text-danger">
       {{ 'form_email_req_msg' | translate }}
     </div>
-    <div *ngIf="isSubmitted && fgForm.controls['email'].hasError('email')" class="text-danger">
+    } @if (isSubmitted && fgForm.controls['email'].hasError('email')) {
+    <div class="text-danger">
       {{ 'form_email_valid_msg' | translate }}
     </div>
+    }
   </div>
 
   <button type="submit" class="btn btn-primary login-form !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
     {{ 'submit' | translate }}
   </button>
 
-  <div class="text-center login-form-btn-secondary" routerLink="/login">
+  <div class="login-form-btn-secondary text-center" routerLink="/login">
     <span class="text-white-dark hover:text-blue-500">&lt;</span>
     <a routerLink="/login" class="text-white-dark hover:text-blue-500">
       {{ 'login_link' | translate }}
@@ -42,4 +46,6 @@
   </div>
 </form>
 
-<app-loader *ngIf="loading"></app-loader>
+@if (loading) {
+<app-loader></app-loader>
+}

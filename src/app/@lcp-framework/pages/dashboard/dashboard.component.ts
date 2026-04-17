@@ -47,6 +47,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
+import { initialState } from '../../../store/index.reducer';
 import { environment } from '../../../../environments/environment';
 import { IdleService } from '../../service/common/idle.service';
 import * as pbi from 'powerbi-client';
@@ -124,8 +125,6 @@ interface DashboardTab {
     DragDropModule,
     NgApexchartsModule,
     SafeHtmlPipe,
-    FormBuilderComponent,
-    StaticPageComponent,
     MasterListComponent,
     //MasterListChildrenComponent,
     DateRangePickerComponent,
@@ -153,7 +152,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   config: any = null;
   displayDateRangeFilter = false;
 
-  store: any;
+  store: any = initialState;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
   @ViewChildren('powerBiContainer') powerBiContainers!: QueryList<ElementRef>;
   isDark: any = 'light';
@@ -209,7 +208,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     public idleService: IdleService,
     public authService: AuthService
   ) {
-    this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
     // Set default date range
@@ -314,8 +312,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    this.initStore();
     const userData = this.localstore.getData('user_data');
-    this.loadConfig();
     const permissionsList = userData ? JSON.parse(userData).permissions : null;
 
     this.permissionsList = permissionsList;
@@ -325,8 +323,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       this.userId = parsedData.main?.id;
       this.companyId = parsedData.main?.company_id;
     }
-    this.loadDashboardWizards();
-    this.setupMasterListButtonListeners();
+
+    // Defer async operations to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.loadConfig();
+      this.loadDashboardWizards();
+      this.setupMasterListButtonListeners();
+    }, 0);
     //this.menuLoadService.fetchMenuData(this.companyId);
   }
 
@@ -838,15 +841,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        const hasChangeTheme = this.store?.theme !== d?.theme;
-        const hasChangeLayout = this.store?.layout !== d?.layout;
-        const hasChangeMenu = this.store?.menu !== d?.menu;
-        const hasChangeSidebar = this.store?.sidebar !== d?.sidebar;
-
         this.store = d;
-
         this.isDark = this.store.theme === 'dark' || this.store.isDarkMode ? true : false;
         this.isRtl = this.store.rtlClass === 'rtl' ? true : false;
+        this.cdr.detectChanges();
       });
   }
 

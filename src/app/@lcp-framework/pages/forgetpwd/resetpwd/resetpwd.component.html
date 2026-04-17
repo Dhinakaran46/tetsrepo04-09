@@ -16,9 +16,11 @@
       />
       <span class="absolute start-4 top-1/2 -translate-y-1/2"><i class="fa-solid fa-unlock-keyhole"></i> </span>
     </div>
-    <div *ngIf="resetPwdForm.get('otp')?.invalid && resetPwdForm.get('otp')?.touched" class="text-red-500">
+    @if (resetPwdForm.get('otp')?.invalid && resetPwdForm.get('otp')?.touched) {
+    <div class="text-red-500">
       {{ 'otp_validate_msg' | translate }}
     </div>
+    }
   </div>
   <div>
     <label for="new_password">{{ 'form_label_new_password' | translate }}</label>
@@ -41,11 +43,13 @@
         <i class="fa-regular fa-eye"></i>
       </span>
     </div>
-    <div *ngIf="isSubmitted && resetPwdForm.controls['new_password'].hasError('required')" class="text-danger">{{ 'new_pwd_req' | translate }}</div>
-
-    <div class="passwordCharMatch text-red-500" *ngIf="resetPwdForm.controls['new_password'].touched && !allConditionsMet">
+    @if (isSubmitted && resetPwdForm.controls['new_password'].hasError('required')) {
+    <div class="text-danger">{{ 'new_pwd_req' | translate }}</div>
+    } @if (resetPwdForm.controls['new_password'].touched && !allConditionsMet) {
+    <div class="passwordCharMatch text-red-500">
       {{ passwordValidationMessage }}
     </div>
+    }
   </div>
 
   <div>
@@ -67,9 +71,11 @@
         <i class="fa-regular fa-eye"></i>
       </span>
     </div>
-    <div *ngIf="isSubmitted && resetPwdForm.controls['confirm_new_password'].hasError('required')" class="text-danger">
+    @if (isSubmitted && resetPwdForm.controls['confirm_new_password'].hasError('required')) {
+    <div class="text-danger">
       {{ 'RESETPASSWORD.CONFIRM_PWD_REQ' | translate }}
     </div>
+    }
   </div>
 
   <button type="submit" class="btn btn-gradient w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
@@ -84,4 +90,6 @@
   </div>
 </form>
 
-<app-loader *ngIf="loading"></app-loader>
+@if (loading) {
+<app-loader></app-loader>
+}
