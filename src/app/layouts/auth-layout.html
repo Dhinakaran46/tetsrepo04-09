@@ -49,7 +49,7 @@
       <div class="absolute inset-0">
         @if (authentication_background_1) {
         <img [src]="apiUrl + '/' + authentication_background_1" alt="image" class="h-full w-full object-cover" />
-        } @if (!authentication_background_1) {
+        } @else {
         <img src="assets/images/auth/bg-gradient.png" alt="image" class="h-full w-full object-cover" />
         }
       </div>
@@ -237,9 +237,12 @@
           <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
             <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:start-20 lg:top-6 lg:max-w-full">
               <a routerLink="/" class="flex items-center gap-2">
+                @if (logo) {
                 <img [src]="apiUrl + '/' + this.logo" alt="Logo" class="max-h-14" />
-
+                }
+                @if (company) {
                 <span class="text-2xl font-bold text-primary">{{ this.company }}</span>
+                }
               </a>
             </div>
             <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">

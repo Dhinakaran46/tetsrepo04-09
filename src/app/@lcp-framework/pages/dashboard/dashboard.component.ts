@@ -151,6 +151,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   commonConfig = commonConfig;
   config: any = null;
   displayDateRangeFilter = false;
+  isDashboardLoading = true;
+  dashboardLoadError = '';
 
   store: any = initialState;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
@@ -313,15 +315,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initStore();
-    const userData = this.localstore.getData('user_data');
-    const permissionsList = userData ? JSON.parse(userData).permissions : null;
+    const rawUserData = this.localstore.getData('user_data');
+    const parsedUserData = this.parseUserData(rawUserData);
 
-    this.permissionsList = permissionsList;
+    this.permissionsList = parsedUserData?.permissions || parsedUserData?.main?.permissions || null;
 
-    if (userData) {
-      const parsedData = JSON.parse(userData);
-      this.userId = parsedData.main?.id;
-      this.companyId = parsedData.main?.company_id;
+    if (parsedUserData) {
+      this.userId = parsedUserData.main?.id;
+      this.companyId = parsedUserData.main?.company_id;
     }
 
     // Defer async operations to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
@@ -334,11 +335,42 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   loadConfig() {
-    this.config = JSON.parse(this.localstore.getData('config'));
+    this.config = this.parseJson(this.localstore.getData('config'));
     this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
     this.cdr.detectChanges();
   }
+
+  private parseJson(value: any): any {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === 'object') {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+
+  private parseUserData(rawUserData: any): any {
+    const parsedRaw = this.parseJson(rawUserData);
+    if (parsedRaw) {
+      return parsedRaw;
+    }
+
+    try {
+      const decrypted = this.localstore.getDataDecrypted('user_data');
+      return this.parseJson(decrypted);
+    } catch {
+      return null;
+    }
+  }
   async loadDashboardWizards() {
+    this.isDashboardLoading = true;
+    this.dashboardLoadError = '';
+
     const db = (environment as any).DB || 'pg';
     let params: any;
     switch (db) {
@@ -446,11 +478,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               // Parse if cards is a string
               if (typeof mainElem.cards === 'string') {
                 try {
-                  mainElem.cards = []; //JSON.parse(mainElem.cards);
+                  const parsedCards = JSON.parse(mainElem.cards);
+                  mainElem.cards = Array.isArray(parsedCards) ? parsedCards : [];
                 } catch (error) {
                   console.error('Error parsing JSON for cards:', error);
                   mainElem.cards = [];
                 }
+              } else if (!Array.isArray(mainElem.cards)) {
+                mainElem.cards = [];
               }
 
               // Proceed with Promise.all only if cards is an array
@@ -479,12 +514,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           } else {
             this.activeTabId = '';
           }
+
+          this.isDashboardLoading = false;
+          this.cdr.markForCheck();
         }
       },
       (error) => {
         const key = 'failed_to_load';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
+        this.dashboardLoadError = errorMessage;
+        this.isDashboardLoading = false;
+        this.cdr.markForCheck();
       }
     );
   }

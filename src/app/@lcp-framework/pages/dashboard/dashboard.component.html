@@ -1,3 +1,11 @@
+@if (isDashboardLoading) {
+<div class="flex min-h-[240px] items-center justify-center">
+  <div class="flex items-center gap-3 text-base font-medium" style="color: var(--app-text-color, var(--app-text-color-default))">
+    <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+    Loading dashboard...
+  </div>
+</div>
+} @else {
 <div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]" style="border-color: var(--app-table-border-color, var(--app-border-color))">
   @for (tab of getTabsWithActiveCards(); track tab) {
   <button
@@ -48,6 +56,12 @@
 <!-- Click outside to close -->
 @if (showDateRangePicker) {
 <div class="fixed inset-0 z-0" (click)="showDateRangePicker = false"></div>
+} @if (dashboardLoadError) {
+<div class="rounded-md border border-danger/40 bg-danger/10 p-4 text-danger">{{ dashboardLoadError }}</div>
+} @if (!dashboardLoadError && !getTabsWithActiveCards().length) {
+<div class="rounded-md border border-white-light p-6 text-center text-base" style="border-color: var(--app-table-border-color, var(--app-border-color))">
+  No dashboard widgets are available for your account.
+</div>
 }
 
 <div class="flex-1 pt-5">
@@ -119,4 +133,4 @@
 
 @if (showMasterListPopup) {
 <master-list [popupConfig]="popupConfig" [isViewPopupOpen]="showMasterListPopup" [nonGridPage]="true" (closeModal)="closeMasterListPopup()"></master-list>
-}
+} }

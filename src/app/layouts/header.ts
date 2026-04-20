@@ -233,6 +233,9 @@ export class HeaderComponent implements OnInit {
 
     const languageId = this.languageService.getLanguageId(languageCode);
 
+    // Load menu from cache synchronously to render immediately
+    this.loadMenuFromCache();
+
     // Defer async service calls to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.languageService.fetchLanguageData(this.companyId, languageId);
@@ -249,6 +252,23 @@ export class HeaderComponent implements OnInit {
       this.loadMenuFromStorage();
       this.updateActiveClasses();
     }, 0);
+  }
+
+  private loadMenuFromCache(): void {
+    try {
+      const cachedMenuList = this.localstore.getData('menuList');
+      if (cachedMenuList) {
+        const menuList = JSON.parse(cachedMenuList);
+        if (Array.isArray(menuList) && menuList.length > 0) {
+          this.menuItems = menuList;
+          this.filterMenuItems();
+          this.updateActiveClasses();
+          this.refreshView();
+        }
+      }
+    } catch (error) {
+      console.warn('Error loading cached menu:', error);
+    }
   }
 
   loadMenuFromStorage() {

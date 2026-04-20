@@ -1,4 +1,4 @@
-import { Component, Renderer2 } from '@angular/core';
+import { Component, OnDestroy, Renderer2 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { Router, NavigationEnd } from '@angular/router';
@@ -13,6 +13,8 @@ import { initialState } from '../store/index.reducer';
 import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { OpenaiService } from '../@lcp-framework/service/common/openai.service';
+import { LayoutReadyService } from '../@lcp-framework/service/common/layout-ready.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -20,12 +22,14 @@ import { OpenaiService } from '../@lcp-framework/service/common/openai.service';
   standalone: true,
   imports: [CommonSharedModule, RouterModule, SidebarComponent, ThemeCustomizerComponent, HeaderComponent, TranslateModule, FormsModule],
 })
-export class AppLayout {
+export class AppLayout implements OnDestroy {
   store: any = initialState;
   isLoading = true;
   showTopButton = false;
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   enableVoiceSearch = false;
+  private menuReadySub?: Subscription;
+
   constructor(
     private renderer: Renderer2,
     public translate: TranslateService,
@@ -33,8 +37,12 @@ export class AppLayout {
     private service: AppService,
     private router: Router,
     private localstore: LocalStorageService,
-    private openaiService: OpenaiService
-  ) {}
+    private openaiService: OpenaiService,
+    private layoutReadyService: LayoutReadyService
+  ) {
+    // Reset ready state so loader shows on each fresh navigation to app layout
+    this.layoutReadyService.reset();
+  }
   headerClass = '';
 
   mediaRecorder: any;
@@ -58,9 +66,6 @@ export class AppLayout {
   }
 
   ngOnInit() {
-    // Always release the shell loader first to avoid sticky overlay on init errors.
-    this.toggleLoader();
-
     this.initStore();
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const configRaw = this.localstore.getData('config');
@@ -76,6 +81,14 @@ export class AppLayout {
       }
     }
 
+    // Wait for sidebar menu to finish loading before hiding the loader
+    this.menuReadySub = this.layoutReadyService.menuReady.subscribe((ready) => {
+      if (ready) {
+        this.isLoading = false;
+        this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
+      }
+    });
+
     this.initAnimation();
     this.startTypingAnimation();
     window.addEventListener('scroll', () => {
@@ -88,6 +101,7 @@ export class AppLayout {
   }
 
   ngOnDestroy() {
+    this.menuReadySub?.unsubscribe();
     window.removeEventListener('scroll', () => {});
   }
 
@@ -105,14 +119,8 @@ export class AppLayout {
     });
   }
 
-  changeFavicon(url: any): void {
-    const favicon = this.renderer.selectRootElement('#common-favicon', true);
+  changeFavicon(url: any): void {    const favicon = this.renderer.selectRootElement('#common-favicon', true);
     this.renderer.setAttribute(favicon, 'href', url);
-  }
-
-  toggleLoader() {
-    this.isLoading = false;
-    this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
   }
 
   initStore() {

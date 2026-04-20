@@ -29,6 +29,9 @@ import { ThemeService } from '../@lcp-framework/service/common/theme.service';
 })
 export class AuthLayout {
   slideInterval: any;
+  private readonly onWindowScroll = () => {
+    this.showTopButton = document.body.scrollTop > 50 || document.documentElement.scrollTop > 50;
+  };
 
   currYear: number = new Date().getFullYear();
   companyId: number = 1;
@@ -44,6 +47,7 @@ export class AuthLayout {
   company: any;
   copyrightContent: any;
   mediaItems: any = [];
+  configLoaded = false;
   constructor(
     private renderer: Renderer2,
     private toastr: ToastrService,
@@ -57,24 +61,58 @@ export class AuthLayout {
     private gridApiService: GridApiService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    // Pre-populate from cache so DOM renders with values on first paint
+    this.loadConfigFromCache();
+  }
+
+  private loadConfigFromCache(): void {
+    try {
+      const cached = this.localstore.getData('config');
+      if (cached) {
+        const res = JSON.parse(cached);
+        this.logo = res.logo;
+        this.authentication_banner = res.authentication_banner;
+        this.authentication_background_1 = res.authentication_background_1;
+        this.authentication_background_2 = res.authentication_background_2;
+        this.company = res.company_name;
+        this.copyrightContent = res.footer_content;
+        this.configLoaded = true;
+      }
+    } catch {
+      // no cache yet — will be populated after API call
+    }
+  }
 
   // Auto-slide function
   startAutoSlide() {
+    if (this.slideInterval) {
+      clearInterval(this.slideInterval);
+    }
+    if (this.mediaItems.length <= 1) {
+      return;
+    }
+
     this.slideInterval = setInterval(() => {
       this.nextItem();
-    }, 1200000000000); // Change the slide every 12 seconds
+    }, 12000); // Change the slide every 12 seconds
   }
 
   activeIndex: number = 0;
 
   // Move to the next item
   nextItem() {
+    if (!this.mediaItems.length) {
+      return;
+    }
     this.activeIndex = (this.activeIndex + 1) % this.mediaItems.length;
   }
 
   // Move to the previous item
   prevItem() {
+    if (!this.mediaItems.length) {
+      return;
+    }
     this.activeIndex = (this.activeIndex - 1 + this.mediaItems.length) % this.mediaItems.length;
   }
 
@@ -92,13 +130,7 @@ export class AuthLayout {
     this.languageService.fetchLanguageData(this.companyId, languageId);
 
     this.toggleLoader();
-    window.addEventListener('scroll', () => {
-      if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
-        this.showTopButton = true;
-      } else {
-        this.showTopButton = false;
-      }
-    });
+    window.addEventListener('scroll', this.onWindowScroll);
 
     // Get userId from localStorageService if available
     let userId: number | undefined = undefined;
@@ -135,7 +167,7 @@ export class AuthLayout {
   loadDataCarousel() {
     const params = {
       company_id: 1,
-      print_query: true,
+      print_query: false,
       primary_table: 'carousel_templates',
       start_index: 0,
       limit_range: 1,
@@ -167,19 +199,66 @@ export class AuthLayout {
     this.gridApiService.getAllUnAuthList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          const entity = response.data.records[0];
-          if (entity && entity.items) {
-            this.mediaItems = entity.items;
-            this.mediaItems.sort((a: any, b: any) => a.order - b.order);
+          const entity = response?.data?.records?.[0];
+          const rawItems = Array.isArray(entity?.items) ? entity.items : [];
+
+          this.mediaItems = rawItems
+            .map((item: any) => ({
+              ...item,
+              image_url: this.normalizeMediaUrl(item?.image_url),
+              video_url: this.normalizeMediaUrl(item?.video_url),
+            }))
+            .sort((a: any, b: any) => Number(a?.order_no || 0) - Number(b?.order_no || 0));
+
+          if (this.activeIndex >= this.mediaItems.length) {
+            this.activeIndex = 0;
           }
+
+          // Preload first media item to speed up initial paint
+          this.preloadFirstMediaItem();
+          this.startAutoSlide();
+          this.cdr.markForCheck();
         }
       },
       (error) => {
         this.toastr.error('Error loading carousel template data', 'Error');
       }
     );
+  }
 
-    this.startAutoSlide(); // Start auto-sliding when the component is initialized
+  private normalizeMediaUrl(url: any): string {
+    if (!url || url === 'null') {
+      return '';
+    }
+
+    const value = String(url).trim();
+    if (!value) {
+      return '';
+    }
+
+    if (/^(https?:)?\/\//i.test(value) || value.startsWith('data:') || value.startsWith('blob:')) {
+      return value;
+    }
+
+    const normalizedBase = this.apiUrl.replace(/\/+$/, '');
+    const normalizedPath = value.replace(/^\/+/, '');
+    return `${normalizedBase}/${normalizedPath}`;
+  }
+
+  private preloadFirstMediaItem(): void {
+    if (!this.mediaItems.length) {
+      return;
+    }
+
+    const firstItem = this.mediaItems[0];
+    if (firstItem.image_url) {
+      const img = new Image();
+      img.src = firstItem.image_url;
+    } else if (firstItem.video_url) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = firstItem.video_url;
+    }
   }
 
   getconfig(userId?: number) {
@@ -256,7 +335,7 @@ export class AuthLayout {
     if (this.slideInterval) {
       clearInterval(this.slideInterval);
     }
-    window.removeEventListener('scroll', () => {});
+    window.removeEventListener('scroll', this.onWindowScroll);
   }
 
   initStore() {

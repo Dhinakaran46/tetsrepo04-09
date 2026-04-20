@@ -12,6 +12,7 @@ import { commonConfig } from '../@lcp-framework/config/common.config';
 import { catchError, map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
+import { LayoutReadyService } from '../@lcp-framework/service/common/layout-ready.service';
 import { initialState } from '../store/index.reducer';
 import { environment } from '../../environments/environment';
 
@@ -54,7 +55,7 @@ export class SidebarComponent {
   showssmenu: boolean = true;
 
   private refreshView(): void {
-    setTimeout(() => this.cdr.detectChanges(), 0);
+    this.cdr.detectChanges();
   }
 
   private parseUserData(rawUserData: any): any {
@@ -103,10 +104,10 @@ export class SidebarComponent {
     public router: Router,
     private localstore: LocalStorageService,
     private menuLoadService: MenuLoadService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private layoutReadyService: LayoutReadyService
   ) {}
-  async initStore() {
-    await Promise.resolve();
+  initStore() {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
@@ -132,6 +133,7 @@ export class SidebarComponent {
     if (userData) {
       const parsedData = this.parseUserData(userData);
       if (!parsedData) {
+        this.layoutReadyService.markMenuReady();
         return;
       }
       this.user_info = parsedData;
@@ -139,10 +141,7 @@ export class SidebarComponent {
       this.companyId = parsedData.main?.company_id;
     }
     this.setActiveDropdown();
-    // Defer menu fetch to the next tick to avoid NG0100 during first render.
-    setTimeout(() => {
-      this.loadMenuFromStorage();
-    }, 0);
+    this.loadMenuFromStorage();
   }
 
   getTranslatedValues(key: any, label: any): Observable<string> {
@@ -161,16 +160,17 @@ export class SidebarComponent {
           if (menuList && menuList.length > 0) {
             this.menuItems = menuList;
             this.filterMenuItems();
-            this.refreshView();
           } else {
             console.warn('No menu list found after fetching.');
-            this.refreshView();
           }
+          this.refreshView();
+          this.layoutReadyService.markMenuReady();
         }),
         catchError((error) => {
           console.error('Error fetching menu data:', error);
           this.refreshView();
-          return of([]); // Return an empty array in case of error
+          this.layoutReadyService.markMenuReady();
+          return of([]);
         })
       )
       .toPromise();
