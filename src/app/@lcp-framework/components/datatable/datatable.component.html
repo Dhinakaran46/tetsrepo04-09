@@ -34,8 +34,9 @@
                   [items]="entityViews"
                   [clearable]="false"
                   [searchable]="false"
-                  [ngModel]="selectedViewName || null"
-                  (change)="onSavedViewSelectionChange($event)"
+                  [(ngModel)]="selectedViewName"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onSavedViewSelectionChange($event)"
                   placeholder="Select any"
                   class="form-control my-view-ng-select"
                 >
@@ -132,9 +133,9 @@
           </div>
 
           <!-- Filter Button -->
-          <div class="datatable-filter-controls align-center align-items-center relative inline-flex justify-center">
+          <div class="datatable-filter-controls align-center align-items-center relative inline-flex justify-center" (click)="$event.stopPropagation()">
             <button
-              (click)="toggleMenu()"
+              (click)="toggleAdvancedFilterMenu($event)"
               aria-expanded="true"
               aria-haspopup="true"
               class="filter-button mr-2 flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
@@ -148,11 +149,12 @@
             </button>
 
             <div
-              [hidden]="!isMenuOpen"
+              [hidden]="!isAdvancedFilterMenuOpen"
               aria-labelledby="options-menu"
               aria-orientation="vertical"
               class="advancedfiltercontainer rigin-top-left absolute z-10 mt-2 divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
               role="menu"
+              (click)="$event.stopPropagation()"
             >
               <!-- Header -->
               <div class="flex items-center justify-between border-b border-gray-200 p-2.5">
@@ -372,17 +374,17 @@
               </div>
             </div>
 
-            <div class="dropdown mb-2 md:mb-0 relative">
+            <div class="dropdown relative mb-2 md:mb-0" (click)="$event.stopPropagation()">
               <button
                 type="button"
-                (click)="isMenuOpen = !isMenuOpen"
+                (click)="toggleColumnsMenu($event)"
                 class="mr-2 flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
                 appDynamicFontSize="body"
               >
                 <i class="fa-solid fa-table-columns"></i>&nbsp;
                 <span class="ltr:mr-1 rtl:ml-1">{{ 'table_multiselect_1' | translate }}</span>
               </button>
-              @if (isMenuOpen) {
+              @if (isColumnsMenuOpen) {
               <ul @toggleAnimation class="w-max ltr:left-0 rtl:right-0">
                 <li>
                   <div class="flex items-center border-b border-gray-200 px-4 py-1">
@@ -411,27 +413,23 @@
             </div>
             @if (permissions && (this.masterInfo?.permissions.export_excel || this.masterInfo?.permissions.export_pdf)) {
             <div class="flex">
-              <div class="dropdown mb-2 md:mb-0 relative">
+              <div class="dropdown relative mb-2 md:mb-0">
                 <button
                   type="button"
-                  (click)="isMenuOpen = !isMenuOpen"
+                  (click)="toggleExportMenu($event)"
                   class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
                 >
                   <i class="fa-solid fa-download"></i> &nbsp; <span class="hidden md:inline">{{ 'export' | translate }} </span>
                 </button>
-                @if (isMenuOpen) {
+                @if (isExportMenuOpen) {
                 <ul @toggleAnimation class="whitespace-nowrap ltr:right-0 rtl:left-0">
                   @if (this.masterInfo?.permissions.export_excel) {
                   <li>
-                    <a (click)="exportTable('excel')" href="javascript:;"
-                      ><i class="fa-solid fa-file-excel ltr:mr-2 rtl:ml-2"></i>{{ 'excel' | translate }}
-                    </a>
+                    <a (click)="exportTable('excel')" href="javascript:;"><i class="fa-solid fa-file-excel ltr:mr-2 rtl:ml-2"></i>{{ 'excel' | translate }} </a>
                   </li>
                   } @if (this.masterInfo?.permissions.export_pdf) {
                   <li>
-                    <a (click)="exportTable('pdf')" href="javascript:;"
-                      ><i class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }}
-                    </a>
+                    <a (click)="exportTable('pdf')" href="javascript:;"><i class="fa-solid fa-file-pdf ltr:mr-2 rtl:ml-2"></i>&nbsp;{{ 'pdf' | translate }} </a>
                   </li>
                   }
                 </ul>
@@ -517,11 +515,11 @@
         COMMON SEARCH
         <i class="fa-solid fa-angles-right ml-2 text-[10px]"></i>
       </span>
-      @for (condition of getCommonSearchBadgeConditions(); track condition; let last = $last) {
+      @for (condition of getCommonSearchBadgeConditions(); track condition.label; let last = $last) {
       <span
         class="search-badge-pill inline-flex items-center gap-2 rounded-full border border-primary/40 bg-gray-100 px-3 py-1 text-xs font-bold text-app-text dark:bg-[#1b2e4b]"
       >
-        {{ getFilterColumnLabel(condition.column_name) }} : {{ capitalizeFirstLetter(condition.operator) }}
+        {{ condition.label }} : {{ condition.operatorLabel }}
         <span class="text-primary"> {{ condition.value }}</span>
       </span>
       @if (!last) {

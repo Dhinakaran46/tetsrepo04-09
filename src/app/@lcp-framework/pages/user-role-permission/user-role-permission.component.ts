@@ -50,10 +50,7 @@ interface IPermission {
 @Component({
   selector: 'app-user-role-permission',
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    ReactiveFormsModule,
-  ],
+  imports: [CommonSharedModule, ReactiveFormsModule],
   templateUrl: './user-role-permission.component.html',
   styleUrl: './user-role-permission.component.scss',
 })
@@ -315,6 +312,8 @@ export class UserRolePermissionComponent {
               entitiesArray.insert(0, dashboard);
             }
           }
+
+          setTimeout(() => this.cdr.detectChanges());
         }
       },
       (error) => {

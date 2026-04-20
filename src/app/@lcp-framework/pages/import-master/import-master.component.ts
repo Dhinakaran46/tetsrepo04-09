@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -137,7 +137,9 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     private gridApiService: GridApiService,
     public router: Router,
     private localstore: LocalStorageService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     this.userData = JSON.parse(this.localstore.getData('user_data'));
     this.importForm = this.fb.group({
@@ -153,11 +155,31 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     });
   }
 
+  private refreshView(): void {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
+
+  setLoading(loading: boolean): void {
+    this.ngZone.run(() => {
+      this.isLoading = loading;
+      this.cdr.markForCheck();
+    });
+    this.refreshView();
+  }
+
+  goToSection(section: 'section1' | 'section2' | 'section3'): void {
+    this.ngZone.run(() => {
+      this.section = section;
+      this.cdr.markForCheck();
+    });
+    this.refreshView();
+  }
+
   ngOnInit() {
     this.resetComponent();
     this.getImportTemplates();
     if (this.userData?.main?.user_id) {
-      const socketUrl = 'wss://opensource.techcedence.net:8090'; //(environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8090';
+      const socketUrl = (environment as any).WS_URL ? (environment as any).WS_URL : 'ws://localhost:8089';
       this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.userData.main.user_id}`);
       this.socket$.subscribe((data: any) => {
         this.progress = data.progress;
@@ -180,7 +202,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
     });
 
     this.fieldsForm = this.fb.group({});
-    this.section = 'section1';
+    this.goToSection('section1');
     // this.importTemplates = [];
     this.individual_fields = {};
     this.selectedTemplate = null;
@@ -247,7 +269,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       return;
     }
     if (this.file) {
-      this.isLoading = true;
+      this.setLoading(true);
       const formData = new FormData();
       formData.append('excel_file', this.file);
       formData.append('uuid', this.importForm.get('import_template')?.value);
@@ -263,16 +285,16 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
             this.fileHeaders = response.data.fileHeaders;
             if (this.selectedTemplate) this.createFieldsForm(this.selectedTemplate.importable_fields);
             this.fileUploadLog = response.data.fileUploadLog;
-            this.section = 'section2';
-            this.isLoading = false;
+            this.goToSection('section2');
+            this.setLoading(false);
           } else {
             this.toastr.error(response.message);
-            this.isLoading = false;
+            this.setLoading(false);
           }
         },
         (error: any) => {
           this.toastr.error('Error getting import template detail');
-          this.isLoading = false;
+          this.setLoading(false);
         }
       );
     }
@@ -352,40 +374,40 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
       this.resetComponent();
       return;
     }
-    this.isLoading = true;
+    this.setLoading(true);
 
     if (this.import_job == 'scheduled') {
       this.gridApiService.getImportTemplateDataScheduled(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
         (response: ApiResponce) => {
           if (response.status) {
-            this.section = 'section3';
+            this.goToSection('section3');
             this.sheet_data = response.data; //{ header_details, row_datas }
-            this.isLoading = false;
+            this.setLoading(false);
           } else {
             this.toastr.error(response.message);
-            this.isLoading = false;
+            this.setLoading(false);
           }
         },
         (error: any) => {
           this.toastr.error('Error getting import template data');
-          this.isLoading = false;
+          this.setLoading(false);
         }
       );
     } else {
       this.gridApiService.getImportTemplateData(bodyParams, this.selectedTemplate?.uuid, this.fileUploadLog?.uuid).subscribe(
         (response: ApiResponce) => {
           if (response.status) {
-            this.section = 'section3';
+            this.goToSection('section3');
             this.sheet_data = response.data; //{ header_details, row_datas }
-            this.isLoading = false;
+            this.setLoading(false);
           } else {
             this.toastr.error(response.message);
-            this.isLoading = false;
+            this.setLoading(false);
           }
         },
         (error: any) => {
           this.toastr.error('Error getting import template data');
-          this.isLoading = false;
+          this.setLoading(false);
         }
       );
     }

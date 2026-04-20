@@ -5,7 +5,7 @@
       bindValue="value"
       [formControl]="formControl"
       [formlyAttributes]="field"
-      [items]="options$ | async"
+      [items]="(options$ | async) ?? []"
       [multiple]="to['multiple'] || false"
       [clearable]="true"
       [searchable]="true"

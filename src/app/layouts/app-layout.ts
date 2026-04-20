@@ -58,6 +58,9 @@ export class AppLayout {
   }
 
   ngOnInit() {
+    // Always release the shell loader first to avoid sticky overlay on init errors.
+    this.toggleLoader();
+
     this.initStore();
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     const configRaw = this.localstore.getData('config');
@@ -74,7 +77,6 @@ export class AppLayout {
     }
 
     this.initAnimation();
-    this.toggleLoader();
     this.startTypingAnimation();
     window.addEventListener('scroll', () => {
       if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
@@ -109,11 +111,8 @@ export class AppLayout {
   }
 
   toggleLoader() {
-    // Hide loader immediately in next tick (not after 500ms)
-    setTimeout(() => {
-      this.isLoading = false;
-      this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
-    }, 0);
+    this.isLoading = false;
+    this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
   }
 
   initStore() {

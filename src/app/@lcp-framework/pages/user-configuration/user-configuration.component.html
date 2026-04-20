@@ -456,7 +456,7 @@
         <div class="select-editor-row">
           @if (!jsonEditorOpenNew) {
           <ng-select
-            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
+            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value) ?? []"
             [multiple]="false"
             bindLabel="name"
             bindValue="id"
@@ -480,7 +480,7 @@
         <div class="select-editor-row">
           @if (!jsonEditorOpenNew) {
           <ng-select
-            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
+            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value) ?? []"
             [multiple]="true"
             bindLabel="name"
             bindValue="id"

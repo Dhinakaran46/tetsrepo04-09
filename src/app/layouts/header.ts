@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, Type } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, Type } from '@angular/core';
 import { CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';
@@ -114,6 +114,50 @@ export class HeaderComponent implements OnInit {
   showLanguageMenu = false;
   showProfileMenu = false;
 
+  private refreshView(): void {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
+
+  private parseUserData(rawUserData: any): any {
+    if (!rawUserData) return null;
+    if (typeof rawUserData === 'object') return rawUserData;
+    try {
+      return JSON.parse(rawUserData);
+    } catch {
+      return null;
+    }
+  }
+
+  private getPermissionsMap(): Record<string, boolean> {
+    const rootPermissions = this.user_info?.permissions;
+    if (rootPermissions && typeof rootPermissions === 'object' && !Array.isArray(rootPermissions)) {
+      return rootPermissions as Record<string, boolean>;
+    }
+
+    const mainPermissions = this.user_info?.main?.permissions;
+    if (Array.isArray(mainPermissions)) {
+      return mainPermissions.reduce((acc: Record<string, boolean>, permission: any) => {
+        const slug = String(permission?.slug || '').trim();
+        if (!slug) return acc;
+        acc[slug] = permission?.accessible === true;
+        return acc;
+      }, {});
+    }
+
+    if (mainPermissions && typeof mainPermissions === 'object') {
+      return mainPermissions as Record<string, boolean>;
+    }
+
+    return {};
+  }
+
+  private getViewPermissions(): string[] {
+    const permissionMap = this.getPermissionsMap();
+    return Object.entries(permissionMap)
+      .filter(([key, value]) => key.startsWith('view_') && value === true)
+      .map(([key]) => key.replace('view_', ''));
+  }
+
   constructor(
     public translate: TranslateService,
     private toastr: ToastrService,
@@ -128,7 +172,8 @@ export class HeaderComponent implements OnInit {
     private idleService: IdleService,
     private timezoneService: TimezoneService,
     private gridApiService: GridApiService,
-    private firebaseService: FirebaseService
+    private firebaseService: FirebaseService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async initStore() {
@@ -147,7 +192,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     this.initStore();
-    this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.user_info = this.parseUserData(this.localstore.getData('user_data'));
     this.config = JSON.parse(this.localstore.getData('config'));
     // this.setActiveDropdown();
     // this.router.events.subscribe((event) => {
@@ -199,9 +244,11 @@ export class HeaderComponent implements OnInit {
       }
     });
 
-    this.loadMenuFromStorage();
-
-    this.updateActiveClasses();
+    // Defer menu fetch/update to the next tick to avoid NG0100 on reload.
+    setTimeout(() => {
+      this.loadMenuFromStorage();
+      this.updateActiveClasses();
+    }, 0);
   }
 
   loadMenuFromStorage() {
@@ -212,12 +259,16 @@ export class HeaderComponent implements OnInit {
           if (menuList && menuList.length > 0) {
             this.menuItems = menuList;
             this.filterMenuItems();
+            this.updateActiveClasses();
+            this.refreshView();
           } else {
             console.warn('No menu list found after fetching.');
+            this.refreshView();
           }
         }),
         catchError((error) => {
           console.error('Error fetching menu data:', error);
+          this.refreshView();
           return of([]);
         })
       )
@@ -225,36 +276,41 @@ export class HeaderComponent implements OnInit {
   }
 
   filterMenuItems() {
-    const viewPermissions = Object.entries(this.user_info.permissions)
-      .filter(([key, value]) => key.startsWith('view_') && value === true)
-      .map(([key, value]) => key.replace('view_', ''));
-
+    const viewPermissions = this.getViewPermissions();
+    if (!viewPermissions.length) {
+      return;
+    }
     this.menuItems = this.filterMenu(this.menuItems, viewPermissions);
   }
 
   filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
-    return menuItems.filter((item) => {
-      const permissionKey = item.entity_name;
-      const hasPermission = viewPermissions.includes(permissionKey);
-      if (item.children && item.children.length) {
-        item.children = this.filterMenu(item.children, viewPermissions);
-      }
-      // Menu item.link_type external must have either target or childern in order to display in application
-      if (item.link_type == 4) {
-        const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
+    return (menuItems || [])
+      .map((item) => {
+        const children = Array.isArray(item?.children) ? this.filterMenu(item.children, viewPermissions) : [];
+        return {
+          ...item,
+          children,
+        };
+      })
+      .filter((item) => {
+        const permissionKey = item.entity_name;
+        const hasPermission = viewPermissions.includes(permissionKey);
+        // Menu item.link_type external must have either target or childern in order to display in application
+        if (item.link_type == 4) {
+          const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
 
-        if (hasTargetOrChildren) {
-          return true;
-        } else {
-          return false;
+          if (hasTargetOrChildren) {
+            return true;
+          } else {
+            return false;
+          }
         }
-      }
-      if (item.parent_id == null) {
-        return true;
-      }
+        if (item.parent_id == null) {
+          return true;
+        }
 
-      return hasPermission || (item.children && item.children.length > 0);
-    });
+        return hasPermission || (item.children && item.children.length > 0);
+      });
   }
 
   updateActiveClasses() {

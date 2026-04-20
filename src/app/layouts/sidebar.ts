@@ -1,4 +1,4 @@
-﻿import { CUSTOM_ELEMENTS_SCHEMA, Component, ViewEncapsulation } from '@angular/core';
+﻿import { CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef, Component, ViewEncapsulation } from '@angular/core';
 import { Router, IsActiveMatchOptions, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { slideDownUp } from '../@lcp-framework/shared/animations';
@@ -53,12 +53,57 @@ export class SidebarComponent {
 
   showssmenu: boolean = true;
 
+  private refreshView(): void {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
+
+  private parseUserData(rawUserData: any): any {
+    if (!rawUserData) return null;
+    if (typeof rawUserData === 'object') return rawUserData;
+    try {
+      return JSON.parse(rawUserData);
+    } catch {
+      return null;
+    }
+  }
+
+  private getPermissionsMap(): Record<string, boolean> {
+    const rootPermissions = this.user_info?.permissions;
+    if (rootPermissions && typeof rootPermissions === 'object' && !Array.isArray(rootPermissions)) {
+      return rootPermissions as Record<string, boolean>;
+    }
+
+    const mainPermissions = this.user_info?.main?.permissions;
+    if (Array.isArray(mainPermissions)) {
+      return mainPermissions.reduce((acc: Record<string, boolean>, permission: any) => {
+        const slug = String(permission?.slug || '').trim();
+        if (!slug) return acc;
+        acc[slug] = permission?.accessible === true;
+        return acc;
+      }, {});
+    }
+
+    if (mainPermissions && typeof mainPermissions === 'object') {
+      return mainPermissions as Record<string, boolean>;
+    }
+
+    return {};
+  }
+
+  private getViewPermissions(): string[] {
+    const permissionMap = this.getPermissionsMap();
+    return Object.entries(permissionMap)
+      .filter(([key, value]) => key.startsWith('view_') && value === true)
+      .map(([key]) => key.replace('view_', ''));
+  }
+
   constructor(
     public translate: TranslateService,
     public storeData: Store<any>,
     public router: Router,
     private localstore: LocalStorageService,
-    private menuLoadService: MenuLoadService
+    private menuLoadService: MenuLoadService,
+    private cdr: ChangeDetectorRef
   ) {}
   async initStore() {
     await Promise.resolve();
@@ -85,13 +130,19 @@ export class SidebarComponent {
     const userData = this.localstore.getData('user_data');
 
     if (userData) {
-      const parsedData = JSON.parse(userData);
+      const parsedData = this.parseUserData(userData);
+      if (!parsedData) {
+        return;
+      }
       this.user_info = parsedData;
       this.userId = parsedData.main?.id;
       this.companyId = parsedData.main?.company_id;
     }
     this.setActiveDropdown();
-    this.loadMenuFromStorage();
+    // Defer menu fetch to the next tick to avoid NG0100 during first render.
+    setTimeout(() => {
+      this.loadMenuFromStorage();
+    }, 0);
   }
 
   getTranslatedValues(key: any, label: any): Observable<string> {
@@ -110,12 +161,15 @@ export class SidebarComponent {
           if (menuList && menuList.length > 0) {
             this.menuItems = menuList;
             this.filterMenuItems();
+            this.refreshView();
           } else {
             console.warn('No menu list found after fetching.');
+            this.refreshView();
           }
         }),
         catchError((error) => {
           console.error('Error fetching menu data:', error);
+          this.refreshView();
           return of([]); // Return an empty array in case of error
         })
       )
@@ -123,26 +177,32 @@ export class SidebarComponent {
   }
 
   filterMenuItems() {
-    const viewPermissions = Object.entries(this.user_info.permissions)
-      .filter(([key, value]) => key.startsWith('view_') && value === true)
-      .map(([key, value]) => key.replace('view_', ''));
+    const viewPermissions = this.getViewPermissions();
+    if (!viewPermissions.length) {
+      return;
+    }
 
     this.menuItems = this.filterMenu(this.menuItems, viewPermissions);
   }
 
   filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
-    return menuItems.filter((item) => {
-      const permissionKey = item.entity_name;
-      const hasPermission = viewPermissions.includes(permissionKey);
-      if (item.children && item.children.length) {
-        item.children = this.filterMenu(item.children, viewPermissions);
-      }
-      if (item.parent_id == null) {
-        return true;
-      }
+    return (menuItems || [])
+      .map((item) => {
+        const children = Array.isArray(item?.children) ? this.filterMenu(item.children, viewPermissions) : [];
+        return {
+          ...item,
+          children,
+        };
+      })
+      .filter((item) => {
+        const permissionKey = item.entity_name;
+        const hasPermission = viewPermissions.includes(permissionKey);
+        if (item.parent_id == null) {
+          return true;
+        }
 
-      return hasPermission || (item.children && item.children.length > 0);
-    });
+        return hasPermission || (item.children && item.children.length > 0);
+      });
   }
 
   setActiveDropdown() {

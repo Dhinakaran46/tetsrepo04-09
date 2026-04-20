@@ -222,7 +222,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   textClass: string = '';
 
-  isMenuOpen = false;
+  isAdvancedFilterMenuOpen = false;
+  isColumnsMenuOpen = false;
+  isExportMenuOpen = false;
   filterCondition: any = true;
   filterConditions: Array<FilterCondition> = [];
   appliedFilterCondition: any = true;
@@ -1149,16 +1151,39 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     condition.enumValueOptions = [];
   }
 
-  toggleMenu() {
-    this.isMenuOpen = !this.isMenuOpen;
-    if (this.isMenuOpen) {
+  private closeToolbarMenus(except: 'filter' | 'columns' | 'export' | null = null): void {
+    this.isAdvancedFilterMenuOpen = except === 'filter';
+    this.isColumnsMenuOpen = except === 'columns';
+    this.isExportMenuOpen = except === 'export';
+  }
+
+  toggleAdvancedFilterMenu(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const nextState = !this.isAdvancedFilterMenuOpen;
+    this.closeToolbarMenus(nextState ? 'filter' : null);
+    if (nextState) {
       this.syncDraftFiltersFromApplied();
     }
   }
 
   openAdvancedFilterMenu() {
-    this.isMenuOpen = true;
+    this.closeToolbarMenus('filter');
     this.syncDraftFiltersFromApplied();
+  }
+
+  toggleColumnsMenu(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const nextState = !this.isColumnsMenuOpen;
+    this.closeToolbarMenus(nextState ? 'columns' : null);
+  }
+
+  toggleExportMenu(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const nextState = !this.isExportMenuOpen;
+    this.closeToolbarMenus(nextState ? 'export' : null);
   }
 
   addCondition() {
@@ -1346,7 +1371,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.removeEmptyFilters();
     this.appliedFilterCondition = this.filterCondition;
     this.appliedFilterConditions = this.cloneFilterConditions(this.filterConditions);
-    this.isMenuOpen = false;
+    this.isAdvancedFilterMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
@@ -1398,7 +1423,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   /*applyFilters() {
     this.removeEmptyFilters();
-    this.isMenuOpen = false;
+    this.isAdvancedFilterMenuOpen = false;
 
     const condition = this.filterCondition ? 'AND' : 'OR';
     const data = this.filterConditions.map((key: any, index: any) => {
@@ -1635,7 +1660,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }*/
 
   cancelFilters() {
-    this.isMenuOpen = false;
+    this.isAdvancedFilterMenuOpen = false;
     this.filterCondition = this.appliedFilterCondition;
     this.filterConditions = this.cloneFilterConditions(this.appliedFilterConditions);
   }
@@ -2555,6 +2580,22 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.getSelectedViewConfiguration();
   }
 
+  private findEntityViewByName(viewName: string): UserSearchConfiguration | null {
+    const normalizedName = String(viewName || '')
+      .trim()
+      .toLowerCase();
+    if (!normalizedName) return null;
+
+    return (
+      this.entityViews.find(
+        (item: any) =>
+          String(item?.view_name || 'Default View')
+            .trim()
+            .toLowerCase() === normalizedName
+      ) || null
+    );
+  }
+
   private persistCurrentSelectedViewStateAsDefault(): void {
     if (!this.save_grid_views && !this.save_grid_latest_state) return;
 
@@ -2755,6 +2796,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @HostListener('document:click')
   onDocumentClick(): void {
     this.isMyViewsMenuOpen = false;
+    this.closeToolbarMenus(null);
   }
 
   closeViewConfigurationModal(): void {
@@ -2854,6 +2896,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const currentSlug = this.getEntitySlug();
     const activeViewKey = `${currentSlug}::${this.selectedViewName}`;
     this.pendingManualViewSelection = true;
+
     if (this.isNoFilterViewName(this.selectedViewName)) {
       const tempState = this.getTempGridStateForCurrentGrid();
       if (tempState && this.canApplyGridState(tempState)) {
@@ -2870,9 +2913,25 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       this.applyNoFilterSelection();
       return;
     }
+
+    const selectedView = this.findEntityViewByName(this.selectedViewName);
+    const selectedState = selectedView?.search_values || null;
+
     this.appliedSavedViewSlug = null;
-    this.tryApplySavedView();
-    this.scheduleTryApplySavedView();
+
+    if (!selectedView || !selectedState) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
+
+    if (!this.canApplyGridState(selectedState)) {
+      this.scheduleTryApplySavedView();
+      return;
+    }
+
+    this.hasSavedViewConfiguration = true;
+    this.appliedSavedViewSlug = activeViewKey;
+    this.applyGridState(selectedState);
   }
 
   deleteSelectedViewConfiguration(): void {
@@ -2991,7 +3050,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const userId = userData?.main?.id;
 
     if (!userId) {
-      this.toastr.warning('Unable to save view in database for this user', 'Warning');
+      //this.toastr.warning('Unable to save view in database for this user', 'Warning');
       return;
     }
 
@@ -3034,7 +3093,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const userId = userData?.main?.id;
 
     if (!userId) {
-      this.toastr.warning('Unable to reset saved view in database for this user', 'Warning');
+      //this.toastr.warning('Unable to reset saved view in database for this user', 'Warning');
       return;
     }
 
@@ -3282,18 +3341,71 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return { whereData, havingData };
   }
 
-  getCommonSearchBadgeConditions(): Array<{ column_name: string; operator: string; value: any }> {
+  private getCommonSearchBadgeSourceColumns(): any[] {
+    const sourceColumns = this.selectedColumns.length > 0 ? this.selectedColumns : this.filteredColumns;
+
+    return (sourceColumns || [])
+      .filter((column: any) => [3, 4].includes(Number(column?.field_type_id)))
+      .filter(
+        (column: any, index: number, allColumns: any[]) =>
+          index === allColumns.findIndex((entry: any) => String(entry?.field || '') === String(column?.field || ''))
+      );
+  }
+
+  getCommonSearchBadgeConditions(): Array<{ label: string; operatorLabel: string; value: any }> {
     if (!this.isCommonSearchApplied || !this.appliedCommonSearch) {
       return [];
     }
 
-    const { whereData, havingData } = this.buildCommonSearchPayloadLabelPurpose(this.appliedCommonSearch);
-    return [...whereData, ...havingData];
+    const operatorLabel = this.getCommonSearchOperatorLabel(this.searchCondition);
+    const labels = this.getCommonSearchBadgeSourceColumns()
+      .map((column: any) => String(column?.title || column?.previewTitle || column?.field || '').trim())
+      .filter(Boolean);
+
+    if (labels.length === 0) {
+      return [
+        {
+          label: 'Search',
+          operatorLabel,
+          value: this.appliedCommonSearch,
+        },
+      ];
+    }
+
+    return labels.map((label: string) => ({
+      label,
+      operatorLabel,
+      value: this.appliedCommonSearch,
+    }));
+  }
+
+  getCommonSearchOperatorLabel(operator: string): string {
+    const normalizedOperator = String(operator || '')
+      .trim()
+      .toLowerCase();
+
+    const allOperators = Object.values(this.searchConditions || {}).flatMap((conditions: SearchCondition[]) => conditions || []);
+    const matched = allOperators.find(
+      (condition: SearchCondition) =>
+        String(condition?.value || '')
+          .trim()
+          .toLowerCase() === normalizedOperator
+    );
+
+    if (matched?.label) {
+      return matched.label;
+    }
+
+    return normalizedOperator
+      .split('_')
+      .filter(Boolean)
+      .map((part) => this.capitalizeFirstLetter(part))
+      .join(' ');
   }
 
   getCommonSearchBadgeLabel(): string {
     const conditions = this.getCommonSearchBadgeConditions();
-    return conditions.map((condition) => `${this.getFilterColumnLabel(condition.column_name)} : ${condition.operator} ${condition.value}`).join(' | ');
+    return conditions.map((condition) => `${condition.label} : ${condition.operatorLabel} ${condition.value}`).join(' | ');
   }
 
   clearCommonSearchBadge(event?: Event) {

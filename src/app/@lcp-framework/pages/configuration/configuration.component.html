@@ -530,7 +530,7 @@
         <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
           @if (!jsonEditorOpenNew) {
           <ng-select
-            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
+            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value) ?? []"
             [multiple]="false"
             bindLabel="name"
             bindValue="id"
@@ -595,7 +595,7 @@
         <div style="display: flex; align-items: flex-start; gap: 0.5rem; min-height: 48px">
           @if (!jsonEditorOpenNew) {
           <ng-select
-            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value)"
+            [items]="parseConfigSelectJson(newConfigForm.get('config_select_json')?.value) ?? []"
             [multiple]="true"
             bindLabel="name"
             bindValue="id"

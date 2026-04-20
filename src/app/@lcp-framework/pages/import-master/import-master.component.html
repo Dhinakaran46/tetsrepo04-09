@@ -25,7 +25,7 @@
             [ngClass]="{
               '!border-white-light !border-b-white  text-primary dark:!border-[#191e3a] dark:!border-b-black': section.toLowerCase() === 'section1'
             }"
-            (click)="section = 'section1'"
+            (click)="goToSection('section1')"
           >
             {{ 'step_1' | translate }}
           </a>
@@ -33,7 +33,7 @@
             href="javascript:;"
             class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
             [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': section.toLowerCase() === 'section2' }"
-            (click)="section = 'section2'"
+            (click)="goToSection('section2')"
           >
             {{ 'step_2' | translate }}
           </a>
@@ -41,7 +41,7 @@
             href="javascript:;"
             class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
             [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': section.toLowerCase() === 'section3' }"
-            (click)="section = 'section3'"
+            (click)="goToSection('section3')"
           >
             {{ 'step_3' | translate }}
           </a>
@@ -214,7 +214,7 @@
                     <tr>
                       <td colspan="3">
                         <div class="flex">
-                          <button type="button" role="button" (click)="section = 'section1'" class="btn btn-primary !mt-6 mr-3">
+                          <button type="button" role="button" (click)="goToSection('section1')" class="btn btn-primary !mt-6 mr-3">
                             {{ 'back' | translate }}
                           </button>
                           <button type="submit" class="btn btn-primary !mt-6">{{ 'next' | translate }}</button>
@@ -340,7 +340,7 @@
               }
               <app-client-datatable [data]="getSheetDatas()" [config]="getSheetHeader()"></app-client-datatable>
               <div class="flex">
-                <button type="button" (click)="section = 'section2'" class="btn btn-primary !mt-6 mr-3">{{ 'back' | translate }}</button>
+                <button type="button" (click)="goToSection('section2')" class="btn btn-primary !mt-6 mr-3">{{ 'back' | translate }}</button>
                 @if ( !selectedTemplate?.ignore_error_rows || getErrorCount(sheet_data.row_datas || []) == 0 || getErrorCount(sheet_data.row_datas || []) ===
                 (sheet_data.row_datas.length || 0) ) {
                 <button type="button" class="btn btn-primary !mt-6 mr-3" (click)="importTemplateDetail()">

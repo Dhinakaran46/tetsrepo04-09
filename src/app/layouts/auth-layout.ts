@@ -247,11 +247,8 @@ export class AuthLayout {
   }
 
   toggleLoader() {
-    // Hide loader immediately in next tick (not after 500ms)
-    setTimeout(() => {
-      this.isLoading = false;
-      this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
-    }, 0);
+    this.isLoading = false;
+    this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
   }
 
   ngOnDestroy() {
