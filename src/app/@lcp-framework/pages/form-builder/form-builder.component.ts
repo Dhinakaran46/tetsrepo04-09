@@ -164,7 +164,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       this.policyData = this.user_info.main?.policies || null;
     }
 
-    if (this.entity_type !== 'add' && this.entity_type !== 'popup_add' && !this.unique_id) {
+    if (this.entity_type !== 'view' && this.entity_type !== 'add' && this.entity_type !== 'popup_add' && !this.unique_id) {
       this.toastr.error('Invalid entity details given.');
       this.router.navigate(['/dashboard']);
       return;
@@ -937,7 +937,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.listParams = this.formEntity.query_information;
 
           this.transParam =
-            this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
+            this.entity_type === 'view' || this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
@@ -1020,7 +1020,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   }
 
   setDefaultData() {
-    if (this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
+    if (this.entity_type !== 'view' && this.defaultDataParam && this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
       if (this.defaultDataParam.primary_table) {
         this.processDefaultParam(this.defaultDataParam);
       } else {
@@ -1463,7 +1463,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       const menuItem = unorgmenuList.find(
         (item: any) =>
           item.entity_name === entityName &&
-          (uuid ? item.action_slug === 'edit' || item.action_slug === 'popup_edit' : item.action_slug === 'add' || item.action_slug === 'popup_add')
+          (uuid ? item.action_slug === 'edit' || item.action_slug === 'popup_edit' : item.action_slug === 'view' || item.action_slug === 'add' || item.action_slug === 'popup_add')
       );
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;

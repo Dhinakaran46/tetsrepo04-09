@@ -63,6 +63,8 @@ export class RouteUpdateService {
       import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
     audit_log_management_module: () =>
       import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
+    chart_builder_module: () =>
+      import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
   };
 
   constructor(
@@ -170,6 +172,7 @@ export class RouteUpdateService {
 
   /** Builds a Route object from a menu item + permissions */
   private buildRoute(routeData: any, routeDataArray: any[], permissionListJSON: any): Route {
+    
     const keys = this.buildPermissionKeys(routeData.entity_name);
     const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
     const finalAllCol = this.buildSearchAllCol(routeData);
@@ -254,6 +257,7 @@ export class RouteUpdateService {
       .filter((r: any) => r.entity_name === entity_name && r.component_class_name)
       .map((routeData: any) => {
         const route = this.buildRoute(routeData, routeDataArray, permissionListJSON);
+        
 
         // Extra logic specific to getPageInfo: fallback child_details resolution
         if (routeData.action_slug === 'child_details' && Object.keys(route.data!['pageInfo'].children).length === 0) {
