@@ -2793,8 +2793,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.isMyViewsMenuOpen = false;
   }
 
-  @HostListener('document:click')
-  onDocumentClick(): void {
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const path = (event.composedPath?.() || []) as Array<EventTarget>;
+    const clickedInsideNgSelect = path.some((node) => {
+      const element = node as HTMLElement;
+      return !!element?.classList?.contains('ng-dropdown-panel') || !!element?.classList?.contains('ng-option');
+    });
+
+    // ng-select dropdown is appended to body, so option clicks should not close Advanced Filter.
+    if (this.isAdvancedFilterMenuOpen && clickedInsideNgSelect) {
+      return;
+    }
+
     this.isMyViewsMenuOpen = false;
     this.closeToolbarMenus(null);
   }

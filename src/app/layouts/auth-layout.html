@@ -239,22 +239,22 @@
               <a routerLink="/" class="flex items-center gap-2">
                 @if (logo) {
                 <img [src]="apiUrl + '/' + this.logo" alt="Logo" class="max-h-14" />
-                }
-                @if (company) {
+                } @if (company) {
                 <span class="text-2xl font-bold text-primary">{{ this.company }}</span>
                 }
               </a>
             </div>
             <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
               <div class="ms-auto flex items-center gap-2 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark dark:bg-black">
-                <img [src]="'assets/images/flags/' + store.locale.toUpperCase() + '.svg'" alt="image" class="h-5 w-5 rounded-full object-cover" />
+                <img [src]="'assets/images/flags/' + selectedLanguageCode.toUpperCase() + '.svg'" alt="image" class="h-5 w-5 rounded-full object-cover" />
                 <select
                   class="bg-transparent text-base font-bold uppercase outline-none"
-                  [value]="store.locale"
-                  (change)="changeLanguageByCode($any($event.target).value)"
+                  [ngModel]="selectedLanguageCode"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="changeLanguageByCode($event)"
                 >
                   @for (item of store.languageList; track item) {
-                  <option [value]="item.code">{{ item.name }}</option>
+                  <option [ngValue]="item.code">{{ getLanguageName(item) }}</option>
                   }
                 </select>
               </div>

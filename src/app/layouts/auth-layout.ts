@@ -48,6 +48,7 @@ export class AuthLayout {
   copyrightContent: any;
   mediaItems: any = [];
   configLoaded = false;
+  selectedLanguageCode = 'en';
   constructor(
     private renderer: Renderer2,
     private toastr: ToastrService,
@@ -122,6 +123,9 @@ export class AuthLayout {
     this.initStore();
 
     const languageCode = this.languageService.getSavedLanguageCode();
+    this.selectedLanguageCode = this.resolveLanguageCode(languageCode || this.store?.locale || this.translate.currentLang || 'en');
+    this.storeData.dispatch({ type: 'toggleLocale', payload: this.selectedLanguageCode });
+    this.translate.use(this.selectedLanguageCode);
     if (this.languageService.checkReloadFlag()) {
     } else {
     }
@@ -307,6 +311,7 @@ export class AuthLayout {
   }
 
   changeLanguage(item: any) {
+    this.selectedLanguageCode = this.resolveLanguageCode(item?.code);
     this.translate.use(item.code);
     this.appSetting.toggleLanguage(item);
     if (this.store.locale?.toLowerCase() === 'ae') {
@@ -319,10 +324,39 @@ export class AuthLayout {
   }
 
   changeLanguageByCode(code: string) {
-    const item = this.store.languageList?.find((language: any) => language.code === code);
+    const normalizedCode = this.resolveLanguageCode(code);
+    this.selectedLanguageCode = normalizedCode;
+    const item = this.store.languageList?.find((language: any) => language.code === normalizedCode);
     if (item) {
       this.changeLanguage(item);
     }
+  }
+
+  getLanguageName(language: any): string {
+    const code = String(language?.code || '').toLowerCase();
+    if (code === 'en') {
+      return 'English';
+    }
+    if (code === 'ae' || code === 'ar') {
+      return 'Arabic';
+    }
+    return String(language?.name || code || '').trim();
+  }
+
+  private resolveLanguageCode(code: string): string {
+    const languageList = this.store?.languageList || [];
+    const normalized = String(code || '').toLowerCase();
+
+    if (languageList.some((language: any) => String(language?.code || '').toLowerCase() === normalized)) {
+      return normalized;
+    }
+
+    // Keep backward compatibility where Arabic can come as "ar" but app language list uses "ae".
+    if (normalized === 'ar' && languageList.some((language: any) => String(language?.code || '').toLowerCase() === 'ae')) {
+      return 'ae';
+    }
+
+    return 'en';
   }
 
   toggleLoader() {
@@ -343,6 +377,9 @@ export class AuthLayout {
       .select((d) => d.index)
       .subscribe((d) => {
         this.store = d;
+        this.selectedLanguageCode = this.resolveLanguageCode(
+          this.languageService.getSavedLanguageCode() || this.store?.locale || this.translate.currentLang || 'en'
+        );
       });
   }
 
