@@ -422,7 +422,8 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   }
 
   getValidCount(rowDatas: any = []) {
-    return rowDatas.filter((row: any) => row.error === false && row.warning === false).length;
+    //return rowDatas.filter((row: any) => row.error === false && row.warning === false).length;
+    return rowDatas.filter((row: any) => row.error === false).length;
   }
 
   canDeactivate(): boolean {
