@@ -75,7 +75,8 @@
                     </ng-select>
                   </div>
 
-                  <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'tag'">
+                  @if (assignment.get('approver_type')?.value === 'tag') {
+                  <div class="form-group">
                     <label>{{ 'approver_tag' | translate }} <span class="text-danger">*</span></label>
                     <ng-select
                       bindLabel="label"
@@ -95,25 +96,24 @@
                       }
                     </ng-select>
                     <!-- <select
-                        formControlName="tag"
-                        class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
-                        required
-                      >
-                        <option value disabled>{{ 'Select the Tag' }}</option>
-                        @for(tag of approverTags; track tag; let i = $index) {
-                        <option [value]="tag.id">{{ tag.name }}</option>
-                        }
-                      </select> -->
-                    <div
-                      *ngIf="assignment.get('tag')?.invalid && (assignment.get('tag')?.touched || assignment.get('tag')?.dirty)"
-                      class="invalid-feedback mt-1 text-danger"
-                    >
+                          formControlName="tag"
+                          class="form-select w-full py-1 text-xs text-gray-700 placeholder:text-white-dark dark:bg-gray-800 dark:text-white-dark"
+                          required
+                          >
+                          <option value disabled>{{ 'Select the Tag' }}</option>
+                          @for(tag of approverTags; track tag; let i = $index) {
+                            <option [value]="tag.id">{{ tag.name }}</option>
+                          }
+                        </select> -->
+                    @if (assignment.get('tag')?.invalid && (assignment.get('tag')?.touched || assignment.get('tag')?.dirty)) {
+                    <div class="invalid-feedback mt-1 text-danger">
                       {{ 'approver_tag_is_required' | translate }}
                     </div>
+                    }
                     <!-- <div *ngIf="assignment.get('email_tag_mail')?.value" class="mt-5">sends to : {{ assignment.get('email_tag_mail')?.value }}</div> -->
                   </div>
-
-                  <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'user_id'">
+                  } @if (assignment.get('approver_type')?.value === 'user_id') {
+                  <div class="form-group">
                     <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
                     <ng-select
                       bindLabel="label"
@@ -132,15 +132,14 @@
                       <ng-option [value]="user.value">{{ user.label }}</ng-option>
                       }
                     </ng-select>
-                    <div
-                      *ngIf="assignment.get('users')?.invalid && (assignment.get('users')?.touched || assignment.get('users')?.dirty)"
-                      class="invalid-feedback mt-1 text-danger"
-                    >
+                    @if (assignment.get('users')?.invalid && (assignment.get('users')?.touched || assignment.get('users')?.dirty)) {
+                    <div class="invalid-feedback mt-1 text-danger">
                       {{ 'user_email_is_required' | translate }}
                     </div>
+                    }
                   </div>
-
-                  <div class="form-group" *ngIf="assignment.get('approver_type')?.value === 'role_id'">
+                  } @if (assignment.get('approver_type')?.value === 'role_id') {
+                  <div class="form-group">
                     <label>{{ 'role' | translate }} <span class="text-danger">*</span></label>
                     <ng-select
                       bindLabel="label"
@@ -159,13 +158,13 @@
                       <ng-option [value]="role.value">{{ role.label }}</ng-option>
                       }
                     </ng-select>
-                    <div
-                      *ngIf="assignment.get('roles')?.invalid && (assignment.get('roles')?.touched || assignment.get('roles')?.dirty)"
-                      class="invalid-feedback mt-1 text-danger"
-                    >
+                    @if (assignment.get('roles')?.invalid && (assignment.get('roles')?.touched || assignment.get('roles')?.dirty)) {
+                    <div class="invalid-feedback mt-1 text-danger">
                       {{ 'role_is_required' | translate }}
                     </div>
+                    }
                   </div>
+                  }
                   <div class="form-group">
                     <label>{{ 'approver_order' | translate }} <span class="text-danger">*</span></label>
                     <input
@@ -174,15 +173,12 @@
                       formControlName="approver_order_no"
                       placeholder="Approver Order"
                     />
-                    <div
-                      *ngIf="
-                        assignment.get('approver_order_no')?.invalid &&
-                        (assignment.get('approver_order_no')?.touched || assignment.get('approver_order_no')?.dirty)
-                      "
-                      class="invalid-feedback mt-1 text-danger"
-                    >
+                    @if ( assignment.get('approver_order_no')?.invalid && (assignment.get('approver_order_no')?.touched ||
+                    assignment.get('approver_order_no')?.dirty) ) {
+                    <div class="invalid-feedback mt-1 text-danger">
                       {{ 'approver_order_is_required' | translate }}
                     </div>
+                    }
                   </div>
 
                   <div class="min-w-200-p">
@@ -281,15 +277,12 @@
                         class="monaco-editor"
                       ></ngx-monaco-editor>
                     </div>
-                    <div
-                      *ngIf="
-                        assignment.get('approve_query_information')?.invalid &&
-                        (assignment.get('approve_query_information')?.touched || assignment.get('approve_query_information')?.dirty)
-                      "
-                      class="invalid-feedback mt-1 text-danger"
-                    >
+                    @if ( assignment.get('approve_query_information')?.invalid && (assignment.get('approve_query_information')?.touched ||
+                    assignment.get('approve_query_information')?.dirty) ) {
+                    <div class="invalid-feedback mt-1 text-danger">
                       {{ 'approve_query_information_is_required' | translate }}
                     </div>
+                    }
                   </div>
 
                   <!-- Reject Query -->
@@ -307,15 +300,12 @@
                         class="monaco-editor"
                       ></ngx-monaco-editor>
                     </div>
-                    <div
-                      *ngIf="
-                        assignment.get('reject_query_information')?.invalid &&
-                        (assignment.get('reject_query_information')?.touched || assignment.get('reject_query_information')?.dirty)
-                      "
-                      class="invalid-feedback mt-1 text-danger"
-                    >
+                    @if ( assignment.get('reject_query_information')?.invalid && (assignment.get('reject_query_information')?.touched ||
+                    assignment.get('reject_query_information')?.dirty) ) {
+                    <div class="invalid-feedback mt-1 text-danger">
                       {{ 'reject_query_information_is_required' | translate }}
                     </div>
+                    }
                   </div>
                 </div>
               </div>
@@ -330,10 +320,10 @@
 
 <!--Modal for Copy sample content-->
 
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isInfoModalOpen">
+@if (isInfoModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -351,28 +341,31 @@
           </button>
         </div>
       </div>
-
       <!-- Modal Content -->
       <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
         <!-- Copy Button (Top Left Corner) -->
         <!-- <button
-          *ngIf="!copied"
-          class="absolute bottom-6 right-10 z-50 rounded bg-transparent px-3 py-1 text-sm text-white hover:bg-gray-700"
-          (click)="copyToClipboard()"
-        >
-          📋
-        </button> -->
+            *ngIf="!copied"
+            class="absolute bottom-6 right-10 z-50 rounded bg-transparent px-3 py-1 text-sm text-white hover:bg-gray-700"
+            (click)="copyToClipboard()"
+            >
+            📋
+          </button> -->
         <div class="px-4 sm:px-6">
           <ul class="flex list-disc flex-col gap-3">
-            <li *ngFor="let item of popupInformation.comments">
+            @for (item of popupInformation.comments; track item) {
+            <li>
               <div class="flex items-center gap-2">
                 <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>
               </div>
             </li>
+            }
           </ul>
         </div>
         <div class="relative">
-          <p *ngIf="copied" class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
+          @if (copied) {
+          <p class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
+          }
           <div class="monaco-editor-container .editor-container mt-3 rounded border border-gray-300">
             <!-- Monaco Editor -->
             <ngx-monaco-editor
@@ -390,5 +383,6 @@
     </div>
   </div>
 </div>
-
-<app-loader *ngIf="loading"></app-loader>
+} @if (loading) {
+<app-loader></app-loader>
+}

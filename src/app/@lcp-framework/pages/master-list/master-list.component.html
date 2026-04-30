@@ -1,10 +1,10 @@
 <div id="master-list-id">
-  <div *ngIf="noPermission" class="flex h-full items-center justify-center">
+  @if (noPermission) {
+  <div class="flex h-full items-center justify-center">
     <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
   </div>
-
+  } @if (!nonGridPage && !noPermission) {
   <app-datatable
-    *ngIf="!nonGridPage && !noPermission"
     [loading]="gridloading"
     [masterInfo]="masterInfo"
     [enableCheckBox]="enableCheckBox"
@@ -43,14 +43,15 @@
     [attachedPolicies]="attachedPolicies"
     [parentGridFilters]="parentGridFilters"
   ></app-datatable>
+  }
 
   <ng-template #actionTemplate let-item>
     <div class="flex items-center gap-4">
       <!-- mail resend -->
+      @if (this.masterInfo.permissions.email_resend) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
-        *ngIf="this.masterInfo.permissions.email_resend"
         (click)="this.emailResendItem(item, $event)"
         ngxTippy
         data-tippy-content="Resend Email"
@@ -58,10 +59,10 @@
       >
         <i class="fa-solid fa-arrows-rotate {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      } @if (this.masterInfo.permissions.details) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
-        *ngIf="this.masterInfo.permissions.details"
         (click)="this.viewItem(item, $event)"
         ngxTippy
         data-tippy-content="Details"
@@ -69,10 +70,10 @@
       >
         <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      } @if (this.masterInfo.permissions.popup_details) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
-        *ngIf="this.masterInfo.permissions.popup_details"
         (click)="this.viewPopupItem(item)"
         ngxTippy
         data-tippy-content="Details"
@@ -80,29 +81,15 @@
       >
         <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
-      <a
-        href="javascript:void(0);"
-        class="hover:text-info"
-        appDynamicFontSize="body"
-        *ngIf="
-          this.masterInfo.permissions.edit &&
-          (this.masterInfo?.Listname == 'mrn_grid'
-            ? item?.mrn_status != 'completed'
-            : true && this.masterInfo?.Listname == 'min_grid'
-            ? item?.min_status != 'completed'
-            : true)
-        "
-        (click)="this.editItem(item, $event)"
-        ngxTippy
-        data-tippy-content="Edit"
-      >
+      } @if ( this.masterInfo.permissions.edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed' : true && this.masterInfo?.Listname
+      == 'min_grid' ? item?.min_status != 'completed' : true) ) {
+      <a href="javascript:void(0);" class="hover:text-info" appDynamicFontSize="body" (click)="this.editItem(item, $event)" ngxTippy data-tippy-content="Edit">
         <i
           class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
         ></i>
       </a>
-
+      } @if (EntityName == 'master_entity') {
       <a
-        *ngIf="EntityName == 'master_entity'"
         href="javascript:void(0);"
         class="hover:text-success"
         appDynamicFontSize="body"
@@ -119,9 +106,8 @@
           }"
         ></i>
       </a>
-
+      } @if (EntityName == 'master_entity') {
       <a
-        *ngIf="EntityName == 'master_entity'"
         href="javascript:void(0);"
         class="hover:text-primary"
         (click)="this.previewPopupItem(item)"
@@ -131,45 +117,29 @@
       >
         <i class="fa-regular fa-file-lines"></i>
       </a>
-
-      <a
-        href="javascript:void(0);"
-        class="hover:text-info"
-        appDynamicFontSize="body"
-        *ngIf="
-          this.masterInfo.permissions.popup_edit &&
-          (this.masterInfo?.Listname == 'mrn_grid'
-            ? item?.mrn_status != 'completed'
-            : true && this.masterInfo?.Listname == 'min_grid'
-            ? item?.min_status != 'completed'
-            : true)
-        "
-        (click)="this.editPopupItem(item)"
-        ngxTippy
-        data-tippy-content="Edit"
-      >
+      } @if ( this.masterInfo.permissions.popup_edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed' : true &&
+      this.masterInfo?.Listname == 'min_grid' ? item?.min_status != 'completed' : true) ) {
+      <a href="javascript:void(0);" class="hover:text-info" appDynamicFontSize="body" (click)="this.editPopupItem(item)" ngxTippy data-tippy-content="Edit">
         <i
           class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
         ></i>
       </a>
-
+      } @if (this.masterInfo.permissions.delete) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.delete"
         (click)="this.deleteItem(item, $event)"
         ngxTippy
         data-tippy-content="Delete"
       >
         <i class="fa-regular fa-trash-can {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
-
+      } @if (this.masterInfo.permissions.get_code) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.get_code"
         (click)="this.getCode(item, $event)"
         ngxTippy
         data-tippy-content="Get Code"
@@ -185,59 +155,56 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 21 12l-3.75 5.25M6.75 6.75 3 12l3.75 5.25M14.25 3l-4.5 18" />
         </svg>
       </a>
-
+      } @if (this.masterInfo.permissions.assign) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.assign"
         (click)="this.assignItem(item, $event)"
         ngxTippy
         data-tippy-content="Assign"
       >
         <i class="fa fa-tasks {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      } @if (this.masterInfo.permissions.print) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.print"
         (click)="this.printItem(item, $event)"
         ngxTippy
         data-tippy-content="Print"
       >
         <i class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
-
+      } @if (this.masterInfo.permissions.record_export || item?.downloadables != null) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.record_export || item?.downloadables != null"
         (click)="this.recordExport(item, $event)"
         ngxTippy
         data-tippy-content="Record Export"
       >
         <i class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
+      } @if (this.masterInfo.permissions.generate_vector) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.generate_vector"
         (click)="this.generateVector(item, $event)"
         ngxTippy
         data-tippy-content="Generate Vector"
       >
         <i class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
-
+      } @if (this.masterInfo.permissions.reset_password) {
       <a
         href="javascript:void(0);"
         [class.text-red-500]="!item.password"
         [class.hover:text-primary]="item.password"
         appDynamicFontSize="body"
-        *ngIf="this.masterInfo.permissions.reset_password"
         (click)="this.passwordModal(item, $event)"
         ngxTippy
         [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'"
@@ -252,6 +219,7 @@
           }"
         ></i>
       </a>
+      }
     </div>
   </ng-template>
 
@@ -277,55 +245,60 @@
   </ng-template>
 
   <ng-template #linkDownloadVideoURLTemplate let-item>
+    @if (item.documentation_video_url) {
     <a
       [href]="item.documentation_video_url"
       target="_blank"
       rel="noopener noreferrer"
-      *ngIf="item.documentation_video_url"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
       class="flex items-center gap-2 text-blue-600 hover:underline"
     >
       <i class="fa-solid fa-up-right-from-square"></i>
       {{ item.documentation_video_url }}
     </a>
+    }
   </ng-template>
 
   <ng-template #linkDownloadPdfURLTemplate let-item>
+    @if (item.documentation_pdf) {
     <a
       [href]="apiUrl + '/' + item.documentation_pdf"
       target="_blank"
       rel="noopener noreferrer"
-      *ngIf="item.documentation_pdf"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
       class="flex items-center gap-2 text-blue-600 hover:underline"
     >
       <i class="fa-solid fa-download"></i>
       {{ item.documentation_pdf }}
     </a>
+    }
   </ng-template>
 
   <ng-template #linkDownloadWordURLTemplate let-item>
+    @if (item.documentation_word) {
     <a
       [href]="apiUrl + '/' + item.documentation_word"
       target="_blank"
       rel="noopener noreferrer"
-      *ngIf="item.documentation_word"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
       class="flex items-center gap-2 text-blue-600 hover:underline"
     >
       <i class="fa-solid fa-download"></i>
       {{ item.documentation_word }}
     </a>
+    }
   </ng-template>
 </div>
 
-<app-loader *ngIf="loading"></app-loader>
+@if (loading) {
+<app-loader></app-loader>
+}
 
 <!-- Get Code Modal -->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isGetCodeModalOpen">
+@if (isGetCodeModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -352,7 +325,6 @@
           </button>
         </div>
       </div>
-
       <!-- Modal Content -->
       <div class="px-4 py-4 sm:px-6">
         <form [formGroup]="getCodeForm">
@@ -384,12 +356,13 @@
     </div>
   </div>
 </div>
+}
 
 <!-- Line Items Modal -->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isItemModalOpen">
+@if (isItemModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -418,7 +391,6 @@
           </button>
         </div>
       </div>
-
       <!-- Line Items Modal Content Section -->
       <div class="px-4 py-4 sm:px-6">
         <form
@@ -437,42 +409,38 @@
                 <label for="new_password" class="form-label">{{ 'form_label_new_pwd' | translate }}</label>
                 <input type="password" formControlName="new_password" class="form-input" id="new_password" />
                 <!--<div *ngIf="changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched" class="text-red-500">
-                  {{ 'form_label_confirm_new_pwd' | translate }}
-                </div>-->
-                <div *ngIf="changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched" class="text-red-500">
-                  <ng-container
-                    *ngIf="
-                    changePasswordForm.get('new_password')?.errors?.['passwordInvalid']
-                  "
-                  >
-                    {{ passwordValidationMessage }}
-                  </ng-container>
+                    {{ 'form_label_confirm_new_pwd' | translate }}
+                  </div>-->
+                @if (changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched) {
+                <div class="text-red-500">
+                  @if ( changePasswordForm.get('new_password')?.errors?.['passwordInvalid'] ) {
+                  {{ passwordValidationMessage }}
+                  }
                   <!--<ng-container
                     *ngIf="
                     changePasswordForm.get('new_password')?.errors?.['minlength']
                   "
-                  >
-                    Password must be at least 8 characters long.
-                  </ng-container>-->
+                      >
+                      Password must be at least 8 characters long.
+                    </ng-container>-->
                 </div>
-
-                <div class="passwordCharMatch text-red-500" *ngIf="changePasswordForm.controls['new_password'].touched && !allConditionsMet">
+                } @if (changePasswordForm.controls['new_password'].touched && !allConditionsMet) {
+                <div class="passwordCharMatch text-red-500">
                   <!--  {{ passwordValidationMessage }} -->
                 </div>
+                }
               </div>
               <div>
                 <label for="confirm_new_password" class="form-label">{{ 'form_label_confirm_new_pwd' | translate }}</label>
                 <input type="password" formControlName="confirm_new_password" class="form-input" id="confirm_new_password" />
-                <div
-                  *ngIf="changePasswordForm.get('confirm_new_password')?.invalid && changePasswordForm.get('confirm_new_password')?.touched"
-                  class="text-red-500"
-                >
+                @if (changePasswordForm.get('confirm_new_password')?.invalid && changePasswordForm.get('confirm_new_password')?.touched) {
+                <div class="text-red-500">
                   {{ 'form_confirm_new_pwd_req_msg' | translate }}
                 </div>
+                }
               </div>
             </div>
           </div>
-
           <div class="mt-5 flex flex-col items-center">
             <button appDynamicFontSize="body" type="submit" class="btn btn-primary">{{ 'submit' | translate }}</button>
           </div>
@@ -482,12 +450,13 @@
     </div>
   </div>
 </div>
+}
 
 <!-- View Static Page Modal -->
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isViewPopupOpen">
+@if (isViewPopupOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Content -->
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
@@ -505,15 +474,17 @@
       </button>
       <!-- Modal Body -->
       <div class="max-h-[80vh] overflow-y-auto p-4">
-        <app-loader *ngIf="loadingpopup"></app-loader>
-        <div *ngIf="noPopupPermission && selectedItemEntityType !== 'grid_builder_module'" class="flex min-h-[200px] flex-col items-center justify-center">
+        @if (loadingpopup) {
+        <app-loader></app-loader>
+        } @if (noPopupPermission && selectedItemEntityType !== 'grid_builder_module') {
+        <div class="flex min-h-[200px] flex-col items-center justify-center">
           <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
           <button class="btn btn-danger rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" (click)="closeViewPopup()">Close</button>
         </div>
-
+        }
         <ng-container>
+          @if (selectedItemEntityType == 'grid_builder_module') {
           <app-datatable
-            *ngIf="selectedItemEntityType == 'grid_builder_module'"
             [headercolumns]="previewHeaderColumns"
             [selectcolumns]="previewSelectColumns"
             [items]="previewItems"
@@ -540,66 +511,61 @@
             [parentGridFilters]="parentGridFilters"
           >
           </app-datatable>
+          }
         </ng-container>
-
-        <ng-container *ngIf="!noPopupPermission">
-          <app-datatable
-            *ngIf="popupName == 'popup_grid'"
-            [loading]="gridloading"
-            [masterInfo]="masterInfo"
-            [enableCheckBox]="enableCheckBox"
-            [customTemplates]="customTemplates"
-            [headercolumns]="headercolumns"
-            [selectcolumns]="selectcolumns"
-            [items]="items"
-            [totalItems]="totalItems"
-            [currentPage]="currentPage"
-            [resultsPerPage]="resultsPerPage"
-            [column]="column"
-            [title]="title"
-            [query]="query"
-            [activeSearchAll]="listQuery?.search_all || []"
-            [activeSearchAny]="listQuery?.search_any || []"
-            [activeHavingAll]="listQuery?.having_conditions || []"
-            [activeHavingAny]="listQuery?.having_any_conditions || []"
-            (delete)="deleteItems($event)"
-            (edit)="editItem($event)"
-            (view)="viewItem($event)"
-            (customAction)="handleCustomAction($event)"
-            (pageChange)="onPageChange($event)"
-            (resultsPerPageChange)="onResultsPerPageChange($event)"
-            (columnSort)="sortColumn($event)"
-            (searchQuery)="searchData($event)"
-            (exportType)="exportTable($event)"
-            (advancedSearchQuery)="advancedSearchData($event)"
-            (linkComponentClick)="onLinkComponentClick($event)"
-            [unique_id]="uniqueId"
-            [headerStaticEntityName]="headerStaticEntityName"
-            [footerStaticEntityName]="footerStaticEntityName"
-            [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
-            [staticPageGridParams]="popupComponentGridParams || grid_params"
-            [attachedPolicies]="attachedPolicies"
-            [parentGridFilters]="parentGridFilters"
-          >
-          </app-datatable>
-          <app-static-page
-            *ngIf="popupName == 'popup_details'"
-            [uuid]="selectedItemUuid"
-            [entityName]="popupEntityName"
-            [parentGridFilters]="getCurrentGridFilters()"
-            [isModal]="true"
-            [gridParams]="popupComponentGridParams"
-            (closeModal)="closeViewPopup()"
-          ></app-static-page>
-          <app-form-builder
-            *ngIf="popupName == 'popup_add' || popupName == 'popup_edit'"
-            [uuid]="selectedItemUuid"
-            [entityName]="popupEntityName"
-            [isModal]="true"
-            (closeModal)="closeViewPopup()"
-          ></app-form-builder>
-        </ng-container>
+        @if (!noPopupPermission) { @if (popupName == 'popup_grid') {
+        <app-datatable
+          [loading]="gridloading"
+          [masterInfo]="masterInfo"
+          [enableCheckBox]="enableCheckBox"
+          [customTemplates]="customTemplates"
+          [headercolumns]="headercolumns"
+          [selectcolumns]="selectcolumns"
+          [items]="items"
+          [totalItems]="totalItems"
+          [currentPage]="currentPage"
+          [resultsPerPage]="resultsPerPage"
+          [column]="column"
+          [title]="title"
+          [query]="query"
+          [activeSearchAll]="listQuery?.search_all || []"
+          [activeSearchAny]="listQuery?.search_any || []"
+          [activeHavingAll]="listQuery?.having_conditions || []"
+          [activeHavingAny]="listQuery?.having_any_conditions || []"
+          (delete)="deleteItems($event)"
+          (edit)="editItem($event)"
+          (view)="viewItem($event)"
+          (customAction)="handleCustomAction($event)"
+          (pageChange)="onPageChange($event)"
+          (resultsPerPageChange)="onResultsPerPageChange($event)"
+          (columnSort)="sortColumn($event)"
+          (searchQuery)="searchData($event)"
+          (exportType)="exportTable($event)"
+          (advancedSearchQuery)="advancedSearchData($event)"
+          (linkComponentClick)="onLinkComponentClick($event)"
+          [unique_id]="uniqueId"
+          [headerStaticEntityName]="headerStaticEntityName"
+          [footerStaticEntityName]="footerStaticEntityName"
+          [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
+          [staticPageGridParams]="popupComponentGridParams || grid_params"
+          [attachedPolicies]="attachedPolicies"
+          [parentGridFilters]="parentGridFilters"
+        >
+        </app-datatable>
+        } @if (popupName == 'popup_details') {
+        <app-static-page
+          [uuid]="selectedItemUuid"
+          [entityName]="popupEntityName"
+          [parentGridFilters]="getCurrentGridFilters()"
+          [isModal]="true"
+          [gridParams]="popupComponentGridParams"
+          (closeModal)="closeViewPopup()"
+        ></app-static-page>
+        } @if (popupName == 'popup_add' || popupName == 'popup_edit') {
+        <app-form-builder [uuid]="selectedItemUuid" [entityName]="popupEntityName" [isModal]="true" (closeModal)="closeViewPopup()"></app-form-builder>
+        } }
       </div>
     </div>
   </div>
 </div>
+}

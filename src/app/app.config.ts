@@ -1,20 +1,18 @@
 import { ApplicationConfig, ErrorHandler } from '@angular/core';
-import { routes } from './app.routes';
 
-import { provideRouter } from '@angular/router';
-import { BrowserModule, Title } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Title } from '@angular/platform-browser';
 import { importProvidersFrom } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { DatePipe } from '@angular/common';
 
-// headlessui
-import { MenuModule } from 'headlessui-angular';
+// headlessui-angular removed: package is experimental (0.0.x), MenuModule was never used
+// in any template — all menu toggling uses plain Angular (isMenuOpen boolean + toggleMenu()).
+// Decision: removed headlessui-angular dependency entirely (Angular 21 upgrade, task 11.5).
 
-// perfect-scrollbar
-import { NgScrollbarModule } from 'ngx-scrollbar';
+// ngx-scrollbar
+import { NgScrollbarModule, provideScrollbarOptions } from 'ngx-scrollbar';
 import { CommonModule, HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { ToastrModule } from 'ngx-toastr';
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
@@ -36,25 +34,22 @@ export const appConfig: ApplicationConfig = {
       },
       themePath: 'assets/styles/androidstudio.css',
     }),
-    provideRouter(routes),
     provideAnimations(),
+    provideHttpClient(),
     importProvidersFrom(
-      BrowserModule,
-      BrowserAnimationsModule,
       CommonModule,
       FormsModule,
       ReactiveFormsModule,
-      HttpClientModule,
-      MenuModule,
       ToastrModule.forRoot(),
       MonacoEditorModule.forRoot(),
       QuillModule.forRoot(),
       NgMultiSelectDropDownModule.forRoot(),
-      NgScrollbarModule.withConfig({
-        visibility: 'hover',
-        appearance: 'standard',
-      })
+      NgScrollbarModule,
     ),
+    provideScrollbarOptions({
+      visibility: 'hover',
+      appearance: 'native',
+    }),
     Title,
     { provide: LocationStrategy, useClass: HashLocationStrategy },
     DatePipe,

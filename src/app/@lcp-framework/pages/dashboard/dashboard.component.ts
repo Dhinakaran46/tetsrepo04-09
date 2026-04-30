@@ -47,6 +47,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { registerHandlebarsHelpers } from '../../helpers/handlebar/handlebar-helpers';
+import { initialState } from '../../../store/index.reducer';
 import { environment } from '../../../../environments/environment';
 import { IdleService } from '../../service/common/idle.service';
 import * as pbi from 'powerbi-client';
@@ -124,8 +125,6 @@ interface DashboardTab {
     DragDropModule,
     NgApexchartsModule,
     SafeHtmlPipe,
-    FormBuilderComponent,
-    StaticPageComponent,
     MasterListComponent,
     //MasterListChildrenComponent,
     DateRangePickerComponent,
@@ -152,8 +151,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   commonConfig = commonConfig;
   config: any = null;
   displayDateRangeFilter = false;
+  isDashboardLoading = true;
+  dashboardLoadError = '';
 
-  store: any;
+  store: any = initialState;
   @ViewChild('staticContentContainer', { read: ElementRef }) staticContentContainer!: ElementRef;
   @ViewChildren('powerBiContainer') powerBiContainers!: QueryList<ElementRef>;
   isDark: any = 'light';
@@ -209,7 +210,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     public idleService: IdleService,
     public authService: AuthService
   ) {
-    this.initStore();
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
     // Set default date range
@@ -314,28 +314,63 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const userData = this.localstore.getData('user_data');
-    this.loadConfig();
-    const permissionsList = userData ? JSON.parse(userData).permissions : null;
+    this.initStore();
+    const rawUserData = this.localstore.getData('user_data');
+    const parsedUserData = this.parseUserData(rawUserData);
 
-    this.permissionsList = permissionsList;
+    this.permissionsList = parsedUserData?.permissions || parsedUserData?.main?.permissions || null;
 
-    if (userData) {
-      const parsedData = JSON.parse(userData);
-      this.userId = parsedData.main?.id;
-      this.companyId = parsedData.main?.company_id;
+    if (parsedUserData) {
+      this.userId = parsedUserData.main?.id;
+      this.companyId = parsedUserData.main?.company_id;
     }
-    this.loadDashboardWizards();
-    this.setupMasterListButtonListeners();
+
+    // Defer async operations to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.loadConfig();
+      this.loadDashboardWizards();
+      this.setupMasterListButtonListeners();
+    }, 0);
     //this.menuLoadService.fetchMenuData(this.companyId);
   }
 
   loadConfig() {
-    this.config = JSON.parse(this.localstore.getData('config'));
+    this.config = this.parseJson(this.localstore.getData('config'));
     this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
     this.cdr.detectChanges();
   }
+
+  private parseJson(value: any): any {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === 'object') {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+
+  private parseUserData(rawUserData: any): any {
+    const parsedRaw = this.parseJson(rawUserData);
+    if (parsedRaw) {
+      return parsedRaw;
+    }
+
+    try {
+      const decrypted = this.localstore.getDataDecrypted('user_data');
+      return this.parseJson(decrypted);
+    } catch {
+      return null;
+    }
+  }
   async loadDashboardWizards() {
+    this.isDashboardLoading = true;
+    this.dashboardLoadError = '';
+
     const db = (environment as any).DB || 'pg';
     let params: any;
     switch (db) {
@@ -443,11 +478,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               // Parse if cards is a string
               if (typeof mainElem.cards === 'string') {
                 try {
-                  mainElem.cards = []; //JSON.parse(mainElem.cards);
+                  const parsedCards = JSON.parse(mainElem.cards);
+                  mainElem.cards = Array.isArray(parsedCards) ? parsedCards : [];
                 } catch (error) {
                   console.error('Error parsing JSON for cards:', error);
                   mainElem.cards = [];
                 }
+              } else if (!Array.isArray(mainElem.cards)) {
+                mainElem.cards = [];
               }
 
               // Proceed with Promise.all only if cards is an array
@@ -476,12 +514,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           } else {
             this.activeTabId = '';
           }
+
+          this.isDashboardLoading = false;
+          this.cdr.markForCheck();
         }
       },
       (error) => {
         const key = 'failed_to_load';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
+        this.dashboardLoadError = errorMessage;
+        this.isDashboardLoading = false;
+        this.cdr.markForCheck();
       }
     );
   }
@@ -838,15 +882,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        const hasChangeTheme = this.store?.theme !== d?.theme;
-        const hasChangeLayout = this.store?.layout !== d?.layout;
-        const hasChangeMenu = this.store?.menu !== d?.menu;
-        const hasChangeSidebar = this.store?.sidebar !== d?.sidebar;
-
         this.store = d;
-
         this.isDark = this.store.theme === 'dark' || this.store.isDarkMode ? true : false;
         this.isRtl = this.store.rtlClass === 'rtl' ? true : false;
+        this.cdr.detectChanges();
       });
   }
 

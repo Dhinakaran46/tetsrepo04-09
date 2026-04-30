@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -51,7 +51,8 @@ export class QueryBuilderComponent implements OnInit {
     public translate: TranslateService,
     public commonService: MenuMapService,
     private gridApiService: GridApiService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       query: [null, Validators.required],
@@ -65,6 +66,7 @@ export class QueryBuilderComponent implements OnInit {
         if (res.data.length) {
           this.tableList = res.data;
           this.filteredTableList = this.tableList;
+          this.cdr.detectChanges();
         }
       },
     });
@@ -137,9 +139,11 @@ export class QueryBuilderComponent implements OnInit {
             this.responseMessage = res.data;
             this.isTableError = true;
           }
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.loading = false;
+          this.cdr.detectChanges();
           this.toastr.error('Failed to execute query', 'Error');
         },
       });

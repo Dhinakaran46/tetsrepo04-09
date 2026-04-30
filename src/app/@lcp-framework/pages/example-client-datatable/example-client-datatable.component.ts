@@ -1,13 +1,13 @@
 // example-client-datatable.component.ts
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ClientDatatableComponent, TableConfig } from '../../components/client-datatable/client-datatable.component';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-example-client-datatable',
   standalone: true,
-  imports: [CommonModule, ClientDatatableComponent],
+  imports: [ClientDatatableComponent],
   templateUrl: './example-client-datatable.component.html',
 })
 export class ExampleClientDatatableComponent implements OnInit {

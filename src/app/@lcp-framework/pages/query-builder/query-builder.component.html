@@ -59,4 +59,6 @@
     </div>
   </div>
 </form>
-<app-loader *ngIf="loading"></app-loader>
+@if (loading) {
+<app-loader></app-loader>
+}

@@ -74,7 +74,7 @@ export class LanguageService {
   }
 
   public getSavedLanguageCode(): string {
-    return this.localstore.getData('languageReload') || 'en'; // Default to 'en'
+    return this.localstore.getData('languageCode') || 'en'; // Default to 'en'
     //return localStorage.getItem('languageCode') || 'en'; // Default to 'en'
   }
 }

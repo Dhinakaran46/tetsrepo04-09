@@ -1,32 +1,24 @@
-<div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-black px-4">
-    <div class="w-full max-w-lg">
-      <h1 class="text-3xl font-semibold text-center mb-6 dark:text-white">Enter API Base URL</h1>
-      <div class="relative mb-4">
-        <input
-          [(ngModel)]="apiUrl"
-          type="text"
-          placeholder="https://example.com"
-          class="w-full rounded-full border border-gray-300 px-5 py-3 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
-        />
-      </div>
-      <div class="flex justify-center gap-4 mb-4">
-        <button
-          class="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
-          (click)="testApiUrl()"
-          [disabled]="testing"
-        >
-          {{ testing ? 'Testing...' : 'Test' }}
-        </button>
-        <button
-          class="px-6 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition"
-          (click)="saveApiUrl()"
-          [disabled]="!testPassed"
-        >
-          Save
-        </button>
-      </div>
-      <div *ngIf="message" class="text-green-600 text-center font-medium">{{ message }}</div>
-      <div *ngIf="error" class="text-red-600 text-center font-medium">{{ error }}</div>
+<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4 dark:bg-black">
+  <div class="w-full max-w-lg">
+    <h1 class="mb-6 text-center text-3xl font-semibold dark:text-white">Enter API Base URL</h1>
+    <div class="relative mb-4">
+      <input
+        [(ngModel)]="apiUrl"
+        type="text"
+        placeholder="https://example.com"
+        class="w-full rounded-full border border-gray-300 px-5 py-3 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+      />
     </div>
+    <div class="mb-4 flex justify-center gap-4">
+      <button class="rounded-full bg-blue-600 px-6 py-2 text-white transition hover:bg-blue-700" (click)="testApiUrl()" [disabled]="testing">
+        {{ testing ? 'Testing...' : 'Test' }}
+      </button>
+      <button class="rounded-full bg-green-600 px-6 py-2 text-white transition hover:bg-green-700" (click)="saveApiUrl()" [disabled]="!testPassed">Save</button>
+    </div>
+    @if (message) {
+    <div class="text-center font-medium text-green-600">{{ message }}</div>
+    } @if (error) {
+    <div class="text-center font-medium text-red-600">{{ error }}</div>
+    }
   </div>
-  
+</div>

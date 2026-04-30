@@ -18,13 +18,17 @@
         <i class="fa-solid fa-envelope"></i>
       </span>
     </div>
-    <div *ngIf="isSubmitted && loginForm.controls['email'].hasError('pattern')" class="text-danger">
+    @if (isSubmitted && loginForm.controls['email'].hasError('pattern')) {
+    <div class="text-danger">
       {{ 'form_email_valid_msg' | translate }}
     </div>
-    <div *ngIf="isSubmitted && loginForm.controls['email'].hasError('required')" class="text-danger">
+    } @if (isSubmitted && loginForm.controls['email'].hasError('required')) {
+    <div class="text-danger">
       {{ 'form_email_req_msg' | translate }}
     </div>
-    <div *ngIf="isSubmitted && loginForm.controls['email'].hasError('email')" class="text-danger">{{ 'form_email_valid_msg' | translate }}</div>
+    } @if (isSubmitted && loginForm.controls['email'].hasError('email')) {
+    <div class="text-danger">{{ 'form_email_valid_msg' | translate }}</div>
+    }
   </div>
   <div class="login-form">
     <label for="Password">{{ 'form_label_password' | translate }}</label>
@@ -49,9 +53,11 @@
         <i class="fa-regular fa-eye"></i>
       </span>
     </div>
-    <div *ngIf="isSubmitted && passwordControl?.invalid" class="text-danger">{{ 'form_email_req_pwd' | translate }}</div>
+    @if (isSubmitted && passwordControl?.invalid) {
+    <div class="text-danger">{{ 'form_email_req_pwd' | translate }}</div>
+    }
   </div>
-  <div class="flex items-center justify-between login-form">
+  <div class="login-form flex items-center justify-between">
     <label class="flex cursor-pointer items-center">
       <input formControlName="subscribe" type="checkbox" class="form-checkbox bg-white dark:bg-black" />
       <span class="text-white-dark">{{ 'form_remember_me' | translate }}</span>
@@ -65,9 +71,9 @@
   </button>
 </form>
 <!--<div class="relative my-7 text-center md:mb-9">
-  <span class="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-white-light dark:bg-white-dark"></span>
-  <span class="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light">or</span>
-</div>-->
+    <span class="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-white-light dark:bg-white-dark"></span>
+    <span class="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light">or</span>
+  </div>-->
 <!--<div class="mb-10 md:mb-[60px]">
   <ul class="flex justify-center gap-3.5 text-white">
     <li>
@@ -75,7 +81,7 @@
         href="javascript:"
         class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
         style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
-      >
+        >
         <icon-instagram />
       </a>
     </li>
@@ -84,7 +90,7 @@
         href="javascript:"
         class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
         style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
-      >
+        >
         <icon-facebook-circle />
       </a>
     </li>
@@ -93,7 +99,7 @@
         href="javascript:"
         class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
         style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
-      >
+        >
         <icon-twitter [fill]="true" />
       </a>
     </li>
@@ -102,13 +108,13 @@
         href="javascript:"
         class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
         style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
-      >
+        >
         <icon-google />
       </a>
     </li>
   </ul>
 </div>-->
 <!--<div class="text-center dark:text-white">
-  Don't have an account?
-  <a routerLink="/auth/cover-register" class="uppercase text-primary underline transition hover:text-black dark:hover:text-white"> SIGN UP </a>
+Don't have an account?
+<a routerLink="/auth/cover-register" class="uppercase text-primary underline transition hover:text-black dark:hover:text-white"> SIGN UP </a>
 </div>-->

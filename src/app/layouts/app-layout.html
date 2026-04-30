@@ -14,8 +14,8 @@
     ></div>
 
     <!-- screen loader -->
+    @if (isLoading) {
     <div
-      *ngIf="store.isShowMainLoader"
       class="screen_loader animate__animated fixed inset-0 z-[60] grid place-content-center bg-[#fafafa] dark:bg-[#060818]"
       style="background-color: var(--app-bg-color, var(--app-bg-color-default))"
     >
@@ -38,9 +38,11 @@
         </path>
       </svg>
     </div>
+    }
 
     <!-- Voice Search Section -->
-    <div *ngIf="enableVoiceSearch" class="fixed bottom-20 z-50 flex flex-col items-center space-y-2 ltr:right-8 rtl:left-6">
+    @if (enableVoiceSearch) {
+    <div class="fixed bottom-20 z-50 flex flex-col items-center space-y-2 ltr:right-8 rtl:left-6">
       <div class="relative">
         <button
           class="btn btn-outline-primary relative rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary"
@@ -52,28 +54,30 @@
           (mouseenter)="micHoverText = isRecording ? 'Release to translate' : (isPreviewOpen ? 'Click to close' : 'Click to open or hold to record'); showTooltip = true"
           (mouseleave)="micHoverText = 'Click to open or hold to record'; showTooltip = false"
         >
-          <i *ngIf="!isRecording && !audioBlob" [class]="isPreviewOpen ? 'fa fa-times' : 'fa fa-microphone'"></i>
-          <i *ngIf="isRecording" class="fa fa-stop"></i>
-          <i *ngIf="!isRecording && audioBlob" class="fa fa-microphone"></i>
+          @if (!isRecording && !audioBlob) {
+          <i [class]="isPreviewOpen ? 'fa fa-times' : 'fa fa-microphone'"></i>
+          } @if (isRecording) {
+          <i class="fa fa-stop"></i>
+          } @if (!isRecording && audioBlob) {
+          <i class="fa fa-microphone"></i>
+          }
         </button>
-
         <!-- Custom Tooltip -->
+        @if (micHoverText && showTooltip) {
         <div
-          *ngIf="micHoverText && showTooltip"
           class="pointer-events-none absolute bottom-full right-0 z-10 mb-3 max-w-[220px] whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-center text-xs text-white shadow-lg"
         >
           {{ micHoverText }}
-
           <div class="absolute right-4 top-full h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
         </div>
+        }
       </div>
     </div>
+    }
 
     <!-- Transcription Preview - Enhanced UI -->
-    <div
-      *ngIf="enableVoiceSearch && (isPreviewOpen || isTranscribing || hasTranscriptionData)"
-      class="fixed left-6 right-32 top-3/4 z-50 -translate-y-1/2 transform"
-    >
+    @if (enableVoiceSearch && (isPreviewOpen || isTranscribing || hasTranscriptionData)) {
+    <div class="fixed left-6 right-32 top-3/4 z-50 -translate-y-1/2 transform">
       <div
         class="relative w-full rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800"
         style="min-height: 140px"
@@ -83,8 +87,11 @@
           <div class="flex items-center space-x-2">
             <div class="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">
-              <span *ngIf="isTranscribing" class="text-blue-600 dark:text-blue-400">Transcribing...</span>
-              <span *ngIf="!isTranscribing && displayedText" class="text-green-600 dark:text-green-400">Ready to Send</span>
+              @if (isTranscribing) {
+              <span class="text-blue-600 dark:text-blue-400">Transcribing...</span>
+              } @if (!isTranscribing && displayedText) {
+              <span class="text-green-600 dark:text-green-400">Ready to Send</span>
+              }
             </h3>
           </div>
           <button
@@ -94,20 +101,22 @@
             <i class="fas fa-times text-lg"></i>
           </button>
         </div>
-
         <div class="relative">
-          <div *ngIf="isTranscribing" class="relative">
+          @if (isTranscribing) {
+          <div class="relative">
             <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20"></div>
+            @if (isTranscribing) {
             <textarea
-              *ngIf="isTranscribing"
               class="w-full resize-none rounded-xl border-2 border-blue-200 bg-transparent p-4 text-sm text-gray-700 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-blue-800 dark:text-gray-200"
               style="height: 5.5rem"
               rows="5"
               placeholder="Transcribing..."
               readonly
             >
-              {{ transcribingText }}
-            </textarea>
+                    {{ transcribingText }}
+                  </textarea
+            >
+            }
             <div class="absolute bottom-3 right-3">
               <div class="flex space-x-1">
                 <div class="h-3 w-1 animate-bounce rounded-full bg-blue-500"></div>
@@ -116,8 +125,8 @@
               </div>
             </div>
           </div>
-
-          <div *ngIf="!isTranscribing && !hasTranscriptionData && isPreviewOpen" class="relative">
+          } @if (!isTranscribing && !hasTranscriptionData && isPreviewOpen) {
+          <div class="relative">
             <textarea
               [(ngModel)]="displayedText"
               (keydown)="handleEnterKey($event)"
@@ -136,8 +145,8 @@
               </button>
             </div>
           </div>
-
-          <div *ngIf="!isTranscribing && hasTranscriptionData" class="relative">
+          } @if (!isTranscribing && hasTranscriptionData) {
+          <div class="relative">
             <textarea
               [(ngModel)]="displayedText"
               (keydown)="handleEnterKey($event)"
@@ -156,11 +165,12 @@
               </button>
             </div>
           </div>
+          }
         </div>
       </div>
     </div>
-
-    <div *ngIf="showTopButton" class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
+    } @if (showTopButton) {
+    <div class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
       <button
         type="button"
         class="btn btn-outline-primary animate-pulse rounded-full bg-[#fafafa] p-2 dark:bg-[#060818] dark:hover:bg-primary"
@@ -182,6 +192,7 @@
         </svg>
       </button>
     </div>
+    }
 
     <!-- BEGIN APP SETTING LAUNCHER -->
     <setting></setting>

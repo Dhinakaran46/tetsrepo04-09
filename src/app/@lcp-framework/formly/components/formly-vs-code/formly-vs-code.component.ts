@@ -3,6 +3,7 @@ import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
 import * as monaco from 'monaco-editor';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-vs-code',
   templateUrl: './formly-vs-code.component.html',
   styleUrls: ['./formly-vs-code.component.scss'],

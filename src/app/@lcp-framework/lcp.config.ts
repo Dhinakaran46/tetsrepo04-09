@@ -1,27 +1,27 @@
 import { APP_INITIALIZER, ApplicationConfig, ErrorHandler } from '@angular/core';
 import { routes } from './lcp.routes';
 import { provideRouter, Router, RouterConfigOptions, Routes, withRouterConfig } from '@angular/router';
-import { BrowserModule, Title } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Title } from '@angular/platform-browser';
 import { importProvidersFrom } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { AppService } from './service/common/app.service';
 
 // store
-import { StoreModule } from '@ngrx/store';
+import { provideStore } from '@ngrx/store';
 import { indexReducer } from '../store/index.reducer';
 
 // i18n
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 
-// headlessui
-import { MenuModule } from 'headlessui-angular';
+// headlessui-angular removed: package is experimental (0.0.x), MenuModule was never used
+// in any template — all menu toggling uses plain Angular (isMenuOpen boolean + toggleMenu()).
+// Decision: removed headlessui-angular dependency entirely (Angular 21 upgrade, task 11.5).
 
-// perfect-scrollbar
-import { NgScrollbarModule } from 'ngx-scrollbar';
+// ngx-scrollbar
+import { NgScrollbarModule, provideScrollbarOptions } from 'ngx-scrollbar';
 import { CommonModule, HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { authInterceptor } from './interceptors/auth/auth.interceptor';
 import { GlobalErrorHandlerService } from './service/errorhandler/global-error-handler.service';
@@ -66,14 +66,12 @@ export const lcpAppConfig: ApplicationConfig = {
       multi: true,
     },
     provideAnimations(),
+    provideHttpClient(withInterceptors([authInterceptor, HttpErrorInterceptor])),
+    provideStore({ index: indexReducer }),
     importProvidersFrom(
-      BrowserModule,
-      BrowserAnimationsModule,
       CommonModule,
       FormsModule,
       ReactiveFormsModule,
-      HttpClientModule,
-      MenuModule,
       ToastrModule.forRoot(),
       MonacoEditorModule.forRoot(),
       QuillModule.forRoot(),
@@ -84,18 +82,17 @@ export const lcpAppConfig: ApplicationConfig = {
           deps: [HttpClient, LocalStorageService],
         },
       }),
-      StoreModule.forRoot({ index: indexReducer }),
       NgMultiSelectDropDownModule.forRoot(),
-      NgScrollbarModule.withConfig({
-        visibility: 'hover',
-        appearance: 'standard',
-      })
+      NgScrollbarModule
     ),
+    provideScrollbarOptions({
+      visibility: 'hover',
+      appearance: 'native',
+    }),
     AppService,
     Title,
     BnNgIdleService,
     { provide: ErrorHandler, useClass: GlobalErrorHandlerService },
-    provideHttpClient(withInterceptors([authInterceptor, HttpErrorInterceptor])),
     { provide: LocationStrategy, useClass: HashLocationStrategy }, // Add this line
   ],
 };

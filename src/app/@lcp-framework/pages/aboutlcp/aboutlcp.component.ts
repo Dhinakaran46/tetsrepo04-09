@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { ToastrService } from 'ngx-toastr';
 import { GridApiService } from '../../service/common/grid.service';
 import { Location } from '@angular/common';
@@ -13,7 +13,7 @@ import { create } from 'handlebars';
 @Component({
   selector: 'app-aboutlcp',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
+  imports: [ReactiveFormsModule, TranslateModule],
   templateUrl: './aboutlcp.component.html',
   styleUrls: ['./aboutlcp.component.scss'],
 })
@@ -147,8 +147,6 @@ export class AboutlcpComponent implements OnInit {
   }
 
   onSubmit() {
-    
-
     if (this.form.invalid) {
       this.markFormGroupTouched(this.form);
       return;
@@ -246,7 +244,6 @@ export class AboutlcpComponent implements OnInit {
 
     this.gridApiService.getAllList(payload).subscribe({
       next: (response: any) => {
-       
         if (response.code === 200 && response.status) {
           const data = response.data.records[0];
           this.form.patchValue({

@@ -5,7 +5,7 @@
       <formly-form [form]="editForm" [fields]="getFieldGroup()" class="repeat-table-form flex-grow"></formly-form>
 
       <!-- Buttons Section -->
-      <div class=" space-x-2 text-center">
+      <div class="space-x-2 text-center">
         <button type="button" class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="saveRow()">
           {{ currentRowIndex !== null ? 'Update' : 'Add' }}
         </button>
@@ -17,55 +17,61 @@
     </form>
   </div>
 
-  <div class="invalid-feedback" *ngIf="errorMessage">
+  @if (errorMessage) {
+  <div class="invalid-feedback">
     {{ errorMessage }}
   </div>
+  }
 
   <!-- Table displaying the added rows -->
-  <table class="mb-4 table-fixed" *ngIf="formArray && formArray.length > 0">
+  @if (formArray && formArray.length > 0) {
+  <table class="mb-4 table-fixed">
     <thead>
       <tr>
-        <th class="px-3 py-2" *ngFor="let field of getFieldGroup()" [ngClass]="{ hidden: field.props && field.props['hideColumn'] }">
+        @for (field of getFieldGroup(); track field) {
+        <th class="px-3 py-2" [ngClass]="{ hidden: field.props && field.props['hideColumn'] }">
           {{ field.props?.label || field.key }}
         </th>
+        }
         <th class="px-3 py-2">Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let fgRow of formArray.controls; let i = index">
-        <td class="truncate px-3 py-2" *ngFor="let field of getFieldGroup()" [ngClass]="{ hidden: field.props && field.props['hideColumn'] }">
-          <ng-container *ngIf="field.type !== 'image' && field.type !== 'file' && fgRow.get(coerceKeyToString(field.key ?? ''))?.value as fieldValue">
-            {{ getSafeDisplayValue(fieldValue, field.props?.options) }}
-          </ng-container>
-          <ng-container *ngIf="(field.type === 'image' || field.type === 'file') && isImageUrl(fgRow.value, coerceKeyToString(field.key ?? '')); else showUrl">
-            <img
-              [title]="
-                (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
-                  ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
-                  : ''
-              "
-              (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
-              [src]="getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''))"
-              alt="Image"
-              class="max-h-16 max-w-16 cursor-pointer rounded-md"
-            />
-          </ng-container>
-          <ng-template #showUrl>
-            <div
-              class="cursor-pointer truncate"
-              [ngClass]="{ 'cursor-auto text-blue-600': (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')) || '').includes('http') }"
-              appDynamicFontSize="body"
-              (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
-              [title]="
-                (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
-                  ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
-                  : ''
-              "
-            >
-              {{ getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i) }}
-            </div>
-          </ng-template>
+      @for (fgRow of formArray.controls; track fgRow; let i = $index) {
+      <tr>
+        @for (field of getFieldGroup(); track field) {
+        <td class="truncate px-3 py-2" [ngClass]="{ hidden: field.props && field.props['hideColumn'] }">
+          @if (field.type !== 'image' && field.type !== 'file' && fgRow.get(coerceKeyToString(field.key ?? ''))?.value; as fieldValue) {
+          {{ getSafeDisplayValue(fieldValue, field.props?.options) }}
+          } @if ((field.type === 'image' || field.type === 'file') && isImageUrl(fgRow.value, coerceKeyToString(field.key ?? ''))) {
+          <img
+            [title]="
+              (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
+                ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
+                : ''
+            "
+            (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
+            [src]="getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''))"
+            alt="Image"
+            class="max-h-16 max-w-16 cursor-pointer rounded-md"
+          />
+          } @else {
+          <div
+            class="cursor-pointer truncate"
+            [ngClass]="{ 'cursor-auto text-blue-600': (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')) || '').includes('http') }"
+            appDynamicFontSize="body"
+            (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
+            [title]="
+              (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
+                ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
+                : ''
+            "
+          >
+            {{ getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i) }}
+          </div>
+          }
         </td>
+        }
         <td class="px-3 py-2">
           <div class="flex gap-2">
             <i class="fa-pen-to-square fa-regular h-3.5 w-3.5 cursor-pointer" (click)="editRow(i)"></i>
@@ -73,6 +79,8 @@
           </div>
         </td>
       </tr>
+      }
     </tbody>
   </table>
+  }
 </div>

@@ -2,9 +2,10 @@ import { Directive, Renderer2, ElementRef, Input, OnChanges, SimpleChanges } fro
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
 @Directive({
+  standalone: false,
   selector: 'input[type=file].formly-file',
   host: {
-    '(change)': 'onChange($event.target.files)',
+    '(change)': 'handleChange($event)',
     '(blur)': 'onTouched()',
   },
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: FileValueAccessor, multi: true }],
@@ -47,6 +48,13 @@ export class FileValueAccessor implements ControlValueAccessor, OnChanges {
   value: any;
   onChange = (_: any) => {};
   onTouched = () => {};
+
+  handleChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.files) {
+      this.onChange(target.files);
+    }
+  }
 
   writeValue(value: any) {
     this.value = value;

@@ -18,7 +18,7 @@ import { Location } from '@angular/common';
 @Component({
   selector: 'app-carousel',
   standalone: true,
-  imports: [CommonSharedModule, MonacoEditorModule, IconSaveComponent, IconXCircleComponent, ReactiveFormsModule, ClientDatatableComponent],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule, ClientDatatableComponent],
   templateUrl: './carousel.component.html',
   styleUrls: ['./carousel.component.scss'],
   animations: [

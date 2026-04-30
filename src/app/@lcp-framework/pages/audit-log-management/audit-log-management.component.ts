@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { GridApiService } from '../../service/common/grid.service';
@@ -37,7 +37,8 @@ export class AuditLogManagementComponent implements OnInit {
     private gridApiService: GridApiService,
     private toastr: ToastrService,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       tables: this.fb.array([]),
@@ -162,6 +163,7 @@ export class AuditLogManagementComponent implements OnInit {
         this.loading = false;
         this.existingRecords = response?.status ? response?.data?.records || [] : [];
         this.buildTableForm(allTables, this.existingRecords);
+        this.cdr.markForCheck();
       },
       error: () => {
         if (sourceIndex < this.auditSourceTables.length - 1) {
@@ -172,6 +174,7 @@ export class AuditLogManagementComponent implements OnInit {
         this.loading = false;
         this.existingRecords = [];
         this.buildTableForm(allTables, []);
+        this.cdr.markForCheck();
       },
     });
   }

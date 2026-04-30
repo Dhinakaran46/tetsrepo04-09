@@ -2,7 +2,7 @@ import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, In
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -23,6 +23,7 @@ import jsPDF from 'jspdf';
 import { LoaderComponent } from '../../components/loader/loader.component';
 import { ProfileApiService } from '../../service/user/profile-api.service';
 import { environment } from '../../../../environments/environment';
+import { initialState } from '../../../store/index.reducer';
 import { OpenaiService } from '../../service/common/openai.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { StaticPageComponent } from '../static-page/static-page.component';
@@ -62,7 +63,6 @@ interface AcceptedParentParamRule {
   selector: 'master-list',
   imports: [
     CommonSharedModule,
-    HttpClientModule,
     DataTableComponent,
     LoaderComponent,
     ReactiveFormsModule,
@@ -119,7 +119,7 @@ export class MasterListComponent implements OnChanges {
     return this._nonGridPage;
   }
 
-  store: any;
+  store: any = initialState;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   @ViewChild('processStatusTemplate') processStatusTemplate!: TemplateRef<any>;
@@ -269,7 +269,6 @@ export class MasterListComponent implements OnChanges {
     private routeUpdateService: RouteUpdateService,
     private timezoneService: TimezoneService
   ) {
-    this.initStore();
     const url = this.localStorageService?.getData('base_app_url');
     this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
     this.route.paramMap.subscribe((params) => {
@@ -357,6 +356,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   async ngAfterContentInit() {
+    this.initStore();
     this.config = JSON.parse(this.localStorageService.getData('config'));
     this.save_grid_latest_state = this.config?.save_grid_latest_state == 'true' && this.config?.save_grid_latest_state;
     let pageInfo: any;
@@ -429,7 +429,10 @@ export class MasterListComponent implements OnChanges {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 
@@ -2256,10 +2259,12 @@ export class MasterListComponent implements OnChanges {
 
             this.totalItems = response.data.total_records;
             this.gridloading = false;
+            this.cdr.markForCheck();
           } else {
             this.items = [];
             this.totalItems = 0;
             this.gridloading = false;
+            this.cdr.markForCheck();
           }
         } else {
           this.entities = [];
@@ -2268,6 +2273,7 @@ export class MasterListComponent implements OnChanges {
           this.items = [];
           this.totalItems = 0;
           this.gridloading = false;
+          this.cdr.markForCheck();
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
@@ -2278,6 +2284,7 @@ export class MasterListComponent implements OnChanges {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
+        this.cdr.markForCheck();
         this.entities = [];
         this.headerStaticEntityName = '';
         this.footerStaticEntityName = '';
@@ -2463,9 +2470,7 @@ export class MasterListComponent implements OnChanges {
       this.selectedItemUuid = null;
       this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
       this.isViewPopupOpen = true;
-      setTimeout(() => {
-        this.loadingpopup = false;
-      }, 500);
+      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
     }
   }
   editPopupItem(item: any) {
@@ -2491,9 +2496,7 @@ export class MasterListComponent implements OnChanges {
     });
     this.popupComponentGridParams = gridParams;
 
-    setTimeout(() => {
-      this.loadingpopup = false;
-    }, 500);
+    setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
   }
 
   previewPopupItem(item: any) {
@@ -2516,9 +2519,7 @@ export class MasterListComponent implements OnChanges {
           this.previewFetchData(this.previewListQuery);
         }
       });
-      setTimeout(() => {
-        this.loadingpopup = false;
-      }, 500);
+      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
     } else {
       this.previewHeaderColumns = [];
       this.previewTotalItems = 0;
@@ -2720,9 +2721,7 @@ export class MasterListComponent implements OnChanges {
       });
       this.popupComponentGridParams = gridParams;
 
-      setTimeout(() => {
-        this.loadingpopup = false;
-      }, 500);
+      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
     } else {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
@@ -3300,9 +3299,7 @@ export class MasterListComponent implements OnChanges {
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = entityName;
     this.isViewPopupOpen = true;
-    setTimeout(() => {
-      this.loadingpopup = false;
-    }, 500);
+    setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
@@ -3340,9 +3337,7 @@ export class MasterListComponent implements OnChanges {
       this.popupEntityName = event.col.link_action;
       this.isViewPopupOpen = true;
       this.loadingpopup = true;
-      setTimeout(() => {
-        this.loadingpopup = false;
-      }, 500);
+      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
     }
   }
 
@@ -3388,6 +3383,7 @@ export class MasterListComponent implements OnChanges {
     this.loadingpopup = true;
     setTimeout(() => {
       this.loadingpopup = false;
+      this.cdr.markForCheck();
     }, 500);
   }
 

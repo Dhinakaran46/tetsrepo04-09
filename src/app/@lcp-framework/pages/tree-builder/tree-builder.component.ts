@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, Input, AfterContentInit, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, AfterContentInit, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { GridApiService } from '../../service/common/grid.service';
@@ -62,7 +63,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     edit: false,
     delete: false,
   };
-  store: any;
+  store: any = initialState;
   companyId: number;
   config!: any;
   query: any = '';
@@ -91,9 +92,9 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     private toastr: ToastrService,
     private titleService: Title,
     public storeData: Store<any>,
-    private commonService: MenuMapService
+    private commonService: MenuMapService,
+    private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       const uuid = params.get('uuid');
@@ -110,6 +111,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   async ngOnInit() {
+    this.initStore();
     this.config = JSON.parse(this.localStorageService.getData('config'));
     this.route.data.pipe(takeUntil(this.destroy$)).subscribe((data) => {
       this.pageInfo = data['pageInfo'];
@@ -243,7 +245,10 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

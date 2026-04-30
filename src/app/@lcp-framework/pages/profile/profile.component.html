@@ -20,47 +20,69 @@
           <div>
             <label for="first_name" class="form-label">{{ 'profile_form_first_name' | translate }}</label>
             <input type="text" class="form-input" id="first_name" formControlName="first_name" />
-            <div *ngIf="profileForm.get('first_name')?.invalid && (profileForm.get('first_name')?.dirty || profileForm.get('first_name')?.touched)">
-              <div *ngIf="profileForm.get('first_name')?.errors?.['required']" class="text-red-500">
+            @if (profileForm.get('first_name')?.invalid && (profileForm.get('first_name')?.dirty || profileForm.get('first_name')?.touched)) {
+            <div>
+              @if (profileForm.get('first_name')?.errors?.['required']) {
+              <div class="text-red-500">
                 {{ 'profile_form_first_name_req_msg' | translate }}
               </div>
+              }
             </div>
+            }
           </div>
           <div>
             <label for="last_name" class="form-label">{{ 'profile_form_last_name' | translate }}</label>
             <input type="text" class="form-input" id="last_name" formControlName="last_name" />
-            <div *ngIf="profileForm.get('last_name')?.invalid && (profileForm.get('last_name')?.dirty || profileForm.get('last_name')?.touched)">
-              <div *ngIf="profileForm.get('last_name')?.errors?.['required']" class="text-red-500">
+            @if (profileForm.get('last_name')?.invalid && (profileForm.get('last_name')?.dirty || profileForm.get('last_name')?.touched)) {
+            <div>
+              @if (profileForm.get('last_name')?.errors?.['required']) {
+              <div class="text-red-500">
                 {{ 'profile_form_last_name_req_msg' | translate }}
               </div>
+              }
             </div>
+            }
           </div>
           <div>
             <label for="dob" class="form-label">{{ 'profile_form_dob' | translate }}</label>
             <input type="text" class="form-input" id="dob" appFlatpickr="date" formControlName="dob" />
-            <div *ngIf="profileForm.get('dob')?.invalid && (profileForm.get('dob')?.dirty || profileForm.get('dob')?.touched)">
-              <div *ngIf="profileForm.get('dob')?.errors?.['required']" class="text-red-500">{{ 'profile_form_dob_req_msg' | translate }}</div>
+            @if (profileForm.get('dob')?.invalid && (profileForm.get('dob')?.dirty || profileForm.get('dob')?.touched)) {
+            <div>
+              @if (profileForm.get('dob')?.errors?.['required']) {
+              <div class="text-red-500">{{ 'profile_form_dob_req_msg' | translate }}</div>
+              }
             </div>
+            }
           </div>
           <div>
             <label for="country_code" class="form-label">{{ 'profile_form_country_code' | translate }}</label>
             <select class="form-input" id="country_code" formControlName="country_code" (change)="onCountryCodeChange()">
               <option value disabled>{{ 'select_any' | translate }}</option>
-              <option *ngFor="let code of countryCodes" [value]="code">{{ code }}</option>
+              @for (code of countryCodes; track code) {
+              <option [value]="code">{{ code }}</option>
+              }
             </select>
-            <div *ngIf="profileForm.get('country_code')?.invalid && (profileForm.get('country_code')?.dirty || profileForm.get('country_code')?.touched)">
-              <div *ngIf="profileForm.get('country_code')?.errors?.['required']" class="text-red-500">
+            @if (profileForm.get('country_code')?.invalid && (profileForm.get('country_code')?.dirty || profileForm.get('country_code')?.touched)) {
+            <div>
+              @if (profileForm.get('country_code')?.errors?.['required']) {
+              <div class="text-red-500">
                 {{ 'profile_form_country_code_req_msg' | translate }}
               </div>
+              }
             </div>
+            }
           </div>
 
           <div>
             <label for="phone_number" class="form-label">{{ 'profile_form_phnum' | translate }}</label>
             <input type="text" class="form-input" id="phone_number" formControlName="phone_number" />
-            <div *ngIf="profileForm.get('phone_number')?.invalid && (profileForm.get('phone_number')?.dirty || profileForm.get('phone_number')?.touched)">
-              <div *ngIf="profileForm.get('phone_number')?.errors?.['required']" class="text-red-500">{{ 'profile_form_phnum_req_msg' | translate }}</div>
+            @if (profileForm.get('phone_number')?.invalid && (profileForm.get('phone_number')?.dirty || profileForm.get('phone_number')?.touched)) {
+            <div>
+              @if (profileForm.get('phone_number')?.errors?.['required']) {
+              <div class="text-red-500">{{ 'profile_form_phnum_req_msg' | translate }}</div>
+              }
             </div>
+            }
           </div>
           <div>
             <label for="gender" class="form-label">{{ 'profile_form_gender' | translate }}</label>
@@ -70,25 +92,37 @@
               <option value="female">{{ 'profile_form_gender_option_2' | translate }}</option>
               <option value="other">{{ 'profile_form_gender_option_3' | translate }}</option>
             </select>
-            <div *ngIf="profileForm.get('gender')?.invalid && (profileForm.get('gender')?.dirty || profileForm.get('gender')?.touched)">
-              <div *ngIf="profileForm.get('gender')?.errors?.['required']" class="text-red-500">{{ 'profile_form_gender_req_msg' | translate }}</div>
+            @if (profileForm.get('gender')?.invalid && (profileForm.get('gender')?.dirty || profileForm.get('gender')?.touched)) {
+            <div>
+              @if (profileForm.get('gender')?.errors?.['required']) {
+              <div class="text-red-500">{{ 'profile_form_gender_req_msg' | translate }}</div>
+              }
             </div>
+            }
           </div>
           <div>
             <label for="user_time_zone" class="form-label">{{ 'profile_form_timezone' | translate }}</label>
             <input type="text" class="form-input" id="user_time_zone" formControlName="user_time_zone" [readonly]="true" />
-            <div *ngIf="profileForm.get('user_time_zone')?.invalid && (profileForm.get('user_time_zone')?.dirty || profileForm.get('user_time_zone')?.touched)">
-              <div *ngIf="profileForm.get('user_time_zone')?.errors?.['required']" class="text-red-500">
+            @if (profileForm.get('user_time_zone')?.invalid && (profileForm.get('user_time_zone')?.dirty || profileForm.get('user_time_zone')?.touched)) {
+            <div>
+              @if (profileForm.get('user_time_zone')?.errors?.['required']) {
+              <div class="text-red-500">
                 {{ 'profile_form_timezone_req_msg' | translate }}
               </div>
+              }
             </div>
+            }
           </div>
           <div>
             <label for="address" class="form-label">{{ 'profile_form_address' | translate }}</label>
             <textarea class="form-input" id="address" rows="3" formControlName="address"></textarea>
-            <div *ngIf="profileForm.get('address')?.invalid && (profileForm.get('address')?.dirty || profileForm.get('address')?.touched)">
-              <div *ngIf="profileForm.get('address')?.errors?.['required']" class="text-red-500">{{ 'profile_form_address_req_msg' | translate }}</div>
+            @if (profileForm.get('address')?.invalid && (profileForm.get('address')?.dirty || profileForm.get('address')?.touched)) {
+            <div>
+              @if (profileForm.get('address')?.errors?.['required']) {
+              <div class="text-red-500">{{ 'profile_form_address_req_msg' | translate }}</div>
+              }
             </div>
+            }
           </div>
 
           <div class="mt-3 sm:col-span-2">

@@ -55,12 +55,11 @@
                 <option [value]="template.value">{{ template.label }}</option>
                 }
               </select>
-              <div
-                *ngIf="assignment.get('template_id')?.invalid && (assignment.get('template_id')?.touched || assignment.get('template_id')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('template_id')?.invalid && (assignment.get('template_id')?.touched || assignment.get('template_id')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'email_template_is_required' | translate }}
               </div>
+              }
             </div>
 
             <div class="form-group">
@@ -77,7 +76,8 @@
               </select>
             </div>
 
-            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
+            @if (assignment.get('recipient_type')?.value === 'tag') {
+            <div class="form-group">
               <label>{{ 'email_tag' | translate }} <span class="text-danger">*</span></label>
               <select
                 formControlName="notification_to"
@@ -89,16 +89,16 @@
                 <option [value]="tag.id">{{ tag.name }}</option>
                 }
               </select>
-              <div
-                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'email_tag_is_required' | translate }}
               </div>
-              <div *ngIf="assignment.get('email_tag_mail')?.value" class="mt-5">sends to : {{ assignment.get('email_tag_mail')?.value }}</div>
+              } @if (assignment.get('email_tag_mail')?.value) {
+              <div class="mt-5">sends to : {{ assignment.get('email_tag_mail')?.value }}</div>
+              }
             </div>
-
-            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
+            } @if (assignment.get('recipient_type')?.value === 'user_id') {
+            <div class="form-group">
               <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
               <ng-select
                 bindLabel="label"
@@ -115,15 +115,14 @@
                 <ng-option [value]="user.value">{{ user.label }}</ng-option>
                 }
               </ng-select>
-              <div
-                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'user_email_is_required' | translate }}
               </div>
+              }
             </div>
-
-            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'custom'">
+            } @if (assignment.get('recipient_type')?.value === 'custom') {
+            <div class="form-group">
               <label>{{ 'email' | translate }} <span class="text-danger">*</span></label>
               <input
                 type="email"
@@ -133,15 +132,13 @@
                 required
               />
               <div class="mt-5">Note : Can add multiple emails as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
-              <div
-                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'email_is_required' | translate }}
               </div>
+              }
             </div>
-
-            @if(i > 0) {
+            } @if(i > 0) {
             <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeEmailTemplateAssignment(i)"></i>
             }
           </div>
@@ -160,12 +157,11 @@
                     <option value="cc">CC</option>
                     <option value="bcc">BCC</option>
                   </select>
-                  <div
-                    *ngIf="ccBcc.get('send_type')?.invalid && (ccBcc.get('send_type')?.touched || ccBcc.get('send_type')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (ccBcc.get('send_type')?.invalid && (ccBcc.get('send_type')?.touched || ccBcc.get('send_type')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'send_type_is_required' | translate }}
                   </div>
+                  }
                 </div>
 
                 <div class="form-group">
@@ -180,15 +176,15 @@
                     <option value="user_id">User</option>
                     <option value="custom">Custom Mail</option>
                   </select>
-                  <div
-                    *ngIf="ccBcc.get('recipient_type')?.invalid && (ccBcc.get('recipient_type')?.touched || ccBcc.get('recipient_type')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (ccBcc.get('recipient_type')?.invalid && (ccBcc.get('recipient_type')?.touched || ccBcc.get('recipient_type')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'recipient_type_is_required' | translate }}
                   </div>
+                  }
                 </div>
 
-                <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'tag'">
+                @if (ccBcc.get('recipient_type')?.value === 'tag') {
+                <div class="form-group">
                   <label>{{ 'email_tag' | translate }} <span class="text-danger">*</span></label>
                   <select
                     formControlName="email_to"
@@ -200,16 +196,16 @@
                     <option [value]="tag.id">{{ tag.name }}</option>
                     }
                   </select>
-                  <div
-                    *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'email_tag_is_required' | translate }}
                   </div>
-                  <div *ngIf="ccBcc.get('email_tag_mail')?.value" class="mt-5">sends to : {{ ccBcc.get('email_tag_mail')?.value }}</div>
+                  } @if (ccBcc.get('email_tag_mail')?.value) {
+                  <div class="mt-5">sends to : {{ ccBcc.get('email_tag_mail')?.value }}</div>
+                  }
                 </div>
-
-                <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'user_id'">
+                } @if (ccBcc.get('recipient_type')?.value === 'user_id') {
+                <div class="form-group">
                   <label>{{ 'user_email' | translate }} <span class="text-danger">*</span></label>
                   <ng-select
                     bindLabel="label"
@@ -226,15 +222,14 @@
                     <ng-option [value]="user.value">{{ user.label }}</ng-option>
                     }
                   </ng-select>
-                  <div
-                    *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'user_email_is_required' | translate }}
                   </div>
+                  }
                 </div>
-
-                <div class="form-group" *ngIf="ccBcc.get('recipient_type')?.value === 'custom'">
+                } @if (ccBcc.get('recipient_type')?.value === 'custom') {
+                <div class="form-group">
                   <label>{{ 'email' | translate }} <span class="text-danger">*</span></label>
                   <input
                     type="email"
@@ -243,14 +238,14 @@
                     placeholder="Enter email address"
                     required
                   />
-                  <div
-                    *ngIf="ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (ccBcc.get('email_to')?.invalid && (ccBcc.get('email_to')?.touched || ccBcc.get('email_to')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'email_is_required' | translate }}
                   </div>
+                  }
                   <div class="mt-5">Note : Can add multiple emails as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
                 </div>
+                }
 
                 <i class="fa-solid fa-xmark mt-5 text-xl" (click)="removeCcBccGroup(i, j)"> </i>
               </div>

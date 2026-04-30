@@ -55,12 +55,11 @@
                 <option [value]="template.value">{{ template.label }}</option>
                 }
               </select>
-              <div
-                *ngIf="assignment.get('template_id')?.invalid && (assignment.get('template_id')?.touched || assignment.get('template_id')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('template_id')?.invalid && (assignment.get('template_id')?.touched || assignment.get('template_id')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'whatsapp_template_is_required' | translate }}
               </div>
+              }
             </div>
 
             <div class="form-group">
@@ -77,7 +76,8 @@
               </select>
             </div>
 
-            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'tag'">
+            @if (assignment.get('recipient_type')?.value === 'tag') {
+            <div class="form-group">
               <label>{{ 'whatsapp_tag' | translate }} <span class="text-danger">*</span></label>
               <select
                 formControlName="notification_to"
@@ -89,16 +89,16 @@
                 <option [value]="tag.id">{{ tag.name }}</option>
                 }
               </select>
-              <div
-                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'whatsapp_tag_is_required' | translate }}
               </div>
-              <div *ngIf="assignment.get('whatsapp_tag_number')?.value" class="mt-5">sends to : {{ assignment.get('whatsapp_tag_number')?.value }}</div>
+              } @if (assignment.get('whatsapp_tag_number')?.value) {
+              <div class="mt-5">sends to : {{ assignment.get('whatsapp_tag_number')?.value }}</div>
+              }
             </div>
-
-            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'user_id'">
+            } @if (assignment.get('recipient_type')?.value === 'user_id') {
+            <div class="form-group">
               <label>{{ 'user_phoneno' | translate }} <span class="text-danger">*</span></label>
               <ng-select
                 bindLabel="label"
@@ -115,15 +115,14 @@
                 <ng-option [value]="user.value">{{ user.label }}</ng-option>
                 }
               </ng-select>
-              <div
-                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'user_phoneno_is_required' | translate }}
               </div>
+              }
             </div>
-
-            <div class="form-group" *ngIf="assignment.get('recipient_type')?.value === 'custom'">
+            } @if (assignment.get('recipient_type')?.value === 'custom') {
+            <div class="form-group">
               <label>{{ 'phone' | translate }} <span class="text-danger">*</span></label>
               <input
                 type="tel"
@@ -133,15 +132,13 @@
                 required
               />
               <div class="mt-5">Note : Can add multiple whatsapp numbers as comma seperated values eg: {{ 'example1@gmail.com, example2@gmail.com' }}</div>
-              <div
-                *ngIf="assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)"
-                class="invalid-feedback mt-1 text-danger"
-              >
+              @if (assignment.get('notification_to')?.invalid && (assignment.get('notification_to')?.touched || assignment.get('notification_to')?.dirty)) {
+              <div class="invalid-feedback mt-1 text-danger">
                 {{ 'whatsapp_is_required' | translate }}
               </div>
+              }
             </div>
-
-            @if(i > 0) {
+            } @if(i > 0) {
             <i class="fa-solid fa-xmark color-red mt-5 cursor-pointer text-xl" (click)="removeWhatsappTemplateAssignment(i)"></i>
             }
           </div>

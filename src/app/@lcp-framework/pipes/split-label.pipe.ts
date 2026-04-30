@@ -1,6 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
+  standalone: false,
   name: 'splitLabel'
 })
 export class SplitLabelPipe implements PipeTransform {

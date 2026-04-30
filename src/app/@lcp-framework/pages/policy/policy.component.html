@@ -26,15 +26,13 @@
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                     [required]="true"
                   />
-                  <div
-                    *ngIf="policyForm.get('policy_name')?.invalid && (policyForm.get('policy_name')?.touched || policyForm.get('policy_name')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (policyForm.get('policy_name')?.invalid && (policyForm.get('policy_name')?.touched || policyForm.get('policy_name')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'policy_name_is_required' | translate }}
                   </div>
-                  <div *ngIf="policyForm.get('policy_name')?.errors?.['maxlength']" class="invalid-feedback mt-1 text-danger">
-                    Policy name cannot exceed 75 characters.
-                  </div>
+                  } @if (policyForm.get('policy_name')?.errors?.['maxlength']) {
+                  <div class="invalid-feedback mt-1 text-danger">Policy name cannot exceed 75 characters.</div>
+                  }
                 </div>
                 <div class="flex flex-col">
                   <label for="policy_description" class="required-mark mb-2 block font-medium">{{ 'policy_description' | translate }}</label>
@@ -47,15 +45,12 @@
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                     [required]="true"
                   />
-                  <div
-                    *ngIf="
-                      policyForm.get('policy_description')?.invalid &&
-                      (policyForm.get('policy_description')?.touched || policyForm.get('policy_description')?.dirty)
-                    "
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if ( policyForm.get('policy_description')?.invalid && (policyForm.get('policy_description')?.touched ||
+                  policyForm.get('policy_description')?.dirty) ) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'policy_description_is_required' | translate }}
                   </div>
+                  }
                 </div>
                 <div class="flex flex-col">
                   <label class="required-mark mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
@@ -70,18 +65,18 @@
                       <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
                     </label>
                   </div>
-                  <div
-                    *ngIf="policyForm.get('status_id')?.invalid && (policyForm.get('status_id')?.touched || policyForm.get('status_id')?.dirty)"
-                    class="invalid-feedback mt-1 text-danger"
-                  >
+                  @if (policyForm.get('status_id')?.invalid && (policyForm.get('status_id')?.touched || policyForm.get('status_id')?.dirty)) {
+                  <div class="invalid-feedback mt-1 text-danger">
                     {{ 'status_is_required' | translate }}
                   </div>
+                  }
                 </div>
               </div>
             </div>
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
               <div class="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div *ngIf="unique_id" class="flex flex-col">
+                @if (unique_id) {
+                <div class="flex flex-col">
                   <label for="slug">{{ 'slug' | translate }}</label>
                   <input
                     autocomplete="off"
@@ -93,6 +88,7 @@
                     class="form-input w-full py-1 text-xs text-gray-600 placeholder:text-white-dark"
                   />
                 </div>
+                }
               </div>
             </div>
           </div>
@@ -131,10 +127,10 @@
 
 <!--Modal for Copy sample content-->
 
-<div class="fixed inset-0 z-50 overflow-y-auto" *ngIf="isInfoModalOpen">
+@if (isInfoModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
@@ -152,28 +148,31 @@
           </button>
         </div>
       </div>
-
       <!-- Modal Content -->
       <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
         <!-- Copy Button (Top Left Corner) -->
         <!-- <button
-          *ngIf="!copied"
-          class="absolute bottom-6 right-10 z-50 rounded bg-transparent px-3 py-1 text-sm text-white hover:bg-gray-700"
-          (click)="copyToClipboard()"
-        >
-          📋
-        </button> -->
+                *ngIf="!copied"
+                class="absolute bottom-6 right-10 z-50 rounded bg-transparent px-3 py-1 text-sm text-white hover:bg-gray-700"
+                (click)="copyToClipboard()"
+                >
+                📋
+              </button> -->
         <div class="px-4 sm:px-6">
           <ul class="flex list-disc flex-col gap-3">
-            <li *ngFor="let item of popupInformation.comments">
+            @for (item of popupInformation.comments; track item) {
+            <li>
               <div class="flex items-center gap-2">
                 <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>
               </div>
             </li>
+            }
           </ul>
         </div>
         <div class="relative">
-          <p *ngIf="copied" class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
+          @if (copied) {
+          <p class="absolute right-5 top-3 z-50 rounded bg-green-700 px-3 py-1 text-sm text-white hover:bg-green-600">Copied to clipboard!</p>
+          }
           <div class="monaco-editor-container .editor-container mt-3 rounded border border-gray-300">
             <!-- Monaco Editor -->
             <ngx-monaco-editor
@@ -191,5 +190,6 @@
     </div>
   </div>
 </div>
-
-<app-loader *ngIf="loading"></app-loader>
+} @if (loading) {
+<app-loader></app-loader>
+}

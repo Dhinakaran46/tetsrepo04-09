@@ -28,6 +28,45 @@ export class MenuLoadService {
 
   constructor(private menuMapService: MenuMapService, private localStorageService: LocalStorageService) {}
 
+  private parseJsonSafe(raw: any, fallback: any = null): any {
+    if (raw == null) return fallback;
+    if (typeof raw === 'object') return raw;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private resolveMenuIdsFromStoredMenus(userData: any): number[] {
+    const unorgList = Array.isArray(userData?.unorgmenuList) ? userData.unorgmenuList : [];
+    const menuIds = unorgList.map((item: any) => Number(item?.menu_id)).filter((id: number) => Number.isFinite(id) && id > 0);
+    const uniqueMenuIds = Array.from(new Set<number>(menuIds));
+    return uniqueMenuIds.sort((a: number, b: number) => a - b);
+  }
+
+  private resolveMenuIdsFromUserData(userData: any): number[] {
+    const main = userData?.main || {};
+    const roleCandidates = [main?.role, main?.role_slug, main?.role_name, main?.user_role]
+      .map((item) =>
+        String(item || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean);
+
+    if (roleCandidates.includes('super_admin')) {
+      return [1, 2, 5];
+    }
+
+    const fromStoredMenus = this.resolveMenuIdsFromStoredMenus(userData);
+    if (fromStoredMenus.length > 0) {
+      return fromStoredMenus;
+    }
+
+    return [1];
+  }
+
   getMenuList(): Observable<MenuItem[] | null> {
     const storedMenuList = this.localStorageService.getData('menuList');
     if (storedMenuList) {
@@ -231,19 +270,10 @@ export class MenuLoadService {
   fetchMenuData(companyId: number): Observable<MenuItem[]> {
     //const conf: any = localStorage.getItem('config');
     const conf: any = this.localStorageService.getData('config');
-    const enc_config: any = JSON.parse(conf);
+    const enc_config: any = this.parseJsonSafe(conf, null);
     const userData = this.localStorageService.getData('user_data');
-    this.user_info = userData ? JSON.parse(userData) : null;
-    if (this.user_info && this.user_info.main && this.user_info.main.role) {
-      if (this.user_info.main.role !== 'super_admin') {
-        this.menu_id = [1];
-      } else {
-        this.menu_id = [1, 2, 5];
-      }
-    } else {
-      console.error('User info, main, or role is missing.');
-      this.menu_id = [1];
-    }
+    this.user_info = this.parseJsonSafe(userData, null);
+    this.menu_id = this.resolveMenuIdsFromUserData(this.user_info);
 
     const payload = {
       print_query: true,
@@ -292,14 +322,14 @@ export class MenuLoadService {
         if (response.code === 200 && response.status) {
           const organizedMenu = this.organizeMenu(response.data.records);
           // Store menu data
-          const user_data = this.localStorageService.getData('user_data') ? JSON.parse(this.localStorageService.getData('user_data')) : null;
+          const user_data = this.parseJsonSafe(this.localStorageService.getData('user_data'), null);
 
           if (user_data) {
             if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
               this.localStorageService.storeDataEncrypted(
                 'user_data',
                 JSON.stringify({
-                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  ...this.parseJsonSafe(this.localStorageService.getData('user_data'), {}),
                   menuList: organizedMenu,
                   unorgmenuList: response.data.records,
                 })
@@ -308,7 +338,7 @@ export class MenuLoadService {
               this.localStorageService.storeData(
                 'user_data',
                 JSON.stringify({
-                  ...JSON.parse(this.localStorageService.getData('user_data') || '{}'),
+                  ...this.parseJsonSafe(this.localStorageService.getData('user_data'), {}),
                   menuList: organizedMenu,
                   unorgmenuList: response.data.records,
                 })

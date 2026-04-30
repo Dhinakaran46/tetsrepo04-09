@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { GridApiService } from '../../service/common/grid.service';
@@ -19,7 +20,8 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FlatpickrDirective } from '../../directives/flatpickr.directive';
 import { DynamicFontSizeDirective } from '../../directives/page-specific-font-size.directive';
 import { NgScrollbarModule } from 'ngx-scrollbar';
-import { MenuModule } from 'headlessui-angular';
+// headlessui-angular (MenuModule) removed: experimental package (0.0.x), never used in templates.
+// All menu toggling uses plain Angular (isMenuOpen boolean + toggleMenu()). Removed in Angular 21 upgrade (task 11.5).
 
 interface TabConfiguration {
   id: number;
@@ -65,7 +67,6 @@ const DATETIME_FORMAT_LIST = [
     TranslateModule,
     DynamicFontSizeDirective,
     NgScrollbarModule,
-    MenuModule,
   ],
   templateUrl: './user-configuration.component.html',
   styleUrls: ['./user-configuration.component.scss'],
@@ -77,7 +78,7 @@ export class UserConfigurationComponent implements OnInit {
   currentTab: string = '';
   allTabsForm: FormGroup;
   configForm: FormGroup;
-  store: any;
+  store: any = initialState;
   title_key: string = 'configuration';
   masterInfo: any;
 
@@ -168,11 +169,10 @@ export class UserConfigurationComponent implements OnInit {
 
     this.userList = [];
     this.selectedUserId = null;
-
-    this.initStore();
   }
 
   ngOnInit() {
+    this.initStore();
     this.title_key = this.route.snapshot.data['pageInfo'].fullEntity;
     const translateTitle = this.translate.instant(this.title_key);
     this.titleService.setTitle(translateTitle);
@@ -221,7 +221,10 @@ export class UserConfigurationComponent implements OnInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 
@@ -350,6 +353,7 @@ export class UserConfigurationComponent implements OnInit {
           if (this.tabs.length > 0) {
             this.switchTab(this.currentTab?.length ? this.currentTab : this.tabs[0].name);
           }
+          this.cdr.markForCheck();
         }
       },
       error: (error) => {
@@ -682,8 +686,10 @@ export class UserConfigurationComponent implements OnInit {
               this.onUserSelect(this.selectedUserId);
             }
           }
+          this.cdr.markForCheck();
         } else if (!response.status) {
           this.userList = [];
+          this.cdr.markForCheck();
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(`Code: ${response.code} , ${errorMessage}`);

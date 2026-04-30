@@ -1,24 +1,22 @@
-import { Component, OnInit, Type } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, Type } from '@angular/core';
 import { CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 
 import { TranslateService } from '@ngx-translate/core';
 
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { AuthService } from '../@lcp-framework/service/common/auth.service';
+import { initialState } from '../store/index.reducer';
 import { environment } from '../@lcp-framework/../../environments/environment';
-import { MenuItemComponent } from './menu-item-component';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { commonConfig } from '../@lcp-framework/config/common.config';
-import { IconMenuDashboardComponent } from '../@lcp-framework/shared/icon/menu/icon-menu-dashboard';
-import { NgComponentOutlet } from '@angular/common';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
 import { IdleService } from '../@lcp-framework/service/common/idle.service';
@@ -42,7 +40,7 @@ interface MenuItem {
   templateUrl: './header.html',
   styleUrl: './common.scss',
   standalone: true,
-  imports: [CommonSharedModule, NgComponentOutlet, MenuItemComponent, IconMenuDashboardComponent],
+  imports: [CommonSharedModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   animations: [
     trigger('toggleAnimation', [
@@ -62,7 +60,7 @@ export class HeaderComponent implements OnInit {
   menu_types: any = [];
 
   menuItems: MenuItem[] = [];
-  store: any;
+  store: any = initialState;
   search = false;
   notifications = [
     {
@@ -125,6 +123,53 @@ export class HeaderComponent implements OnInit {
   user_info: any;
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
+  showNotifications: boolean = false;
+  showLanguageMenu = false;
+  showProfileMenu = false;
+
+  private refreshView(): void {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
+
+  private parseUserData(rawUserData: any): any {
+    if (!rawUserData) return null;
+    if (typeof rawUserData === 'object') return rawUserData;
+    try {
+      return JSON.parse(rawUserData);
+    } catch {
+      return null;
+    }
+  }
+
+  private getPermissionsMap(): Record<string, boolean> {
+    const rootPermissions = this.user_info?.permissions;
+    if (rootPermissions && typeof rootPermissions === 'object' && !Array.isArray(rootPermissions)) {
+      return rootPermissions as Record<string, boolean>;
+    }
+
+    const mainPermissions = this.user_info?.main?.permissions;
+    if (Array.isArray(mainPermissions)) {
+      return mainPermissions.reduce((acc: Record<string, boolean>, permission: any) => {
+        const slug = String(permission?.slug || '').trim();
+        if (!slug) return acc;
+        acc[slug] = permission?.accessible === true;
+        return acc;
+      }, {});
+    }
+
+    if (mainPermissions && typeof mainPermissions === 'object') {
+      return mainPermissions as Record<string, boolean>;
+    }
+
+    return {};
+  }
+
+  private getViewPermissions(): string[] {
+    const permissionMap = this.getPermissionsMap();
+    return Object.entries(permissionMap)
+      .filter(([key, value]) => key.startsWith('view_') && value === true)
+      .map(([key]) => key.replace('view_', ''));
+  }
 
   constructor(
     public translate: TranslateService,
@@ -136,10 +181,12 @@ export class HeaderComponent implements OnInit {
     private localstore: LocalStorageService,
     private languageService: LanguageService,
     private menuLoadService: MenuLoadService,
-    private idleService: IdleService
-  ) {
-    this.initStore();
-  }
+    private idleService: IdleService,
+    private timezoneService: TimezoneService,
+    private gridApiService: GridApiService,
+    private firebaseService: FirebaseService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   async initStore() {
     this.storeData
@@ -150,7 +197,8 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.initStore();
+    this.user_info = this.parseUserData(this.localstore.getData('user_data'));
     this.config = JSON.parse(this.localstore.getData('config'));
     // this.setActiveDropdown();
     // this.router.events.subscribe((event) => {
@@ -158,6 +206,26 @@ export class HeaderComponent implements OnInit {
     //     this.setActiveDropdown();
     //   }
     // });
+
+    if (this.user_info?.main?.user_id) {
+      if (this.config?.enable_socket_push_notification === 'true') {
+        const socketUrl = (environment as any).WS_URL || 'ws://localhost:8089';
+        this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.user_info.main.user_id}`);
+        console.log('Websocket connected sucessfully');
+        this.socket$.subscribe({
+          next: (data: any) => {
+            this.toastr.info(data.message, '');
+            console.log('WebSocket message received:', data);
+          },
+          error: (err) => {
+            console.error('WebSocket error', err);
+          },
+        });
+      } else {
+        this.firebaseService.init(this.config);
+        this.firebaseService.listen(this.user_info?.main?.user_id);
+      }
+    }
 
     if (this.user_info) {
       this.userId = this.user_info.main?.id;
@@ -170,7 +238,14 @@ export class HeaderComponent implements OnInit {
     }
 
     const languageId = this.languageService.getLanguageId(languageCode);
-    this.languageService.fetchLanguageData(this.companyId, languageId);
+
+    // Load menu from cache synchronously to render immediately
+    this.loadMenuFromCache();
+
+    // Defer async service calls to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.languageService.fetchLanguageData(this.companyId, languageId);
+    }, 0);
 
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -178,9 +253,28 @@ export class HeaderComponent implements OnInit {
       }
     });
 
-    this.loadMenuFromStorage();
+    // Defer menu fetch/update to the next tick to avoid NG0100 on reload.
+    setTimeout(() => {
+      this.loadMenuFromStorage();
+      this.updateActiveClasses();
+    }, 0);
+  }
 
-    this.updateActiveClasses();
+  private loadMenuFromCache(): void {
+    try {
+      const cachedMenuList = this.localstore.getData('menuList');
+      if (cachedMenuList) {
+        const menuList = JSON.parse(cachedMenuList);
+        if (Array.isArray(menuList) && menuList.length > 0) {
+          this.menuItems = menuList;
+          this.filterMenuItems();
+          this.updateActiveClasses();
+          this.refreshView();
+        }
+      }
+    } catch (error) {
+      console.warn('Error loading cached menu:', error);
+    }
   }
 
   loadMenuFromStorage() {
@@ -191,12 +285,16 @@ export class HeaderComponent implements OnInit {
           if (menuList && menuList.length > 0) {
             this.menuItems = menuList;
             this.filterMenuItems();
+            this.updateActiveClasses();
+            this.refreshView();
           } else {
             console.warn('No menu list found after fetching.');
+            this.refreshView();
           }
         }),
         catchError((error) => {
           console.error('Error fetching menu data:', error);
+          this.refreshView();
           return of([]);
         })
       )
@@ -204,36 +302,41 @@ export class HeaderComponent implements OnInit {
   }
 
   filterMenuItems() {
-    const viewPermissions = Object.entries(this.user_info.permissions)
-      .filter(([key, value]) => key.startsWith('view_') && value === true)
-      .map(([key, value]) => key.replace('view_', ''));
-
+    const viewPermissions = this.getViewPermissions();
+    if (!viewPermissions.length) {
+      return;
+    }
     this.menuItems = this.filterMenu(this.menuItems, viewPermissions);
   }
 
   filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
-    return menuItems.filter((item) => {
-      const permissionKey = item.entity_name;
-      const hasPermission = viewPermissions.includes(permissionKey);
-      if (item.children && item.children.length) {
-        item.children = this.filterMenu(item.children, viewPermissions);
-      }
-      // Menu item.link_type external must have either target or childern in order to display in application
-      if (item.link_type == 4) {
-        const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
+    return (menuItems || [])
+      .map((item) => {
+        const children = Array.isArray(item?.children) ? this.filterMenu(item.children, viewPermissions) : [];
+        return {
+          ...item,
+          children,
+        };
+      })
+      .filter((item) => {
+        const permissionKey = item.entity_name;
+        const hasPermission = viewPermissions.includes(permissionKey);
+        // Menu item.link_type external must have either target or childern in order to display in application
+        if (item.link_type == 4) {
+          const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
 
-        if (hasTargetOrChildren) {
-          return true;
-        } else {
-          return false;
+          if (hasTargetOrChildren) {
+            return true;
+          } else {
+            return false;
+          }
         }
-      }
-      if (item.parent_id == null) {
-        return true;
-      }
+        if (item.parent_id == null) {
+          return true;
+        }
 
-      return hasPermission || (item.children && item.children.length > 0);
-    });
+        return hasPermission || (item.children && item.children.length > 0);
+      });
   }
 
   updateActiveClasses() {
@@ -310,6 +413,9 @@ export class HeaderComponent implements OnInit {
   }
 
   getProfileInfo() {
+    if (!this.user_info?.main) {
+      return { profile_pic: 'assets/images/user.png', name: '', email: '' };
+    }
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     let profile_pic = this.user_info.main.profile_pic;
     profile_pic = profile_pic && profile_pic !== 'null' ? apiUrl + '/' + profile_pic : 'assets/images/user.png';
@@ -325,6 +431,7 @@ export class HeaderComponent implements OnInit {
   changeLanguage(item: any) {
     this.translate.use(item.code);
     this.appSetting.toggleLanguage(item);
+    this.showLanguageMenu = false;
     if (this.store.locale?.toLowerCase() === 'ae') {
       this.storeData.dispatch({ type: 'toggleRTL', payload: 'rtl' });
       this.languageService.serviceChangeLanguage(this.companyId, item.code.toLowerCase());
@@ -334,11 +441,24 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  toggleLanguageMenu(event: Event) {
+    event.stopPropagation();
+    this.showLanguageMenu = !this.showLanguageMenu;
+    this.showProfileMenu = false;
+  }
+
+  toggleProfileMenu(event: Event) {
+    event.stopPropagation();
+    this.showProfileMenu = !this.showProfileMenu;
+    this.showLanguageMenu = false;
+  }
+
   hasVisibleChildren(item: any): boolean {
     return item.children && item.children.some((child: any) => child.link_type !== 2 && child.link_type !== 5);
   }
 
   logout() {
+    this.showProfileMenu = false;
     try {
       this.authService.logout().subscribe({
         next: (response) => {
@@ -357,5 +477,205 @@ export class HeaderComponent implements OnInit {
     } catch (error: any) {
       console.error('Logout Error: ', error);
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleOutsideClick(event: any) {
+    const clickedInsideDropdown = event.target.closest('.notification-dropdown');
+    const clickedInsideBox = event.target.closest('.notification-dropdown-box');
+    const clickedInsideLanguageMenu = event.target.closest('.language-dropdown');
+    const clickedInsideProfileMenu = event.target.closest('.profile-dropdown');
+
+    if (!clickedInsideDropdown && !clickedInsideBox) {
+      this.showNotifications = false;
+      this.activeTab = this.tabs[0];
+    }
+
+    if (!clickedInsideLanguageMenu) {
+      this.showLanguageMenu = false;
+    }
+
+    if (!clickedInsideProfileMenu) {
+      this.showProfileMenu = false;
+    }
+  }
+
+  toggleDropdown(): void {
+    this.activeTab = this.tabs[0];
+    if (this.showNotifications == false) {
+      this.fetchNotifications(this.activeTab.key);
+    }
+    this.showNotifications = !this.showNotifications;
+  }
+
+  tabs = [
+    {
+      key: 'push_notification',
+      icon: 'fa-regular fa-bell',
+    },
+    {
+      key: 'sms',
+      icon: 'fa-solid fa-comment-sms',
+    },
+    {
+      key: 'email',
+      icon: 'fa-regular fa-envelope',
+    },
+    {
+      key: 'whatsapp',
+      icon: 'fa-brands fa-whatsapp',
+    },
+  ];
+
+  activeTab = this.tabs[0];
+
+  selectTab(tab: any) {
+    this.activeTab = tab;
+    this.fetchNotifications(tab.key);
+  }
+
+  notifications: any[] = [];
+
+  formatDateTime(dateTime: any) {
+    return this.timezoneService.transformDateTime(dateTime);
+  }
+
+  loadingNotificationData: boolean = false;
+
+  fetchNotifications(notification_type: string) {
+    this.notifications = [];
+    this.loadingNotificationData = true;
+    const search_all: any[] = [
+      {
+        column_name: 'notification_jobs.notification_type',
+        operator: '=',
+        value: notification_type,
+      },
+      {
+        column_name: 'notification_jobs.company_id',
+        operator: '=',
+        value: 1,
+      },
+    ];
+
+    if (notification_type === 'push_notification') {
+      search_all.push({
+        column_name: 'notification_jobs.notification_status_id',
+        operator: '=',
+        value: 'ac11',
+      });
+    }
+
+    let email = this.user_info.main.email;
+
+    const search_any: any[] = [
+      {
+        column_name: 'notification_jobs.notification_to',
+        operator: '=',
+        value: email,
+      },
+      {
+        column_name: 'notification_jobs.notification_cc',
+        operator: '=',
+        value: email,
+      },
+      {
+        column_name: 'notification_jobs.notification_bcc',
+        operator: '=',
+        value: email,
+      },
+    ];
+
+    const param: any = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'notification_jobs',
+      search_all,
+      search_any,
+      select_columns: [
+        ['notification_jobs.notification_content', 'notification_content'],
+        ['notification_jobs.notification_subject', 'notification_subject'],
+        ['notification_jobs.sent_at', 'sent_at'],
+      ],
+      sort_columns: [['notification_jobs.sent_at', 'desc']],
+      limit_range: 5,
+      start_index: 0,
+    };
+
+    this.gridApiService.getListData(param).subscribe({
+      next: (response: any) => {
+        if (response.status) {
+          this.notifications = response.data?.records || [];
+          this.notifications.forEach((notification: any) => {
+            notification.notification_content = htmlToPlainText(notification.notification_content);
+          });
+        } else {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code}, ${errorMessage}`);
+        }
+      },
+      error: (error: any) => {
+        this.notifications = [];
+        const errorMessage = this.translate.instant('error');
+        this.toastr.error(errorMessage, 'Error');
+      },
+      complete: () => {
+        this.loadingNotificationData = false;
+      },
+    });
+  }
+
+  markPushNotificationAsread(actionType?: string) {
+    this.loadingNotificationData = true;
+    let param: any = {
+      table: ['notification_jobs'],
+      action: ['update'],
+      data: {
+        table1: [
+          {
+            notification_status_id: 'ac10',
+            updated_at: true,
+          },
+        ],
+      },
+      conditions: {
+        table1: [
+          {
+            notification_type: 'push_notification',
+            notification_status_id: 'ac11',
+          },
+        ],
+      },
+      table_mapping: ['table1'],
+    };
+    this.gridApiService.executeTransaction(param).subscribe(
+      (response: ApiResponce) => {
+        if (response.status) {
+          if (!actionType) {
+            const key = 'marked_notifications_as_read';
+            const successMessage = this.translate.instant(key);
+            this.toastr.success(successMessage, 'Success');
+          }
+        } else if (!response.status) {
+          const key = response.message;
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
+        }
+      },
+      (error: any) => {
+        const key = 'error_mapping_role_permissions';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  navigateToNotifications() {
+    this.toggleDropdown();
+    if (this.activeTab.key === 'push_notification') {
+      this.markPushNotificationAsread('triggerRead');
+    }
+    this.router.navigate(['/notifications']);
   }
 }
