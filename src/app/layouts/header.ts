@@ -216,8 +216,16 @@ export class HeaderComponent implements OnInit {
           },
         });
       } else {
-        this.firebaseService.init(this.config);
-        this.firebaseService.listen(this.user_info?.main?.user_id);
+        try {
+          if (this.config?.projectId && this.config?.databaseURL) {
+            this.firebaseService.init(this.config);
+            this.firebaseService.listen(this.user_info?.main?.user_id);
+          } else {
+            console.warn('Firebase config incomplete. Real-time notifications disabled.');
+          }
+        } catch (error) {
+          console.error('Error initializing Firebase notifications:', error);
+        }
       }
     }
 

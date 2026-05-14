@@ -7,24 +7,39 @@ import { ToastrService } from 'ngx-toastr';
   providedIn: 'root',
 })
 export class FirebaseService {
-  private app!: FirebaseApp;
+  private app: FirebaseApp | undefined;
 
   constructor(private toastr: ToastrService) {}
 
   init(config: any) {
-    if (!this.app) {
-      this.app = initializeApp({
-        apiKey: config['apiKey'],
-        authDomain: config['authDomain'],
-        projectId: config['projectId'],
-        databaseURL: config['databaseURL'],
+    // Validate that Firebase config has required keys
+    if (!config?.projectId || !config?.databaseURL) {
+      console.warn('FirebaseService: Firebase config is incomplete. Skipping initialization.', {
+        hasProjectId: !!config?.projectId,
+        hasDatabaseURL: !!config?.databaseURL,
       });
+      return;
+    }
+
+    if (!this.app) {
+      try {
+        this.app = initializeApp({
+          apiKey: config['apiKey'],
+          authDomain: config['authDomain'],
+          projectId: config['projectId'],
+          databaseURL: config['databaseURL'],
+        });
+        console.log('FirebaseService initialized successfully');
+      } catch (error) {
+        console.error('FirebaseService initialization failed:', error);
+      }
     }
   }
 
   listen(userId: string) {
     if (!this.app) {
-      throw new Error('Firebase not initialized. Call init() first.');
+      console.warn('FirebaseService: Firebase is not initialized. Realtime notifications disabled.');
+      return;
     }
 
     const db = getDatabase(this.app);
