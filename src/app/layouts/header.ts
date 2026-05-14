@@ -7,6 +7,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { DomSanitizer } from '@angular/platform-browser';
 
 import { TranslateService } from '@ngx-translate/core';
+import { ToastrService } from 'ngx-toastr';
 
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { AuthService } from '../@lcp-framework/service/common/auth.service';
@@ -20,6 +21,11 @@ import { commonConfig } from '../@lcp-framework/config/common.config';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
 import { IdleService } from '../@lcp-framework/service/common/idle.service';
+import { WebSocketSubject } from 'rxjs/webSocket';
+import { TimezoneService } from '../@lcp-framework/service/common/timezone.service';
+import { ApiResponce, GridApiService } from '../@lcp-framework/service/common/grid.service';
+import { htmlToPlainText } from '../@lcp-framework/shared/utils/html-text.util';
+import { FirebaseService } from '../@lcp-framework/service/firebase.service';
 
 interface MenuItem {
   id: number;
@@ -52,6 +58,7 @@ interface MenuItem {
 })
 export class HeaderComponent implements OnInit {
   private adList: { component: Type<any>; inputs?: any }[] = [];
+  private socket$!: WebSocketSubject<any>;
 
   userId: any;
   companyId: any;
@@ -62,26 +69,6 @@ export class HeaderComponent implements OnInit {
   menuItems: MenuItem[] = [];
   store: any = initialState;
   search = false;
-  notifications = [
-    {
-      id: 1,
-      profile: '<i class="fas fa-circle-user"></i>',
-      message: '<strong class="text-sm mr-1">John Doe</strong>invite you to <strong>Prototyping</strong>',
-      time: '45 min ago',
-    },
-    {
-      id: 2,
-      profile: '<i class="fas fa-circle-user"></i>',
-      message: '<strong class="text-sm mr-1">Adam Nolan</strong>mentioned you to <strong>UX Basics</strong>',
-      time: '9h Ago',
-    },
-    {
-      id: 3,
-      profile: '<i class="fas fa-circle-user"></i>',
-      message: '<strong class="text-sm mr-1">Anna Morgan</strong>Upload a file',
-      time: '9h Ago',
-    },
-  ];
   messages = [
     {
       id: 1,
@@ -173,6 +160,7 @@ export class HeaderComponent implements OnInit {
 
   constructor(
     public translate: TranslateService,
+    private toastr: ToastrService,
     public storeData: Store<any>,
     public router: Router,
     private appSetting: AppService,
@@ -194,6 +182,12 @@ export class HeaderComponent implements OnInit {
       .subscribe((d) => {
         this.store = d;
       });
+  }
+
+  ngOnDestroy() {
+    if (this.socket$) {
+      this.socket$.complete();
+    }
   }
 
   ngOnInit() {

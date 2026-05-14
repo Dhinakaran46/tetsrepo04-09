@@ -119,7 +119,8 @@ export class AppLayout implements OnDestroy {
     });
   }
 
-  changeFavicon(url: any): void {    const favicon = this.renderer.selectRootElement('#common-favicon', true);
+  changeFavicon(url: any): void {
+    const favicon = this.renderer.selectRootElement('#common-favicon', true);
     this.renderer.setAttribute(favicon, 'href', url);
   }
 
