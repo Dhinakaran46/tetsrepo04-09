@@ -1,0 +1,51 @@
+<div class="chart-builder-container">
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="main-loading">
+      <span class="spinner spinner--large"></span>
+      <span>{{ 'loading' | translate }}</span>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (!isLoading && loadError) {
+    <div class="main-error">
+      <span class="error-icon" aria-hidden="true">&#9888;</span>
+      {{ loadError }}
+    </div>
+  }
+
+  <!-- Chart display -->
+  @if (!isLoading && !loadError && selectedCharts.length > 0) {
+    <div class="charts-grid">
+      @for (chart of selectedCharts; track chart.id) {
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h5 class="chart-card-title">{{ chart.title }}</h5>
+          </div>
+          <div class="chart-card-body">
+            @if (chart.chart_format) {
+              <apx-chart
+                [series]="chart.chart_format.series"
+                [chart]="chart.chart_format.chart"
+                [xaxis]="chart.chart_format.xaxis"
+                [yaxis]="chart.chart_format.yaxis"
+                [dataLabels]="chart.chart_format.dataLabels"
+                [grid]="chart.chart_format.grid"
+                [stroke]="chart.chart_format.stroke"
+                [plotOptions]="chart.chart_format.plotOptions"
+                [fill]="chart.chart_format.fill"
+                [tooltip]="chart.chart_format.tooltip"
+                [colors]="chart.chart_format.colors"
+                [legend]="chart.chart_format.legend"
+                [labels]="chart.chart_format.labels"
+              ></apx-chart>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>

@@ -3,12 +3,11 @@ import { FieldType } from '@ngx-formly/core';
 import { GridApiService } from '../../../service/common/grid.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-whatsapp-tags',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './whatsapp-tags.component.html',
   styleUrl: './whatsapp-tags.component.scss',
 })

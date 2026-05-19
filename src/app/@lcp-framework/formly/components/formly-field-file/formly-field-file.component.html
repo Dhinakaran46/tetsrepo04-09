@@ -1,5 +1,5 @@
 <!-- <input type="file" [formControl]="formControl" [formlyAttributes]="field" />
- <div class="custom-file-container" data-upload-id="myFirstImage"></div> -->
+<div class="custom-file-container" data-upload-id="myFirstImage"></div> -->
 <div class="formly-file-preview">
   <input
     [accept]="updateFileAccept(field.props['accept'])"
@@ -9,8 +9,8 @@
     (change)="onFileChange($event, field.props['max_size'])"
     class="formly-file form-input p-0 file:border-0 file:bg-primary/90 file:px-4 file:py-2 file:font-semibold file:text-white file:hover:bg-primary ltr:file:mr-5 rtl:file:ml-5"
   />
+  @if (isImageFile('image') && !fileMsg.length && defaultImageUrl.length) {
   <img
-    *ngIf="isImageFile('image') && !fileMsg.length && defaultImageUrl.length"
     [src]="defaultImageUrl"
     alt="formly-img"
     class="formly-img cursor-pointer"
@@ -19,20 +19,23 @@
     (click)="downloadFile()"
     [title]="(defaultImageUrl || '').includes('http') ? 'Download the file ' + getFileName(true) : ''"
   />
+  } @if (fileMsg.length) {
   <div
     [title]="'Download the file ' + defaultImageUrl.split('/').pop()"
     class="cursor-pointer truncate p-2 text-blue-600"
     appDynamicFontSize="body"
-    *ngIf="fileMsg.length"
     (click)="downloadFile()"
     [title]="(defaultImageUrl || '').includes('http') ? 'Download the file ' + getFileName(true) : ''"
   >
     {{ fileMsg }}
   </div>
-  <div class="p-2 text-red-500" *ngIf="formControl && formControl.errors && formControl.errors['invalidFileFormat']">
+  } @if (formControl && formControl.errors && formControl.errors['invalidFileFormat']) {
+  <div class="p-2 text-red-500">
     {{ 'Invalid file format. Please upload a valid file. Supported formats: ' + field.props['accept'].split(',').join(', ') + '.' }}
   </div>
-  <div class="p-2 text-red-500" *ngIf="formControl && formControl.errors && formControl.errors['invalidFileSize']">
+  } @if (formControl && formControl.errors && formControl.errors['invalidFileSize']) {
+  <div class="p-2 text-red-500">
     {{ 'File size must be up to ' + (field.props['max_size'] | uppercase) + '.' }}
   </div>
+  }
 </div>

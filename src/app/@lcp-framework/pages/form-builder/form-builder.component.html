@@ -3,59 +3,62 @@
     <div class="panel">
       <div class="mb-5 flex items-center justify-between">
         <h5 class="text-lg font-semibold dark:text-white-light">{{ formEntity?.entity_name | translate }}</h5>
+        @if (!this.entityName) {
         <button
-          *ngIf="!this.entityName"
           type="button"
           class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l"
           (click)="location.back()"
         >
           {{ 'back' | translate }}
         </button>
+        }
 
         <!--<button *ngIf="this.entityName && isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
-          <i class="fa-solid fa-xmark"></i>
-        </button>-->
+        <i class="fa-solid fa-xmark"></i>
+      </button>-->
       </div>
       <div class="mb-5">
         <form [formGroup]="form" (ngSubmit)="onSubmit(false)" novalidate>
           <div class="mb-5 flex flex-wrap items-center justify-end gap-2">
+            @if (isDrafted) {
             <span
               class="badge badge-outline-secondary"
-              *ngIf="isDrafted"
               [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
             >
               {{ 'draft' | translate }}
             </span>
+            } @if (processStatus && processStatus != 'submitted') {
             <span
               class="badge"
               [ngClass]="[
                 store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
                 processStatuses[processStatus]?.border_color
               ]"
-              *ngIf="processStatus && processStatus != 'submitted'"
             >
               {{ processStatuses[processStatus].value | translate }}
             </span>
+            }
           </div>
           <formly-form [form]="form" [fields]="fields" [options]="options" [model]="model"></formly-form>
           <div class="flex flex-wrap justify-center gap-5">
+            @if (entity_type !== 'details' && draftMode) {
             <button
               type="button"
               class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-              *ngIf="entity_type !== 'details' && draftMode"
               [disabled]="isDisabled"
               (click)="onSubmit(true)"
             >
               {{ 'save_as_draft' | translate }}
             </button>
+            } @if (entity_type !== 'details') {
             <button
               type="submit"
               class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-              *ngIf="entity_type !== 'details'"
               [disabled]="isDisabled"
             >
               {{ 'submit' | translate }}
             </button>
+            }
           </div>
         </form>
       </div>
@@ -64,13 +67,10 @@
 </div>
 
 <!-- Nested Form Builder Modal -->
-<div
-  class="fixed inset-0 z-50 overflow-y-auto"
-  *ngIf="nestedFormModalConfig?.open"
->
+@if (nestedFormModalConfig?.open) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-
   <!-- Modal Content -->
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
@@ -78,39 +78,43 @@
       [ngStyle]="{ width: nestedFormModalConfig?.width, height: nestedFormModalConfig?.height }"
     >
       <!-- Modal Title -->
-      <div *ngIf="nestedFormModalConfig?.title" class="p-4 border-b">
+      @if (nestedFormModalConfig?.title) {
+      <div class="border-b p-4">
         <h3 class="text-lg font-semibold">{{ nestedFormModalConfig.title }}</h3>
       </div>
+      }
       <!-- Corner Close Button -->
+      @if (nestedFormModalConfig?.showClose !== false) {
       <button
-        *ngIf="nestedFormModalConfig?.showClose !== false"
         type="button"
-        class="btn-xs absolute -top-5 -right-5 z-20 rounded-full bg-white shadow-lg border border-gray-200 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
+        class="btn-xs absolute -right-5 -top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-lg hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
         (click)="nestedFormModalConfig.open = false; noNestedFormPermission = false"
       >
         <span class="sr-only">Close</span>
         <i class="fa-solid fa-xmark text-2xl"></i>
       </button>
+      }
       <!-- Modal Body -->
       <div class="max-h-[80vh] overflow-y-auto p-4">
-        <div *ngIf="noNestedFormPermission" class="flex flex-col items-center justify-center min-h-[200px]">
-          <span class="text-lg text-red-600 font-semibold mb-4">No permission to view the details</span>
+        @if (noNestedFormPermission) {
+        <div class="flex min-h-[200px] flex-col items-center justify-center">
+          <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
           <button class="btn btn-primary" (click)="nestedFormModalConfig.open = false; noNestedFormPermission = false">Close</button>
         </div>
-        <ng-container *ngIf="!noNestedFormPermission">
-          <app-form-builder
-            *ngIf="nestedFormEntityName"
-            [uuid]="nestedFormUuid"
-            [entityName]="nestedFormEntityName"
-            [entityType]="nestedModalEntityType"
-            [isModal]="true"
-            [isNested]="true"
-            [fieldKey]="nestedFormFieldKey"
-            (closeModal)="onNestedFormSubmitted($event)"
-            (nestedFormSuccess)="onNestedFormSuccess($event)"
-          ></app-form-builder>
-        </ng-container>
+        } @if (!noNestedFormPermission) { @if (nestedFormEntityName) {
+        <app-form-builder
+          [uuid]="nestedFormUuid"
+          [entityName]="nestedFormEntityName"
+          [entityType]="nestedModalEntityType"
+          [isModal]="true"
+          [isNested]="true"
+          [fieldKey]="nestedFormFieldKey"
+          (closeModal)="onNestedFormSubmitted($event)"
+          (nestedFormSuccess)="onNestedFormSuccess($event)"
+        ></app-form-builder>
+        } }
       </div>
     </div>
   </div>
 </div>
+}

@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { Store } from '@ngrx/store';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormBuilder, FormGroup, ReactiveFormsModule, AbstractControl, FormArray, Validators } from '@angular/forms';
@@ -33,7 +34,7 @@ interface Item {
 @Component({
   selector: 'app-language-mapping',
   standalone: true,
-  imports: [LoaderComponent, CommonSharedModule, DataTableComponent, ReactiveFormsModule, SearchPipe],
+  imports: [CommonSharedModule, ReactiveFormsModule],
   templateUrl: './language-mapping.component.html',
   styleUrl: './language-mapping.component.scss',
   animations: [
@@ -44,7 +45,7 @@ interface Item {
   ],
 })
 export class LanguageMappingComponent implements OnInit {
-  store: any;
+  store: any = initialState;
   userId: any;
   companyId: any;
   loading = false;
@@ -103,7 +104,8 @@ export class LanguageMappingComponent implements OnInit {
     private route: ActivatedRoute,
     private languageService: LanguageService,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
     this.langMapForm = this.formBuilder.group({
       items: this.formBuilder.array([]),
@@ -112,10 +114,10 @@ export class LanguageMappingComponent implements OnInit {
     this.langMapAddForm = this.formBuilder.group({
       items: this.formBuilder.array([]),
     });
-    this.initStore();
   }
 
   ngOnInit() {
+    this.initStore();
     this.title_key = this.route.snapshot.data['pageInfo'].fullEntity;
     const translateTitle = this.translate.instant(this.title_key);
     this.titleService.setTitle(translateTitle);
@@ -146,7 +148,10 @@ export class LanguageMappingComponent implements OnInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 
@@ -170,11 +175,14 @@ export class LanguageMappingComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
+          this.loading = false;
+          this.cdr.detectChanges();
         }
       },
       error: (error) => {
         console.error('Error fetching data:', error);
         this.loading = false;
+        this.cdr.detectChanges();
       },
       complete: () => {
         this.loading = false;
@@ -229,6 +237,8 @@ export class LanguageMappingComponent implements OnInit {
       if (data.length - 1 === rowIndex) {
         setTimeout(() => {
           this.updateFilteredControls();
+          this.loading = false;
+          this.cdr.detectChanges();
         }, 500);
       }
     });

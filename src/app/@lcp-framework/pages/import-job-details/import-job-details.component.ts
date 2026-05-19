@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, ComponentRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { CommonSharedModule } from '../../../@lcp-framework/shared/common/common.module';
 import { GridApiService } from '../../../@lcp-framework/service/common/grid.service';
 import { ToastrService } from 'ngx-toastr';
@@ -17,7 +18,7 @@ import { MasterListComponent } from '../master-list/master-list.component';
 @Component({
   selector: 'app-import-job-details',
   standalone: true,
-  imports: [CommonSharedModule, ClientDatatableComponent, LoaderComponent, MasterListComponent],
+  imports: [CommonSharedModule, LoaderComponent],
   templateUrl: './import-job-details.component.html',
   styleUrl: './import-job-details.component.scss',
 })
@@ -30,7 +31,7 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
 
   sheet_data: any = null;
   loading: boolean = false;
-  store: any;
+  store: any = initialState;
   isProcessing: boolean = false;
   id: any | null = null;
   commonData: any = {
@@ -56,10 +57,10 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
     private titleService: Title,
     private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
   }
 
   ngOnInit() {
+    this.initStore();
     this.id = this.route.snapshot.params['uuid'] || null;
 
     if (this.id) {
@@ -126,7 +127,10 @@ export class ImportJobDetailsComponent implements OnInit, OnDestroy {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

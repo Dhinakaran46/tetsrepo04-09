@@ -17,12 +17,10 @@
     [class.cursor-not-allowed]="disabled"
   />
 
-  <ul
-    *ngIf="showDropdown && filteredItems.length"
-    class="absolute top-full z-10 mt-1 max-h-60 w-full overflow-y-auto rounded border border-gray-300 bg-white text-xs shadow"
-  >
+  @if (showDropdown && filteredItems.length) {
+  <ul class="absolute top-full z-10 mt-1 max-h-60 w-full overflow-y-auto rounded border border-gray-300 bg-white text-xs shadow">
+    @for (item of filteredItems; track item) {
     <li
-      *ngFor="let item of filteredItems"
       (mousedown)="selectItem(item)"
       [class.bg-blue-100]="item.id === innerValue"
       [class.text-blue-800]="item.id === innerValue"
@@ -31,5 +29,7 @@
     >
       {{ item.name }}
     </li>
+    }
   </ul>
+  }
 </div>

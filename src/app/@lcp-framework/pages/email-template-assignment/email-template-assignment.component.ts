@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { FormlyConfigModule } from '../../formly/formly-config.module';
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MenuMapService } from '../../service/common/menu-map.service';
@@ -17,7 +17,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 @Component({
   selector: 'app-email-template-assignment',
   standalone: true,
-  imports: [FormlyModule, CommonSharedModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, CommonModule, NgSelectModule],
+  imports: [FormlyModule, CommonSharedModule, FormlyBootstrapModule, ReactiveFormsModule, FormlyConfigModule, FormsModule, NgSelectModule],
   templateUrl: './email-template-assignment.component.html',
   styleUrl: './email-template-assignment.component.scss',
 })

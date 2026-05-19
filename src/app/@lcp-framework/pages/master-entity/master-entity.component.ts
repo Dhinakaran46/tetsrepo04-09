@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconXComponent } from '../../shared/icon/icon-x';
@@ -39,13 +40,6 @@ export function viewMandatoryValidator(): ValidatorFn {
   imports: [
     CommonSharedModule,
     MonacoEditorModule,
-    IconXComponent,
-    IconSendComponent,
-    IconSaveComponent,
-    IconEyeComponent,
-    IconDownloadComponent,
-    IconXCircleComponent,
-    IconPlusCircleComponent,
     ReactiveFormsModule,
   ],
   templateUrl: './master-entity.component.html',
@@ -60,7 +54,7 @@ export function viewMandatoryValidator(): ValidatorFn {
 export class MasterEntityComponent implements OnInit {
   readonly linkTypeComponentCase = 'component';
   readonly linkTypeChildComponentCase = 'child_component';
-  store: any;
+  store: any = initialState;
   form!: FormGroup;
   items: any = [];
   entity_types: any = [];
@@ -1207,12 +1201,13 @@ export class MasterEntityComponent implements OnInit {
     public location: Location,
     private translate: TranslateService,
     private titleService: Title,
-    private openaiService: OpenaiService
+    private openaiService: OpenaiService,
+    private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
   }
 
   ngOnInit() {
+    this.initStore();
     this.id = this.route.snapshot.params['id'] || this.route.snapshot.params['uuid'] || null;
     this.initForm();
     this.constructRedirectUrl();
@@ -1249,7 +1244,10 @@ export class MasterEntityComponent implements OnInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

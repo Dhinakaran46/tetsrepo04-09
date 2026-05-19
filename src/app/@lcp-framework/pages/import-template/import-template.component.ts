@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconXComponent } from '../../shared/icon/icon-x';
@@ -71,13 +72,6 @@ interface QueryItem {
   imports: [
     CommonSharedModule,
     MonacoEditorModule,
-    IconXComponent,
-    IconSendComponent,
-    IconSaveComponent,
-    IconEyeComponent,
-    IconDownloadComponent,
-    IconXCircleComponent,
-    IconPlusCircleComponent,
     ReactiveFormsModule,
     ClientDatatableComponent,
   ],
@@ -91,7 +85,7 @@ interface QueryItem {
   ],
 })
 export class ImportTemplateComponent implements OnInit {
-  store: any;
+  store: any = initialState;
   form!: FormGroup;
   items: any = [];
   queries: any = [];
@@ -272,12 +266,13 @@ export class ImportTemplateComponent implements OnInit {
     public storeData: Store<any>,
     public location: Location,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
   }
 
   ngOnInit() {
+    this.initStore();
     this.id = this.route.snapshot.params['uuid'] || null;
     this.getEmailTemplateProcessList();
     this.initForm();
@@ -333,7 +328,10 @@ export class ImportTemplateComponent implements OnInit {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

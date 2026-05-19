@@ -106,6 +106,7 @@ export const commonConfig: any = {
     TREE_BUILDER_MODULE: 'tree_builder_module',
     TARGET_KEYWORDS_EMBEDDINGS_MODULE: 'target_keywords_embeddings_module',
     AUDIT_LOG_MANAGEMENT_MODULE: 'audit_log_management_module',
+    CHART_BUILDER_MODULE: 'chart_builder_module',
   },
   PREFIX_SHORTCODE: {
     grid_builder_module: 'grid',
@@ -143,6 +144,7 @@ export const commonConfig: any = {
     tree_builder_module: 'treebuildermodule',
     target_keywords_embeddings_module: 'targetkeywordsembeddingsmodule',
     audit_log_management_module: 'auditlogmanagement',
+    chart_builder_module: 'chartbuilder',
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -265,6 +267,7 @@ export const commonConfig: any = {
     { label: 'Tree Builder Module', value: 'tree_builder_module' },
     { label: 'Target Keywords Embeddings Module', value: 'target_keywords_embeddings_module' },
     { label: 'Audit Log Management Module', value: 'audit_log_management_module' },
+    { label: 'Chart Builder Module', value: 'chart_builder_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

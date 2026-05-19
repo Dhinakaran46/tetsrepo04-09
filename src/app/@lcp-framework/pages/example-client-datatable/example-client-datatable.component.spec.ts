@@ -1,5 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { DatePipe } from '@angular/common';
+import { importProvidersFrom } from '@angular/core';
+import { provideToastr } from 'ngx-toastr';
+import { provideStore } from '@ngrx/store';
+import { TranslateModule } from '@ngx-translate/core';
 import { ExampleClientDatatableComponent } from './example-client-datatable.component';
 
 describe('ExampleClientDatatableComponent', () => {
@@ -8,10 +12,16 @@ describe('ExampleClientDatatableComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ExampleClientDatatableComponent]
-    })
-    .compileComponents();
-    
+      teardown: { destroyAfterEach: true },
+      imports: [ExampleClientDatatableComponent],
+      providers: [
+        DatePipe,
+        provideToastr(),
+        provideStore({}),
+        importProvidersFrom(TranslateModule.forRoot()),
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(ExampleClientDatatableComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

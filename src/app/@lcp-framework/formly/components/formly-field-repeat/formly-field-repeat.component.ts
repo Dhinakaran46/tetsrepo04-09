@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FieldArrayType, FormlyFieldConfig } from '@ngx-formly/core';
 
 @Component({
+  standalone: false,
   selector: 'app-formly-field-repeat',
   templateUrl: './formly-field-repeat.component.html',
   styleUrl: './formly-field-repeat.component.scss',

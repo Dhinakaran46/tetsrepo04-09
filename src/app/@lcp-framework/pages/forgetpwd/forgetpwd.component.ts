@@ -1,7 +1,8 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { initialState } from '../../../store/index.reducer';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AppService } from '../../service/common/app.service';
 import { IconCaretDownComponent } from '../../shared/icon/icon-caret-down';
@@ -31,16 +32,7 @@ import { LanguageService } from '../../service/common/language.service';
   imports: [
     CommonSharedModule,
     ReactiveFormsModule,
-    IconEyeComponent,
-    IconCaretDownComponent,
-    IconMailComponent,
-    IconLockDotsComponent,
-    IconInstagramComponent,
-    IconFacebookCircleComponent,
-    IconTwitterComponent,
-    IconGoogleComponent,
     LoaderComponent,
-    CopyrightComponent,
   ],
   animations: [
     trigger('toggleAnimation', [
@@ -54,7 +46,7 @@ export class ForgetpwdComponent {
 
   email = '';
   loading = false;
-  store: any;
+  store: any = initialState;
   fgForm: FormGroup;
   isSubmitted = false;
 
@@ -68,16 +60,16 @@ export class ForgetpwdComponent {
     private toastr: ToastrService,
     private authService: AuthService,
     private profileApiService: ProfileApiService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
-
     this.fgForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/)]],
     });
   }
 
   ngOnInit() {
+    this.initStore();
     this.fgForm.controls['email'].statusChanges.subscribe((status) => {
       if (this.isSubmitted) {
         this.fgForm.controls['email'].markAsTouched();
@@ -97,7 +89,10 @@ export class ForgetpwdComponent {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

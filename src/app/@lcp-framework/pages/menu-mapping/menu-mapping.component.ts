@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -74,6 +74,10 @@ export class MenuMappingComponent implements OnInit {
   manualIcons: Set<string> = new Set(); // To track manually entered values
   commonConfig = commonConfig;
 
+  private refreshView(): void {
+    setTimeout(() => this.cdr.detectChanges());
+  }
+
   constructor(
     private menuService: MenuService,
     private menuMapService: MenuMapService,
@@ -85,7 +89,8 @@ export class MenuMappingComponent implements OnInit {
     private http: HttpClient,
     private menuLoadService: MenuLoadService,
     private translate: TranslateService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {
     this.menu_id = this.localStorageService.getData('menu_id');
 
@@ -153,6 +158,7 @@ export class MenuMappingComponent implements OnInit {
         if (this.menu_id) {
           this.getMenuList(this.menu_id);
         }
+        this.refreshView();
       },
       (error) => {
         console.error('Error loading icon classes:', error);
@@ -199,6 +205,7 @@ export class MenuMappingComponent implements OnInit {
       this.flatMenu = this.flattenMenu(data);
       const menuIcons = this.flatMenu.map((item) => item.menu_img).filter((icon) => icon !== null);
       this.iconClasses = this.mergeAndDeduplicateIcons(this.iconClasses, menuIcons);
+      this.refreshView();
     });
   }
 
@@ -232,6 +239,7 @@ export class MenuMappingComponent implements OnInit {
           } else {
             this.selectedOptionName = '';
           }
+          this.refreshView();
         }
       },
       error: (error) => {
@@ -321,6 +329,7 @@ export class MenuMappingComponent implements OnInit {
             this.entity_type = response.data.records[0]?.entity_type || null;
             this.updateFormFields(item);
             this.fetchAndSelectModules(this.entity_type, item.entity_id);
+            this.refreshView();
           }
         },
         error: (error) => {
@@ -465,12 +474,14 @@ export class MenuMappingComponent implements OnInit {
             this.menuForm.patchValue({ module: selectedEntityID });
             this.getViewPermission(selectedEntityID);
           }
+          this.refreshView();
         }
       },
       error: (error) => {
         console.error('Error fetching modules:', error);
         this.entityModules = [];
         this.menuForm.patchValue({ module: '' });
+        this.refreshView();
       },
     });
   }
@@ -512,6 +523,7 @@ export class MenuMappingComponent implements OnInit {
             this.menuForm.patchValue({ parentActionItem: viewActionId });
             this.getActionItem = false;
           }
+          this.refreshView();
         }
       },
       error: (error) => {
@@ -562,6 +574,7 @@ export class MenuMappingComponent implements OnInit {
       next: (response: any) => {
         if (response.code === 200 && response.status) {
           this.parentActionList = response.data.records.filter((action: any) => action.name !== 'view');
+          this.refreshView();
         }
       },
       error: (error) => {
@@ -624,17 +637,20 @@ export class MenuMappingComponent implements OnInit {
               } else {
                 this.toastr.warning('This URL is already in use. Please try another URL.');
                 this.loading = false;
+                this.cdr.markForCheck();
               }
             } else {
               this.saveMenuData(formData, currentDate);
             }
           } else {
             this.loading = false;
+            this.cdr.markForCheck();
           }
         },
         error: (error) => {
           console.error('Error fetching URL details:', error);
           this.loading = false;
+          this.cdr.markForCheck();
         },
       });
     } else {
@@ -693,7 +709,6 @@ export class MenuMappingComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
-       
 
         this.showForm = false;
         this.menuForm.reset();
@@ -756,7 +771,7 @@ export class MenuMappingComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
-        
+
         this.showTypeForm = false;
         this.menuForm.reset();
       },

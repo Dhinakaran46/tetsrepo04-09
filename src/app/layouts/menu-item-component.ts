@@ -22,17 +22,25 @@ interface MenuItem {
     <li class="menu nav-item relative">
       <a [routerLink]="item.target ? [item.target] : null" [routerLinkActive]="item.target ? 'active' : ''" class="nav-link">
         <div class="flex items-center">
-          <icon-menu-dashboard class="shrink-0" *ngIf="item.name.toLowerCase() === 'dashboard'" />
+          @if (item.name.toLowerCase() === 'dashboard') {
+          <icon-menu-dashboard class="shrink-0" />
+          }
           <!-- Add more icon conditions here based on item name or other properties -->
           <span class="px-2">{{ item.name | translate }}</span>
         </div>
-        <div class="right_arrow" *ngIf="item.children && item.children.length">
+        @if (item.children && item.children.length) {
+        <div class="right_arrow">
           <i class="fa-solid fa-angle-down"></i>
         </div>
+        }
       </a>
-      <ul class="sub-menu" *ngIf="item.children && item.children.length">
-        <app-menu-item *ngFor="let child of item.children" [item]="child"></app-menu-item>
+      @if (item.children && item.children.length) {
+      <ul class="sub-menu">
+        @for (child of item.children; track child) {
+        <app-menu-item [item]="child"></app-menu-item>
+        }
       </ul>
+      }
     </li>
   `,
 })

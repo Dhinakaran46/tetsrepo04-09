@@ -1,7 +1,8 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { initialState } from '../../../../store/index.reducer';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AppService } from '../../../service/common/app.service';
 import { IconCaretDownComponent } from '../../../shared/icon/icon-caret-down';
@@ -32,16 +33,7 @@ import { LanguageService } from '../../../service/common/language.service';
   imports: [
     CommonSharedModule,
     ReactiveFormsModule,
-    IconEyeComponent,
-    IconCaretDownComponent,
-    IconMailComponent,
-    IconLockDotsComponent,
-    IconInstagramComponent,
-    IconFacebookCircleComponent,
-    IconTwitterComponent,
-    IconGoogleComponent,
     LoaderComponent,
-    CopyrightComponent,
   ],
   animations: [
     trigger('toggleAnimation', [
@@ -54,7 +46,7 @@ export class ResetpwdComponent {
   companyId: number = 1;
 
   loading = false;
-  store: any;
+  store: any = initialState;
   resetPwdForm: FormGroup;
   isSubmitted = false;
   currYear: number = new Date().getFullYear();
@@ -95,10 +87,9 @@ export class ResetpwdComponent {
     private authService: AuthService,
     private profileApiService: ProfileApiService,
     private localstore: LocalStorageService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private cdr: ChangeDetectorRef
   ) {
-    this.initStore();
-
     const conf: any = this.localstore.getData('config');
     if (conf) {
       try {
@@ -130,6 +121,7 @@ export class ResetpwdComponent {
   }
 
   ngOnInit() {
+    this.initStore();
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
     } else {
@@ -189,7 +181,10 @@ export class ResetpwdComponent {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          this.cdr.detectChanges();
+        });
       });
   }
 

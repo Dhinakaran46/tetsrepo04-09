@@ -4,6 +4,7 @@ import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
 @Component({
+  standalone: false,
   selector: 'formly-field-color-picker',
   templateUrl: './formly-field-color-picker.component.html',
   styleUrls: ['./formly-field-color-picker.component.scss'],

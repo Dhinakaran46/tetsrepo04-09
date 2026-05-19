@@ -33,7 +33,8 @@
           </ul>
         </div>
 
-        <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('permission_type')?.value === 'role'">
+        @if (mappingForm.get('permission_type')?.value === 'role') {
+        <div class="align-center inline-contents relative justify-center">
           <select
             appDynamicFontSize="body"
             id="role"
@@ -42,11 +43,13 @@
             (change)="getEntityList()"
           >
             <option value>{{ 'select_any' | translate }}</option>
-            <option *ngFor="let role of roleList" [value]="role.id">{{ role.name }}</option>
+            @for (role of roleList; track role) {
+            <option [value]="role.id">{{ role.name }}</option>
+            }
           </select>
         </div>
-
-        <div class="align-center inline-contents relative justify-center" *ngIf="mappingForm.get('permission_type')?.value === 'user'">
+        } @if (mappingForm.get('permission_type')?.value === 'user') {
+        <div class="align-center inline-contents relative justify-center">
           <select
             appDynamicFontSize="body"
             id="user"
@@ -55,9 +58,12 @@
             (change)="getEntityList()"
           >
             <option value>{{ 'select_any' | translate }}</option>
-            <option *ngFor="let user of userList" [value]="user.id">{{ user.name }}</option>
+            @for (user of userList; track user) {
+            <option [value]="user.id">{{ user.name }}</option>
+            }
           </select>
         </div>
+        }
       </div>
     </div>
   </div>
@@ -66,7 +72,8 @@
     <!-- Content Wrapper for scrolling -->
     <div class="h-full w-full">
       <div formArrayName="entities" class="ml-2 min-w-full sm:min-w-[700px] lg:min-w-[1200px]">
-        <ng-container *ngFor="let entityGroup of getEntitiesControls(); let i = index" [formGroupName]="i">
+        @for (entityGroup of getEntitiesControls(); track entityGroup; let i = $index) {
+        <ng-container [formGroupName]="i">
           <div
             class="mb-2 overflow-x-auto rounded-lg border bg-gray-100 p-4 shadow-sm dark:bg-black"
             [ngClass]="{ 'flex items-center': getSortedRightsControls(entityGroup).length > 0 }"
@@ -78,17 +85,17 @@
               [title]="entityGroup.get('name')?.value | translate"
               (click)="toggleExpand(entityGroup)"
             >
+              @if (getSortedRightsControls(entityGroup).length > 0) {
               <input
-                *ngIf="getSortedRightsControls(entityGroup).length > 0"
                 type="checkbox"
                 [checked]="isAllChecked(entityGroup)"
                 (change)="toggleAllRights(entityGroup, getCheckboxChecked($event))"
                 class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
               />
+              }
               <i class="fas" [ngClass]="entityGroup.get('menu_img')?.value"></i>
               <span class="ml-2" appDynamicFontSize="title">{{ entityGroup.get('name')?.value | translate }}</span>
               <i class="fas ml-4" [ngClass]="entityGroup.get('expanded')?.value ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-
               <!-- All checkbox placed right after arrow icon -->
               <label class="ml-4 flex items-center text-sm" (click)="$event.stopPropagation()">
                 <input
@@ -100,139 +107,150 @@
                 <span class="ml-1">Select All</span>
               </label>
             </button>
-
-            <ng-container *ngIf="entityGroup.get('expanded')?.value">
-              <!-- Font Awesome Right Arrow -->
-              <ng-container *ngIf="getSortedRightsControls(entityGroup).length > 0">
-                <i class="fas fa-arrow-right mx-2"></i>
+            @if (entityGroup.get('expanded')?.value) {
+            <!-- Font Awesome Right Arrow -->
+            @if (getSortedRightsControls(entityGroup).length > 0) {
+            <i class="fas fa-arrow-right mx-2"></i>
+            }
+            <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
+              @for (rightGroup of getSortedRightsControls(entityGroup); track rightGroup; let j = $index) {
+              <ng-container [formGroupName]="j">
+                @if (rightGroup.get('name')?.value) {
+                <label class="flex items-center justify-center whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    (change)="onCheckboxChange(rightGroup, $event, entityGroup)"
+                    formControlName="selected"
+                    class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
+                  />
+                  <span class="leading-none" appDynamicFontSize="subtitle">{{ rightGroup.get('name')?.value | translate }}</span>
+                  @if (rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value) {
+                  <span> ( {{ rightGroup.get('dashboard_grid')?.value | translate }} ) </span>
+                  }
+                  <!------  -->
+                </label>
+                }
               </ng-container>
-
-              <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
-                <ng-container *ngFor="let rightGroup of getSortedRightsControls(entityGroup); let j = index" [formGroupName]="j">
-                  <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
+              }
+            </div>
+            <div formArrayName="children" class="ml-7 mt-2">
+              @for (childGroup of getChildrenControls(entityGroup); track childGroup; let k = $index) {
+              <ng-container [formGroupName]="k">
+                <div class="mb-2 overflow-x-auto" [ngClass]="{ 'flex items-center': getSortedRightsControls(childGroup).length > 0 }">
+                  <button
+                    type="button"
+                    class="font-semibold sm:flex sm:items-center md:w-80"
+                    appDynamicFontSize="subtitle"
+                    [title]="childGroup.get('name')?.value | translate"
+                  >
+                    @if (getSortedRightsControls(childGroup).length > 0 || isDashboardTab(childGroup)) {
                     <input
                       type="checkbox"
-                      (change)="onCheckboxChange(rightGroup, $event, entityGroup)"
-                      formControlName="selected"
-                      class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
+                      [checked]="isDashboardTab(childGroup) ? isDashboardTabAllChecked(childGroup) : isAllChecked(childGroup)"
+                      (change)="
+                        isDashboardTab(childGroup)
+                          ? toggleDashboardTabRights(childGroup, getCheckboxChecked($event))
+                          : toggleAllRights(childGroup, getCheckboxChecked($event))
+                      "
+                      class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
                     />
-                    <span class="leading-none" appDynamicFontSize="subtitle">{{ rightGroup.get('name')?.value | translate }}</span>
-                    <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value">
-                      ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
-                    </span>
-                    <!------  -->
-                  </label>
-                </ng-container>
-              </div>
-
-              <div formArrayName="children" class="ml-7 mt-2">
-                <ng-container *ngFor="let childGroup of getChildrenControls(entityGroup); let k = index" [formGroupName]="k">
-                  <div class="mb-2 overflow-x-auto" [ngClass]="{ 'flex items-center': getSortedRightsControls(childGroup).length > 0 }">
-                    <button
-                      type="button"
-                      class="font-semibold sm:flex sm:items-center md:w-80"
-                      appDynamicFontSize="subtitle"
-                      [title]="childGroup.get('name')?.value | translate"
-                    >
-                      <input
-                        *ngIf="getSortedRightsControls(childGroup).length > 0 || isDashboardTab(childGroup)"
-                        type="checkbox"
-                        [checked]="isDashboardTab(childGroup) ? isDashboardTabAllChecked(childGroup) : isAllChecked(childGroup)"
-                        (change)="
-                          isDashboardTab(childGroup)
-                            ? toggleDashboardTabRights(childGroup, getCheckboxChecked($event))
-                            : toggleAllRights(childGroup, getCheckboxChecked($event))
-                        "
-                        class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
-                      />
-                      <i class="fas" [ngClass]="childGroup.get('menu_img')?.value"></i>
-                      <span class="ml-2" appDynamicFontSize="subtitle">{{ childGroup.get('name')?.value | translate }} </span>
-                    </button>
-
-                    <ng-container>
-                      <!-- Conditional Arrow for Grandchild Group Rights -->
-                      <ng-container *ngIf="getSortedRightsControls(childGroup).length > 0">
-                        <i class="fas fa-arrow-right mx-2"></i>
+                    }
+                    <i class="fas" [ngClass]="childGroup.get('menu_img')?.value"></i>
+                    <span class="ml-2" appDynamicFontSize="subtitle">{{ childGroup.get('name')?.value | translate }} </span>
+                  </button>
+                  <ng-container>
+                    <!-- Conditional Arrow for Grandchild Group Rights -->
+                    @if (getSortedRightsControls(childGroup).length > 0) {
+                    <i class="fas fa-arrow-right mx-2"></i>
+                    }
+                    <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
+                      @for (rightGroup of getSortedRightsControls(childGroup); track rightGroup; let l = $index) {
+                      <ng-container [formGroupName]="l">
+                        @if (rightGroup.get('name')?.value) {
+                        <label class="flex items-center justify-center whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            (change)="onCheckboxChange(rightGroup, $event, childGroup)"
+                            formControlName="selected"
+                            class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
+                            appDynamicFontSize="body"
+                          />
+                          <span class="leading-none" appDynamicFontSize="body">{{ rightGroup.get('name')?.value | translate }}</span>
+                          <!-- Check if the permission name is 'child_details' and show the child_entity_name -->
+                          @if (rightGroup.get('name')?.value === 'child_details') {
+                          <span> ( {{ rightGroup.get('child_entity_name')?.value | translate }} ) </span>
+                          }
+                        </label>
+                        }
                       </ng-container>
-
-                      <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
-                        <ng-container *ngFor="let rightGroup of getSortedRightsControls(childGroup); let l = index" [formGroupName]="l">
-                          <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
+                      }
+                    </div>
+                    <div formArrayName="children" class="ml-7 mt-2">
+                      @for (grandchildGroup of getChildrenControls(childGroup); track grandchildGroup; let m = $index) {
+                      <ng-container [formGroupName]="m">
+                        <div class="mb-2 overflow-x-auto" [ngClass]="{ 'flex items-center': getSortedRightsControls(grandchildGroup).length > 0 }">
+                          <button
+                            type="button"
+                            class="font-semibold sm:flex sm:items-center md:w-80"
+                            appDynamicFontSize="subtitle"
+                            [title]="grandchildGroup.get('name')?.value | translate"
+                          >
+                            @if (getSortedRightsControls(grandchildGroup).length > 0) {
                             <input
                               type="checkbox"
-                              (change)="onCheckboxChange(rightGroup, $event, childGroup)"
-                              formControlName="selected"
-                              class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
-                              appDynamicFontSize="body"
+                              [checked]="isAllChecked(grandchildGroup)"
+                              (change)="toggleAllRights(grandchildGroup, getCheckboxChecked($event))"
+                              class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
                             />
-                            <span class="leading-none" appDynamicFontSize="body">{{ rightGroup.get('name')?.value | translate }}</span>
-                            <!-- Check if the permission name is 'child_details' and show the child_entity_name -->
-                            <span *ngIf="rightGroup.get('name')?.value === 'child_details'">
-                              ( {{ rightGroup.get('child_entity_name')?.value | translate }} )
-                            </span>
-                          </label>
-                        </ng-container>
-                      </div>
-
-                      <div formArrayName="children" class="ml-7 mt-2">
-                        <ng-container *ngFor="let grandchildGroup of getChildrenControls(childGroup); let m = index" [formGroupName]="m">
-                          <div class="mb-2 overflow-x-auto" [ngClass]="{ 'flex items-center': getSortedRightsControls(grandchildGroup).length > 0 }">
-                            <button
-                              type="button"
-                              class="font-semibold sm:flex sm:items-center md:w-80"
-                              appDynamicFontSize="subtitle"
-                              [title]="grandchildGroup.get('name')?.value | translate"
-                            >
-                              <input
-                                *ngIf="getSortedRightsControls(grandchildGroup).length > 0"
-                                type="checkbox"
-                                [checked]="isAllChecked(grandchildGroup)"
-                                (change)="toggleAllRights(grandchildGroup, getCheckboxChecked($event))"
-                                class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary"
-                              />
-                              <i class="fas" [ngClass]="grandchildGroup.get('menu_img')?.value"></i>
-                              <span class="ml-2" appDynamicFontSize="subtitle">{{ grandchildGroup.get('name')?.value | translate }}</span>
-                            </button>
-
-                            <ng-container>
-                              <!-- Conditional Arrow for Grandchild Group Rights -->
-                              <ng-container *ngIf="getSortedRightsControls(grandchildGroup).length > 0">
-                                <i class="fas fa-arrow-right mx-2"></i>
+                            }
+                            <i class="fas" [ngClass]="grandchildGroup.get('menu_img')?.value"></i>
+                            <span class="ml-2" appDynamicFontSize="subtitle">{{ grandchildGroup.get('name')?.value | translate }}</span>
+                          </button>
+                          <ng-container>
+                            <!-- Conditional Arrow for Grandchild Group Rights -->
+                            @if (getSortedRightsControls(grandchildGroup).length > 0) {
+                            <i class="fas fa-arrow-right mx-2"></i>
+                            }
+                            <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
+                              @for (rightGroup of getSortedRightsControls(grandchildGroup); track rightGroup; let n = $index) {
+                              <ng-container [formGroupName]="n">
+                                @if (rightGroup.get('name')?.value) {
+                                <label class="flex items-center justify-center whitespace-nowrap">
+                                  <input
+                                    type="checkbox"
+                                    (change)="onCheckboxChange(rightGroup, $event, grandchildGroup)"
+                                    formControlName="selected"
+                                    class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
+                                    appDynamicFontSize="body"
+                                  />
+                                  <span class="leading-none" appDynamicFontSize="body">{{ rightGroup.get('name')?.value | translate }}</span>
+                                  <!-- Dashboard Grid Name -->
+                                  @if (rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value) {
+                                  <span> ( {{ rightGroup.get('dashboard_grid')?.value | translate }} ) </span>
+                                  }
+                                  <!-- Check if the permission name is 'child_details' and show the child_entity_name -->
+                                  @if (rightGroup.get('name')?.value === 'child_details') {
+                                  <span> ( {{ rightGroup.get('child_entity_name')?.value | translate }} ) </span>
+                                  }
+                                </label>
+                                }
                               </ng-container>
-
-                              <div formArrayName="rights" class="ml-7 mt-2 flex flex-wrap gap-2">
-                                <ng-container *ngFor="let rightGroup of getSortedRightsControls(grandchildGroup); let n = index" [formGroupName]="n">
-                                  <label class="flex items-center justify-center whitespace-nowrap" *ngIf="rightGroup.get('name')?.value">
-                                    <input
-                                      type="checkbox"
-                                      (change)="onCheckboxChange(rightGroup, $event, grandchildGroup)"
-                                      formControlName="selected"
-                                      class="form-checkbox h-4 w-4 rounded border-gray-300 align-middle text-primary"
-                                      appDynamicFontSize="body"
-                                    />
-                                    <span class="leading-none" appDynamicFontSize="body">{{ rightGroup.get('name')?.value | translate }}</span>
-                                    <!-- Dashboard Grid Name -->
-                                    <span *ngIf="rightGroup.get('name')?.value === 'view' && rightGroup.get('dashboard_grid')?.value">
-                                      ( {{ rightGroup.get('dashboard_grid')?.value | translate }} )
-                                    </span>
-                                    <!-- Check if the permission name is 'child_details' and show the child_entity_name -->
-                                    <span *ngIf="rightGroup.get('name')?.value === 'child_details'">
-                                      ( {{ rightGroup.get('child_entity_name')?.value | translate }} )
-                                    </span>
-                                  </label>
-                                </ng-container>
-                              </div>
-                            </ng-container>
-                          </div>
-                        </ng-container>
-                      </div>
-                    </ng-container>
-                  </div>
-                </ng-container>
-              </div>
-            </ng-container>
+                              }
+                            </div>
+                          </ng-container>
+                        </div>
+                      </ng-container>
+                      }
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-container>
+              }
+            </div>
+            }
           </div>
         </ng-container>
+        }
       </div>
     </div>
   </div>

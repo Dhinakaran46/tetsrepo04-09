@@ -1,25 +1,23 @@
-import { Component, HostListener, OnInit, Type } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, Type } from '@angular/core';
 import { CUSTOM_ELEMENTS_SCHEMA, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NavigationEnd, Router, UrlTree } from '@angular/router';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from 'ngx-toastr';
 
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
 import { AuthService } from '../@lcp-framework/service/common/auth.service';
+import { initialState } from '../store/index.reducer';
 import { environment } from '../@lcp-framework/../../environments/environment';
-import { MenuItemComponent } from './menu-item-component';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { commonConfig } from '../@lcp-framework/config/common.config';
-import { IconMenuDashboardComponent } from '../@lcp-framework/shared/icon/menu/icon-menu-dashboard';
-import { NgComponentOutlet } from '@angular/common';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.service';
 import { IdleService } from '../@lcp-framework/service/common/idle.service';
@@ -48,7 +46,7 @@ interface MenuItem {
   templateUrl: './header.html',
   styleUrl: './common.scss',
   standalone: true,
-  imports: [CommonSharedModule, NgComponentOutlet, MenuItemComponent, IconMenuDashboardComponent],
+  imports: [CommonSharedModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   animations: [
     trigger('toggleAnimation', [
@@ -69,7 +67,7 @@ export class HeaderComponent implements OnInit {
   menu_types: any = [];
 
   menuItems: MenuItem[] = [];
-  store: any;
+  store: any = initialState;
   search = false;
   messages = [
     {
@@ -113,6 +111,52 @@ export class HeaderComponent implements OnInit {
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
   showNotifications: boolean = false;
+  showLanguageMenu = false;
+  showProfileMenu = false;
+
+  private refreshView(): void {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
+
+  private parseUserData(rawUserData: any): any {
+    if (!rawUserData) return null;
+    if (typeof rawUserData === 'object') return rawUserData;
+    try {
+      return JSON.parse(rawUserData);
+    } catch {
+      return null;
+    }
+  }
+
+  private getPermissionsMap(): Record<string, boolean> {
+    const rootPermissions = this.user_info?.permissions;
+    if (rootPermissions && typeof rootPermissions === 'object' && !Array.isArray(rootPermissions)) {
+      return rootPermissions as Record<string, boolean>;
+    }
+
+    const mainPermissions = this.user_info?.main?.permissions;
+    if (Array.isArray(mainPermissions)) {
+      return mainPermissions.reduce((acc: Record<string, boolean>, permission: any) => {
+        const slug = String(permission?.slug || '').trim();
+        if (!slug) return acc;
+        acc[slug] = permission?.accessible === true;
+        return acc;
+      }, {});
+    }
+
+    if (mainPermissions && typeof mainPermissions === 'object') {
+      return mainPermissions as Record<string, boolean>;
+    }
+
+    return {};
+  }
+
+  private getViewPermissions(): string[] {
+    const permissionMap = this.getPermissionsMap();
+    return Object.entries(permissionMap)
+      .filter(([key, value]) => key.startsWith('view_') && value === true)
+      .map(([key]) => key.replace('view_', ''));
+  }
 
   constructor(
     public translate: TranslateService,
@@ -128,10 +172,9 @@ export class HeaderComponent implements OnInit {
     private idleService: IdleService,
     private timezoneService: TimezoneService,
     private gridApiService: GridApiService,
-    private firebaseService: FirebaseService
-  ) {
-    this.initStore();
-  }
+    private firebaseService: FirebaseService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   async initStore() {
     this.storeData
@@ -148,7 +191,8 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.user_info = JSON.parse(this.localstore.getData('user_data'));
+    this.initStore();
+    this.user_info = this.parseUserData(this.localstore.getData('user_data'));
     this.config = JSON.parse(this.localstore.getData('config'));
     // this.setActiveDropdown();
     // this.router.events.subscribe((event) => {
@@ -172,8 +216,16 @@ export class HeaderComponent implements OnInit {
           },
         });
       } else {
-        this.firebaseService.init(this.config);
-        this.firebaseService.listen(this.user_info?.main?.user_id);
+        try {
+          if (this.config?.projectId && this.config?.databaseURL) {
+            this.firebaseService.init(this.config);
+            this.firebaseService.listen(this.user_info?.main?.user_id);
+          } else {
+            console.warn('Firebase config incomplete. Real-time notifications disabled.');
+          }
+        } catch (error) {
+          console.error('Error initializing Firebase notifications:', error);
+        }
       }
     }
 
@@ -188,7 +240,14 @@ export class HeaderComponent implements OnInit {
     }
 
     const languageId = this.languageService.getLanguageId(languageCode);
-    this.languageService.fetchLanguageData(this.companyId, languageId);
+
+    // Load menu from cache synchronously to render immediately
+    this.loadMenuFromCache();
+
+    // Defer async service calls to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.languageService.fetchLanguageData(this.companyId, languageId);
+    }, 0);
 
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -196,9 +255,28 @@ export class HeaderComponent implements OnInit {
       }
     });
 
-    this.loadMenuFromStorage();
+    // Defer menu fetch/update to the next tick to avoid NG0100 on reload.
+    setTimeout(() => {
+      this.loadMenuFromStorage();
+      this.updateActiveClasses();
+    }, 0);
+  }
 
-    this.updateActiveClasses();
+  private loadMenuFromCache(): void {
+    try {
+      const cachedMenuList = this.localstore.getData('menuList');
+      if (cachedMenuList) {
+        const menuList = JSON.parse(cachedMenuList);
+        if (Array.isArray(menuList) && menuList.length > 0) {
+          this.menuItems = menuList;
+          this.filterMenuItems();
+          this.updateActiveClasses();
+          this.refreshView();
+        }
+      }
+    } catch (error) {
+      console.warn('Error loading cached menu:', error);
+    }
   }
 
   loadMenuFromStorage() {
@@ -209,12 +287,16 @@ export class HeaderComponent implements OnInit {
           if (menuList && menuList.length > 0) {
             this.menuItems = menuList;
             this.filterMenuItems();
+            this.updateActiveClasses();
+            this.refreshView();
           } else {
             console.warn('No menu list found after fetching.');
+            this.refreshView();
           }
         }),
         catchError((error) => {
           console.error('Error fetching menu data:', error);
+          this.refreshView();
           return of([]);
         })
       )
@@ -222,36 +304,41 @@ export class HeaderComponent implements OnInit {
   }
 
   filterMenuItems() {
-    const viewPermissions = Object.entries(this.user_info.permissions)
-      .filter(([key, value]) => key.startsWith('view_') && value === true)
-      .map(([key, value]) => key.replace('view_', ''));
-
+    const viewPermissions = this.getViewPermissions();
+    if (!viewPermissions.length) {
+      return;
+    }
     this.menuItems = this.filterMenu(this.menuItems, viewPermissions);
   }
 
   filterMenu(menuItems: any[], viewPermissions: string[]): any[] {
-    return menuItems.filter((item) => {
-      const permissionKey = item.entity_name;
-      const hasPermission = viewPermissions.includes(permissionKey);
-      if (item.children && item.children.length) {
-        item.children = this.filterMenu(item.children, viewPermissions);
-      }
-      // Menu item.link_type external must have either target or childern in order to display in application
-      if (item.link_type == 4) {
-        const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
+    return (menuItems || [])
+      .map((item) => {
+        const children = Array.isArray(item?.children) ? this.filterMenu(item.children, viewPermissions) : [];
+        return {
+          ...item,
+          children,
+        };
+      })
+      .filter((item) => {
+        const permissionKey = item.entity_name;
+        const hasPermission = viewPermissions.includes(permissionKey);
+        // Menu item.link_type external must have either target or childern in order to display in application
+        if (item.link_type == 4) {
+          const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
 
-        if (hasTargetOrChildren) {
-          return true;
-        } else {
-          return false;
+          if (hasTargetOrChildren) {
+            return true;
+          } else {
+            return false;
+          }
         }
-      }
-      if (item.parent_id == null) {
-        return true;
-      }
+        if (item.parent_id == null) {
+          return true;
+        }
 
-      return hasPermission || (item.children && item.children.length > 0);
-    });
+        return hasPermission || (item.children && item.children.length > 0);
+      });
   }
 
   updateActiveClasses() {
@@ -328,6 +415,9 @@ export class HeaderComponent implements OnInit {
   }
 
   getProfileInfo() {
+    if (!this.user_info?.main) {
+      return { profile_pic: 'assets/images/user.png', name: '', email: '' };
+    }
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     let profile_pic = this.user_info.main.profile_pic;
     profile_pic = profile_pic && profile_pic !== 'null' ? apiUrl + '/' + profile_pic : 'assets/images/user.png';
@@ -343,6 +433,7 @@ export class HeaderComponent implements OnInit {
   changeLanguage(item: any) {
     this.translate.use(item.code);
     this.appSetting.toggleLanguage(item);
+    this.showLanguageMenu = false;
     if (this.store.locale?.toLowerCase() === 'ae') {
       this.storeData.dispatch({ type: 'toggleRTL', payload: 'rtl' });
       this.languageService.serviceChangeLanguage(this.companyId, item.code.toLowerCase());
@@ -352,11 +443,24 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  toggleLanguageMenu(event: Event) {
+    event.stopPropagation();
+    this.showLanguageMenu = !this.showLanguageMenu;
+    this.showProfileMenu = false;
+  }
+
+  toggleProfileMenu(event: Event) {
+    event.stopPropagation();
+    this.showProfileMenu = !this.showProfileMenu;
+    this.showLanguageMenu = false;
+  }
+
   hasVisibleChildren(item: any): boolean {
     return item.children && item.children.some((child: any) => child.link_type !== 2 && child.link_type !== 5);
   }
 
   logout() {
+    this.showProfileMenu = false;
     try {
       this.authService.logout().subscribe({
         next: (response) => {
@@ -381,10 +485,20 @@ export class HeaderComponent implements OnInit {
   handleOutsideClick(event: any) {
     const clickedInsideDropdown = event.target.closest('.notification-dropdown');
     const clickedInsideBox = event.target.closest('.notification-dropdown-box');
+    const clickedInsideLanguageMenu = event.target.closest('.language-dropdown');
+    const clickedInsideProfileMenu = event.target.closest('.profile-dropdown');
 
     if (!clickedInsideDropdown && !clickedInsideBox) {
       this.showNotifications = false;
       this.activeTab = this.tabs[0];
+    }
+
+    if (!clickedInsideLanguageMenu) {
+      this.showLanguageMenu = false;
+    }
+
+    if (!clickedInsideProfileMenu) {
+      this.showProfileMenu = false;
     }
   }
 

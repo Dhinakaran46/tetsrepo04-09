@@ -1,26 +1,26 @@
 <!-- <div class="form-group">
-  <select class="form-control" [formControl]="formControl" [formlyAttributes]="field"
-    [multiple]="to['multiple'] || false">
-    <option [value]="null" disabled>{{ to.placeholder || 'Select an option' }}</option>
-    <option *ngFor="let option of static_options$ | async" [value]="option.value">
-      {{ option.label }}
-    </option>
-    <option *ngFor="let option of options$ | async" [value]="option.value">
-      {{ option.label }}
-    </option>
-  </select>
+<select class="form-control" [formControl]="formControl" [formlyAttributes]="field"
+  [multiple]="to['multiple'] || false">
+  <option [value]="null" disabled>{{ to.placeholder || 'Select an option' }}</option>
+  <option *ngFor="let option of static_options$ | async" [value]="option.value">
+    {{ option.label }}
+  </option>
+  <option *ngFor="let option of options$ | async" [value]="option.value">
+    {{ option.label }}
+  </option>
+</select>
 </div> -->
 <div class="flex items-center gap-2">
   <div class="flex-1">
+    @if (to['table']) {
     <ng-select
       #selectRef
       [readonly]="to['readonly'] || false"
-      *ngIf="to['table']"
       bindLabel="label"
       bindValue="value"
       [formControl]="formControl"
       [formlyAttributes]="field"
-      [items]="options$ | async"
+      [items]="(options$ | async) ?? []"
       [multiple]="to['multiple'] || false"
       [clearable]="false"
       placeholder="{{ to.placeholder || 'Select an option' }}"
@@ -31,27 +31,22 @@
       <ng-template ng-option-tmp let-item="item" let-index="index">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
           <span [innerHTML]="item.label | splitLabel"></span>
-          <button
-            *ngIf="to['enable_edit']"
-            type="button"
-            class="btn btn-link ml-2 p-0"
-            (click)="onEditOption(item); $event.stopPropagation()"
-            style="margin-left: auto"
-            tabindex="-1"
-          >
+          @if (to['enable_edit']) {
+          <button type="button" class="btn btn-link ml-2 p-0" (click)="onEditOption(item); $event.stopPropagation()" style="margin-left: auto" tabindex="-1">
             <i class="fa fa-edit"></i>
           </button>
+          }
         </div>
       </ng-template>
     </ng-select>
+    } @if (!to['table']) {
     <ng-select
       #selectRef
-      *ngIf="!to['table']"
       bindLabel="label"
       bindValue="value"
       [formControl]="formControl"
       [formlyAttributes]="field"
-      [items]="static_options$ | async"
+      [items]="(static_options$ | async) ?? []"
       [multiple]="to['multiple'] || false"
       [clearable]="false"
       placeholder="{{ to.placeholder || 'Select an option' }}"
@@ -61,21 +56,18 @@
       <ng-template ng-option-tmp let-item="item" let-index="index">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
           <span [innerHTML]="item.label | splitLabel"></span>
-          <button
-            *ngIf="to['enable_edit']"
-            type="button"
-            class="btn btn-link ml-2 p-0"
-            (click)="onEditOption(item); $event.stopPropagation()"
-            style="margin-left: auto"
-            tabindex="-1"
-          >
+          @if (to['enable_edit']) {
+          <button type="button" class="btn btn-link ml-2 p-0" (click)="onEditOption(item); $event.stopPropagation()" style="margin-left: auto" tabindex="-1">
             <i class="fa fa-edit"></i>
           </button>
+          }
         </div>
       </ng-template>
     </ng-select>
+    }
   </div>
-  <div class="flex-none" *ngIf="getAddEditForm()">
+  @if (getAddEditForm()) {
+  <div class="flex-none">
     <button
       type="button"
       class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-3 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
@@ -85,4 +77,5 @@
       <i class="fa-solid fa-plus"></i>
     </button>
   </div>
+  }
 </div>

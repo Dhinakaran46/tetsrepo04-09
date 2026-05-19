@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { importProvidersFrom } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { DateRangePickerComponent } from './date-range-picker.component';
 
 describe('DateRangePickerComponent', () => {
@@ -8,10 +9,11 @@ describe('DateRangePickerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DateRangePickerComponent]
-    })
-    .compileComponents();
-    
+      teardown: { destroyAfterEach: true },
+      imports: [DateRangePickerComponent],
+      providers: [importProvidersFrom(TranslateModule.forRoot())],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(DateRangePickerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

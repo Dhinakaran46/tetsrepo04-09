@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -9,7 +9,7 @@ import { HttpClient } from '@angular/common/http';
   standalone: true,
   templateUrl: './api-base-url.component.html',
   styleUrl: './api-base-url.component.scss',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
 })
 export class ApiBaseUrlComponent {
   apiUrl = '';
@@ -26,23 +26,25 @@ export class ApiBaseUrlComponent {
     this.error = '';
     this.testPassed = false;
 
-    this.http.post(`${this.apiUrl}/api/common/language-content`, {
-      company_id: 1,
-      language_id: 1,
-    }).subscribe({
-      next: () => {
-        this.message = 'API URL is valid!';
-        this.testPassed = true;
-      },
-      error: () => {
-        this.error = 'API test failed. Please check your URL.';
-        this.testPassed = false;
-        this.testing = false;
-      },
-      complete: () => {
-        this.testing = false;
-      }
-    });
+    this.http
+      .post(`${this.apiUrl}/api/common/language-content`, {
+        company_id: 1,
+        language_id: 1,
+      })
+      .subscribe({
+        next: () => {
+          this.message = 'API URL is valid!';
+          this.testPassed = true;
+        },
+        error: () => {
+          this.error = 'API test failed. Please check your URL.';
+          this.testPassed = false;
+          this.testing = false;
+        },
+        complete: () => {
+          this.testing = false;
+        },
+      });
   }
 
   saveApiUrl() {

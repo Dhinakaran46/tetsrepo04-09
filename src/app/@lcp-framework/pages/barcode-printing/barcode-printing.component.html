@@ -27,9 +27,11 @@
           <div class="flex flex-col">
             <label for="prefix">{{ 'form_label_prefix' | translate }} <span class="text-danger">*</span></label>
             <input autocomplete="off" formControlName="prefix" id="prefix" type="text" class="form-input w-full py-1.5 text-xs placeholder:text-white-dark" />
-            <div *ngIf="isSubmitted && barcodePrintForm.controls['prefix'].hasError('required')" class="text-danger">
+            @if (isSubmitted && barcodePrintForm.controls['prefix'].hasError('required')) {
+            <div class="text-danger">
               {{ 'form_label_prefix_req' | translate }}
             </div>
+            }
           </div>
 
           <div class="flex flex-col">
@@ -41,9 +43,11 @@
               type="text"
               class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
             />
-            <div *ngIf="isSubmitted && barcodePrintForm.controls['label_end'].hasError('required')" class="text-danger">
+            @if (isSubmitted && barcodePrintForm.controls['label_end'].hasError('required')) {
+            <div class="text-danger">
               {{ 'form_label_end_req' | translate }}
             </div>
+            }
           </div>
           <div class="flex flex-col">
             <label for="no_of_barcodes">{{ 'form_label_no_of_barcodes' | translate }} <span class="text-danger">*</span></label>
@@ -55,9 +59,11 @@
               class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
               (input)="onBarcodeChange($event)"
             />
-            <div *ngIf="isSubmitted && barcodePrintForm.controls['no_of_barcodes'].hasError('required')" class="text-danger">
+            @if (isSubmitted && barcodePrintForm.controls['no_of_barcodes'].hasError('required')) {
+            <div class="text-danger">
               {{ 'form_label_no_of_barcodes_req' | translate }}
             </div>
+            }
           </div>
         </div>
 
@@ -118,17 +124,21 @@
               class="form-input w-full py-1.5 text-xs placeholder:text-white-dark"
               rows="15"
             ></textarea>
-            <div *ngIf="isSubmitted && barcodePrintForm.controls['zpl_code'].hasError('required')" class="text-danger">
+            @if (isSubmitted && barcodePrintForm.controls['zpl_code'].hasError('required')) {
+            <div class="text-danger">
               {{ 'form_label_zpl_code_req' | translate }}
             </div>
+            }
           </div>
 
-          <div class="flex flex-col items-center lg:col-span-4" *ngIf="zplPreview">
+          @if (zplPreview) {
+          <div class="flex flex-col items-center lg:col-span-4">
             <h3>{{ 'barcode_preview' | translate }}</h3>
             <div class="mt-4 h-auto w-[250px] rounded border p-4 md:w-[330px]">
               <img [src]="zplPreview" alt="ZPL Code Preview" class="h-auto w-full object-contain" />
             </div>
           </div>
+          }
         </div>
 
         <div class="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -166,4 +176,6 @@
     </div>
   </form>
 </div>
-<app-loader *ngIf="loading"></app-loader>
+@if (loading) {
+<app-loader></app-loader>
+}

@@ -1,41 +1,33 @@
-<ng-container *ngIf="keyword === 'plain'; else defaultStaticPageTemplate">
-  <div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
-</ng-container>
-
-<ng-template #defaultStaticPageTemplate>
-  <div class="space-y-8">
-    <div class="grid grid-cols-1 gap-2 lg:grid-cols-1">
-      <div class="panel">
-        <div class="mb-5 flex items-center justify-between">
-          <h5 appDynamicFontSize="title" class="static-page-content-title text-lg font-semibold dark:text-white-light">{{ entity_name | translate }}</h5>
-
-          <button
-            *ngIf="!this.uuid && !isModal"
-            appDynamicFontSize="body"
-            type="button"
-            class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l"
-            (click)="location.back()"
-          >
-            {{ 'back' | translate }}
-          </button>
-
-          <!--<button *ngIf=" isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
-            <i class="fa-solid fa-xmark"></i>
-          </button>-->
-        </div>
-        <div class="mb-5">
-          <div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
-        </div>
+@if (keyword === 'plain') {
+<div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
+} @else {
+<div class="space-y-8">
+  <div class="grid grid-cols-1 gap-2 lg:grid-cols-1">
+    <div class="panel">
+      <div class="mb-5 flex items-center justify-between">
+        <h5 appDynamicFontSize="title" class="static-page-content-title text-lg font-semibold dark:text-white-light">{{ entity_name | translate }}</h5>
+        @if (!this.uuid && !isModal) {
+        <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+          {{ 'back' | translate }}
+        </button>
+        }
+        <!--<button *ngIf=" isModal" (click)="closeModal.emit()" class="btn rounded-md p-2  focus:outline-none focus:ring-2 focus:ring-blue-500 btn-danger">
+          <i class="fa-solid fa-xmark"></i>
+        </button>-->
+      </div>
+      <div class="mb-5">
+        <div id="static-content" [innerHTML]="pageContent | safeHtml" appHighlight></div>
       </div>
     </div>
   </div>
-</ng-template>
+</div>
+}
 
 <!-- Image Viewer Modal -->
-<div *ngIf="viewer.open" class="fixed inset-0 z-[9999]">
+@if (viewer.open) {
+<div class="fixed inset-0 z-[9999]">
   <!-- Backdrop -->
   <div class="absolute inset-0 bg-black/70" (click)="closeViewer()"></div>
-
   <!-- Controls -->
   <!--<div class="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
     <button class="btn btn-secondary h-8 px-3 text-sm" (click)="prevImage($event)">‹ Prev</button>
@@ -45,7 +37,6 @@
     <button class="btn btn-secondary h-8 px-3 text-sm" (click)="zoomIn($event)">+</button>
     <button class="btn h-8 px-3 text-sm" (click)="resetView($event)">Reset</button>
   </div>-->
-
   <!-- Canvas -->
   <div
     class="absolute inset-0 flex cursor-grab select-none items-center justify-center"
@@ -67,7 +58,7 @@
       draggable="false"
     />
   </div>
-
   <!-- Close -->
   <button class="btn btn-danger absolute right-3 top-3 h-8 px-3 text-sm" (click)="closeViewer()">✕</button>
 </div>
+}

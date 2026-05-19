@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormArray } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
-import { BooleanStatusPipe } from '../../pipes/boolean/boolean-status.pipe';
 import { animate, style, transition, trigger } from '@angular/animations';
 import jsPDF from 'jspdf'; // For PDF export
 import * as XLSX from 'xlsx'; // For Excel export
@@ -65,7 +64,7 @@ export interface FilterCondition {
 @Component({
   selector: 'app-client-datatable',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgMultiSelectDropDownModule, BooleanStatusPipe, ReactiveFormsModule, CommonSharedModule, SafeHtmlPipe],
+  imports: [CommonModule, FormsModule, NgMultiSelectDropDownModule, ReactiveFormsModule, CommonSharedModule, SafeHtmlPipe],
   templateUrl: './client-datatable.component.html',
   styleUrls: ['./client-datatable.component.scss'],
   animations: [

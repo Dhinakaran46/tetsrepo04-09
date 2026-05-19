@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -32,11 +32,6 @@ interface IUserPolicy {
   imports: [
     CommonSharedModule,
     ReactiveFormsModule,
-    OrderByControlPipe,
-    IconFolderComponent,
-    IconMinusComponent,
-    IconFolderPlusComponent,
-    IconFolderMinusComponent,
     ClientDatatableComponent,
   ],
   templateUrl: './user-role-policy.component.html',
@@ -60,7 +55,8 @@ export class UserRolePolicyComponent {
     private localStorageService: LocalStorageService,
     private titleService: Title,
     public datePipe: DatePipe,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
+    private cdr: ChangeDetectorRef
   ) {
     this.mappingForm = this.fb.group({
       policy_type: ['user', Validators.required],
@@ -212,9 +208,11 @@ export class UserRolePolicyComponent {
             };
           });
           this.tempPolicyList = this.policyList;
+          setTimeout(() => this.cdr.detectChanges());
         } else {
           this.policyList = [];
           this.tempPolicyList = [];
+          this.cdr.detectChanges();
           const key = response.message;
           const errorMessage = this.translate.instant(key);
           this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
@@ -250,6 +248,7 @@ export class UserRolePolicyComponent {
       (response: ApiResponce) => {
         if (response.status) {
           this.roleList = response.data?.records || [];
+          this.cdr.detectChanges();
         } else if (!response.status) {
           this.roleList = [];
           const key = response.message;
