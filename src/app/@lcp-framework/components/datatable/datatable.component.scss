@@ -137,12 +137,103 @@
   color: var(--app-table-text-color, #888ea8);
 }
 
-.header-panel {
-  margin-top: -15px;
-}
+// .header-panel {
+//   margin-top: -15px;
+// }
 
 .panel {
   padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+  --datatable-sticky-top: 56px;
+  --datatable-toolbar-height: 56px;
+  --datatable-scroll-height: calc(100vh - 220px);
+}
+
+:host-context(.horizontal) .panel {
+  --datatable-sticky-top: 104px;
+}
+
+:host {
+  --toolbar-height: 60px; /* fallback */
+}
+
+.datatable-toolbar {
+  position: sticky;
+  top: 7rem;
+  z-index: 19;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: visible;
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
+  border-bottom: 1px solid var(--app-table-border-color, #e5e7eb);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.datatable-toolbar:is(.dark *) {
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
+  border-bottom-color: var(--app-table-border-color, #253b5c);
+}
+
+.datatable-toolbar-main {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.common-search-badges {
+  position: sticky;
+  z-index: 18; /* Lower than toolbar's z-index:19 so it goes UNDER toolbar when scrolled */
+  top: calc(7rem + 60px); /* Push it below the toolbar - adjust 60px to your toolbar's actual height */
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+  /* Add a subtle border to separate from toolbar */
+  border-bottom: 1px solid var(--app-table-border-color, #e5e7eb);
+}
+
+.common-search-badges:is(.dark *) {
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
+  border-bottom-color: var(--app-table-border-color, #253b5c);
+}
+
+/* Optional: Add a container wrapper if needed */
+.common-search-badges-wrapper {
+  position: sticky;
+  z-index: 18;
+  top: calc(7rem + 60px);
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
+}
+
+/* If the toolbar height is dynamic, use this JavaScript alternative */
+
+/* Dark mode support */
+.common-search-badges:is(.dark *) {
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
+}
+
+.datatable-badge-wrapper {
+  position: sticky;
+  top: calc(var(--datatable-sticky-top) + var(--datatable-toolbar-height) + 1.5rem);
+  z-index: 21;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  display: block;
+  width: calc(100% + 1rem);
+  left: -0.5rem;
+  background-clip: padding-box;
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
+  border-bottom: 1px solid var(--app-table-border-color, #e5e7eb);
+}
+
+.datatable-badge-wrapper:is(.dark *) {
+  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
+  border-bottom-color: var(--app-table-border-color, #253b5c);
+}
+
+.common-search-badges,
+.column-search-badges {
+  margin-bottom: 0.5rem;
 }
 
 .bh-text-black {
@@ -153,7 +244,6 @@
   color: var(--app-button-bg-color, #4361ee) !important;
 }
 
-.datatable .table-responsive table tfoot tr th,
 .datatable .table-responsive table thead tr th {
   vertical-align: top;
   font-weight: 700;
@@ -161,7 +251,6 @@
   border-bottom: 2px solid var(--app-table-border-color, #dee2e6);
 }
 
-.datatable .table-responsive table tfoot tr th:is(.dark *),
 .datatable .table-responsive table thead tr th:is(.dark *) {
   background-color: var(--app-table-header-color, #1a2941);
   color: var(--app-table-text-color, #888ea8);
@@ -182,8 +271,7 @@
   white-space: nowrap;
 }
 
-:is(.dark table thead tr),
-:is(.dark table tfoot tr) {
+:is(.dark table thead tr) {
   background-color: var(--app-table-header-color, #1a2941) !important;
 }
 
@@ -192,9 +280,62 @@
   background-color: var(--app-table-bg-color, #0e1726);
 }
 
+.datatable {
+  position: relative;
+  top: 15px;
+}
+
 .datatable table {
   background-color: var(--app-table-bg-color, #ffffff);
   color: var(--app-table-text-color, #495057);
+}
+
+.datatable .table-responsive {
+  max-width: 100%;
+  max-height: var(--datatable-scroll-height);
+  overflow: auto;
+}
+
+.datatable .table-responsive table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--app-table-header-color, #f9fafb);
+  background-clip: padding-box;
+  box-shadow: 0 1px 0 var(--app-table-border-color, #dee2e6);
+}
+
+.datatable .table-responsive table thead th:is(.dark *) {
+  background-color: var(--app-table-header-color, #1a2941);
+}
+
+.datatable .table-responsive table thead th.datatable-sticky-column,
+.datatable .table-responsive table tbody td.datatable-sticky-column {
+  position: sticky;
+  right: 0;
+  background-clip: padding-box;
+}
+
+.datatable .table-responsive table thead th.datatable-sticky-column {
+  z-index: 20;
+  background-color: var(--app-table-header-action-color, #e5e7eb) !important;
+  box-shadow: -1px 0 0 var(--app-table-border-color, #e5e7eb), 0 1px 0 var(--app-table-border-color, #dee2e6);
+}
+
+.datatable .table-responsive table tbody td.datatable-sticky-column {
+  z-index: 9;
+  background-color: var(--app-table-bg-color, #fff);
+  box-shadow: -1px 0 0 var(--app-table-border-color, #e5e7eb);
+}
+
+.datatable .table-responsive table thead th.datatable-sticky-column:is(.dark *) {
+  background-color: var(--app-table-header-color, #152135) !important;
+  box-shadow: -1px 0 0 var(--app-table-border-color, #374151), 0 1px 0 var(--app-table-border-color, #374151);
+}
+
+.datatable .table-responsive table tbody td.datatable-sticky-column:is(.dark *) {
+  background-color: var(--app-table-bg-color, #0e1726);
+  box-shadow: -1px 0 0 var(--app-table-border-color, #374151);
 }
 
 .datatable table:is(.dark *) {
@@ -220,6 +361,7 @@
 }
 
 thead th.sticky {
+  z-index: 11;
   background-color: var(--app-table-header-action-color, #e5e7eb) !important;
 }
 
@@ -592,6 +734,10 @@ tbody td.sticky:is(.dark *) {
 }
 
 @media (max-width: 1023px) {
+  .panel {
+    --datatable-toolbar-height: 124px;
+  }
+
   .datatable-toolbar-main {
     width: 100%;
     flex-wrap: wrap;
@@ -688,6 +834,10 @@ tbody td.sticky:is(.dark *) {
 }
 
 @media (max-width: 767px) {
+  .panel {
+    --datatable-toolbar-height: 188px;
+  }
+
   .datatable-toolbar-main > * {
     width: 100%;
   }

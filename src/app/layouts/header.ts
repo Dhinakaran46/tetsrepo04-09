@@ -416,7 +416,7 @@ export class HeaderComponent implements OnInit {
 
   getProfileInfo() {
     if (!this.user_info?.main) {
-      return { profile_pic: 'assets/images/user.png', name: '', email: '' };
+      return { profile_pic: 'assets/images/user.png', name: '', email: '', role: '' };
     }
     const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
     let profile_pic = this.user_info.main.profile_pic;
@@ -426,8 +426,9 @@ export class HeaderComponent implements OnInit {
     const last_name = this.user_info.main.last_name || '';
     const name = `${first_name} ${last_name}`;
     const email = this.user_info.main.email || '';
+    const role = this.user_info.main.role || '';
 
-    return { profile_pic: profile_pic, name, email };
+    return { profile_pic: profile_pic, name, email, role: this.translate.instant(role) };
   }
 
   changeLanguage(item: any) {

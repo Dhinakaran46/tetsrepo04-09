@@ -3483,6 +3483,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.headercolumns.filter((column) => column.is_grid_column == 'true').length;
   }
 
+  isStickyGridColumn(column: any): boolean {
+    if (!column || column.colFilterHide || column.is_grid_column != 'true') {
+      return false;
+    }
+
+    if (column.header === 'table_column_action') {
+      return true;
+    }
+
+    const visibleGridColumns = this.headercolumns.filter((col: any) => col?.is_grid_column == 'true' && !col?.colFilterHide);
+    return visibleGridColumns.length > 0 && visibleGridColumns[visibleGridColumns.length - 1] === column;
+  }
+
   private getColumnUniqueKey(column: any): string {
     return String(column?.field_value ?? column?.field ?? column?.header ?? column?.title ?? '');
   }
