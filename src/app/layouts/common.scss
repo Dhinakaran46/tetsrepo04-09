@@ -37,3 +37,115 @@
 .carousel-container video {
   transition: transform 0.5s ease-in-out;
 }
+
+/* Notification Dropdown Styles */
+.notification-dropdown {
+  position: relative;
+}
+
+.notification-dropdown-box {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 380px;
+  max-width: 420px;
+  max-height: 500px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 8px;
+  overflow-y: auto;
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+.notification-dropdown-box.dark {
+  background: #1f2937;
+  border-color: #374151;
+  
+  ::-webkit-scrollbar-track {
+    background: #111827;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    
+    &:hover {
+      background: #6b7280;
+    }
+  }
+}
+
+.notification-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  gap: 8px;
+  
+  div {
+    display: flex;
+    gap: 12px;
+    
+    div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+      color: #6b7280;
+      
+      &.active {
+        color: var(--app-header-bg-color);
+        border-bottom-color: var(--app-header-bg-color);
+      }
+      
+      &:hover {
+        color: var(--app-header-bg-color);
+      }
+    }
+  }
+}
+
+.notification-dropdown-box.dark {
+  .notification-tabs {
+    border-bottom-color: #374151;
+    
+    div div {
+      color: #9ca3af;
+      
+      &.active {
+        color: var(--app-header-bg-color);
+        border-bottom-color: var(--app-header-bg-color);
+      }
+      
+      &:hover {
+        color: var(--app-header-bg-color);
+      }
+    }
+  }
+}
+
+.notification-tab-content {
+  max-height: 350px;
+  overflow-y: auto;
+}

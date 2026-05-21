@@ -1,4 +1,15 @@
-import { Component, OnInit, OnDestroy, Input, AfterContentInit, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Input,
+  AfterContentInit,
+  EventEmitter,
+  Output,
+  ChangeDetectorRef,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { initialState } from '../../../store/index.reducer';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
@@ -37,6 +48,8 @@ interface FetchDataParams {
   imports: [CommonSharedModule, FormBuilderComponent, TreeViewItemComponent, TranslateModule],
   templateUrl: './tree-builder.component.html',
   styleUrl: './tree-builder.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.Emulated,
 })
 export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit {
   private destroy$ = new Subject<void>();
@@ -119,7 +132,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
         this.permissions = this.pageInfo.permissions;
         this.EntityName = this.pageInfo.fullEntity;
         this.primmaryTable = this?.pageInfo?.additionalData?.primary_table || null;
-        if(this.pageInfo?.children?.['add']?.entity_name) {
+        if (this.pageInfo?.children?.['add']?.entity_name) {
           this.setFormDefaultData(this.pageInfo?.children?.['add']?.entity_name);
         }
       }
@@ -137,7 +150,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     }
   }
 
-    private parseJSONField(value: any) {
+  private parseJSONField(value: any) {
     try {
       return typeof value === 'string' ? JSON.parse(value) : value;
     } catch (error) {
@@ -169,7 +182,6 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
           this.defaultFormModel = this.parseJSONField(formEntity.form_information)?.model || {};
         } else {
           this.toastr.error('Invalid entity details given.');
-
         }
       },
       (error) => {
@@ -179,7 +191,6 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       }
     );
   }
-
 
   setupPageInfo(pageInfo: any, defaultPermission: any) {
     this.userInfo = JSON.parse(this.localStorageService.getData('user_data'));
@@ -259,6 +270,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
 
   loadTreeData(payload: any = {}) {
     this.loading = true;
+    this.cdr.markForCheck();
     let query = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(
         {
@@ -290,14 +302,17 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
         if (res.code === 200 && res.status) {
           this.flatData = res.data.records;
           this.treeData = this.buildHierarchy(this.flatData);
+          this.cdr.markForCheck();
         }
       },
       error: (err) => {
         console.error('Error loading tree data:', err);
         this.toastr.error(this.commonTranslate('error_loading_tree'));
+        this.cdr.markForCheck();
       },
       complete: () => {
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -331,32 +346,33 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
         this.formEntityName = this.pageInfo.children?.['edit']?.entity_name || this.pageInfo.fullEntity;
         this.formEntityType = 'edit';
         this.showForm = true;
+        this.cdr.markForCheck();
       }, 0);
     } else {
       this.showForm = false;
+      this.cdr.markForCheck();
     }
   }
 
- setParentId(obj: any, parentId: any = null) {
-  if (typeof obj !== "object" || obj === null) return;
+  setParentId(obj: any, parentId: any = null) {
+    if (typeof obj !== 'object' || obj === null) return;
 
-  for (const key in obj) {
-    const value = obj[key];
+    for (const key in obj) {
+      const value = obj[key];
 
-    if (typeof value === "object" && value !== null) {
+      if (typeof value === 'object' && value !== null) {
+        // set parent_id if exists
+        if ('parent_id' in value) {
+          value.parent_id = parentId;
+        }
 
-      // set parent_id if exists
-      if ("parent_id" in value) {
-        value.parent_id = parentId;
+        // recursive call
+        this.setParentId(value, parentId);
       }
-
-      // recursive call
-      this.setParentId(value, parentId);
     }
-  }
 
-  return obj;
-}
+    return obj;
+  }
   onAddRoot() {
     if (!this.permissions.create) {
       this.toastr.warning(this.commonTranslate('no_permission_create'));
@@ -371,6 +387,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       this.formEntityType = 'add';
       this.formDefaultData = { parent_id: null };
       this.showForm = true;
+      this.cdr.markForCheck();
     }, 0);
   }
 
@@ -388,6 +405,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       this.formEntityType = 'add';
       this.formDefaultData = this.setParentId(this.defaultFormModel, parent.id);
       this.showForm = true;
+      this.cdr.markForCheck();
     }, 0);
   }
 
@@ -408,6 +426,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     if (this.formType === 'add') {
       this.showForm = false;
     }
+    this.cdr.markForCheck();
   }
 
   private async executeJob(inputObject: any): Promise<void> {
