@@ -61,31 +61,52 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
   }
 
   private initializeAndSearchOptions(value: any): Observable<{ label: string; value: any }[]> {
-    const initialLoad$ = this.loadOptions(value);
+    const initialLoad$ = this.loadOptions(value, true);
     return initialLoad$.pipe(
       switchMap(() =>
         this.searchSubject.pipe(
           startWith(''),
           debounceTime(300),
           distinctUntilChanged(),
-          switchMap((searchTerm) => this.loadOptions(searchTerm)),
+          switchMap((searchTerm) => this.loadOptions(searchTerm, false)),
           catchError(() => of([])) // Handle errors gracefully
         )
       )
     );
   }
 
-  private loadOptions(searchTerm: string | any[]): Observable<{ label: string; value: any }[]> {
+  private loadOptions(searchTerm: string | any[], isInitialLoad: boolean = false): Observable<{ label: string; value: any }[]> {
     const { table: tableName, valueColumn, labelColumn, additionalColumns } = this.props;
     const additionalCols = additionalColumns?.length ? additionalColumns : [];
-    searchTerm = searchTerm ? searchTerm : this.formControl.value && Array.isArray(this.formControl.value) ? this.formControl.value : [this.formControl.value];
-    if (!tableName || !labelColumn || !valueColumn || !searchTerm || !searchTerm.length) {
+
+    let term: any = searchTerm;
+
+    if (!term) {
+      if (isInitialLoad && this.formControl.value !== null && this.formControl.value !== undefined && this.formControl.value !== '') {
+        term = Array.isArray(this.formControl.value) ? this.formControl.value : [this.formControl.value];
+      } else {
+        term = '';
+      }
+    }
+
+    if (typeof term === 'number' || (typeof term === 'string' && isInitialLoad && term)) {
+      // Just in case it's a primitive ID, wrap it.
+      // Actually, if it's a primitive string but not a user search, how to know?
+      // Let's just wrap it if it's an exact match to formControl.value
+      if (term === this.formControl.value) {
+        term = [term];
+      }
+    }
+
+    if (!tableName || !labelColumn || !valueColumn) {
       return of([]); // Return early if essential properties are missing
     }
-    const searchCriteria = this.buildSearchCriteria(searchTerm, valueColumn, labelColumn);
+    const searchCriteria = this.buildSearchCriteria(term, valueColumn, labelColumn);
     let searchConditions = this.props['search_all'] ? JSON.parse(JSON.stringify(this.props['search_all'])) : [];
     searchConditions = this.evaluateDynamicValues([...searchConditions, searchCriteria], this);
-    const listParams = this.buildListParams(tableName, valueColumn, labelColumn, searchConditions, additionalCols);
+    const printQuery = this.props['print_query'] || false;
+    const includes = this.props['includes'] || false;
+    const listParams = this.buildListParams(includes, printQuery, tableName, valueColumn, labelColumn, searchConditions, additionalCols);
 
     return this.gridApiService.getAllList(listParams).pipe(
       map((response) => this.transformResponse(response, valueColumn, labelColumn)),
@@ -96,20 +117,29 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
   private buildSearchCriteria(searchTerm: string | any[], valueColumn: string, labelColumn: string) {
     const split = valueColumn.split('::');
     let searchValue: any = [];
-    if (typeof searchTerm !== 'string') {
-      searchValue = searchTerm.filter((item) => item);
+    if (Array.isArray(searchTerm)) {
+      searchValue = searchTerm.filter((item) => item !== null && item !== undefined);
     }
     return searchValue.length
       ? { value: searchValue, operator: 'IN', column_name: split[0] }
       : { value: `%${searchTerm || ''}%`, operator: 'ILIKE', column_name: labelColumn };
   }
 
-  private buildListParams(tableName: string, valueColumn: string, labelColumn: string, searchConditions: any, additionalColumns: any[]) {
+  private buildListParams(
+    includes: any,
+    printQuery: any,
+    tableName: string,
+    valueColumn: string,
+    labelColumn: string,
+    searchConditions: any,
+    additionalColumns: any[]
+  ) {
     return {
       company_id: 1,
-      search_all: [{ value: '1', operator: '=', column_name: 'status_id' }, ...searchConditions],
+      search_all: [...searchConditions],
       limit_range: 25,
-      print_query: false,
+      print_query: printQuery,
+      includes: includes ? includes : undefined,
       start_index: 0,
       sort_columns: [[labelColumn, 'asc']],
       primary_table: tableName,

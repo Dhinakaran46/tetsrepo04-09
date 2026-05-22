@@ -59,58 +59,57 @@
                   class="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
               </span>
             </button>
-          </div>
-        </div>
-        @if (showNotifications) {
-        <div class="notification-dropdown-box">
-          <!-- Tabs -->
-          <div class="notification-tabs">
-            <div>
-              @for (tab of tabs; track tab) {
-              <div
-                (click)="selectTab(tab)"
-                [class.active]="activeTab.key === tab.key"
-                [ngClass]="{
+            @if (showNotifications) {
+            <div class="notification-dropdown-box">
+              <!-- Tabs -->
+              <div class="notification-tabs">
+                <div>
+                  @for (tab of tabs; track tab) {
+                  <div
+                    (click)="selectTab(tab)"
+                    [class.active]="activeTab.key === tab.key"
+                    [ngClass]="{
       'opacity-50 pointer-events-none !cursor-not-allowed': loadingNotificationData,
       'cursor-pointer': !loadingNotificationData
     }">
-                <i [class]="tab.icon"></i>
-                {{ tab.key | translate }}
+                    <i [class]="tab.icon"></i>
+                    {{ tab.key | translate }}
+                  </div>
+                  }
+                </div>
               </div>
-              }
-            </div>
-          </div>
-          <div
-            class="notification-tab-content flex w-full flex-col items-center">
-            @if (!loadingNotificationData && notifications.length > 0 &&
-            activeTab.key === 'push_notification') {
-            <div
-              class="flex w-full items-center justify-end border-b border-gray-200 px-3 pb-1">
-              <button class="text-xs hover:opacity-80 disabled:opacity-50"
-                [style.color]="'var(--app-header-bg-color)'"
-                (click)="markPushNotificationAsread()">
-                {{ 'mark_all_as_read' | translate }}
-              </button>
-            </div>
-            } @if (loadingNotificationData) {
-            <div class="flex w-full items-center justify-center py-6">
               <div
-                class="h-6 w-6 animate-spin rounded-full border-2"
-                style="
-                  border-left-color: var(--app-header-bg-color);
-                  border-right-color: var(--app-header-bg-color);
-                  border-bottom-color: var(--app-header-bg-color);
-                  border-top-color: transparent;
-                "></div>
-            </div>
-            } @else if (notifications.length === 0) {
-            <div
-              class="flex w-full flex-col items-center justify-center py-10 text-gray-500">
-              <i class="fa fa-bell-slash mb-2 text-3xl"></i>
-              <p class="text-sm">{{'no_notifications' | translate}}s</p>
-            </div>
-            } @else { @for (item of notifications; track item.id) {
-            <!-- <div class="w-full p-3 border-b border-gray-200">
+                class="notification-tab-content flex w-full flex-col items-center">
+                @if (!loadingNotificationData && notifications.length > 0 &&
+                activeTab.key === 'push_notification') {
+                <div
+                  class="flex w-full items-center justify-end border-b border-gray-200 px-3 pb-1">
+                  <button
+                    class="text-xs hover:opacity-80 disabled:opacity-50"
+                    [style.color]="'var(--app-header-bg-color)'"
+                    (click)="markPushNotificationAsread()">
+                    {{ 'mark_all_as_read' | translate }}
+                  </button>
+                </div>
+                } @if (loadingNotificationData) {
+                <div class="flex w-full items-center justify-center py-6">
+                  <div
+                    class="h-6 w-6 animate-spin rounded-full border-2"
+                    style="
+                      border-left-color: var(--app-header-bg-color);
+                      border-right-color: var(--app-header-bg-color);
+                      border-bottom-color: var(--app-header-bg-color);
+                      border-top-color: transparent;
+                    "></div>
+                </div>
+                } @else if (notifications.length === 0) {
+                <div
+                  class="flex w-full flex-col items-center justify-center py-10 text-gray-500">
+                  <i class="fa fa-bell-slash mb-2 text-3xl"></i>
+                  <p class="text-sm">{{'no_notifications' | translate}}s</p>
+                </div>
+                } @else { @for (item of notifications; track item.id) {
+                <!-- <div class="w-full p-3 border-b border-gray-200">
                     <div class="flex justify-between items-start">
                       <p class="font-medium text-gray-800">
                         {{ item.notification_content }}
@@ -120,39 +119,42 @@
                       </span>
                     </div>
                   </div> -->
-            <div class="w-full border-b border-gray-200 p-3">
-              <div class="flex w-full items-start">
-                <!-- LEFT -->
-                <div class="w-[70%] pr-0"
-                  [attr.title]="item.notification_content">
-                  <p class="line-clamp-2 font-medium text-gray-800">
-                    {{ item.notification_content?.length > 200 ?
-                    (item.notification_content | slice:0:200) + '...' :
-                    item.notification_content }}
-                  </p>
+                <div class="w-full border-b border-gray-200 p-3">
+                  <div class="flex w-full items-start">
+                    <!-- LEFT -->
+                    <div class="w-[70%] pr-0"
+                      [attr.title]="item.notification_content">
+                      <p class="line-clamp-2 font-medium text-gray-800">
+                        {{ item.notification_content?.length > 200 ?
+                        (item.notification_content | slice:0:200) + '...' :
+                        item.notification_content }}
+                      </p>
+                    </div>
+                    <!-- RIGHT -->
+                    <div class="w-[30%] text-right">
+                      <span class="text-xs text-gray-500"
+                        [class.text-blue-600]="item.notify_status === 'Unread'">
+                        {{ formatDateTime(item.sent_at) }} </span>
+                    </div>
+                  </div>
                 </div>
-                <!-- RIGHT -->
-                <div class="w-[30%] text-right">
-                  <span class="text-xs text-gray-500"
-                    [class.text-blue-600]="item.notify_status === 'Unread'"> {{
-                    formatDateTime(item.sent_at) }} </span>
+                }
+                <div
+                  class="flex items-center justify-center border-t border-gray-200 px-4 pt-2">
+                  <button
+                    (click)="navigateToNotifications()"
+                    class="flex items-center gap-2 text-sm hover:opacity-80"
+                    style="color: var(--app-header-bg-color)">
+                    <i class="fa fa-eye"></i>
+                    {{ 'view_all' | translate }}
+                  </button>
                 </div>
+                }
               </div>
-            </div>
-            }
-            <div
-              class="flex items-center justify-center border-t border-gray-200 px-4 pt-2">
-              <button (click)="navigateToNotifications()"
-                class="flex items-center gap-2 text-sm hover:opacity-80"
-                style="color: var(--app-header-bg-color)">
-                <i class="fa fa-eye"></i>
-                {{ 'view_all' | translate }}
-              </button>
             </div>
             }
           </div>
         </div>
-        }
       </div>
 
       <div>

@@ -104,7 +104,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     this.form = this.fb.group({
       approvalWorkflow: this.fb.group({
         id: [null, Validators.required],
-        name: [{ value: '', disabled: true }, Validators.required],
+        name: [{ value: '' }, Validators.required],
         slug: ['', Validators.required],
       }),
       approvalWorkflowAssignments: this.fb.array([]),
@@ -180,11 +180,14 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
               id: response.data.records[0].id,
               slug: response.data.records[0].slug,
               name: response.data.records[0].name,
-              accept_email: response.data.records[0].approved_mail,
-              reject_email: response.data.records[0].reject_mail,
+              accept_email: response.data.records[0].approved_mail ? response.data.records[0].approved_mail : null,
+              reject_email: response.data.records[0].reject_mail ? response.data.records[0].reject_mail : null,
+              accept_whatsapp: response.data.records[0].approved_whatsapp ? response.data.records[0].approved_whatsapp : null,
+              reject_whatsapp: response.data.records[0].reject_whatsapp ? response.data.records[0].reject_whatsapp : null,
             });
             if (response.data.records[0]?.approval_assignments.length) {
               const lineItemsArray: any = this.form.get('approvalWorkflowAssignments') as FormArray;
+
               response.data.records[0]?.approval_assignments.map(
                 (
                   each: {
@@ -250,6 +253,10 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
               );
             } else {
               this.addApproverAssignment();
+              const lineItemsArray = this.form.get('approvalWorkflowAssignments') as FormArray;
+              lineItemsArray.controls[lineItemsArray.length - 1].patchValue({
+                approval_workflow_slug: response.data.records[0].slug,
+              });
             }
           }
         }
@@ -351,6 +358,8 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       roles: [null],
       accept_email: [null],
       reject_email: [null],
+      accept_whatsapp: [null],
+      reject_whatsapp: [null],
     });
 
     // Push the new form group
@@ -561,6 +570,10 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
   }
 
   submit(): void {
+    console.log(this.form.value);
+    //[
+    //"update van_load_request set trac_process_status = 'posted' where id = $unique_id"
+    //]
     if (this.form.valid) {
       const payload: any = {
         data: {

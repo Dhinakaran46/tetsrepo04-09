@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { CommonSharedModule } from '../../../shared/common/common.module';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,8 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [CommonSharedModule, TranslateModule],
   templateUrl: './tree-view-item.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.Emulated,
   animations: [
     trigger('slideDownUp', [
       transition(':enter', [style({ height: 0, opacity: 0 }), animate('200ms ease-out', style({ height: '*', opacity: 1 }))]),
@@ -25,6 +27,8 @@ export class TreeViewItemComponent {
   @Output() deleteNode = new EventEmitter<any>();
   @Output() addChild = new EventEmitter<any>();
 
+  constructor(private cdr: ChangeDetectorRef) {}
+
   toggleTreeview(id: any) {
     const idStr = id.toString();
     if (this.treeview.includes(idStr)) {
@@ -33,6 +37,7 @@ export class TreeViewItemComponent {
     } else {
       this.treeview.push(idStr);
     }
+    this.cdr.markForCheck();
   }
 
   isExpanded(id: any): boolean {
