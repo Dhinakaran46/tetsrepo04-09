@@ -1,4 +1,9 @@
-<div class="panel text-app-text">
+<div
+  class="panel text-app-text"
+  [ngClass]="tableHierarchyClass"
+  [class.sticky-enabled]="isStickyHeaderEnabled"
+  [class.sticky-disabled]="!isStickyHeaderEnabled"
+  [attr.data-table-level]="tableLevel">
   <div class="mb-2.5">
     @if (headerStaticEntityName) {
     <div class="mb-4 pb-5 pt-5">
@@ -624,7 +629,11 @@
     </div>
     }
 
-    <div class="datatable">
+    <div
+      class="datatable"
+      [ngClass]="tableHierarchyClass"
+      [class.sticky-enabled]="isStickyHeaderEnabled"
+      [class.sticky-disabled]="!isStickyHeaderEnabled">
       <div class="table-responsive overflow-x-auto">
         <table class="table-hover relative min-w-full">
           <thead class="bg-gray-50">
@@ -645,7 +654,7 @@
               <th
                 scope="col"
                 class="max-w-140 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
-                [ngClass]="{ 'datatable-sticky-column': isStickyGridColumn(col) }"
+                [ngClass]="{ 'datatable-sticky-column': isStickyHeaderEnabled && isStickyGridColumn(col) }"
                 appDynamicFontSize="body"
                 (click)="sortColumn(col)"
                 ngxTippy
@@ -772,7 +781,7 @@
                 <!-- Replace the cell rendering section in your datatable.component.html -->
                 @if (!col.colFilterHide) {
                 <td class="max-w-150 truncate whitespace-nowrap"
-                  [ngClass]="[isStickyGridColumn(col) ? 'datatable-sticky-column' : '', col.cellClass || '']">
+                  [ngClass]="[isStickyHeaderEnabled && isStickyGridColumn(col) ? 'datatable-sticky-column' : '', col.cellClass || '']">
                   @if (!col.customTemplate && col.is_grid_column == 'true') {
                   <!-- NEW: Check if column has field_html_content -->
                   <!-- Check if column has HTML content -->
@@ -920,7 +929,7 @@
                 <td
                   [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1"
                   class="p-0">
-                  <div class="bg-gray-50 p-4">
+                  <div class="datatable-child-host bg-gray-50 p-4">
                     <!-- Child content -->
                     <ng-template #childMasterListContainer></ng-template>
                   </div>
@@ -935,7 +944,7 @@
                 <td
                   [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1"
                   class="p-0">
-                  <div class="bg-gray-50 p-4">
+                  <div class="datatable-child-host bg-gray-50 p-4">
                     @if ( col.link_type === 'child_grid' || (col.link_type ===
                     'child_component' && getChildComponentMode(col) ===
                     'popup_grid')) {

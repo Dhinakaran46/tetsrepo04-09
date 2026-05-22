@@ -37,11 +37,7 @@ export function viewMandatoryValidator(): ValidatorFn {
 @Component({
   selector: 'app-add-master-entity',
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    MonacoEditorModule,
-    ReactiveFormsModule,
-  ],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule],
   templateUrl: './master-entity.component.html',
   styleUrl: './master-entity.component.scss',
   animations: [
@@ -157,7 +153,6 @@ export class MasterEntityComponent implements OnInit {
         },
       ],
     },
-
     reportInfo: {
       header: 'sample_report_information',
       examples: [
@@ -1152,6 +1147,19 @@ export class MasterEntityComponent implements OnInit {
         },
       ],
     },
+    entityConfigurationsInfo: {
+      header: 'sample_entity_configurations_information',
+      examples: [
+        {
+          name: 'example_1',
+          comments: [],
+          data: {
+            enable_sticky_header: 'yes',
+            show_serial_number: 'yes',
+          },
+        },
+      ],
+    },
   };
   selectedInfoTab: number = 0;
   popupInformation: any = null;
@@ -1203,8 +1211,7 @@ export class MasterEntityComponent implements OnInit {
     private titleService: Title,
     private openaiService: OpenaiService,
     private cdr: ChangeDetectorRef
-  ) {
-  }
+  ) {}
 
   ngOnInit() {
     this.initStore();
@@ -1293,6 +1300,7 @@ export class MasterEntityComponent implements OnInit {
       addQueryInformation: [''],
       editQueryInformation: [''],
       presetQueryInformation: [''],
+      entity_configurations: [''],
       staticPageContent: [''],
       items: this.fb.array([]),
       exportTemplateFileName: [''],
@@ -1632,6 +1640,7 @@ export class MasterEntityComponent implements OnInit {
             footer_entity_id: entity.footer_entity_id,
             draftMode: entity.draft_mode || false,
             entityType: entity.entity_type,
+            entity_configurations: entity.entity_configurations ? this.prettyJSON(entity.entity_configurations) : '',
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
             reportInformation: entity.report_information ? this.prettyJSON(entity.report_information) : '',
             formInformation: entity.form_information ? this.prettyJSON(entity.form_information) : '',
@@ -1718,6 +1727,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation, true) }),
         ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation, true) }),
         ...(formData.presetQueryInformation && { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true) }),
+        ...(formData.entity_configurations && { entity_configurations: this.prepareJSON(formData.entity_configurations, true) }),
         ...(formData.staticPageContent && { static_page_content: formData.staticPageContent }),
         ...(formData.wizardType && { dashboard_wizard_type: formData.wizardType }),
         ...(formData.reportType && { report_type: formData.reportType }),
@@ -1808,6 +1818,9 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.presetQueryInformation
           ? { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true) }
           : { preset_query_information: null }),
+        ...(formData.entity_configurations
+          ? { entity_configurations: this.prepareJSON(formData.entity_configurations, true) }
+          : { entity_configurations: null }),
         ...(formData.staticPageContent ? { static_page_content: formData.staticPageContent } : { static_page_content: null }),
         ...(formData.wizardType ? { dashboard_wizard_type: formData.wizardType } : { dashboard_wizard_type: null }),
         ...(formData?.reportType ? { report_type: formData.reportType } : { report_type: this.commonConfig.REPORT_TYPES.LCP }),
@@ -1944,6 +1957,7 @@ export class MasterEntityComponent implements OnInit {
 
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
+        console.log('API Response:', response);
         if (response.status && response.code === 200) {
           let key;
           if (this.id) {
@@ -1958,6 +1972,8 @@ export class MasterEntityComponent implements OnInit {
           this.router.navigate([this.redirect_url]);
         } else {
           const key = response.message;
+          console.log('Error key:', key);
+          console.log('Error response:', response);
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }

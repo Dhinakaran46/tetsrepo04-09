@@ -164,6 +164,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() title: any = '';
   @Input() previewTitle: any = '';
   @Input() enableCheckBox: boolean = false;
+  @Input() stickyHeader: any = 'no';
+  @Input() tableLevel: number = 0;
 
   @Input() masterInfo: any = [];
   @Input() selectcolumns: any[] = [];
@@ -189,6 +191,27 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     columns?: any[];
     grid_params?: any;
   } | null = null;
+
+  get isStickyHeaderEnabled(): boolean {
+    return (
+      String(this.stickyHeader ?? '')
+        .trim()
+        .toLowerCase() === 'yes'
+    );
+  }
+
+  get stickyModeClass(): string {
+    console.log('this.isStickyHeaderEnabled', this.isStickyHeaderEnabled);
+    return this.isStickyHeaderEnabled ? 'sticky-enabled' : 'sticky-disabled';
+  }
+
+  get tableHierarchyClass(): string {
+    return this.tableLevel === 0 ? 'table-level-parent' : `table-level-${this.tableLevel}`;
+  }
+
+  get tableClassList(): string[] {
+    return [this.tableHierarchyClass, this.stickyModeClass];
+  }
   @Output() delete = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
@@ -3829,6 +3852,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (!this.childMasterListContainer) return;
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
+    componentRef.instance.stickyHeader = this.stickyHeader;
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
@@ -3877,6 +3902,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.popupChildMasterListContainer.clear();
 
     const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
+    componentRef.instance.stickyHeader = this.stickyHeader;
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
@@ -3900,6 +3927,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
+    componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
+    componentRef.instance.stickyHeader = this.stickyHeader;
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;

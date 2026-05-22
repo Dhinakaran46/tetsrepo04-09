@@ -1,7 +1,8 @@
 <div id="master-list-id">
   @if (noPermission) {
   <div class="flex h-full items-center justify-center">
-    <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
+    <span class="mb-4 text-lg font-semibold text-red-600">No permission to view
+      the details</span>
   </div>
   } @if (!nonGridPage && !noPermission) {
   <app-datatable
@@ -10,6 +11,7 @@
     [enableCheckBox]="enableCheckBox"
     [customTemplates]="customTemplates"
     [headercolumns]="headercolumns"
+    [stickyHeader]="stickyHeader"
     [selectcolumns]="selectcolumns"
     [items]="items"
     [totalItems]="totalItems"
@@ -42,7 +44,7 @@
     [staticPageGridParams]="popupComponentGridParams || grid_params"
     [attachedPolicies]="attachedPolicies"
     [parentGridFilters]="parentGridFilters"
-  ></app-datatable>
+    [tableLevel]="tableLevel"></app-datatable>
   }
 
   <ng-template #actionTemplate let-item>
@@ -55,9 +57,9 @@
         (click)="this.emailResendItem(item, $event)"
         ngxTippy
         data-tippy-content="Resend Email"
-        appDynamicFontSize="body"
-      >
-        <i class="fa-solid fa-arrows-rotate {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        appDynamicFontSize="body">
+        <i
+          class="fa-solid fa-arrows-rotate {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.details) {
       <a
@@ -66,9 +68,9 @@
         (click)="this.viewItem(item, $event)"
         ngxTippy
         data-tippy-content="Details"
-        appDynamicFontSize="body"
-      >
-        <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        appDynamicFontSize="body">
+        <i
+          class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.popup_details) {
       <a
@@ -77,16 +79,19 @@
         (click)="this.viewPopupItem(item)"
         ngxTippy
         data-tippy-content="Details"
-        appDynamicFontSize="body"
-      >
-        <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
-      </a>
-      } @if ( this.masterInfo.permissions.edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed' : true && this.masterInfo?.Listname
-      == 'min_grid' ? item?.min_status != 'completed' : true) ) {
-      <a href="javascript:void(0);" class="hover:text-info" appDynamicFontSize="body" (click)="this.editItem(item, $event)" ngxTippy data-tippy-content="Edit">
+        appDynamicFontSize="body">
         <i
-          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
-        ></i>
+          class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </a>
+      } @if ( this.masterInfo.permissions.edit && (this.masterInfo?.Listname ==
+      'mrn_grid' ? item?.mrn_status != 'completed' : true &&
+      this.masterInfo?.Listname
+      == 'min_grid' ? item?.min_status != 'completed' : true) ) {
+      <a href="javascript:void(0);" class="hover:text-info"
+        appDynamicFontSize="body" (click)="this.editItem(item, $event)" ngxTippy
+        data-tippy-content="Edit">
+        <i
+          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (EntityName == 'master_entity') {
       <a
@@ -95,16 +100,14 @@
         appDynamicFontSize="body"
         (click)="this.exportEntityAsZip(item, $event)"
         ngxTippy
-        [attr.data-tippy-content]="'Export ' + item.name + ' as Zip'"
-      >
+        [attr.data-tippy-content]="'Export ' + item.name + ' as Zip'">
         <i
           class="fa fa-file-export"
           [ngClass]="{
             'h-5.5 w-5.5': store.fontsize === 'large',
             'h-4.5 w-4.5': store.fontsize === 'medium',
             'h-3.5 w-3.5': store.fontsize === 'small'
-          }"
-        ></i>
+          }"></i>
       </a>
       } @if (EntityName == 'master_entity') {
       <a
@@ -113,16 +116,19 @@
         (click)="this.previewPopupItem(item)"
         data-tippy-content="Preview"
         ngxTippy
-        appDynamicFontSize="body"
-      >
+        appDynamicFontSize="body">
         <i class="fa-regular fa-file-lines"></i>
       </a>
-      } @if ( this.masterInfo.permissions.popup_edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed' : true &&
-      this.masterInfo?.Listname == 'min_grid' ? item?.min_status != 'completed' : true) ) {
-      <a href="javascript:void(0);" class="hover:text-info" appDynamicFontSize="body" (click)="this.editPopupItem(item)" ngxTippy data-tippy-content="Edit">
+      } @if ( this.masterInfo.permissions.popup_edit &&
+      (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed'
+      : true &&
+      this.masterInfo?.Listname == 'min_grid' ? item?.min_status != 'completed'
+      : true) ) {
+      <a href="javascript:void(0);" class="hover:text-info"
+        appDynamicFontSize="body" (click)="this.editPopupItem(item)" ngxTippy
+        data-tippy-content="Edit">
         <i
-          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
-        ></i>
+          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.delete) {
       <a
@@ -131,9 +137,9 @@
         appDynamicFontSize="body"
         (click)="this.deleteItem(item, $event)"
         ngxTippy
-        data-tippy-content="Delete"
-      >
-        <i class="fa-regular fa-trash-can {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        data-tippy-content="Delete">
+        <i
+          class="fa-regular fa-trash-can {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.get_code) {
       <a
@@ -142,17 +148,16 @@
         appDynamicFontSize="body"
         (click)="this.getCode(item, $event)"
         ngxTippy
-        data-tippy-content="Get Code"
-      >
+        data-tippy-content="Get Code">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
           stroke-width="1.8"
           stroke="currentColor"
-          [ngClass]="store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5'"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 21 12l-3.75 5.25M6.75 6.75 3 12l3.75 5.25M14.25 3l-4.5 18" />
+          [ngClass]="store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5'">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17.25 6.75 21 12l-3.75 5.25M6.75 6.75 3 12l3.75 5.25M14.25 3l-4.5 18" />
         </svg>
       </a>
       } @if (this.masterInfo.permissions.assign) {
@@ -162,9 +167,9 @@
         appDynamicFontSize="body"
         (click)="this.assignItem(item, $event)"
         ngxTippy
-        data-tippy-content="Assign"
-      >
-        <i class="fa fa-tasks {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        data-tippy-content="Assign">
+        <i
+          class="fa fa-tasks {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.print) {
       <a
@@ -173,20 +178,21 @@
         appDynamicFontSize="body"
         (click)="this.printItem(item, $event)"
         ngxTippy
-        data-tippy-content="Print"
-      >
-        <i class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        data-tippy-content="Print">
+        <i
+          class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
-      } @if (this.masterInfo.permissions.record_export || item?.downloadables != null) {
+      } @if (this.masterInfo.permissions.record_export || item?.downloadables !=
+      null) {
       <a
         href="javascript:void(0);"
         class="hover:text-primary"
         appDynamicFontSize="body"
         (click)="this.recordExport(item, $event)"
         ngxTippy
-        data-tippy-content="Record Export"
-      >
-        <i class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        data-tippy-content="Record Export">
+        <i
+          class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.generate_vector) {
       <a
@@ -195,9 +201,9 @@
         appDynamicFontSize="body"
         (click)="this.generateVector(item, $event)"
         ngxTippy
-        data-tippy-content="Generate Vector"
-      >
-        <i class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+        data-tippy-content="Generate Vector">
+        <i
+          class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </a>
       } @if (this.masterInfo.permissions.reset_password) {
       <a
@@ -207,8 +213,7 @@
         appDynamicFontSize="body"
         (click)="this.passwordModal(item, $event)"
         ngxTippy
-        [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'"
-      >
+        [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'">
         <i
           class="fa fa-key"
           [ngClass]="{
@@ -216,8 +221,7 @@
             'h-4.5 w-4.5': store.fontsize === 'medium',
             'h-3.5 w-3.5': store.fontsize === 'small',
             'text-red-500': !item.password
-          }"
-        ></i>
+          }"></i>
       </a>
       }
     </div>
@@ -226,8 +230,7 @@
   <ng-template #statusTemplate let-item>
     <span
       class="badge"
-      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color || '']"
-    >
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color || '']">
       {{ statuses[item.status].value | translate }}
     </span>
   </ng-template>
@@ -238,8 +241,7 @@
       [ngClass]="[
         store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
         processStatuses[item.process_status]?.border_color || ''
-      ]"
-    >
+      ]">
       {{ processStatuses[item.process_status].value | translate }}
     </span>
   </ng-template>
@@ -251,8 +253,7 @@
       target="_blank"
       rel="noopener noreferrer"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
-      class="flex items-center gap-2 text-blue-600 hover:underline"
-    >
+      class="flex items-center gap-2 text-blue-600 hover:underline">
       <i class="fa-solid fa-up-right-from-square"></i>
       {{ item.documentation_video_url }}
     </a>
@@ -266,8 +267,7 @@
       target="_blank"
       rel="noopener noreferrer"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
-      class="flex items-center gap-2 text-blue-600 hover:underline"
-    >
+      class="flex items-center gap-2 text-blue-600 hover:underline">
       <i class="fa-solid fa-download"></i>
       {{ item.documentation_pdf }}
     </a>
@@ -281,8 +281,7 @@
       target="_blank"
       rel="noopener noreferrer"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
-      class="flex items-center gap-2 text-blue-600 hover:underline"
-    >
+      class="flex items-center gap-2 text-blue-600 hover:underline">
       <i class="fa-solid fa-download"></i>
       {{ item.documentation_word }}
     </a>
@@ -298,28 +297,27 @@
 @if (isGetCodeModalOpen) {
 <div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
-  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+  <div
+    class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
       class="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-    >
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
       <!-- Modal Header -->
       <div
         class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6"
         style="
           background-color: var(--app-table-header-color, var(--app-sidebar-bg-color));
           border-color: var(--app-table-border-color, var(--app-border-color));
-        "
-      >
+        ">
         <div class="flex items-center justify-between">
-          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">Code</h3>
+          <h3
+            class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">Code</h3>
           <button
             type="button"
             class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
-            (click)="closeGetCodeModal()"
-          >
+            (click)="closeGetCodeModal()">
             <span class="sr-only">Close</span>
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -328,19 +326,20 @@
       <!-- Modal Content -->
       <div class="px-4 py-4 sm:px-6">
         <form [formGroup]="getCodeForm">
-          <div class="modal-monaco-editor-wrapper relative" style="height: 450px">
+          <div class="modal-monaco-editor-wrapper relative"
+            style="height: 450px">
             <button
               type="button"
               class="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-blue-700"
               (click)="copyGetCodeContent()"
-              title="Copy to clipboard"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-3.5 w-3.5">
+              title="Copy to clipboard">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                class="h-3.5 w-3.5">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 0 1 3 20.625V10.125C3 9.504 3.504 9 4.125 9H7.5m8.25 8.25h4.125c.621 0 1.125-.504 1.125-1.125V5.625A1.125 1.125 0 0 0 19.875 4.5H9.375c-.621 0-1.125.504-1.125 1.125V9m7.5 8.25H9.375A1.125 1.125 0 0 1 8.25 16.125V9m7.5 8.25V9"
-                />
+                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 0 1 3 20.625V10.125C3 9.504 3.504 9 4.125 9H7.5m8.25 8.25h4.125c.621 0 1.125-.504 1.125-1.125V5.625A1.125 1.125 0 0 0 19.875 4.5H9.375c-.621 0-1.125.504-1.125 1.125V9m7.5 8.25H9.375A1.125 1.125 0 0 1 8.25 16.125V9m7.5 8.25V9" />
               </svg>
               <span>Copy</span>
             </button>
@@ -348,8 +347,7 @@
               [options]="modalJsonEditorOptions"
               formControlName="codeContent"
               class="modal-monaco-editor"
-              style="height: 100%"
-            ></ngx-monaco-editor>
+              style="height: 100%"></ngx-monaco-editor>
           </div>
         </form>
       </div>
@@ -362,30 +360,29 @@
 @if (isItemModalOpen) {
 <div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
-  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+  <div
+    class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Panel -->
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
       class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-    >
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
       <!-- Modal Header -->
       <div
         class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6"
         style="
           background-color: var(--app-table-header-color, var(--app-sidebar-bg-color));
           border-color: var(--app-table-border-color, var(--app-border-color));
-        "
-      >
+        ">
         <div class="flex items-center justify-between">
-          <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
+          <h3
+            class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
             {{ 'title_reset_password' | translate }}
           </h3>
           <button
             type="button"
             class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
-            (click)="cancelResetPwd()"
-          >
+            (click)="cancelResetPwd()">
             <span class="sr-only">Close</span>
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -401,19 +398,23 @@
             background-color: var(--app-table-bg-color, var(--app-bg-color));
             border-color: var(--app-table-border-color, var(--app-border-color));
             color: var(--app-table-text-color, var(--app-text-color));
-          "
-        >
+          ">
           <div class="flex flex-col sm:flex-row">
             <div class="grid flex-1 gap-5 sm:grid-cols-2">
               <div>
-                <label for="new_password" class="form-label">{{ 'form_label_new_pwd' | translate }}</label>
-                <input type="password" formControlName="new_password" class="form-input" id="new_password" />
+                <label for="new_password" class="form-label">{{
+                  'form_label_new_pwd' | translate }}</label>
+                <input type="password" formControlName="new_password"
+                  class="form-input" id="new_password" />
                 <!--<div *ngIf="changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched" class="text-red-500">
                     {{ 'form_label_confirm_new_pwd' | translate }}
                   </div>-->
-                @if (changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched) {
+                @if (changePasswordForm.get('new_password')?.invalid &&
+                changePasswordForm.get('new_password')?.touched) {
                 <div class="text-red-500">
-                  @if ( changePasswordForm.get('new_password')?.errors?.['passwordInvalid'] ) {
+                  @if (
+                  changePasswordForm.get('new_password')?.errors?.['passwordInvalid']
+                  ) {
                   {{ passwordValidationMessage }}
                   }
                   <!--<ng-container
@@ -424,16 +425,20 @@
                       Password must be at least 8 characters long.
                     </ng-container>-->
                 </div>
-                } @if (changePasswordForm.controls['new_password'].touched && !allConditionsMet) {
+                } @if (changePasswordForm.controls['new_password'].touched &&
+                !allConditionsMet) {
                 <div class="passwordCharMatch text-red-500">
                   <!--  {{ passwordValidationMessage }} -->
                 </div>
                 }
               </div>
               <div>
-                <label for="confirm_new_password" class="form-label">{{ 'form_label_confirm_new_pwd' | translate }}</label>
-                <input type="password" formControlName="confirm_new_password" class="form-input" id="confirm_new_password" />
-                @if (changePasswordForm.get('confirm_new_password')?.invalid && changePasswordForm.get('confirm_new_password')?.touched) {
+                <label for="confirm_new_password" class="form-label">{{
+                  'form_label_confirm_new_pwd' | translate }}</label>
+                <input type="password" formControlName="confirm_new_password"
+                  class="form-input" id="confirm_new_password" />
+                @if (changePasswordForm.get('confirm_new_password')?.invalid &&
+                changePasswordForm.get('confirm_new_password')?.touched) {
                 <div class="text-red-500">
                   {{ 'form_confirm_new_pwd_req_msg' | translate }}
                 </div>
@@ -442,9 +447,12 @@
             </div>
           </div>
           <div class="mt-5 flex flex-col items-center">
-            <button appDynamicFontSize="body" type="submit" class="btn btn-primary">{{ 'submit' | translate }}</button>
+            <button appDynamicFontSize="body" type="submit"
+              class="btn btn-primary">{{ 'submit' | translate }}</button>
           </div>
-          <p class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400"><strong>Note:</strong> {{ passwordValidationMessage }}</p>
+          <p
+            class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400"><strong>Note:</strong>
+            {{ passwordValidationMessage }}</p>
         </form>
       </div>
     </div>
@@ -456,19 +464,18 @@
 @if (isViewPopupOpen) {
 <div class="fixed inset-0 z-50 overflow-y-auto">
   <!-- Modal Backdrop -->
-  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+  <div
+    class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Content -->
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
       class="relative w-full max-w-5xl transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-    >
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
       <!-- Corner Close Button -->
       <button
         type="button"
         class="btn-xs absolute -right-5 -top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-lg hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
-        (click)="closeViewPopup()"
-      >
+        (click)="closeViewPopup()">
         <span class="sr-only">Close</span>
         <i class="fa-solid fa-xmark text-2xl"></i>
       </button>
@@ -476,16 +483,21 @@
       <div class="max-h-[80vh] overflow-y-auto p-4">
         @if (loadingpopup) {
         <app-loader></app-loader>
-        } @if (noPopupPermission && selectedItemEntityType !== 'grid_builder_module') {
+        } @if (noPopupPermission && selectedItemEntityType !==
+        'grid_builder_module') {
         <div class="flex min-h-[200px] flex-col items-center justify-center">
-          <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
-          <button class="btn btn-danger rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" (click)="closeViewPopup()">Close</button>
+          <span class="mb-4 text-lg font-semibold text-red-600">No permission to
+            view the details</span>
+          <button
+            class="btn btn-danger rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            (click)="closeViewPopup()">Close</button>
         </div>
         }
         <ng-container>
           @if (selectedItemEntityType == 'grid_builder_module') {
           <app-datatable
             [headercolumns]="previewHeaderColumns"
+            [stickyHeader]="stickyHeader"
             [selectcolumns]="previewSelectColumns"
             [items]="previewItems"
             [totalItems]="previewTotalItems"
@@ -509,7 +521,7 @@
             [staticPageGridParams]="popupComponentGridParams || grid_params"
             [attachedPolicies]="attachedPolicies"
             [parentGridFilters]="parentGridFilters"
-          >
+            [tableLevel]="tableLevel">
           </app-datatable>
           }
         </ng-container>
@@ -520,6 +532,7 @@
           [enableCheckBox]="enableCheckBox"
           [customTemplates]="customTemplates"
           [headercolumns]="headercolumns"
+          [stickyHeader]="stickyHeader"
           [selectcolumns]="selectcolumns"
           [items]="items"
           [totalItems]="totalItems"
@@ -550,7 +563,7 @@
           [staticPageGridParams]="popupComponentGridParams || grid_params"
           [attachedPolicies]="attachedPolicies"
           [parentGridFilters]="parentGridFilters"
-        >
+          [tableLevel]="tableLevel">
         </app-datatable>
         } @if (popupName == 'popup_details') {
         <app-static-page
@@ -559,10 +572,11 @@
           [parentGridFilters]="getCurrentGridFilters()"
           [isModal]="true"
           [gridParams]="popupComponentGridParams"
-          (closeModal)="closeViewPopup()"
-        ></app-static-page>
+          (closeModal)="closeViewPopup()"></app-static-page>
         } @if (popupName == 'popup_add' || popupName == 'popup_edit') {
-        <app-form-builder [uuid]="selectedItemUuid" [entityName]="popupEntityName" [isModal]="true" (closeModal)="closeViewPopup()"></app-form-builder>
+        <app-form-builder [uuid]="selectedItemUuid"
+          [entityName]="popupEntityName" [isModal]="true"
+          (closeModal)="closeViewPopup()"></app-form-builder>
         } }
       </div>
     </div>

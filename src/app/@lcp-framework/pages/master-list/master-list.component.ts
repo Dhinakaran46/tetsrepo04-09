@@ -61,15 +61,7 @@ interface AcceptedParentParamRule {
 @Component({
   standalone: true,
   selector: 'master-list',
-  imports: [
-    CommonSharedModule,
-    DataTableComponent,
-    LoaderComponent,
-    ReactiveFormsModule,
-    StaticPageComponent,
-    FormBuilderComponent,
-    MonacoEditorModule,
-  ],
+  imports: [CommonSharedModule, DataTableComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent, FormBuilderComponent, MonacoEditorModule],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -87,6 +79,8 @@ export class MasterListComponent implements OnChanges {
   @Input() isViewPopupOpen: boolean = false;
   @Input() popupEntityName: any = '';
   @Input() selectedItemUuid: string | null = null;
+  @Input() tableLevel: number = 0;
+  @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
   @Input() parentGridFilters: {
     search_all?: any[];
@@ -239,6 +233,12 @@ export class MasterListComponent implements OnChanges {
   private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
   private save_grid_latest_state: boolean = false;
 
+  private normalizeResultsPerPage(value: any): number {
+    const numericValue = Number(value);
+    const resolvedValue = Number.isFinite(numericValue) && numericValue > 0 ? Math.floor(numericValue) : 10;
+    return this.tableLevel > 0 ? Math.max(10, resolvedValue) : resolvedValue;
+  }
+
   private parsePasswordValidationRegexp(pattern: string): RegExp {
     // Accept both plain regex strings and slash-delimited strings (/.../flags).
     const literalMatch = pattern.match(/^\/(.*)\/([a-z]*)$/i);
@@ -375,7 +375,7 @@ export class MasterListComponent implements OnChanges {
 
   setupPageInfo(pageInfo: any, defaultPermission: any) {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
-    this.resultsPerPage = parseInt(this.config.grid_pagination_default);
+    this.resultsPerPage = this.normalizeResultsPerPage(this.config?.grid_pagination_default);
     this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
 
     if (defaultPermission !== true) {
@@ -393,6 +393,14 @@ export class MasterListComponent implements OnChanges {
       }
 
       const masterListConfig = pageInfo;
+      console.log('entity_configurations', masterListConfig.entity_configurations);
+
+      if (masterListConfig.entity_configurations != null) {
+        // this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
+        this.stickyHeader = 'yes';
+      }
+
+      console.log('stickyHeader', this.stickyHeader);
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
@@ -1170,6 +1178,7 @@ export class MasterListComponent implements OnChanges {
       associated_entity_name: record?.associated_entity_name ?? null,
       associated_entity: record?.associated_entity ?? null,
       children: Array.isArray(record?.children) ? record.children : [],
+      entity_configurations: record?.entity_configurations && typeof record.entity_configurations === 'object' ? record.entity_configurations : null,
       query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
       form_information: record?.form_information && typeof record.form_information === 'object' ? record.form_information : null,
       report_information: record?.report_information && typeof record.report_information === 'object' ? record.report_information : null,
@@ -1207,6 +1216,7 @@ export class MasterListComponent implements OnChanges {
       entity_name: record?.entity_name || '',
       entity_type: record?.entity_type || '',
       primary_table: record?.primary_table || '',
+      entity_configurations: record?.entity_configurations && typeof record.entity_configurations === 'object' ? record.entity_configurations : null,
       form_information:
         record?.form_information && typeof record.form_information === 'object'
           ? record.form_information
@@ -1327,6 +1337,10 @@ export class MasterListComponent implements OnChanges {
 
     if (record?.static_page_content !== undefined && record?.static_page_content !== null) {
       genericJson.static_page_content = record.static_page_content;
+    }
+
+    if (record?.entity_configurations !== undefined && record?.entity_configurations !== null && typeof record.entity_configurations === 'object') {
+      genericJson.entity_configurations = record.entity_configurations;
     }
 
     if (record?.query_information !== undefined && record?.query_information !== null && typeof record.query_information === 'object') {
@@ -2002,8 +2016,8 @@ export class MasterListComponent implements OnChanges {
 
     const savedResultsPerPage = Number(state?.resultsPerPage);
     if (savedResultsPerPage > 0) {
-      this.resultsPerPage = savedResultsPerPage;
-      this.listQuery.limit_range = savedResultsPerPage;
+      this.resultsPerPage = this.normalizeResultsPerPage(savedResultsPerPage);
+      this.listQuery.limit_range = this.resultsPerPage;
     }
 
     const savedCurrentPage = Number(state?.currentPage);
@@ -2121,8 +2135,12 @@ export class MasterListComponent implements OnChanges {
                 ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true
               );
 
+              console.log('this.masterInfo.entity_configurations S.No=>', this.masterInfo.entity_configurations);
+
               // Include serial number column if enabled in config
-              if (this.config.grid_show_serial_number == 'true') {
+              // if (this.config.grid_show_serial_number == 'true') // global grid serial number config check (deprecated)
+              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                // entity level serial number config check
                 this.headercolumns = [
                   {
                     header: 'table_column_sno',
@@ -2236,7 +2254,7 @@ export class MasterListComponent implements OnChanges {
                 }
               }
 
-              if (this.config.grid_show_serial_number == 'true') {
+              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
                 return {
                   table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,
@@ -2470,7 +2488,10 @@ export class MasterListComponent implements OnChanges {
       this.selectedItemUuid = null;
       this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
       this.isViewPopupOpen = true;
-      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
+      setTimeout(() => {
+        this.loadingpopup = false;
+        this.cdr.markForCheck();
+      }, 500);
     }
   }
   editPopupItem(item: any) {
@@ -2496,7 +2517,10 @@ export class MasterListComponent implements OnChanges {
     });
     this.popupComponentGridParams = gridParams;
 
-    setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
+    setTimeout(() => {
+      this.loadingpopup = false;
+      this.cdr.markForCheck();
+    }, 500);
   }
 
   previewPopupItem(item: any) {
@@ -2519,7 +2543,10 @@ export class MasterListComponent implements OnChanges {
           this.previewFetchData(this.previewListQuery);
         }
       });
-      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
+      setTimeout(() => {
+        this.loadingpopup = false;
+        this.cdr.markForCheck();
+      }, 500);
     } else {
       this.previewHeaderColumns = [];
       this.previewTotalItems = 0;
@@ -2597,7 +2624,7 @@ export class MasterListComponent implements OnChanges {
             }));
 
           // Include serial number column if enabled in config
-          if (this.config.grid_show_serial_number == 'true') {
+          if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
             this.previewHeaderColumns = [
               {
                 header: 'table_column_sno',
@@ -2671,7 +2698,7 @@ export class MasterListComponent implements OnChanges {
               }
             }
 
-            if (this.config.grid_show_serial_number == 'true') {
+            if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
               return {
                 table_column_sno: this.listQuery.start_index + index + 1,
                 ...formattedItem,
@@ -2721,7 +2748,10 @@ export class MasterListComponent implements OnChanges {
       });
       this.popupComponentGridParams = gridParams;
 
-      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
+      setTimeout(() => {
+        this.loadingpopup = false;
+        this.cdr.markForCheck();
+      }, 500);
     } else {
       this.noPopupPermission = true;
       this.isViewPopupOpen = true;
@@ -3274,12 +3304,12 @@ export class MasterListComponent implements OnChanges {
   }
 
   onResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
-    const limit = Number(event?.resultsPerPage) > 0 ? Number(event.resultsPerPage) : 10;
+    const limit = this.normalizeResultsPerPage(event?.resultsPerPage);
     const startIndex = Number(event?.start_index) >= 0 ? Number(event.start_index) : 0;
     this.currentPage = Math.floor(startIndex / limit) + 1;
-    this.resultsPerPage = event.resultsPerPage;
-    this.listQuery.start_index = event.start_index;
-    this.listQuery.limit_range = event.resultsPerPage;
+    this.resultsPerPage = limit;
+    this.listQuery.start_index = startIndex;
+    this.listQuery.limit_range = limit;
     if (event?.skipFetch) return;
     this.requestGridFetch(this.listQuery);
   }
@@ -3299,7 +3329,10 @@ export class MasterListComponent implements OnChanges {
     this.selectedItemUuid = item.uuid;
     this.popupEntityName = entityName;
     this.isViewPopupOpen = true;
-    setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
+    setTimeout(() => {
+      this.loadingpopup = false;
+      this.cdr.markForCheck();
+    }, 500);
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
@@ -3337,7 +3370,10 @@ export class MasterListComponent implements OnChanges {
       this.popupEntityName = event.col.link_action;
       this.isViewPopupOpen = true;
       this.loadingpopup = true;
-      setTimeout(() => { this.loadingpopup = false; this.cdr.markForCheck(); }, 500);
+      setTimeout(() => {
+        this.loadingpopup = false;
+        this.cdr.markForCheck();
+      }, 500);
     }
   }
 

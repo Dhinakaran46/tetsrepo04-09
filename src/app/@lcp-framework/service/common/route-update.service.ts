@@ -21,8 +21,7 @@ export class RouteUpdateService {
     menu_module: () => import('../../pages/menu-mapping/menu-mapping.component').then((m) => m.MenuMappingComponent),
     static_page_builder_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
     form_builder_module: () => import('../../pages/form-builder/form-builder.component').then((m) => m.FormBuilderComponent),
-    entity_user_role_map_module: () =>
-      import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
+    entity_user_role_map_module: () => import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
     entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
     about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
     ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
@@ -31,47 +30,36 @@ export class RouteUpdateService {
     job_builder_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
     export_module: () => import('../../pages/job-page/job-page.component').then((m) => m.JobPageComponent),
     configurations_module: () => import('../../pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
-    user_configurations_module: () =>
-      import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
+    user_configurations_module: () => import('../../pages/user-configuration/user-configuration.component').then((m) => m.UserConfigurationComponent),
     cron_setting_module: () => import('../../pages/cron-setting/cron-setting.component').then((m) => m.CronSettingComponent),
     import_module: () => import('../../pages/import-master/import-master.component').then((m) => m.ImportMasterComponent),
     migrate_entity: () => import('../../pages/migrate-entity/migrate-entity.component').then((m) => m.MigrateEntityComponent),
     import_template_module: () => import('../../pages/import-template/import-template.component').then((m) => m.ImportTemplateComponent),
     export_template_module: () => import('../../pages/export-template/export-template.component').then((m) => m.ExportTemplateComponent),
-    import_job_detail_module: () =>
-      import('../../pages/import-job-details/import-job-details.component').then((m) => m.ImportJobDetailsComponent),
+    import_job_detail_module: () => import('../../pages/import-job-details/import-job-details.component').then((m) => m.ImportJobDetailsComponent),
     policy_add_edit_module: () => import('../../pages/policy/policy.component').then((m) => m.PolicyComponent),
-    user_role_policy_module: () =>
-      import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
+    user_role_policy_module: () => import('../../pages/user-role-policy/user-role-policy.component').then((m) => m.UserRolePolicyComponent),
     email_template_assignment_module: () =>
       import('../../pages/email-template-assignment/email-template-assignment.component').then((m) => m.EmailTemplateAssignmentComponent),
     whatsapp_template_assignment_module: () =>
       import('../../pages/whatsapp-template-assignment/whatsapp-template-assignment.component').then((m) => m.WhatsappTemplateAssignmentComponent),
     approval_workflow_assignment_module: () =>
       import('../../pages/approval-workflow-assignment/approval-workflow-assignment.component').then((m) => m.ApprovalWorkflowAssignmentComponent),
-    approval_requests_module: () =>
-      import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
+    approval_requests_module: () => import('../../pages/approval-requests/approval-requests.component').then((m) => m.ApprovalRequestsComponent),
     approval_requests_tracking_module: () =>
       import('../../pages/approval-requests-tracking/approval-requests-tracking.component').then((m) => m.ApprovalRequestsTrackingComponent),
-    child_process_setting_module: () =>
-      import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
+    child_process_setting_module: () => import('../../pages/child-process-setting/child-process-setting.component').then((m) => m.ChildProcessSettingComponent),
     carousel_module: () => import('../../pages/carousel/carousel.component').then((m) => m.CarouselComponent),
     barcode_print_module: () => import('../../pages/barcode-printing/barcode-printing.component').then((m) => m.BarcodePrintingComponent),
     common_permission_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
     tree_builder_module: () => import('../../pages/tree-builder/tree-builder.component').then((m) => m.TreeBuilderComponent),
     target_keywords_embeddings_module: () =>
       import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
-    audit_log_management_module: () =>
-      import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
-    chart_builder_module: () =>
-      import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
+    audit_log_management_module: () => import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
+    chart_builder_module: () => import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
   };
 
-  constructor(
-    private rendererFactory: RendererFactory2,
-    private router: Router,
-    private localStore: LocalStorageService,
-  ) {
+  constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
     this.renderer = this.rendererFactory.createRenderer(null, null);
     const permissionsList = this.getMenuData()?.permissions ?? null;
     this.permissionsListSubject.next(permissionsList);
@@ -172,12 +160,10 @@ export class RouteUpdateService {
 
   /** Builds a Route object from a menu item + permissions */
   private buildRoute(routeData: any, routeDataArray: any[], permissionListJSON: any): Route {
-    
     const keys = this.buildPermissionKeys(routeData.entity_name);
     const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
     const finalAllCol = this.buildSearchAllCol(routeData);
     const children = this.buildChildren(routeData, routeDataArray);
-
     return {
       path: targetPath,
       loadComponent: this.componentMap[routeData.component_class_name] || null,
@@ -190,6 +176,7 @@ export class RouteUpdateService {
           Listname: routeData.entity_name,
           action_slug: routeData.action_slug,
           draft_mode: routeData.draft_mode,
+          entity_configurations: routeData.entity_configurations,
           ListQuery: {
             print_query: true,
             company_id: 0,
@@ -242,7 +229,7 @@ export class RouteUpdateService {
           .map((r: any) => this.buildRoute(r, routeDataArray, permissionListJSON));
 
         return [dynamicRoutes];
-      }),
+      })
     );
   }
 
@@ -257,14 +244,11 @@ export class RouteUpdateService {
       .filter((r: any) => r.entity_name === entity_name && r.component_class_name)
       .map((routeData: any) => {
         const route = this.buildRoute(routeData, routeDataArray, permissionListJSON);
-        
 
         // Extra logic specific to getPageInfo: fallback child_details resolution
         if (routeData.action_slug === 'child_details' && Object.keys(route.data!['pageInfo'].children).length === 0) {
           const possibleActionSlugs = action_types.map((a: any) => `menu_${a.value}_${routeData.entity_name}`);
-          const matchedItems = routeDataArray.filter(
-            (r: any) => r.id !== routeData.id && r.action_slug && possibleActionSlugs.includes(r.name),
-          );
+          const matchedItems = routeDataArray.filter((r: any) => r.id !== routeData.id && r.action_slug && possibleActionSlugs.includes(r.name));
           matchedItems.forEach((r: any) => {
             if (!route.data!['pageInfo'].children[r.action_slug]) {
               route.data!['pageInfo'].children[r.action_slug] = r;
