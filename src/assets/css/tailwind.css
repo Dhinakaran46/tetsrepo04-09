@@ -400,6 +400,35 @@
     @apply flex items-center justify-between px-4 py-2;
   }
 
+  /* =========================
+   HEADER / MENU GLOBAL LAYER
+========================= */
+
+  .horizontal-menu,
+  .topbar,
+  .navbar,
+  header {
+    position: relative;
+    z-index: 99999 !important;
+    overflow: visible !important;
+  }
+
+  .horizontal-menu > li.nav-item {
+    overflow: visible !important;
+  }
+
+  .horizontal-menu ul.sub-menu {
+    position: absolute !important;
+    z-index: 999999 !important;
+    overflow: visible !important;
+  }
+
+  /* Dropdown visible */
+  .horizontal-menu > li.nav-item:hover > ul.sub-menu,
+  .horizontal-menu > li.nav-item > ul.sub-menu > li:hover > ul {
+    display: block;
+  }
+
   .horizontal-menu ul.sub-menu a:hover {
     background-color: var(--app-header-color, #f3f4f6) !important;
     color: var(--app-primary-color, #4361ee) !important;
@@ -957,7 +986,6 @@
   }
 
   /* tables */
-
 
   table {
     @apply w-full !border-collapse;

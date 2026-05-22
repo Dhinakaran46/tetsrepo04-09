@@ -393,11 +393,9 @@ export class MasterListComponent implements OnChanges {
       }
 
       const masterListConfig = pageInfo;
-      console.log('entity_configurations', masterListConfig.entity_configurations);
-
       if (masterListConfig.entity_configurations != null) {
-        // this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
-        this.stickyHeader = 'yes';
+        this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
+        // this.stickyHeader = 'yes';
       }
 
       console.log('stickyHeader', this.stickyHeader);
@@ -2134,8 +2132,6 @@ export class MasterListComponent implements OnChanges {
               const enableActionMenu = Object.entries(this.masterInfo.permissions).some(
                 ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true
               );
-
-              console.log('this.masterInfo.entity_configurations S.No=>', this.masterInfo.entity_configurations);
 
               // Include serial number column if enabled in config
               // if (this.config.grid_show_serial_number == 'true') // global grid serial number config check (deprecated)

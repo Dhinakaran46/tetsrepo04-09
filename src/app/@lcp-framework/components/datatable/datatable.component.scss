@@ -141,6 +141,8 @@
   --toolbar-height: 60px; /* fallback */
   --datatable-toolbar-top: 7rem;
   --datatable-header-top: 0px;
+  position: relative;
+  z-index: 1;
 }
 
 :host-context(.datatable) {
@@ -164,7 +166,7 @@
 .datatable-toolbar {
   position: sticky;
   top: var(--datatable-toolbar-top);
-  // z-index: var(--datatable-toolbar-z, 30);
+  z-index: var(--datatable-toolbar-z, 30);
   box-sizing: border-box;
   max-width: 100%;
   overflow: visible;
@@ -187,7 +189,6 @@
 .common-search-badges,
 .column-search-badges {
   position: sticky;
-  z-index: 18; /* Lower than toolbar's z-index so it goes under toolbar when scrolled */
   top: calc(var(--datatable-toolbar-top) + var(--datatable-toolbar-height));
   background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
   margin-bottom: 0.5rem;
@@ -251,6 +252,12 @@
   color: var(--app-button-bg-color, #4361ee) !important;
 }
 
+.datatable .table-responsive {
+  position: relative;
+  overflow: auto;
+  z-index: 1 !important;
+}
+
 .datatable .table-responsive table thead tr th {
   vertical-align: top;
   font-weight: 700;
@@ -302,6 +309,12 @@
   max-width: 100%;
   max-height: var(--datatable-scroll-height);
   overflow: auto;
+}
+
+.datatable .table-responsive table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 .datatable-child-host {
@@ -589,7 +602,7 @@ tbody td.sticky:is(.dark *) {
   left: 50%;
   transform: translateX(-50%);
   right: auto;
-  z-index: 1050;
+  z-index: 5000 !important;
   position: fixed;
   top: 9%;
   max-height: 74vh;
@@ -1009,9 +1022,13 @@ tbody td.sticky:is(.dark *) {
 
 /* Mobile view - prevent content from going under sticky elements */
 @media (max-width: 768px) {
+  .panel {
+    padding: 0.25rem 1.25rem 0.25rem 1.25rem;
+  }
   /* Create a scroll container with proper padding */
   .datatable {
     position: relative;
+    top: 0;
   }
 
   .datatable .table-responsive {
@@ -1025,6 +1042,11 @@ tbody td.sticky:is(.dark *) {
   .datatable .table-responsive::-webkit-scrollbar {
     width: 6px;
     height: 6px;
+  }
+
+  .datatable-toolbar {
+    top: 0 !important;
+    z-index: auto !important;
   }
 
   /* Ensure sticky toolbar doesn't overlap content */
@@ -1041,16 +1063,7 @@ tbody td.sticky:is(.dark *) {
   }
 }
 
-/* Alternative: Use scroll-padding on the scroll container */
-@media (max-width: 768px) {
-  .datatable .table-responsive {
-    scroll-padding-top: 120px; /* Adjust based on your toolbar + badges height */
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
-  }
-}
-
-/* Alternative: Child table toolbar sticky within its own scroll area */
+/* Child table toolbar sticky within its own scroll area */
 @media (max-width: 768px) {
   /* Make child table a sticky container */
   .table-level-1 .datatable,
@@ -1059,7 +1072,7 @@ tbody td.sticky:is(.dark *) {
     position: relative;
     display: flex;
     flex-direction: column;
-    max-height: 45vh;
+    max-height: 80vh;
   }
 
   /* Child table toolbar - sticky within child container */
@@ -1087,5 +1100,73 @@ tbody td.sticky:is(.dark *) {
   :is(.dark) .table-level-2 .datatable .datatable-toolbar,
   :is(.dark) .table-level-3 .datatable .datatable-toolbar {
     background: var(--app-table-bg-color, #0e1726);
+  }
+}
+
+/* =========================
+   CHILD TABLE MOBILE TOOLBAR
+========================= */
+
+@media (max-width: 768px) {
+  /* Only child tables */
+  .table-level-1 .saved-view-toolbar,
+  .table-level-2 .saved-view-toolbar,
+  .table-level-3 .saved-view-toolbar {
+    display: flex;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  /* Prevent full width buttons */
+  .table-level-1 .saved-view-toolbar button,
+  .table-level-2 .saved-view-toolbar button,
+  .table-level-3 .saved-view-toolbar button,
+  .table-level-1 .saved-view-toolbar .dropdown,
+  .table-level-2 .saved-view-toolbar .dropdown,
+  .table-level-3 .saved-view-toolbar .dropdown {
+    width: auto !important;
+    min-width: auto !important;
+    flex: 0 0 auto;
+  }
+
+  /* Icon buttons only */
+  .table-level-1 .saved-view-toolbar button span,
+  .table-level-2 .saved-view-toolbar button span,
+  .table-level-3 .saved-view-toolbar button span {
+    display: none;
+  }
+
+  /* Keep icons centered */
+  .table-level-1 .saved-view-toolbar button i,
+  .table-level-2 .saved-view-toolbar button i,
+  .table-level-3 .saved-view-toolbar button i,
+  .table-level-1 .saved-view-toolbar button svg,
+  .table-level-2 .saved-view-toolbar button svg,
+  .table-level-3 .saved-view-toolbar button svg {
+    margin: 0 !important;
+  }
+
+  /* Compact button size */
+  .table-level-1 .saved-view-toolbar button,
+  .table-level-2 .saved-view-toolbar button,
+  .table-level-3 .saved-view-toolbar button {
+    padding: 6px 8px !important;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Search input flexible */
+  .table-level-1 .datatable-global-search,
+  .table-level-2 .datatable-global-search,
+  .table-level-3 .datatable-global-search {
+    min-width: 120px;
+    flex: 1;
   }
 }
