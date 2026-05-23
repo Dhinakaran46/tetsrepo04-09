@@ -971,6 +971,11 @@
     z-index: 999999 !important;
   }
 
+  .language-dropdown {
+    position: relative !important;
+    z-index: 999999 !important;
+  }
+
   .profile-dropdown ul {
     z-index: 999999 !important;
   }
