@@ -1270,6 +1270,10 @@
   @apply scale-100 transform opacity-100;
 }
 
+.popup-modal {
+  position: absolute;
+  z-index: 99999;
+}
 /* highlightjs */
 pre code.hljs {
   @apply overflow-x-auto rounded-md !bg-[#191e3a] p-4 text-white;
