@@ -565,6 +565,14 @@
     @apply hidden;
   }
 
+  header,
+  .horizontal-menu,
+  .horizontal-menu > li,
+  .navbar,
+  .topbar {
+    overflow: visible !important;
+  }
+
   /* Header */
   header {
     background-color: var(--app-header-bg-color, white) !important;
@@ -957,8 +965,19 @@
   }
 
   /* dropdown */
+
+  .profile-dropdown {
+    position: relative !important;
+    z-index: 999999 !important;
+  }
+
+  .profile-dropdown ul {
+    z-index: 999999 !important;
+  }
   .dropdown {
     @apply relative;
+    overflow: visible !important;
+    z-index: 9999;
   }
 
   .dropdown > button {
@@ -966,9 +985,14 @@
   }
 
   .dropdown ul {
-    @apply absolute z-10 mt-1 min-w-[120px] rounded p-0 py-2 shadow;
+    @apply absolute mt-1 min-w-[120px] rounded p-0 py-2 shadow;
+
+    z-index: 99999 !important;
+
     background-color: var(--app-bg-color, white);
     color: var(--app-text-color, black);
+
+    overflow: visible !important;
   }
 
   .dropdown ul:is(.dark *) {
