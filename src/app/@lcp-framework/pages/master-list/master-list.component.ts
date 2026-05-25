@@ -392,15 +392,11 @@ export class MasterListComponent implements OnChanges {
         this.allowPasswordModal = true;
       }
 
-      console.log('Page Info:', pageInfo);
-
       const masterListConfig = pageInfo;
       if (masterListConfig.entity_configurations != null) {
         this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
         // this.stickyHeader = 'yes';
       }
-
-      console.log('stickyHeader', this.stickyHeader);
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);

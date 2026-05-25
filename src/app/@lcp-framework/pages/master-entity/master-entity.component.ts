@@ -1957,7 +1957,6 @@ export class MasterEntityComponent implements OnInit {
 
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
-        console.log('API Response:', response);
         if (response.status && response.code === 200) {
           let key;
           if (this.id) {
