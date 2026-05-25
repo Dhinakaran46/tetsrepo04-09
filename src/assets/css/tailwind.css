@@ -144,7 +144,8 @@
   /* Navbar */
   .navbar-sticky header,
   .navbar-floating header {
-    @apply sticky top-0 z-20;
+    @apply sticky top-0 z-20 !important;
+    background-color: var(--app-header-bg-color) !important;
   }
 
   .navbar-floating header {

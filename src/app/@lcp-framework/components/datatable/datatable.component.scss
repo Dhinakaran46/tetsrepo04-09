@@ -358,9 +358,19 @@
   --datatable-header-z: 12;
 }
 
+.table-level-4,
+.datatable.table-level-4 {
+  --datatable-toolbar-top: 0px;
+  --datatable-header-top: 0px;
+  --datatable-scroll-height: 18vh;
+  --datatable-toolbar-z: 18;
+  --datatable-header-z: 12;
+}
+
 .table-level-1 .datatable-toolbar,
 .table-level-2 .datatable-toolbar,
-.table-level-3 .datatable-toolbar {
+.table-level-3 .datatable-toolbar,
+.table-level-4 .datatable-toolbar {
   position: relative;
   top: auto;
   z-index: 1;
@@ -377,7 +387,11 @@
 .table-level-3 .common-search-badges,
 .table-level-3 .column-search-badges,
 .table-level-3 .common-search-badges-wrapper,
-.table-level-3 .datatable-badge-wrapper {
+.table-level-3 .datatable-badge-wrapper,
+.table-level-4 .common-search-badges,
+.table-level-4 .column-search-badges,
+.table-level-4 .common-search-badges-wrapper,
+.table-level-4 .datatable-badge-wrapper {
   position: static;
   top: auto;
   z-index: auto;
@@ -391,7 +405,8 @@
 }
 
 .panel.table-level-2,
-.panel.table-level-3 {
+.panel.table-level-3,
+.panel.table-level-4 {
   position: relative;
   top: 0;
   margin: 0;
@@ -400,7 +415,8 @@
 
 .panel.table-level-1 .datatable,
 .panel.table-level-2 .datatable,
-.panel.table-level-3 .datatable {
+.panel.table-level-3 .datatable,
+.panel.table-level-4 .datatable {
   top: 0;
 }
 
@@ -1068,7 +1084,8 @@ tbody td.sticky:is(.dark *) {
   /* Make child table a sticky container */
   .table-level-1 .datatable,
   .table-level-2 .datatable,
-  .table-level-3 .datatable {
+  .table-level-3 .datatable,
+  .table-level-4 .datatable {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1078,7 +1095,8 @@ tbody td.sticky:is(.dark *) {
   /* Child table toolbar - sticky within child container */
   .table-level-1 .datatable .datatable-toolbar,
   .table-level-2 .datatable .datatable-toolbar,
-  .table-level-3 .datatable .datatable-toolbar {
+  .table-level-3 .datatable .datatable-toolbar,
+  .table-level-4 .datatable .datatable-toolbar {
     position: sticky !important;
     top: 0 !important;
     z-index: 10 !important;
@@ -1088,7 +1106,8 @@ tbody td.sticky:is(.dark *) {
   /* Child table scroll area */
   .table-level-1 .datatable .table-responsive,
   .table-level-2 .datatable .table-responsive,
-  .table-level-3 .datatable .table-responsive {
+  .table-level-3 .datatable .table-responsive,
+  .table-level-4 .datatable .table-responsive {
     flex: 1;
     overflow: auto;
     max-height: none;
@@ -1098,7 +1117,8 @@ tbody td.sticky:is(.dark *) {
   /* Dark mode for child toolbars */
   :is(.dark) .table-level-1 .datatable .datatable-toolbar,
   :is(.dark) .table-level-2 .datatable .datatable-toolbar,
-  :is(.dark) .table-level-3 .datatable .datatable-toolbar {
+  :is(.dark) .table-level-3 .datatable .datatable-toolbar,
+  :is(.dark) .table-level-4 .datatable .datatable-toolbar {
     background: var(--app-table-bg-color, #0e1726);
   }
 }
@@ -1111,7 +1131,8 @@ tbody td.sticky:is(.dark *) {
   /* Only child tables */
   .table-level-1 .saved-view-toolbar,
   .table-level-2 .saved-view-toolbar,
-  .table-level-3 .saved-view-toolbar {
+  .table-level-3 .saved-view-toolbar,
+  .table-level-4 .saved-view-toolbar {
     display: flex;
     flex-wrap: nowrap !important;
     align-items: center;
@@ -1126,9 +1147,11 @@ tbody td.sticky:is(.dark *) {
   .table-level-1 .saved-view-toolbar button,
   .table-level-2 .saved-view-toolbar button,
   .table-level-3 .saved-view-toolbar button,
+  .table-level-4 .saved-view-toolbar button,
   .table-level-1 .saved-view-toolbar .dropdown,
   .table-level-2 .saved-view-toolbar .dropdown,
-  .table-level-3 .saved-view-toolbar .dropdown {
+  .table-level-3 .saved-view-toolbar .dropdown,
+  .table-level-4 .saved-view-toolbar .dropdown {
     width: auto !important;
     min-width: auto !important;
     flex: 0 0 auto;
@@ -1137,7 +1160,8 @@ tbody td.sticky:is(.dark *) {
   /* Icon buttons only */
   .table-level-1 .saved-view-toolbar button span,
   .table-level-2 .saved-view-toolbar button span,
-  .table-level-3 .saved-view-toolbar button span {
+  .table-level-3 .saved-view-toolbar button span,
+  .table-level-4 .saved-view-toolbar button span {
     display: none;
   }
 
@@ -1145,16 +1169,19 @@ tbody td.sticky:is(.dark *) {
   .table-level-1 .saved-view-toolbar button i,
   .table-level-2 .saved-view-toolbar button i,
   .table-level-3 .saved-view-toolbar button i,
+  .table-level-4 .saved-view-toolbar button i,
   .table-level-1 .saved-view-toolbar button svg,
   .table-level-2 .saved-view-toolbar button svg,
-  .table-level-3 .saved-view-toolbar button svg {
+  .table-level-3 .saved-view-toolbar button svg,
+  .table-level-4 .saved-view-toolbar button svg {
     margin: 0 !important;
   }
 
   /* Compact button size */
   .table-level-1 .saved-view-toolbar button,
   .table-level-2 .saved-view-toolbar button,
-  .table-level-3 .saved-view-toolbar button {
+  .table-level-3 .saved-view-toolbar button,
+  .table-level-4 .saved-view-toolbar button {
     padding: 6px 8px !important;
     height: 34px;
     display: flex;
@@ -1165,7 +1192,8 @@ tbody td.sticky:is(.dark *) {
   /* Search input flexible */
   .table-level-1 .datatable-global-search,
   .table-level-2 .datatable-global-search,
-  .table-level-3 .datatable-global-search {
+  .table-level-3 .datatable-global-search,
+  .table-level-4 .datatable-global-search {
     min-width: 120px;
     flex: 1;
   }

@@ -392,6 +392,8 @@ export class MasterListComponent implements OnChanges {
         this.allowPasswordModal = true;
       }
 
+      console.log('Page Info:', pageInfo);
+
       const masterListConfig = pageInfo;
       if (masterListConfig.entity_configurations != null) {
         this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
