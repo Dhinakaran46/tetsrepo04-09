@@ -82,6 +82,7 @@ export class MasterListComponent implements OnChanges {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
+  @Input() showBackButton: boolean = true;
   @Input() parentGridFilters: {
     search_all?: any[];
     search_any?: any[];
@@ -267,7 +268,7 @@ export class MasterListComponent implements OnChanges {
     private formBuilder: FormBuilder,
     private openaiService: OpenaiService,
     private routeUpdateService: RouteUpdateService,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
   ) {
     const url = this.localStorageService?.getData('base_app_url');
     this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
@@ -303,7 +304,7 @@ export class MasterListComponent implements OnChanges {
         new_password: ['', [Validators.required, this.passwordValidator]],
         confirm_new_password: ['', Validators.required],
       },
-      { validators: this.passwordMatchValidator }
+      { validators: this.passwordMatchValidator },
     );
 
     this.changePasswordForm.get('new_password')?.valueChanges.subscribe((value) => {
@@ -427,6 +428,9 @@ export class MasterListComponent implements OnChanges {
       this.headercolumns = [];
       this.items = [];
     }
+    if (!(this.cdr as any).destroyed) {
+      this.cdr.detectChanges();
+    }
   }
 
   async initStore() {
@@ -496,22 +500,22 @@ export class MasterListComponent implements OnChanges {
       search_all: this.filterBucketWithSource(
         acceptedParams.search_all,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []
+        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : [],
       ),
       search_any: this.filterBucketWithSource(
         acceptedParams.search_any,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []
+        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : [],
       ),
       having_conditions: this.filterBucketWithSource(
         acceptedParams.having_conditions,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []
+        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : [],
       ),
       having_any_conditions: this.filterBucketWithSource(
         acceptedParams.having_any_conditions,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []
+        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : [],
       ),
     };
   }
@@ -706,7 +710,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       const signature = `${parsedRule.parentColumnToken}|${this.normalizeFilterToken(parsedRule.currentColumnName)}|${this.normalizeFilterToken(
-        parsedRule.condition || ''
+        parsedRule.condition || '',
       )}`;
       if (seen.has(signature)) {
         continue;
@@ -782,7 +786,7 @@ export class MasterListComponent implements OnChanges {
         this.toastr.error(errorMessage + error, 'Error');
         this.isItemModalOpen = false;
         // Handle error response
-      }
+      },
     );
   }
 
@@ -920,7 +924,6 @@ export class MasterListComponent implements OnChanges {
     // Reset pagination
     clonedListQuery.start_index = 0;
     this.currentPage = 1;
-
     if (!data?.skipFetch) {
       this.requestGridFetch(clonedListQuery);
     }
@@ -1563,7 +1566,7 @@ export class MasterListComponent implements OnChanges {
         let listParams = this.localStorageService.replaceUniqueId(
           this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
           '$session_user_id',
-          this.user_info.main.id
+          this.user_info.main.id,
         );
         const gridParams: any = {};
         Object.keys(item).forEach((key) => {
@@ -1615,7 +1618,7 @@ export class MasterListComponent implements OnChanges {
             const key = 'error';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          }
+          },
         );
       }
     }
@@ -1628,7 +1631,7 @@ export class MasterListComponent implements OnChanges {
         header.header !== 'uuid' &&
         !String(header.header || '').startsWith('gparam_') &&
         header.is_grid_column !== false &&
-        header.is_grid_column !== 'false'
+        header.is_grid_column !== 'false',
     );
 
     const transformedRecords = records.map((record) => {
@@ -1707,7 +1710,7 @@ export class MasterListComponent implements OnChanges {
           this.queuedInitialFetchParams = null;
           this.fetchData(this.listQuery);
         });
-      }
+      },
     );
   }
 
@@ -1967,8 +1970,8 @@ export class MasterListComponent implements OnChanges {
           value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
             ? this.getNoValueOperatorSQL(item?.operator)
             : Array.isArray(item?.enum_values) && item.enum_values.length
-            ? item.enum_values
-            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+              ? item.enum_values
+              : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
         }))
         .filter((item: any) => !!item.column_name);
 
@@ -1980,8 +1983,8 @@ export class MasterListComponent implements OnChanges {
           value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
             ? this.getNoValueOperatorSQL(item?.operator)
             : Array.isArray(item?.enum_values) && item.enum_values.length
-            ? item.enum_values
-            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+              ? item.enum_values
+              : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
         }))
         .filter((item: any) => !!item.column_name);
 
@@ -2037,33 +2040,36 @@ export class MasterListComponent implements OnChanges {
               };
             });
 
-            this.selectcolumns = [
-              {
-                field: 'S.No',
-                title: 'S.No',
-                sorting: false,
-                searchable: false,
-                enable: false,
-                field_type_id: 1,
-              },
-              ...data,
-              {
-                field: 'Status',
-                title: 'Status',
-                sorting: false,
-                searchable: false,
-                enable: false,
-                field_type_id: 1,
-              },
-              {
-                field: 'Action',
-                title: 'Action',
-                sorting: false,
-                searchable: false,
-                enable: false,
-                field_type_id: 0,
-              },
-            ];
+            Promise.resolve().then(() => {
+              this.selectcolumns = [
+                {
+                  field: 'S.No',
+                  title: 'S.No',
+                  sorting: false,
+                  searchable: false,
+                  enable: false,
+                  field_type_id: 1,
+                },
+                ...data,
+                {
+                  field: 'Status',
+                  title: 'Status',
+                  sorting: false,
+                  searchable: false,
+                  enable: false,
+                  field_type_id: 1,
+                },
+                {
+                  field: 'Action',
+                  title: 'Action',
+                  sorting: false,
+                  searchable: false,
+                  enable: false,
+                  field_type_id: 0,
+                },
+              ];
+              this.cdr.detectChanges();
+            });
           }
         },
         (error) => {
@@ -2072,7 +2078,7 @@ export class MasterListComponent implements OnChanges {
           this.toastr.error(errorMessage, 'Error');
           resolve();
         },
-        () => resolve()
+        () => resolve(),
       );
     });
   }
@@ -2090,7 +2096,7 @@ export class MasterListComponent implements OnChanges {
     let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(effectiveParams, this.policyData, this.attachedPolicies),
       '$session_user_id',
-      this.user_info.main.id
+      this.user_info.main.id,
     );
 
     if (this.uniqueId) {
@@ -2100,6 +2106,7 @@ export class MasterListComponent implements OnChanges {
     if (this.uuid) {
       payload.unique_id = this.uuid;
     }
+
     this.grid_unique_id = payload.unique_id;
 
     if (this.grid_params) {
@@ -2112,195 +2119,200 @@ export class MasterListComponent implements OnChanges {
 
     this.gridApiService.getAllRecords(payload).subscribe(
       (response) => {
-        if (response.status && response.code === 200) {
-          this.entities = response.data?.entities || [];
-          this.headerStaticEntityName = response.data?.entities?.header_entity_id;
-          this.footerStaticEntityName = response.data?.entities?.footer_entity_id;
+        Promise.resolve().then(() => {
+          if (response.status && response.code === 200) {
+            this.entities = response.data?.entities || [];
+            this.headerStaticEntityName = response.data?.entities?.header_entity_id;
+            this.footerStaticEntityName = response.data?.entities?.footer_entity_id;
 
-          if (response.data.headers) {
-            if (this.headercolumns.length == 0) {
-              const data = response.data.headers
-                .filter((key: any) => key.is_grid_column == 'true')
-                .map((key: any) => ({
-                  ...key,
-                  column_width: '40px',
-                }));
-
-              // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
-              const enableActionMenu = Object.entries(this.masterInfo.permissions).some(
-                ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true
-              );
-
-              // Include serial number column if enabled in config
-              // if (this.config.grid_show_serial_number == 'true') // global grid serial number config check (deprecated)
-              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
-                // entity level serial number config check
-                this.headercolumns = [
-                  {
-                    header: 'table_column_sno',
-                    field_value: 'S.No',
-                    is_sortable: 'false',
-                    column_order: '0.00',
+            if (response.data.headers) {
+              if (this.headercolumns.length == 0) {
+                const data = response.data.headers
+                  .filter((key: any) => key.is_grid_column == 'true')
+                  .map((key: any) => ({
+                    ...key,
                     column_width: '40px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                    field_html_content: false,
-                  },
-                  ...data,
-                ];
+                  }));
 
-                // Add 'Action' column if permissions are not limited to view/export
-                if (enableActionMenu) {
-                  this.headercolumns.push({
-                    header: 'table_column_action',
-                    field_value: 'Action',
-                    is_sortable: 'false',
-                    column_order: '0.00',
-                    column_width: '50px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                    field_html_content: false,
-                  });
-                }
-              } else {
-                this.headercolumns = [...data];
+                // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
 
-                if (enableActionMenu) {
-                  this.headercolumns.push({
-                    header: 'table_column_action',
-                    field_value: 'Action',
-                    is_sortable: 'false',
-                    column_order: '0.00',
-                    column_width: '50px',
-                    is_searchable: 'false',
-                    is_grid_column: 'true',
-                    field_html_content: false,
-                  });
+                const enableActionMenu = Object.entries(this.masterInfo.permissions).some(
+                  ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true,
+                );
+
+                // Include serial number column if enabled in config
+                // if (this.config.grid_show_serial_number == 'true') // global grid serial number config check (deprecated)
+                if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                  // entity level serial number config check
+                  this.headercolumns = [
+                    {
+                      header: 'table_column_sno',
+                      field_value: 'S.No',
+                      is_sortable: 'false',
+                      column_order: '0.00',
+                      column_width: '40px',
+                      is_searchable: 'false',
+                      is_grid_column: 'true',
+                      field_html_content: false,
+                    },
+                    ...data,
+                  ];
+
+                  // Add 'Action' column if permissions are not limited to view/export
+                  if (enableActionMenu) {
+                    this.headercolumns.push({
+                      header: 'table_column_action',
+                      field_value: 'Action',
+                      is_sortable: 'false',
+                      column_order: '0.00',
+                      column_width: '50px',
+                      is_searchable: 'false',
+                      is_grid_column: 'true',
+                      field_html_content: false,
+                    });
+                  }
+                } else {
+                  this.headercolumns = [...data];
+
+                  if (enableActionMenu) {
+                    this.headercolumns.push({
+                      header: 'table_column_action',
+                      field_value: 'Action',
+                      is_sortable: 'false',
+                      column_order: '0.00',
+                      column_width: '50px',
+                      is_searchable: 'false',
+                      is_grid_column: 'true',
+                      field_html_content: false,
+                    });
+                  }
                 }
               }
+
+              // Adding custom templates
+              this.headercolumns = this.headercolumns.map((item: any) => {
+                if (item.header === 'status' && item.enum_values == null) {
+                  return {
+                    ...item,
+                    customTemplate: this.statusTemplate,
+                  };
+                } else if (item.header === 'process_status' && item.enum_values == null) {
+                  return {
+                    ...item,
+                    customTemplate: this.processStatusTemplate,
+                  };
+                } else if (item.header === 'table_column_action') {
+                  return {
+                    ...item,
+                    customTemplate: this.actionTemplate,
+                  };
+                } else if (item.header === 'documentation_video_url') {
+                  return {
+                    ...item,
+                    customTemplate: this.linkDownloadVideoURLTemplate,
+                  };
+                } else if (item.header === 'documentation_pdf') {
+                  return {
+                    ...item,
+                    customTemplate: this.linkDownloadPdfURLTemplate,
+                  };
+                } else if (item.header === 'documentation_word') {
+                  return {
+                    ...item,
+                    customTemplate: this.linkDownloadWordURLTemplate,
+                  };
+                } else {
+                  return { ...item };
+                }
+              });
             }
 
-            // Adding custom templates
-            this.headercolumns = this.headercolumns.map((item: any) => {
-              if (item.header === 'status' && item.enum_values == null) {
-                return {
-                  ...item,
-                  customTemplate: this.statusTemplate,
-                };
-              } else if (item.header === 'process_status' && item.enum_values == null) {
-                return {
-                  ...item,
-                  customTemplate: this.processStatusTemplate,
-                };
-              } else if (item.header === 'table_column_action') {
-                return {
-                  ...item,
-                  customTemplate: this.actionTemplate,
-                };
-              } else if (item.header === 'documentation_video_url') {
-                return {
-                  ...item,
-                  customTemplate: this.linkDownloadVideoURLTemplate,
-                };
-              } else if (item.header === 'documentation_pdf') {
-                return {
-                  ...item,
-                  customTemplate: this.linkDownloadPdfURLTemplate,
-                };
-              } else if (item.header === 'documentation_word') {
-                return {
-                  ...item,
-                  customTemplate: this.linkDownloadWordURLTemplate,
-                };
-              } else {
-                return { ...item };
-              }
-            });
-          }
-
-          // Processing records
-          if (response.data.records) {
-            this.items = response.data.records.map((item: any, index: any) => {
-              const formattedItem = { ...item };
-              for (const key in formattedItem) {
-                if (formattedItem.hasOwnProperty(key) && this.isDate(formattedItem[key])) {
-                  this.headercolumns = this.headercolumns.map((headerItem: any) => {
-                    if (headerItem.header === key) {
-                      if (headerItem.field_type_id == 5) {
-                        const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
-                        if (transformedDate) {
-                          formattedItem[key] = transformedDate;
-                        }
-                      } else if (headerItem.field_type_id == 6) {
-                        const transformedDate = this.timezoneService.transformTimeOnly(formattedItem[key]);
-                        if (transformedDate) {
-                          formattedItem[key] = transformedDate;
-                        }
-                      } else if (headerItem.field_type_id == 7) {
-                        const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
-                        if (transformedDate) {
-                          formattedItem[key] = transformedDate;
+            // Processing records
+            if (response.data.records) {
+              this.items = response.data.records.map((item: any, index: any) => {
+                const formattedItem = { ...item };
+                for (const key in formattedItem) {
+                  if (formattedItem.hasOwnProperty(key) && this.isDate(formattedItem[key])) {
+                    this.headercolumns = this.headercolumns.map((headerItem: any) => {
+                      if (headerItem.header === key) {
+                        if (headerItem.field_type_id == 5) {
+                          const transformedDate = this.timezoneService.transformDateOnly(formattedItem[key]);
+                          if (transformedDate) {
+                            formattedItem[key] = transformedDate;
+                          }
+                        } else if (headerItem.field_type_id == 6) {
+                          const transformedDate = this.timezoneService.transformTimeOnly(formattedItem[key]);
+                          if (transformedDate) {
+                            formattedItem[key] = transformedDate;
+                          }
+                        } else if (headerItem.field_type_id == 7) {
+                          const transformedDate = this.timezoneService.transformDateTime(formattedItem[key]);
+                          if (transformedDate) {
+                            formattedItem[key] = transformedDate;
+                          }
                         }
                       }
-                    }
-                    return headerItem;
-                  });
+                      return headerItem;
+                    });
+                  }
                 }
-              }
 
-              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                  return {
+                    table_column_sno: this.listQuery.start_index + index + 1,
+                    ...formattedItem,
+                    Action: index + 1,
+                  };
+                }
                 return {
-                  table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,
                   Action: index + 1,
                 };
-              }
-              return {
-                ...formattedItem,
-                Action: index + 1,
-              };
-            });
+              });
 
-            const selectedRecord = this.resolveRecordForStaticPageContext(response.data.records);
-            if (selectedRecord) {
-              if (!this.selectedItemUuid && selectedRecord.uuid) {
-                this.selectedItemUuid = selectedRecord.uuid;
+              const selectedRecord = this.resolveRecordForStaticPageContext(response.data.records);
+              if (selectedRecord) {
+                if (!this.selectedItemUuid && selectedRecord.uuid) {
+                  this.selectedItemUuid = selectedRecord.uuid;
+                }
+                this.popupComponentGridParams = this.extractGridParamsFromRecord(selectedRecord);
               }
-              this.popupComponentGridParams = this.extractGridParamsFromRecord(selectedRecord);
+
+              this.totalItems = response.data.total_records;
+              this.gridloading = false;
+              this.cdr.detectChanges();
+            } else {
+              this.items = [];
+              this.totalItems = 0;
+              this.gridloading = false;
+              this.cdr.detectChanges();
             }
-
-            this.totalItems = response.data.total_records;
-            this.gridloading = false;
-            this.cdr.markForCheck();
           } else {
+            this.entities = [];
+            this.headerStaticEntityName = '';
+            this.footerStaticEntityName = '';
             this.items = [];
             this.totalItems = 0;
             this.gridloading = false;
-            this.cdr.markForCheck();
+            this.cdr.detectChanges();
+            const key = response.message;
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
           }
-        } else {
+        });
+      },
+      (error) => {
+        Promise.resolve().then(() => {
+          const key = 'error';
+          const errorMessage = this.translate.instant(key);
+          this.toastr.error(errorMessage, 'Error');
+          this.gridloading = false;
           this.entities = [];
           this.headerStaticEntityName = '';
           this.footerStaticEntityName = '';
-          this.items = [];
-          this.totalItems = 0;
-          this.gridloading = false;
-          this.cdr.markForCheck();
-          const key = response.message;
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
-        }
+          this.cdr.detectChanges();
+        });
       },
-      (error) => {
-        const key = 'error';
-        const errorMessage = this.translate.instant(key);
-        this.toastr.error(errorMessage, 'Error');
-        this.gridloading = false;
-        this.cdr.markForCheck();
-        this.entities = [];
-        this.headerStaticEntityName = '';
-        this.footerStaticEntityName = '';
-      }
     );
   }
 
@@ -2359,7 +2371,7 @@ export class MasterListComponent implements OnChanges {
         entity?.entity_name === currentEntityName ||
         entity?.value === currentEntityName ||
         entity?.name === currentEntityName ||
-        entity?.slug === currentEntityName
+        entity?.slug === currentEntityName,
     );
 
     if (!currentEntity) {
@@ -2380,7 +2392,7 @@ export class MasterListComponent implements OnChanges {
 
     const entity = entities.find(
       (item: any) =>
-        item?.id == identifier || item?.uuid == identifier || item?.entity_name == identifier || item?.value == identifier || item?.slug == identifier
+        item?.id == identifier || item?.uuid == identifier || item?.entity_name == identifier || item?.value == identifier || item?.slug == identifier,
     );
 
     return entity?.entity_name || entity?.value || '';
@@ -2467,7 +2479,22 @@ export class MasterListComponent implements OnChanges {
 
   handleCustomAction(action: string) {
     if (action === 'addNew' && this.masterInfo.children.add) {
-      this.router.navigate([`${this.masterInfo.children.add.target}`]);
+      let targetRoute = this.masterInfo.children.add.target;
+      const queryParams: Record<string, any> = {};
+      if (this.grid_params) {
+        Object.keys(this.grid_params).forEach((key) => {
+          const cleanKey = key.startsWith('$') ? key.slice(1) : key;
+          if (cleanKey.startsWith('gparam_') && this.grid_params[key] !== undefined && this.grid_params[key] !== null) {
+            const placeholder = `:${cleanKey}`;
+            if (targetRoute.includes(placeholder)) {
+              targetRoute = targetRoute.replace(placeholder, this.grid_params[key]);
+            } else {
+              queryParams[cleanKey] = this.grid_params[key];
+            }
+          }
+        });
+      }
+      this.router.navigate([targetRoute], { queryParams });
     }
 
     if (action === 'addNew' && this.masterInfo.children.popup_add) {
@@ -2481,6 +2508,19 @@ export class MasterListComponent implements OnChanges {
       this.popupName = 'popup_add';
       this.selectedItemUuid = null;
       this.popupEntityName = this.masterInfo.children.popup_add.entity_name;
+
+      // Extract gparams from grid_params
+      const gridParams: any = {};
+      if (this.grid_params) {
+        Object.keys(this.grid_params).forEach((key) => {
+          const cleanKey = key.startsWith('$') ? key.slice(1) : key;
+          if (cleanKey.startsWith('gparam_') && this.grid_params[key] !== undefined && this.grid_params[key] !== null) {
+            gridParams['$' + cleanKey] = this.grid_params[key];
+          }
+        });
+      }
+      this.popupComponentGridParams = gridParams;
+
       this.isViewPopupOpen = true;
       setTimeout(() => {
         this.loadingpopup = false;
@@ -2598,7 +2638,7 @@ export class MasterListComponent implements OnChanges {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -2857,8 +2897,8 @@ export class MasterListComponent implements OnChanges {
                   item.type === 'excel'
                     ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     : item.type === 'pdf'
-                    ? 'application/pdf'
-                    : 'application/octet-stream';
+                      ? 'application/pdf'
+                      : 'application/octet-stream';
                 const blob = new Blob([response.blob], {
                   type,
                 });
@@ -3307,7 +3347,6 @@ export class MasterListComponent implements OnChanges {
     if (event?.skipFetch) return;
     this.requestGridFetch(this.listQuery);
   }
-
   previewOnResultsPerPageChange(event: { resultsPerPage: number; start_index: number; skipFetch?: boolean }) {
     this.previewCurrentPage = 1;
     this.previewResultsPerPage = event.resultsPerPage;
@@ -3354,6 +3393,7 @@ export class MasterListComponent implements OnChanges {
         }
       });
       this.popupComponentGridParams = gridParams;
+
       this.popupParentGridFilters = this.getCurrentGridFilters();
 
       this.popupName = mode;
@@ -3384,11 +3424,11 @@ export class MasterListComponent implements OnChanges {
         menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'add' || item.action_slug === 'popup_add'));
       } else if (popupName === 'popup_edit') {
         menuItem = unorgmenuList.find(
-          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit')
+          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit'),
         );
       } else if (popupName === 'popup_details') {
         menuItem = unorgmenuList.find(
-          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
+          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details'),
         );
       } else if (popupName === 'popup_grid') {
         menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName);

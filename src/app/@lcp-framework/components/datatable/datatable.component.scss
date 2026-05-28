@@ -474,7 +474,9 @@
 .datatable .table-responsive table thead th.datatable-sticky-column {
   z-index: calc(var(--datatable-header-z, 15) + 5);
   background-color: var(--app-table-header-action-color, #e5e7eb) !important;
-  box-shadow: -1px 0 0 var(--app-table-border-color, #e5e7eb), 0 1px 0 var(--app-table-border-color, #dee2e6);
+  box-shadow:
+    -1px 0 0 var(--app-table-border-color, #e5e7eb),
+    0 1px 0 var(--app-table-border-color, #dee2e6);
 }
 
 .datatable .table-responsive table tbody td.datatable-sticky-column {
@@ -485,7 +487,9 @@
 
 .datatable .table-responsive table thead th.datatable-sticky-column:is(.dark *) {
   background-color: var(--app-table-header-color, #152135) !important;
-  box-shadow: -1px 0 0 var(--app-table-border-color, #374151), 0 1px 0 var(--app-table-border-color, #374151);
+  box-shadow:
+    -1px 0 0 var(--app-table-border-color, #374151),
+    0 1px 0 var(--app-table-border-color, #374151);
 }
 
 .datatable .table-responsive table tbody td.datatable-sticky-column:is(.dark *) {
@@ -763,19 +767,25 @@ tbody td.sticky:is(.dark *) {
   0% {
     transform: scale(0.8);
     background-color: var(--app-form-base-component-color, var(--app-primary-color)) !important;
-    box-shadow: 0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)), 0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
+    box-shadow:
+      0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)),
+      0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
   }
 
   50% {
     transform: scale(1.2);
     background-color: var(--app-form-base-component-color, var(--app-primary-color)) !important;
-    box-shadow: 0 0 0 0 rgba(var(--app-form-base-component-color, 0)), 0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0));
+    box-shadow:
+      0 0 0 0 rgba(var(--app-form-base-component-color, 0)),
+      0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0));
   }
 
   100% {
     transform: scale(0.8);
     background-color: var(--app-form-base-component-color, var(--app-primary-color)) !important;
-    box-shadow: 0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)), 0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
+    box-shadow:
+      0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)),
+      0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
   }
 }
 

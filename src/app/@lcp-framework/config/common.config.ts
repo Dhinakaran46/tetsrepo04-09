@@ -437,11 +437,16 @@ export const commonConfig: any = {
       label: 'Grid',
       value: 'grid',
     },
+    {
+      label: 'Entity',
+      value: 'entity',
+    },
   ],
   WIZARD_TYPES: {
     CHART: 'chart',
     STATIC: 'static',
     GRID: 'grid',
+    ENTITY: 'entity',
   },
   report_type: [
     {

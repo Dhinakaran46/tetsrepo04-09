@@ -203,12 +203,14 @@ export class HeaderComponent implements OnInit {
 
     if (this.user_info?.main?.user_id) {
       if (this.config?.enable_socket_push_notification === 'true') {
-        const socketUrl = (environment as any).WS_URL || 'ws://localhost:8089';
+        const socketUrl = (environment as any).WS_URL || 'ws://localhost:8100';
         this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.user_info.main.user_id}`);
         console.log('Websocket connected sucessfully');
         this.socket$.subscribe({
           next: (data: any) => {
-            this.toastr.info(data.message, '');
+            if (data && data.message) {
+              this.toastr.info(data.message, '');
+            }
             console.log('WebSocket message received:', data);
           },
           error: (err) => {
@@ -547,6 +549,11 @@ export class HeaderComponent implements OnInit {
 
   fetchNotifications(notification_type: string) {
     this.notifications = [];
+    if (!this.user_info?.main) {
+      this.loadingNotificationData = false;
+      this.cdr.detectChanges();
+      return;
+    }
     this.loadingNotificationData = true;
     const search_all: any[] = [
       {
@@ -569,7 +576,7 @@ export class HeaderComponent implements OnInit {
       });
     }
 
-    let email = this.user_info.main.email;
+    let email = this.user_info.main.email || '';
 
     const search_any: any[] = [
       {
@@ -617,14 +624,19 @@ export class HeaderComponent implements OnInit {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(`Code: ${response.code}, ${errorMessage}`);
         }
+        this.loadingNotificationData = false;
+        this.cdr.detectChanges();
       },
       error: (error: any) => {
         this.notifications = [];
         const errorMessage = this.translate.instant('error');
         this.toastr.error(errorMessage, 'Error');
+        this.loadingNotificationData = false;
+        this.cdr.detectChanges();
       },
       complete: () => {
         this.loadingNotificationData = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -652,8 +664,9 @@ export class HeaderComponent implements OnInit {
       },
       table_mapping: ['table1'],
     };
-    this.gridApiService.executeTransaction(param).subscribe(
-      (response: ApiResponce) => {
+    this.gridApiService.executeTransaction(param).subscribe({
+      next: (response: ApiResponce) => {
+        this.loadingNotificationData = false;
         if (response.status) {
           if (!actionType) {
             const key = 'marked_notifications_as_read';
@@ -665,13 +678,16 @@ export class HeaderComponent implements OnInit {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(`Code: ${response.code} , ${errorMessage}`);
         }
+        this.cdr.detectChanges();
       },
-      (error: any) => {
+      error: (error: any) => {
+        this.loadingNotificationData = false;
         const key = 'error_mapping_role_permissions';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
-    );
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   navigateToNotifications() {

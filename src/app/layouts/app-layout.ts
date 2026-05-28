@@ -1,4 +1,4 @@
-import { Component, OnDestroy, Renderer2 } from '@angular/core';
+import { Component, OnDestroy, Renderer2, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { Router, NavigationEnd } from '@angular/router';
@@ -38,7 +38,9 @@ export class AppLayout implements OnDestroy {
     private router: Router,
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
-    private layoutReadyService: LayoutReadyService
+    private layoutReadyService: LayoutReadyService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     // Reset ready state so loader shows on each fresh navigation to app layout
     this.layoutReadyService.reset();
@@ -84,18 +86,25 @@ export class AppLayout implements OnDestroy {
     // Wait for sidebar menu to finish loading before hiding the loader
     this.menuReadySub = this.layoutReadyService.menuReady.subscribe((ready) => {
       if (ready) {
-        this.isLoading = false;
-        this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
+        this.ngZone.run(() => {
+          this.isLoading = false;
+          this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
+          this.cdr.detectChanges();
+        });
       }
     });
 
     this.initAnimation();
     this.startTypingAnimation();
     window.addEventListener('scroll', () => {
-      if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
-        this.showTopButton = true;
-      } else {
-        this.showTopButton = false;
+      const show = document.body.scrollTop > 50 || document.documentElement.scrollTop > 50;
+      if (this.showTopButton !== show) {
+        setTimeout(() => {
+          if (!this.menuReadySub?.closed) {
+            this.showTopButton = show;
+            this.cdr.detectChanges();
+          }
+        });
       }
     });
   }

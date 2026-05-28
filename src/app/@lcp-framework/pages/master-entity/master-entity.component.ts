@@ -1196,6 +1196,7 @@ export class MasterEntityComponent implements OnInit {
   };
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
+  entitiesForChildProcess: any[] = [];
   staticPageEntities: any[] = [];
 
   constructor(
@@ -1210,7 +1211,7 @@ export class MasterEntityComponent implements OnInit {
     private translate: TranslateService,
     private titleService: Title,
     private openaiService: OpenaiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -1234,6 +1235,12 @@ export class MasterEntityComponent implements OnInit {
     // To listen "entityType" on value change
     this.form.get('entityType')?.valueChanges.subscribe((value) => {
       this.updateFormValidation(value);
+    });
+
+    // Clear dashboard_grid whenever wizard type changes to avoid stale values
+    // (e.g. switching between ENTITY and GRID uses the same field for different data)
+    this.form.get('wizardType')?.valueChanges.subscribe(() => {
+      this.form.get('dashboard_grid')?.setValue('');
     });
 
     // If "id" is not available we need consider it as "Add", otherwise "Edit"
@@ -1350,7 +1357,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1375,7 +1382,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1415,7 +1422,7 @@ export class MasterEntityComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-        }
+        },
       );
     }
   }
@@ -1492,7 +1499,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1692,7 +1699,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1981,7 +1988,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -2210,7 +2217,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      }
+      },
     );
   }
 
@@ -2241,7 +2248,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      }
+      },
     );
   }
 
@@ -2280,14 +2287,39 @@ export class MasterEntityComponent implements OnInit {
         if (response.status && response.code === 200) {
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module',
           );
           this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
           );
           // For 'child_process' linkType (only grid_builder_module)
           this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
+          );
+          this.entitiesForChildProcess = response.data.records.filter(
+            (entity: any) =>
+              ![
+                this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
+                // this.commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE,
+                this.commonConfig.ENTITY_TYPES.MENU_MODULE,
+                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE,
+                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE,
+                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE,
+                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE,
+                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE,
+                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE,
+                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE,
+                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE,
+                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
+              ].includes(entity.entity_type),
           );
         }
       },
@@ -2295,7 +2327,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 

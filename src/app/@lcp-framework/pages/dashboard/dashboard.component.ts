@@ -55,6 +55,7 @@ import { AuthService } from '../../service/common/auth.service';
 import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { StaticPageComponent } from '../static-page/static-page.component';
 import { MasterListComponent } from '../master-list/master-list.component';
+import { RouteUpdateService } from '../../service/common/route-update.service';
 
 // import { MasterListChildrenComponent } from '../master-list-children/master-list-children.component';
 
@@ -108,6 +109,7 @@ interface DashboardTab {
   id: string;
   name: string;
   cards: Card[];
+  show_daterange_filter?: boolean | string | number;
 }
 
 @Component({
@@ -137,6 +139,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   // Add these properties to your class
   @ViewChildren('gridContainer', { read: ViewContainerRef }) gridContainers!: QueryList<ViewContainerRef>;
   private gridComponentRefs: ComponentRef<MasterListComponent>[] = [];
+
+  @ViewChildren('entityContainer', { read: ViewContainerRef }) entityContainers!: QueryList<ViewContainerRef>;
+  private entityComponentRefs: ComponentRef<any>[] = [];
 
   dateRange: DateRange = {
     fromDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
@@ -208,7 +213,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     private toastr: ToastrService,
     public translate: TranslateService,
     public idleService: IdleService,
-    public authService: AuthService
+    public authService: AuthService,
+    private routeUpdateService: RouteUpdateService,
   ) {
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
@@ -254,10 +260,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.clearReloadTimers();
     this.removePowerBiInstances();
     this.clearGridComponents();
+    this.clearEntityComponents();
   }
   private clearGridComponents() {
     this.gridComponentRefs.forEach((ref) => ref.destroy());
     this.gridComponentRefs = [];
+  }
+  private clearEntityComponents() {
+    this.entityComponentRefs.forEach((ref) => ref.destroy());
+    this.entityComponentRefs = [];
   }
 
   formatDate(date: Date | null): string {
@@ -388,6 +399,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name, sub.dashboard_grid FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols,master_entities.dashboard_grid AS dashboard_grid, master_entities.dashboard_wizard_order_no AS order_no, master_entities.reload_timeout ,  master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.dashboard_grid AS dashboard_grid, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
               'cards',
             ],
+            ['wizard_group.show_daterange_filter', 'show_daterange_filter'],
           ],
           includes: [
             {
@@ -396,7 +408,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               join_condition: 'master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1',
             },
           ],
-          group_by: ['wizard_group.id', 'wizard_group.name'],
+          group_by: ['wizard_group.id', 'wizard_group.name', 'wizard_group.show_daterange_filter'],
         };
         break;
       case 'pg':
@@ -417,6 +429,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           select_columns: [
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
+            ['wizard_group.show_daterange_filter', 'show_daterange_filter'],
             [
               `CASE
             WHEN COUNT(subquery.id) = 0 THEN null
@@ -500,12 +513,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                         view: this.permissionsList?.[`view_` + item.entity_name] || false,
                       },
                     };
-                  })
+                  }),
                 );
               }
 
               return mainElem;
-            })
+            }),
           );
           // Set the first tab with at least one viewable card as active
           const tabsWithActiveCards = this.getTabsWithActiveCards();
@@ -526,7 +539,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         this.dashboardLoadError = errorMessage;
         this.isDashboardLoading = false;
         this.cdr.markForCheck();
-      }
+      },
     );
   }
 
@@ -556,6 +569,17 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.clearReloadTimers();
 
     const activeTab = this.dashboardTabs.find((tab) => tab.id === tabId);
+
+    // Update displayDateRangeFilter based on both global config and the active tab's setting
+    const globalShow = this.config?.display_dashboard_daterange_filter === 'true';
+    const tabShow = activeTab
+      ? activeTab.show_daterange_filter !== false &&
+        activeTab.show_daterange_filter !== 'false' &&
+        activeTab.show_daterange_filter !== 0 &&
+        activeTab.show_daterange_filter !== '0'
+      : true;
+    this.displayDateRangeFilter = globalShow && tabShow;
+
     //if (activeTab && activeTab.cards.some((card) => card.data.length === 0)) {
     if (activeTab) {
       this.removePowerBiInstances();
@@ -566,6 +590,9 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   // NEW: schedule auto-reload for LCP card
   private scheduleLcpReload(card: Card) {
+    if (card.type === commonConfig.WIZARD_TYPES.ENTITY) {
+      return; // Skip scheduling reloads for ENTITY wizard type cards since they use real-time sockets and manage their own state.
+    }
     const minutes = Number(card.reload_timeout) || 0;
     if (minutes > 0 && card?.id != null) {
       const key = this.cardKey(this.activeTabId, card.id);
@@ -612,8 +639,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               'number',
               card.chart_format[0].tooltip.y.formatter.substring(
                 card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
-              )
+                card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
+              ),
             );
           }
         }
@@ -644,14 +671,24 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         }
       }
 
-      // NEW: Handle GRID refresh
+      // Handle GRID refresh
       if (card.type === commonConfig.WIZARD_TYPES.GRID) {
-        // Trigger re-render of grid component
         const activeTab = this.dashboardTabs.find((tab) => tab.id === this.activeTabId);
         if (activeTab) {
           const cardIndex = activeTab.cards.findIndex((c) => c.id === card.id);
           if (cardIndex !== -1) {
             this.createGridComponent(card, cardIndex);
+          }
+        }
+      }
+
+      // Handle ENTITY refresh
+      if (card.type === commonConfig.WIZARD_TYPES.ENTITY) {
+        const activeTab = this.dashboardTabs.find((tab) => tab.id === this.activeTabId);
+        if (activeTab) {
+          const entityCardIndex = activeTab.cards.filter((c) => c.type === commonConfig.WIZARD_TYPES.ENTITY).findIndex((c) => c.id === card.id);
+          if (entityCardIndex !== -1) {
+            this.createEntityComponent(card, entityCardIndex);
           }
         }
       }
@@ -706,7 +743,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             const key = 'failed_to_load';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          }
+          },
         );
     } catch (error: any) {
       console.error(`Error loading Power BI report - ${index}:`, error);
@@ -718,6 +755,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     if (cards) {
       let pbiIndex = 0;
       let gridIndex = 0;
+      // Use a ref object so the async lambda captures the same counter
+      const entityIndexRef = { count: 0 };
       await Promise.all(
         cards.map(async (card, i) => {
           if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
@@ -742,8 +781,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                       'number',
                       card.chart_format[0].tooltip.y.formatter.substring(
                         card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
-                      )
+                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
+                      ),
                     );
                   }
                 }
@@ -774,20 +813,31 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               }
             }
 
-            // NEW: Handle GRID type
+            // Handle GRID type
             if (card.type === commonConfig.WIZARD_TYPES.GRID) {
-              // Ensure card has entity_name
               if (!card.entity_name) {
                 console.error('Grid card missing entity_name:', card);
                 return;
               }
-              // Wait for view to be ready
               setTimeout(() => {
                 this.createGridComponent(card, gridIndex);
                 gridIndex++;
               }, 100);
             }
-            // NEW: schedule auto-reload for LCP card
+
+            // Handle ENTITY type (custom component)
+            if (card.type === commonConfig.WIZARD_TYPES.ENTITY) {
+              if (!card.dashboard_grid) {
+                console.error('Entity card missing dashboard_grid (entity_type):', card);
+                return;
+              }
+              const entityIndex = entityIndexRef.count++;
+              setTimeout(() => {
+                this.createEntityComponent(card, entityIndex);
+              }, 150);
+            }
+
+            // Schedule auto-reload for LCP card
             this.scheduleLcpReload(card);
           } else {
             this.powerBiSubscription = this.powerBiContainers.changes.subscribe((response: any) => {
@@ -797,17 +847,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               }
             });
           }
-        })
+        }),
       );
     }
     this.cdr.detectChanges();
   }
 
-  // Add method to create grid component
+  // Create a MasterListComponent dynamically for GRID type cards
   private createGridComponent(card: Card, index: number) {
-    // Wait for the gridContainers to be available
     if (!this.gridContainers || this.gridContainers.length === 0) {
-      // Retry after a short delay
       setTimeout(() => this.createGridComponent(card, index), 100);
       return;
     }
@@ -821,12 +869,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     container.clear();
     const componentRef = container.createComponent(MasterListComponent);
 
-    // Set the entity name from card configuration
     if (card.dashboard_grid) {
       componentRef.instance.entity_name = card.dashboard_grid;
     }
 
-    // Set uuid if available from card data
     if (card.data && card.data.length > 0 && card.data[0].uuid) {
       componentRef.instance.uuid = card.data[0].uuid;
     }
@@ -834,7 +880,6 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     componentRef.instance.nonGridPage = false;
     componentRef.instance.enableCheckBox = false;
 
-    // Pass grid parameters if available
     const gridParams: any = {};
     if (card.data && card.data.length > 0) {
       Object.keys(card.data[0]).forEach((key) => {
@@ -845,22 +890,69 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       });
     }
 
-    // Merge with component's grid_params
     componentRef.instance.grid_params = { ...gridParams, ...this.grid_params };
 
-    // Subscribe to selection changes if needed
     componentRef.instance.selectionChange.subscribe((selectedItems: any) => {
       // Handle selection changes if needed
     });
 
-    // Store reference for cleanup
     this.gridComponentRefs.push(componentRef);
-
-    // Manually trigger the component's initialization since it's not going through routing
-    // This will call ngAfterContentInit which fetches the data
     componentRef.instance.ngAfterContentInit();
-
     this.cdr.detectChanges();
+  }
+
+  /**
+   * Dynamically creates a custom component for ENTITY type dashboard cards.
+   * card.dashboard_grid holds the entity_name slug (e.g. asset_overview_dashboard).
+   * We use getComponentLoader(entity_name) to resolve the correct component factory
+   * directly from the unorgmenuList → component_class_name → componentMap,
+   * without going through the full route/permission pipeline.
+   */
+  private async createEntityComponent(card: Card, index: number) {
+    if (!this.entityContainers || this.entityContainers.length === 0) {
+      setTimeout(() => this.createEntityComponent(card, index), 100);
+      return;
+    }
+
+    const container = this.entityContainers.toArray()[index];
+    if (!container) {
+      console.warn(`Entity container at index ${index} not found for entity: ${card.dashboard_grid}`);
+      return;
+    }
+
+    const entityName = card.dashboard_grid as string;
+    if (!entityName) {
+      console.warn('Entity card has no dashboard_grid value');
+      return;
+    }
+
+    try {
+      // Resolve directly: entity_name → component_class_name (from unorgmenuList) → componentMap loader
+      const loader = this.routeUpdateService.getComponentLoader(entityName);
+      if (!loader) {
+        console.warn(`No route/component found for entity_name: ${entityName}`);
+        container.clear();
+        return;
+      }
+
+      const componentClass = await loader();
+      container.clear();
+      const componentRef = container.createComponent(componentClass);
+
+      // Pass grid_params if the component supports it
+      if ((componentRef.instance as any).grid_params !== undefined) {
+        (componentRef.instance as any).grid_params = { ...this.grid_params };
+      }
+      // Pass uuid from card data if supported
+      if (card.data && card.data.length > 0 && (componentRef.instance as any).uuid !== undefined) {
+        (componentRef.instance as any).uuid = card.data[0]?.uuid || null;
+      }
+
+      this.entityComponentRefs.push(componentRef);
+      this.cdr.detectChanges();
+    } catch (err) {
+      console.error(`Failed to load component for entity "${entityName}":`, err);
+    }
   }
 
   validateChartData(chart: any) {
@@ -872,6 +964,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   getActiveCards(): Card[] {
     const activeTab = this.dashboardTabs.find((tab) => tab.id == this.activeTabId);
     return activeTab ? activeTab.cards : [];
+  }
+
+  hasNonEntityCards(): boolean {
+    return this.getActiveCards().some((card) => card?.permissions?.view && card.type !== this.commonConfig.WIZARD_TYPES.ENTITY);
   }
 
   getTabsWithActiveCards(): DashboardTab[] {

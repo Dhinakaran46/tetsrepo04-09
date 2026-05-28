@@ -59,7 +59,11 @@ export class RouteUpdateService {
     chart_builder_module: () => import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
   };
 
-  constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
+  constructor(
+    private rendererFactory: RendererFactory2,
+    private router: Router,
+    private localStore: LocalStorageService,
+  ) {
     this.renderer = this.rendererFactory.createRenderer(null, null);
     const permissionsList = this.getMenuData()?.permissions ?? null;
     this.permissionsListSubject.next(permissionsList);
@@ -229,7 +233,7 @@ export class RouteUpdateService {
           .map((r: any) => this.buildRoute(r, routeDataArray, permissionListJSON));
 
         return [dynamicRoutes];
-      })
+      }),
     );
   }
 
@@ -258,6 +262,19 @@ export class RouteUpdateService {
 
         return route;
       });
+  }
+
+  /**
+   * Resolves a lazy component loader directly by entity_name.
+   * Looks up component_class_name from unorgmenuList (keyed by entity_name),
+   * then returns the matching loader from componentMap.
+   * Returns null if no match is found.
+   * Use this in dashboard's createEntityComponent instead of getPageInfo.
+   */
+  getComponentLoader(entity_name: string): (() => Promise<any>) | null {
+    const menuItem = this.getMenuList().find((r: any) => r.entity_name === entity_name && r.component_class_name);
+    if (!menuItem) return null;
+    return this.componentMap[menuItem.component_class_name] ?? null;
   }
 
   addDynamicRoutes() {

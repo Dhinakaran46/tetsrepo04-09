@@ -1,136 +1,157 @@
 @if (isDashboardLoading) {
-<div class="flex min-h-[240px] items-center justify-center">
-  <div class="flex items-center gap-3 text-base font-medium" style="color: var(--app-text-color, var(--app-text-color-default))">
-    <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
-    Loading dashboard...
-  </div>
-</div>
-} @else {
-<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]" style="border-color: var(--app-table-border-color, var(--app-border-color))">
-  @for (tab of getTabsWithActiveCards(); track tab) {
-  <button
-    class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
-    [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTabId == tab.id }"
-    (click)="setActiveTab(tab.id)"
-  >
-    {{ tab.name }}
-  </button>
-  }
-</div>
-
-<br />
-@if (displayDateRangeFilter) {
-<div class="flex w-full justify-end pr-4">
-  <div class="relative">
-    <button
-      (click)="showDateRangePicker = !showDateRangePicker"
-      style="color: var(--app-header-text-color, var(--app-bg-color)); background-color: var(--app-header-color, var(--app-primary-color))"
-      class="-mb-px flex cursor-pointer items-center rounded-md px-4 py-2 transition-all duration-300"
-    >
-      {{ getDateRangeText() }}
-      <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-      </svg>
-    </button>
-    @if (showDateRangePicker) {
-    <div
-      @toggleAnimation
-      class="absolute right-0 z-10 mt-1 w-[800px] rounded-md bg-white shadow-lg focus:outline-none"
-      (click)="$event.stopPropagation()"
-      style="transform: translateX(0)"
-    >
-      <app-date-range-picker
-        [dateRange]="dateRange"
-        (dateRangeChange)="onDateRangeChange($event)"
-        (submitted)="showDateRangePicker = false"
-        class="date-range-tab p-4"
-        (click)="$event.stopPropagation()"
-        style="min-width: 100%"
-      ></app-date-range-picker>
+  <div class="flex min-h-[240px] items-center justify-center">
+    <div class="flex items-center gap-3 text-base font-medium" style="color: var(--app-text-color, var(--app-text-color-default))">
+      <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+      Loading dashboard...
     </div>
-    }
   </div>
-</div>
-}
-
-<!-- Click outside to close -->
-@if (showDateRangePicker) {
-<div class="fixed inset-0 z-0" (click)="showDateRangePicker = false"></div>
-} @if (dashboardLoadError) {
-<div class="rounded-md border border-danger/40 bg-danger/10 p-4 text-danger">{{ dashboardLoadError }}</div>
-} @if (!dashboardLoadError && !getTabsWithActiveCards().length) {
-<div class="rounded-md border border-white-light p-6 text-center text-base" style="border-color: var(--app-table-border-color, var(--app-border-color))">
-  No dashboard widgets are available for your account.
-</div>
-}
-
-<div class="flex-1 pt-5">
-  <!--<div class="grid grid-cols-4 gap-4 p-4" cdkDropList (cdkDropListDropped)="onDrop($event)">-->
-  <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
-    @for (card of getActiveCards(); track card; let i = $index) {
-    <!--<div *ngIf="card.permissions.view" class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" cdkDrag>-->
-    @if (card.permissions.view) {
-    <div
-      class="relative rounded-lg bg-white dark:bg-black"
-      [ngStyle]="getCardStyle(card)"
-      style="
-        background-color: var(--app-table-bg-color, var(--app-bg-color));
-        color: var(--app-table-text-color, var(--app-text-color));
-        border-color: var(--app-table-border-color, var(--app-border-color));
-      "
-    >
-      <div class="overflow-x-auto overflow-y-auto p-2" [ngStyle]="getScrollContainerStyle(card.rows, card.cols)">
-        <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
-        @if (card.report_type === commonConfig.REPORT_TYPES.LCP) { @if ([commonConfig.WIZARD_TYPES.STATIC].includes(card.type)) {
-        <div>
-          @for (content of getStaticContent(card); track content) {
-          <div [innerHTML]="content | safeHtml"></div>
-          }
-        </div>
-        } @if ([commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)) {
-        <div>
+} @else {
+  @if (getTabsWithActiveCards().length > 1) {
+    <div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]" style="border-color: var(--app-table-border-color, var(--app-border-color))">
+      @for (tab of getTabsWithActiveCards(); track tab) {
+        <button
+          class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
+          [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTabId == tab.id }"
+          (click)="setActiveTab(tab.id)"
+        >
+          {{ tab.name }}
+        </button>
+      }
+    </div>
+    <br />
+  }
+  @if (displayDateRangeFilter) {
+    <div class="flex w-full justify-end pr-4">
+      <div class="relative">
+        <button
+          (click)="showDateRangePicker = !showDateRangePicker"
+          style="color: var(--app-header-text-color, var(--app-bg-color)); background-color: var(--app-header-color, var(--app-primary-color))"
+          class="-mb-px flex cursor-pointer items-center rounded-md px-4 py-2 transition-all duration-300"
+        >
+          {{ getDateRangeText() }}
+          <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        @if (showDateRangePicker) {
           <div
-            class="panel"
-            style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
+            @toggleAnimation
+            class="absolute right-0 z-10 mt-1 w-[800px] rounded-md bg-white shadow-lg focus:outline-none"
+            (click)="$event.stopPropagation()"
+            style="transform: translateX(0)"
           >
-            <div class="mb-5 flex items-center justify-between">
-              <h5 class="text-lg font-semibold dark:text-white" style="color: var(--app-table-text-color, var(--app-text-color))">{{ card.title }}</h5>
-            </div>
-            <div class="mb-5 overflow-hidden">
-              @if (card.chart_format[0]) {
-              <apx-chart
-                [series]="card.chart_format[0].series"
-                [chart]="card.chart_format[0].chart"
-                [xaxis]="card.chart_format[0].xaxis"
-                [yaxis]="card.chart_format[0].yaxis!"
-                [dataLabels]="card.chart_format[0].dataLabels!"
-                [grid]="card.chart_format[0].grid"
-                [stroke]="card.chart_format[0].stroke"
-                [title]="card.chart_format[0].title!"
-                [plotOptions]="card.chart_format[0].plotOptions!"
-                [fill]="card.chart_format[0].fill!"
-                [tooltip]="card.chart_format[0].tooltip!"
-              ></apx-chart>
-              }
-            </div>
+            <app-date-range-picker
+              [dateRange]="dateRange"
+              (dateRangeChange)="onDateRangeChange($event)"
+              (submitted)="showDateRangePicker = false"
+              class="date-range-tab p-4"
+              (click)="$event.stopPropagation()"
+              style="min-width: 100%"
+            ></app-date-range-picker>
           </div>
-        </div>
-        }
-        <!-- ADD THIS NEW SECTION -->
-        @if ([commonConfig.WIZARD_TYPES.GRID].includes(card.type)) {
-        <div class="mt-5">
-          <ng-template #gridContainer></ng-template>
-        </div>
-        } } @else {
-        <div #powerBiContainer [attr.id]="'powerbi-container-' + i" style="width: 100%; height: 100%"></div>
         }
       </div>
-      <!--</ng-scrollbar>-->
     </div>
-    } }
-  </div>
-</div>
+  }
 
-@if (showMasterListPopup) {
-<master-list [popupConfig]="popupConfig" [isViewPopupOpen]="showMasterListPopup" [nonGridPage]="true" (closeModal)="closeMasterListPopup()"></master-list>
-} }
+  <!-- Click outside to close -->
+  @if (showDateRangePicker) {
+    <div class="fixed inset-0 z-0" (click)="showDateRangePicker = false"></div>
+  }
+  @if (dashboardLoadError) {
+    <div class="mt-5 rounded-md border border-danger/40 bg-danger/10 p-4 text-danger">{{ dashboardLoadError }}</div>
+  }
+  @if (!dashboardLoadError && !getTabsWithActiveCards().length) {
+    <div
+      class="mt-5 rounded-md border border-white-light p-6 text-center text-base"
+      style="border-color: var(--app-table-border-color, var(--app-border-color))"
+    >
+      No dashboard widgets are available for your account.
+    </div>
+  }
+
+  <div [class]="hasNonEntityCards() ? 'flex-1 pt-5' : displayDateRangeFilter ? 'flex-1 pt-5' : 'flex-1'">
+    @for (card of getActiveCards(); track card; let i = $index) {
+      @if (card.permissions.view && card.type === commonConfig.WIZARD_TYPES.ENTITY) {
+        <ng-template #entityContainer></ng-template>
+      }
+    }
+    @if (hasNonEntityCards()) {
+      <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
+        @for (card of getActiveCards(); track card; let i = $index) {
+          @if (card.permissions.view && card.type !== commonConfig.WIZARD_TYPES.ENTITY) {
+            <div
+              class="relative rounded-lg bg-white dark:bg-black"
+              [ngStyle]="getCardStyle(card)"
+              style="
+                background-color: var(--app-table-bg-color, var(--app-bg-color));
+                color: var(--app-table-text-color, var(--app-text-color));
+                border-color: var(--app-table-border-color, var(--app-border-color));
+              "
+            >
+              <div
+                [ngClass]="card.type !== commonConfig.WIZARD_TYPES.ENTITY ? 'overflow-x-auto overflow-y-auto p-2' : ''"
+                [ngStyle]="card.type !== commonConfig.WIZARD_TYPES.ENTITY ? getScrollContainerStyle(card.rows, card.cols) : {}"
+              >
+                <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
+                @if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
+                  @if ([commonConfig.WIZARD_TYPES.STATIC].includes(card.type)) {
+                    <div>
+                      @for (content of getStaticContent(card); track content) {
+                        <div [innerHTML]="content | safeHtml"></div>
+                      }
+                    </div>
+                  }
+                  @if ([commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)) {
+                    <div>
+                      <div
+                        class="panel"
+                        style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
+                      >
+                        <div class="mb-5 flex items-center justify-between">
+                          <h5 class="text-lg font-semibold dark:text-white" style="color: var(--app-table-text-color, var(--app-text-color))">
+                            {{ card.title }}
+                          </h5>
+                        </div>
+                        <div class="mb-5 overflow-hidden">
+                          @if (card.chart_format[0]) {
+                            <apx-chart
+                              [series]="card.chart_format[0].series"
+                              [chart]="card.chart_format[0].chart"
+                              [xaxis]="card.chart_format[0].xaxis"
+                              [yaxis]="card.chart_format[0].yaxis!"
+                              [dataLabels]="card.chart_format[0].dataLabels!"
+                              [grid]="card.chart_format[0].grid"
+                              [stroke]="card.chart_format[0].stroke"
+                              [title]="card.chart_format[0].title!"
+                              [plotOptions]="card.chart_format[0].plotOptions!"
+                              [fill]="card.chart_format[0].fill!"
+                              [tooltip]="card.chart_format[0].tooltip!"
+                            ></apx-chart>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                  <!-- ADD THIS NEW SECTION -->
+                  @if ([commonConfig.WIZARD_TYPES.GRID].includes(card.type)) {
+                    <div class="mt-5">
+                      <ng-template #gridContainer></ng-template>
+                    </div>
+                  }
+                } @else {
+                  <div #powerBiContainer [attr.id]="'powerbi-container-' + i" style="width: 100%; height: 100%"></div>
+                }
+              </div>
+              <!--</ng-scrollbar>-->
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  @if (showMasterListPopup) {
+    <master-list [popupConfig]="popupConfig" [isViewPopupOpen]="showMasterListPopup" [nonGridPage]="true" (closeModal)="closeMasterListPopup()"></master-list>
+  }
+}
