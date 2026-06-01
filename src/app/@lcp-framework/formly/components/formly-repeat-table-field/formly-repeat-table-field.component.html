@@ -1,23 +1,46 @@
-<div class="repeat-table-field rounded-md border-4 p-5">
-  <div class="grid border-b-2 pb-2">
+<div
+  class="repeat-table-field rounded-md"
+  [ngClass]="{'border-4 p-5': !field.props['noBorder'] && !field.templateOptions?.['noBorder'], 'p-0': field.props['noBorder'] || field.templateOptions?.['noBorder']}"
+>
+  <!-- Header: Add button (popup mode) or label only (inline mode) -->
+  <div class="grid border-b-2 pb-2" [ngClass]="{'border-gray-200': field.props['noBorder'] || field.templateOptions?.['noBorder']}">
+    <div class="flex items-center justify-between">
+      <h3
+        [ngClass]="{'text-base font-bold text-gray-800': field.props['noBorder'] || field.templateOptions?.['noBorder'], 'text-lg font-semibold': !field.props['noBorder'] && !field.templateOptions?.['noBorder']}"
+      >
+        {{ field.templateOptions?.label || field.props['label'] || 'Add Item' }}
+      </h3>
+      @if (enablePopupLineItem) {
+      <button type="button" class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="openPopup()" [disabled]="isDisabled()">
+        <i class="fa-plus fa-solid mr-2"></i>Add
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- Inline form (shown when enablePopupLineItem is false) -->
+  @if (!enablePopupLineItem) {
+  <div class="mt-4">
     <form [formGroup]="editForm" class="space-x-4">
-      <!-- Formly Form -->
-      <formly-form [form]="editForm" [fields]="getFieldGroup()" class="repeat-table-form flex-grow"></formly-form>
-
-      <!-- Buttons Section -->
-      <div class="space-x-2 text-center">
-        <button type="button" class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="saveRow()">
-          {{ currentRowIndex !== null ? 'Update' : 'Add' }}
-        </button>
-
-        <button type="button" class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="resetRow()">
-          {{ currentRowIndex !== null ? 'Back' : 'Reset' }}
-        </button>
+      <div class="flex items-end gap-2">
+        <formly-form [form]="editForm" [fields]="getFieldGroup()" [options]="options" [model]="editModel" class="repeat-table-form flex-grow"></formly-form>
+        <div class="repeat-table-actions mb-1 flex flex-none gap-2">
+          <button
+            type="button"
+            class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold"
+            (click)="saveRow()"
+            [disabled]="isDisabled() && currentRowIndex === null"
+          >
+            {{ currentRowIndex !== null ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="resetRow()">
+            {{ currentRowIndex !== null ? 'Cancel' : 'Reset' }}
+          </button>
+        </div>
       </div>
     </form>
   </div>
-
-  @if (errorMessage) {
+  } @if (errorMessage) {
   <div class="invalid-feedback">
     {{ errorMessage }}
   </div>
@@ -25,62 +48,137 @@
 
   <!-- Table displaying the added rows -->
   @if (formArray && formArray.length > 0) {
-  <table class="mb-4 table-fixed">
-    <thead>
-      <tr>
-        @for (field of getFieldGroup(); track field) {
-        <th class="px-3 py-2" [ngClass]="{ hidden: field.props && field.props['hideColumn'] }">
-          {{ field.props?.label || field.key }}
-        </th>
+  <div class="overflow-x-auto">
+    <table class="mb-4 w-full table-auto">
+      <thead>
+        <tr>
+          @if (isDiscountRuleType()) {
+          <!-- Specific headers for discount rule types -->
+          <th class="px-3 py-2">Discount Rule Type</th>
+          <th class="px-3 py-2">Values</th>
+          <th class="px-3 py-2">Priority</th>
+          } @else if (hasCustomHeaders()) {
+          <!-- Custom headers for specific components -->
+          @for (header of getCustomHeaders(); track header) {
+          <th class="px-3 py-2">{{ header.label }}</th>
+          } } @else {
+          <!-- Dynamic headers for general use cases -->
+          @for (field of getFieldGroup(); track field) {
+          <th class="whitespace-nowrap px-3 py-2" [ngClass]="{ hidden: field.props?.['hideColumn'] || field.templateOptions?.['hideColumn'] }">
+            {{ field.props?.label || field.templateOptions?.label || field.key }}
+          </th>
+          } }
+          <th class="px-3 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (fgRow of formArray.controls; track fgRow; let i = $index) {
+        <tr>
+          @if (isDiscountRuleType()) {
+          <!-- Specific cells for discount rule types -->
+          <td class="truncate px-3 py-2">{{ getRuleTypeDisplay(fgRow.get('rule_type')?.value) }}</td>
+          <td class="truncate px-3 py-2">{{ getRuleValuesDisplay(fgRow.value, i) }}</td>
+          <td class="truncate px-3 py-2">{{ fgRow.get('priority')?.value }}</td>
+          } @else if (hasCustomHeaders()) {
+          <!-- Custom cells for specific components -->
+          @for (header of getCustomHeaders(); track header) {
+          <td class="truncate px-3 py-2">{{ getCustomDisplayValue(fgRow.value, i, header.key) }}</td>
+          } } @else {
+          <!-- Dynamic cells for general use cases -->
+          @for (field of getFieldGroup(); track field) {
+          <td class="whitespace-nowrap px-3 py-2" [ngClass]="{ hidden: field.props?.['hideColumn'] || field.templateOptions?.['hideColumn'] }">
+            @if (field.type === 'image' || field.type === 'file') { @if (isImageUrl(fgRow.value, coerceKeyToString(field.key ?? ''))) {
+            <img
+              [title]="
+                (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
+                  ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
+                  : ''
+              "
+              (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
+              [src]="getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''))"
+              alt="Image"
+              class="max-h-16 max-w-16 cursor-pointer rounded-md"
+            />
+            } @else {
+            <div
+              class="cursor-pointer truncate"
+              [ngClass]="{ 'cursor-auto text-blue-600': (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')) || '').includes('http') }"
+              appDynamicFontSize="body"
+              (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
+              [title]="
+                (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
+                  ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
+                  : ''
+              "
+            >
+              {{ getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i) }}
+            </div>
+            } } @else { @if (fgRow.get(coerceKeyToString(field.key ?? ''))?.value !== null && fgRow.get(coerceKeyToString(field.key ?? ''))?.value !== undefined
+            && fgRow.get(coerceKeyToString(field.key ?? ''))?.value !== '') {
+            {{
+              field.type === 'select-from-db'
+                ? getDisplayValue(fgRow.get(coerceKeyToString(field.key ?? ''))?.value, field, i)
+                : field.props?.type === 'date' || field.templateOptions?.type === 'date'
+                ? formatDateValue(fgRow.get(coerceKeyToString(field.key ?? ''))?.value)
+                : getSafeDisplayValue(fgRow.get(coerceKeyToString(field.key ?? ''))?.value, field.props?.options || field.templateOptions?.options)
+            }}
+            } }
+          </td>
+          } }
+          <td class="px-3 py-2">
+            <div class="flex gap-2">
+              <i class="fa-pen-to-square fa-regular h-3.5 w-3.5 cursor-pointer" (click)="editRow(i)"></i>
+              <i class="fa-regular fa-trash-can h-3.5 w-3.5 cursor-pointer" (click)="deleteRow(i)"></i>
+            </div>
+          </td>
+        </tr>
         }
-        <th class="px-3 py-2">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (fgRow of formArray.controls; track fgRow; let i = $index) {
-      <tr>
-        @for (field of getFieldGroup(); track field) {
-        <td class="truncate px-3 py-2" [ngClass]="{ hidden: field.props && field.props['hideColumn'] }">
-          @if (field.type !== 'image' && field.type !== 'file' && fgRow.get(coerceKeyToString(field.key ?? ''))?.value; as fieldValue) {
-          {{ getSafeDisplayValue(fieldValue, field.props?.options) }}
-          } @if ((field.type === 'image' || field.type === 'file') && isImageUrl(fgRow.value, coerceKeyToString(field.key ?? ''))) {
-          <img
-            [title]="
-              (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
-                ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
-                : ''
-            "
-            (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
-            [src]="getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''))"
-            alt="Image"
-            class="max-h-16 max-w-16 cursor-pointer rounded-md"
-          />
-          } @else {
-          <div
-            class="cursor-pointer truncate"
-            [ngClass]="{ 'cursor-auto text-blue-600': (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')) || '').includes('http') }"
-            appDynamicFontSize="body"
-            (click)="downloadFile(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)"
-            [title]="
-              (getImageSrc(fgRow.value, coerceKeyToString(field.key ?? ''), true) || '').includes('http')
-                ? 'Download the file ' + getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i)
-                : ''
-            "
-          >
-            {{ getFileExtension(getImageSrc(fgRow.value, coerceKeyToString(field.key ?? '')), i) }}
+      </tbody>
+    </table>
+  </div>
+  } @else {
+  <div class="py-4 text-center text-gray-500">
+    <p>No records found</p>
+  </div>
+  }
+
+  <!-- Popup Modal (only shown when enablePopupLineItem is true) -->
+  @if (enablePopupLineItem && isPopupOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="repeat-table-popup max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-white p-5">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-xl font-semibold">{{ currentRowIndex !== null ? 'Edit' : 'Add' }} {{ field.props.label || 'Item' }}</h3>
+        <button type="button" class="text-gray-500 hover:text-gray-700" (click)="closePopup()">
+          <i class="fa-times fa-solid text-xl"></i>
+        </button>
+      </div>
+
+      <div class="grid border-b-2 pb-2">
+        <form [formGroup]="popupForm" class="repeat-table-popup-form space-x-4">
+          <formly-form
+            [form]="popupForm"
+            [fields]="getPopupFields()"
+            [options]="options"
+            [model]="popupModel"
+            class="repeat-table-form flex-grow"
+          ></formly-form>
+          <div class="space-x-2 text-center">
+            <button type="button" class="btn-primary rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="saveFromPopup()">
+              {{ currentRowIndex !== null ? 'Update' : 'Add' }}
+            </button>
+            <button type="button" class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold" (click)="closePopup()">
+              {{ currentRowIndex !== null ? 'Back' : 'Reset' }}
+            </button>
           </div>
-          }
-        </td>
-        }
-        <td class="px-3 py-2">
-          <div class="flex gap-2">
-            <i class="fa-pen-to-square fa-regular h-3.5 w-3.5 cursor-pointer" (click)="editRow(i)"></i>
-            <i class="fa-regular fa-trash-can h-3.5 w-3.5 cursor-pointer" (click)="deleteRow(i)"></i>
-          </div>
-        </td>
-      </tr>
+        </form>
+      </div>
+
+      @if (errorMessage) {
+      <div class="invalid-feedback">
+        {{ errorMessage }}
+      </div>
       }
-    </tbody>
-  </table>
+    </div>
+  </div>
   }
 </div>
