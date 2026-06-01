@@ -73,7 +73,7 @@ export class HeaderComponent implements OnInit {
     {
       id: 1,
       image: this.sanitizer.bypassSecurityTrustHtml(
-        `<span class="grid place-content-center w-9 h-9 rounded-full bg-success-light dark:bg-success text-success dark:text-success-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></span>`
+        `<span class="grid place-content-center w-9 h-9 rounded-full bg-success-light dark:bg-success text-success dark:text-success-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></span>`,
       ),
       title: 'Congratulations!',
       message: 'Your OS has been updated.',
@@ -82,7 +82,7 @@ export class HeaderComponent implements OnInit {
     {
       id: 2,
       image: this.sanitizer.bypassSecurityTrustHtml(
-        `<span class="grid place-content-center w-9 h-9 rounded-full bg-info-light dark:bg-info text-info dark:text-info-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`
+        `<span class="grid place-content-center w-9 h-9 rounded-full bg-info-light dark:bg-info text-info dark:text-info-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`,
       ),
       title: 'Did you know?',
       message: 'You can switch between artboards.',
@@ -91,7 +91,7 @@ export class HeaderComponent implements OnInit {
     {
       id: 3,
       image: this.sanitizer.bypassSecurityTrustHtml(
-        `<span class="grid place-content-center w-9 h-9 rounded-full bg-danger-light dark:bg-danger text-danger dark:text-danger-light"> <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`
+        `<span class="grid place-content-center w-9 h-9 rounded-full bg-danger-light dark:bg-danger text-danger dark:text-danger-light"> <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`,
       ),
       title: 'Something went wrong!',
       message: 'Send Reposrt',
@@ -100,7 +100,7 @@ export class HeaderComponent implements OnInit {
     {
       id: 4,
       image: this.sanitizer.bypassSecurityTrustHtml(
-        `<span class="grid place-content-center w-9 h-9 rounded-full bg-warning-light dark:bg-warning text-warning dark:text-warning-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">    <circle cx="12" cy="12" r="10"></circle>    <line x1="12" y1="8" x2="12" y2="12"></line>    <line x1="12" y1="16" x2="12.01" y2="16"></line></svg></span>`
+        `<span class="grid place-content-center w-9 h-9 rounded-full bg-warning-light dark:bg-warning text-warning dark:text-warning-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">    <circle cx="12" cy="12" r="10"></circle>    <line x1="12" y1="8" x2="12" y2="12"></line>    <line x1="12" y1="16" x2="12.01" y2="16"></line></svg></span>`,
       ),
       title: 'Warning',
       message: 'Your password strength is low.',
@@ -173,7 +173,7 @@ export class HeaderComponent implements OnInit {
     private timezoneService: TimezoneService,
     private gridApiService: GridApiService,
     private firebaseService: FirebaseService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   async initStore() {
@@ -243,11 +243,9 @@ export class HeaderComponent implements OnInit {
 
     const languageId = this.languageService.getLanguageId(languageCode);
 
-    // Load menu from cache synchronously to render immediately
-    this.loadMenuFromCache();
-
-    // Defer async service calls to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
+    // Defer cache loading and service calls to next tick to avoid NG0100 ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
+      this.loadMenuFromCache();
       this.languageService.fetchLanguageData(this.companyId, languageId);
     }, 0);
 
@@ -300,7 +298,7 @@ export class HeaderComponent implements OnInit {
           console.error('Error fetching menu data:', error);
           this.refreshView();
           return of([]);
-        })
+        }),
       )
       .toPromise();
   }

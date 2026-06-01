@@ -1,31 +1,28 @@
-<div class="theme-sidebar-text"
-  [ngClass]="{ 'dark text-white-dark': store.semidark }">
-  <nav
-    class="sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300">
+<div class="theme-sidebar-text" [ngClass]="{ 'dark text-white-dark': store.semidark }">
+  <nav class="sidebar fixed bottom-0 top-0 z-50 h-full min-h-screen w-[260px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-all duration-300">
     <div class="theme-sidebar-bg theme-sidebar-text h-full">
-      <div [ngClass]="{ 'hidden': showssmenu }"
-        class="flex items-center justify-between px-4 py-3">
+      <div [ngClass]="{ 'hidden': showssmenu }" class="flex items-center justify-between px-4 py-3">
         <a routerLink="/" class="main-logo flex shrink-0 items-center">
-          <img class="ml-[5px] flex-none" [src]="apiUrl+'/'+ this.config?.logo"
-            [alt]="this.config?.company_name" alt
-            appDynamicFontSize="headerlogo" />
+          <img class="ml-[5px] flex-none" [src]="apiUrl+'/'+ this.config?.logo" [alt]="this.config?.company_name" alt appDynamicFontSize="headerlogo" />
           <span
             class="truncate-text theme-sidebar-text hidden align-middle text-lg font-semibold lg:inline ltr:ml-1.5 rtl:mr-1.5"
             appDynamicFontSize="heading"
-            style="max-width: 15ch">{{this.config?.company_name}}</span>
+            style="max-width: 15ch"
+            >{{this.config?.company_name}}</span
+          >
         </a>
         <a
           href="javascript:;"
           class="collapse-icon icon-hover flex h-8 w-8 items-center rounded-full transition duration-300 dark:text-white-light dark:hover:bg-dark-light/10 rtl:rotate-180"
-          (click)="storeData.dispatch({ type: 'toggleSidebar'})">
-          <i class="fa-solid fa-angles-right"></i></a>
+          (click)="storeData.dispatch({ type: 'toggleSidebar'})"
+        >
+          <i class="fa-solid fa-angles-right"></i
+        ></a>
       </div>
       <ng-scrollbar class="relative !h-[calc(100vh-80px)]" appearance="compact">
         <ul class="relative space-y-0.5 p-4 font-semibold">
           <li class="nav-item">
-            <a routerLink="/" class="group" routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              (click)="toggleMobileMenu()">
+            <a routerLink="/" class="group" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="toggleMobileMenu()">
               <div class="flex items-center">
                 <svg
                   width="20"
@@ -34,98 +31,81 @@
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   ng-reflect-ng-class="h-6 w-6"
-                  class="ng-star-inserted h-6 w-6">
+                  class="ng-star-inserted h-6 w-6"
+                >
                   <path
                     opacity="0.5"
                     d="M13 15.4C13 13.3258 13 12.2887 13.659 11.6444C14.318 11 15.3787 11 17.5 11C19.6213 11 20.682 11 21.341 11.6444C22 12.2887 22 13.3258 22 15.4V17.6C22 19.6742 22 20.7113 21.341 21.3556C20.682 22 19.6213 22 17.5 22C15.3787 22 14.318 22 13.659 21.3556C13 20.7113 13 19.6742 13 17.6V15.4Z"
-                    fill="currentColor"></path>
+                    fill="currentColor"
+                  ></path>
                   <path
                     d="M2 8.6C2 10.6742 2 11.7113 2.65901 12.3556C3.31802 13 4.37868 13 6.5 13C8.62132 13 9.68198 13 10.341 12.3556C11 11.7113 11 10.6742 11 8.6V6.4C11 4.32582 11 3.28873 10.341 2.64437C9.68198 2 8.62132 2 6.5 2C4.37868 2 3.31802 2 2.65901 2.64437C2 3.28873 2 4.32582 2 6.4V8.6Z"
-                    fill="currentColor"></path>
+                    fill="currentColor"
+                  ></path>
                   <path
                     d="M13 5.5C13 4.4128 13 3.8692 13.1713 3.44041C13.3996 2.86867 13.8376 2.41443 14.389 2.17761C14.8024 2 15.3266 2 16.375 2H18.625C19.6734 2 20.1976 2 20.611 2.17761C21.1624 2.41443 21.6004 2.86867 21.8287 3.44041C22 3.8692 22 4.4128 22 5.5C22 6.5872 22 7.1308 21.8287 7.55959C21.6004 8.13133 21.1624 8.58557 20.611 8.82239C20.1976 9 19.6734 9 18.625 9H16.375C15.3266 9 14.8024 9 14.389 8.82239C13.8376 8.58557 13.3996 8.13133 13.1713 7.55959C13 7.1308 13 6.5872 13 5.5Z"
-                    fill="currentColor"></path>
+                    fill="currentColor"
+                  ></path>
                   <path
                     opacity="0.5"
                     d="M2 18.5C2 19.5872 2 20.1308 2.17127 20.5596C2.39963 21.1313 2.83765 21.5856 3.38896 21.8224C3.80245 22 4.32663 22 5.375 22H7.625C8.67337 22 9.19755 22 9.61104 21.8224C10.1624 21.5856 10.6004 21.1313 10.8287 20.5596C11 20.1308 11 19.5872 11 18.5C11 17.4128 11 16.8692 10.8287 16.4404C10.6004 15.8687 10.1624 15.4144 9.61104 15.1776C9.19755 15 8.67337 15 7.625 15H5.375C4.32663 15 3.80245 15 3.38896 15.1776C2.83765 15.4144 2.39963 15.8687 2.17127 16.4404C2 16.8692 2 17.4128 2 18.5Z"
-                    fill="currentColor"></path>
+                    fill="currentColor"
+                  ></path>
                 </svg>
-                <span class="theme-sidebar-text ltr:pl-3 rtl:pr-3">{{
-                  "dashboard" | translate }}</span>
+                <span class="theme-sidebar-text ltr:pl-3 rtl:pr-3">{{ "dashboard" | translate }}</span>
               </div>
             </a>
           </li>
-          @for (item of menuItems; track item) { @if
-          ([COMMON_CONFIG.MENU_LINK_TYPE.ACTION,
-          COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(item.link_type) === -1)
-          { @if (item.children?.length && hasVisibleChildren(item)) {
-          <h2
-            class="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
+          @for (item of menuItems; track item.id) { @if ([COMMON_CONFIG.MENU_LINK_TYPE.ACTION, COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(item.link_type) ===
+          -1) { @if (item.children?.length && hasVisibleChildren(item)) {
+          <h2 class="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
             <i class="fa-solid fa-minus xl-2 hidden flex-none"></i>
             <span class="theme-sidebar-text">{{ item.name | translate }}</span>
           </h2>
           <ul>
-            @for (child of item.children; track child) { @if
-            ([COMMON_CONFIG.MENU_LINK_TYPE.ACTION,
-            COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(child.link_type) ===
-            -1) { @if (child.children?.length && hasVisibleChildren(child)) {
+            @for (child of item.children; track child.id) { @if ([COMMON_CONFIG.MENU_LINK_TYPE.ACTION,
+            COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(child.link_type) === -1) { @if (child.children?.length && hasVisibleChildren(child)) {
             <li class="accordion menu nav-item">
               <button
                 type="button"
                 class="nav-link group w-full"
                 [ngClass]="{ active: activeDropdown.includes(child.name) }"
-                (click)="toggleAccordion(child.name)">
+                (click)="toggleAccordion(child.name)"
+              >
                 <div class="flex items-center">
-                  <i class="fas" [ngClass]="child.menu_img"
-                    aria-hidden="true"></i>
-                  <span title="{{ child.name | translate }}"
-                    class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ child.name
-                    | translate }} </span>
+                  <i class="fas" [ngClass]="child.menu_img" aria-hidden="true"></i>
+                  <span title="{{ child.name | translate }}" class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ child.name | translate }} </span>
                 </div>
-                <div
-                  [ngClass]="{ 'rtl:rotate-90 -rotate-90': !activeDropdown.includes(child.name) }">
+                <div [ngClass]="{ 'rtl:rotate-90 -rotate-90': !activeDropdown.includes(child.name) }">
                   <i class="fa-solid fa-angle-down"></i>
                 </div>
               </button>
-              <div [@slideDownUp]="!activeDropdown.includes(child.name)"
-                class="accordion-content">
+              <div [@slideDownUp]="!activeDropdown.includes(child.name)" class="accordion-content">
                 <ul class="sub-menu text-gray-500">
-                  @for (subChild of child.children; track subChild) { @if
-                  ([COMMON_CONFIG.MENU_LINK_TYPE.ACTION,
-                  COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(subChild.link_type)
-                  === -1) {
+                  @for (subChild of child.children; track subChild.id) { @if ([COMMON_CONFIG.MENU_LINK_TYPE.ACTION,
+                  COMMON_CONFIG.MENU_LINK_TYPE.HIDDEN].indexOf(subChild.link_type) === -1) {
                   <li>
-                    @if (subChild.children?.length &&
-                    hasVisibleChildren(subChild)) {
+                    @if (subChild.children?.length && hasVisibleChildren(subChild)) {
                     <button
                       type="button"
                       class="nav-link group w-full"
                       [ngClass]="{ active: activeDropdown.includes(subChild.name) }"
-                      (click)="toggleAccordion(subChild.name)">
+                      (click)="toggleAccordion(subChild.name)"
+                    >
                       <div class="flex items-center">
-                        <i class="fas" [ngClass]="subChild.menu_img"
-                          aria-hidden="true"></i>
-                        <span title="{{ subChild.name | translate }}"
-                          class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{
-                          subChild.name | translate }} </span>
+                        <i class="fas" [ngClass]="subChild.menu_img" aria-hidden="true"></i>
+                        <span title="{{ subChild.name | translate }}" class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ subChild.name | translate }} </span>
                       </div>
-                      <div
-                        [ngClass]="{ 'rtl:rotate-90 -rotate-90': !activeDropdown.includes(subChild.name) }">
+                      <div [ngClass]="{ 'rtl:rotate-90 -rotate-90': !activeDropdown.includes(subChild.name) }">
                         <i class="fa-solid fa-angle-down"></i>
                       </div>
                     </button>
-                    <div
-                      [@slideDownUp]="!activeDropdown.includes(subChild.name)"
-                      class="accordion-content">
+                    <div [@slideDownUp]="!activeDropdown.includes(subChild.name)" class="accordion-content">
                       <ul class="sub-menu text-gray-500">
-                        @for (subSubChild of subChild.children; track
-                        subSubChild) {
+                        @for (subSubChild of subChild.children; track subSubChild.id) {
                         <li>
-                          @if (subSubChild.link_type ===
-                          COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL) {
-                          <a [attr.href]="getHref(subSubChild.target)"
-                            target="_blank"
-                            title="{{ subSubChild.name | translate }}">
+                          @if (subSubChild.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL) {
+                          <a [attr.href]="getHref(subSubChild.target)" target="_blank" title="{{ subSubChild.name | translate }}">
                             {{ subSubChild.name | translate }}
                           </a>
                           } @else {
@@ -134,7 +114,8 @@
                             [routerLink]="subSubChild.target"
                             routerLinkActive="active"
                             [routerLinkActiveOptions]="{ exact: true }"
-                            (click)="toggleMobileMenu()">
+                            (click)="toggleMobileMenu()"
+                          >
                             {{ subSubChild.name | translate }}
                           </a>
                           }
@@ -142,18 +123,16 @@
                         }
                       </ul>
                     </div>
-                    } @else { @if (subChild.link_type ===
-                    COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL) {
-                    <a [attr.href]="getHref(subChild.target)" target="_blank"
-                      title="{{ subChild.name | translate  }}"> {{ subChild.name
-                      | translate }} </a>
+                    } @else { @if (subChild.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL) {
+                    <a [attr.href]="getHref(subChild.target)" target="_blank" title="{{ subChild.name | translate  }}"> {{ subChild.name | translate }} </a>
                     } @else {
                     <a
                       title="{{subChild.name | translate}}"
                       [routerLink]="subChild.target"
                       routerLinkActive="active"
                       [routerLinkActiveOptions]="{ exact: true }"
-                      (click)="toggleMobileMenu()">
+                      (click)="toggleMobileMenu()"
+                    >
                       {{ subChild.name | translate }}
                     </a>
                     } }
@@ -165,14 +144,10 @@
             } @else {
             <li class="nav-item">
               @if (child.link_type === COMMON_CONFIG.MENU_LINK_TYPE.EXTERNAL) {
-              <a [attr.href]="getHref(child.target)" target="_blank"
-                class="group" title="{{ child.name | translate }}">
+              <a [attr.href]="getHref(child.target)" target="_blank" class="group" title="{{ child.name | translate }}">
                 <div class="flex items-center">
-                  <i class="fas" [ngClass]="child.menu_img"
-                    aria-hidden="true"></i>
-                  <span title="{{child.name | translate }}"
-                    class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ child.name
-                    | translate }} </span>
+                  <i class="fas" [ngClass]="child.menu_img" aria-hidden="true"></i>
+                  <span title="{{child.name | translate }}" class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ child.name | translate }} </span>
                 </div>
               </a>
               } @else {
@@ -182,13 +157,11 @@
                 class="group"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
-                (click)="toggleMobileMenu()">
+                (click)="toggleMobileMenu()"
+              >
                 <div class="flex items-center">
-                  <i class="fas" [ngClass]="child.menu_img"
-                    aria-hidden="true"></i>
-                  <span title="{{ child.name | translate }}"
-                    class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ child.name
-                    | translate }} </span>
+                  <i class="fas" [ngClass]="child.menu_img" aria-hidden="true"></i>
+                  <span title="{{ child.name | translate }}" class="theme-sidebar-text ltr:pl-3 rtl:pr-3"> {{ child.name | translate }} </span>
                 </div>
               </a>
               }
@@ -196,13 +169,10 @@
             } } }
           </ul>
           } @else {
-          <h2
-            class="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
+          <h2 class="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
             <i class="fa-solid fa-minus xl-2 hidden flex-none"></i>
             <span>
-              <a title="{{ item.name | translate }}" [routerLink]="item.target"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: true }">
+              <a title="{{ item.name | translate }}" [routerLink]="item.target" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 {{ item.name | translate }}
               </a>
             </span>

@@ -1197,6 +1197,7 @@ export class MasterEntityComponent implements OnInit {
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
   entitiesForChildProcess: any[] = [];
+  entitiesForDashboardWizard: any[] = [];
   staticPageEntities: any[] = [];
 
   constructor(
@@ -1230,28 +1231,30 @@ export class MasterEntityComponent implements OnInit {
     this.action_types = this.commonConfig.action_types;
     this.wizard_type_list = this.commonConfig.wizard_type;
     this.report_type_list = this.commonConfig.report_type;
-    this.fetchAllTables();
-
     // To listen "entityType" on value change
     this.form.get('entityType')?.valueChanges.subscribe((value) => {
       this.updateFormValidation(value);
     });
 
-    // Clear dashboard_grid whenever wizard type changes to avoid stale values
+    // Clear dashboard_entity_name whenever wizard type changes to avoid stale values
     // (e.g. switching between ENTITY and GRID uses the same field for different data)
     this.form.get('wizardType')?.valueChanges.subscribe(() => {
-      this.form.get('dashboard_grid')?.setValue('');
+      this.form.get('dashboard_entity_name')?.setValue('');
     });
 
-    // If "id" is not available we need consider it as "Add", otherwise "Edit"
-    if (!this.id) {
-      this.editTitle = false;
-    } else {
-      this.editTitle = true;
-      this.loadData(this.id);
-    }
-    this.titleChange();
-    this.fetchAllMasterEntities();
+    setTimeout(() => {
+      this.fetchAllTables();
+      // If "id" is not available we need consider it as "Add", otherwise "Edit"
+      if (!this.id) {
+        this.editTitle = false;
+      } else {
+        this.editTitle = true;
+        this.loadData(this.id);
+      }
+      this.titleChange();
+      this.fetchAllMasterEntities();
+      this.cdr.detectChanges();
+    });
   }
 
   async initStore() {
@@ -1299,7 +1302,7 @@ export class MasterEntityComponent implements OnInit {
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
       reload_timeout: [''],
-      dashboard_grid: [''],
+      dashboard_entity_name: [''],
       queryInformation: [''],
       reportInformation: [''],
       dashboard_wizard_options: [''],
@@ -1663,7 +1666,7 @@ export class MasterEntityComponent implements OnInit {
             dashboard_wizard_columns: entity.dashboard_wizard_columns,
             dashboard_wizard_order_no: entity.dashboard_wizard_order_no,
             reload_timeout: entity.reload_timeout,
-            dashboard_grid: entity.dashboard_grid,
+            dashboard_entity_name: entity.dashboard_entity_name,
             dashboard_wizard_options: entity.dashboard_wizard_options ? this.prettyJSON(entity.dashboard_wizard_options) : '',
             exportTemplateFileName: entity.export_template_file_name || '',
           });
@@ -1745,7 +1748,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
         ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
-        ...(formData.dashboard_grid && { dashboard_grid: formData.dashboard_grid }),
+        ...(formData.dashboard_entity_name && { dashboard_entity_name: formData.dashboard_entity_name }),
         ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
       },
     ];
@@ -1838,7 +1841,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
         ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
-        ...(formData.dashboard_grid ? { dashboard_grid: formData.dashboard_grid } : { dashboard_grid: null }),
+        ...(formData.dashboard_entity_name ? { dashboard_entity_name: formData.dashboard_entity_name } : { dashboard_entity_name: null }),
         ...(formData.dashboard_wizard_options
           ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
           : { dashboard_wizard_options: null }),
@@ -2299,7 +2302,6 @@ export class MasterEntityComponent implements OnInit {
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
               ![
-                this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
                 this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
                 // this.commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE,
                 this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE,
@@ -2321,6 +2323,7 @@ export class MasterEntityComponent implements OnInit {
                 this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
               ].includes(entity.entity_type),
           );
+          this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];
         }
       },
       (error) => {

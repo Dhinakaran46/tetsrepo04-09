@@ -71,7 +71,7 @@ export class UserRolePermissionComponent {
     private commonService: MenuMapService,
     private localStorageService: LocalStorageService,
     private titleService: Title,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {
     this.mappingForm = this.fb.group({
       permission_type: ['user', Validators.required],
@@ -122,7 +122,7 @@ export class UserRolePermissionComponent {
               permission_value: new FormControl(right.permission_value == 'true'),
               entity_permission_value: new FormControl(right.entity_permission_value == 'true'),
               selected: new FormControl(isSelectedRight),
-            })
+            }),
           );
         });
       }
@@ -197,7 +197,7 @@ export class UserRolePermissionComponent {
                   'order_no', master_entities.dashboard_wizard_order_no,
                   'entity_name', master_entities.entity_name,
                   'permission_id', permissions.id,
-                  'dasboard_grid', master_entities.dashboard_grid,
+                  'dashboard_entity_name', master_entities.dashboard_entity_name,
                   'has_permission',
                     CASE
                       WHEN '${permission_type}' = 'user' THEN
@@ -270,7 +270,7 @@ export class UserRolePermissionComponent {
                   id: new FormControl(ielem.id),
                   name: new FormControl(ielem.entity_name),
                   menu_img: ielem.type == 'chart' ? new FormControl('fa-chart-simple') : new FormControl('fa-palette'),
-                  // menu_img: ielem.dashboard_grid
+                  // menu_img: ielem.dashboard_entity_name
                   //     ? new FormControl('fa-table-cells')
                   //     : ielem.type === 'chart'
                   //       ? new FormControl('fa-chart-simple')
@@ -286,7 +286,7 @@ export class UserRolePermissionComponent {
                       name: new FormControl('view'),
                       permission_value: new FormControl(ielem.has_permission),
                       entity_permission_value: new FormControl(ielem.has_permission),
-                      dashboard_grid: new FormControl(ielem.dasboard_grid),
+                      dashboard_entity_name: new FormControl(ielem.dashboard_entity_name),
                       link_type: new FormControl(1),
                       id: new FormControl(ielem.id),
                       selected: new FormControl(ielem.has_permission),
@@ -320,7 +320,7 @@ export class UserRolePermissionComponent {
         const key = 'failed_to_load';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -343,7 +343,7 @@ export class UserRolePermissionComponent {
               permission_value: new FormControl(right.permission_value == 'true'),
               entity_permission_value: new FormControl(right.entity_permission_value == 'true'),
               selected: new FormControl(isSelectedRight),
-            })
+            }),
           );
         });
       }
@@ -666,7 +666,7 @@ export class UserRolePermissionComponent {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
   getEntityList() {
@@ -694,7 +694,7 @@ export class UserRolePermissionComponent {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -756,7 +756,7 @@ export class UserRolePermissionComponent {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -806,7 +806,7 @@ export class UserRolePermissionComponent {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -834,7 +834,7 @@ export class UserRolePermissionComponent {
     }
 
     const uniqueData = selectedPermissions.filter(
-      (item, index, self) => index === self.findIndex((t) => t.user_id === item.user_id && t.permission_id === item.permission_id)
+      (item, index, self) => index === self.findIndex((t) => t.user_id === item.user_id && t.permission_id === item.permission_id),
     );
 
     param.data.table2 = uniqueData;
@@ -854,7 +854,7 @@ export class UserRolePermissionComponent {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -881,7 +881,7 @@ export class UserRolePermissionComponent {
     }
 
     const uniqueData = selectedPermissions.filter(
-      (item, index, self) => index === self.findIndex((t) => t.role_id === item.role_id && t.permission_id === item.permission_id)
+      (item, index, self) => index === self.findIndex((t) => t.role_id === item.role_id && t.permission_id === item.permission_id),
     );
 
     param.data.table2 = uniqueData;
@@ -901,7 +901,7 @@ export class UserRolePermissionComponent {
         const key = 'error_mapping_role_permissions';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 

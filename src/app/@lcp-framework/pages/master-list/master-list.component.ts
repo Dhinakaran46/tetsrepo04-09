@@ -218,6 +218,7 @@ export class MasterListComponent implements OnChanges {
   previewPopupPermission: boolean = false;
   noPermission: boolean = false;
   isUUid: boolean = true;
+
   commonSearchQuery: any = {};
   grid_unique_id: any;
   popupComponentGridParams: any;
@@ -360,18 +361,20 @@ export class MasterListComponent implements OnChanges {
     this.initStore();
     this.config = JSON.parse(this.localStorageService.getData('config'));
     this.save_grid_latest_state = this.config?.save_grid_latest_state == 'true' && this.config?.save_grid_latest_state;
-    let pageInfo: any;
-    if (this.entity_name) {
-      const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
+    setTimeout(async () => {
+      let pageInfo: any;
+      if (this.entity_name) {
+        const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
 
-      pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
-      const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
-      this.setupPageInfo(pageInfo, defaultPermission);
-    } else {
-      pageInfo = this.route.snapshot.data['pageInfo'] || '';
-      const defaultPermission = this.route.snapshot.data['defaultPermission'] || '';
-      this.setupPageInfo(pageInfo, defaultPermission);
-    }
+        pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
+        const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
+        this.setupPageInfo(pageInfo, defaultPermission);
+      } else {
+        pageInfo = this.route.snapshot.data['pageInfo'] || '';
+        const defaultPermission = this.route.snapshot.data['defaultPermission'] || '';
+        this.setupPageInfo(pageInfo, defaultPermission);
+      }
+    }, 0);
   }
 
   setupPageInfo(pageInfo: any, defaultPermission: any) {
@@ -1197,7 +1200,7 @@ export class MasterListComponent implements OnChanges {
       dashboard_wizard_order_no: record?.dashboard_wizard_order_no ?? 0,
       dashboard_wizard_options:
         record?.dashboard_wizard_options && typeof record.dashboard_wizard_options === 'object' ? record.dashboard_wizard_options : null,
-      dashboard_grid: record?.dashboard_grid ?? null,
+      dashboard_entity_name: record?.dashboard_entity_name ?? null,
       reload_timeout: record?.reload_timeout ?? null,
       name: record?.name || '',
       company_id: companyId,
@@ -3332,6 +3335,7 @@ export class MasterListComponent implements OnChanges {
   previewOnPageChange(event: { page: number; start_index: number; skipFetch?: boolean }) {
     this.previewCurrentPage = event.page;
     this.previewListQuery.start_index = event.start_index;
+
     this.previewListQuery.limit_range = this.previewResultsPerPage;
     if (event?.skipFetch) return;
     this.previewFetchData(this.previewListQuery);

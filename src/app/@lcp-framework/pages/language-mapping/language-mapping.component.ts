@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { initialState } from '../../../store/index.reducer';
 import { Store } from '@ngrx/store';
 import { animate, style, transition, trigger } from '@angular/animations';
@@ -105,7 +105,8 @@ export class LanguageMappingComponent implements OnInit {
     private languageService: LanguageService,
     private translate: TranslateService,
     private titleService: Title,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private zone: NgZone,
   ) {
     this.langMapForm = this.formBuilder.group({
       items: this.formBuilder.array([]),
@@ -166,26 +167,34 @@ export class LanguageMappingComponent implements OnInit {
 
     this.commonService.procedureCall(procedureParams).subscribe({
       next: (response: { code: number; status: boolean; data: { result: Item[] }[]; message: string }) => {
-        if (response.code === 200 && response.status) {
-          this.allItems = response.data?.[0]?.result || [];
-          this.languages = this.extractLanguages(this.allItems);
-          this.populateFormArray(this.allItems);
-          this.storeInitialValues();
-        } else {
-          const key = 'error';
-          const errorMessage = this.translate.instant(key);
-          this.toastr.error(errorMessage, 'Error');
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+        this.zone.run(() => {
+          if (response.code === 200 && response.status) {
+            this.allItems = response.data?.[0]?.result || [];
+            this.languages = this.extractLanguages(this.allItems);
+            this.populateFormArray(this.allItems);
+            this.storeInitialValues();
+            this.cdr.detectChanges();
+          } else {
+            const key = 'error';
+            const errorMessage = this.translate.instant(key);
+            this.toastr.error(errorMessage, 'Error');
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
       },
       error: (error) => {
-        console.error('Error fetching data:', error);
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.zone.run(() => {
+          console.error('Error fetching data:', error);
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
       },
       complete: () => {
-        this.loading = false;
+        this.zone.run(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -360,7 +369,7 @@ export class LanguageMappingComponent implements OnInit {
         const key = 'record_failed_deleted';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -468,7 +477,7 @@ export class LanguageMappingComponent implements OnInit {
         const key = 'record_failed_inserted';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 

@@ -58,7 +58,7 @@
               appDynamicFontSize="body"
             >
               <option value>{{ 'form_label_entity_type_dropdown' | translate }}</option>
-              @for (item of entity_types; track item) {
+              @for (item of entity_types; track item.value) {
                 <option [value]="item.value">{{ item.label }}</option>
               }
             </select>
@@ -80,7 +80,7 @@
               placeholder="Select an option"
               [ngClass]="{ 'is-invalid': isFieldInvalid('permissions') }"
             >
-              @for (item of action_types; track item.id) {
+              @for (item of action_types; track item.value) {
                 <ng-option [value]="item.value">{{ item.label | translate }}</ng-option>
               }
             </ng-select>
@@ -210,7 +210,7 @@
                 [ngClass]="{ 'is-invalid': isFieldInvalid('header_entity_id') }"
               >
                 <option value>{{ 'select_any' | translate }}</option>
-                @for (entity of staticPageEntities; track entity) {
+                @for (entity of staticPageEntities; track entity.value) {
                   <option [value]="entity.value">{{ entity.label }}</option>
                 }
               </select>
@@ -230,7 +230,7 @@
                 [ngClass]="{ 'is-invalid': isFieldInvalid('footer_entity_id') }"
               >
                 <option value>{{ 'select_any' | translate }}</option>
-                @for (entity of staticPageEntities; track entity) {
+                @for (entity of staticPageEntities; track entity.value) {
                   <option [value]="entity.value">{{ entity.label }}</option>
                 }
               </select>
@@ -296,7 +296,7 @@
                 appDynamicFontSize="body"
               >
                 <!-- <option value>{{ 'form_label_report_type_dropdown' | translate }}</option> -->
-                @for (item of report_type_list; track item) {
+                @for (item of report_type_list; track item.value) {
                   <option [value]="item.value">{{ item.label | translate }}</option>
                 }
               </select>
@@ -317,7 +317,7 @@
                   appDynamicFontSize="body"
                 >
                   <option value>{{ 'form_label_wizard_type_dropdown' | translate }}</option>
-                  @for (item of wizard_type_list; track item) {
+                  @for (item of wizard_type_list; track item.value) {
                     <option [value]="item.value">{{ item.label | translate }}</option>
                   }
                 </select>
@@ -492,36 +492,18 @@
                 </div>
               }
             </div>
-            @if ([commonConfig.WIZARD_TYPES.GRID].includes(form.get('wizardType')?.value)) {
-              <div class="mt-0">
-                <label for="dashboard_grid" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_grid' | translate }}</label>
-                <select id="dashboard_grid" formControlName="dashboard_grid" appDynamicFontSize="body" class="form-select w-full">
-                  <option value>{{ 'select_any' | translate }}</option>
-                  @for (entity of masterEntitiesForChildProcess; track entity) {
-                    <option [value]="entity.value">{{ entity.label }}</option>
-                  }
-                </select>
-                @if (isFieldInvalid('dashboard_grid')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('dashboard_grid') }}
-                  </div>
-                }
-              </div>
-            }
             @if ([commonConfig.WIZARD_TYPES.ENTITY].includes(form.get('wizardType')?.value)) {
               <div class="mt-0">
-                <label for="dashboard_grid" class="required-mark mb-2 block font-medium"
-                  >{{ 'form_label_dashboard_entity' | translate }} {{ form.get('wizardType')?.value }}</label
-                >
-                <select id="dashboard_grid" formControlName="dashboard_grid" appDynamicFontSize="body" class="form-select w-full">
+                <label for="dashboard_entity_name" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_entity' | translate }}</label>
+                <select id="dashboard_entity_name" formControlName="dashboard_entity_name" appDynamicFontSize="body" class="form-select w-full">
                   <option value="">{{ 'select_any' | translate }}</option>
-                  @for (entity of entitiesForChildProcess; track entity) {
+                  @for (entity of entitiesForDashboardWizard; track $index) {
                     <option [value]="entity.value">{{ entity.label }}</option>
                   }
                 </select>
-                @if (isFieldInvalid('dashboard_grid')) {
+                @if (isFieldInvalid('dashboard_entity_name')) {
                   <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('dashboard_grid') }}
+                    {{ getErrorMessage('dashboard_entity_name') }}
                   </div>
                 }
               </div>
@@ -1057,7 +1039,7 @@
                           [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldType') }"
                         >
                           <option value selected disabled>{{ 'select_any' | translate }}</option>
-                          @for (fieldType of field_types; track fieldType) {
+                          @for (fieldType of field_types; track fieldType.value) {
                             <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
                           }
                         </select>
@@ -1103,7 +1085,7 @@
                               [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
                             >
                               <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntities; track entity) {
+                              @for (entity of masterEntities; track entity.value) {
                                 <option [value]="entity.value">{{ entity.label }}</option>
                               }
                             </select>
@@ -1117,7 +1099,7 @@
                               [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
                             >
                               <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntities; track entity) {
+                              @for (entity of masterEntities; track entity.value) {
                                 <option [value]="entity.value">{{ entity.label }}</option>
                               }
                             </select>
@@ -1131,7 +1113,7 @@
                               [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
                             >
                               <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntitiesForChildProcess; track entity) {
+                              @for (entity of masterEntitiesForChildProcess; track entity.value) {
                                 <option [value]="entity.value">{{ entity.label }}</option>
                               }
                             </select>
@@ -1145,7 +1127,7 @@
                               [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
                             >
                               <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntitiesForChildProcess; track entity) {
+                              @for (entity of masterEntitiesForChildProcess; track entity.value) {
                                 <option [value]="entity.value">{{ entity.label }}</option>
                               }
                             </select>
@@ -1362,7 +1344,7 @@
                 [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldType') }"
               >
                 <option value disabled>{{ 'select_any' | translate }}</option>
-                @for (fieldType of field_types; track fieldType) {
+                @for (fieldType of field_types; track fieldType.value) {
                   <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
                 }
               </select>
@@ -1395,7 +1377,7 @@
                     [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
                   >
                     <option value>{{ 'select_any' | translate }}</option>
-                    @for (entity of masterEntities; track entity) {
+                    @for (entity of masterEntities; track entity.value) {
                       <option [value]="entity.value">{{ entity.label }}</option>
                     }
                   </select>
@@ -1408,7 +1390,7 @@
                     [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
                   >
                     <option value>{{ 'select_any' | translate }}</option>
-                    @for (entity of masterEntitiesForChildProcess; track entity) {
+                    @for (entity of masterEntitiesForChildProcess; track entity.value) {
                       <option [value]="entity.value">{{ entity.label }}</option>
                     }
                   </select>
@@ -1421,7 +1403,7 @@
                     [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
                   >
                     <option value>{{ 'select_any' | translate }}</option>
-                    @for (entity of masterEntitiesForChildProcess; track entity) {
+                    @for (entity of masterEntitiesForChildProcess; track entity.value) {
                       <option [value]="entity.value">{{ entity.label }}</option>
                     }
                   </select>
@@ -1521,7 +1503,7 @@
           <!--comments-->
           <div class="px-4 sm:px-6">
             <ul class="flex list-disc flex-col gap-3">
-              @for (item of popupInformation.comments; track item) {
+              @for (item of popupInformation.comments; track $index) {
                 <li>
                   <div class="flex items-center gap-2">
                     <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>

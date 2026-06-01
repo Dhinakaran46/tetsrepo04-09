@@ -209,7 +209,7 @@
                   @if (filterConditions.length === 0) {
                     <p class="text-app-text">{{ 'No filter applied' }}</p>
                   } @else {
-                    @for (condition of filterConditions; track condition; let i = $index) {
+                    @for (condition of filterConditions; track $index; let i = $index) {
                       <div class="advanced-filter-row grid grid-cols-[auto_180px_150px_minmax(180px,1fr)_auto] items-center gap-1.5">
                         <div class="flex items-center justify-center">
                           @if (!filterCondition) {
@@ -221,13 +221,13 @@
                         </div>
                         <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select h-8 w-full text-xs">
                           <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
-                          @for (col of filteredColumns; track col) {
+                          @for (col of filteredColumns; track col.field || col.header || $index) {
                             <option [value]="col.field">{{ col.title || col.previewTitle }}</option>
                           }
                         </select>
                         <select [(ngModel)]="condition.operator" class="form-select h-8 w-full text-xs" (ngModelChange)="onOperatorChange(i)">
                           <option value selected disabled>{{ 'condition' | translate }}</option>
-                          @for (op of condition.availableOperators; track op) {
+                          @for (op of condition.availableOperators; track op.value || op.label || $index) {
                             <option [value]="op.value">{{ op.label }}</option>
                           }
                         </select>
@@ -432,7 +432,7 @@
                       <button class="px-2 py-1 text-red-500" (click)="clearAll()">{{ 'clear_all' | translate }}</button>
                     </div>
                   </li>
-                  @for (col of headercolumns; track col; let i = $index) {
+                  @for (col of headercolumns; track col.field || col.header || $index; let i = $index) {
                     <li>
                       <div class="flex items-center px-4 py-1">
                         <label [for]="'chk-' + i" class="mb-0 cursor-pointer">
@@ -588,7 +588,7 @@
           COLUMN SEARCH
           <i class="fa-solid fa-angles-right ml-2 text-[10px]"></i>
         </span>
-        @for (condition of getAppliedAdvancedFilters(); track condition; let i = $index; let last = $last) {
+        @for (condition of getAppliedAdvancedFilters(); track $index; let i = $index; let last = $last) {
           <span
             class="search-badge-pill inline-flex items-center gap-2 rounded-full border border-[#e0e6ed] bg-gray-100 px-3 py-1 text-xs font-bold text-app-text dark:border-[#253b5c] dark:bg-[#1b2e4b]"
             (click)="openAdvancedFilterMenu()"
@@ -639,7 +639,7 @@
                   <input type="checkbox" (change)="toggleSelectAll($event)" />
                 </th>
               }
-              @for (col of headercolumns; track col; let last = $last) {
+              @for (col of headercolumns; track col.field || col.header || $index; let last = $last) {
                 @if (col.is_grid_column == 'true' && !col.colFilterHide) {
                   <th
                     scope="col"
@@ -690,7 +690,7 @@
             }
             @if (!loading) {
               @if (items && items.length > 0) {
-                @for (item of items; track item; let row_index = $index) {
+                @for (item of items; track item.uuid || item.id || $index; let row_index = $index) {
                   <ng-container>
                     <tr>
                       @if (permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
@@ -705,7 +705,7 @@
                           <input type="checkbox" (change)="toggleSelectItem(item)" [checked]="isItemSelected(item)" />
                         </td>
                       }
-                      @for (col of headercolumns; track col; let last = $last) {
+                      @for (col of headercolumns; track col.field || col.header || $index; let last = $last) {
                         <!--<td
                                   class="max-w-150 truncate whitespace-nowrap"
                                   [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
@@ -943,7 +943,7 @@
                       </tr>
                     }
                     <!-- Add for each column child link type -->
-                    @for (col of headercolumns; track col) {
+                    @for (col of headercolumns; track col.field || col.header || $index) {
                       @if ((col.link_type === 'child_grid' || col.link_type === 'child_component') && isColumnChildGridExpanded(row_index + 1, col)) {
                         <tr>
                           <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">

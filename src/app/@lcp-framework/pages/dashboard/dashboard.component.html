@@ -70,16 +70,16 @@
     </div>
   }
 
-  <div [class]="hasNonEntityCards() ? 'flex-1 pt-5' : displayDateRangeFilter ? 'flex-1 pt-5' : 'flex-1'">
+  <div [class]="'flex-1'">
     @for (card of getActiveCards(); track card; let i = $index) {
-      @if (card.permissions.view && card.type === commonConfig.WIZARD_TYPES.ENTITY) {
+      @if (card.permissions.view && card.type === commonConfig.WIZARD_TYPES.ENTITY && card.dashboard_entity_type !== 'grid_builder_module') {
         <ng-template #entityContainer></ng-template>
       }
     }
     @if (hasNonEntityCards()) {
       <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
         @for (card of getActiveCards(); track card; let i = $index) {
-          @if (card.permissions.view && card.type !== commonConfig.WIZARD_TYPES.ENTITY) {
+          @if (card.permissions.view && (card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module')) {
             <div
               class="relative rounded-lg bg-white dark:bg-black"
               [ngStyle]="getCardStyle(card)"
@@ -90,8 +90,16 @@
               "
             >
               <div
-                [ngClass]="card.type !== commonConfig.WIZARD_TYPES.ENTITY ? 'overflow-x-auto overflow-y-auto p-2' : ''"
-                [ngStyle]="card.type !== commonConfig.WIZARD_TYPES.ENTITY ? getScrollContainerStyle(card.rows, card.cols) : {}"
+                [ngClass]="
+                  card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module'
+                    ? 'overflow-x-auto overflow-y-auto p-2'
+                    : ''
+                "
+                [ngStyle]="
+                  card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module'
+                    ? getScrollContainerStyle(card.rows, card.cols)
+                    : {}
+                "
               >
                 <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
                 @if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
@@ -133,8 +141,7 @@
                       </div>
                     </div>
                   }
-                  <!-- ADD THIS NEW SECTION -->
-                  @if ([commonConfig.WIZARD_TYPES.GRID].includes(card.type)) {
+                  @if (card.type === commonConfig.WIZARD_TYPES.ENTITY && card.dashboard_entity_type === 'grid_builder_module') {
                     <div class="mt-5">
                       <ng-template #gridContainer></ng-template>
                     </div>
