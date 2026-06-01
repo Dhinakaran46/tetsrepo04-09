@@ -637,15 +637,26 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
       if (card.type === commonConfig.WIZARD_TYPES.CHART) {
         card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
 
-        if (card.chart_format[0] && card.chart_format[0].tooltip?.y?.formatter) {
-          if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
-            card.chart_format[0].tooltip.y.formatter = new Function(
-              'number',
-              card.chart_format[0].tooltip.y.formatter.substring(
-                card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
-              ),
-            );
+        if (card.chart_format[0]) {
+          if (!card.chart_format[0].chart) {
+            card.chart_format[0].chart = {};
+          }
+          if (!card.chart_format[0].chart.zoom) {
+            card.chart_format[0].chart.zoom = {};
+          }
+          card.chart_format[0].chart.zoom.enabled = false;
+          card.chart_format[0].chart.zoom.allowMouseWheelZoom = false;
+
+          if (card.chart_format[0].tooltip?.y?.formatter) {
+            if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
+              card.chart_format[0].tooltip.y.formatter = new Function(
+                'number',
+                card.chart_format[0].tooltip.y.formatter.substring(
+                  card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
+                  card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
+                ),
+              );
+            }
           }
         }
 
@@ -783,6 +794,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               card.chart_format = card.chart_format ? [{ ...this.createformat(), ...card.chart_format[0] }] : [this.createformat()];
 
               if (card.chart_format[0]) {
+                if (!card.chart_format[0].chart) {
+                  card.chart_format[0].chart = {};
+                }
+                if (!card.chart_format[0].chart.zoom) {
+                  card.chart_format[0].chart.zoom = {};
+                }
+                card.chart_format[0].chart.zoom.enabled = false;
+                card.chart_format[0].chart.zoom.allowMouseWheelZoom = false;
+
                 if (card.chart_format[0].tooltip.y.formatter) {
                   if (typeof card.chart_format[0].tooltip.y.formatter === 'string') {
                     card.chart_format[0].tooltip.y.formatter = new Function(
@@ -1090,6 +1110,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         type: chartType,
         zoom: {
           enabled: false,
+          allowMouseWheelZoom: false,
         },
         toolbar: {
           show: false,

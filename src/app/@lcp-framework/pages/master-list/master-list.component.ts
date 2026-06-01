@@ -269,7 +269,7 @@ export class MasterListComponent implements OnChanges {
     private formBuilder: FormBuilder,
     private openaiService: OpenaiService,
     private routeUpdateService: RouteUpdateService,
-    private timezoneService: TimezoneService,
+    private timezoneService: TimezoneService
   ) {
     const url = this.localStorageService?.getData('base_app_url');
     this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
@@ -305,7 +305,7 @@ export class MasterListComponent implements OnChanges {
         new_password: ['', [Validators.required, this.passwordValidator]],
         confirm_new_password: ['', Validators.required],
       },
-      { validators: this.passwordMatchValidator },
+      { validators: this.passwordMatchValidator }
     );
 
     this.changePasswordForm.get('new_password')?.valueChanges.subscribe((value) => {
@@ -503,22 +503,22 @@ export class MasterListComponent implements OnChanges {
       search_all: this.filterBucketWithSource(
         acceptedParams.search_all,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : [],
+        Array.isArray(this.parentGridFilters.search_all) ? this.parentGridFilters.search_all : []
       ),
       search_any: this.filterBucketWithSource(
         acceptedParams.search_any,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : [],
+        Array.isArray(this.parentGridFilters.search_any) ? this.parentGridFilters.search_any : []
       ),
       having_conditions: this.filterBucketWithSource(
         acceptedParams.having_conditions,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : [],
+        Array.isArray(this.parentGridFilters.having_conditions) ? this.parentGridFilters.having_conditions : []
       ),
       having_any_conditions: this.filterBucketWithSource(
         acceptedParams.having_any_conditions,
         parentConditionPool,
-        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : [],
+        Array.isArray(this.parentGridFilters.having_any_conditions) ? this.parentGridFilters.having_any_conditions : []
       ),
     };
   }
@@ -713,7 +713,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       const signature = `${parsedRule.parentColumnToken}|${this.normalizeFilterToken(parsedRule.currentColumnName)}|${this.normalizeFilterToken(
-        parsedRule.condition || '',
+        parsedRule.condition || ''
       )}`;
       if (seen.has(signature)) {
         continue;
@@ -789,7 +789,7 @@ export class MasterListComponent implements OnChanges {
         this.toastr.error(errorMessage + error, 'Error');
         this.isItemModalOpen = false;
         // Handle error response
-      },
+      }
     );
   }
 
@@ -1569,7 +1569,7 @@ export class MasterListComponent implements OnChanges {
         let listParams = this.localStorageService.replaceUniqueId(
           this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
           '$session_user_id',
-          this.user_info.main.id,
+          this.user_info.main.id
         );
         const gridParams: any = {};
         Object.keys(item).forEach((key) => {
@@ -1621,7 +1621,7 @@ export class MasterListComponent implements OnChanges {
             const key = 'error';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          },
+          }
         );
       }
     }
@@ -1634,7 +1634,7 @@ export class MasterListComponent implements OnChanges {
         header.header !== 'uuid' &&
         !String(header.header || '').startsWith('gparam_') &&
         header.is_grid_column !== false &&
-        header.is_grid_column !== 'false',
+        header.is_grid_column !== 'false'
     );
 
     const transformedRecords = records.map((record) => {
@@ -1685,9 +1685,12 @@ export class MasterListComponent implements OnChanges {
     this.gridApiService.getAttachedPolicies({ entity_name: params.entity_name }).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          this.EntityName = params.entity_name;
-          this.attachedPolicies = response.data.attached_policies || [];
-          this.accepted_parent_params = response.data.accepted_parent_params || {};
+          queueMicrotask(() => {
+            this.EntityName = params.entity_name;
+            this.attachedPolicies = response.data.attached_policies || [];
+            this.accepted_parent_params = response.data.accepted_parent_params || {};
+            this.cdr.markForCheck();
+          });
         }
       },
       (error) => {
@@ -1713,7 +1716,7 @@ export class MasterListComponent implements OnChanges {
           this.queuedInitialFetchParams = null;
           this.fetchData(this.listQuery);
         });
-      },
+      }
     );
   }
 
@@ -1973,8 +1976,8 @@ export class MasterListComponent implements OnChanges {
           value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
             ? this.getNoValueOperatorSQL(item?.operator)
             : Array.isArray(item?.enum_values) && item.enum_values.length
-              ? item.enum_values
-              : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+            ? item.enum_values
+            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
         }))
         .filter((item: any) => !!item.column_name);
 
@@ -1986,8 +1989,8 @@ export class MasterListComponent implements OnChanges {
           value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
             ? this.getNoValueOperatorSQL(item?.operator)
             : Array.isArray(item?.enum_values) && item.enum_values.length
-              ? item.enum_values
-              : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+            ? item.enum_values
+            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
         }))
         .filter((item: any) => !!item.column_name);
 
@@ -2081,7 +2084,7 @@ export class MasterListComponent implements OnChanges {
           this.toastr.error(errorMessage, 'Error');
           resolve();
         },
-        () => resolve(),
+        () => resolve()
       );
     });
   }
@@ -2099,7 +2102,7 @@ export class MasterListComponent implements OnChanges {
     let payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(effectiveParams, this.policyData, this.attachedPolicies),
       '$session_user_id',
-      this.user_info.main.id,
+      this.user_info.main.id
     );
 
     if (this.uniqueId) {
@@ -2140,7 +2143,7 @@ export class MasterListComponent implements OnChanges {
                 // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
 
                 const enableActionMenu = Object.entries(this.masterInfo.permissions).some(
-                  ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true,
+                  ([key, value]) => !['child_details', 'create', 'export_excel', 'export_pdf'].includes(key) && value === true
                 );
 
                 // Include serial number column if enabled in config
@@ -2315,7 +2318,7 @@ export class MasterListComponent implements OnChanges {
           this.footerStaticEntityName = '';
           this.cdr.detectChanges();
         });
-      },
+      }
     );
   }
 
@@ -2374,7 +2377,7 @@ export class MasterListComponent implements OnChanges {
         entity?.entity_name === currentEntityName ||
         entity?.value === currentEntityName ||
         entity?.name === currentEntityName ||
-        entity?.slug === currentEntityName,
+        entity?.slug === currentEntityName
     );
 
     if (!currentEntity) {
@@ -2395,7 +2398,7 @@ export class MasterListComponent implements OnChanges {
 
     const entity = entities.find(
       (item: any) =>
-        item?.id == identifier || item?.uuid == identifier || item?.entity_name == identifier || item?.value == identifier || item?.slug == identifier,
+        item?.id == identifier || item?.uuid == identifier || item?.entity_name == identifier || item?.value == identifier || item?.slug == identifier
     );
 
     return entity?.entity_name || entity?.value || '';
@@ -2641,7 +2644,7 @@ export class MasterListComponent implements OnChanges {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -2900,8 +2903,8 @@ export class MasterListComponent implements OnChanges {
                   item.type === 'excel'
                     ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     : item.type === 'pdf'
-                      ? 'application/pdf'
-                      : 'application/octet-stream';
+                    ? 'application/pdf'
+                    : 'application/octet-stream';
                 const blob = new Blob([response.blob], {
                   type,
                 });
@@ -3428,11 +3431,11 @@ export class MasterListComponent implements OnChanges {
         menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName && (item.action_slug === 'add' || item.action_slug === 'popup_add'));
       } else if (popupName === 'popup_edit') {
         menuItem = unorgmenuList.find(
-          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit'),
+          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit')
         );
       } else if (popupName === 'popup_details') {
         menuItem = unorgmenuList.find(
-          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details'),
+          (item: any) => item.entity_name === popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
         );
       } else if (popupName === 'popup_grid') {
         menuItem = unorgmenuList.find((item: any) => item.entity_name === popupEntityName);
