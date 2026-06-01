@@ -86,6 +86,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     },
   };
 
+  @Input() gridParams: any;
   @Input() uuid!: string | null;
   @Input() entityName!: string;
   @Input() entityType!: string;
@@ -107,11 +108,21 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     public location: Location,
     private translate: TranslateService,
     private titleService: Title,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
   ) {}
 
   ngOnInit() {
     this.collectRouteGParams();
+
+    if (this.gridParams) {
+      Object.keys(this.gridParams).forEach((key) => {
+        const cleanKey = key.startsWith('$') ? key.slice(1) : key;
+        if (cleanKey.startsWith('gparam_') && this.gridParams[key] !== undefined && this.gridParams[key] !== null) {
+          this.routeGParams[cleanKey] = String(this.gridParams[key]);
+        }
+      });
+      this.model = { ...this.model, ...this.routeGParams };
+    }
 
     if (!this.uuid) {
       this.route.paramMap.subscribe((params) => {
@@ -120,6 +131,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const value = id || uuid;
 
         this.collectRouteGParams();
+
+        if (this.gridParams) {
+          Object.keys(this.gridParams).forEach((key) => {
+            const cleanKey = key.startsWith('$') ? key.slice(1) : key;
+            if (cleanKey.startsWith('gparam_') && this.gridParams[key] !== undefined && this.gridParams[key] !== null) {
+              this.routeGParams[cleanKey] = String(this.gridParams[key]);
+            }
+          });
+        }
 
         this.originaluid = value;
         this.unique_id = value;
@@ -294,7 +314,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         }),
         catchError(() => {
           return of(null); // Handle errors gracefully, no validation error on failure
-        })
+        }),
       );
     };
   }
@@ -313,10 +333,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.localStorageService.formatPayloadWithPolicyConditions(
             this.replacePlaceholders(this.listParams[key], this.model, required),
             this.policyData,
-            field?.attached_policies || []
+            field?.attached_policies || [],
           ),
           '$session_user_id',
-          this.user_info.main.id
+          this.user_info.main.id,
         );
         listParams.company_id = 1;
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
@@ -339,7 +359,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           },
           (error) => {
             observer.error(error);
-          }
+          },
         );
       } else {
         observer.next([]);
@@ -439,7 +459,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         if (this.uploadedFiles.length) this.deleteImageByName(this.uploadedFiles);
-      }
+      },
     );
   }
 
@@ -513,7 +533,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                 //   this.oldUploadedFiles.push(this.defaultData[controlKey]);
                 // }
               }
-            })
+            }),
           );
           uploadObservables.push(uploadObservable);
         }
@@ -937,7 +957,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.listParams = this.formEntity.query_information;
 
           this.transParam =
-            this.entity_type === 'view' || this.entity_type === 'add' || this.entity_type === 'popup_add' ? this.formEntity.add_query_information : this.formEntity.edit_query_information;
+            this.entity_type === 'view' || this.entity_type === 'add' || this.entity_type === 'popup_add'
+              ? this.formEntity.add_query_information
+              : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
@@ -1015,12 +1037,19 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.router.navigate(['/dashboard']);
-      }
+      },
     );
   }
 
   setDefaultData() {
-    if (this.entity_type !== 'view' && this.defaultDataParam && this.entity_type !== 'add' && this.defaultDataParam && this.entity_type !== 'popup_add' && this.defaultDataParam) {
+    if (
+      this.entity_type !== 'view' &&
+      this.defaultDataParam &&
+      this.entity_type !== 'add' &&
+      this.defaultDataParam &&
+      this.entity_type !== 'popup_add' &&
+      this.defaultDataParam
+    ) {
       if (this.defaultDataParam.primary_table) {
         this.processDefaultParam(this.defaultDataParam);
       } else {
@@ -1029,6 +1058,44 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
             this.processDefaultParam(this.defaultDataParam[formControl], formControl);
           }
         }
+      }
+    }
+
+    // In add/popup_add mode, check query_information for any entries that are intended
+    // as prefill sources (identified by having select_columns with named aliases and a
+    // limit_range of 1). These entries fetch contextual data (e.g., floor_name,
+    // partition_name) from the DB using URL params (gparam) and prefill the form model.
+    if ((this.entity_type === 'add' || this.entity_type === 'popup_add') && this.listParams) {
+      for (const groupKey in this.listParams) {
+        if (!this.listParams.hasOwnProperty(groupKey)) continue;
+        const queryParam = this.listParams[groupKey];
+        if (!queryParam || !queryParam.primary_table) continue;
+
+        // Identify as a prefill query (not a dropdown) when limit_range === 1
+        // and select_columns have named alias columns
+        const isPrefillQuery =
+          queryParam.limit_range === 1 && Array.isArray(queryParam.select_columns) && queryParam.select_columns.some((col: any[]) => col.length === 2);
+
+        if (!isPrefillQuery) continue;
+
+        const processedParam = this.replacePlaceholders(queryParam, this.model);
+        this.gridApiService.getAllList(processedParam).subscribe((response) => {
+          if (response.status && response.data?.records?.length > 0) {
+            const record = response.data.records[0];
+            // Apply fetched data into the matching model group
+            if (this.model[groupKey] && typeof this.model[groupKey] === 'object') {
+              Object.keys(record).forEach((key) => {
+                const controlPath = `${groupKey}.${key}`;
+                const control = this.form.get(controlPath);
+                if (control) {
+                  control.patchValue(record[key]);
+                }
+                this.model[groupKey][key] = record[key];
+              });
+            }
+            this.cdRef.markForCheck();
+          }
+        });
       }
     }
   }
@@ -1063,7 +1130,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.router.navigate(['/dashboard']);
-      }
+      },
     );
   }
 
@@ -1211,7 +1278,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                     if (parentValue) {
                       this.fetchList(f, group.key, true);
                     }
-                  })
+                  }),
                 )
                 .subscribe();
             }
@@ -1232,7 +1299,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                     if (parentValue) {
                       this.fetchList(f, group.key, true);
                     }
-                  })
+                  }),
                 )
                 .subscribe();
             }
@@ -1297,15 +1364,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.valueColumn
                     : opts.valueColumn.startsWith(`${opts.table}.`)
-                    ? opts.valueColumn
-                    : `${opts.table}.${opts.valueColumn}`,
+                      ? opts.valueColumn
+                      : `${opts.table}.${opts.valueColumn}`,
                 ],
                 [
                   opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.labelColumn
                     : opts.labelColumn.startsWith(`${opts.table}.`)
-                    ? opts.labelColumn
-                    : `${opts.table}.${opts.labelColumn}`,
+                      ? opts.labelColumn
+                      : `${opts.table}.${opts.labelColumn}`,
                 ],
                 ...additionalColumns,
               ],
@@ -1336,15 +1403,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.valueColumn
                     : opts.valueColumn.startsWith(`${opts.table}.`)
-                    ? opts.valueColumn
-                    : `${opts.table}.${opts.valueColumn}`,
+                      ? opts.valueColumn
+                      : `${opts.table}.${opts.valueColumn}`,
                 ],
                 [
                   opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.labelColumn
                     : opts.labelColumn.startsWith(`${opts.table}.`)
-                    ? opts.labelColumn
-                    : `${opts.table}.${opts.labelColumn}`,
+                      ? opts.labelColumn
+                      : `${opts.table}.${opts.labelColumn}`,
                 ],
                 ...additionalColumns,
               ],
@@ -1374,15 +1441,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.valueColumn
                     : opts.valueColumn.startsWith(`${opts.table}.`)
-                    ? opts.valueColumn
-                    : `${opts.table}.${opts.valueColumn}`,
+                      ? opts.valueColumn
+                      : `${opts.table}.${opts.valueColumn}`,
                 ],
                 [
                   opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.labelColumn
                     : opts.labelColumn.startsWith(`${opts.table}.`)
-                    ? opts.labelColumn
-                    : `${opts.table}.${opts.labelColumn}`,
+                      ? opts.labelColumn
+                      : `${opts.table}.${opts.labelColumn}`,
                 ],
                 ...additionalColumns,
               ],
@@ -1463,7 +1530,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       const menuItem = unorgmenuList.find(
         (item: any) =>
           item.entity_name === entityName &&
-          (uuid ? item.action_slug === 'edit' || item.action_slug === 'popup_edit' : item.action_slug === 'view' || item.action_slug === 'add' || item.action_slug === 'popup_add')
+          (uuid
+            ? item.action_slug === 'edit' || item.action_slug === 'popup_edit'
+            : item.action_slug === 'view' || item.action_slug === 'add' || item.action_slug === 'popup_add'),
       );
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;

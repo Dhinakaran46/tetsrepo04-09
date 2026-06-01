@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormlyFieldFileComponent } from './components/formly-field-file/formly-field-file.component';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
-import { FormlyFieldConfig, FormlyModule } from '@ngx-formly/core';
+import { FormlyFieldConfig, FormlyModule, FormlyExtension } from '@ngx-formly/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyPresetModule } from '@ngx-formly/core/preset';
 import { FileValueAccessor } from './directives/file-value-accessor';
@@ -46,6 +46,75 @@ export function maxValidationMessage(error: any, field: FormlyFieldConfig) {
 export const field_types = commonConfig.field_types;
 export const search_conditions: any = commonConfig.search_conditions;
 
+export const lcpPresetExtension: FormlyExtension = {
+  prePopulate(field) {
+    if (!field.type) return;
+
+    if (field.type === '#status') {
+      field.type = 'radio';
+      field.key = field.key || 'status_id';
+      if (field.defaultValue === undefined) field.defaultValue = 1;
+      field.props = field.props || {};
+      field.props.label = field.props.label || 'Status';
+      if (field.props.required === undefined) field.props.required = true;
+      field.props.options = field.props.options || [
+        { value: 1, label: 'Active', class: 'inline-flex' },
+        { value: 2, label: 'In Active', class: 'inline-flex' },
+      ];
+    } else if (field.type === '#field_type') {
+      field.type = 'select-from-db';
+      field.key = field.key || 'field_type_id';
+      field.props = field.props || {};
+      field.props.label = field.props.label || 'Field Type';
+      field.props.placeholder = field.props.placeholder || 'Please select';
+      if (field.props.required === undefined) field.props.required = true;
+      field.props.options = field.props.options || [
+        { label: 'field_types_integer', value: 1 },
+        { label: 'field_types_float', value: 2 },
+        { label: 'field_types_string', value: 3 },
+        { label: 'field_types_big_string', value: 4 },
+        { label: 'field_types_date', value: 5 },
+        { label: 'field_types_time', value: 6 },
+        { label: 'field_types_date_time', value: 7 },
+        { label: 'field_types_integer_range', value: 8 },
+        { label: 'field_types_float_range', value: 9 },
+        { label: 'field_types_date_range', value: 10 },
+        { label: 'field_types_json', value: 11 },
+      ];
+    } else if (field.type === '#search_conditions') {
+      field.type = 'select-from-db';
+      field.key = field.key || 'search_conditions';
+      field.props = field.props || {};
+      field.props.label = field.props.label || 'Search Condition';
+      field.props.placeholder = field.props.placeholder || 'Please select';
+      if (field.props.required === undefined) field.props.required = true;
+      field.props.options = field.props.options || [];
+      field.hooks = field.hooks || {};
+      field.hooks.onInit = (f: FormlyFieldConfig) => {
+        const fieldTypeControl = f.parent?.formControl?.get('field_type_id');
+        if (fieldTypeControl) {
+          fieldTypeControl.valueChanges
+            .pipe(
+              debounceTime(300),
+              map((value: any) => {
+                const options = value ? [...search_conditions[value]] : [];
+                return options;
+              }),
+            )
+            .subscribe((options) => {
+              if (f.props) {
+                f.props.options = options;
+              }
+              if (f.formControl && f.formControl.updateValueAndValidity) {
+                f.formControl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+              }
+            });
+        }
+      };
+    }
+  },
+};
+
 @NgModule({
   declarations: [
     FileValueAccessor,
@@ -78,6 +147,7 @@ export const search_conditions: any = commonConfig.search_conditions;
         { name: 'min', message: minValidationMessage },
         { name: 'max', message: maxValidationMessage },
       ],
+      extensions: [{ name: 'lcp-preset-expansion', extension: lcpPresetExtension }],
       presets: [
         {
           name: 'status',
@@ -134,7 +204,7 @@ export const search_conditions: any = commonConfig.search_conditions;
                       map((value: any) => {
                         const options = value ? [...search_conditions[value]] : [];
                         return options;
-                      })
+                      }),
                     )
                     .subscribe((options) => {
                       // Assign new options array to ensure change detection

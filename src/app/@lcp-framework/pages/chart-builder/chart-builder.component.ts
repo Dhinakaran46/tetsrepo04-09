@@ -183,6 +183,17 @@ export class ChartBuilderComponent implements OnInit, OnDestroy {
     const stored = card.chart_format ? (Array.isArray(card.chart_format) ? card.chart_format[0] : card.chart_format) : {};
     card.chart_format = { ...base, ...stored };
 
+    if (card.chart_format) {
+      if (!card.chart_format.chart) {
+        card.chart_format.chart = {};
+      }
+      if (!card.chart_format.chart.zoom) {
+        card.chart_format.chart.zoom = {};
+      }
+      card.chart_format.chart.zoom.enabled = false;
+      card.chart_format.chart.zoom.allowMouseWheelZoom = false;
+    }
+
     if (card.data && card.data.length > 0) {
       this.mapDataToChart(card, card.data);
     }
@@ -212,7 +223,10 @@ export class ChartBuilderComponent implements OnInit, OnDestroy {
       chart: {
         height: 350,
         type: 'line',
-        zoom: { enabled: false },
+        zoom: {
+          enabled: false,
+          allowMouseWheelZoom: false,
+        },
         toolbar: { show: false },
       },
       colors: ['#805dca'],

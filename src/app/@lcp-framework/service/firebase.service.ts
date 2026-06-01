@@ -50,7 +50,7 @@ export class FirebaseService {
 
     const userRef = ref(db, 'notifications/' + userId);
 
-    onChildAdded(userRef, (snapshot) => {
+    onChildAdded(userRef, (snapshot: { val: () => any; ref: any }) => {
       const data = snapshot.val();
 
       this.toastr.info(data?.text || 'New notification', '');
