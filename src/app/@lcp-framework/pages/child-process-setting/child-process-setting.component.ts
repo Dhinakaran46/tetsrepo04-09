@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, TemplateRef, ViewChild, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -56,7 +56,7 @@ interface FetchDataParams {
   ],
   providers: [DatePipe],
 })
-export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
+export class ChildProcessSettingComponent implements OnInit, OnDestroy {
   store: any = initialState;
   @ViewChild('actionTemplate') actionTemplate!: TemplateRef<any>;
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
@@ -120,43 +120,46 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     private commonService: MenuMapService,
     private titleService: Title,
     private fb: FormBuilder,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
   ) {}
 
-  ngAfterViewInit() {
+  ngOnInit() {
     this.initStore();
-    this.config = JSON.parse(this.localStorageService.getData('config'));
-    const pageInfo = this.route.snapshot.data['pageInfo'] || '';
 
-    this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
-    this.resultsPerPage = parseInt(this.config.grid_pagination_default);
-    this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+    setTimeout(() => {
+      this.config = JSON.parse(this.localStorageService.getData('config'));
+      const pageInfo = this.route.snapshot.data['pageInfo'] || '';
 
-    this.user_id = this.user_info.main?.id;
-    if (pageInfo && this.resultsPerPage) {
-      if (this.user_info.main?.policies) {
-        this.policyData = this.user_info.main?.policies || null;
+      this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
+      this.resultsPerPage = parseInt(this.config.grid_pagination_default);
+      this.grid_records_delete = this.config.grid_enable_associated_records_deletion;
+
+      this.user_id = this.user_info.main?.id;
+      if (pageInfo && this.resultsPerPage) {
+        if (this.user_info.main?.policies) {
+          this.policyData = this.user_info.main?.policies || null;
+        }
+        this.masterInfo = pageInfo;
+
+        const masterListConfig = pageInfo;
+
+        const translateTitle = this.translate.instant(masterListConfig.fullEntity);
+        this.titleService.setTitle(translateTitle);
+
+        this.enableCheckBox = masterListConfig.enable_row_checkbox;
+
+        this.title = masterListConfig.fullEntity;
+        this.setHeader();
+        this.setDefaultQuery();
+        this.listQuery.start_index = 0;
+        this.fetchAttachedPolicies(this.listQuery);
+      } else {
+        this.title = 'Default Title';
+        this.headercolumns = [];
+        this.items = [];
       }
-      this.masterInfo = pageInfo;
-
-      const masterListConfig = pageInfo;
-
-      const translateTitle = this.translate.instant(masterListConfig.fullEntity);
-      this.titleService.setTitle(translateTitle);
-
-      this.enableCheckBox = masterListConfig.enable_row_checkbox;
-
-      this.title = masterListConfig.fullEntity;
-      this.setHeader();
-      this.setDefaultQuery();
-      this.listQuery.start_index = 0;
-      this.fetchAttachedPolicies(this.listQuery);
-    } else {
-      this.title = 'Default Title';
-      this.headercolumns = [];
-      this.items = [];
-    }
-    this.cdr.detectChanges();
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnDestroy(): void {}
@@ -301,10 +304,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        queueMicrotask(() => {
-          this.store = d;
-          this.cdr.detectChanges();
-        });
+        this.store = d;
       });
   }
 
@@ -446,8 +446,8 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
             this.localStorageService.replaceUniqueId(
               this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
               '$session_user_id',
-              this.user_info.main.id
-            )
+              this.user_info.main.id,
+            ),
           )
           .subscribe(
             (response) => {
@@ -476,7 +476,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
               const key = 'error';
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
-            }
+            },
           );
       }
     }
@@ -529,7 +529,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
       () => {
         this.fetchColumns();
         this.fetchData(this.listQuery);
-      }
+      },
     );
   }
 
@@ -610,7 +610,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
     const payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
       '$session_user_id',
-      this.user_info.main.id
+      this.user_info.main.id,
     );
     this.commonService.getCommonList(payload).subscribe(
       (response) => {
@@ -744,7 +744,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
         this.cdr.markForCheck();
-      }
+      },
     );
   }
 
@@ -1028,7 +1028,7 @@ export class ChildProcessSettingComponent implements AfterViewInit, OnDestroy {
             const key = 'error';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          }
+          },
         );
       }
     });

@@ -1277,7 +1277,7 @@
 }
 
 .popup-modal {
-  position: absolute;
+  position: fixed;
   z-index: 99999;
 }
 /* highlightjs */

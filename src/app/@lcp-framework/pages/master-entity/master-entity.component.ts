@@ -1196,6 +1196,8 @@ export class MasterEntityComponent implements OnInit {
   };
   masterEntities: any[] = [];
   masterEntitiesForChildProcess: any[] = [];
+  entitiesForChildProcess: any[] = [];
+  entitiesForDashboardWizard: any[] = [];
   staticPageEntities: any[] = [];
 
   constructor(
@@ -1210,7 +1212,7 @@ export class MasterEntityComponent implements OnInit {
     private translate: TranslateService,
     private titleService: Title,
     private openaiService: OpenaiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -1229,22 +1231,30 @@ export class MasterEntityComponent implements OnInit {
     this.action_types = this.commonConfig.action_types;
     this.wizard_type_list = this.commonConfig.wizard_type;
     this.report_type_list = this.commonConfig.report_type;
-    this.fetchAllTables();
-
     // To listen "entityType" on value change
     this.form.get('entityType')?.valueChanges.subscribe((value) => {
       this.updateFormValidation(value);
     });
 
-    // If "id" is not available we need consider it as "Add", otherwise "Edit"
-    if (!this.id) {
-      this.editTitle = false;
-    } else {
-      this.editTitle = true;
-      this.loadData(this.id);
-    }
-    this.titleChange();
-    this.fetchAllMasterEntities();
+    // Clear dashboard_entity_name whenever wizard type changes to avoid stale values
+    // (e.g. switching between ENTITY and GRID uses the same field for different data)
+    this.form.get('wizardType')?.valueChanges.subscribe(() => {
+      this.form.get('dashboard_entity_name')?.setValue('');
+    });
+
+    setTimeout(() => {
+      this.fetchAllTables();
+      // If "id" is not available we need consider it as "Add", otherwise "Edit"
+      if (!this.id) {
+        this.editTitle = false;
+      } else {
+        this.editTitle = true;
+        this.loadData(this.id);
+      }
+      this.titleChange();
+      this.fetchAllMasterEntities();
+      this.cdr.detectChanges();
+    });
   }
 
   async initStore() {
@@ -1292,7 +1302,7 @@ export class MasterEntityComponent implements OnInit {
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
       reload_timeout: [''],
-      dashboard_grid: [''],
+      dashboard_entity_name: [''],
       queryInformation: [''],
       reportInformation: [''],
       dashboard_wizard_options: [''],
@@ -1350,7 +1360,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1375,7 +1385,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1415,7 +1425,7 @@ export class MasterEntityComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-        }
+        },
       );
     }
   }
@@ -1492,7 +1502,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1656,7 +1666,7 @@ export class MasterEntityComponent implements OnInit {
             dashboard_wizard_columns: entity.dashboard_wizard_columns,
             dashboard_wizard_order_no: entity.dashboard_wizard_order_no,
             reload_timeout: entity.reload_timeout,
-            dashboard_grid: entity.dashboard_grid,
+            dashboard_entity_name: entity.dashboard_entity_name,
             dashboard_wizard_options: entity.dashboard_wizard_options ? this.prettyJSON(entity.dashboard_wizard_options) : '',
             exportTemplateFileName: entity.export_template_file_name || '',
           });
@@ -1692,7 +1702,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -1738,7 +1748,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
         ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
-        ...(formData.dashboard_grid && { dashboard_grid: formData.dashboard_grid }),
+        ...(formData.dashboard_entity_name && { dashboard_entity_name: formData.dashboard_entity_name }),
         ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
       },
     ];
@@ -1831,7 +1841,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
         ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
         ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
-        ...(formData.dashboard_grid ? { dashboard_grid: formData.dashboard_grid } : { dashboard_grid: null }),
+        ...(formData.dashboard_entity_name ? { dashboard_entity_name: formData.dashboard_entity_name } : { dashboard_entity_name: null }),
         ...(formData.dashboard_wizard_options
           ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
           : { dashboard_wizard_options: null }),
@@ -1981,7 +1991,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 
@@ -2210,7 +2220,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      }
+      },
     );
   }
 
@@ -2241,7 +2251,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      }
+      },
     );
   }
 
@@ -2280,22 +2290,47 @@ export class MasterEntityComponent implements OnInit {
         if (response.status && response.code === 200) {
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
+            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module',
           );
           this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
           );
           // For 'child_process' linkType (only grid_builder_module)
           this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
           );
+          this.entitiesForChildProcess = response.data.records.filter(
+            (entity: any) =>
+              ![
+                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
+                // this.commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE,
+                this.commonConfig.ENTITY_TYPES.MENU_MODULE,
+                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE,
+                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE,
+                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE,
+                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE,
+                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE,
+                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE,
+                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE,
+                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE,
+                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
+              ].includes(entity.entity_type),
+          );
+          this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];
         }
       },
       (error) => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      }
+      },
     );
   }
 

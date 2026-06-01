@@ -34,14 +34,14 @@ export class ChangePwdComponent implements OnInit {
     private formBuilder: FormBuilder,
     private toastr: ToastrService,
     private translate: TranslateService,
-    private localstore: LocalStorageService
+    private localstore: LocalStorageService,
   ) {
     const conf = this.localstore.getData('config');
-    console.log('config:', conf);
+    // console.log('config:', conf);
     if (conf) {
       try {
         const common_conf: any = JSON.parse(conf);
-        console.log('Parsed config:', common_conf);
+        // console.log('Parsed config:', common_conf);
         if (common_conf?.password_validation_regexp) {
           this.passwordValidationPattern = this.parsePasswordValidationRegexp(common_conf.password_validation_regexp);
         }
@@ -59,7 +59,7 @@ export class ChangePwdComponent implements OnInit {
         new_password: ['', [Validators.required, this.passwordValidator]],
         confirm_new_password: ['', Validators.required],
       },
-      { validators: this.passwordMatchValidator }
+      { validators: this.passwordMatchValidator },
     );
 
     this.changePasswordForm.get('new_password')?.valueChanges.subscribe((value) => {
@@ -136,7 +136,7 @@ export class ChangePwdComponent implements OnInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage + error, 'Error');
         // Handle error response
-      }
+      },
     );
   }
 
