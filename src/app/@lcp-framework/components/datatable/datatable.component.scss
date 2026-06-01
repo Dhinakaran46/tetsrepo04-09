@@ -78,6 +78,10 @@
     }
   }
 
+  .datatable .table-responsive {
+    overflow-x: auto;
+  }
+
   .datatable th,
   .datatable td {
     white-space: nowrap;
@@ -133,115 +137,12 @@
   color: var(--app-table-text-color, #888ea8);
 }
 
-// .header-panel {
-//   margin-top: -15px;
-// }
-
-:host {
-  --toolbar-height: 60px; /* fallback */
-  --datatable-toolbar-top: 7rem;
-  --datatable-header-top: 0px;
-  position: relative;
-  z-index: 1;
-}
-
-:host-context(.datatable) {
-  /* Nested datatable instances should not use the top-level header offset. */
-  --datatable-toolbar-top: 0px;
-  --datatable-header-top: 0px;
-  --datatable-sticky-top: 0px;
+.header-panel {
+  margin-top: -15px;
 }
 
 .panel {
   padding: 1.25rem 1.25rem 0.25rem 1.25rem;
-  --datatable-sticky-top: 56px;
-  --datatable-toolbar-height: 56px;
-  --datatable-scroll-height: calc(100vh - 220px);
-}
-
-:host-context(.horizontal) .panel {
-  --datatable-sticky-top: 104px;
-}
-
-.datatable-toolbar {
-  position: sticky;
-  top: var(--datatable-toolbar-top);
-  z-index: var(--datatable-toolbar-z, 30);
-  box-sizing: border-box;
-  max-width: 100%;
-  overflow: visible;
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
-  border-bottom: 1px solid var(--app-table-border-color, #e5e7eb);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
-}
-
-.datatable-toolbar:is(.dark *) {
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
-  border-bottom-color: var(--app-table-border-color, #253b5c);
-}
-
-.datatable-toolbar-main {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-
-.common-search-badges,
-.column-search-badges {
-  position: sticky;
-  top: calc(var(--datatable-toolbar-top) + var(--datatable-toolbar-height));
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
-  margin-bottom: 0.5rem;
-  padding: 0.5rem 0;
-  /* Add a subtle border to separate from toolbar */
-  border-bottom: 1px solid var(--app-table-border-color, #e5e7eb);
-}
-
-.common-search-badges:is(.dark *),
-.column-search-badges:is(.dark *) {
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
-  border-bottom-color: var(--app-table-border-color, #253b5c);
-}
-
-/* Optional: Add a container wrapper if needed */
-.common-search-badges-wrapper {
-  position: sticky;
-  z-index: 18;
-  top: calc(var(--datatable-toolbar-top) + var(--datatable-toolbar-height));
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
-}
-
-/* If the toolbar height is dynamic, use this JavaScript alternative */
-
-/* Dark mode support */
-.common-search-badges:is(.dark *) {
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
-}
-
-.datatable-badge-wrapper {
-  position: sticky;
-  top: calc(var(--datatable-sticky-top) + var(--datatable-toolbar-height) + 1.5rem);
-  z-index: 21;
-  margin-left: -0.5rem;
-  margin-right: -0.5rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  display: block;
-  width: calc(100% + 1rem);
-  left: -0.5rem;
-  background-clip: padding-box;
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
-  border-bottom: 1px solid var(--app-table-border-color, #e5e7eb);
-}
-
-.datatable-badge-wrapper:is(.dark *) {
-  background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
-  border-bottom-color: var(--app-table-border-color, #253b5c);
-}
-
-.common-search-badges,
-.column-search-badges {
-  margin-bottom: 0.5rem;
 }
 
 .bh-text-black {
@@ -252,12 +153,7 @@
   color: var(--app-button-bg-color, #4361ee) !important;
 }
 
-.datatable .table-responsive {
-  position: relative;
-  overflow: auto;
-  z-index: 1 !important;
-}
-
+.datatable .table-responsive table tfoot tr th,
 .datatable .table-responsive table thead tr th {
   vertical-align: top;
   font-weight: 700;
@@ -265,6 +161,7 @@
   border-bottom: 2px solid var(--app-table-border-color, #dee2e6);
 }
 
+.datatable .table-responsive table tfoot tr th:is(.dark *),
 .datatable .table-responsive table thead tr th:is(.dark *) {
   background-color: var(--app-table-header-color, #1a2941);
   color: var(--app-table-text-color, #888ea8);
@@ -285,7 +182,8 @@
   white-space: nowrap;
 }
 
-:is(.dark table thead tr) {
+:is(.dark table thead tr),
+:is(.dark table tfoot tr) {
   background-color: var(--app-table-header-color, #1a2941) !important;
 }
 
@@ -294,207 +192,9 @@
   background-color: var(--app-table-bg-color, #0e1726);
 }
 
-.datatable {
-  position: relative;
-  top: 15px;
-}
-
 .datatable table {
   background-color: var(--app-table-bg-color, #ffffff);
   color: var(--app-table-text-color, #495057);
-}
-
-.datatable .table-responsive {
-  position: relative;
-  max-width: 100%;
-  max-height: var(--datatable-scroll-height);
-  overflow: auto;
-}
-
-.datatable .table-responsive table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
-
-.datatable-child-host {
-  position: relative;
-  overflow: hidden;
-}
-
-.table-level-parent,
-.datatable.table-level-parent {
-  --datatable-toolbar-top: calc(var(--main-header-height, 7rem));
-  --datatable-header-top: 0px;
-  --datatable-scroll-height: calc(100vh - 220px);
-  --datatable-toolbar-z: 30;
-  --datatable-header-z: 15;
-}
-
-.table-level-1,
-.datatable.table-level-1 {
-  --datatable-toolbar-top: 0px;
-  --datatable-header-top: 0px;
-  --datatable-scroll-height: 34vh;
-  --datatable-toolbar-z: 25;
-  --datatable-header-z: 14;
-}
-
-.table-level-2,
-.datatable.table-level-2 {
-  --datatable-toolbar-top: 0px;
-  --datatable-header-top: 0px;
-  --datatable-scroll-height: 32vh;
-  --datatable-toolbar-z: 22;
-  --datatable-header-z: 13;
-}
-
-.table-level-3,
-.datatable.table-level-3 {
-  --datatable-toolbar-top: 0px;
-  --datatable-header-top: 0px;
-  --datatable-scroll-height: 26vh;
-  --datatable-toolbar-z: 20;
-  --datatable-header-z: 12;
-}
-
-.table-level-4,
-.datatable.table-level-4 {
-  --datatable-toolbar-top: 0px;
-  --datatable-header-top: 0px;
-  --datatable-scroll-height: 18vh;
-  --datatable-toolbar-z: 18;
-  --datatable-header-z: 12;
-}
-
-.table-level-1 .datatable-toolbar,
-.table-level-2 .datatable-toolbar,
-.table-level-3 .datatable-toolbar,
-.table-level-4 .datatable-toolbar {
-  position: relative;
-  top: auto;
-  z-index: 1;
-}
-
-.table-level-1 .common-search-badges,
-.table-level-1 .column-search-badges,
-.table-level-1 .common-search-badges-wrapper,
-.table-level-1 .datatable-badge-wrapper,
-.table-level-2 .common-search-badges,
-.table-level-2 .column-search-badges,
-.table-level-2 .common-search-badges-wrapper,
-.table-level-2 .datatable-badge-wrapper,
-.table-level-3 .common-search-badges,
-.table-level-3 .column-search-badges,
-.table-level-3 .common-search-badges-wrapper,
-.table-level-3 .datatable-badge-wrapper,
-.table-level-4 .common-search-badges,
-.table-level-4 .column-search-badges,
-.table-level-4 .common-search-badges-wrapper,
-.table-level-4 .datatable-badge-wrapper {
-  position: static;
-  top: auto;
-  z-index: auto;
-}
-
-.panel.table-level-1 {
-  position: sticky;
-  top: calc(var(--datatable-toolbar-height, 56px));
-  margin: 0;
-  z-index: 6;
-}
-
-.panel.table-level-2,
-.panel.table-level-3,
-.panel.table-level-4 {
-  position: relative;
-  top: 0;
-  margin: 0;
-  z-index: 0;
-}
-
-.panel.table-level-1 .datatable,
-.panel.table-level-2 .datatable,
-.panel.table-level-3 .datatable,
-.panel.table-level-4 .datatable {
-  top: 0;
-}
-
-.sticky-disabled .datatable-toolbar {
-  position: relative !important;
-  top: auto !important;
-  z-index: 1 !important;
-}
-
-.sticky-disabled .common-search-badges,
-.sticky-disabled .column-search-badges,
-.sticky-disabled .common-search-badges-wrapper,
-.sticky-disabled .datatable-badge-wrapper {
-  position: static !important;
-  top: auto !important;
-  z-index: auto !important;
-}
-
-.sticky-disabled .datatable .table-responsive table thead th,
-.sticky-disabled .datatable .table-responsive table thead th.datatable-sticky-column,
-.sticky-disabled .datatable .table-responsive table tbody td.datatable-sticky-column,
-.sticky-disabled .sticky {
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  z-index: auto !important;
-}
-
-.sticky-disabled.panel.table-level-1 {
-  position: relative !important;
-  top: 0 !important;
-  z-index: 0 !important;
-}
-
-.datatable .table-responsive table thead th {
-  position: sticky;
-  top: var(--datatable-header-top, 0);
-  z-index: var(--datatable-header-z, 15);
-  background-color: var(--app-table-header-color, #f9fafb);
-  background-clip: padding-box;
-  box-shadow: 0 1px 0 var(--app-table-border-color, #dee2e6);
-}
-
-.datatable .table-responsive table thead th:is(.dark *) {
-  background-color: var(--app-table-header-color, #1a2941);
-}
-
-.datatable .table-responsive table thead th.datatable-sticky-column,
-.datatable .table-responsive table tbody td.datatable-sticky-column {
-  position: sticky;
-  right: 0;
-  background-clip: padding-box;
-}
-
-.datatable .table-responsive table thead th.datatable-sticky-column {
-  z-index: calc(var(--datatable-header-z, 15) + 5);
-  background-color: var(--app-table-header-action-color, #e5e7eb) !important;
-  box-shadow:
-    -1px 0 0 var(--app-table-border-color, #e5e7eb),
-    0 1px 0 var(--app-table-border-color, #dee2e6);
-}
-
-.datatable .table-responsive table tbody td.datatable-sticky-column {
-  z-index: calc(var(--datatable-header-z, 15) - 1);
-  background-color: var(--app-table-bg-color, #fff);
-  box-shadow: -1px 0 0 var(--app-table-border-color, #e5e7eb);
-}
-
-.datatable .table-responsive table thead th.datatable-sticky-column:is(.dark *) {
-  background-color: var(--app-table-header-color, #152135) !important;
-  box-shadow:
-    -1px 0 0 var(--app-table-border-color, #374151),
-    0 1px 0 var(--app-table-border-color, #374151);
-}
-
-.datatable .table-responsive table tbody td.datatable-sticky-column:is(.dark *) {
-  background-color: var(--app-table-bg-color, #0e1726);
-  box-shadow: -1px 0 0 var(--app-table-border-color, #374151);
 }
 
 .datatable table:is(.dark *) {
@@ -520,7 +220,6 @@
 }
 
 thead th.sticky {
-  z-index: 11;
   background-color: var(--app-table-header-action-color, #e5e7eb) !important;
 }
 
@@ -622,7 +321,7 @@ tbody td.sticky:is(.dark *) {
   left: 50%;
   transform: translateX(-50%);
   right: auto;
-  z-index: 5000 !important;
+  z-index: 1050;
   position: fixed;
   top: 9%;
   max-height: 74vh;
@@ -767,25 +466,19 @@ tbody td.sticky:is(.dark *) {
   0% {
     transform: scale(0.8);
     background-color: var(--app-form-base-component-color, var(--app-primary-color)) !important;
-    box-shadow:
-      0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)),
-      0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
+    box-shadow: 0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)), 0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
   }
 
   50% {
     transform: scale(1.2);
     background-color: var(--app-form-base-component-color, var(--app-primary-color)) !important;
-    box-shadow:
-      0 0 0 0 rgba(var(--app-form-base-component-color, 0)),
-      0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0));
+    box-shadow: 0 0 0 0 rgba(var(--app-form-base-component-color, 0)), 0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0));
   }
 
   100% {
     transform: scale(0.8);
     background-color: var(--app-form-base-component-color, var(--app-primary-color)) !important;
-    box-shadow:
-      0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)),
-      0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
+    box-shadow: 0 0 0 0 rgba(var(--app-form-base-component-color, 0.7)), 0 0 1px 0 var(--app-hover-color, rgba(178, 212, 252, 0.7));
   }
 }
 
@@ -899,10 +592,6 @@ tbody td.sticky:is(.dark *) {
 }
 
 @media (max-width: 1023px) {
-  .panel {
-    --datatable-toolbar-height: 124px;
-  }
-
   .datatable-toolbar-main {
     width: 100%;
     flex-wrap: wrap;
@@ -999,10 +688,6 @@ tbody td.sticky:is(.dark *) {
 }
 
 @media (max-width: 767px) {
-  .panel {
-    --datatable-toolbar-height: 188px;
-  }
-
   .datatable-toolbar-main > * {
     width: 100%;
   }
@@ -1043,168 +728,5 @@ tbody td.sticky:is(.dark *) {
 
   .advanced-filter-row > :nth-child(5) {
     justify-self: start;
-  }
-}
-
-/* Mobile view - prevent content from going under sticky elements */
-@media (max-width: 768px) {
-  .panel {
-    padding: 0.25rem 1.25rem 0.25rem 1.25rem;
-  }
-  /* Create a scroll container with proper padding */
-  .datatable {
-    position: relative;
-    top: 0;
-  }
-
-  .datatable .table-responsive {
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
-    /* Add scroll margin to account for sticky elements */
-    scroll-margin-top: 120px;
-  }
-
-  /* Make the first row have top padding when scrolled */
-  .datatable .table-responsive::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .datatable-toolbar {
-    top: 0 !important;
-    z-index: auto !important;
-  }
-
-  /* Ensure sticky toolbar doesn't overlap content */
-  .datatable-toolbar + * {
-    margin-top: 0;
-  }
-
-  /* Add a pseudo-element to create offset when scrolling to top */
-  .datatable .table-responsive::before {
-    content: '';
-    display: block;
-    height: 0;
-    pointer-events: none;
-  }
-}
-
-/* Child table toolbar sticky within its own scroll area */
-@media (max-width: 768px) {
-  /* Make child table a sticky container */
-  .table-level-1 .datatable,
-  .table-level-2 .datatable,
-  .table-level-3 .datatable,
-  .table-level-4 .datatable {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    max-height: 80vh;
-  }
-
-  /* Child table toolbar - sticky within child container */
-  .table-level-1 .datatable .datatable-toolbar,
-  .table-level-2 .datatable .datatable-toolbar,
-  .table-level-3 .datatable .datatable-toolbar,
-  .table-level-4 .datatable .datatable-toolbar {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 10 !important;
-    background: var(--app-table-bg-color, #ffffff);
-  }
-
-  /* Child table scroll area */
-  .table-level-1 .datatable .table-responsive,
-  .table-level-2 .datatable .table-responsive,
-  .table-level-3 .datatable .table-responsive,
-  .table-level-4 .datatable .table-responsive {
-    flex: 1;
-    overflow: auto;
-    max-height: none;
-    scroll-padding-top: 80px;
-  }
-
-  /* Dark mode for child toolbars */
-  :is(.dark) .table-level-1 .datatable .datatable-toolbar,
-  :is(.dark) .table-level-2 .datatable .datatable-toolbar,
-  :is(.dark) .table-level-3 .datatable .datatable-toolbar,
-  :is(.dark) .table-level-4 .datatable .datatable-toolbar {
-    background: var(--app-table-bg-color, #0e1726);
-  }
-}
-
-/* =========================
-   CHILD TABLE MOBILE TOOLBAR
-========================= */
-
-@media (max-width: 768px) {
-  /* Only child tables */
-  .table-level-1 .saved-view-toolbar,
-  .table-level-2 .saved-view-toolbar,
-  .table-level-3 .saved-view-toolbar,
-  .table-level-4 .saved-view-toolbar {
-    display: flex;
-    flex-wrap: nowrap !important;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  /* Prevent full width buttons */
-  .table-level-1 .saved-view-toolbar button,
-  .table-level-2 .saved-view-toolbar button,
-  .table-level-3 .saved-view-toolbar button,
-  .table-level-4 .saved-view-toolbar button,
-  .table-level-1 .saved-view-toolbar .dropdown,
-  .table-level-2 .saved-view-toolbar .dropdown,
-  .table-level-3 .saved-view-toolbar .dropdown,
-  .table-level-4 .saved-view-toolbar .dropdown {
-    width: auto !important;
-    min-width: auto !important;
-    flex: 0 0 auto;
-  }
-
-  /* Icon buttons only */
-  .table-level-1 .saved-view-toolbar button span,
-  .table-level-2 .saved-view-toolbar button span,
-  .table-level-3 .saved-view-toolbar button span,
-  .table-level-4 .saved-view-toolbar button span {
-    display: none;
-  }
-
-  /* Keep icons centered */
-  .table-level-1 .saved-view-toolbar button i,
-  .table-level-2 .saved-view-toolbar button i,
-  .table-level-3 .saved-view-toolbar button i,
-  .table-level-4 .saved-view-toolbar button i,
-  .table-level-1 .saved-view-toolbar button svg,
-  .table-level-2 .saved-view-toolbar button svg,
-  .table-level-3 .saved-view-toolbar button svg,
-  .table-level-4 .saved-view-toolbar button svg {
-    margin: 0 !important;
-  }
-
-  /* Compact button size */
-  .table-level-1 .saved-view-toolbar button,
-  .table-level-2 .saved-view-toolbar button,
-  .table-level-3 .saved-view-toolbar button,
-  .table-level-4 .saved-view-toolbar button {
-    padding: 6px 8px !important;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Search input flexible */
-  .table-level-1 .datatable-global-search,
-  .table-level-2 .datatable-global-search,
-  .table-level-3 .datatable-global-search,
-  .table-level-4 .datatable-global-search {
-    min-width: 120px;
-    flex: 1;
   }
 }

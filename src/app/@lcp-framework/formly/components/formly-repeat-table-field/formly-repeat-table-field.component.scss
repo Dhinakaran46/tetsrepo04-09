@@ -19,6 +19,154 @@
   }
 
   /* Dropdown panel: responsive */
+  ::ng-deep {
+    /* Keep row fields equal width */
+    formly-form.repeat-table-form > formly-field > formly-group:not(.grid) {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    formly-form.repeat-table-form > formly-field > formly-group:not(.grid) > formly-field {
+      flex: 1 1 0;
+      min-width: 120px;
+      max-width: 100%;
+    }
+
+    /* Vansales-like popup form controls */
+    .repeat-table-popup .repeat-table-popup-form formly-field .form-control {
+      width: 100% !important;
+      min-height: 38px;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 0.375rem;
+      background-color: #fff !important;
+      box-shadow: none !important;
+    }
+
+    .repeat-table-popup .repeat-table-popup-form formly-field textarea.form-control {
+      min-height: 150px;
+      line-height: 1.4;
+      resize: vertical;
+    }
+
+    .repeat-table-popup .repeat-table-popup-form formly-field input[type='date'].form-control {
+      padding-right: 2rem;
+    }
+
+    .repeat-table-popup .repeat-table-popup-form .ng-select .ng-select-container {
+      min-height: 38px !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 0.375rem !important;
+      background-color: #fff !important;
+      box-shadow: none !important;
+    }
+
+    /* Keep popup rows strictly 3 fields on desktop */
+    .repeat-table-popup .repeat-table-popup-form formly-form.repeat-table-form > formly-field > formly-group.grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 1rem !important;
+      align-items: start;
+    }
+
+    .repeat-table-popup .repeat-table-popup-form formly-form.repeat-table-form > formly-field > formly-group.grid > formly-field {
+      min-width: 0;
+    }
+
+    /* Larger description boxes in popup repeat-table */
+    formly-form.repeat-table-form formly-field.repeat-popup-textarea textarea.form-control {
+      min-height: 50px;
+      resize: vertical;
+    }
+
+    .repeat-table-popup button,
+    input,
+    optgroup,
+    select,
+    textarea {
+      padding: 6px;
+    }
+
+    /* Keep radio options on a single line for repeat-table forms */
+    formly-form.repeat-table-form .form-check:has(input[type='radio']) {
+      display: inline-flex !important;
+      align-items: center !important;
+      float: none !important;
+      margin-right: 1rem !important;
+      margin-top: 0 !important;
+      min-height: auto !important;
+    }
+
+    formly-form.repeat-table-form .form-check:has(input[type='radio']) label {
+      margin: 0 0 0 0.35rem !important;
+      white-space: nowrap;
+    }
+
+    /* Ensure buttons align to the bottom of the fields row */
+    .repeat-table-actions {
+      align-self: flex-end;
+      white-space: nowrap;
+    }
+
+    /* ng-select container */
+    formly-form.repeat-table-form > formly-field > formly-group > formly-field ng-select {
+      width: 100%;
+      display: block;
+    }
+
+    /* Dropdown panel: responsive */
+    ::ng-deep .ng-dropdown-panel {
+      max-width: 100% !important;
+      // width: auto !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      // overflow-x: auto !important;
+      // white-space: nowrap !important;
+      // word-wrap: normal !important;
+    }
+
+    ::ng-deep .ng-select.ng-select-single .ng-select-container {
+      height: auto !important;
+    }
+
+    ::ng-deep .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-value {
+      white-space: wrap !important;
+      text-overflow: ellipsis !important;
+      height: auto;
+    }
+
+    ::ng-deep .ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-marked,
+    ::ng-deep .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+      text-wrap: auto !important;
+    }
+
+    /* Mobile layout: stack fields */
+    @media (max-width: 767px) {
+      .repeat-table-popup .repeat-table-popup-form formly-form.repeat-table-form > formly-field > formly-group.grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      formly-form.repeat-table-form > formly-field > formly-group:not(.grid) {
+        flex-direction: column !important;
+      }
+
+      formly-form.repeat-table-form > formly-field > formly-group:not(.grid) > formly-field {
+        width: 100% !important;
+      }
+
+      formly-form.repeat-table-form > formly-field > formly-group > formly-field ng-select {
+        width: 100% !important;
+      }
+
+      /* Mobile dropdown full width */
+      ::ng-deep .ng-dropdown-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        left: 0 !important;
+      }
+    }
+  }
+
   ::ng-deep .ng-dropdown-panel {
     max-width: 100% !important;
     // width: auto !important;
