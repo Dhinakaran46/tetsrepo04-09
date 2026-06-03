@@ -11,7 +11,7 @@
           [ngModelOptions]="{ standalone: true }"
         >
           <option [ngValue]="null">Select User</option>
-          @for (user of userList; track user) {
+          @for (user of userList; track user.id) {
           <option [ngValue]="user.id">{{ user.name }}</option>
           }
         </select>
@@ -31,7 +31,7 @@
         class="tab-scroll-container"
         style="display: flex; flex-wrap: nowrap; width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none"
       >
-        @for (tab of tabs; track tab) {
+        @for (tab of tabs; track tab.id) {
         <a
           href="javascript:;"
           style="white-space: nowrap; flex-shrink: 0; min-width: max-content"
@@ -53,7 +53,7 @@
           [ngModelOptions]="{ standalone: true }"
         >
           <option [ngValue]="null">Select User</option>
-          @for (user of userList; track user) {
+          @for (user of userList; track user.id) {
           <option [ngValue]="user.id">{{ user.name }}</option>
           }
         </select>
@@ -69,7 +69,7 @@
     </div>
 
     <div class="flex-1 pt-2 text-sm">
-      @for (tab of tabs; track tab) { @if (currentTab == tab.name) {
+      @for (tab of tabs; track tab.id) { @if (currentTab == tab.name) {
       <div [formGroupName]="tab.name">
         <ng-container formArrayName="configurations">
           <div class="user-config-table-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch">
@@ -108,7 +108,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                @for (config of getConfigurationsArray(tab.name).controls; track config; let i = $index) { @if (masterInfo?.permissions?.edit ||
+                @for (config of getConfigurationsArray(tab.name).controls; track i; let i = $index) { @if (masterInfo?.permissions?.edit ||
                 config.get('display_config')?.value) {
                 <tr [formGroupName]="i">
                   @if (masterInfo?.permissions?.edit) {
@@ -347,7 +347,7 @@
           formControlName="tab"
           class="form-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 sm:w-10/12"
         >
-          @for (tab of tabs; track tab) {
+          @for (tab of tabs; track tab.id) {
           <option [value]="tab.category_id + '_' + tab.name">{{ tab.name }}</option>
           }
         </select>
