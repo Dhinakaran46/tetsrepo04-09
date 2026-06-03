@@ -50,11 +50,28 @@ export const lcpPresetExtension: FormlyExtension = {
   prePopulate(field) {
     if (!field.type) return;
 
+    // Formly v7 compatibility: ensure props are synced from templateOptions
+    // so we don't accidentally overwrite customized or translated labels
+    field.props = field.props || {};
+    if (field.templateOptions) {
+      if (field.templateOptions.label && !field.props.label) {
+        field.props.label = field.templateOptions.label;
+      }
+      if (field.templateOptions.placeholder && !field.props.placeholder) {
+        field.props.placeholder = field.templateOptions.placeholder;
+      }
+      if (field.templateOptions.required !== undefined && field.props.required === undefined) {
+        field.props.required = field.templateOptions.required;
+      }
+      if (field.templateOptions.options && !field.props.options) {
+        field.props.options = field.templateOptions.options;
+      }
+    }
+
     if (field.type === '#status') {
       field.type = 'radio';
       field.key = field.key || 'status_id';
       if (field.defaultValue === undefined) field.defaultValue = 1;
-      field.props = field.props || {};
       field.props.label = field.props.label || 'Status';
       if (field.props.required === undefined) field.props.required = true;
       field.props.options = field.props.options || [
@@ -64,7 +81,6 @@ export const lcpPresetExtension: FormlyExtension = {
     } else if (field.type === '#field_type') {
       field.type = 'select-from-db';
       field.key = field.key || 'field_type_id';
-      field.props = field.props || {};
       field.props.label = field.props.label || 'Field Type';
       field.props.placeholder = field.props.placeholder || 'Please select';
       if (field.props.required === undefined) field.props.required = true;
@@ -84,7 +100,6 @@ export const lcpPresetExtension: FormlyExtension = {
     } else if (field.type === '#search_conditions') {
       field.type = 'select-from-db';
       field.key = field.key || 'search_conditions';
-      field.props = field.props || {};
       field.props.label = field.props.label || 'Search Condition';
       field.props.placeholder = field.props.placeholder || 'Please select';
       if (field.props.required === undefined) field.props.required = true;
@@ -99,7 +114,7 @@ export const lcpPresetExtension: FormlyExtension = {
               map((value: any) => {
                 const options = value ? [...search_conditions[value]] : [];
                 return options;
-              }),
+              })
             )
             .subscribe((options) => {
               if (f.props) {
@@ -107,6 +122,10 @@ export const lcpPresetExtension: FormlyExtension = {
               }
               if (f.formControl && f.formControl.updateValueAndValidity) {
                 f.formControl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+              }
+              // Trigger Formly change detection to ensure UI updates after async options modification
+              if (f.options && f.options.detectChanges) {
+                f.options.detectChanges(f);
               }
             });
         }
@@ -139,7 +158,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyBootstrapModule,
     FormlyPresetModule,
     SafeHtmlPipe,
-    FormlyModule.forRoot({
+    FormlyModule.forChild({
       validationMessages: [
         { name: 'required', message: 'This field is required' },
         { name: 'minLength', message: minLengthValidationMessage },
@@ -204,7 +223,7 @@ export const lcpPresetExtension: FormlyExtension = {
                       map((value: any) => {
                         const options = value ? [...search_conditions[value]] : [];
                         return options;
-                      }),
+                      })
                     )
                     .subscribe((options) => {
                       // Assign new options array to ensure change detection
@@ -248,6 +267,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyFieldSelectFromDbComponent,
     FormlyFieldAutocompleteComponent,
     NgSelectModule,
+    FormlyBootstrapModule,
     SplitLabelPipe,
   ],
 })

@@ -11,18 +11,18 @@
             >{{this.config?.company_name}}</span
           >
         </a>
-        <a
-          href="javascript:;"
+        <button
+          type="button"
           class="collapse-icon icon-hover flex h-8 w-8 items-center rounded-full transition duration-300 dark:text-white-light dark:hover:bg-dark-light/10 rtl:rotate-180"
           (click)="storeData.dispatch({ type: 'toggleSidebar'})"
         >
-          <i class="fa-solid fa-angles-right"></i
-        ></a>
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
       </div>
       <ng-scrollbar class="relative !h-[calc(100vh-80px)]" appearance="compact">
         <ul class="relative space-y-0.5 p-4 font-semibold">
           <li class="nav-item">
-            <a routerLink="/" class="group" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="toggleMobileMenu()">
+            <a routerLink="/dashboard" class="group" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="toggleMobileMenu()">
               <div class="flex items-center">
                 <svg
                   width="20"
