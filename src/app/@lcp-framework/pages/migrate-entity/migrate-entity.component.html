@@ -1,13 +1,16 @@
 <div class="space-y-6">
   <!-- 🔹 Tabs -->
   <div class="flex border-b border-gray-200">
-    <button class="px-6 py-2 font-semibold transition"
+    <button
+      class="px-6 py-2 font-semibold transition"
       [ngClass]="section === 'list' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
-      (click)="section = 'list'">
+      (click)="section = 'list'"
+    >
       Migration Log
     </button>
 
-    <button class="px-6 py-2 font-semibold transition"
+    <button
+      class="px-6 py-2 font-semibold transition"
       [ngClass]="section === 'import' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
       (click)="section = 'import'"
     >
@@ -41,15 +44,11 @@
   }
 
   <!-- 🔹 Export -->
-  <div *ngIf="section === 'export'" class="panel p-5 rounded-lg shadow-sm bg-white">
-
-    <!-- <h2 class="mb-5 text-lg font-bold border-b pb-2">
-      Export Modules
-    </h2> -->
-
+  @if (section === 'export') {
+  <div class="panel rounded-lg bg-white p-5 shadow-sm">
     <form [formGroup]="exportForm">
       <!-- Type + Company -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label class="mb-1 block font-medium">Type</label>
           <select formControlName="type" class="form-select w-full">
@@ -70,8 +69,7 @@
         <!-- Note textarea -->
         <div class="mt-3">
           <label class="mb-1 block">Note (optional)</label>
-          <textarea formControlName="note" rows="3" class="form-input"
-            placeholder="Add any notes about this import..."></textarea>
+          <textarea formControlName="note" rows="3" class="form-input" placeholder="Add any notes about this import..."></textarea>
         </div>
       </div>
       <!-- Divider -->
@@ -86,7 +84,7 @@
           </div>
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          @for (item of checkboxOptions; track item) {
+          @for (item of checkboxOptions; track item.control) {
           <div
             class="overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
             [class.cursor-pointer]="!expandedItems[item.control]"
@@ -141,15 +139,12 @@
       </div>
     </form>
   </div>
+  }
 
   <!-- 🔹 Import -->
-  <div *ngIf="section === 'import'" class="panel">
-
-    <!-- <h2 class="mb-4 text-lg font-bold">Import Modules</h2> -->
-
+  @if (section === 'import') {
+  <div class="panel">
     <form [formGroup]="importForm">
-
-
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <!-- Developer Name input -->
         <div>
@@ -162,8 +157,7 @@
         <!-- Note textarea -->
         <div class="mt-3">
           <label class="mb-1 block">Note (optional)</label>
-          <textarea formControlName="note" rows="3" class="form-input"
-            placeholder="Add any notes about this import..."></textarea>
+          <textarea formControlName="note" rows="3" class="form-input" placeholder="Add any notes about this import..."></textarea>
         </div>
       </div>
 
@@ -173,6 +167,7 @@
           <input type="file" (change)="onFileChange($event)" class="form-input" accept=".zip" #fileInput />
         </div>
       </div>
+
       <!-- Selected file preview -->
       @if (file) {
       <div class="mt-3 text-sm text-gray-600">
@@ -180,67 +175,81 @@
       </div>
 
       <!-- 🔍 Preview Card (shows note, developer, modules) -->
-      <div *ngIf="showPreview && previewData" class="mt-4 rounded border border-blue-200 bg-blue-50 p-4">
+      @if (showPreview && previewData) {
+      <div class="mt-4 rounded border border-blue-200 bg-blue-50 p-4">
         <h3 class="mb-2 text-lg font-semibold text-blue-800">Import Preview</h3>
         <div class="space-y-2 text-sm">
           <div><strong>Version:</strong> {{ previewData.version }}</div>
           <div><strong>Export Type:</strong> {{ previewData.type }}</div>
           <div><strong>Target Company ID:</strong> {{ previewData.company_id }}</div>
-          <div><strong>Exported At:</strong> {{ previewData.exportedAt | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
+          <div><strong>Exported At:</strong> {{ previewData.exportedAt | date : 'yyyy-MM-dd HH:mm:ss' }}</div>
           <div>
             <strong>Modules included:</strong>
-            <ul class="ml-4 list-disc" *ngIf="previewData.modules?.length > 0; else noModules">
-              <li *ngFor="let mod of previewData.modules">{{ mod }}</li>
+            @if (previewData.modules?.length > 0) {
+            <ul class="ml-4 list-disc">
+              @for (mod of previewData.modules; track mod) {
+              <li>{{ mod }}</li>
+              }
             </ul>
-            <ng-template #noModules>
-              <span>N/A</span>
-            </ng-template>
+            } @else {
+            <span>N/A</span>
+            }
           </div>
           <div><strong>Developer:</strong> {{ previewData.developer_name || 'N/A' }}</div>
           <div><strong>Note:</strong> {{ previewData.note || 'N/A' }}</div>
         </div>
         <div class="mt-4 flex gap-3">
-          <button type="button" (click)="importData(false)" [disabled]="isLoading" class="btn btn-primary">Confirm &
-            Import</button>
-          <button type="button" (click)="cancelImport()" [disabled]="isLoading"
-            class="btn btn-secondary">Cancel</button>
+          <button type="button" (click)="importData(false)" [disabled]="isLoading" class="btn btn-primary">Confirm & Import</button>
+          <button type="button" (click)="cancelImport()" [disabled]="isLoading" class="btn btn-secondary">Cancel</button>
         </div>
       </div>
-      }
-
-      <!-- <div class="mt-6 flex items-center gap-3">
-        <button type="button" (click)="importData(false)" [disabled]="isLoading" class="btn btn-primary">
-          ⬆ Import
-        </button>
-      </div> -->
-
+      } }
     </form>
     <!-- ✅ Success message -->
     @if (!isLoading && progress === 100) {
     <div class="mt-6 rounded bg-green-100 p-4 text-green-700">✅ Import completed successfully</div>
     }
   </div>
+  }
 
   <!-- 🔹 Log -->
-  <div *ngIf="section === 'list'" class="panel p-5 rounded-lg shadow-sm bg-white">
+  <div class="panel rounded-lg bg-white p-5 shadow-sm" [hidden]="section !== 'list'">
     <div class="flex-1 p-3 pt-6">
-      <app-datatable [loading]="gridloading" [masterInfo]="masterInfo" [enableCheckBox]="enableCheckBox"
-        [customTemplates]="customTemplates" [headercolumns]="headercolumns" [selectcolumns]="selectcolumns"
-        [items]="items" [totalItems]="totalItems" [currentPage]="currentPage" [resultsPerPage]="resultsPerPage"
-        [column]="column" [title]="title" [query]="query" (customAction)="handleCustomAction($event)"
-        (pageChange)="onPageChange($event)" (resultsPerPageChange)="onResultsPerPageChange($event)"
-        (columnSort)="sortColumn($event)" (searchQuery)="searchData($event)"
-        (advancedSearchQuery)="advancedSearchData($event)"></app-datatable>
+      <app-datatable
+        [loading]="gridloading"
+        [masterInfo]="masterInfo"
+        [enableCheckBox]="enableCheckBox"
+        [customTemplates]="customTemplates"
+        [headercolumns]="headercolumns"
+        [selectcolumns]="selectcolumns"
+        [items]="items"
+        [totalItems]="totalItems"
+        [currentPage]="currentPage"
+        [resultsPerPage]="resultsPerPage"
+        [column]="column"
+        [title]="title"
+        [query]="query"
+        (customAction)="handleCustomAction($event)"
+        (pageChange)="onPageChange($event)"
+        (resultsPerPageChange)="onResultsPerPageChange($event)"
+        (columnSort)="sortColumn($event)"
+        (searchQuery)="searchData($event)"
+        (advancedSearchQuery)="advancedSearchData($event)"
+      ></app-datatable>
       <ng-template #actionTemplate let-item>
         <div class="flex items-center gap-4">
-          <!-- mail resend -->
-          <a role="button" class="hover:text-primary" (click)="downloadFile($event, item)" ngxTippy
-            data-tippy-content="Download" appDynamicFontSize="body">
-            <i
-              class="fa-solid fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
-          </a>
+          <button
+            type="button"
+            class="hover:text-primary"
+            (click)="downloadFile($event, item)"
+            ngxTippy
+            data-tippy-content="Download"
+            appDynamicFontSize="body"
+          >
+            <i class="fa-solid fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+          </button>
         </div>
       </ng-template>
     </div>
-
   </div>
+</div>

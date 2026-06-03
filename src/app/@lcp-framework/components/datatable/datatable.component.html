@@ -128,14 +128,9 @@
               appDynamicFontSize="body"
               placeholder="{{ 'table_search_placeholder' | translate }}..."
             />
-            <a
-              (click)="onSearch()"
-              href="javascript:void(0);"
-              class="search-btn absolute inset-y-0 right-0 flex items-center border-none"
-              (click)="focusSearchInput()"
-            >
+            <button type="button" (click)="onSearch(); focusSearchInput()" class="search-btn absolute inset-y-0 right-0 flex items-center border-none">
               <i class="fa-solid fa-magnifying-glass"></i>
-            </a>
+            </button>
           </div>
 
           <!-- Filter Button -->
@@ -380,7 +375,7 @@
               </div>
             </div>
 
-            <div class="dropdown !z-[10] relative mb-2 md:mb-0" (click)="$event.stopPropagation()">
+            <div class="dropdown relative !z-[10] mb-2 md:mb-0" (click)="$event.stopPropagation()">
               <button
                 type="button"
                 (click)="toggleColumnsMenu($event)"
@@ -419,7 +414,7 @@
             </div>
             @if (permissions && (this.masterInfo?.permissions?.export_excel || this.masterInfo?.permissions?.export_pdf)) {
             <div class="flex">
-              <div class="dropdown !z-[10] relative mb-2 md:mb-0">
+              <div class="dropdown relative !z-[10] mb-2 md:mb-0">
                 <button
                   type="button"
                   (click)="toggleExportMenu($event)"
@@ -866,6 +861,7 @@
                         [uuid]="getChildComponentUuid(item, col)"
                         [entityName]="col.link_action"
                         [isModal]="true"
+                        [gridParams]="getGridParamsFromItem(item)"
                         (closeModal)="clearAllExpandedGrids()"
                       ></app-form-builder>
                       } }

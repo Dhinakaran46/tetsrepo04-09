@@ -20,6 +20,7 @@ import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { QuillModule } from 'ngx-quill';
 import { provideHighlightOptions } from 'ngx-highlightjs';
+import { FormlyModule } from '@ngx-formly/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -45,6 +46,7 @@ export const appConfig: ApplicationConfig = {
       QuillModule.forRoot(),
       NgMultiSelectDropDownModule.forRoot(),
       NgScrollbarModule,
+      FormlyModule.forRoot()
     ),
     provideScrollbarOptions({
       visibility: 'hover',

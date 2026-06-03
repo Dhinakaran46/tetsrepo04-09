@@ -1468,6 +1468,10 @@ export class MasterListComponent implements OnChanges {
   }
 
   getCode(item: any, event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
     if (item) {
       const listParams = {
         company_id: 1,
@@ -1505,8 +1509,11 @@ export class MasterListComponent implements OnChanges {
         if (response.status && response.code === 200) {
           const records = response?.data?.records || [];
           const transformedData = this.transformGetCodeRecords(records);
-          this.getCodeForm.patchValue({ codeContent: JSON.stringify(transformedData, null, 2) });
-          this.isGetCodeModalOpen = true;
+          setTimeout(() => {
+            this.getCodeForm.patchValue({ codeContent: JSON.stringify(transformedData, null, 2) });
+            this.isGetCodeModalOpen = true;
+            this.cdr.detectChanges();
+          }, 0);
         }
       });
     }
@@ -2579,6 +2586,9 @@ export class MasterListComponent implements OnChanges {
         if (response.status && response.code === 200) {
           this.previewDefaultQuery = response.data.query_information;
           this.previewListQuery = response.data.query_information;
+          if (!(this.cdr as any).destroyed) {
+            this.cdr.detectChanges();
+          }
           this.previewFetchColumns(this.previewListQuery);
           this.previewFetchData(this.previewListQuery);
         }
@@ -2638,6 +2648,9 @@ export class MasterListComponent implements OnChanges {
               field_type_id: 0,
             },
           ];
+          if (!(this.cdr as any).destroyed) {
+            this.cdr.detectChanges();
+          }
         }
       },
       (error) => {
@@ -2752,10 +2765,16 @@ export class MasterListComponent implements OnChanges {
           });
           this.previewTotalItems = response.data.total_records;
           this.gridloading = false;
+          if (!(this.cdr as any).destroyed) {
+            this.cdr.detectChanges();
+          }
         } else {
           this.previewItems = [];
           this.previewTotalItems = 0;
           this.gridloading = false;
+          if (!(this.cdr as any).destroyed) {
+            this.cdr.detectChanges();
+          }
         }
       } else {
         const key = response.message;
@@ -2765,6 +2784,9 @@ export class MasterListComponent implements OnChanges {
         this.previewHeaderColumns = [];
         this.previewTotalItems = 0;
         this.gridloading = false;
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       }
     });
   }

@@ -232,19 +232,26 @@ export class MigrateEntityComponent {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        this.store = d;
+        queueMicrotask(() => {
+          this.store = d;
+          if (!(this.cdr as any).destroyed) {
+            this.cdr.detectChanges();
+          }
+        });
       });
   }
 
   ngOnInit() {
     if (this.userData?.main?.user_id) {
-      const socketUrl = (environment as any).WS_URL || 'ws://localhost:8089';
+      const socketUrl = (environment as any).WS_URL || 'ws://localhost:8100';
 
       this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.userData.main.user_id}`);
 
       this.socket$.subscribe({
         next: (data: any) => {
-          this.progress = data.progress;
+          if (data && data.progress !== undefined) {
+            this.progress = data.progress;
+          }
         },
         error: (err) => {
           console.error('WebSocket error', err);
@@ -332,10 +339,16 @@ export class MigrateEntityComponent {
           this.toastr.success(res.message || 'Export saved successfully');
         }
         this.isLoading = false;
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       },
       error: (e) => {
         this.toastr.error(e.message || 'Export failed');
         this.isLoading = false;
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       },
     });
   }
@@ -404,10 +417,16 @@ export class MigrateEntityComponent {
             this.isLoading = false;
           }
         }
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       },
       error: () => {
         this.toastr.error('Import failed');
         this.isLoading = false;
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       },
     });
   }
@@ -567,12 +586,18 @@ export class MigrateEntityComponent {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       },
       (error) => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       }
     );
   }
@@ -825,6 +850,9 @@ export class MigrateEntityComponent {
       () => {
         this.fetchColumns();
         this.fetchData(this.listQuery);
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
       }
     );
   }
