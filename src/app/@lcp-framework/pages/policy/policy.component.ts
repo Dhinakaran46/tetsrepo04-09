@@ -67,12 +67,12 @@ export class PolicyComponent implements OnInit {
         ],
         includes: [
           {
-            table_name: 'user_details',
+            table_name: 'tenant_users',
             join_type: 'INNER',
-            join_condition: 'users.id = user_details.user_id',
+            join_condition: 'tenant_users.id = users.tenant_user_id',
           },
         ],
-        group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+        group_by: ['users.id', 'tenant_users.first_name', 'tenant_users.last_name'],
         having_conditions: [
           {
             column_name: 'users.deleted_at',
@@ -84,7 +84,7 @@ export class PolicyComponent implements OnInit {
           {
             value: '%Mukesh%',
             operator: 'ILIKE',
-            column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+            column_name: "concat(tenant_users.first_name, ' ', tenant_users.last_name)",
           },
         ],
       },
@@ -340,3 +340,4 @@ export class PolicyComponent implements OnInit {
       .catch((err) => console.error('Failed to copy:', err));
   }
 }
+

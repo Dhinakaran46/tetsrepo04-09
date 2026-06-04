@@ -1,13 +1,14 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { LocalStorageService } from './local-storage.service';
 import { MenuMapService } from './menu-map.service';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 interface MenuItem {
   id: number;
   name: string;
   uuid: string;
+  menu_slug?: string | null;
   target: string | null;
   order_no: number;
   parent_id: number | null;
@@ -15,7 +16,6 @@ interface MenuItem {
   children?: MenuItem[];
   action_slug?: any;
   entity_name?: any;
-  entity_configurations?: any;
 }
 
 @Injectable({
@@ -25,7 +25,7 @@ export class MenuLoadService {
   public menuSubject = new BehaviorSubject<MenuItem[] | null>(null);
   private unorgMenuSubject = new BehaviorSubject<MenuItem[] | null>(null);
   user_info: any;
-  menu_id: any;
+  menu_slug: string[] = [];
 
   constructor(private menuMapService: MenuMapService, private localStorageService: LocalStorageService) {}
 
@@ -39,14 +39,28 @@ export class MenuLoadService {
     }
   }
 
-  private resolveMenuIdsFromStoredMenus(userData: any): number[] {
+  private resolveMenuSlugsFromStoredMenus(userData: any): string[] {
     const unorgList = Array.isArray(userData?.unorgmenuList) ? userData.unorgmenuList : [];
-    const menuIds = unorgList.map((item: any) => Number(item?.menu_id)).filter((id: number) => Number.isFinite(id) && id > 0);
-    const uniqueMenuIds = Array.from(new Set<number>(menuIds));
-    return uniqueMenuIds.sort((a: number, b: number) => a - b);
+    const menuSlugs = unorgList
+      .map((item: any) => String(item?.menu_slug || item?.slug || '').trim())
+      .filter(Boolean);
+
+    if (menuSlugs.length > 0) {
+      return Array.from(new Set<string>(menuSlugs)).sort();
+    }
+
+    const legacyMenuSlugMap: Record<number, string> = {
+      1: 'primary_menu',
+      2: 'admin_menu',
+      3: 'mobile_menu',
+      4: 'mobile_menu_web',
+      5: 'documentation_menu',
+    };
+    const legacyMenuIds = unorgList.map((item: any) => Number(item?.menu_id)).filter((id: number) => Number.isFinite(id) && id > 0);
+    return Array.from(new Set<string>(legacyMenuIds.map((id: number) => legacyMenuSlugMap[id]).filter(Boolean))).sort();
   }
 
-  private resolveMenuIdsFromUserData(userData: any): number[] {
+  private resolveMenuSlugsFromUserData(userData: any): string[] {
     const main = userData?.main || {};
     const roleCandidates = [main?.role, main?.role_slug, main?.role_name, main?.user_role]
       .map((item) =>
@@ -57,15 +71,15 @@ export class MenuLoadService {
       .filter(Boolean);
 
     if (roleCandidates.includes('super_admin')) {
-      return [1, 2, 5];
+      return ['primary_menu', 'admin_menu', 'documentation_menu'];
     }
 
-    const fromStoredMenus = this.resolveMenuIdsFromStoredMenus(userData);
+    const fromStoredMenus = this.resolveMenuSlugsFromStoredMenus(userData);
     if (fromStoredMenus.length > 0) {
       return fromStoredMenus;
     }
 
-    return [1];
+    return ['primary_menu'];
   }
 
   getMenuList(): Observable<MenuItem[] | null> {
@@ -206,7 +220,7 @@ export class MenuLoadService {
 
     // 2. Try user config first
     return this.menuMapService.getCommnListConfiguration(userConfigPayload).pipe(
-      map((userResponse: any) => {
+      switchMap((userResponse: any) => {
         if (userResponse.code === 200 && userResponse.status && userResponse.data.records.length > 0) {
           const userConfig = userResponse.data.records.reduce((acc: any, record: any) => {
             acc[record.config_key] = record.config_value;
@@ -215,7 +229,7 @@ export class MenuLoadService {
 
           // If user config has encrypt_local_storage, use it
           if (userConfig.encrypt_local_storage !== undefined) {
-            return processConfig(userConfig);
+            return of(processConfig(userConfig));
           }
         }
         // 3. If no user config or no encrypt_local_storage, fetch default config
@@ -236,7 +250,6 @@ export class MenuLoadService {
           includes: [],
           search_all: [],
         };
-        // Return an observable for chaining
         return this.menuMapService.getCommnListConfiguration(defaultConfigPayload).pipe(
           map((response: any) => {
             if (response.code === 200 && response.status) {
@@ -256,11 +269,6 @@ export class MenuLoadService {
           })
         );
       }),
-      // If the result is an observable (from fallback), flatten it
-      // This ensures the return type is always an observable
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      map((result: any) => (result && typeof result.subscribe === 'function' ? result : result)),
       catchError((error) => {
         console.error('Error fetching user config:', error);
         return of([]);
@@ -268,13 +276,17 @@ export class MenuLoadService {
     );
   }
 
-  fetchMenuData(companyId: number): Observable<MenuItem[]> {
+  fetchMenuData(companyId: number, menuSlug?: string | string[]): Observable<MenuItem[]> {
     //const conf: any = localStorage.getItem('config');
     const conf: any = this.localStorageService.getData('config');
     const enc_config: any = this.parseJsonSafe(conf, null);
     const userData = this.localStorageService.getData('user_data');
     this.user_info = this.parseJsonSafe(userData, null);
-    this.menu_id = this.resolveMenuIdsFromUserData(this.user_info);
+    this.menu_slug = Array.isArray(menuSlug)
+      ? menuSlug.map((slug) => String(slug).trim()).filter(Boolean)
+      : menuSlug
+        ? [String(menuSlug).trim()].filter(Boolean)
+        : this.resolveMenuSlugsFromUserData(this.user_info);
 
     const payload = {
       print_query: true,
@@ -285,6 +297,7 @@ export class MenuLoadService {
       select_columns: [
         ['menu_items.id'],
         ['menu_items.menu_id'],
+        ['menu.slug', 'menu_slug'],
         ['menu_items.name'],
         ['menu_items.menu_img'],
         ['menu_items.target'],
@@ -295,13 +308,17 @@ export class MenuLoadService {
         ['master_entities.primary_table'],
         ['master_entities.entity_type', 'component_class_name'],
         ['master_entities.entity_name'],
-        ['master_entities.entity_configurations'],
         ['master_entities.draft_mode'],
         ['master_entities.export_template_file_name'],
         ['master_entities.static_page_content'],
         ['permissions.name', 'action_slug'],
       ],
       includes: [
+        {
+          table_name: 'menu',
+          join_type: 'INNER',
+          join_condition: 'menu.id = menu_items.menu_id AND menu.company_id = menu_items.company_id',
+        },
         {
           table_name: 'master_entities',
           join_type: 'LEFT',
@@ -315,7 +332,8 @@ export class MenuLoadService {
       ],
       search_all: [
         { column_name: 'menu_items.status_id', operator: '=', value: '1' },
-        { column_name: 'menu_items.menu_id', operator: 'IN', value: this.menu_id },
+        { column_name: 'menu.slug', operator: 'IN', value: this.menu_slug },
+        { column_name: 'menu.company_id', operator: '=', value: companyId },
       ],
     };
 

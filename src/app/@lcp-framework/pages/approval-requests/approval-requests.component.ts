@@ -153,7 +153,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
     private titleService: Title,
     private fb: FormBuilder,
     private timezoneService: TimezoneService
-  ) {}
+  ) {
+  }
 
   ngAfterViewInit() {
     this.initStore();
@@ -521,8 +522,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
+            table_name: 'tenant_users ud1',
+            join_condition: 'ud1.id = u1.tenant_user_id',
           },
           {
             join_type: 'LEFT',
@@ -531,8 +532,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'tenant_users ud2',
+            join_condition: 'ud2.id = u2.tenant_user_id',
           },
         ],
         // having_conditions: null,
@@ -615,8 +616,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
+            table_name: 'tenant_users ud1',
+            join_condition: 'ud1.id = u1.tenant_user_id',
           },
           {
             join_type: 'LEFT',
@@ -625,8 +626,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'tenant_users ud2',
+            join_condition: 'ud2.id = u2.tenant_user_id',
           },
           {
             join_type: 'LEFT',
@@ -772,8 +773,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
+            table_name: 'tenant_users ud1',
+            join_condition: 'ud1.id = u1.tenant_user_id',
           },
           {
             join_type: 'LEFT',
@@ -782,8 +783,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'tenant_users ud2',
+            join_condition: 'ud2.id = u2.tenant_user_id',
           },
         ],
         // having_conditions: null,
@@ -854,8 +855,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
+            table_name: 'tenant_users ud1',
+            join_condition: 'ud1.id = u1.tenant_user_id',
           },
           {
             join_type: 'LEFT',
@@ -864,8 +865,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'tenant_users ud2',
+            join_condition: 'ud2.id = u2.tenant_user_id',
           },
           {
             join_type: 'LEFT',
@@ -1339,7 +1340,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             Object.keys(this.masterInfo.permissions).every((key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false);
 
           // Include serial number column if enabled in config
-          if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+          if (this.config.grid_show_serial_number == 'true') {
             this.headercolumns = [
               {
                 header: 'table_column_sno',
@@ -1430,7 +1431,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
                 }
               }
 
-              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+              if (this.config.grid_show_serial_number == 'true') {
                 return {
                   table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,

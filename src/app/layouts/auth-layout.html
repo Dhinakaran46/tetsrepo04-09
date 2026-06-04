@@ -1,4 +1,4 @@
-<div
+﻿<div
   class="main-section relative font-nunito text-sm font-normal antialiased"
   [ngClass]="[store.sidebar ? 'toggle-sidebar' : '', store.menu, store.layout, store.rtlClass]"
 >
@@ -59,18 +59,18 @@
           >-->
       <div
         class="relative flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat px-4 py-4 dark:bg-[#060818]"
-        [ngStyle]="{
-    'background-image': 'url(' + (authentication_background_2 ? apiUrl + '/' + authentication_background_2 : '/assets/images/auth/map.png') + ')'
-  }"
-      >
+        [ngStyle]="!hideMedia ? {
+    'background-image': 'url(' + ((authentication_background_2) ? apiUrl + '/' + authentication_background_2 : '/assets/images/auth/map.png') + ')'
+      } : {}">
         <!--  <img src="assets/images/auth/coming-soon-object1.png" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
             <img src="assets/images/auth/coming-soon-object2.png" alt="image" class="absolute left-24 top-0 h-40 md:left-[30%]" />
             <img src="assets/images/auth/coming-soon-object3.png" alt="image" class="absolute right-0 top-0 h-[300px]" />
             <img src="assets/images/auth/polygon-object.svg" alt="image" class="absolute bottom-0 end-[28%]" />-->
         <div
-          class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[658px] lg:flex-row lg:gap-10 xl:gap-0"
+          class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md  backdrop-blur-lg lg:min-h-[658px] lg:flex-row lg:gap-10 xl:gap-0" [ngClass]="{ 'bg-white/60 dark:bg-black/50': !hideMedia, 'bg-white dark:bg-black': hideMedia }"
         >
           <!-- linear-gradient(225deg, rgb(29 254 199) 0%, rgb(110 126 214) 100%) -->
+          @if (!hideMedia) {
           <div
             class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(244,210,222)_0%,rgba(200,209,252)_100%)] p-5 lg:inline-flex lg:max-w-[835px] ltr:xl:skew-x-[0deg] rtl:xl:skew-x-[-0deg]"
           >
@@ -233,8 +233,12 @@
                 </div>-->
             </div>
           </div>
+          }
 
-          <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
+          <div
+            class="relative flex w-full flex-col items-center gap-6 px-4 pb-16 pt-6 sm:px-6"
+            [ngClass]="{ 'justify-center lg:max-w-[667px]': !hideMedia, 'justify-start': hideMedia }"
+          >
             <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:start-20 lg:top-6 lg:max-w-full">
               <a routerLink="/" class="flex items-center gap-2">
                 @if (logo) {
@@ -259,7 +263,7 @@
                 </select>
               </div>
             </div>
-            <div class="w-full max-w-[440px]">
+            <div class="w-full" [ngClass]="{ 'max-w-[440px]': !hideMedia }">
               <router-outlet></router-outlet>
             </div>
             <p class="absolute bottom-6 w-full text-center dark:text-white">© {{ currYear }}.{{ copyrightContent }}</p>

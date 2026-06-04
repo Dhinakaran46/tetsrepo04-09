@@ -107,7 +107,7 @@ export class UserRolePolicyComponent {
   }
 
   mapPolicies() {
-   
+
     if (this.mappingForm.invalid) {
       const key = 'please_select_all_the_required_fields';
       const errorMessage = this.translate.instant(key);
@@ -160,16 +160,21 @@ export class UserRolePolicyComponent {
       sort_columns: [['policies.name', 'asc']],
       group_by: [
         'policies.id',
-        'user_details.first_name',
-        'user_details.last_name',
+        'tenant_users.first_name',
+        'tenant_users.last_name',
         ...(role_id && ['role_policies.role_id']),
         ...(user_id && ['user_policies.user_id']),
       ],
       includes: [
         {
           join_type: 'LEFT',
-          table_name: 'user_details',
-          join_condition: 'user_details.user_id = policies.updated_by',
+          table_name: 'users as updated_user',
+          join_condition: 'updated_user.id = policies.updated_by AND updated_user.company_id = policies.company_id',
+        },
+        {
+          join_type: 'LEFT',
+          table_name: 'tenant_users',
+          join_condition: 'tenant_users.id = updated_user.tenant_user_id',
         },
         ...joinCondition,
       ],
@@ -186,7 +191,7 @@ export class UserRolePolicyComponent {
         ['policies.uuid'],
         ['policies.slug'],
         ['policies.description'],
-        ["CONCAT(user_details.first_name, ' ', user_details.last_name)", 'updated_by'],
+        ["CONCAT(tenant_users.first_name, ' ', tenant_users.last_name)", 'updated_by'],
         ['policies.updated_at'],
         ...(role_id && [['role_policies.role_id']]),
         ...(user_id && [['user_policies.user_id']]),
@@ -276,7 +281,7 @@ export class UserRolePolicyComponent {
       primary_table: 'users',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [["concat(user_details.first_name, ' ', user_details.last_name)", 'asc']],
+      sort_columns: [["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'asc']],
       search_all: [
         {
           column_name: 'users.status_id',
@@ -286,17 +291,17 @@ export class UserRolePolicyComponent {
         {
           value: ['super_admin', 'company_admin'],
           operator: 'NOT IN',
-          column_name: 'users.role',
+          column_name: 'tenant_users.role',
         },
       ],
       includes: [
         {
-          table_name: 'user_details',
+          table_name: 'tenant_users',
           join_type: 'INNER',
-          join_condition: 'users.id = user_details.user_id',
+          join_condition: 'tenant_users.id = users.tenant_user_id',
         },
       ],
-      select_columns: [['users.id'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'name'], ['users.uuid']],
+      select_columns: [['users.id'], ["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'name'], ['users.uuid']],
     };
     this.gridApiService.getListData(param).subscribe(
       (response: ApiResponce) => {
@@ -338,7 +343,7 @@ export class UserRolePolicyComponent {
           policy_id: p.id,
         };
       });
-    
+
     param.data.table2 = selectedPolicies;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
@@ -380,7 +385,7 @@ export class UserRolePolicyComponent {
           policy_id: p.id,
         };
       });
-    
+
     param.data.table2 = selectedPolicies;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
@@ -418,3 +423,6 @@ export class UserRolePolicyComponent {
     this.onPolicyDataChange(items);
   }
 }
+
+
+

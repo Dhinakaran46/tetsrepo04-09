@@ -2,6 +2,8 @@ export const commonConfig: any = {
   API: {
     processImportJob: 'common/process-import-job',
     login: 'auth/admin/login',
+    switchCompany: 'auth/switch-company',
+    switchCompanies: 'auth/companies',
     logout: 'auth/logout',
     getallprofile: 'auth/profile',
     updateprofile: 'auth/profile',
@@ -29,6 +31,8 @@ export const commonConfig: any = {
     postCommnList: 'common/execute-transaction',
     listdata: 'common/list-data',
     listdataconfig: 'common/list-data-configuration',
+    tenantRegistrationLovValues: 'tenant-registration/lov-values',
+    tenantRegistrationRegister: 'tenant-registration/register',
     executeRecords: 'common/execute-transaction',
     executeRecordsCase: 'common/execute-transaction-case',
     executeRecordsConfig: 'common/execute-transaction-configuration',

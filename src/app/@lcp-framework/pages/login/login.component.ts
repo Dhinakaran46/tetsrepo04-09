@@ -1,4 +1,4 @@
-import { animate, style, transition, trigger } from '@angular/animations';
+﻿import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -270,6 +270,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
         next: async (response: any) => {
           if (response.status) {
             const userID = response.data.id;
+            const activeCompanyId = Number(response.data.company_id || this.companyId);
+            this.companyId = activeCompanyId;
 
             const permissionsObj = response.data.permissions.reduce((acc: any, perm: any) => {
               acc[perm.slug] = perm.accessible;
@@ -324,15 +326,31 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               this.localstore.removeData('rememberme');
             }
 
-            this.setConfig(this.companyId, userID);
+            const companies = Array.isArray(response.data?.companies) ? response.data.companies : [];
+            if (companies.length > 1) {
+              this.localstore.storeData('company_selection_pending', 'true');
+              this.localstore.removeData('selected_company_id');
+              this.localstore.removeData('menuList');
+              this.localstore.removeData('unorgmenuList');
+              this.localstore.removeData('menu_id');
+              localStorage.setItem('login', Date.now().toString());
+              this.router.navigate(['/select-company']).then(() => {
+                window.location.reload();
+              });
+              return;
+            }
+
+            this.localstore.removeData('company_selection_pending');
+            this.localstore.storeData('selected_company_id', String(activeCompanyId));
+            this.setConfig(activeCompanyId, userID);
 
             this.getconfig(userID);
 
-            this.onLoginSuccess(this.companyId);
+            this.onLoginSuccess(activeCompanyId);
 
             // Add dynamic routes
 
-            forkJoin([this.menuLoadService.fetchMenuData(this.companyId)]).subscribe({
+            forkJoin([this.menuLoadService.fetchMenuData(activeCompanyId)]).subscribe({
               next: ([configData]) => {
                 // Notify other tabs of login
                 localStorage.setItem('login', Date.now().toString());

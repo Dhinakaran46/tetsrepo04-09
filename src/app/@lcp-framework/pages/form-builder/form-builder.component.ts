@@ -430,6 +430,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     // this.model = { ...this.model, ...this.form.value };
     //
 
+    this.applyActiveTenantToModel();
     let transParam = this.replaceDataPlaceholders(this.transParam, this.model, false, draft_mode);
     transParam = this.replacePlaceholders(transParam, this.model);
     const val = transParam.data.table1[0].name;
@@ -961,6 +962,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
               ? this.formEntity.add_query_information
               : this.formEntity.edit_query_information;
           this.model = { ...this.formEntity.form_information.model, ...this.routeGParams, unique_id: this.unique_id, ...this.defaultData };
+          this.applyActiveTenantToModel();
           this.defaultDataParam = this.formEntity.preset_query_information;
           const fieldsJson = this.formEntity.form_information.fields;
 
@@ -1496,6 +1498,46 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       console.error('Error creating function from string:', fnString, error);
       return () => null;
     }
+  }
+
+  private applyActiveTenantToModel() {
+    if (
+      !['add', 'popup_add'].includes(this.entity_type) ||
+      !this.model?.tenant_users ||
+      this.model.tenant_users.tenant_id === undefined
+    ) {
+      return;
+    }
+
+    const tenantId = this.getActiveCompanyTenantId();
+    if (!tenantId) return;
+
+    this.model.tenant_users.tenant_id = tenantId;
+    (this.form.get('tenant_users.tenant_id') as any)?.patchValue(tenantId, {
+      emitEvent: false,
+    });
+  }
+
+  private getActiveCompanyTenantId(): number | null {
+    const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data') || '{}');
+    const activeCompanyId = Number(
+      userData?.main?.company_id ||
+        userData?.company?.id ||
+        this.localStorageService.getData('selected_company_id') ||
+        0,
+    );
+    const companies = userData?.main?.companies || userData?.companies || [];
+    const activeCompany = Array.isArray(companies)
+      ? companies.find((company: any) => Number(company?.id || company?.company_id) === activeCompanyId)
+      : null;
+    const tenantId = Number(
+      userData?.company?.tenant_id ||
+        userData?.main?.selected_company_tenant_id ||
+        activeCompany?.tenant_id ||
+        0,
+    );
+
+    return tenantId || null;
   }
 
   flatten(obj: any): any {

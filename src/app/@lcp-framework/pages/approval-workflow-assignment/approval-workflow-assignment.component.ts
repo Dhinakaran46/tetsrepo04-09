@@ -75,12 +75,12 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     approve_query_information: {
       header: 'Approve Query Information',
       comments: [],
-      data: ['select * from users limit 1', 'select * from user_details limit 1'],
+      data: ['select * from users limit 1', 'select * from tenant_users limit 1'],
     },
     reject_query_information: {
       header: 'Reject Query Information',
       comments: [],
-      data: ['select * from users limit 1', 'select * from user_details limit 1'],
+      data: ['select * from users limit 1', 'select * from tenant_users limit 1'],
     },
   };
   popupInformation: any = null;

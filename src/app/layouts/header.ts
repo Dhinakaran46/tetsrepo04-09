@@ -26,6 +26,7 @@ import { TimezoneService } from '../@lcp-framework/service/common/timezone.servi
 import { ApiResponce, GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { htmlToPlainText } from '../@lcp-framework/shared/utils/html-text.util';
 import { FirebaseService } from '../@lcp-framework/service/firebase.service';
+import Swal from 'sweetalert2';
 
 interface MenuItem {
   id: number;
@@ -111,8 +112,11 @@ export class HeaderComponent implements OnInit {
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   config: any;
   showNotifications: boolean = false;
+  showCompanyMenu = false;
   showLanguageMenu = false;
   showProfileMenu = false;
+  companyList: any[] = [];
+  selectedCompanyName = '';
 
   private refreshView(): void {
     setTimeout(() => this.cdr.detectChanges(), 0);
@@ -149,6 +153,10 @@ export class HeaderComponent implements OnInit {
     }
 
     return {};
+  }
+
+  private isCompanySelectionPending(): boolean {
+    return this.localstore.getData('company_selection_pending') === 'true';
   }
 
   private getViewPermissions(): string[] {
@@ -234,6 +242,7 @@ export class HeaderComponent implements OnInit {
     if (this.user_info) {
       this.userId = this.user_info.main?.id;
       this.companyId = this.user_info.main?.company_id;
+      this.initCompanyList();
     }
 
     const languageCode = this.languageService.getSavedLanguageCode();
@@ -260,6 +269,62 @@ export class HeaderComponent implements OnInit {
       this.loadMenuFromStorage();
       this.updateActiveClasses();
     }, 0);
+  }
+
+  private initCompanyList(): void {
+    const storedCompanies = this.user_info?.companies || this.user_info?.main?.companies;
+    if (Array.isArray(storedCompanies) && storedCompanies.length) {
+      this.companyList = storedCompanies.map((company: any) => this.normalizeCompanyOption(company));
+      this.selectedCompanyName =
+        this.isCompanySelectionPending() && this.companyList.length > 1
+          ? 'Select Company'
+          : this.getSelectedCompany()?.name || this.companyList[0]?.name || '';
+      this.fetchCompanyList();
+      return;
+    }
+
+    const currentCompany = this.normalizeCompanyOption({
+      id: this.user_info?.main?.company_id || this.user_info?.company?.id || this.companyId,
+      name: this.user_info?.main?.company_name || this.user_info?.company?.name || this.user_info?.main?.company_code || 'Company',
+      code: this.user_info?.main?.company_code || this.user_info?.company?.code,
+      user_id: this.user_info?.main?.id,
+      user_uuid: this.user_info?.main?.uuid,
+    });
+    this.companyList = currentCompany.id ? [currentCompany] : [];
+    this.selectedCompanyName = this.isCompanySelectionPending() ? 'Select Company' : currentCompany.name || '';
+
+    this.fetchCompanyList();
+  }
+
+  private normalizeCompanyOption(company: any): any {
+    return {
+      id: Number(company?.id || company?.company_id || company?.value || 0),
+      name: String(company?.name || company?.company_name || company?.label || company?.code || 'Company'),
+      code: company?.code || company?.company_code || '',
+      tenant_id: company?.tenant_id ? Number(company.tenant_id) : undefined,
+      user_id: company?.user_id || company?.membership_user_id || company?.id,
+      user_uuid: company?.user_uuid || company?.membership_user_uuid || company?.uuid,
+    };
+  }
+
+  private getSelectedCompany(): any {
+    return this.companyList.find((company: any) => Number(company.id) === Number(this.companyId));
+  }
+
+  private fetchCompanyList(): void {
+    this.authService.getSwitchCompanies().subscribe({
+      next: (response: any) => {
+        const records = response?.data?.records || response?.data || [];
+        if (!records.length) return;
+        this.companyList = records.map((record: any) => this.normalizeCompanyOption(record));
+        this.selectedCompanyName =
+          this.isCompanySelectionPending() && this.companyList.length > 1
+            ? 'Select Company'
+            : this.getSelectedCompany()?.name || this.companyList[0]?.name || this.selectedCompanyName;
+        this.refreshView();
+      },
+      error: (error) => console.warn('Unable to load company list:', error),
+    });
   }
 
   private loadMenuFromCache(): void {
@@ -447,12 +512,118 @@ export class HeaderComponent implements OnInit {
   toggleLanguageMenu(event: Event) {
     event.stopPropagation();
     this.showLanguageMenu = !this.showLanguageMenu;
+    this.showCompanyMenu = false;
     this.showProfileMenu = false;
+  }
+
+  toggleCompanyMenu(event: Event) {
+    event.stopPropagation();
+    this.showCompanyMenu = !this.showCompanyMenu;
+    this.showLanguageMenu = false;
+    this.showProfileMenu = false;
+  }
+
+  changeCompany(company: any) {
+    const selectedCompany = this.normalizeCompanyOption(company);
+    if (!selectedCompany.id || Number(selectedCompany.id) === Number(this.companyId)) {
+      this.showCompanyMenu = false;
+      return;
+    }
+
+    this.showCompanyMenu = false;
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Are you sure?',
+      text: `Switch company to "${selectedCompany.name}"? Unsaved changes on this page may be lost.`,
+      showCancelButton: true,
+      confirmButtonText: 'Switch',
+      cancelButtonText: 'Cancel',
+      padding: '2em',
+    }).then((result) => {
+      if (!result.isConfirmed && !result.value) return;
+      this.switchCompany(selectedCompany);
+    });
+  }
+
+  private switchCompany(selectedCompany: any) {
+    this.authService.switchCompany(selectedCompany.id).subscribe({
+      next: (response: any) => {
+        if (!response?.status || !response?.data?.token) {
+          const key = response?.message || 'error';
+          this.toastr.error(this.translate.instant(key), 'Error');
+          return;
+        }
+
+        const switchedUser = response.data;
+        const companies = switchedUser.companies?.length ? switchedUser.companies : this.companyList;
+        this.companyId = Number(switchedUser.company_id || selectedCompany.id);
+        this.selectedCompanyName = switchedUser.company_name || selectedCompany.name;
+        const selectedCompanyTenantId = Number(
+          switchedUser.company_tenant_id ||
+            selectedCompany.tenant_id ||
+            companies.find((company: any) => Number(company.id) === Number(this.companyId))?.tenant_id ||
+            0,
+        );
+
+        const permissionsObj = (switchedUser.permissions || []).reduce((acc: any, permission: any) => {
+          acc[permission.slug] = permission.accessible;
+          return acc;
+        }, {});
+
+        const nextUserInfo = {
+          ...this.user_info,
+          main: {
+            ...switchedUser,
+            companies,
+            selected_company_tenant_id: selectedCompanyTenantId || switchedUser.selected_company_tenant_id,
+          },
+          permissions: permissionsObj,
+          user_id: switchedUser.id,
+          company: {
+            ...(this.user_info?.company || {}),
+            id: this.companyId,
+            name: switchedUser.company_name || selectedCompany.name,
+            code: switchedUser.company_code || selectedCompany.code,
+            tenant_id: selectedCompanyTenantId || selectedCompany.tenant_id,
+          },
+        };
+
+        this.localstore.storeData('base_app_url', JSON.stringify(switchedUser.base_app_url));
+        this.localstore.storeData('version_info', JSON.stringify(switchedUser.version_info));
+        if (switchedUser.theme_info) {
+          this.localstore.storeData('theme_info', JSON.stringify(switchedUser.theme_info));
+        }
+
+        const payload = JSON.stringify(nextUserInfo);
+        if (this.config?.encrypt_local_storage === 'true') {
+          this.localstore.storeDataEncrypted('user_data', payload);
+        } else {
+          this.localstore.storeData('user_data', payload);
+        }
+
+        this.user_info = nextUserInfo;
+        this.localstore.removeData('company_selection_pending');
+        this.localstore.storeData('selected_company_id', String(this.companyId));
+        this.localstore.removeData('menuList');
+        this.localstore.removeData('unorgmenuList');
+        this.localstore.removeData('menu_id');
+
+        const languageCode = this.languageService.getSavedLanguageCode();
+        this.languageService.serviceChangeLanguage(this.companyId, languageCode.toLowerCase());
+        window.location.href = '/';
+      },
+      error: (error: any) => {
+        const key = error?.message || 'error';
+        this.toastr.error(this.translate.instant(key), 'Error');
+      },
+    });
   }
 
   toggleProfileMenu(event: Event) {
     event.stopPropagation();
     this.showProfileMenu = !this.showProfileMenu;
+    this.showCompanyMenu = false;
     this.showLanguageMenu = false;
   }
 
@@ -486,8 +657,13 @@ export class HeaderComponent implements OnInit {
   handleOutsideClick(event: any) {
     const clickedInsideDropdown = event.target.closest('.notification-dropdown');
     const clickedInsideBox = event.target.closest('.notification-dropdown-box');
+    const clickedInsideCompanyMenu = event.target.closest('.company-dropdown');
     const clickedInsideLanguageMenu = event.target.closest('.language-dropdown');
     const clickedInsideProfileMenu = event.target.closest('.profile-dropdown');
+
+    if (!clickedInsideCompanyMenu) {
+      this.showCompanyMenu = false;
+    }
 
     if (!clickedInsideDropdown && !clickedInsideBox) {
       this.showNotifications = false;

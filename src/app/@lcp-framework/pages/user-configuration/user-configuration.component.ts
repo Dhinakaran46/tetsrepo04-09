@@ -655,7 +655,7 @@ export class UserConfigurationComponent implements OnInit {
       search_all.push({
         value: ['super_admin', 'company_admin'],
         operator: 'NOT IN',
-        column_name: 'users.role',
+        column_name: 'tenant_users.role',
       });
     }
     const param: any = {
@@ -664,16 +664,16 @@ export class UserConfigurationComponent implements OnInit {
       primary_table: 'users',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [["concat(user_details.first_name, ' ', user_details.last_name)", 'asc']],
+      sort_columns: [["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'asc']],
       search_all: search_all,
       includes: [
         {
-          table_name: 'user_details',
+          table_name: 'tenant_users',
           join_type: 'INNER',
-          join_condition: 'users.id = user_details.user_id',
+          join_condition: 'tenant_users.id = users.tenant_user_id',
         },
       ],
-      select_columns: [['users.id'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'name'], ['users.uuid']],
+      select_columns: [['users.id'], ["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'name'], ['users.uuid']],
     };
     this.gridApiService.getListData(param).subscribe(
       (response: any) => {
@@ -878,3 +878,6 @@ export class UserConfigurationComponent implements OnInit {
     this.jsonEditorOpenNew = false;
   }
 }
+
+
+

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { commonConfig } from '../../config/common.config';
@@ -33,6 +33,17 @@ export class AuthService {
       theme_info: themeInfo
     };
     return this.http.post<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.login}`, loginPayload);
+  }
+
+  switchCompany(companyId: number, fromSource = 1): Observable<any> {
+    return this.cryptoHttp.encryptedPost<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.switchCompany}`, {
+      company_id: companyId,
+      from_source: fromSource,
+    });
+  }
+
+  getSwitchCompanies(): Observable<any> {
+    return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.switchCompanies}`);
   }
 
   logout(): Observable<any> {

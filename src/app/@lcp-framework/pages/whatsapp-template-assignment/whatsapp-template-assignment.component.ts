@@ -381,18 +381,18 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
       includes: [
         {
           join_type: 'INNER',
-          table_name: 'user_details',
-          join_condition: 'users.id = user_details.user_id',
+          table_name: 'tenant_users',
+          join_condition: 'tenant_users.id = users.tenant_user_id',
         },
       ],
       limit_range: 25,
       print_query: false,
       start_index: 0,
-      sort_columns: [['email', 'asc']],
+      sort_columns: [['tenant_users.email', 'asc']],
       primary_table: 'users',
       select_columns: [
-        ['user_details.phone_number', 'value'],
-        ["concat(email, ' - ', user_details.phone_number)", 'label'],
+        ['tenant_users.phone_number', 'value'],
+        ["concat(tenant_users.email, ' - ', tenant_users.phone_number)", 'label'],
       ],
     };
     if (pno) {
@@ -400,7 +400,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         {
           value: '%' + pno + '%',
           operator: 'ILIKE',
-          column_name: 'user_details.phone_number',
+          column_name: 'tenant_users.phone_number',
         },
       ];
     }
@@ -479,3 +479,6 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
     }
   }
 }
+
+
+

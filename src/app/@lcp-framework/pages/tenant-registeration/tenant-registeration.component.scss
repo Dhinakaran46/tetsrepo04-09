@@ -1,0 +1,201 @@
+﻿.tenant-registration {
+  color: #07182f;
+}
+
+.tenant-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  > span {
+    color: #2c4465;
+    font-size: 0.95rem;
+    font-weight: 800;
+
+    b {
+      color: #9a0000;
+    }
+  }
+
+  .form-input {
+    border-color: #cbd7e6;
+    color: #07182f;
+  }
+
+  .form-input::placeholder {
+    color: #8a9ab4;
+  }
+
+  .form-input:focus {
+    border-color: #9a0000;
+    box-shadow: 0 0 0 2px rgb(154 0 0 / 10%);
+  }
+
+  small {
+    color: #9a0000;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+}
+
+.tenant-section {
+  border: 1px solid #dce4ee;
+  border-radius: 6px;
+  padding: 1.25rem;
+}
+
+.tenant-section-title {
+  align-items: center;
+  border-bottom: 1px solid #dce4ee;
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
+
+  h2 {
+    color: #163154;
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0;
+  }
+}
+
+.logo-upload-field {
+  .logo-upload-box {
+    align-items: center;
+    border: 1px dashed #cbd7e6;
+    border-radius: 6px;
+    color: #516785;
+    cursor: pointer;
+    display: flex;
+    font-size: 0.85rem;
+    font-weight: 700;
+    gap: 0.75rem;
+    min-height: 48px;
+    padding: 0.55rem 0.75rem;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      background: #fff7f7;
+      border-color: #9a0000;
+    }
+
+    > i,
+    img {
+      border-radius: 6px;
+      flex: 0 0 auto;
+      height: 34px;
+      width: 34px;
+    }
+
+    > i {
+      background: #eef2f6;
+      display: grid;
+      place-content: center;
+    }
+
+    img {
+      object-fit: contain;
+    }
+  }
+
+  .logo-upload-copy {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+
+    strong {
+      color: #163154;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small {
+      color: #8a9ab4;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+  }
+}
+
+:host-context(.dark) {
+  .tenant-section,
+  .tenant-section-title {
+    border-color: #253b5c;
+  }
+
+  .tenant-section-title h2 {
+    color: #fff;
+  }
+
+  .logo-upload-field {
+    .logo-upload-box {
+      border-color: #253b5c;
+      color: #d1d5db;
+
+      &:hover {
+        background: #1b1018;
+        border-color: #9a0000;
+      }
+
+      > i {
+        background: #1b2a43;
+      }
+    }
+
+    .logo-upload-copy strong {
+      color: #fff;
+    }
+  }
+}
+
+select.form-input {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #607088 50%),
+    linear-gradient(135deg, #607088 50%, transparent 50%);
+  background-position:
+    calc(100% - 28px) 50%,
+    calc(100% - 20px) 50%;
+  background-repeat: no-repeat;
+  background-size:
+    8px 8px,
+    8px 8px;
+  padding-inline-end: 3rem;
+}
+
+.tenant-btn {
+  align-items: center;
+  border-radius: 6px;
+  display: inline-flex;
+  font-size: 0.95rem;
+  font-weight: 600;
+  gap: 0.6rem;
+  justify-content: center;
+  padding: .5rem 1.25rem;
+}
+
+.tenant-btn-primary {
+  background: #9a0000;
+  color: #fff;
+  box-shadow: 0 14px 24px rgb(154 0 0 / 20%);
+}
+
+.tenant-btn-primary:hover {
+  background: #850000;
+}
+
+.tenant-btn-secondary {
+  background: #fff;
+  border: 1px solid #cbd7e6;
+  color: #516785;
+}
+
+.tenant-btn-secondary:hover {
+  border-color: #9a0000;
+  color: #9a0000;
+}

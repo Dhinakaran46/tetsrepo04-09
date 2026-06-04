@@ -110,7 +110,7 @@ export class MigrateEntityComponent {
       default: false,
       tables: [
         'users',
-        'user_details',
+        'tenant_users',
         'roles',
         'user_roles',
         'user_permissions',
@@ -232,26 +232,19 @@ export class MigrateEntityComponent {
     this.storeData
       .select((d) => d.index)
       .subscribe((d) => {
-        queueMicrotask(() => {
-          this.store = d;
-          if (!(this.cdr as any).destroyed) {
-            this.cdr.detectChanges();
-          }
-        });
+        this.store = d;
       });
   }
 
   ngOnInit() {
     if (this.userData?.main?.user_id) {
-      const socketUrl = (environment as any).WS_URL || 'ws://localhost:8100';
+      const socketUrl = (environment as any).WS_URL || 'ws://localhost:8089';
 
       this.socket$ = new WebSocketSubject(`${socketUrl}?userId=${this.userData.main.user_id}`);
 
       this.socket$.subscribe({
         next: (data: any) => {
-          if (data && data.progress !== undefined) {
-            this.progress = data.progress;
-          }
+          this.progress = data.progress;
         },
         error: (err) => {
           console.error('WebSocket error', err);
@@ -339,16 +332,10 @@ export class MigrateEntityComponent {
           this.toastr.success(res.message || 'Export saved successfully');
         }
         this.isLoading = false;
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       },
       error: (e) => {
         this.toastr.error(e.message || 'Export failed');
         this.isLoading = false;
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       },
     });
   }
@@ -417,16 +404,10 @@ export class MigrateEntityComponent {
             this.isLoading = false;
           }
         }
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       },
       error: () => {
         this.toastr.error('Import failed');
         this.isLoading = false;
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       },
     });
   }
@@ -482,7 +463,7 @@ export class MigrateEntityComponent {
             Object.keys(this.masterInfo.permissions).every((key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false);
 
           // Include serial number column if enabled in config
-          if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+          if (this.config.grid_show_serial_number == 'true') {
             this.headercolumns = [
               {
                 header: 'table_column_sno',
@@ -557,7 +538,7 @@ export class MigrateEntityComponent {
                 }
               }
 
-              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+              if (this.config.grid_show_serial_number == 'true') {
                 return {
                   table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,
@@ -586,18 +567,12 @@ export class MigrateEntityComponent {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       },
       (error) => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       }
     );
   }
@@ -850,9 +825,6 @@ export class MigrateEntityComponent {
       () => {
         this.fetchColumns();
         this.fetchData(this.listQuery);
-        if (!(this.cdr as any).destroyed) {
-          this.cdr.detectChanges();
-        }
       }
     );
   }

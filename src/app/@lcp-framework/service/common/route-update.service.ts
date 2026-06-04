@@ -1,7 +1,8 @@
-import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
+﻿import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { Router, Route, Routes } from '@angular/router';
 import { LocalStorageService } from './local-storage.service';
 import { BehaviorSubject, firstValueFrom, Observable, switchMap } from 'rxjs';
+
 import { environment } from '../../../../environments/environment';
 import { commonConfig } from '../../config/common.config';
 
@@ -10,6 +11,7 @@ import { commonConfig } from '../../config/common.config';
 })
 export class RouteUpdateService {
   apiUrl = this.localStore.getData('lcp_api_base_url') || environment.apiUrl;
+
   private permissionsListSubject = new BehaviorSubject<any>(null);
   routeList: { path: string; component: any }[] = [];
 
@@ -21,7 +23,6 @@ export class RouteUpdateService {
     menu_module: () => import('../../pages/menu-mapping/menu-mapping.component').then((m) => m.MenuMappingComponent),
     static_page_builder_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
     form_builder_module: () => import('../../pages/form-builder/form-builder.component').then((m) => m.FormBuilderComponent),
-
     entity_user_role_map_module: () => import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
     entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
     about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
@@ -58,14 +59,9 @@ export class RouteUpdateService {
       import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
     audit_log_management_module: () => import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
     chart_builder_module: () => import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
-    dashboard_wizard_builder_module: () => import('../../pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   };
 
-  constructor(
-    private rendererFactory: RendererFactory2,
-    private router: Router,
-    private localStore: LocalStorageService,
-  ) {
+  constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
     this.renderer = this.rendererFactory.createRenderer(null, null);
     const permissionsList = this.getMenuData()?.permissions ?? null;
     this.permissionsListSubject.next(permissionsList);
@@ -92,6 +88,7 @@ export class RouteUpdateService {
     }
   }
 
+  /** Returns the flat menu list used for dynamic route building */
   private getMenuList(): any[] {
     return this.getMenuData()?.unorgmenuList ?? [];
   }
@@ -145,7 +142,7 @@ export class RouteUpdateService {
       return [...base, { column_name: 'request_logs.res_status', value: false, operator: '=' }];
     }
     if (routeData.entity_name === 'user') {
-      return [...base, { value: ['super_admin', 'company_admin'], operator: 'NOT IN', column_name: 'users.role' }];
+      return [...base, { value: ['super_admin', 'company_admin'], operator: 'NOT IN', column_name: 'tenant_users.role' }];
     }
     if (routeData.entity_name === 'master_entity') {
       return [...base, { column_name: `${routeData.primary_table}.entity_type`, value: 'help_page_module', operator: '!=' }];
@@ -169,6 +166,7 @@ export class RouteUpdateService {
     const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
     const finalAllCol = this.buildSearchAllCol(routeData);
     const children = this.buildChildren(routeData, routeDataArray);
+
     return {
       path: targetPath,
       loadComponent: this.componentMap[routeData.component_class_name] || null,
@@ -220,6 +218,7 @@ export class RouteUpdateService {
         },
         defaultPermission: permissionListJSON[keys.view] || false,
         defaultKey: keys.view,
+        dynamicLcpRoute: true,
       },
     };
   }
@@ -234,8 +233,17 @@ export class RouteUpdateService {
           .map((r: any) => this.buildRoute(r, routeDataArray, permissionListJSON));
 
         return [dynamicRoutes];
-      }),
+      })
     );
+  }
+
+  getComponentLoader(entityName: string): (() => Promise<any>) | null {
+    const menuItem = this.getMenuList().find((item: any) => item.entity_name === entityName);
+    return menuItem?.component_class_name ? this.getComponentLoaderByClass(menuItem.component_class_name) : null;
+  }
+
+  getComponentLoaderByClass(componentClassName: string): (() => Promise<any>) | null {
+    return this.componentMap[componentClassName] || null;
   }
 
   async getPageInfo(entity_name: any): Promise<any> {
@@ -265,23 +273,6 @@ export class RouteUpdateService {
       });
   }
 
-  /**
-   * Resolves a lazy component loader directly by entity_name.
-   * Looks up component_class_name from unorgmenuList (keyed by entity_name),
-   * then returns the matching loader from componentMap.
-   * Returns null if no match is found.
-   * Use this in dashboard's createEntityComponent instead of getPageInfo.
-   */
-  getComponentLoader(entity_name: string): (() => Promise<any>) | null {
-    const menuItem = this.getMenuList().find((r: any) => r.entity_name === entity_name && r.component_class_name);
-    if (!menuItem) return null;
-    return this.componentMap[menuItem.component_class_name] ?? null;
-  }
-
-  getComponentLoaderByClass(component_class_name: string): (() => Promise<any>) | null {
-    return this.componentMap[component_class_name] ?? null;
-  }
-
   addDynamicRoutes() {
     try {
       const config = this.localStore.getData('config');
@@ -302,9 +293,23 @@ export class RouteUpdateService {
       const routerConfig = this.router.config;
       const appLayoutRoute = routerConfig.find((route) => route.path === '');
       if (appLayoutRoute?.children) {
+        appLayoutRoute.children = appLayoutRoute.children.filter((route: any) => !route.data?.dynamicLcpRoute);
         appLayoutRoute.children.push(...dynamicRoutes);
         this.router.resetConfig(routerConfig);
       }
     });
+    try {
+      const config = this.localStore.getData('config');
+      if (config) {
+        const resn = JSON.parse(config);
+        if (resn?.favicon) {
+          this.changeFavicon(this.apiUrl + '/' + resn.favicon);
+        }
+      }
+    } catch {
+      // non-critical ΓÇö favicon failure should not block routing
+    }
   }
 }
+
+

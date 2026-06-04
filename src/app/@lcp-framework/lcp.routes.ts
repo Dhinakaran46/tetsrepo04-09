@@ -14,11 +14,23 @@ import { loginGuard } from './guards/login.guard';
 import { permissionGuardFactory } from './guards/permission.guard';
 import { ExampleClientDatatableComponent } from './pages/example-client-datatable/example-client-datatable.component';
 import { ApiBaseUrlComponent } from './pages/api-base-url/api-base-url.component';
+import { TenantRegisterationComponent } from './pages/tenant-registeration/tenant-registeration.component';
+import { CompanySelectionComponent } from './pages/company-selection/company-selection.component';
+import {
+  companySelectedGuard,
+  companySelectionPageGuard,
+} from './guards/company-selection.guard';
 export const routes: Routes = [
+  {
+    path: 'select-company',
+    component: CompanySelectionComponent,
+    canActivate: [authGuard, companySelectionPageGuard],
+    title: 'Select Company',
+  },
   {
     path: '',
     component: AppLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, companySelectedGuard],
     canActivateChild: [permissionGuardFactory()],
     children: [
       {
@@ -86,6 +98,19 @@ export const routes: Routes = [
         path: 'login',
         component: CoverLoginComponent,
         title: 'Login',
+      },
+      {
+        path: 'tenant/registration',
+        component: TenantRegisterationComponent,
+        title: 'Tenant Registration',
+        data: {
+          hideMedia: true,
+        },
+      },
+      {
+        path: 'tenant-registeration',
+        redirectTo: 'tenant/registration',
+        pathMatch: 'full',
       },
       {
         path: 'forget-password',
