@@ -1430,6 +1430,7 @@ export class MasterListComponent implements OnChanges {
       'export_template_module',
       'menu_module',
       'entity_user_role_map_module',
+      'user_company_map_module',
       'entity_form_module',
       'language_contents_module',
       'help_page_module',

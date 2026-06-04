@@ -2331,6 +2331,7 @@ export class MasterEntityComponent implements OnInit {
                 this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE,
                 this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE,
                 this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE,
+                this.commonConfig.ENTITY_TYPES.USER_COMPANY_MAP_MODULE,
                 this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE,
                 this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE,
                 this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE,

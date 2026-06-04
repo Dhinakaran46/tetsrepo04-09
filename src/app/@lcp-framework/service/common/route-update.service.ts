@@ -24,6 +24,7 @@ export class RouteUpdateService {
     static_page_builder_module: () => import('../../pages/static-page/static-page.component').then((m) => m.StaticPageComponent),
     form_builder_module: () => import('../../pages/form-builder/form-builder.component').then((m) => m.FormBuilderComponent),
     entity_user_role_map_module: () => import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
+    user_company_map_module: () => import('../../pages/user-company-map/user-company-map.component').then((m) => m.UserCompanyMapComponent),
     entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
     about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
     ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
