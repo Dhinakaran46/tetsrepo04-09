@@ -119,6 +119,26 @@ export const lcpPresetExtension: FormlyExtension = {
         }
       };
     }
+
+    const inputType = field.props?.type || field.templateOptions?.type;
+    if (field.type === 'input' && (inputType === 'date' || inputType === 'datetime-local' || inputType === 'datetime')) {
+      field.hooks = field.hooks || {};
+      const originalOnInit = field.hooks.onInit;
+      field.hooks.onInit = (f: FormlyFieldConfig) => {
+        if (originalOnInit) originalOnInit(f);
+        const control = f.formControl;
+        if (control) {
+          if (control.value === '') {
+            control.setValue(null);
+          }
+          control.valueChanges.subscribe((val) => {
+            if (val === '') {
+              control.setValue(null);
+            }
+          });
+        }
+      };
+    }
   },
 };
 

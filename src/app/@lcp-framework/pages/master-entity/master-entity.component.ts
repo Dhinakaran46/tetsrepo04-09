@@ -1212,7 +1212,7 @@ export class MasterEntityComponent implements OnInit {
     private translate: TranslateService,
     private titleService: Title,
     private openaiService: OpenaiService,
-    private cdr: ChangeDetectorRef,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -1360,7 +1360,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1385,7 +1385,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1425,7 +1425,7 @@ export class MasterEntityComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-        },
+        }
       );
     }
   }
@@ -1502,7 +1502,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1702,7 +1702,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1915,6 +1915,28 @@ export class MasterEntityComponent implements OnInit {
     this.update_json_schema.data['table5'] = newly_added_items;
     return this.update_json_schema;
   }
+  escapePlaceholders(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    if (typeof obj === 'string') {
+      return obj
+        .replace(/@table/g, '##table')
+        .replace(/{{{/g, '{#{') // Replace {{{ with {#{
+        .replace(/}}}/g, '}#}'); // Replace }}} with }#}
+    }
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.escapePlaceholders(item));
+    }
+    if (typeof obj === 'object') {
+      const result: any = {};
+      for (const key of Object.keys(obj)) {
+        result[key] = this.escapePlaceholders(obj[key]);
+      }
+      return result;
+    }
+    return obj;
+  }
 
   // prepareJSON(data: any): string {
   //   return JSON.stringify(JSON.parse(data));
@@ -1922,20 +1944,15 @@ export class MasterEntityComponent implements OnInit {
   prepareJSON(data: any, replace_param: boolean = false): string {
     try {
       // Parse the input data into a JavaScript object
-      const parsedData = JSON.parse(data);
+      let parsedData = typeof data === 'string' ? JSON.parse(data) : data;
 
-      // Convert the object back to a JSON string
-      let jsonString = JSON.stringify(parsedData);
-
-      // Perform replacements if replace_param is true
+      // Perform replacements if replace_param is true recursively on values only
       if (replace_param) {
-        jsonString = jsonString
-          .replace(/@table/g, '##table')
-          .replace(/{{{/g, '{#{') // Replace {{{ with {#{
-          .replace(/}}}/g, '}#}'); // Replace }}} with }#}
+        parsedData = this.escapePlaceholders(parsedData);
       }
 
-      return jsonString;
+      // Convert the object back to a JSON string
+      return JSON.stringify(parsedData);
     } catch (error) {
       console.error('Error preparing JSON:', error);
       throw new Error('Invalid JSON input');
@@ -1991,7 +2008,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -2220,7 +2237,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      },
+      }
     );
   }
 
@@ -2251,7 +2268,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      },
+      }
     );
   }
 
@@ -2290,14 +2307,14 @@ export class MasterEntityComponent implements OnInit {
         if (response.status && response.code === 200) {
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module',
+            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
           );
           this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
           );
           // For 'child_process' linkType (only grid_builder_module)
           this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
           );
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
@@ -2321,7 +2338,7 @@ export class MasterEntityComponent implements OnInit {
                 this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE,
                 this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE,
                 this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
-              ].includes(entity.entity_type),
+              ].includes(entity.entity_type)
           );
           this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];
         }
@@ -2330,7 +2347,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
