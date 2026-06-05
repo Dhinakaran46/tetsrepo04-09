@@ -4,6 +4,7 @@
   [class.sticky-enabled]="isStickyHeaderEnabled"
   [class.sticky-disabled]="!isStickyHeaderEnabled"
   [attr.data-table-level]="tableLevel"
+  [style.--table-level]="tableLevel"
 >
   <div class="mb-2.5">
     @if (headerStaticEntityName) {
@@ -19,7 +20,7 @@
     </div>
     }
     <div class="datatable-toolbar mb-1 mt-0 flex w-full min-w-0 flex-col gap-5 px-2 py-2 md:flex-row md:items-center">
-      <div class="header-panel mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
+      <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
         <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
           {{ title | translate }}
         </div>
@@ -594,6 +595,7 @@
                   scope="col"
                   class="max-w-140 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
                   [ngClass]="{ 'datatable-sticky-column': isStickyHeaderEnabled && isStickyGridColumn(col) }"
+                  [class.expanded-column-header]="expandedColumnChildGrid && expandedColumnChildGrid.colHeader === col.header"
                   appDynamicFontSize="body"
                   (click)="sortColumn(col)"
                   ngxTippy
@@ -637,7 +639,7 @@
               </tr>
               } @if (!loading) { @if (items && items.length > 0) { @for(item of items; track item.uuid || item.id || $index; let row_index = $index) {
               <ng-container>
-                <tr>
+                <tr [class.expanded-row]="expandedColumnChildGrid && expandedColumnChildGrid.rowIndex === row_index + 1">
                   @if(permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
                   <td class="align-items-center flex gap-2">
                     <button class="expand-collapse-btn" (click)="toggleRow(item, row_index + 1)">
@@ -716,6 +718,10 @@
                   <td
                     class="max-w-150 truncate whitespace-nowrap"
                     [ngClass]="[isStickyHeaderEnabled && isStickyGridColumn(col) ? 'datatable-sticky-column' : '', col.cellClass || '']"
+                    [class.expanded-column-cell]="expandedColumnChildGrid && expandedColumnChildGrid.colHeader === col.header"
+                    [class.expanded-column-cell-active]="
+                      expandedColumnChildGrid && expandedColumnChildGrid.rowIndex === row_index + 1 && expandedColumnChildGrid.colHeader === col.header
+                    "
                   >
                     @if (!col.customTemplate && col.is_grid_column == 'true') {
                     <!-- NEW: Check if column has field_html_content -->
@@ -830,9 +836,9 @@
                 </tr>
                 <!-- Child datatable row -->
                 @if (expandedItem === row_index + 1 && permissions && this.masterInfo?.permissions?.child_details) {
-                <tr>
+                <tr class="expanded-child-row">
                   <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
-                    <div class="datatable-child-host bg-gray-50 p-4">
+                    <div class="datatable-child-host expanded-child-highlight bg-gray-50 p-3">
                       <!-- Child content -->
                       <ng-template #childMasterListContainer></ng-template>
                     </div>
@@ -842,9 +848,17 @@
                 <!-- Add for each column child link type -->
                 @for (col of headercolumns; track col.field || col.header || $index) { @if ((col.link_type === 'child_grid' || col.link_type ===
                 'child_component') && isColumnChildGridExpanded(row_index + 1, col)) {
-                <tr>
+                <tr [class.expanded-child-row]="isColumnChildGridExpanded(row_index + 1, col)">
                   <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
-                    <div class="datatable-child-host bg-gray-50 p-4">
+                    <div class="datatable-child-host bg-gray-50 p-3" [class.expanded-child-highlight]="isColumnChildGridExpanded(row_index + 1, col)">
+                      <div class="expanded-child-banner mb-3 flex items-center gap-2 rounded bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>
+                          Showing <strong>{{ col.header | translate }}</strong> @if (getRowDisplayName(item)) { for
+                          <strong>{{ getRowDisplayName(item) }}</strong>
+                          }
+                        </span>
+                      </div>
                       @if ( col.link_type === 'child_grid' || (col.link_type === 'child_component' && getChildComponentMode(col) === 'popup_grid')) {
                       <ng-template #columnChildMasterListContainer></ng-template>
                       } @else { @if (getChildComponentMode(col) === 'popup_details') {

@@ -3768,6 +3768,38 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header;
   }
 
+  getRowDisplayName(item: any): string {
+    if (!item) return '';
+
+    // Prioritize friendly visual key names first
+    const friendlyKeys = ['name', 'title', 'asset_name', 'floor_name', 'building_name', 'label'];
+    for (const key of friendlyKeys) {
+      if (item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== '') {
+        return String(item[key]);
+      }
+    }
+
+    if (this.headercolumns && this.headercolumns.length > 0) {
+      // Find the first visible grid column in headercolumns
+      const firstCol = this.headercolumns.find((col) => col.is_grid_column === 'true' && !col.colFilterHide);
+      if (firstCol) {
+        const fieldName = firstCol.field || firstCol.header;
+        if (fieldName && item[fieldName] !== undefined) {
+          return String(item[fieldName]);
+        }
+      }
+
+      // Fallback to first available column in headercolumns
+      const fallbackCol = this.headercolumns[0];
+      const fallbackField = fallbackCol?.field || fallbackCol?.header;
+      if (fallbackField && item[fallbackField] !== undefined) {
+        return String(item[fallbackField]);
+      }
+    }
+
+    return item.code || item.id || '';
+  }
+
   getChildComponentMode(col: any): string {
     const normalizedMode = this.normalizeChildComponentMode(col?.link_mode);
     if (normalizedMode) {

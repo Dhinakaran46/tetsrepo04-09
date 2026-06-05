@@ -118,13 +118,22 @@ export class ClientDatatableComponent implements OnInit {
   sortDirection: 'asc' | 'desc' = 'asc';
 
   private _originalData: any[] = [];
-  isMenuOpen = false;
+  isFilterMenuOpen = false;
+  isColumnSelectorOpen = false;
+  isExportMenuOpen = false;
   filterCondition = false;
   filterConditions: FilterCondition[] = [];
 
   // Column visibility
 
   constructor(private cdr: ChangeDetectorRef, private timezoneService: TimezoneService) {}
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    this.isFilterMenuOpen = false;
+    this.isColumnSelectorOpen = false;
+    this.isExportMenuOpen = false;
+  }
 
   ngOnInit() {
     this.pageSize = this.config.defaultPageSize || 10;
@@ -144,10 +153,25 @@ export class ClientDatatableComponent implements OnInit {
     }
   }
 
-  // Dropdown toggle
-  toggleMenu(event: Event) {
+  toggleFilterMenu(event: Event) {
     event.stopPropagation();
-    this.isMenuOpen = !this.isMenuOpen;
+    this.isFilterMenuOpen = !this.isFilterMenuOpen;
+    this.isColumnSelectorOpen = false;
+    this.isExportMenuOpen = false;
+  }
+
+  toggleColumnSelector(event: Event) {
+    event.stopPropagation();
+    this.isColumnSelectorOpen = !this.isColumnSelectorOpen;
+    this.isFilterMenuOpen = false;
+    this.isExportMenuOpen = false;
+  }
+
+  toggleExportMenu(event: Event) {
+    event.stopPropagation();
+    this.isExportMenuOpen = !this.isExportMenuOpen;
+    this.isFilterMenuOpen = false;
+    this.isColumnSelectorOpen = false;
   }
 
   // Open Status Modal
@@ -234,19 +258,19 @@ export class ClientDatatableComponent implements OnInit {
   clearFilters() {
     this.filterConditions = [];
 
-    this.isMenuOpen = false;
+    this.isFilterMenuOpen = false;
     const filteredData = [...this._originalData];
     this.dataChange.emit(filteredData);
   }
 
   applyFilters() {
-    this.isMenuOpen = false;
+    this.isFilterMenuOpen = false;
     this.updateData();
   }
 
   cancelFilters() {
     this.filterConditions = [];
-    this.isMenuOpen = false;
+    this.isFilterMenuOpen = false;
   }
 
   selectAllColumns() {
@@ -637,7 +661,7 @@ export class ClientDatatableComponent implements OnInit {
     }
     return value;
   }
-  
+
   /*isDateLike(value: any): boolean {
     if (!value || typeof value !== 'string') return false;
     // ISO, yyyy-MM-dd, yyyy-MM-ddTHH:mm:ss, etc.
