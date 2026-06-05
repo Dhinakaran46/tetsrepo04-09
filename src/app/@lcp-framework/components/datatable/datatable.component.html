@@ -8,6 +8,11 @@
 >
   <div class="mb-2.5">
     @if (headerStaticEntityName) {
+    <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
+      <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
+        {{ title | translate }}
+      </div>
+    </div>
     <div class="mb-4 pb-5 pt-5">
       <app-static-page
         [uuid]="staticPageUuid"
@@ -20,11 +25,13 @@
     </div>
     }
     <div class="datatable-toolbar mb-1 mt-0 flex w-full min-w-0 flex-col gap-5 px-2 py-2 md:flex-row md:items-center">
+      @if (!headerStaticEntityName) {
       <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
         <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
           {{ title | translate }}
         </div>
       </div>
+      }
       <div class="datatable-toolbar-main flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
         <div class="flex flex-col gap-2 md:flex-row md:items-center">
           @if (save_grid_views && enableAutosave) {
