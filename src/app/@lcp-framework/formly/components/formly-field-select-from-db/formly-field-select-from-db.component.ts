@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FieldType } from '@ngx-formly/core';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { GridApiService } from '../../../service/common/grid.service';
 import { FormControl, FormGroup } from '@angular/forms';
 import { LocalStorageService } from '../../../service/common/local-storage.service';
@@ -20,7 +20,13 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
   user_info: any = null;
   unique_id: any;
 
-  constructor(private route: ActivatedRoute, public router: Router, private gridApiService: GridApiService, private localStorageService: LocalStorageService) {
+  constructor(
+    private route: ActivatedRoute,
+    public router: Router,
+    private gridApiService: GridApiService,
+    private localStorageService: LocalStorageService,
+    private cdr: ChangeDetectorRef
+  ) {
     super();
   }
 
@@ -151,7 +157,8 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
             }));
           }
           return [];
-        })
+        }),
+        tap(() => this.cdr.markForCheck())
       );
     }
   }

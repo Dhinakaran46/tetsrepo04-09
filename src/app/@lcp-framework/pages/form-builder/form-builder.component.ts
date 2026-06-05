@@ -108,7 +108,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     public location: Location,
     private translate: TranslateService,
     private titleService: Title,
-    private localStorageService: LocalStorageService,
+    private localStorageService: LocalStorageService
   ) {}
 
   ngOnInit() {
@@ -314,7 +314,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         }),
         catchError(() => {
           return of(null); // Handle errors gracefully, no validation error on failure
-        }),
+        })
       );
     };
   }
@@ -333,10 +333,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           this.localStorageService.formatPayloadWithPolicyConditions(
             this.replacePlaceholders(this.listParams[key], this.model, required),
             this.policyData,
-            field?.attached_policies || [],
+            field?.attached_policies || []
           ),
           '$session_user_id',
-          this.user_info.main.id,
+          this.user_info.main.id
         );
         listParams.company_id = 1;
         listParams = this.localStorageService.replaceUniqueId(listParams, '$unique_id', this.unique_id || '');
@@ -359,7 +359,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           },
           (error) => {
             observer.error(error);
-          },
+          }
         );
       } else {
         observer.next([]);
@@ -459,7 +459,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         if (this.uploadedFiles.length) this.deleteImageByName(this.uploadedFiles);
-      },
+      }
     );
   }
 
@@ -533,7 +533,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                 //   this.oldUploadedFiles.push(this.defaultData[controlKey]);
                 // }
               }
-            }),
+            })
           );
           uploadObservables.push(uploadObservable);
         }
@@ -1037,7 +1037,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.router.navigate(['/dashboard']);
-      },
+      }
     );
   }
 
@@ -1130,7 +1130,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.router.navigate(['/dashboard']);
-      },
+      }
     );
   }
 
@@ -1251,6 +1251,96 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         }
       }
 
+      // Compile custom validators if defined in JSON
+      if (group.validators) {
+        Object.keys(group.validators).forEach((vKey) => {
+          if (vKey !== 'validation') {
+            const valConfig = group.validators[vKey];
+            if (valConfig && typeof valConfig.expression === 'string') {
+              const expressionStr = valConfig.expression.trim();
+
+              if (expressionStr.startsWith('/') && expressionStr.endsWith('/')) {
+                // Compile as regular expression
+                try {
+                  const regex = new RegExp(expressionStr.slice(1, -1));
+                  valConfig.expression = (control: any) => {
+                    if (!control.value) return true; // Empty is valid, handled by required validator
+                    return regex.test(control.value);
+                  };
+                } catch (e) {
+                  console.error('Error compiling regex validator:', expressionStr, e);
+                }
+              } else {
+                // Compile as JS Arrow Function
+                try {
+                  const compiledFn = new Function('control', `return (${expressionStr})(control);`);
+                  valConfig.expression = (control: any) => {
+                    try {
+                      const result = compiledFn(control);
+                      // Bridge Angular validator return logic (null/object) with Formly validator format (true/false)
+                      if (result === true || result === null) return true;
+                      if (result === false || typeof result === 'object') return false;
+                      return !!result;
+                    } catch (e) {
+                      console.error('Error executing dynamic validator:', expressionStr, e);
+                      return true; // Fallback to valid on execution error
+                    }
+                  };
+                } catch (e) {
+                  console.error('Error compiling arrow function validator:', expressionStr, e);
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Heuristic auto-validation attachment with granular opt-out
+      const disableVal = group.props?.disableValidation || group.templateOptions?.disableValidation;
+      const isValDisabled = (name: string) => {
+        if (disableVal === true) return true;
+        if (Array.isArray(disableVal)) return disableVal.includes(name);
+        return false;
+      };
+
+      const isLeafField = group.type && !group.fieldGroup && !group.fieldArray;
+      if (isLeafField && disableVal !== true) {
+        // Initialize validators and validators.validation structure
+        group.validators = group.validators || {};
+        group.validators.validation = group.validators.validation || [];
+        if (typeof group.validators.validation === 'string') {
+          group.validators.validation = [group.validators.validation];
+        }
+
+        const addValidator = (name: string) => {
+          if (!isValDisabled(name) && !group.validators.validation.includes(name)) {
+            group.validators.validation.push(name);
+          }
+        };
+
+        const fieldKey = group.key ? String(group.key).toLowerCase() : '';
+        const fieldType = (group.type || '').toLowerCase();
+        const inputType = (group.props?.type || group.templateOptions?.type || '').toLowerCase();
+
+        // Heuristics
+        if (fieldKey === 'email' || inputType === 'email') {
+          addValidator('email');
+          addValidator('noHtml');
+        } else if (fieldKey === 'phone' || fieldKey === 'phone_number' || fieldKey.includes('phone')) {
+          addValidator('phone');
+          addValidator('phoneAndCountry');
+        } else if (fieldKey === 'country_code') {
+          addValidator('phoneAndCountry');
+        } else if (fieldKey === 'username') {
+          addValidator('username');
+          addValidator('noHtml');
+        } else if (fieldKey === 'dob' || fieldKey === 'birth_date' || fieldKey.includes('birth')) {
+          addValidator('noFutureDate');
+        } else if ((fieldType === 'input' && !['date', 'number', 'email', 'password'].includes(inputType)) || fieldType === 'textarea') {
+          addValidator('noHtml');
+        }
+      }
+
       // Process fieldArray (used in repeatable sections) if it exists and contains a fieldGroup
       if (group.fieldArray && Array.isArray(group.fieldArray.fieldGroup)) {
         group.fieldArray.fieldGroup = this.processFields(group.fieldArray.fieldGroup);
@@ -1278,7 +1368,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                     if (parentValue) {
                       this.fetchList(f, group.key, true);
                     }
-                  }),
+                  })
                 )
                 .subscribe();
             }
@@ -1299,7 +1389,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                     if (parentValue) {
                       this.fetchList(f, group.key, true);
                     }
-                  }),
+                  })
                 )
                 .subscribe();
             }
@@ -1364,15 +1454,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.valueColumn
                     : opts.valueColumn.startsWith(`${opts.table}.`)
-                      ? opts.valueColumn
-                      : `${opts.table}.${opts.valueColumn}`,
+                    ? opts.valueColumn
+                    : `${opts.table}.${opts.valueColumn}`,
                 ],
                 [
                   opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.labelColumn
                     : opts.labelColumn.startsWith(`${opts.table}.`)
-                      ? opts.labelColumn
-                      : `${opts.table}.${opts.labelColumn}`,
+                    ? opts.labelColumn
+                    : `${opts.table}.${opts.labelColumn}`,
                 ],
                 ...additionalColumns,
               ],
@@ -1403,15 +1493,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.valueColumn
                     : opts.valueColumn.startsWith(`${opts.table}.`)
-                      ? opts.valueColumn
-                      : `${opts.table}.${opts.valueColumn}`,
+                    ? opts.valueColumn
+                    : `${opts.table}.${opts.valueColumn}`,
                 ],
                 [
                   opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.labelColumn
                     : opts.labelColumn.startsWith(`${opts.table}.`)
-                      ? opts.labelColumn
-                      : `${opts.table}.${opts.labelColumn}`,
+                    ? opts.labelColumn
+                    : `${opts.table}.${opts.labelColumn}`,
                 ],
                 ...additionalColumns,
               ],
@@ -1441,15 +1531,15 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
                   opts.valueColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.valueColumn
                     : opts.valueColumn.startsWith(`${opts.table}.`)
-                      ? opts.valueColumn
-                      : `${opts.table}.${opts.valueColumn}`,
+                    ? opts.valueColumn
+                    : `${opts.table}.${opts.valueColumn}`,
                 ],
                 [
                   opts.labelColumn.includes('CONCAT(') || (opts?.includes || [])?.length
                     ? opts.labelColumn
                     : opts.labelColumn.startsWith(`${opts.table}.`)
-                      ? opts.labelColumn
-                      : `${opts.table}.${opts.labelColumn}`,
+                    ? opts.labelColumn
+                    : `${opts.table}.${opts.labelColumn}`,
                 ],
                 ...additionalColumns,
               ],
@@ -1532,7 +1622,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           item.entity_name === entityName &&
           (uuid
             ? item.action_slug === 'edit' || item.action_slug === 'popup_edit'
-            : item.action_slug === 'view' || item.action_slug === 'add' || item.action_slug === 'popup_add'),
+            : item.action_slug === 'view' || item.action_slug === 'add' || item.action_slug === 'popup_add')
       );
       if (menuItem) {
         menuPermissionId = menuItem.permission_id;
