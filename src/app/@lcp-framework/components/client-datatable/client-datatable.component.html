@@ -25,7 +25,7 @@
 
       <!-- Filter Button -->
       <button
-        (click)="toggleMenu($event)"
+        (click)="toggleFilterMenu($event)"
         aria-expanded="true"
         aria-haspopup="true"
         class="filter-button flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
@@ -38,8 +38,9 @@
           getNonEmptyFilterCount() }}</span>}
       </button>
 
-      @if (isMenuOpen) {
+      @if (isFilterMenuOpen) {
       <div
+        (click)="$event.stopPropagation()"
         aria-labelledby="options-menu"
         class="advancedfiltercontainer absolute z-10 mt-2 divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
         role="menu">
@@ -133,17 +134,17 @@
 
       <!-- Column Selector -->
       @if (config.headerConfig?.enableColumnSelector) {
-      <div class="dropdown mb-2 md:mb-0 relative">
+      <div class="dropdown mb-2 md:mb-0 relative" (click)="$event.stopPropagation()">
         <button
           type="button"
-          (click)="isMenuOpen = !isMenuOpen"
+          (click)="toggleColumnSelector($event)"
           class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
           appDynamicFontSize="body">
           <i class="fa-solid fa-table-columns"></i>&nbsp;
           <span class="ltr:mr-1 rtl:ml-1">{{ 'table_multiselect_1' | translate
             }}</span>
         </button>
-        @if (isMenuOpen) {
+        @if (isColumnSelectorOpen) {
         <ul @toggleAnimation class="w-max ltr:left-0 rtl:right-0">
           <li>
             <div class="flex items-center border-b border-gray-200 px-4 py-1">
@@ -176,16 +177,16 @@
 
       <!-- Export Menu -->
       @if (config.headerConfig?.enableExport) {
-      <div>
+      <div (click)="$event.stopPropagation()">
         <div class="dropdown mb-2 md:mb-0 relative">
           <button
             type="button"
-            (click)="isMenuOpen = !isMenuOpen"
+            (click)="toggleExportMenu($event)"
             class="flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark">
             <i class="mr-1 fa-solid fa-download"></i>
             <span class="hidden md:inline">{{ 'export' | translate }}</span>
           </button>
-          @if (isMenuOpen) {
+          @if (isExportMenuOpen) {
           <ul @toggleAnimation class="whitespace-nowrap ltr:right-0 rtl:left-0">
             <li>
               <a (click)="exportToPDF()" href="javascript:;">
