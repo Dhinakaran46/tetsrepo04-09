@@ -730,3 +730,151 @@ tbody td.sticky:is(.dark *) {
     justify-self: start;
   }
 }
+
+/* ==========================================
+   Drill Down / Column Expansion Highlights
+   ========================================== */
+
+/* 
+   Fully dynamic color calculation using HSL. 
+   Calculates distinct hues based on --table-level custom property.
+   Works for infinite nesting levels!
+*/
+.panel {
+  // Base hue starts at 220 (Royal Blue) and shifts by 150 degrees per level to get clean, professional hues (Blue, Coral Red, Emerald Green, Purple)
+  --drilldown-hue: calc(220 + var(--table-level, 0) * 150);
+
+  --drilldown-primary: hsl(var(--drilldown-hue), 55%, 45%);
+  --drilldown-light: hsla(var(--drilldown-hue), 55%, 45%, 0.16);
+  --drilldown-ultra-light: hsla(var(--drilldown-hue), 55%, 45%, 0.04);
+  --drilldown-border: hsla(var(--drilldown-hue), 55%, 45%, 0.3);
+
+  &:is(.dark *) {
+    --drilldown-primary: hsl(var(--drilldown-hue), 60%, 65%);
+    --drilldown-light: hsla(var(--drilldown-hue), 60%, 65%, 0.24);
+    --drilldown-ultra-light: hsla(var(--drilldown-hue), 60%, 65%, 0.08);
+    --drilldown-border: hsla(var(--drilldown-hue), 60%, 65%, 0.4);
+  }
+}
+
+/* Header highlight for expanded column */
+th.expanded-column-header {
+  position: relative !important;
+  background-color: transparent !important;
+  color: var(--drilldown-primary) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 8px;
+    right: 8px;
+    height: 3px;
+    background-color: var(--drilldown-primary);
+    border-radius: 3px;
+  }
+}
+
+/* Subtle vertical guide highlighting the whole column of cells */
+td.expanded-column-cell {
+  background-color: var(--drilldown-ultra-light) !important;
+}
+
+/* Strong highlight for the active clicked cell under the expanded column */
+td.expanded-column-cell-active {
+  background-color: transparent !important;
+  color: var(--drilldown-primary) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  position: relative !important;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 4px 8px;
+    background-color: var(--drilldown-light);
+    border-radius: 6px;
+    border: 1px dashed var(--drilldown-border);
+    z-index: 0;
+  }
+
+  // Ensure content inside the cell overlays the absolute background
+  button,
+  span,
+  div,
+  i,
+  a {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Row-level indicator for the active row containing the expanded cell - no border-left to avoid drawing outside the table boundary */
+tr.expanded-row,
+tr.expanded-row:hover {
+  background-color: var(--drilldown-ultra-light) !important;
+}
+
+/* Subtle background for the child grid row */
+tr.expanded-child-row,
+tr.expanded-child-row:hover {
+  background-color: var(--drilldown-light) !important;
+}
+
+/* Premium styling for the nested child table host - borderless, thick left accent indicator */
+.datatable-child-host.expanded-child-highlight {
+  border: none !important;
+  border-left: 4px solid var(--drilldown-primary) !important;
+  border-radius: 4px 8px 8px 4px;
+  margin: 8px 10px !important;
+  padding: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+  background-color: var(--app-table-bg-color, #ffffff) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:is(.dark *) {
+    border-left-color: var(--drilldown-primary) !important;
+    background-color: var(--app-table-bg-color, #121e32) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* 
+     FIX: Stop nested .panel negative margins from pulling the child grid 
+     outside the wrapper section and overlapping/overrunning the borders.
+  */
+  .panel {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Visual banner for clarifying parent source - modern pill shape badge */
+.expanded-child-banner {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 10px !important;
+  border-radius: 50px !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  background: linear-gradient(135deg, var(--drilldown-light), rgba(255, 255, 255, 0.4)) !important;
+  border: 1px solid var(--drilldown-border) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  color: var(--drilldown-primary) !important;
+  backdrop-filter: blur(4px) !important;
+  margin-bottom: 12px !important; // FIX: snugger spacing between banner and child grid
+  margin-left: 4px !important;
+
+  strong {
+    font-weight: 700 !important;
+    color: var(--drilldown-primary) !important;
+  }
+
+  &:is(.dark *) {
+    background: linear-gradient(135deg, var(--drilldown-light), rgba(18, 30, 49, 0.4)) !important;
+  }
+}
