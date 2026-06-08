@@ -276,7 +276,7 @@ export class ConfigurationComponent implements OnInit {
         {
           table_name: 'app_configurations',
           join_type: 'INNER',
-          join_condition: `app_categories.category_id = app_configurations.category_id`,
+          join_condition: `app_categories.category_id = app_configurations.category_id AND app_categories.category_type_id = app_configurations.category_type_id AND app_categories.company_id = app_configurations.company_id`,
         },
       ],
       group_by: ['app_categories.id'],

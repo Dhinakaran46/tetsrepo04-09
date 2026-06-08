@@ -274,7 +274,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             {
               header: 'delegated_by',
               clause_type: 'where',
-              field_value: `u_delegator.email`,
+              field_value: `ud_delegator.email`,
               is_sortable: 'true',
               column_order: '4.00',
               column_width: '1.00',
@@ -326,7 +326,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       {
         header: 'requested_by',
         clause_type: 'where',
-        field_value: 'u1.email',
+        field_value: 'ud1.email',
         is_sortable: 'true',
         column_order: '7.00',
         column_width: '1.00',
@@ -372,7 +372,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             {
               header: 'reviewed_by',
               clause_type: 'where',
-              field_value: 'u2.email',
+              field_value: 'ud2.email',
               is_sortable: 'true',
               column_order: '10.00',
               column_width: '3.00',
@@ -461,8 +461,9 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               header: 'approvers',
               clause_type: 'where',
               field_value: `(
-            SELECT string_agg(u3.email, ', ')
+            SELECT string_agg(ud3.email, ', ')
             FROM users u3
+            LEFT JOIN tenant_users ud3 ON ud3.id = u3.tenant_user_id
             WHERE u3.id IN (
               SELECT apjwu1.user_id 
               FROM approval_process_job_workflow_users apjwu1 
@@ -494,8 +495,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.review_status',
           'approval_process_job_workflows.approver_type',
           'approval_process_job_workflows.approver_order_no',
@@ -565,8 +566,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.reason',
           'approval_process_job_workflows.screen_id',
           'approval_process_job_workflows.url',
@@ -633,8 +634,9 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             join_type: 'LEFT',
             table_name: `LATERAL (
               SELECT awf.approver_type, awf.approver_order_no, (
-                  SELECT string_agg(u4.email, ', ')
+                  SELECT string_agg(ud4.email, ', ')
                   FROM users u4
+                  LEFT JOIN tenant_users ud4 ON ud4.id = u4.tenant_user_id
                   WHERE u4.id IN (
                     SELECT apjwu1.user_id
                     FROM approval_process_job_workflow_users apjwu1
@@ -685,8 +687,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.review_status',
           'approval_process_job_workflows.approver_type',
           'approval_process_job_workflows.approver_order_no',
@@ -815,8 +817,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.review_status',
           'approval_process_job_workflows.approver_type',
           'approval_process_job_workflows.approver_order_no',
@@ -826,7 +828,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
-          'u_delegator.email',
+          'ud_delegator.email',
           'd.start_date',
           'd.end_date',
           'approval_process_job_workflows.details',
@@ -872,6 +874,11 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             join_type: 'LEFT',
             table_name: 'users u_delegator',
             join_condition: 'u_delegator.id = d.user_id',
+          },
+          {
+            join_type: 'LEFT',
+            table_name: 'tenant_users ud_delegator',
+            join_condition: 'ud_delegator.id = u_delegator.tenant_user_id',
           },
         ],
         // having_conditions: null,
@@ -1206,7 +1213,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 5,
         status_id: 1,
         company_id: 1,
-        field: 'u1.email',
+        field: 'ud1.email',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('requested_by'),
@@ -1247,7 +1254,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               order_no: 8,
               status_id: 1,
               company_id: 1,
-              field: 'u2.email',
+              field: 'ud2.email',
               clause_type: 'where',
               sorting: true,
               title: this.translate.instant('reviewed_by'),

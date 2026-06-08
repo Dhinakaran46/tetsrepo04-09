@@ -268,7 +268,7 @@ export class UserConfigurationComponent implements OnInit {
       },
     ];
     // If a user is selected, filter by user_id
-    let appcondition = `app_categories.category_id = app_user_configurations.category_id`;
+    let appcondition = `app_categories.category_id = app_user_configurations.category_id AND app_categories.category_type_id = app_user_configurations.category_type_id AND app_categories.company_id = app_user_configurations.company_id`;
     if (this.selectedUserId) {
       appcondition += ` AND app_user_configurations.user_id = ` + this.selectedUserId;
     }

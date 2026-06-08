@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { commonConfig } from '../../config/common.config';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { CryptoHttpService } from '../crypto-http.service';
+import * as CryptoJS from 'crypto-js';
 export interface ApiResponce {
   code: number;
   status: boolean;
@@ -26,16 +27,79 @@ export class GridApiService {
   }
   constructor(private http: HttpClient, private cryptoHttp: CryptoHttpService) {}
 
+  private getScopedKey(key: string): string {
+    const scope = (window.location.hostname.replace('/', '') + '_' + (window.location.port || window.location.pathname)).replace('/', '');
+    return `${scope}_${key}`;
+  }
+
+  private parseJsonSafe(value: any, fallback: any = null): any {
+    try {
+      return value ? JSON.parse(value) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  private readUserData(): any {
+    const rawValue = localStorage.getItem(this.getScopedKey('user_data'));
+    if (!rawValue) return null;
+
+    const rawJson = this.parseJsonSafe(rawValue);
+    if (rawJson) return rawJson;
+
+    try {
+      const decrypted = CryptoJS.AES.decrypt(rawValue, 'user_data').toString(CryptoJS.enc.Utf8);
+      return this.parseJsonSafe(decrypted);
+    } catch {
+      return null;
+    }
+  }
+
+  private getActiveCompanyId(): number {
+    const selectedCompanyId = Number(localStorage.getItem(this.getScopedKey('selected_company_id')) || 0);
+    if (selectedCompanyId) return selectedCompanyId;
+
+    const userData = this.readUserData();
+    return Number(
+      userData?.main?.company_id ||
+        userData?.company?.id ||
+        userData?.main?.company?.id ||
+        userData?.main?.selected_company_id ||
+        0,
+    );
+  }
+
+  private withActiveCompany(data: any): any {
+    if (!data || typeof data !== 'object' || data instanceof FormData) return data;
+
+    const activeCompanyId = this.getActiveCompanyId();
+    if (!activeCompanyId) return data;
+
+    const payloadCompanyId = Number(data.company_id || 0);
+    if (payloadCompanyId === 0 && Object.prototype.hasOwnProperty.call(data, 'company_id')) {
+      return data;
+    }
+
+    if (!payloadCompanyId || payloadCompanyId === 1) {
+      return {
+        ...data,
+        company_id: activeCompanyId,
+      };
+    }
+
+    return data;
+  }
+
   processImportJob(uuid: any): Observable<any> {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.processImportJob}/${uuid}`);
   }
 
   getAllList(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdata}`, this.withActiveCompany(data));
   }
 
   getAllListConfiguration(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdataconfig}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.listdataconfig}`, this.withActiveCompany(data));
   }
 
   getAllUnAuthList(data: any): Observable<any> {
@@ -59,7 +123,7 @@ export class GridApiService {
   }
 
   getAllRecords(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}`, this.withActiveCompany(data));
   }
 
   exportIndividualRecordsAlone(menuItemId: any, item: any): Observable<ExportResponse> {
@@ -159,7 +223,7 @@ export class GridApiService {
   }
 
   getListData(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonlistdata}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonlistdata}`, this.withActiveCompany(data));
   }
 
   getImportTemplateDetail(data: any): Observable<any> {
@@ -180,19 +244,19 @@ export class GridApiService {
   }
 
   executeTransaction(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonexecutetransaction}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commonexecutetransaction}`, this.withActiveCompany(data));
   }
 
   executeRecords(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecords}`, this.withActiveCompany(data));
   }
 
   executeRecordsConfig(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecordsConfig}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecordsConfig}`, this.withActiveCompany(data));
   }
 
   executeRecordsCase(data: any): Observable<any> {
-    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecordsCase}`, data);
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.executeRecordsCase}`, this.withActiveCompany(data));
   }
 
   getAllTables(): Observable<any> {
