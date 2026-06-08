@@ -341,12 +341,13 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
 
   addApproverAssignment(): void {
     const lineItemsArray = this.form.get('approvalWorkflowAssignments') as FormArray;
+    const currentSlug = this.form.get('approvalWorkflow')?.get('slug')?.value || '';
     const newFormGroup = this.fb.group({
       id: [0],
       approver_type: ['tag', Validators.required],
-      approver_order_no: [null, Validators.required],
+      approver_order_no: [lineItemsArray.length + 1, Validators.required],
       approver: [null, Validators.required],
-      approval_workflow_slug: ['', Validators.required],
+      approval_workflow_slug: [currentSlug, Validators.required],
       approve_query_information: ['[]', Validators.required],
       reject_query_information: ['[]', Validators.required],
       accordian: false,
