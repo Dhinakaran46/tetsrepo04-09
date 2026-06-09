@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormlyFieldFileComponent } from './components/formly-field-file/formly-field-file.component';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
@@ -23,25 +23,78 @@ import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.
 import { SplitLabelPipe } from '../pipes/split-label.pipe';
 import { FormlyFieldColorPickerComponent } from './components/formly-field-color-picker/formly-field-color-picker.component';
 import { FormlyOrderedTransferListComponent } from './components/formly-ordered-transfer-list/formly-ordered-transfer-list.component';
+import { TranslateService } from '@ngx-translate/core';
+
+export function translateMessage(key: string, defaultVal: string) {
+  return (error: any, field: FormlyFieldConfig) => {
+    try {
+      const translate = inject(TranslateService);
+      const val = translate.instant(key);
+      return val !== key ? val : defaultVal;
+    } catch (e) {
+      return defaultVal;
+    }
+  };
+}
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `Should have at least ${field.props.minLength} characters`;
-  else return `Should have at least 1 character`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `Should have at least ${field.props.minLength} characters`;
+  else defaultVal = `Should have at least 1 character`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_min_length_message');
+    if (val !== 'form_validation_min_length_message') {
+      return val.replace('{0}', String(field.props?.minLength || 1));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export function maxLengthValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `This value should be less than ${field.props.maxLength} characters`;
-  else return `This value should be less than 100`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `This value should be less than ${field.props.maxLength} characters`;
+  else defaultVal = `This value should be less than 100`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_max_length_message');
+    if (val !== 'form_validation_max_length_message') {
+      return val.replace('{0}', String(field.props?.maxLength || 100));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export function minValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `This value should be more than ${field.props.min}`;
-  else return `This value should be more than 1`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `This value should be more than ${field.props.min}`;
+  else defaultVal = `This value should be more than 1`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_min_message');
+    if (val !== 'form_validation_min_message') {
+      return val.replace('{0}', String(field.props?.min || 1));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export function maxValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `This value should be less than ${field.props.max}`;
-  else return `This value should be less than 100`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `This value should be less than ${field.props.max}`;
+  else defaultVal = `This value should be less than 100`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_max_message');
+    if (val !== 'form_validation_max_message') {
+      return val.replace('{0}', String(field.props?.max || 100));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export const field_types = commonConfig.field_types;
@@ -51,22 +104,10 @@ export const lcpPresetExtension: FormlyExtension = {
   prePopulate(field) {
     if (!field.type) return;
 
-    // Formly v7 compatibility: ensure props are synced from templateOptions
-    // so we don't accidentally overwrite customized or translated labels
+    // Formly v7 compatibility: generically merge legacy templateOptions into props
     field.props = field.props || {};
     if (field.templateOptions) {
-      if (field.templateOptions.label && !field.props.label) {
-        field.props.label = field.templateOptions.label;
-      }
-      if (field.templateOptions.placeholder && !field.props.placeholder) {
-        field.props.placeholder = field.templateOptions.placeholder;
-      }
-      if (field.templateOptions.required !== undefined && field.props.required === undefined) {
-        field.props.required = field.templateOptions.required;
-      }
-      if (field.templateOptions.options && !field.props.options) {
-        field.props.options = field.templateOptions.options;
-      }
+      field.props = { ...field.templateOptions, ...field.props };
     }
 
     if (field.type === '#status') {
@@ -132,6 +173,26 @@ export const lcpPresetExtension: FormlyExtension = {
         }
       };
     }
+
+    const inputType = field.props?.type || field.templateOptions?.type;
+    if (field.type === 'input' && (inputType === 'date' || inputType === 'datetime-local' || inputType === 'datetime')) {
+      field.hooks = field.hooks || {};
+      const originalOnInit = field.hooks.onInit;
+      field.hooks.onInit = (f: FormlyFieldConfig) => {
+        if (originalOnInit) originalOnInit(f);
+        const control = f.formControl;
+        if (control) {
+          if (control.value === '') {
+            control.setValue(null);
+          }
+          control.valueChanges.subscribe((val) => {
+            if (val === '') {
+              control.setValue(null);
+            }
+          });
+        }
+      };
+    }
   },
 };
 
@@ -162,11 +223,143 @@ export const lcpPresetExtension: FormlyExtension = {
     SafeHtmlPipe,
     FormlyModule.forChild({
       validationMessages: [
-        { name: 'required', message: 'This field is required' },
+        { name: 'required', message: translateMessage('required_message', 'This field is required') },
         { name: 'minLength', message: minLengthValidationMessage },
         { name: 'maxLength', message: maxLengthValidationMessage },
         { name: 'min', message: minValidationMessage },
         { name: 'max', message: maxValidationMessage },
+        { name: 'email', message: translateMessage('form_validation_email_format', 'Invalid email format') },
+        { name: 'phone', message: translateMessage('form_validation_phone_format', 'Invalid phone number format') },
+        {
+          name: 'username',
+          message: translateMessage('form_validation_username_format', 'Username can only contain alphanumeric characters, underscores, and hyphens'),
+        },
+        { name: 'noFutureDate', message: translateMessage('form_validation_no_future_date', 'Date cannot be in the future') },
+        {
+          name: 'phoneAndCountry',
+          message: translateMessage('form_validation_phone_and_country_required', 'Both country code and phone number are required if either is provided'),
+        },
+        { name: 'noHtml', message: translateMessage('form_validation_html_not_allowed', 'HTML tags or scripts are not allowed') },
+        { name: 'alphanumeric', message: translateMessage('form_validation_only_alphanumeric_allowed', 'Only alphanumeric characters are allowed') },
+        { name: 'numeric', message: translateMessage('form_validation_only_numeric_allowed', 'Only numeric characters are allowed') },
+        { name: 'url', message: translateMessage('form_validation_invalid_url_format', 'Invalid URL format') },
+      ],
+      validators: [
+        {
+          name: 'email',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(c.value) ? null : { email: true };
+          },
+        },
+        {
+          name: 'phone',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const phoneRegex = /^\+?[0-9\s\-()]+$/;
+            return phoneRegex.test(c.value) ? null : { phone: true };
+          },
+        },
+        {
+          name: 'username',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const usernameRegex = /^[a-zA-Z0-9_\-]+$/;
+            return usernameRegex.test(c.value) ? null : { username: true };
+          },
+        },
+        {
+          name: 'noFutureDate',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const inputDate = new Date(c.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return inputDate <= today ? null : { noFutureDate: true };
+          },
+        },
+        {
+          name: 'phoneAndCountry',
+          validation: (c: import('@angular/forms').AbstractControl, field?: any) => {
+            const parent = c.parent;
+            if (!parent) return null;
+
+            // 1. Check if explicit keys are configured in the field props
+            let phoneKey = field?.props?.['phoneNumberField'] || field?.templateOptions?.['phoneNumberField'];
+            let countryKey = field?.props?.['countryCodeField'] || field?.templateOptions?.['countryCodeField'];
+
+            // 2. If not explicitly defined, search by key conventions in the parent group controls
+            if (!phoneKey || !countryKey) {
+              Object.keys(parent.controls).forEach((key) => {
+                const k = key.toLowerCase();
+                if (!phoneKey && (k.includes('phone') || k.includes('mobile'))) {
+                  phoneKey = key;
+                } else if (!countryKey && (k.includes('country') || k.includes('dial'))) {
+                  countryKey = key;
+                }
+              });
+            }
+
+            if (phoneKey && countryKey) {
+              const phoneControl = parent.get(phoneKey);
+              const countryControl = parent.get(countryKey);
+
+              if (phoneControl && countryControl) {
+                const phoneVal = phoneControl.value;
+                const countryVal = countryControl.value;
+                const hasError = (phoneVal && !countryVal) || (!phoneVal && countryVal);
+
+                const siblingControl = c === phoneControl ? countryControl : phoneControl;
+                if (siblingControl) {
+                  const siblingHasError = siblingControl.hasError('phoneAndCountry');
+                  if (hasError && !siblingHasError) {
+                    siblingControl.setErrors({ ...siblingControl.errors, phoneAndCountry: true }, { emitEvent: false });
+                  } else if (!hasError && siblingHasError) {
+                    const errors = { ...siblingControl.errors };
+                    delete errors['phoneAndCountry'];
+                    siblingControl.setErrors(Object.keys(errors).length ? errors : null, { emitEvent: false });
+                  }
+                }
+
+                return hasError ? { phoneAndCountry: true } : null;
+              }
+            }
+            return null;
+          },
+        },
+        {
+          name: 'noHtml',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value || typeof c.value !== 'string') return null;
+            const htmlRegex = /<[^>]*>/;
+            return htmlRegex.test(c.value) ? { noHtml: true } : null;
+          },
+        },
+        {
+          name: 'alphanumeric',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+            return alphanumericRegex.test(c.value) ? null : { alphanumeric: true };
+          },
+        },
+        {
+          name: 'numeric',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const numericRegex = /^[0-9]+$/;
+            return numericRegex.test(c.value) ? null : { numeric: true };
+          },
+        },
+        {
+          name: 'url',
+          validation: (c: import('@angular/forms').AbstractControl) => {
+            if (!c.value) return null;
+            const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+            return urlRegex.test(c.value) ? null : { url: true };
+          },
+        },
       ],
       extensions: [{ name: 'lcp-preset-expansion', extension: lcpPresetExtension }],
       presets: [
