@@ -107,6 +107,10 @@
   gap: 10px;
   margin-top: 12px;
 
+  &.single {
+    grid-template-columns: 1fr;
+  }
+
   div {
     min-width: 0;
     padding: 14px;

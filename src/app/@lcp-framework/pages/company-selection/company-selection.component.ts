@@ -88,17 +88,22 @@ export class CompanySelectionComponent implements OnInit {
     return this.companies.filter((company: any) => {
       const name = String(company?.name || '').toLowerCase();
       const code = String(company?.code || '').toLowerCase();
-      const tenant = String(company?.tenant_id || '').toLowerCase();
+      const tenant = this.companyTenantLabel(company).toLowerCase();
       return name.includes(search) || code.includes(search) || tenant.includes(search);
     });
   }
 
   get currentCompany(): any {
+    if (this.isSelectionPending) return null;
     return this.companies.find((company: any) => company.id === this.currentCompanyId) || null;
   }
 
   get hasSearch(): boolean {
     return this.searchTerm.trim().length > 0;
+  }
+
+  get isSelectionPending(): boolean {
+    return this.localstore.getData('company_selection_pending') === 'true' && this.companies.length > 1 && !this.selectedCompanyId;
   }
 
   clearSearch(): void {
@@ -110,6 +115,14 @@ export class CompanySelectionComponent implements OnInit {
     const words = source.split(/\s+/).filter(Boolean);
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return `${words[0][0] || ''}${words[1][0] || ''}`.toUpperCase();
+  }
+
+  companyTenantLabel(company: any): string {
+    return (
+      company?.tenant_name ||
+      company?.tenant_code ||
+      (company?.tenant_id ? `Tenant ${company.tenant_id}` : '')
+    );
   }
 
   private storeSwitchedUser(switchedUser: any, selectedCompany: any): void {
@@ -189,6 +202,8 @@ export class CompanySelectionComponent implements OnInit {
         code: company?.code || company?.company_code || '',
         is_primary: Boolean(company?.is_primary),
         tenant_id: company?.tenant_id,
+        tenant_name: company?.tenant_name || company?.tenant?.name || '',
+        tenant_code: company?.tenant_code || company?.tenant?.code || '',
       }))
       .filter((company: any) => company.id);
   }

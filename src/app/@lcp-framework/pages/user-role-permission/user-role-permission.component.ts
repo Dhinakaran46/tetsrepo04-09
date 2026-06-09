@@ -197,7 +197,7 @@ export class UserRolePermissionComponent {
                   'order_no', master_entities.dashboard_wizard_order_no,
                   'entity_name', master_entities.entity_name,
                   'permission_id', permissions.id,
-                  'dasboard_grid', master_entities.dashboard_grid,
+                  'dasboard_grid', master_entities.dashboard_entity_name,
                   'has_permission',
                     CASE
                       WHEN '${permission_type}' = 'user' THEN

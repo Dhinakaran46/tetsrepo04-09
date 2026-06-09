@@ -302,9 +302,19 @@ export class HeaderComponent implements OnInit {
       name: String(company?.name || company?.company_name || company?.label || company?.code || 'Company'),
       code: company?.code || company?.company_code || '',
       tenant_id: company?.tenant_id ? Number(company.tenant_id) : undefined,
+      tenant_name: company?.tenant_name || company?.tenant?.name || '',
+      tenant_code: company?.tenant_code || company?.tenant?.code || '',
       user_id: company?.user_id || company?.membership_user_id || company?.id,
       user_uuid: company?.user_uuid || company?.membership_user_uuid || company?.uuid,
     };
+  }
+
+  getCompanyTenantLabel(company: any): string {
+    return (
+      company?.tenant_name ||
+      company?.tenant_code ||
+      (company?.tenant_id ? `Tenant ${company.tenant_id}` : '')
+    );
   }
 
   private getSelectedCompany(): any {

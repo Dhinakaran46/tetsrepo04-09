@@ -68,7 +68,12 @@
               (click)="changeCompany(company)"
             >
               <i class="fa-regular fa-building h-5 w-5 text-center text-sm"></i>
-              <span class="min-w-0 flex-1 truncate">{{ company.name }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate">{{ company.name }}</span>
+                @if (getCompanyTenantLabel(company)) {
+                <span class="block truncate text-[11px] font-medium opacity-60">{{ getCompanyTenantLabel(company) }}</span>
+                }
+              </span>
               @if (company.code) {
               <span class="text-xs opacity-70">{{ company.code }}</span>
               }

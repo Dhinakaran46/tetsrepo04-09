@@ -17,15 +17,17 @@
         <span>{{ userInfo?.main?.email }}</span>
       </div>
 
-      <div class="company-stats">
+      <div class="company-stats" [class.single]="isSelectionPending">
         <div>
           <strong>{{ companies.length }}</strong>
           <span>Companies</span>
         </div>
+        @if (!isSelectionPending) {
         <div>
           <strong>{{ currentCompany?.code || '-' }}</strong>
           <span>Current</span>
         </div>
+        }
       </div>
     </aside>
 
@@ -59,7 +61,7 @@
           type="button"
           class="company-option"
           [class.active]="company.id === selectedCompanyId"
-          [class.current]="company.id === currentCompanyId"
+          [class.current]="!isSelectionPending && company.id === currentCompanyId"
           [disabled]="loadingCompanyId !== 0"
           (click)="selectCompany(company)"
         >
@@ -70,7 +72,7 @@
           <span class="company-copy">
             <span class="company-row">
               <span class="company-name">{{ company.name }}</span>
-              @if (company.id === currentCompanyId) {
+              @if (!isSelectionPending && company.id === currentCompanyId) {
               <span class="company-badge">Current</span>
               }
               @if (company.is_primary) {
@@ -79,8 +81,8 @@
             </span>
             <span class="company-meta">
               <span>{{ company.code || 'Company' }}</span>
-              @if (company.tenant_id) {
-              <span>Tenant {{ company.tenant_id }}</span>
+              @if (companyTenantLabel(company)) {
+              <span>{{ companyTenantLabel(company) }}</span>
               }
             </span>
           </span>
