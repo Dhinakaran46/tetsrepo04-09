@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormlyFieldFileComponent } from './components/formly-field-file/formly-field-file.component';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
@@ -22,25 +22,78 @@ import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
 import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.component';
 import { SplitLabelPipe } from '../pipes/split-label.pipe';
 import { FormlyFieldColorPickerComponent } from './components/formly-field-color-picker/formly-field-color-picker.component';
+import { TranslateService } from '@ngx-translate/core';
+
+export function translateMessage(key: string, defaultVal: string) {
+  return (error: any, field: FormlyFieldConfig) => {
+    try {
+      const translate = inject(TranslateService);
+      const val = translate.instant(key);
+      return val !== key ? val : defaultVal;
+    } catch (e) {
+      return defaultVal;
+    }
+  };
+}
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `Should have at least ${field.props.minLength} characters`;
-  else return `Should have at least 1 character`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `Should have at least ${field.props.minLength} characters`;
+  else defaultVal = `Should have at least 1 character`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_min_length_message');
+    if (val !== 'form_validation_min_length_message') {
+      return val.replace('{0}', String(field.props?.minLength || 1));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export function maxLengthValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `This value should be less than ${field.props.maxLength} characters`;
-  else return `This value should be less than 100`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `This value should be less than ${field.props.maxLength} characters`;
+  else defaultVal = `This value should be less than 100`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_max_length_message');
+    if (val !== 'form_validation_max_length_message') {
+      return val.replace('{0}', String(field.props?.maxLength || 100));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export function minValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `This value should be more than ${field.props.min}`;
-  else return `This value should be more than 1`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `This value should be more than ${field.props.min}`;
+  else defaultVal = `This value should be more than 1`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_min_message');
+    if (val !== 'form_validation_min_message') {
+      return val.replace('{0}', String(field.props?.min || 1));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export function maxValidationMessage(error: any, field: FormlyFieldConfig) {
-  if (field.props) return `This value should be less than ${field.props.max}`;
-  else return `This value should be less than 100`;
+  let defaultVal = '';
+  if (field.props) defaultVal = `This value should be less than ${field.props.max}`;
+  else defaultVal = `This value should be less than 100`;
+
+  try {
+    const translate = inject(TranslateService);
+    const val = translate.instant('form_validation_max_message');
+    if (val !== 'form_validation_max_message') {
+      return val.replace('{0}', String(field.props?.max || 100));
+    }
+  } catch (e) {}
+  return defaultVal;
 }
 
 export const field_types = commonConfig.field_types;
@@ -168,20 +221,26 @@ export const lcpPresetExtension: FormlyExtension = {
     SafeHtmlPipe,
     FormlyModule.forChild({
       validationMessages: [
-        { name: 'required', message: 'This field is required' },
+        { name: 'required', message: translateMessage('required_message', 'This field is required') },
         { name: 'minLength', message: minLengthValidationMessage },
         { name: 'maxLength', message: maxLengthValidationMessage },
         { name: 'min', message: minValidationMessage },
         { name: 'max', message: maxValidationMessage },
-        { name: 'email', message: 'Invalid email format' },
-        { name: 'phone', message: 'Invalid phone number format' },
-        { name: 'username', message: 'Username can only contain alphanumeric characters, underscores, and hyphens' },
-        { name: 'noFutureDate', message: 'Date cannot be in the future' },
-        { name: 'phoneAndCountry', message: 'Both country code and phone number are required if either is provided' },
-        { name: 'noHtml', message: 'HTML tags or scripts are not allowed' },
-        { name: 'alphanumeric', message: 'Only alphanumeric characters are allowed' },
-        { name: 'numeric', message: 'Only numeric characters are allowed' },
-        { name: 'url', message: 'Invalid URL format' },
+        { name: 'email', message: translateMessage('form_validation_email_format', 'Invalid email format') },
+        { name: 'phone', message: translateMessage('form_validation_phone_format', 'Invalid phone number format') },
+        {
+          name: 'username',
+          message: translateMessage('form_validation_username_format', 'Username can only contain alphanumeric characters, underscores, and hyphens'),
+        },
+        { name: 'noFutureDate', message: translateMessage('form_validation_no_future_date', 'Date cannot be in the future') },
+        {
+          name: 'phoneAndCountry',
+          message: translateMessage('form_validation_phone_and_country_required', 'Both country code and phone number are required if either is provided'),
+        },
+        { name: 'noHtml', message: translateMessage('form_validation_html_not_allowed', 'HTML tags or scripts are not allowed') },
+        { name: 'alphanumeric', message: translateMessage('form_validation_only_alphanumeric_allowed', 'Only alphanumeric characters are allowed') },
+        { name: 'numeric', message: translateMessage('form_validation_only_numeric_allowed', 'Only numeric characters are allowed') },
+        { name: 'url', message: translateMessage('form_validation_invalid_url_format', 'Invalid URL format') },
       ],
       validators: [
         {

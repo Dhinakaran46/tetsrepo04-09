@@ -283,16 +283,32 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       // Clone the listParams object deeply to avoid mutating the original object
       let listParams = JSON.parse(JSON.stringify(this.listParams[key]));
 
-      // Replace 'this.label' with the current control value, and 'this.value' with the unique_id
+      // Replace placeholders with current values, wrapping custom expressions in [#[...]#]
       if (listParams.search_all) {
         listParams.search_all = listParams.search_all.map((item: any) => {
           Object.keys(item).forEach((sKey) => {
             if (typeof item[sKey] === 'string') {
               if (item[sKey] === 'this.label') {
                 item[sKey] = value.trim(); // Replace 'this.label' with control value
-              }
-              if (item[sKey] === 'this.value') {
+              } else if (item[sKey].includes('this.label')) {
+                const valStr = value.trim();
+                const quotedValue = `'${valStr.replace(/'/g, "''")}'`;
+                let replacedVal = item[sKey].replace('this.label', quotedValue);
+                // Wrap in raw expression brackets if not already wrapped
+                if (!replacedVal.startsWith('[#[') || !replacedVal.endsWith(']#]')) {
+                  replacedVal = `[#[${replacedVal}]#]`;
+                }
+                item[sKey] = replacedVal;
+              } else if (item[sKey] === 'this.value') {
                 item[sKey] = this.unique_id; // Replace 'this.value' with unique_id
+              } else if (item[sKey].includes('this.value')) {
+                const valStr = String(this.unique_id || '');
+                const quotedValue = `'${valStr.replace(/'/g, "''")}'`;
+                let replacedVal = item[sKey].replace('this.value', quotedValue);
+                if (!replacedVal.startsWith('[#[') || !replacedVal.endsWith(']#]')) {
+                  replacedVal = `[#[${replacedVal}]#]`;
+                }
+                item[sKey] = replacedVal;
               }
             }
           });
@@ -386,22 +402,57 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     });
   }
 
+  deepMerge(target: any, source: any): any {
+    if (!source || typeof source !== 'object') return target;
+    if (!target || typeof target !== 'object') target = {};
+
+    for (const key of Object.keys(source)) {
+      const sourceVal = source[key];
+      if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+        target[key] = this.deepMerge(target[key], sourceVal);
+      } else {
+        target[key] = sourceVal;
+      }
+    }
+    return target;
+  }
+
   onSubmit(draft_mode: boolean = false) {
-    this.options.formState.submitted = true;
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    // Delay submission check slightly to allow blur handlers and async validation status changes to propagate
+    setTimeout(() => {
+      this.options.formState.submitted = true;
+
+      // If form is pending async validation, wait for it to complete
+      if (this.form.pending) {
+        const subscription = this.form.statusChanges.subscribe((status) => {
+          if (status !== 'PENDING') {
+            subscription.unsubscribe();
+            this.proceedSubmit(draft_mode);
+          }
+        });
+      } else {
+        this.proceedSubmit(draft_mode);
+      }
+    }, 150);
+  }
+
+  private proceedSubmit(draft_mode: boolean = false) {
     // Trim all form values before validation
     if (this.form.invalid) {
-      // const key = 'please_select_all_the_required_fields';
-      // const errorMessage = this.translate.instant(key);
-      // this.toastr.error(errorMessage, 'Error');
       return;
     }
     this.trimFormValues(this.form);
     if (this.form.invalid) {
-      // const key = 'please_select_all_the_required_fields';
-      // const errorMessage = this.translate.instant(key);
-      // this.toastr.error(errorMessage, 'Error');
       return;
     }
+
+    // Synchronize form control values to model before proceeding
+    this.model = this.deepMerge(this.model, this.form.getRawValue());
+
     const uploadObservables = this.collectFileUploadObservables();
     if (uploadObservables.length === 0) {
       // If there are no files to upload, directly proceed with the transaction
@@ -1251,60 +1302,80 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
         }
       }
 
+      // Resolve disableValidation options
+      const disableVal = group.disableValidation || group.props?.disableValidation || group.templateOptions?.disableValidation;
+      const isValDisabled = (name: string) => {
+        if (disableVal === true || disableVal === 'true') return true;
+        if (Array.isArray(disableVal)) return disableVal.includes(name);
+        return false;
+      };
+
       // Compile custom validators if defined in JSON
       if (group.validators) {
         Object.keys(group.validators).forEach((vKey) => {
           if (vKey !== 'validation') {
+            if (isValDisabled(vKey)) {
+              delete group.validators[vKey];
+              return;
+            }
             const valConfig = group.validators[vKey];
-            if (valConfig && typeof valConfig.expression === 'string') {
-              const expressionStr = valConfig.expression.trim();
+            if (valConfig) {
+              if (typeof valConfig.message === 'string') {
+                const messageKey = valConfig.message;
+                valConfig.message = (error: any, field: FormlyFieldConfig) => {
+                  try {
+                    const val = this.translate.instant(messageKey);
+                    return val !== messageKey ? val : messageKey;
+                  } catch (e) {
+                    return messageKey;
+                  }
+                };
+              }
+              if (typeof valConfig.expression === 'string') {
+                const expressionStr = valConfig.expression.trim();
 
-              if (expressionStr.startsWith('/') && expressionStr.endsWith('/')) {
-                // Compile as regular expression
-                try {
-                  const regex = new RegExp(expressionStr.slice(1, -1));
-                  valConfig.expression = (control: any) => {
-                    if (!control.value) return true; // Empty is valid, handled by required validator
-                    return regex.test(control.value);
-                  };
-                } catch (e) {
-                  console.error('Error compiling regex validator:', expressionStr, e);
-                }
-              } else {
-                // Compile as JS Arrow Function
-                try {
-                  const compiledFn = new Function('control', `return (${expressionStr})(control);`);
-                  valConfig.expression = (control: any) => {
-                    try {
-                      const result = compiledFn(control);
-                      // Bridge Angular validator return logic (null/object) with Formly validator format (true/false)
-                      if (result === true || result === null) return true;
-                      if (result === false || typeof result === 'object') return false;
-                      return !!result;
-                    } catch (e) {
-                      console.error('Error executing dynamic validator:', expressionStr, e);
-                      return true; // Fallback to valid on execution error
-                    }
-                  };
-                } catch (e) {
-                  console.error('Error compiling arrow function validator:', expressionStr, e);
+                if (expressionStr.startsWith('/') && expressionStr.endsWith('/')) {
+                  // Compile as regular expression
+                  try {
+                    const regex = new RegExp(expressionStr.slice(1, -1));
+                    valConfig.expression = (control: any) => {
+                      if (!control.value) return true; // Empty is valid, handled by required validator
+                      return regex.test(control.value);
+                    };
+                  } catch (e) {
+                    console.error('Error compiling regex validator:', expressionStr, e);
+                  }
+                } else {
+                  // Compile as JS Arrow Function
+                  try {
+                    const compiledFn = new Function('control', `return (${expressionStr})(control);`);
+                    valConfig.expression = (control: any) => {
+                      try {
+                        const result = compiledFn(control);
+                        // Bridge Angular validator return logic (null/object) with Formly validator format (true/false)
+                        if (result === true || result === null) return true;
+                        if (result === false || typeof result === 'object') return false;
+                        return !!result;
+                      } catch (e) {
+                        console.error('Error executing dynamic validator:', expressionStr, e);
+                        return true; // Fallback to valid on execution error
+                      }
+                    };
+                  } catch (e) {
+                    console.error('Error compiling arrow function validator:', expressionStr, e);
+                  }
                 }
               }
             }
+          } else if (vKey === 'validation' && Array.isArray(group.validators.validation)) {
+            group.validators.validation = group.validators.validation.filter((vName: string) => !isValDisabled(vName));
           }
         });
       }
 
       // Heuristic auto-validation attachment with granular opt-out
-      const disableVal = group.props?.disableValidation || group.templateOptions?.disableValidation;
-      const isValDisabled = (name: string) => {
-        if (disableVal === true) return true;
-        if (Array.isArray(disableVal)) return disableVal.includes(name);
-        return false;
-      };
-
       const isLeafField = group.type && !group.fieldGroup && !group.fieldArray;
-      if (isLeafField && disableVal !== true) {
+      if (isLeafField && disableVal !== true && disableVal !== 'true') {
         // Initialize validators and validators.validation structure
         group.validators = group.validators || {};
         group.validators.validation = group.validators.validation || [];
@@ -1422,7 +1493,14 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           updateOn: 'blur',
         };
         if (typeof uniqueKey === 'string') {
-          group.asyncValidators = { unique: { expression: this.uniqueValidator(uniqueKey), message: 'this_value_cannot_be_duplicate' } };
+          group.asyncValidators = {
+            unique: {
+              expression: this.uniqueValidator(uniqueKey),
+              message: (error: any, field: FormlyFieldConfig) => {
+                return this.translate.instant('this_value_cannot_be_duplicate');
+              },
+            },
+          };
         }
       } else if (group.fieldArray?.hooks && group.fieldArray.hooks.uniqueKey) {
         const uniqueKey = group.fieldArray.hooks.uniqueKey;
@@ -1430,7 +1508,14 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           updateOn: 'blur',
         };
         if (typeof uniqueKey === 'string') {
-          group.fieldArray.asyncValidators = { unique: { expression: this.uniqueValidator(uniqueKey), message: 'this_value_cannot_be_duplicate' } };
+          group.fieldArray.asyncValidators = {
+            unique: {
+              expression: this.uniqueValidator(uniqueKey),
+              message: (error: any, field: FormlyFieldConfig) => {
+                return this.translate.instant('this_value_cannot_be_duplicate');
+              },
+            },
+          };
         }
       }
 
