@@ -436,7 +436,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
-    @Optional() @Host() private parentMasterList: MasterListComponent,
+    @Optional() @Host() private parentMasterList: MasterListComponent
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
 
@@ -505,7 +505,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
           // then by header/title match (depending on what you pass)
           (sc.title && col.title && sc.title === col.title) ||
           (sc.title && col.header && sc.title === col.header) ||
-          (sc.header && col.header && sc.header === col.header),
+          (sc.header && col.header && sc.header === col.header)
       ) || null;
 
     const fromMeta = match?.field_html_content || match?.fieldHtmlContent;
@@ -524,7 +524,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     // primary value (column field wins over header)
     const key = (col?.field ?? col?.header) as string;
-    const primaryValue = key ? (item?.[key] ?? '') : '';
+    const primaryValue = key ? item?.[key] ?? '' : '';
 
     // Build a context exposed to expressions:
     // - spread row properties (e.g., name)
@@ -800,7 +800,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        switchMap((searchTerm) => this.autoCompleteFieldChange(searchTerm)),
+        switchMap((searchTerm) => this.autoCompleteFieldChange(searchTerm))
       )
       .subscribe((results) => {
         const activeCondition = this.filterConditions.find((c) => c.enumType === 'autocomplete' && c.autocompleteLoading);
@@ -945,7 +945,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const beforeReplace = this.localstore.replaceUniqueId(
       enumAttachedPolicies.length ? this.localstore.formatPayloadWithPolicyConditions(clonedValue, this.policyData, enumAttachedPolicies) : clonedValue,
       '$session_user_id',
-      this.user_info.main.id,
+      this.user_info.main.id
     );
 
     const resolvedValue = this.applyGparamsToPayload(beforeReplace);
@@ -1014,7 +1014,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       const beforeReplace = this.localstore.replaceUniqueId(
         enumAttachedPolicies.length ? this.localstore.formatPayloadWithPolicyConditions(params, this.policyData, enumAttachedPolicies) : params,
         '$session_user_id',
-        this.user_info.main.id,
+        this.user_info.main.id
       );
       params = this.applyGparamsToPayload(beforeReplace);
       const response = await this.gridApiService.getListData(params).toPromise();
@@ -1573,7 +1573,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private removeEmptyFilters(): void {
     this.filterConditions = this.filterConditions.filter(
       (filter: any) =>
-        this.isNoValueOperator(filter.operator) || this.hasRangeValue(filter) || String(filter.value ?? '').trim() !== '' || filter.enum_values?.length > 0,
+        this.isNoValueOperator(filter.operator) || this.hasRangeValue(filter) || String(filter.value ?? '').trim() !== '' || filter.enum_values?.length > 0
     );
   }
 
@@ -1634,8 +1634,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     if (Array.isArray(savedValues)) {
       savedValues.forEach((entry: any) => {
-        const value = entry && typeof entry === 'object' ? (entry.value ?? entry.label ?? '') : entry;
-        const label = entry && typeof entry === 'object' ? (entry.label ?? entry.value ?? '') : entry;
+        const value = entry && typeof entry === 'object' ? entry.value ?? entry.label ?? '' : entry;
+        const label = entry && typeof entry === 'object' ? entry.label ?? entry.value ?? '' : entry;
 
         if (!optionMap.has(value)) {
           optionMap.set(value, { label, value });
@@ -1955,7 +1955,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       (item: any) =>
         String(item?.view_name || 'Default View')
           .trim()
-          .toLowerCase() === normalizedSelectedName,
+          .toLowerCase() === normalizedSelectedName
     );
     if (!hasSelection) {
       const defaultView = this.entityViews.find((item: any) => !!item?.is_default);
@@ -2195,13 +2195,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
           value: isNoValue
             ? this.getNoValueOperatorSQL(normalizedOperator)
             : isBetween
-              ? [
-                  this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).start),
-                  this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).end),
-                ]
-              : key.enum_values?.length > 0
-                ? key.enum_values
-                : this.addWildcards(normalizedOperator, normalizedFilterValue),
+            ? [
+                this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).start),
+                this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).end),
+              ]
+            : key.enum_values?.length > 0
+            ? key.enum_values
+            : this.addWildcards(normalizedOperator, normalizedFilterValue),
           isAggregate: key?.clause_type === 'having',
         };
       });
@@ -2571,7 +2571,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         (item: any) =>
           String(item?.view_name || 'Default View')
             .trim()
-            .toLowerCase() === normalizedSelectedName,
+            .toLowerCase() === normalizedSelectedName
       );
       if (selected) return selected;
     }
@@ -2618,7 +2618,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         (item: any) =>
           String(item?.view_name || 'Default View')
             .trim()
-            .toLowerCase() === normalizedName,
+            .toLowerCase() === normalizedName
       ) || null
     );
   }
@@ -2829,8 +2829,16 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       return !!element?.classList?.contains('ng-dropdown-panel') || !!element?.classList?.contains('ng-option');
     });
 
-    // ng-select dropdown is appended to body, so option clicks should not close Advanced Filter.
-    if (this.isAdvancedFilterMenuOpen && clickedInsideNgSelect) {
+    const clickedInsideFlatpickr = path.some((node) => {
+      const element = node as HTMLElement;
+      return (
+        !!element?.classList?.contains('flatpickr-calendar') ||
+        (element?.className && typeof element.className === 'string' && element.className.includes('flatpickr'))
+      );
+    });
+
+    // ng-select dropdown and flatpickr calendars are appended to body, so clicks inside them should not close Advanced Filter.
+    if (this.isAdvancedFilterMenuOpen && (clickedInsideNgSelect || clickedInsideFlatpickr)) {
       return;
     }
 
@@ -2860,7 +2868,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const lowerName = name.toLowerCase();
     const duplicate = entityViews.find(
       (item: any) =>
-        String(item?.view_name || 'Default View').toLowerCase() === lowerName && String(item?.view_name || 'Default View') !== this.editingOriginalViewName,
+        String(item?.view_name || 'Default View').toLowerCase() === lowerName && String(item?.view_name || 'Default View') !== this.editingOriginalViewName
     );
     if (duplicate) {
       this.toastr.warning('View name already exists', 'Warning');
@@ -2990,7 +2998,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const entitySlug = this.getEntitySlug();
     const allConfigs = this.getUserSearchConfigurations();
     const targetView = allConfigs.find(
-      (item: any) => (item?.entity_slug || item?.key) === entitySlug && String(item?.view_name || 'Default View') === selectedName,
+      (item: any) => (item?.entity_slug || item?.key) === entitySlug && String(item?.view_name || 'Default View') === selectedName
     );
     if (!targetView) return;
 
@@ -3287,7 +3295,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.translate.get(key).pipe(
       map((translations) => {
         return translations.includes('.') ? label : translations;
-      }),
+      })
     );
   }
 
@@ -3296,7 +3304,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       map((translations) => {
         const title = translations.includes('.') ? label : translations;
         return title.split('Table')[0];
-      }),
+      })
     );
   }
 
@@ -3387,7 +3395,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       .filter((column: any) => [3, 4].includes(Number(column?.field_type_id)))
       .filter(
         (column: any, index: number, allColumns: any[]) =>
-          index === allColumns.findIndex((entry: any) => String(entry?.field || '') === String(column?.field || '')),
+          index === allColumns.findIndex((entry: any) => String(entry?.field || '') === String(column?.field || ''))
       );
   }
 
@@ -3428,7 +3436,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       (condition: SearchCondition) =>
         String(condition?.value || '')
           .trim()
-          .toLowerCase() === normalizedOperator,
+          .toLowerCase() === normalizedOperator
     );
 
     if (matched?.label) {
@@ -3758,6 +3766,38 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   isColumnChildGridExpanded(row_index: number, col: any): boolean {
     return !!this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header;
+  }
+
+  getRowDisplayName(item: any): string {
+    if (!item) return '';
+
+    // Prioritize friendly visual key names first
+    const friendlyKeys = ['name', 'title', 'asset_name', 'floor_name', 'building_name', 'label'];
+    for (const key of friendlyKeys) {
+      if (item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== '') {
+        return String(item[key]);
+      }
+    }
+
+    if (this.headercolumns && this.headercolumns.length > 0) {
+      // Find the first visible grid column in headercolumns
+      const firstCol = this.headercolumns.find((col) => col.is_grid_column === 'true' && !col.colFilterHide);
+      if (firstCol) {
+        const fieldName = firstCol.field || firstCol.header;
+        if (fieldName && item[fieldName] !== undefined) {
+          return String(item[fieldName]);
+        }
+      }
+
+      // Fallback to first available column in headercolumns
+      const fallbackCol = this.headercolumns[0];
+      const fallbackField = fallbackCol?.field || fallbackCol?.header;
+      if (fallbackField && item[fallbackField] !== undefined) {
+        return String(item[fallbackField]);
+      }
+    }
+
+    return item.code || item.id || '';
   }
 
   getChildComponentMode(col: any): string {

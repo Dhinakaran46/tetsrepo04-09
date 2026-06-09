@@ -431,6 +431,16 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         is_searchable: 'false',
         is_grid_column: 'false',
       },
+      {
+        header: 'approval_workflow_slug',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.approval_workflow_slug',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
       ...(this.activeTab !== Tabs.pending
         ? [
             {
@@ -465,8 +475,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             FROM users u3
             LEFT JOIN tenant_users ud3 ON ud3.id = u3.tenant_user_id
             WHERE u3.id IN (
-              SELECT apjwu1.user_id 
-              FROM approval_process_job_workflow_users apjwu1 
+              SELECT apjwu1.user_id
+              FROM approval_process_job_workflow_users apjwu1
               WHERE apjwu1.approval_process_job_workflow_id = approval_process_job_workflow_users.approval_process_job_workflow_id
                 AND apjwu1.status_id != 3
             )
@@ -506,13 +516,14 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'approval_process_job_workflows.details',
         ],
         includes: [
           {
             join_type: 'INNER',
             table_name: 'approval_process_job_workflows',
-            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id
               AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
               AND approval_process_job_workflows.status_id != 3`,
           },
@@ -572,6 +583,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.screen_id',
           'approval_process_job_workflows.url',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'pending.approver_type',
           'pending.approver_order_no',
           'pending.pending_approvers',
@@ -606,7 +618,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               AND apjwu.status_id != 3
               AND apjwu.company_id = 1
             )  user_jobs`,
-            join_condition: `approval_process_job_workflows.approval_process_job_id = user_jobs.approval_process_job_id 
+            join_condition: `approval_process_job_workflows.approval_process_job_id = user_jobs.approval_process_job_id
               AND approval_process_job_workflows.company_id = user_jobs.company_id
               AND approval_process_job_workflows.status_id != 3`,
           },
@@ -698,6 +710,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'approval_process_job_workflows.details',
         ],
         includes: [
@@ -705,12 +718,12 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             join_type: 'INNER',
             table_name: 'approval_process_job_workflows',
             join_condition: `
-              approval_process_job_workflows.company_id = approval_process_job_workflow_users.company_id 
+              approval_process_job_workflows.company_id = approval_process_job_workflow_users.company_id
               AND approval_process_job_workflows.status_id != 3
               AND approval_process_job_workflows.approval_process_job_id IN (
-                SELECT DISTINCT 
+                SELECT DISTINCT
                     apjw1.approval_process_job_id
-                FROM 
+                FROM
                     approval_process_job_workflows apjw1
                 LEFT JOIN approval_process_job_workflow_users apjwu1
                   ON apjwu1.approval_process_job_workflow_id = apjw1.id
@@ -828,7 +841,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
-          'ud_delegator.email',
+          'approval_process_job_workflows.approval_workflow_slug',
+          'u_delegator.email',
           'd.start_date',
           'd.end_date',
           'approval_process_job_workflows.details',
@@ -837,8 +851,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'INNER',
             table_name: 'delegations d',
-            join_condition: `D.delegated_user_id = ${this.user_info.main?.id} 
-            AND d.status_id != 3 
+            join_condition: `D.delegated_user_id = ${this.user_info.main?.id}
+            AND d.status_id != 3
             AND d.company_id = approval_process_job_workflow_users.company_id
             AND NOW() BETWEEN d.start_date AND d.end_date
             AND approval_process_job_workflow_users.user_id = d.user_id`,
@@ -846,7 +860,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'INNER',
             table_name: 'approval_process_job_workflows',
-            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id
               AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
               AND approval_process_job_workflows.status_id != 3`,
           },
@@ -1251,6 +1265,19 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               enable: true,
             },
             {
+              order_no: 7,
+              status_id: 1,
+              company_id: 1,
+              field: 'approval_process_job_workflows.approval_workflow_slug',
+              clause_type: 'where',
+              sorting: true,
+              title: this.translate.instant('approval_workflow_slug'),
+              field_type_id: 3,
+              searchable: true,
+              is_grid_column: true,
+              enable: true,
+            },
+            {
               order_no: 8,
               status_id: 1,
               company_id: 1,
@@ -1612,6 +1639,12 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
   }
 
   openApprovalProcessPopup(item: any, status: 'approval_completed' | 'approval_rejected') {
+    console.log('Selected Item:', item);
+    console.log('Example Approval WorkFlow Slug:', 'van_load_request_approval');
+    if (item?.approval_workflow_slug === 'van_load_request_approval') {
+      this.router.navigate([`/van-load-request/edit/${item.screen_id}`]);
+      return;
+    }
     this.isInfoModalOpen = true;
     this.selectedRequest = item;
     this.approvalForm.controls['review_status'].setValue(status);
