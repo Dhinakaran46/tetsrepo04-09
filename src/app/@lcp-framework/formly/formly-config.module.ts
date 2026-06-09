@@ -22,6 +22,7 @@ import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
 import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.component';
 import { SplitLabelPipe } from '../pipes/split-label.pipe';
 import { FormlyFieldColorPickerComponent } from './components/formly-field-color-picker/formly-field-color-picker.component';
+import { FormlyOrderedTransferListComponent } from './components/formly-ordered-transfer-list/formly-ordered-transfer-list.component';
 
 export function minLengthValidationMessage(error: any, field: FormlyFieldConfig) {
   if (field.props) return `Should have at least ${field.props.minLength} characters`;
@@ -149,6 +150,7 @@ export const lcpPresetExtension: FormlyExtension = {
     SplitLabelPipe,
   ],
   imports: [
+    FormlyOrderedTransferListComponent,
     QuillModule,
     MonacoEditorModule,
     CommonModule,
@@ -254,6 +256,7 @@ export const lcpPresetExtension: FormlyExtension = {
         { name: 'vs-code', component: FormlyVsCodeComponent, wrappers: ['form-field'] },
         { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
         { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] },
+        { name: 'ordered-transfer-list', component: FormlyOrderedTransferListComponent, wrappers: ['form-field'] },
       ],
     }),
   ],
@@ -266,6 +269,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyPresetModule,
     FormlyFieldSelectFromDbComponent,
     FormlyFieldAutocompleteComponent,
+    FormlyOrderedTransferListComponent,
     NgSelectModule,
     FormlyBootstrapModule,
     SplitLabelPipe,

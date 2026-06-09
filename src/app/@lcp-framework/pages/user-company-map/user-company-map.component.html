@@ -90,7 +90,7 @@
             [disabled]="!filteredCompanies.length || loadingCompanies"
             (change)="toggleAllVisibleCompanies($any($event.target).checked)"
           />
-          <span>Select all visible companies</span>
+          <span>Select all companies</span>
         </label>
 
         <span class="selection-count" [class.error]="!selectedCompanies.length && !loadingCompanies">

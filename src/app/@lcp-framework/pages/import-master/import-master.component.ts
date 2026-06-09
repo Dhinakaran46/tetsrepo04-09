@@ -435,7 +435,7 @@ export class ImportMasterComponent implements OnInit, ImportConfirmDeactivate {
   // Component cleanup logic in ngOnDestroy
   ngOnDestroy() {
     this.deleteUploadedSheet();
-    this.socket$.complete();
+    this.socket$?.complete();
   }
 
   deleteUploadedSheet() {

@@ -1,0 +1,95 @@
+@if (hasFilterConfigs) {
+<div class="transfer-filter-toolbar">
+  <app-transfer-box-filter
+    #transferFilters
+    [filterConfigs]="filterFieldConfigs"
+    [activeConditions]="activeFilterConditions"
+    [buttonLabel]="filterButtonLabel"
+    [title]="filterTitle"
+    [popupSize]="filterPopupSize"
+    [popupWidth]="filterPopupWidth"
+    [popupAlign]="filterPopupAlign"
+    [columnCount]="filterColumnCount"
+    [maxBodyHeight]="filterMaxBodyHeight"
+    [showClearButton]="filterShowClearButton"
+    (filtersChange)="applyFilters($event)"
+  ></app-transfer-box-filter>
+</div>
+
+@if (transferFilters.appliedFiltersTemplate) {
+<ng-container [ngTemplateOutlet]="transferFilters.appliedFiltersTemplate"></ng-container>
+}
+}
+
+<div class="ordered-transfer">
+  <section class="transfer-panel">
+    <header class="transfer-header">{{ availableLabel }}</header>
+    <input
+      type="text"
+      class="form-input transfer-search"
+      [value]="availableSearch"
+      (input)="updateSearch('available', $event)"
+      [placeholder]="searchPlaceholder"
+      [disabled]="disabled"
+    />
+    <div class="transfer-select-actions">
+      <button type="button" (click)="selectAllAvailable()" [disabled]="disabled || filteredAvailableOptions.length === 0">Select all</button>
+      <button type="button" (click)="clearAvailableSelection()" [disabled]="disabled || selectedAvailable.size === 0">Select none</button>
+    </div>
+    <div class="transfer-list">
+      @for (option of filteredAvailableOptions; track option.value) {
+      <label class="transfer-row">
+        <input type="checkbox" [checked]="isAvailableChecked(option)" (change)="toggleAvailable(option, $any($event.target).checked)" [disabled]="disabled" />
+        <span class="transfer-label">
+          <span class="transfer-label-primary">{{ option.label }}</span>
+          @if (option.secondaryLabel) {
+          <span class="transfer-label-secondary">{{ option.secondaryLabel }}</span>
+          }
+        </span>
+      </label>
+      }
+    </div>
+    <footer class="transfer-footer">{{ availableCountLabel }}</footer>
+  </section>
+
+  <div class="transfer-actions">
+    <button type="button" class="transfer-action transfer-action-primary" (click)="moveSelectedToAssigned()" [disabled]="disabled || selectedAvailable.size === 0">
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    <button type="button" class="transfer-action" (click)="moveSelectedToAvailable()" [disabled]="disabled || selectedAssigned.size === 0">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+  </div>
+
+  <section class="transfer-panel">
+    <header class="transfer-header">{{ assignedLabel }}</header>
+    <input
+      type="text"
+      class="form-input transfer-search"
+      [value]="assignedSearch"
+      (input)="updateSearch('assigned', $event)"
+      [placeholder]="searchPlaceholder"
+      [disabled]="disabled"
+    />
+    <div class="transfer-select-actions">
+      <button type="button" (click)="selectAllAssigned()" [disabled]="disabled || filteredAssignedOptions.length === 0">Select all</button>
+      <button type="button" (click)="clearAssignedSelection()" [disabled]="disabled || selectedAssigned.size === 0">Select none</button>
+    </div>
+    <div class="transfer-list assigned-list" cdkDropList [cdkDropListData]="filteredAssignedOptions" (cdkDropListDropped)="dropAssigned($event)">
+      @for (option of filteredAssignedOptions; track option.value; let i = $index) {
+      <div class="transfer-row assigned-row" cdkDrag [cdkDragDisabled]="disabled">
+        <i class="fa-solid fa-bars drag-handle" cdkDragHandle></i>
+        <span class="assigned-order">{{ i + 1 }}.</span>
+        <input type="checkbox" [checked]="isAssignedChecked(option)" (change)="toggleAssigned(option, $any($event.target).checked)" [disabled]="disabled" />
+        <span class="transfer-label">
+          <span class="transfer-label-primary">{{ option.label }}</span>
+          @if (option.secondaryLabel) {
+          <span class="transfer-label-secondary">{{ option.secondaryLabel }}</span>
+          }
+        </span>
+      </div>
+      }
+    </div>
+    <footer class="transfer-footer">{{ assignedCountLabel }}</footer>
+  </section>
+</div>

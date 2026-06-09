@@ -1,0 +1,88 @@
+<div class="transfer-box-filter-wrapper">
+  <button type="button" class="filter-button rounded-md px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l" (click)="toggleMenu($event)" aria-haspopup="true" [attr.aria-expanded]="isOpen">
+    <i class="fa-solid fa-filter"></i>
+    <span>{{ buttonLabel }}</span>
+    @if (activeFilterCount > 0) {
+    <span class="filter-badge">{{ activeFilterCount }}</span>
+    }
+  </button>
+
+  @if (isOpen) {
+  <div class="filter-menu" role="menu" [ngClass]="menuClass" [ngStyle]="popupStyle">
+    <div class="filter-menu-header">
+      <span>{{ title }}</span>
+      <button type="button" class="icon-button" (click)="cancelFilters()" aria-label="Close filters">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="filter-menu-body" [ngStyle]="bodyStyle">
+      @for (filter of filterConfigs; track filter.key) {
+      <div class="filter-field">
+        <div class="filter-field-head">
+          <span>{{ filter.label }}</span>
+          <button type="button" (click)="clearDraftFilter(filter)" [disabled]="!draftValues[filter.key]?.length">Clear</button>
+        </div>
+
+        <ng-select
+          class="custom-multiselect transfer-box-filter-select"
+          [items]="filter.options || []"
+          bindLabel="label"
+          bindValue="value"
+          [multiple]="true"
+          [closeOnSelect]="false"
+          [hideSelected]="false"
+          [searchable]="true"
+          [clearable]="true"
+          [loading]="filter.isLoading"
+          [placeholder]="filter.isLoading ? 'Loading...' : 'All'"
+          [(ngModel)]="draftValues[filter.key]"
+        >
+          <ng-template ng-option-tmp let-item="item" let-item$="item$">
+            <div class="ng-option-checkbox">
+              <input type="checkbox" [checked]="item$.selected" />
+              <span>{{ item.label }}</span>
+            </div>
+          </ng-template>
+        </ng-select>
+      </div>
+      }
+    </div>
+
+    <div class="filter-menu-footer">
+      @if (showClearButton) {
+      <button type="button" class="clear-button" (click)="clearFilters()" [disabled]="activeFilterCount === 0">Clear</button>
+      } @else {
+      <span></span>
+      }
+      <div class="footer-actions">
+        <button type="button" class="btn-secondary rounded-md px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l" (click)="cancelFilters()">Cancel</button>
+        <button type="button" class="btn-primary rounded-md px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l" (click)="applyFilters()">Apply</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<ng-template #appliedFiltersTemplate>
+  @if (activeConditions.length) {
+  <div class="active-filter-row" aria-label="Applied filters">
+    @for (condition of activeConditions; track condition.key) {
+    <span class="filter-chip" [title]="condition.label + ': ' + condition.operatorLabel + ' ' + condition.displayValue">
+      <button type="button" class="filter-chip-edit" (click)="openMenu()" [attr.aria-label]="'Edit ' + condition.label + ' filter'">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </button>
+      <span class="filter-chip-label">{{ condition.label }}: {{ condition.operatorLabel }}</span>
+      <strong class="filter-chip-value">{{ condition.displayValue }}</strong>
+      <button type="button" (click)="removeCondition(condition)" [attr.aria-label]="'Remove ' + condition.label + ' filter'">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </span>
+    @if (!$last) {
+    <span class="filter-joiner">AND</span>
+    }
+    }
+    <button type="button" class="btn-danger rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold ltr:rounded-r rtl:rounded-l" (click)="clearFilters()">Clear All</button>
+  </div>
+  }
+</ng-template>
