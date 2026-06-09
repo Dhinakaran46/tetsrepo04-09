@@ -430,6 +430,16 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         is_searchable: 'false',
         is_grid_column: 'false',
       },
+      {
+        header: 'approval_workflow_slug',
+        clause_type: 'where',
+        field_value: 'approval_process_job_workflows.approval_workflow_slug',
+        is_sortable: 'false',
+        column_order: '0.00',
+        column_width: '0.00',
+        is_searchable: 'false',
+        is_grid_column: 'false',
+      },
       ...(this.activeTab !== Tabs.pending
         ? [
             {
@@ -504,6 +514,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'approval_process_job_workflows.details',
         ],
         includes: [
@@ -570,6 +581,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.screen_id',
           'approval_process_job_workflows.url',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'pending.approver_type',
           'pending.approver_order_no',
           'pending.pending_approvers',
@@ -695,6 +707,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'approval_process_job_workflows.details',
         ],
         includes: [
@@ -825,6 +838,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.url',
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
+          'approval_process_job_workflows.approval_workflow_slug',
           'u_delegator.email',
           'd.start_date',
           'd.end_date',
@@ -1243,6 +1257,19 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               enable: true,
             },
             {
+              order_no: 7,
+              status_id: 1,
+              company_id: 1,
+              field: 'approval_process_job_workflows.approval_workflow_slug',
+              clause_type: 'where',
+              sorting: true,
+              title: this.translate.instant('approval_workflow_slug'),
+              field_type_id: 3,
+              searchable: true,
+              is_grid_column: true,
+              enable: true,
+            },
+            {
               order_no: 8,
               status_id: 1,
               company_id: 1,
@@ -1604,6 +1631,12 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
   }
 
   openApprovalProcessPopup(item: any, status: 'approval_completed' | 'approval_rejected') {
+    console.log('Selected Item:', item);
+    console.log('Example Approval WorkFlow Slug:', 'van_load_request_approval');
+    if (item?.approval_workflow_slug === 'van_load_request_approval') {
+      this.router.navigate([`/van-load-request/edit/${item.screen_id}`]);
+      return;
+    }
     this.isInfoModalOpen = true;
     this.selectedRequest = item;
     this.approvalForm.controls['review_status'].setValue(status);

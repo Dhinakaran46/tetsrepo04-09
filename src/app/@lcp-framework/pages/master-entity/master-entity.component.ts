@@ -1212,7 +1212,7 @@ export class MasterEntityComponent implements OnInit {
     private translate: TranslateService,
     private titleService: Title,
     private openaiService: OpenaiService,
-    private cdr: ChangeDetectorRef,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -1360,7 +1360,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1385,7 +1385,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1425,7 +1425,7 @@ export class MasterEntityComponent implements OnInit {
           const key = 'error';
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
-        },
+        }
       );
     }
   }
@@ -1502,7 +1502,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1702,7 +1702,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -1730,14 +1730,16 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.header_entity_id && { header_entity_id: formData.header_entity_id }),
         ...(formData.footer_entity_id && { footer_entity_id: formData.footer_entity_id }),
         ...(formData.draftMode && { draft_mode: formData.draftMode ? formData.draftMode : false }),
-        ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true) }),
-        ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true) }),
-        ...(formData.reportInformation && { report_information: this.prepareJSON(formData.reportInformation, true) }),
-        ...(formData.formInformation && { form_information: this.prepareJSON(formData.formInformation, true) }),
-        ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation, true) }),
-        ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation, true) }),
-        ...(formData.presetQueryInformation && { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true) }),
-        ...(formData.entity_configurations && { entity_configurations: this.prepareJSON(formData.entity_configurations, true) }),
+        ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true, 'Associate Tables') }),
+        ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }),
+        ...(formData.reportInformation && { report_information: this.prepareJSON(formData.reportInformation, true, 'Report Information') }),
+        ...(formData.formInformation && { form_information: this.prepareJSON(formData.formInformation, true, 'Form Information') }),
+        ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation, true, 'Add Query Information') }),
+        ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation, true, 'Edit Query Information') }),
+        ...(formData.presetQueryInformation && {
+          preset_query_information: this.prepareJSON(formData.presetQueryInformation, true, 'Preset Query Information'),
+        }),
+        ...(formData.entity_configurations && { entity_configurations: this.prepareJSON(formData.entity_configurations, true, 'Entity Configurations') }),
         ...(formData.staticPageContent && { static_page_content: formData.staticPageContent }),
         ...(formData.wizardType && { dashboard_wizard_type: formData.wizardType }),
         ...(formData.reportType && { report_type: formData.reportType }),
@@ -1749,7 +1751,9 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
         ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
         ...(formData.dashboard_entity_name && { dashboard_entity_name: formData.dashboard_entity_name }),
-        ...(formData.dashboard_wizard_options && { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }),
+        ...(formData.dashboard_wizard_options && {
+          dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true, 'Dashboard Wizard Options'),
+        }),
       },
     ];
 
@@ -1793,7 +1797,7 @@ export class MasterEntityComponent implements OnInit {
           link_action: control.value.linkAction,
           link_mode,
           field_html_content: control.value.fieldHtmlContent,
-          enum_values: this.prepareOptionalJSON(control.value.enumValues),
+          enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1817,19 +1821,25 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.header_entity_id ? { header_entity_id: formData.header_entity_id } : { header_entity_id: null }),
         ...(formData.footer_entity_id ? { footer_entity_id: formData.footer_entity_id } : { footer_entity_id: null }),
         ...(formData.draftMode ? { draft_mode: formData.draftMode } : { draft_mode: false }),
-        ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true) } : { associated_tables: null }),
-        ...(formData.queryInformation ? { query_information: this.prepareJSON(formData.queryInformation, true) } : { query_information: null }),
-        ...(formData.reportInformation ? { report_information: this.prepareJSON(formData.reportInformation, true) } : { report_information: null }),
-        ...(formData.formInformation ? { form_information: this.prepareJSON(formData.formInformation, true) } : { form_information: null }),
-        ...(formData.addQueryInformation ? { add_query_information: this.prepareJSON(formData.addQueryInformation, true) } : { add_query_information: null }),
+        ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true, 'Associate Tables') } : { associated_tables: null }),
+        ...(formData.queryInformation
+          ? { query_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }
+          : { query_information: null }),
+        ...(formData.reportInformation
+          ? { report_information: this.prepareJSON(formData.reportInformation, true, 'Report Information') }
+          : { report_information: null }),
+        ...(formData.formInformation ? { form_information: this.prepareJSON(formData.formInformation, true, 'Form Information') } : { form_information: null }),
+        ...(formData.addQueryInformation
+          ? { add_query_information: this.prepareJSON(formData.addQueryInformation, true, 'Add Query Information') }
+          : { add_query_information: null }),
         ...(formData.editQueryInformation
-          ? { edit_query_information: this.prepareJSON(formData.editQueryInformation, true) }
+          ? { edit_query_information: this.prepareJSON(formData.editQueryInformation, true, 'Edit Query Information') }
           : { edit_query_information: null }),
         ...(formData.presetQueryInformation
-          ? { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true) }
+          ? { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true, 'Preset Query Information') }
           : { preset_query_information: null }),
         ...(formData.entity_configurations
-          ? { entity_configurations: this.prepareJSON(formData.entity_configurations, true) }
+          ? { entity_configurations: this.prepareJSON(formData.entity_configurations, true, 'Entity Configurations') }
           : { entity_configurations: null }),
         ...(formData.staticPageContent ? { static_page_content: formData.staticPageContent } : { static_page_content: null }),
         ...(formData.wizardType ? { dashboard_wizard_type: formData.wizardType } : { dashboard_wizard_type: null }),
@@ -1843,7 +1853,7 @@ export class MasterEntityComponent implements OnInit {
         ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
         ...(formData.dashboard_entity_name ? { dashboard_entity_name: formData.dashboard_entity_name } : { dashboard_entity_name: null }),
         ...(formData.dashboard_wizard_options
-          ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true) }
+          ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true, 'Dashboard Wizard Options') }
           : { dashboard_wizard_options: null }),
       },
     ];
@@ -1884,7 +1894,7 @@ export class MasterEntityComponent implements OnInit {
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
-          enum_values: this.prepareOptionalJSON(control.value.enumValues),
+          enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
           link_mode,
         };
       });
@@ -1916,33 +1926,51 @@ export class MasterEntityComponent implements OnInit {
     return this.update_json_schema;
   }
 
+  escapePlaceholders(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    if (typeof obj === 'string') {
+      return obj
+        .replace(/@table/g, '##table')
+        .replace(/{{{/g, '{#{') // Replace {{{ with {#{
+        .replace(/}}}/g, '}#}'); // Replace }}} with }#}
+    }
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.escapePlaceholders(item));
+    }
+    if (typeof obj === 'object') {
+      const result: any = {};
+      for (const key of Object.keys(obj)) {
+        result[key] = this.escapePlaceholders(obj[key]);
+      }
+      return result;
+    }
+    return obj;
+  }
+
   // prepareJSON(data: any): string {
   //   return JSON.stringify(JSON.parse(data));
   // }
-  prepareJSON(data: any, replace_param: boolean = false): string {
+  prepareJSON(data: any, replace_param: boolean = false, fieldName: string = 'JSON field'): string {
     try {
       // Parse the input data into a JavaScript object
-      const parsedData = JSON.parse(data);
+      let parsedData = typeof data === 'string' ? JSON.parse(data) : data;
 
-      // Convert the object back to a JSON string
-      let jsonString = JSON.stringify(parsedData);
-
-      // Perform replacements if replace_param is true
+      // Perform replacements if replace_param is true recursively on values only
       if (replace_param) {
-        jsonString = jsonString
-          .replace(/@table/g, '##table')
-          .replace(/{{{/g, '{#{') // Replace {{{ with {#{
-          .replace(/}}}/g, '}#}'); // Replace }}} with }#}
+        parsedData = this.escapePlaceholders(parsedData);
       }
 
-      return jsonString;
+      // Convert the object back to a JSON string
+      return JSON.stringify(parsedData);
     } catch (error) {
-      console.error('Error preparing JSON:', error);
-      throw new Error('Invalid JSON input');
+      console.error(`Error preparing JSON for "${fieldName}":`, error);
+      throw new Error(`Invalid JSON syntax in "${fieldName}".`);
     }
   }
 
-  prepareOptionalJSON(data: any, replace_param: boolean = false): string | null {
+  prepareOptionalJSON(data: any, replace_param: boolean = false, fieldName: string = 'JSON field'): string | null {
     if (data === null || data === undefined) {
       return null;
     }
@@ -1952,7 +1980,7 @@ export class MasterEntityComponent implements OnInit {
     }
 
     const source = typeof data === 'string' ? data : JSON.stringify(data);
-    return this.prepareJSON(source, replace_param);
+    return this.prepareJSON(source, replace_param, fieldName);
   }
 
   prettyJSON(data: any) {
@@ -1963,7 +1991,14 @@ export class MasterEntityComponent implements OnInit {
     this.submitted = true;
 
     const formData = this.form.getRawValue();
-    const payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
+    let payload;
+    try {
+      payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
+    } catch (error: any) {
+      console.error('Error preparing payload:', error);
+      this.toastr.error(error.message || 'Invalid JSON format in one of the fields.', 'Error');
+      return;
+    }
 
     this.gridApiService.executeRecords(payload).subscribe(
       (response) => {
@@ -1991,7 +2026,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 
@@ -2220,7 +2255,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      },
+      }
     );
   }
 
@@ -2251,7 +2286,7 @@ export class MasterEntityComponent implements OnInit {
         console.error('API Error:', error);
         this.toastr.error('Error generating AI content', 'Error');
         this.popupInformation.isProcessing = false;
-      },
+      }
     );
   }
 
@@ -2290,14 +2325,14 @@ export class MasterEntityComponent implements OnInit {
         if (response.status && response.code === 200) {
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module',
+            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
           );
           this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
           );
           // For 'child_process' linkType (only grid_builder_module)
           this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE,
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
           );
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
@@ -2321,7 +2356,7 @@ export class MasterEntityComponent implements OnInit {
                 this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE,
                 this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE,
                 this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
-              ].includes(entity.entity_type),
+              ].includes(entity.entity_type)
           );
           this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];
         }
@@ -2330,7 +2365,7 @@ export class MasterEntityComponent implements OnInit {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
-      },
+      }
     );
   }
 

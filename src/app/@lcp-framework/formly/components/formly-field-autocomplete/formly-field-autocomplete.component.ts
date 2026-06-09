@@ -106,7 +106,9 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
     searchConditions = this.evaluateDynamicValues([...searchConditions, searchCriteria], this);
     const printQuery = this.props['print_query'] || false;
     const includes = this.props['includes'] || false;
-    const listParams = this.buildListParams(includes, printQuery, tableName, valueColumn, labelColumn, searchConditions, additionalCols);
+    //const listParams = this.buildListParams(includes, printQuery, tableName, valueColumn, labelColumn, searchConditions, additionalCols);
+    const groupBy = this.props['group_by'] || undefined;
+    const listParams = this.buildListParams(includes, printQuery, tableName, valueColumn, labelColumn, searchConditions, additionalCols, groupBy);
 
     return this.gridApiService.getAllList(listParams).pipe(
       map((response) => this.transformResponse(response, valueColumn, labelColumn)),
@@ -132,7 +134,8 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
     valueColumn: string,
     labelColumn: string,
     searchConditions: any,
-    additionalColumns: any[]
+     additionalColumns: any[],
+    groupBy?: any
   ) {
     return {
       company_id: 1,
@@ -140,6 +143,7 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
       limit_range: 25,
       print_query: printQuery,
       includes: includes ? includes : undefined,
+      group_by: groupBy ? groupBy : undefined,
       start_index: 0,
       sort_columns: [[labelColumn, 'asc']],
       primary_table: tableName,
