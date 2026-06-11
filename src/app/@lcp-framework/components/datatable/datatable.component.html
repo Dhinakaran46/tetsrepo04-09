@@ -24,7 +24,11 @@
       ></app-static-page>
     </div>
     }
-    <div class="datatable-toolbar mb-1 mt-0 flex w-full min-w-0 flex-col gap-5 px-2 py-2 md:flex-row md:items-center">
+    <div
+      class="datatable-toolbar mb-1 mt-0 flex w-full min-w-0 flex-col gap-5 px-2 py-2 md:flex-row md:items-center"
+      #datatableToolbar
+      [style.top.px]="tableLevel === 0 ? navbarHeight : null"
+    >
       @if (!headerStaticEntityName) {
       <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
         <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
@@ -584,9 +588,9 @@
 
     <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
       <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
-        <div class="table-responsive overflow-x-auto">
+        <div class="table-responsive datatable-scroll-container overflow-x-auto" [class.expanded-rows]="items.length > 10">
           <table class="table-hover relative min-w-full">
-            <thead class="bg-gray-50">
+            <thead class="bg-pink-50 dark:bg-pink-900/20">
               <tr>
                 @if(permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
                 <th class="text-left uppercase tracking-wider" appDynamicFontSize="body">
@@ -600,11 +604,12 @@
                 !col.colFilterHide) {
                 <th
                   scope="col"
-                  class="max-w-140 cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
+                  class="max-w-140 relative cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
                   [ngClass]="{ 'datatable-sticky-column': isStickyHeaderEnabled && isStickyGridColumn(col) }"
                   [class.expanded-column-header]="expandedColumnChildGrid && expandedColumnChildGrid.colHeader === col.header"
                   appDynamicFontSize="body"
                   (click)="sortColumn(col)"
+                  (contextmenu)="onHeaderRightClick($event, col)"
                   ngxTippy
                   [attr.data-tippy-content]="col.header | translate"
                 >
@@ -646,7 +651,11 @@
               </tr>
               } @if (!loading) { @if (items && items.length > 0) { @for(item of items; track item.uuid || item.id || $index; let row_index = $index) {
               <ng-container>
-                <tr [class.expanded-row]="expandedColumnChildGrid && expandedColumnChildGrid.rowIndex === row_index + 1">
+                <tr
+                  [class.expanded-row]="expandedColumnChildGrid && expandedColumnChildGrid.rowIndex === row_index + 1"
+                  [class.selected-row]="selectedRowIndex === row_index"
+                  (click)="selectTableRow(row_index)"
+                >
                   @if(permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
                   <td class="align-items-center flex gap-2">
                     <button class="expand-collapse-btn" (click)="toggleRow(item, row_index + 1)">
@@ -1082,4 +1091,23 @@
     </div>
   </div>
   }
+</div>
+
+<div
+  *ngIf="headerContextMenu.visible"
+  class="fixed z-[9999] w-56 rounded-md border bg-white shadow-lg"
+  [style.left.px]="headerContextMenu.x"
+  [style.top.px]="headerContextMenu.y"
+  (click)="$event.stopPropagation()"
+>
+  <ng-container *ngFor="let item of headerMenuItems">
+    <hr *ngIf="item.divider" class="my-1" />
+
+    @if (!item.divider) {
+    <div class="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-gray-100" (click)="onHeaderMenuAction(item.action)">
+      <i [class]="item.icon"></i>
+      <span>{{ item.label }}</span>
+    </div>
+    }
+  </ng-container>
 </div>

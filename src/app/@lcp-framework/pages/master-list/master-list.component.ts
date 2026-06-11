@@ -399,7 +399,6 @@ export class MasterListComponent implements OnChanges {
       const masterListConfig = pageInfo;
       if (masterListConfig.entity_configurations != null) {
         this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
-        // this.stickyHeader = 'yes';
       }
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
@@ -3398,9 +3397,15 @@ export class MasterListComponent implements OnChanges {
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
+    //console.log(event.col);
+    //console.log(event.col.link_type);
     if (event.col.link_type === 'component' || event.col.link_type === 'child_component' || event.col.link_type === 'popup_grid') {
+      //console.log(event.col.link_mode);
+      //console.log(this.masterInfo.permissions);
       const mode = event.col.link_mode || 'popup_details';
-      if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
+      //console.log('Link component clicked with mode:', mode);
+      /*if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
+        console.log('coming');
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
@@ -3409,6 +3414,42 @@ export class MasterListComponent implements OnChanges {
         this.isViewPopupOpen = true;
         return;
       } else if (mode == 'popup_edit' && !this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit) {
+        this.noPopupPermission = true;
+        this.isViewPopupOpen = true;
+        return;
+      }*/
+      this.popupEntityName = event.col.link_action;
+      const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
+      const unorgmenuList = userData?.unorgmenuList || [];
+      const permissions = userData?.permissions || {};
+      let menuPermissionId = null;
+      if (unorgmenuList && Array.isArray(unorgmenuList)) {
+        let menuItem = null;
+        if (mode === 'popup_add') {
+          menuItem = unorgmenuList.find(
+            (item: any) => item.entity_name === this.popupEntityName && (item.action_slug === 'add' || item.action_slug === 'popup_add')
+          );
+        } else if (mode === 'popup_edit') {
+          menuItem = unorgmenuList.find(
+            (item: any) => item.entity_name === this.popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit')
+          );
+        } else if (mode === 'popup_details') {
+          menuItem = unorgmenuList.find(
+            (item: any) => item.entity_name === this.popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
+          );
+        } else if (mode === 'popup_grid') {
+          menuItem = unorgmenuList.find((item: any) => item.entity_name === this.popupEntityName);
+        }
+        if (menuItem) {
+          menuPermissionId = menuItem.permission_id;
+        }
+      }
+      let hasPermission = true;
+      if (menuPermissionId && userData?.main?.permissions && Array.isArray(userData.main.permissions)) {
+        const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
+        hasPermission = !!(permObj && permObj.accessible);
+      }
+      if (!hasPermission) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
@@ -3430,7 +3471,7 @@ export class MasterListComponent implements OnChanges {
       if (mode === 'popup_add') {
         this.selectedItemUuid = null;
       }
-      this.popupEntityName = event.col.link_action;
+
       this.isViewPopupOpen = true;
       this.loadingpopup = true;
       setTimeout(() => {

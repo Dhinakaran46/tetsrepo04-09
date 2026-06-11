@@ -101,6 +101,110 @@
   color: var(--app-table-text-color, var(--app-text-color, #495057));
 }
 
+/* Sticky toolbar and thead — only for top-level (non-nested) tables */
+.panel.table-level-parent {
+  // border-collapse:collapse blocks sticky thead in Chrome — use separate+0 spacing (visually identical)
+  table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+  }
+}
+
+/* Sticky toolbar and thead — only when sticky header is enabled */
+.panel.table-level-parent.sticky-enabled {
+  .datatable-toolbar {
+    position: sticky;
+    z-index: 15;
+    background-color: var(--app-table-bg-color, var(--app-bg-color, #ffffff));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .datatable-toolbar:is(.dark *) {
+    background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  thead {
+    position: sticky;
+    z-index: 14;
+    background-color: #f9fafb; // bg-gray-50; covers scrolling content when stuck
+  }
+
+  thead:is(.dark *) {
+    background-color: var(--app-table-header-color, #1a2941) !important;
+  }
+}
+
+/* Sticky header for all tables when page scrolls */
+.datatable {
+  table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+  }
+
+  &.sticky-enabled {
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #f9fafb; // bg-gray-50
+      background-clip: padding-box;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    thead:is(.dark *) {
+      background-color: var(--app-table-header-color, #1a2941) !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  thead th {
+    background-color: inherit;
+    position: relative;
+  }
+
+  thead th:is(.dark *) {
+    background-color: var(--app-table-header-color, #1a2941) !important;
+  }
+
+  /* Row selection highlighting */
+  table tbody tr.selected-row {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    
+    td {
+      background-color: rgba(59, 130, 246, 0.08);
+    }
+  }
+
+  :is(.dark *) table tbody tr.selected-row {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    
+    td {
+      background-color: rgba(59, 130, 246, 0.12);
+    }
+  }
+
+  /* Hidden scrollbar but scrolling enabled - flexible height with internal scroll */
+  .datatable-scroll-container {
+    max-height: calc(100vh - 250px);
+    overflow-y: scroll;
+    overflow-x: auto;
+    
+    /* Hide scrollbar for Chrome, Safari, Edge */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+
+    /* Expand height when more than 10 rows */
+    &.expanded-rows {
+      max-height: calc(100vh - 120px);
+    }
+  }
+}
+
 .panel:is(.dark *) {
   background-color: var(--app-table-bg-color, var(--app-bg-color, #0e1726));
   color: var(--app-table-text-color, var(--app-text-color, #888ea8));
@@ -200,6 +304,22 @@
 .datatable table:is(.dark *) {
   background-color: var(--app-table-bg-color, #0e1726);
   color: var(--app-table-text-color, #888ea8);
+}
+
+/* Enhanced sticky header styling */
+.datatable thead th {
+  background-color: #f9fafb;
+  background-clip: padding-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.datatable thead th:is(.dark *) {
+  background-color: var(--app-table-header-color, #1a2941) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.datatable .table-responsive {
+  border-radius: 0.375rem;
 }
 
 .datatable tbody tr {

@@ -14,6 +14,7 @@ import {
   QueryList,
   ViewContainerRef,
   AfterViewChecked,
+  AfterViewInit,
   HostListener,
   OnDestroy,
   Optional,
@@ -147,12 +148,13 @@ interface UserSearchConfigurationTemp {
     ]),
   ],
 })
-export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, AfterViewInit, OnDestroy {
   // Add this property to your component class:
   pendingPopupData: { item: any; entityName: string } | null = null;
   private childComponentResolvedModes: Record<string, string> = {};
 
   expandedItem: any = null;
+  selectedRowIndex: number | null = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
   @Input() permissions: boolean = true;
   @Input() unique_id: any;
@@ -201,8 +203,52 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     );
   }
 
+  headerContextMenu = {
+    visible: false,
+    x: 0,
+    y: 0,
+    column: null as any,
+  };
+
+  headerMenuItems = [
+    { label: 'Sort Ascending', action: 'sortAsc', icon: 'fa fa-arrow-up' },
+    { label: 'Sort Descending', action: 'sortDesc', icon: 'fa fa-arrow-down' },
+    { label: 'Clear Sorting', action: 'clearSort', icon: 'fa fa-times' },
+    { divider: true },
+    { label: 'Filter Column', action: 'filter', icon: 'fa fa-filter' },
+    { label: 'Clear Filter', action: 'clearFilter', icon: 'fa fa-broom' },
+    { divider: true },
+    { label: 'Hide Column', action: 'hide', icon: 'fa fa-eye-slash' },
+    /*{ label: 'Auto Fit Width', action: 'autoFit', icon: 'fa fa-ruler' },*/
+    { divider: true },
+    { label: 'Copy Column Values', action: 'copy', icon: 'fa fa-copy' },
+  ];
+
+  onHeaderRightClick(event: MouseEvent, col: any): void {
+    event.preventDefault();
+
+    const menuWidth = 220;
+    const menuHeight = 300;
+
+    let x = event.clientX;
+    let y = event.clientY;
+
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10;
+    }
+
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10;
+    }
+
+    this.headerContextMenu = {
+      visible: true,
+      x,
+      y,
+      column: col,
+    };
+  }
   get stickyModeClass(): string {
-    console.log('this.isStickyHeaderEnabled', this.isStickyHeaderEnabled);
     return this.isStickyHeaderEnabled ? 'sticky-enabled' : 'sticky-disabled';
   }
 
@@ -370,6 +416,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
   @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
   @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
+  @ViewChild('datatableToolbar') toolbarElRef?: ElementRef;
+  @ViewChild('datatableTheadRef') theadElRef?: ElementRef;
+
+  navbarHeight: number = 56;
+  private toolbarResizeObserver?: ResizeObserver;
 
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
@@ -462,7 +513,39 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     }
   }
 
+  ngAfterViewInit(): void {
+    this.measureNavbarHeight();
+    if (this.toolbarElRef?.nativeElement) {
+      this.toolbarResizeObserver = new ResizeObserver(() => {
+        this.applyStickyTop();
+      });
+      this.toolbarResizeObserver.observe(this.toolbarElRef.nativeElement);
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.measureNavbarHeight();
+    this.applyStickyTop();
+  }
+
+  private applyStickyTop(): void {
+    if (this.tableLevel !== 0 || !this.theadElRef?.nativeElement) return;
+    const toolbarH: number = this.toolbarElRef?.nativeElement?.offsetHeight ?? 0;
+    const top = this.navbarHeight + toolbarH;
+    (this.theadElRef.nativeElement as HTMLElement).style.top = `${top}px`;
+  }
+
+  private measureNavbarHeight(): void {
+    const header = document.querySelector('header');
+    if (header) {
+      const h = header.offsetHeight;
+      if (h > 0) this.navbarHeight = h;
+    }
+  }
+
   ngOnDestroy(): void {
+    this.toolbarResizeObserver?.disconnect();
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
     });
@@ -539,30 +622,22 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     // 1) Resolve ternary/conditional expressions first:
     //    {{ condition ? trueValue : falseValue }} or {{ some.prop }}
     const exprRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    processedHtml = processedHtml.replace(exprRegex, (_m, expression: string) => {
-      const exp = expression.trim();
+    processedHtml = processedHtml.replace(/\{\{\s*(.+?)\s*\}\}/g, (_m, expression: string) => {
+      try {
+        const result = new Function(
+          'context',
+          `
+        with(context) {
+          return ${expression};
+        }
+        `
+        )(context);
 
-      // ternary?
-      const qIdx = exp.indexOf('?');
-      const cIdx = exp.lastIndexOf(':');
-      if (qIdx > -1 && cIdx > qIdx) {
-        const condition = exp.slice(0, qIdx).trim();
-        const truePart = exp.slice(qIdx + 1, cIdx).trim();
-        const falsePart = exp.slice(cIdx + 1).trim();
-
-        const condResult = this.evaluateCondition(condition, context);
-
-        // resolve each branch as either literal, path, or raw
-        const chosen = condResult ? truePart : falsePart;
-        const val = this.getContextValue(chosen, context);
-        return val === undefined
-          ? chosen.replace(/^['"]|['"]$/g, '') // strip quotes if they used them
-          : this.formatHtmlTemplateValue(val);
+        return result == null ? '' : this.formatHtmlTemplateValue(result);
+      } catch (e) {
+        console.error('Expression error:', expression, e);
+        return '';
       }
-
-      // non-ternary: try to resolve as path/literal (supports row_object.name, value, etc.)
-      const v = this.getContextValue(exp, context);
-      return v !== undefined && v !== null ? this.formatHtmlTemplateValue(v) : '';
     });
 
     // (optional) final pass for the explicit {{ value }} or {{ key }} placeholders
@@ -769,6 +844,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (this.columnChildMasterListContainer) {
       this.columnChildMasterListContainer.clear();
     }
+  }
+
+  /**
+   * Select table row for highlighting (like Excel row selection)
+   */
+  selectTableRow(rowIndex: number) {
+    this.selectedRowIndex = rowIndex;
   }
 
   ngOnInit() {
@@ -2823,6 +2905,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    this.headerContextMenu.visible = false;
     const path = (event.composedPath?.() || []) as Array<EventTarget>;
     const clickedInsideNgSelect = path.some((node) => {
       const element = node as HTMLElement;
@@ -4018,6 +4101,52 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       columns: [...ancestorColumns, ...ownColumns],
       grid_params: this.getCombinedGridParams(),
     };
+  }
+
+  onHeaderMenuAction(action: any) {
+    const col = this.headerContextMenu.column;
+
+    switch (action) {
+      case 'sortAsc':
+        col.sortDirection = 'asc';
+        this.sortColumn(col);
+        break;
+
+      case 'sortDesc':
+        col.sortDirection = 'desc';
+        this.sortColumn(col);
+        break;
+
+      case 'clearSort':
+        col.sortDirection = '';
+        //this.loadItems(); // or your refresh method
+        break;
+
+      case 'filter':
+        this.openAdvancedFilterMenu();
+        break;
+
+      case 'clearFilter':
+        this.clearFilters();
+        break;
+
+      case 'hide':
+        col.colFilterHide = true;
+        break;
+
+      /*case 'autoFit':
+        console.log('Auto fit', col);
+        break;*/
+
+      case 'copy':
+        const columnValues = this.items
+          .map((item: any) => item[col.header] ?? '')
+          .join('\n');
+        navigator.clipboard.writeText(columnValues);
+        break;
+    }
+
+    this.headerContextMenu.visible = false;
   }
 
   private replaceSearchTermInObject(obj: any, searchText: string): any {
