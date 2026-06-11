@@ -101,7 +101,11 @@
           <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
           <button class="btn btn-primary" (click)="nestedFormModalConfig.open = false; noNestedFormPermission = false">Close</button>
         </div>
-        } @if (!noNestedFormPermission) { @if (nestedFormEntityName) {
+        } @if (!noNestedFormPermission) { @if (nestedFormEntityName) { @if (isNestedTreeBuilder) {
+        <!-- TreeBuilderComponent is rendered here dynamically via ViewContainerRef (see renderNestedTreeBuilder())
+             to break the circular import: TreeBuilder→FormBuilder→TreeBuilder -->
+        <ng-container #treeBuilderHost></ng-container>
+        } @else {
         <app-form-builder
           [uuid]="nestedFormUuid"
           [entityName]="nestedFormEntityName"
@@ -112,7 +116,7 @@
           (closeModal)="onNestedFormSubmitted($event)"
           (nestedFormSuccess)="onNestedFormSuccess($event)"
         ></app-form-builder>
-        } }
+        } } }
       </div>
     </div>
   </div>

@@ -288,13 +288,13 @@
         </div> -->
 
       <div class="hidden truncate lg:block ltr:pl-4 rtl:pr-4">
-        <h4 class="profile-name text-right">{{ getProfileInfo().name }}</h4>
-        <span class="profile-email"> {{ getProfileInfo().email }} </span>
+        <h4 class="profile-name text-right">{{ profileInfo.name }}</h4>
+        <span class="profile-email"> {{ profileInfo.email }} </span>
       </div>
 
       <div class="profile-dropdown dropdown relative shrink-0">
         <button type="button" class="group relative block" (click)="toggleProfileMenu($event)">
-          <img class="h-8 w-8 rounded-full object-cover saturate-50 group-hover:saturate-100" [src]="getProfileInfo().profile_pic" alt="Profile" />
+          <img class="h-8 w-8 rounded-full object-cover saturate-50 group-hover:saturate-100" [src]="profileInfo.profile_pic" alt="Profile" />
         </button>
         @if (showProfileMenu) {
         <ul
@@ -304,12 +304,12 @@
           <li>
             <div class="flex items-center px-4 py-4">
               <div class="flex-none">
-                <img class="h-10 w-10 rounded-md object-cover" [src]="getProfileInfo().profile_pic" alt="Profile Picture" />
+                <img class="h-10 w-10 rounded-md object-cover" [src]="profileInfo.profile_pic" alt="Profile Picture" />
               </div>
               <div class="truncate ltr:pl-4 rtl:pr-4">
-                <h4 class="profile-name text-base">{{ getProfileInfo().name }}</h4>
-                <span class="profile-email"> {{ getProfileInfo().email }} </span>
-                <p>{{ getProfileInfo().role }}</p>
+                <h4 class="profile-name text-base">{{ profileInfo.name }}</h4>
+                <span class="profile-email"> {{ profileInfo.email }} </span>
+                <p>{{ profileInfo.role }}</p>
               </div>
             </div>
           </li>

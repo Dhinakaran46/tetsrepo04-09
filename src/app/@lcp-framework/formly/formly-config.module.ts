@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormlyFieldFileComponent } from './components/formly-field-file/formly-field-file.component';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { FormlyFieldConfig, FormlyModule, FormlyExtension } from '@ngx-formly/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { FormlyPresetModule } from '@ngx-formly/core/preset';
 import { FileValueAccessor } from './directives/file-value-accessor';
 import { FormlyFieldRepeatComponent } from './components/formly-field-repeat/formly-field-repeat.component';
@@ -23,6 +24,7 @@ import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.
 import { SplitLabelPipe } from '../pipes/split-label.pipe';
 import { FormlyFieldColorPickerComponent } from './components/formly-field-color-picker/formly-field-color-picker.component';
 import { TranslateService } from '@ngx-translate/core';
+import { FormlyFieldTreeSelectComponent } from './components/formly-field-tree-select/formly-field-tree-select.component';
 
 export function translateMessage(key: string, defaultVal: string) {
   return (error: any, field: FormlyFieldConfig) => {
@@ -207,6 +209,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyVsCodeComponent,
     FormlyRepeatTableFieldComponent,
     FormlyFieldColorPickerComponent,
+    FormlyFieldTreeSelectComponent,
     SplitLabelPipe,
   ],
   imports: [
@@ -215,7 +218,9 @@ export const lcpPresetExtension: FormlyExtension = {
     CommonModule,
     NgSelectModule,
     WhatsappTagsComponent,
+    FormsModule,
     ReactiveFormsModule,
+    TranslateModule,
     FormlyBootstrapModule,
     FormlyPresetModule,
     SafeHtmlPipe,
@@ -447,6 +452,7 @@ export const lcpPresetExtension: FormlyExtension = {
         { name: 'vs-code', component: FormlyVsCodeComponent, wrappers: ['form-field'] },
         { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
         { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] },
+        { name: 'tree-select', component: FormlyFieldTreeSelectComponent, wrappers: ['form-field'] },
       ],
     }),
   ],
@@ -459,6 +465,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyPresetModule,
     FormlyFieldSelectFromDbComponent,
     FormlyFieldAutocompleteComponent,
+    FormlyFieldTreeSelectComponent,
     NgSelectModule,
     FormlyBootstrapModule,
     SplitLabelPipe,

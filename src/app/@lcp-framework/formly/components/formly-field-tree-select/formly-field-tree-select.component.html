@@ -1,0 +1,147 @@
+<div class="tree-select-container relative w-full">
+  <div class="flex items-center gap-2">
+    <div class="flex-1 relative min-w-0">
+      <!-- Trigger Input/Box -->
+      <div
+        (click)="!props.disabled && (isOpen = !isOpen)"
+        [class.is-invalid]="formControl.invalid && (formControl.touched || formControl.dirty || field.options?.formState?.submitted)"
+        [class.bg-gray-100]="props.disabled"
+        [class.cursor-not-allowed]="props.disabled"
+        [class.cursor-pointer]="!props.disabled"
+        [class.opacity-70]="props.disabled"
+        class="form-control flex items-center justify-between pr-2 gap-2 min-w-0 w-full"
+      >
+        <span class="truncate flex-1 min-w-0" [class.text-gray-400]="!selectedLabel">
+          {{ selectedLabel || (((props.placeholder || '') | translate) || ('select' | translate)) }}
+        </span>
+        <div class="flex items-center space-x-2 shrink-0">
+          <!-- Clear selection icon -->
+          @if (selectedLabel && !props.disabled && props['clearable'] !== false) {
+          <button
+            type="button"
+            (click)="clearSelection(); $event.stopPropagation()"
+            class="text-gray-400 hover:text-danger"
+          >
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>
+          }
+          <!-- Chevron -->
+          <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+        </div>
+      </div>
+
+      <!-- Dropdown Panel -->
+      @if (isOpen) {
+      <div
+        class="absolute left-0 z-[9999] mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#121e32] shadow-2xl"
+      >
+        <!-- Dropdown Search -->
+        <div class="border-b border-gray-100 p-2 dark:border-gray-700">
+          <div class="relative flex items-center">
+            <div class="absolute left-2.5 text-gray-400">
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </div>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="applyDropdownFilter()"
+              class="form-control w-full dropdown-search-input text-xs"
+              placeholder="{{ 'search' | translate }}..."
+              (click)="$event.stopPropagation()"
+            />
+            @if (searchQuery) {
+            <button
+              type="button"
+              (click)="searchQuery = ''; applyDropdownFilter(); $event.stopPropagation()"
+              class="absolute right-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <i class="fa-solid fa-circle-xmark text-xs"></i>
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Tree Nodes Scroll Area -->
+        <div class="max-h-60 overflow-y-auto p-1">
+          @if (filteredTreeData && filteredTreeData.length > 0) {
+            @for (node of filteredTreeData; track node.value) {
+              <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { node: node, depth: 0 }"></ng-container>
+            }
+          } @else {
+            <div class="py-4 text-center text-xs text-gray-400">
+              {{ 'no_nodes_found' | translate }}
+            </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Plus button to open nested modal -->
+    @if (getAddEditForm()) {
+    <div class="flex-none">
+      <button
+        type="button"
+        (click)="openNestedFormModal(getAddEditForm()!, getFieldKey()!)"
+        class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-3 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
+        [title]="('add_new' | translate) + ' ' + ((getAddEditForm() || '') | translate)"
+      >
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+    }
+  </div>
+</div>
+
+<!-- Recursive Node Template -->
+<ng-template #treeNodeTemplate let-node="node" let-depth="depth">
+  <div
+    (click)="selectNode(node); $event.stopPropagation()"
+    class="flex items-center rounded py-1.5 px-2 cursor-pointer transition-colors"
+    [ngClass]="{
+      'bg-primary/10 text-primary font-semibold': isNodeSelected(node),
+      'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50': !isNodeSelected(node)
+    }"
+  >
+    <!-- Indentation offset -->
+    <div [style.width.px]="depth * 16" class="shrink-0"></div>
+
+    <!-- Expand/Collapse toggle -->
+    @if (node.children && node.children.length > 0) {
+    <button
+      type="button"
+      (click)="toggleNodeExpand(node); $event.stopPropagation()"
+      class="mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+    >
+      <i class="fa-solid text-[8px]" [ngClass]="isNodeExpanded(node) ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+    </button>
+    } @else {
+    <div class="mr-1 w-4 shrink-0"></div>
+    }
+
+    <!-- Folder/File Icon -->
+    <i
+      class="fa-solid mr-1.5 text-[10px] text-primary/70 dark:text-primary-light/70"
+      [class.fa-folder]="node.children && node.children.length > 0"
+      [class.fa-file]="!node.children || node.children.length === 0"
+    ></i>
+
+    <!-- Node name/label -->
+    <span
+      class="text-xs truncate transition-colors"
+      [ngClass]="{
+        'text-primary font-semibold': isNodeSelected(node) || isNodeMatched(node),
+        'text-gray-700 dark:text-gray-200': !isNodeSelected(node) && !isNodeMatched(node)
+      }"
+      [innerHTML]="getHighlightedText(node.label)"
+    >
+    </span>
+  </div>
+
+  <!-- Children -->
+  @if (node.children && node.children.length > 0 && isNodeExpanded(node)) {
+    @for (child of node.children; track child.value) {
+      <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { node: child, depth: depth + 1 }"></ng-container>
+    }
+  }
+</ng-template>
