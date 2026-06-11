@@ -112,7 +112,7 @@ html.login-page > body {
 .table-responsive {
   width: 100%;
   overflow-x: auto; /* enable horizontal scroll */
-  overflow-y: hidden; /* prevent vertical scroll */
+  overflow-y: clip; /* clip without creating a scroll container (preserves sticky positioning) */
   -webkit-overflow-scrolling: touch;
 }
 
