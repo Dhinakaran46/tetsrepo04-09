@@ -129,3 +129,17 @@ html.login-page > body {
   min-width: 250px;
   resize: horizontal; /* user can resize if needed */
 }
+
+/* Global search highlight styling */
+mark {
+  background-color: #fef08a !important; /* Tailwind bg-yellow-200 */
+  color: #000000 !important;
+  border-radius: 0.125rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+.dark mark,
+body.dark mark {
+  background-color: #854d0e !important; /* Tailwind bg-yellow-800 */
+  color: #ffffff !important;
+}
