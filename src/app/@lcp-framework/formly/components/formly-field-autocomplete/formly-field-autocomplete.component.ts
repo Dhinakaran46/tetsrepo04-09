@@ -63,12 +63,28 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
   private initializeAndSearchOptions(value: any): Observable<{ label: string; value: any }[]> {
     const initialLoad$ = this.loadOptions(value, true);
     return initialLoad$.pipe(
-      switchMap(() =>
+      switchMap((initialOptions) =>
         this.searchSubject.pipe(
           startWith(''),
           debounceTime(300),
           distinctUntilChanged(),
-          switchMap((searchTerm) => this.loadOptions(searchTerm, false)),
+          switchMap((searchTerm) =>
+            this.loadOptions(searchTerm, false).pipe(
+              map((searchOptions) => {
+                const merged = [...searchOptions];
+                if (Array.isArray(initialOptions)) {
+                  const currentVal = this.formControl?.value;
+                  const selectedValues = Array.isArray(currentVal) ? currentVal : [currentVal];
+                  initialOptions.forEach((initOpt) => {
+                    if (initOpt && initOpt.value !== undefined && selectedValues.includes(initOpt.value) && !merged.some((m) => m.value === initOpt.value)) {
+                      merged.push(initOpt);
+                    }
+                  });
+                }
+                return merged;
+              })
+            )
+          ),
           catchError(() => of([])) // Handle errors gracefully
         )
       )
@@ -134,7 +150,7 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
     valueColumn: string,
     labelColumn: string,
     searchConditions: any,
-     additionalColumns: any[],
+    additionalColumns: any[],
     groupBy?: any
   ) {
     return {
@@ -153,11 +169,22 @@ export class FormlyFieldAutocompleteComponent extends FieldType implements OnIni
 
   private transformResponse(response: any, valueColumn: string, labelColumn: string): { label: string; value: any }[] {
     if (response.status && response.data?.records?.length > 0) {
-      return response.data.records.map((record: any) => ({
-        ...record,
-        value: record[valueColumn] || record['value'],
-        label: record[labelColumn] || record['label'],
-      }));
+      return response.data.records.map((record: any) => {
+        const val = record[valueColumn] !== undefined ? record[valueColumn] : record['value'] !== undefined ? record['value'] : record['id'];
+        const lbl =
+          record[labelColumn] !== undefined
+            ? record[labelColumn]
+            : record['label'] !== undefined
+            ? record['label']
+            : record['concat'] !== undefined
+            ? record['concat']
+            : record['name'];
+        return {
+          ...record,
+          value: val,
+          label: lbl,
+        };
+      });
     }
     return [];
   }
