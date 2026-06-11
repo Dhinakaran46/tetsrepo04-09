@@ -396,8 +396,54 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           }
         );
       } else {
-        observer.next([]);
-        observer.complete();
+        const props = field?.props || field?.templateOptions || {};
+        const tableName = props.table || props.primary_table;
+        const valueColumn = props.valueColumn;
+        const labelColumn = props.labelColumn;
+        if (tableName && valueColumn && labelColumn) {
+          const searchAll = props.search_all
+            ? JSON.parse(JSON.stringify(props.search_all))
+            : [{ column_name: `${tableName}.status_id`, operator: '=', value: '1' }];
+          const listParams = {
+            company_id: 1,
+            primary_table: tableName,
+            start_index: 0,
+            limit_range: 1000,
+            select_columns: [
+              [valueColumn, 'value'],
+              [labelColumn, 'label'],
+            ],
+            search_all: searchAll,
+          };
+
+          this.gridApiService.getAllList(listParams).subscribe(
+            (response) => {
+              if (response.status && response.code === 200) {
+                const records = response.data?.records || [];
+                const options = records.map((record: any) => ({
+                  ...record,
+                  value: record[valueColumn] || record['value'],
+                  label: record[labelColumn] || record['label'],
+                }));
+                this.listDatas[key] = options;
+                if (field && field.props) {
+                  field.props.options = options;
+                }
+                observer.next(options);
+                observer.complete();
+              } else {
+                observer.next([]);
+                observer.complete();
+              }
+            },
+            (error) => {
+              observer.error(error);
+            }
+          );
+        } else {
+          observer.next([]);
+          observer.complete();
+        }
       }
     });
   }
@@ -471,7 +517,6 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     // Synchronize form control values to model before proceeding
     this.model = this.deepMerge(this.model, this.form.getRawValue());
     this.sanitizeSelfReferencingParentIds(this.model);
-
     const uploadObservables = this.collectFileUploadObservables();
     if (uploadObservables.length === 0) {
       // If there are no files to upload, directly proceed with the transaction
@@ -1885,9 +1930,25 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.toastr.success('Record created successfully. Form data refreshed.');
   }
 
+  private cloneFields(fields: FormlyFieldConfig[]): FormlyFieldConfig[] {
+    return fields.map((field) => {
+      const cloned: any = { ...field };
+      if (cloned.fieldGroup) {
+        cloned.fieldGroup = this.cloneFields(cloned.fieldGroup);
+      }
+      if (cloned.fieldArray) {
+        cloned.fieldArray = {
+          ...cloned.fieldArray,
+          fieldGroup: cloned.fieldArray.fieldGroup ? this.cloneFields(cloned.fieldArray.fieldGroup) : undefined,
+        };
+      }
+      return cloned;
+    });
+  }
+
   public refreshSelectFromDbOptions() {
-    // Deep clone the fields array to force Angular and Formly to re-render the form
-    this.fields = JSON.parse(JSON.stringify(this.fields));
+    // Clone fields while preserving functions to force Angular/Formly re-render without losing validators
+    this.fields = this.cloneFields(this.fields);
     this.cdRef.detectChanges();
   }
 
@@ -1919,42 +1980,57 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       const fieldConfig = this.findFieldConfigByKey(this.fields, event.fieldKey);
       // Fetch and wait for options to be available before updating value
       this.fetchList(fieldConfig, event.fieldKey, true).subscribe(() => {
-        // Debug: log all keys and char codes
-
-        Object.keys(this.listDatas).forEach((k) => {});
         // Normalize key by trimming whitespace
         const normalizedKey = event.fieldKey.trim();
         const options = this.listDatas[normalizedKey] || [];
 
-        // Always set the value immediately
-        this.model[event.fieldKey] = event.value;
+        let finalValue = event.value;
+        const isMultiple = fieldConfig?.props?.['multiple'] || fieldConfig?.templateOptions?.['multiple'] || false;
+
+        if (Array.isArray(options)) {
+          const labelColumn = fieldConfig?.props?.['labelColumn'] || fieldConfig?.templateOptions?.['labelColumn'];
+          const valueColumn = fieldConfig?.props?.['valueColumn'] || fieldConfig?.templateOptions?.['valueColumn'];
+          const found = options.find((opt: any) => {
+            const labelStr = String(opt.label || opt.concat || opt.name || (labelColumn ? opt[labelColumn] : '') || '');
+            const nameStr = String(opt.name || '');
+            const valStr = String(event.value);
+
+            if (labelStr === valStr || nameStr === valStr) return true;
+            if (labelStr.includes('___') && labelStr.split('___')[0] === valStr) return true;
+            if (labelStr.toLowerCase().startsWith(valStr.toLowerCase())) return true;
+            return false;
+          });
+          if (found) {
+            finalValue = found.id !== undefined ? found.id : found.value !== undefined ? found.value : valueColumn ? found[valueColumn] : undefined;
+            if (finalValue === undefined) {
+              finalValue = event.value;
+            }
+          }
+        }
+
+        let updatedValue: any;
+        if (isMultiple) {
+          const currentValue = fieldConfig?.formControl?.value;
+          let currentArray: any[] = [];
+          if (Array.isArray(currentValue)) {
+            currentArray = currentValue;
+          } else if (currentValue !== undefined && currentValue !== null) {
+            currentArray = [currentValue];
+          }
+          updatedValue = currentArray.includes(finalValue) ? currentArray : [...currentArray, finalValue];
+        } else {
+          updatedValue = finalValue;
+        }
+
+        this.model[event.fieldKey] = updatedValue;
         const control = this.form.get(event.fieldKey);
         if (control) {
-          control.setValue(event.value);
+          control.setValue(updatedValue);
         }
-        const currentValue = fieldConfig?.formControl?.value;
         if (fieldConfig?.formControl) {
-          let updatedValue: any[] = [];
-          if (Array.isArray(currentValue)) {
-            updatedValue = currentValue.includes(event.value) ? currentValue : [...currentValue, event.value];
-          } else if (currentValue !== undefined && currentValue !== null) {
-            updatedValue = [currentValue, event.value];
-          } else {
-            updatedValue = [event.value];
-          }
-          if (Array.isArray(options)) {
-            updatedValue = updatedValue.map((val) => {
-              if (typeof val === 'string') {
-                const found = options.find((opt: any) => opt.label === val || opt.name === val);
-                if (found) {
-                  return found.id !== undefined ? found.id : found.value;
-                }
-              }
-              return val;
-            });
-          }
           fieldConfig.formControl.setValue(updatedValue);
         }
+
         // Always close the modal after success
         this.closeNestedFormModal();
       });
