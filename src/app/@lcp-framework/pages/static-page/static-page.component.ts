@@ -892,16 +892,65 @@ export class StaticPageComponent implements OnChanges {
     staticContent = staticContent.replace(/<code class="xml">([\s\S]*?)<\/code>/g, (match, p1) => {
       return `<code class="xml">${this.escapeHtml(p1)}</code>`;
     });
+    // Convert {{#if a == b}} / {{#if a > b}} etc. → {{#hbp_ifCond a '==' b}}
+    staticContent = this.preprocessIfConditions(staticContent);
     // Pretty-print JSON if data contains JSON fields
     const formattedData = this.prettifyJsonFields(data);
     // Recursively format all date-like values
     const dateFormattedData = this.formatDatesInObject(formattedData);
     // Compile the static content using Handlebars
-    const compiledTemplate = Handlebars.compile(staticContent);
+    let compiledTemplate: Handlebars.TemplateDelegate;
+    try {
+      compiledTemplate = Handlebars.compile(staticContent);
+    } catch (e) {
+      console.error('[StaticPage] Handlebars compile error:', e, '\nTemplate:\n', staticContent);
+      return `<pre style="color:red">Template compile error: ${(e as Error).message}</pre>`;
+    }
     let rendered = compiledTemplate(dateFormattedData);
     rendered = this.escapeRenderIntoHtml(rendered);
     rendered = this.replaceRenderHtmlTags(rendered);
     return rendered;
+  }
+
+  private preprocessIfConditions(template: string): string {
+    // Matches any {{...}} token that has no } inside (covers all standard Handlebars tokens)
+    const tokenRegex = /\{\{[^}]*?\}\}/g;
+    // {{#if left op right}} — comparison operators
+    const ifCompareRegex = /^\{\{#if\s+([\w.[\]'"]+)\s*(===|!==|==|!=|>=|<=|>|<)\s*([^\s}][^}]*?)\s*\}\}$/;
+    // {{ left op right }} — arithmetic: spaces required around operator to distinguish from hyphenated paths
+    const mathRegex = /^\{\{\s*([\w.[\]]+)\s+([-+*/%])\s+([\w.[\]]+)\s*\}\}$/;
+    const stack: ('if' | 'ifcond')[] = [];
+    let result = '';
+    let lastIndex = 0;
+    let m: RegExpExecArray | null;
+
+    tokenRegex.lastIndex = 0;
+    while ((m = tokenRegex.exec(template)) !== null) {
+      result += template.substring(lastIndex, m.index);
+      lastIndex = m.index + m[0].length;
+
+      const token = m[0];
+      if (/^\{\{#if[\s}]/.test(token)) {
+        const cmp = ifCompareRegex.exec(token);
+        if (cmp) {
+          result += `{{#hbp_ifCond ${cmp[1]} '${cmp[2]}' ${cmp[3].trim()}}}`;
+          stack.push('ifcond');
+        } else {
+          result += token;
+          stack.push('if');
+        }
+      } else if (/^\{\{\/if\s*\}\}$/.test(token)) {
+        result += stack.pop() === 'ifcond' ? '{{/hbp_ifCond}}' : token;
+      } else if (/^\{\{\s*[\w.[\]]/.test(token) && !token.startsWith('{{#') && !token.startsWith('{{/') && !token.startsWith('{{>') && !token.startsWith('{{!')) {
+        const math = mathRegex.exec(token);
+        result += math ? `{{hbp_math ${math[1]} '${math[2]}' ${math[3]}}}` : token;
+      } else {
+        result += token;
+      }
+    }
+
+    result += template.substring(lastIndex);
+    return result;
   }
 
   escapeRenderIntoHtml(html: string): string {
