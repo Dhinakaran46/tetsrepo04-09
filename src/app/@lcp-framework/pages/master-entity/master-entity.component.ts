@@ -1042,6 +1042,201 @@ export class MasterEntityComponent implements OnInit {
             ],
           },
         },
+        {
+          name: 'validator_example',
+          comments: [],
+          data: {
+            model: {
+              demo: {
+                email: null,
+                comments: null,
+                coupon_code: null,
+                employee_id: null,
+                website: null,
+                username_field: null,
+                dob: null,
+                country_code: null,
+                phone_number: null,
+                first_name: null,
+                last_name: null,
+                address: null,
+                email_no_html: null,
+              },
+            },
+            fields: [
+              {
+                key: 'demo',
+                wrappers: ['form-field'],
+                fieldGroup: [
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>1. Standard Built-in Validators</h3>",
+                  },
+                  {
+                    key: 'email',
+                    type: 'input',
+                    props: {
+                      label: 'Email Address (email)',
+                      placeholder: 'Enter email',
+                    },
+                    validators: {
+                      validation: ['email'],
+                    },
+                  },
+                  {
+                    key: 'comments',
+                    type: 'textarea',
+                    props: {
+                      label: 'Comments (noHtml)',
+                      placeholder: 'Enter comments',
+                    },
+                    validators: {
+                      validation: ['noHtml'],
+                    },
+                  },
+                  {
+                    key: 'coupon_code',
+                    type: 'input',
+                    props: {
+                      label: 'Coupon Code (alphanumeric)',
+                      placeholder: 'Enter coupon code',
+                    },
+                    validators: {
+                      validation: ['alphanumeric'],
+                    },
+                  },
+                  {
+                    key: 'employee_id',
+                    type: 'input',
+                    props: {
+                      label: 'Employee ID (numeric)',
+                      placeholder: 'Enter employee ID',
+                    },
+                    validators: {
+                      validation: ['numeric'],
+                    },
+                  },
+                  {
+                    key: 'website',
+                    type: 'input',
+                    props: {
+                      label: 'Website URL (url)',
+                      placeholder: 'https://example.com',
+                    },
+                    validators: {
+                      validation: ['url'],
+                    },
+                  },
+                  {
+                    key: 'username_field',
+                    type: 'input',
+                    props: {
+                      label: 'Username (username)',
+                      placeholder: 'Enter username',
+                    },
+                    validators: {
+                      validation: ['username'],
+                    },
+                  },
+                  {
+                    key: 'dob',
+                    type: 'input',
+                    props: {
+                      type: 'date',
+                      label: 'Date of Birth (noFutureDate)',
+                    },
+                    validators: {
+                      validation: ['noFutureDate'],
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>2. Sibling Symmetrical Validation (phoneAndCountry)</h3>",
+                  },
+                  {
+                    key: 'country_code',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Country Code',
+                      table: 'phone_country_codes',
+                      labelColumn: 'name',
+                      valueColumn: 'id',
+                      placeholder: 'Select country code',
+                      phoneNumberField: 'phone_number',
+                    },
+                  },
+                  {
+                    key: 'phone_number',
+                    type: 'input',
+                    props: {
+                      label: 'Phone Number',
+                      placeholder: 'Enter phone number',
+                      countryCodeField: 'country_code',
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>3. Custom Regex Validator</h3>",
+                  },
+                  {
+                    key: 'first_name',
+                    type: 'input',
+                    props: {
+                      label: 'First Name (letters & spaces only)',
+                      placeholder: 'Enter first name',
+                    },
+                    validators: {
+                      lettersOnly: {
+                        expression: '/^[a-zA-Z\\s]+$/',
+                        message: 'First name can only contain letters and spaces',
+                      },
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>4. Custom Arrow Function Validator</h3>",
+                  },
+                  {
+                    key: 'last_name',
+                    type: 'input',
+                    props: {
+                      label: 'Last Name (profanity check)',
+                      placeholder: 'Enter last name',
+                    },
+                    validators: {
+                      noProfanity: {
+                        expression: "(control) => control.value && ['badword', 'test'].includes(control.value.toLowerCase()) ? { noProfanity: true } : null",
+                        message: 'Invalid last name entered',
+                      },
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>5. Heuristic Opt-Out Configurations</h3>",
+                  },
+                  {
+                    key: 'address',
+                    type: 'textarea',
+                    props: {
+                      label: 'Address (disableValidation: true — all auto validators off)',
+                      placeholder: 'Enter address',
+                      disableValidation: true,
+                    },
+                  },
+                  {
+                    key: 'email_no_html',
+                    type: 'input',
+                    props: {
+                      label: 'Email (disableValidation: [noHtml] — only email validator runs)',
+                      placeholder: 'Enter email',
+                      disableValidation: ['noHtml'],
+                    },
+                    validators: {
+                      validation: ['email'],
+                    },
+                  },
+                ],
+                fieldGroupClassName: 'grid grid-cols-1 gap-4 md:grid-cols-3',
+              },
+            ],
+            options: {},
+          },
+        },
       ],
     },
     presetQueryInfo: {

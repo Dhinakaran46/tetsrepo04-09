@@ -109,18 +109,14 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
 
       const search_all = this.evaluateDynamicValues(updatedSearchAll, this);
 
-      const search_any = this.props['search_any']
-        ? this.evaluateDynamicValues(JSON.parse(JSON.stringify(this.props['search_any'])), this)
-        : [];
+      const search_any = this.props['search_any'] ? this.evaluateDynamicValues(JSON.parse(JSON.stringify(this.props['search_any'])), this) : [];
       const having_conditions = this.props['having_conditions']
         ? this.evaluateDynamicValues(JSON.parse(JSON.stringify(this.props['having_conditions'])), this)
         : [];
-      const having_any_conditions = this.props['having_any_conditions'] ?? this.props['having_any']
-        ? this.evaluateDynamicValues(
-            JSON.parse(JSON.stringify(this.props['having_any_conditions'] ?? this.props['having_any'])),
-            this
-          )
-        : [];
+      const having_any_conditions =
+        this.props['having_any_conditions'] ?? this.props['having_any']
+          ? this.evaluateDynamicValues(JSON.parse(JSON.stringify(this.props['having_any_conditions'] ?? this.props['having_any'])), this)
+          : [];
 
       const limit_range = this.props['limit_range'] ? this.props['limit_range'] : 1000;
       const sort_columns = this.props['sort_columns'] ? this.props['sort_columns'] : [[labelColumn, 'asc']];
@@ -136,26 +132,16 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
         start_index: 0,
         sort_columns,
         primary_table: tableName,
-        select_columns: [
-          [valueColumn, 'value'],
-          [labelColumn, 'label'],
-          [parentIdColumn, parentIdColumn],
-          [uuidColumn, 'uuid'],
-          ...additionalColumns,
-        ],
+        select_columns: [[valueColumn, 'value'], [labelColumn, 'label'], [parentIdColumn, parentIdColumn], [uuidColumn, 'uuid'], ...additionalColumns],
       };
 
-      if (search_any.length)           payload['search_any']            = search_any;
-      if (having_conditions.length)    payload['having_conditions']     = having_conditions;
+      if (search_any.length) payload['search_any'] = search_any;
+      if (having_conditions.length) payload['having_conditions'] = having_conditions;
       if (having_any_conditions.length) payload['having_any_conditions'] = having_any_conditions;
-      if (includes.length)             payload['includes']              = includes;
+      if (includes.length) payload['includes'] = includes;
 
       let listParams = this.localStorageService.replaceUniqueId(
-        this.localStorageService.formatPayloadWithPolicyConditions(
-          payload,
-          this.policyData,
-          (this.field as any)?.attached_policies || []
-        ),
+        this.localStorageService.formatPayloadWithPolicyConditions(payload, this.policyData, (this.field as any)?.attached_policies || []),
         '$session_user_id',
         this.user_info.main.id
       );
@@ -189,7 +175,7 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
           this.filteredTreeData = [];
           this.selectedLabel = '';
           this.cdr.markForCheck();
-        }
+        },
       });
     }
   }
@@ -223,7 +209,7 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
   getAncestorPath(value: any): string {
     const parentIdColumn = this.props['parentIdColumn'] || 'parent_id';
     const nodeMap: any = {};
-    this.flatData.forEach(d => nodeMap[d.value] = d);
+    this.flatData.forEach((d) => (nodeMap[d.value] = d));
 
     const parts: string[] = [];
     let current = nodeMap[value];
@@ -240,9 +226,25 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
   }
 
   updateSelectedLabel() {
-    const val = this.formControl?.value;
+    let val = this.formControl?.value;
     if (val !== null && val !== undefined && val !== '') {
-      const match = this.flatData.find(d => d.value === val);
+      let match = this.flatData.find((d) => d.value === val);
+      if (!match && typeof val === 'string') {
+        match = this.flatData.find((d) => {
+          const labelStr = String(d.label || '');
+          const nameStr = String(d.name || '');
+          const valStr = String(val);
+
+          if (labelStr === valStr || nameStr === valStr) return true;
+          if (labelStr.includes('___') && labelStr.split('___')[0] === valStr) return true;
+          if (labelStr.toLowerCase().startsWith(valStr.toLowerCase())) return true;
+          return false;
+        });
+        if (match) {
+          this.formControl.setValue(match.value, { emitEvent: false });
+          val = match.value;
+        }
+      }
       this.selectedLabel = match ? this.getAncestorPath(val) : this.translate.instant(String(val));
     } else {
       this.selectedLabel = '';
@@ -319,7 +321,7 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
           }
           result.push({
             ...node,
-            children: filteredChildren
+            children: filteredChildren,
           });
         }
       }
@@ -327,7 +329,7 @@ export class FormlyFieldTreeSelectComponent extends FieldType implements OnInit 
     };
 
     this.filteredTreeData = filterRecursive(this.treeData);
-    expanded.forEach(id => this.expandedNodeIds.add(id));
+    expanded.forEach((id) => this.expandedNodeIds.add(id));
     this.cdr.markForCheck();
   }
 
