@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input, SimpleChanges, OnChanges, Output, EventEmitter } from '@angular/core';
+import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, HostListener, Input, SimpleChanges, OnChanges, Output, EventEmitter } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -82,6 +82,7 @@ export class MasterListComponent implements OnChanges {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
+  @Input() line_item_configurations: any = null;
   @Input() showBackButton: boolean = true;
   @Input() parentGridFilters: {
     search_all?: any[];
@@ -223,6 +224,10 @@ export class MasterListComponent implements OnChanges {
   grid_unique_id: any;
   popupComponentGridParams: any;
   popupParentGridFilters: any = null;
+  popupLineItemConfigurations: any = null;
+  contextMenuVisible = false;
+  contextMenuPosition = { x: 0, y: 0 };
+  contextMenuItem: any = null;
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
@@ -2124,6 +2129,9 @@ export class MasterListComponent implements OnChanges {
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
+    if (this.line_item_configurations) {
+      payload.line_item_configurations = this.line_item_configurations;
+    }
     if (this.attachedPolicies) {
       payload.attached_policies = this.attachedPolicies;
     }
@@ -2141,10 +2149,14 @@ export class MasterListComponent implements OnChanges {
               if (this.headercolumns.length == 0) {
                 const data = response.data.headers
                   .filter((key: any) => key.is_grid_column == 'true')
-                  .map((key: any) => ({
-                    ...key,
-                    column_width: '40px',
-                  }));
+                  .map((key: any) => {
+                    const matched = this.selectcolumns.find((sc: any) => sc.display_name === key.header);
+                    return {
+                      ...key,
+                      column_width: '40px',
+                      ...(matched?.line_item_configurations != null ? { line_item_configurations: matched.line_item_configurations } : {}),
+                    };
+                  });
 
                 // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
 
@@ -2825,6 +2837,38 @@ export class MasterListComponent implements OnChanges {
     this.noPopupPermission = false;
     this.previewPopupPermission = false;
     this.selectedItemEntityType = null;
+    this.popupLineItemConfigurations = null;
+  }
+
+  onRowContextMenu(data: { item: any; event: MouseEvent }) {
+    data.event.preventDefault();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const menuW = 200;
+    const menuH = 320;
+    let x = data.event.clientX;
+    let y = data.event.clientY;
+    if (x + menuW > vw) x = vw - menuW - 8;
+    if (y + menuH > vh) y = vh - menuH - 8;
+    this.contextMenuPosition = { x, y };
+    this.contextMenuItem = data.item;
+    this.contextMenuVisible = true;
+    this.cdr.detectChanges();
+  }
+
+  closeContextMenu() {
+    this.contextMenuVisible = false;
+    this.contextMenuItem = null;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.contextMenuVisible) this.closeContextMenu();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    if (this.contextMenuVisible) this.closeContextMenu();
   }
 
   editItem(item: any, event?: MouseEvent) {
@@ -2849,7 +2893,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        const url = window.location.origin + '/#' + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
         window.open(url, '_blank');
       } else {
         this.router.navigate([targetRoute]);
@@ -3018,7 +3062,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        const url = window.location.origin + '/#' + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
         window.open(url, '_blank');
       } else {
         this.router.navigate([targetRoute]);
@@ -3327,7 +3371,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute], { queryParams }));
+        const url = window.location.origin + '/#' + this.router.serializeUrl(this.router.createUrlTree([targetRoute], { queryParams }));
         window.open(url, '_blank');
       } else {
         this.router.navigate([targetRoute], { queryParams });
@@ -3463,6 +3507,7 @@ export class MasterListComponent implements OnChanges {
         }
       });
       this.popupComponentGridParams = gridParams;
+      this.popupLineItemConfigurations = event.col?.line_item_configurations || null;
 
       this.popupParentGridFilters = this.getCurrentGridFilters();
 

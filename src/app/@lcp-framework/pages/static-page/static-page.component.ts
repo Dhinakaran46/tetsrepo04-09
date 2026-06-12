@@ -47,6 +47,7 @@ export class StaticPageComponent implements OnChanges {
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
   @Input() gridParams!: any;
+  @Input() lineItemConfigurations: any = null;
   @Input() parentGridFilters: {
     search_all?: any[];
     search_any?: any[];
@@ -299,7 +300,7 @@ export class StaticPageComponent implements OnChanges {
       this.titleService.setTitle(translateTitle);
     }
 
-    if ((changes['entityName'] || changes['uuid'] || changes['gridParams'] || changes['parentGridFilters']) && this.entity_name) {
+    if ((changes['entityName'] || changes['uuid'] || changes['gridParams'] || changes['parentGridFilters'] || changes['lineItemConfigurations']) && this.entity_name) {
       this.requestLoadData();
     }
   }
@@ -314,6 +315,7 @@ export class StaticPageComponent implements OnChanges {
       unique_id: this.unique_id || null,
       gridParams: this.gridParams || null,
       parentGridFilters: this.parentGridFilters || null,
+      lineItemConfigurations: this.lineItemConfigurations || null,
       currentTab: this.currentTab,
       currentAccordion: this.currentAccordion,
     });
@@ -514,11 +516,33 @@ export class StaticPageComponent implements OnChanges {
     return walk(obj);
   }
 
+  private replaceColumnAdditionalConfig(obj: any): any {
+    if (!this.lineItemConfigurations || typeof this.lineItemConfigurations !== 'object') {
+      return obj;
+    }
+    const walk = (value: any): any => {
+      if (Array.isArray(value)) return value.map((item) => walk(item));
+      if (value && typeof value === 'object') {
+        const out: any = {};
+        Object.keys(value).forEach((key) => { out[key] = walk(value[key]); });
+        return out;
+      }
+      if (typeof value === 'string') {
+        return value.replace(/\$column_additional_config\.(\w+)/g, (match, key) => {
+          return this.lineItemConfigurations[key] !== undefined ? String(this.lineItemConfigurations[key]) : match;
+        });
+      }
+      return value;
+    };
+    return walk(obj);
+  }
+
   private loadDefaultData() {
     if (this.unique_id) {
       this.query_information = this.replaceUniqueId(this.query_information, '$unique_id', this.unique_id);
     }
     this.query_information = this.mergeAcceptedParentFiltersIntoQueryInformation(this.query_information);
+    this.query_information = this.replaceColumnAdditionalConfig(this.query_information);
     this.query_information.grid_params = this.gridParams;
     delete this.query_information?.accepted_parent_params;
     this.gridApiService.getAllList(this.query_information).subscribe(

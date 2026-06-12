@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
+
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconXComponent } from '../../shared/icon/icon-x';
 import { IconSendComponent } from '../../shared/icon/icon-send';
@@ -1394,6 +1395,8 @@ export class MasterEntityComponent implements OnInit {
   entitiesForChildProcess: any[] = [];
   entitiesForDashboardWizard: any[] = [];
   staticPageEntities: any[] = [];
+  entityNameSuggestions: string[] = [];
+  allEntityNameSlugs: Set<string> = new Set();
 
   constructor(
     private fb: FormBuilder,
@@ -1429,6 +1432,15 @@ export class MasterEntityComponent implements OnInit {
     // To listen "entityType" on value change
     this.form.get('entityType')?.valueChanges.subscribe((value) => {
       this.updateFormValidation(value);
+      if (!this.editTitle) {
+        this.generateEntityNameSuggestions(this.form.get('name')?.value, value);
+      }
+    });
+
+    this.form.get('name')?.valueChanges.subscribe((name) => {
+      if (!this.editTitle) {
+        this.generateEntityNameSuggestions(name, this.form.get('entityType')?.value);
+      }
     });
 
     // Clear dashboard_entity_name whenever wizard type changes to avoid stale values
@@ -1525,6 +1537,7 @@ export class MasterEntityComponent implements OnInit {
       linkAction: [''],
       fieldHtmlContent: [''],
       enumValues: [''],
+      lineItemConfigurations: [''],
     });
   }
 
@@ -1716,6 +1729,7 @@ export class MasterEntityComponent implements OnInit {
       linkAction: [''],
       fieldHtmlContent: [''],
       enumValues: [''],
+      lineItemConfigurations: [''],
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
@@ -1749,6 +1763,7 @@ export class MasterEntityComponent implements OnInit {
       linkAction: [currentItem.get('linkAction')?.value],
       fieldHtmlContent: [currentItem.get('fieldHtmlContent')?.value],
       enumValues: [currentItem.get('enumValues')?.value],
+      lineItemConfigurations: [currentItem.get('lineItemConfigurations')?.value],
     });
 
     this.setupLinkModeAutoUpdate(this.editItemForm);
@@ -1808,7 +1823,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values, 'line_item_configurations', master_entity_line_items.line_item_configurations))) END",
           'items',
         ],
       ],
@@ -1886,6 +1901,7 @@ export class MasterEntityComponent implements OnInit {
                 linkAction: [linkAction],
                 fieldHtmlContent: [item.field_html_content],
                 enumValues: [item.enum_values ? this.prettyJSON(item.enum_values) : null],
+                lineItemConfigurations: [item.line_item_configurations ? this.prettyJSON(item.line_item_configurations) : null],
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1911,7 +1927,7 @@ export class MasterEntityComponent implements OnInit {
 
   getAddParams(formData: any) {
     const formDataName = commonConfig.PREFIX_SHORTCODE[formData.entityType] + '_' + formData.name;
-    const entitySlug = this.localStorageService.generateSlugWithTimestamp(formDataName);
+    const entitySlug = (formData.entityName || '').trim() || this.localStorageService.generateSlugWithTimestamp(formDataName);
 
     const master = [
       {
@@ -1993,6 +2009,7 @@ export class MasterEntityComponent implements OnInit {
           link_mode,
           field_html_content: control.value.fieldHtmlContent,
           enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
+          line_item_configurations: this.prepareOptionalJSON(control.value.lineItemConfigurations, false, `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`),
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -2090,6 +2107,7 @@ export class MasterEntityComponent implements OnInit {
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
           enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
+          line_item_configurations: this.prepareOptionalJSON(control.value.lineItemConfigurations, false, `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`),
           link_mode,
         };
       });
@@ -2500,6 +2518,27 @@ export class MasterEntityComponent implements OnInit {
       });
   }
 
+  generateEntityNameSuggestions(name: string, entityType: string): void {
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      this.entityNameSuggestions = [];
+      return;
+    }
+    const prefix = entityType ? ((commonConfig.PREFIX_SHORTCODE as any)[entityType] || '') : '';
+    const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const ts = Date.now().toString(36).slice(-5);
+
+    const candidates = prefix
+      ? [`${prefix}_${slug}`, `${prefix}_${slug}_${ts.slice(-4)}`, `${prefix}_${slug}_${ts}`]
+      : [slug, `${slug}_${ts.slice(-4)}`, `${slug}_${ts}`];
+
+    this.entityNameSuggestions = candidates.filter((c, i, arr) => c && arr.indexOf(c) === i && !this.allEntityNameSlugs.has(c));
+  }
+
+  selectEntityNameSuggestion(slug: string): void {
+    this.form.get('entityName')?.setValue(slug);
+  }
+
   fetchAllMasterEntities() {
     const params = {
       company_id: 1,
@@ -2518,6 +2557,11 @@ export class MasterEntityComponent implements OnInit {
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
+          this.allEntityNameSlugs = new Set(response.data.records.map((e: any) => e.value as string));
+          // regenerate suggestions now that slugs are loaded
+          if (!this.editTitle) {
+            this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+          }
           // For 'component' linkType
           this.masterEntities = response.data.records.filter(
             (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'

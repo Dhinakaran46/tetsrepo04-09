@@ -150,7 +150,7 @@ interface UserSearchConfigurationTemp {
 })
 export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, AfterViewInit, OnDestroy {
   // Add this property to your component class:
-  pendingPopupData: { item: any; entityName: string } | null = null;
+  pendingPopupData: { item: any; entityName: string; col?: any } | null = null;
   private childComponentResolvedModes: Record<string, string> = {};
 
   expandedItem: any = null;
@@ -271,6 +271,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
   @Output() selectionChange = new EventEmitter<any>();
+  @Output() rowContextMenu = new EventEmitter<{ item: any; event: MouseEvent }>();
   autocompleteSearchSubject = new Subject<string>();
 
   search: any = '';
@@ -506,9 +507,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   ngAfterViewChecked() {
     // if a popup is requested and the container is now available, create it once
     if (this.isViewPopupOpenDirect && this.pendingPopupData && this.popupChildMasterListContainer) {
-      const { item, entityName } = this.pendingPopupData;
+      const { item, entityName, col } = this.pendingPopupData;
       this.pendingPopupData = null; // prevent double-create
-      this.createColumnPopupChildMasterList(item, entityName);
+      this.createColumnPopupChildMasterList(item, entityName, col);
       this.cdr.detectChanges(); // flush changes
     }
   }
@@ -851,6 +852,22 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
    */
   selectTableRow(rowIndex: number) {
     this.selectedRowIndex = rowIndex;
+  }
+
+  onRowContextMenu(event: MouseEvent, item: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.rowContextMenu.emit({ item, event });
+  }
+
+  onRowEnterKey(event: Event, item: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    const syntheticEvent = new MouseEvent('contextmenu', {
+      clientX: (event.target as HTMLElement)?.getBoundingClientRect()?.right ?? 0,
+      clientY: (event.target as HTMLElement)?.getBoundingClientRect()?.top ?? 0,
+    });
+    this.rowContextMenu.emit({ item, event: syntheticEvent });
   }
 
   ngOnInit() {
@@ -3791,11 +3808,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.loadingpopup = true;
 
     // Store the parameters for use after the view is initialized
-    this.pendingPopupData = { item, entityName: col.link_action };
+    this.pendingPopupData = { item, entityName: col.link_action, col };
 
     // Use setTimeout to ensure the DOM is updated and ViewChild is available
     setTimeout(() => {
-      this.createColumnPopupChildMasterList(item, col.link_action);
+      this.createColumnPopupChildMasterList(item, col.link_action, col);
     }, 100); // Increased delay to ensure DOM is ready
   }
   toggleColumnChildGrid(item: any, col: any, row_index: number) {
@@ -3815,7 +3832,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
     if (col?.link_type === 'child_grid') {
       setTimeout(() => {
-        this.createColumnChildMasterList(item, col.link_action);
+        this.createColumnChildMasterList(item, col.link_action, col);
       }, 250);
     }
   }
@@ -3842,7 +3859,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const resolvedMode = this.getChildComponentMode(col);
     if (resolvedMode === 'popup_grid') {
       setTimeout(() => {
-        this.createColumnChildMasterList(item, col.link_action);
+        this.createColumnChildMasterList(item, col.link_action, col);
       }, 250);
     }
   }
@@ -4019,7 +4036,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     video.pause();
   }
 
-  createColumnPopupChildMasterList(item: any, entityName: string) {
+  createColumnPopupChildMasterList(item: any, entityName: string, col?: any) {
     // Add safety check
     if (!this.popupChildMasterListContainer) {
       this.loadingpopup = false;
@@ -4046,12 +4063,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     });
     componentRef.instance.grid_params = gridParams;
 
+    const lineItemConfig = col?.line_item_configurations;
+    if (lineItemConfig && typeof lineItemConfig === 'object') {
+      componentRef.instance.line_item_configurations = lineItemConfig;
+    }
+
     setTimeout(() => {
       this.loadingpopup = false;
       this.cdr.detectChanges();
     }, 500);
   }
-  createColumnChildMasterList(item: any, entityName: string) {
+  createColumnChildMasterList(item: any, entityName: string, col?: any) {
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
@@ -4074,6 +4096,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       }
     });
     componentRef.instance.grid_params = gridParams;
+
+    const lineItemConfig = col?.line_item_configurations;
+    if (lineItemConfig && typeof lineItemConfig === 'object') {
+      componentRef.instance.line_item_configurations = lineItemConfig;
+    }
   }
 
   getParentGridFilterContext() {
