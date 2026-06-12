@@ -48,6 +48,44 @@
               </div>
             }
           </div>
+
+          <!-- Entity Name (slug) field -->
+          <div class="mt-0">
+            <label for="entityName" class="mb-2 block font-medium">Entity Name (Slug)</label>
+            <input
+              id="entityName"
+              type="text"
+              formControlName="entityName"
+              appDynamicFontSize="body"
+              class="form-input w-full bg-gray-50 dark:bg-[#1b2e4b]"
+              placeholder="Select a suggestion below"
+              [readOnly]="true"
+              style="cursor: default;"
+            />
+            @if (!editTitle && entityNameSuggestions.length > 0) {
+              <div class="mt-1.5">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
+                <div class="mt-1 flex flex-wrap gap-1.5">
+                  @for (slug of entityNameSuggestions; track slug) {
+                    <button
+                      type="button"
+                      (click)="selectEntityNameSuggestion(slug)"
+                      class="rounded border px-2 py-0.5 text-xs transition-colors"
+                      [ngClass]="form.get('entityName')?.value === slug
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'"
+                    >
+                      {{ slug }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+            @if (!editTitle && form.get('name')?.value && entityNameSuggestions.length === 0 && !form.get('entityName')?.value) {
+              <p class="mt-1 text-xs text-warning">All suggested slugs are already taken. Try a different name.</p>
+            }
+          </div>
+
           <div class="mt-0">
             <label for="entityType" class="required-mark mb-2 block font-medium">{{ 'form_label_entity_type' | translate }}</label>
             <select
@@ -873,6 +911,7 @@
                   </div>
                 </th>
                 <th class="w-3/12">{{ 'table_enum_values' | translate }}</th>
+                <th class="w-3/12">Line Item Configurations</th>
               </tr>
             </thead>
             <tbody formArrayName="items">
@@ -1192,6 +1231,25 @@
                         }
                       </div>
                     </td>
+                    <td class="w-3/12">
+                      <div class="mb-2">
+                        <textarea
+                          [id]="'lineItemConfigurations' + i"
+                          rows="3"
+                          formControlName="lineItemConfigurations"
+                          appDynamicFontSize="body"
+                          class="form-textarea w-full"
+                          placeholder="Enter line item configurations (JSON)"
+                          appJsonValidator="object"
+                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'lineItemConfigurations') }"
+                        ></textarea>
+                        @if (isItemFieldInvalid(i, 'lineItemConfigurations')) {
+                          <div class="invalid-feedback text-danger">
+                            {{ getItemErrorMessage(i, 'lineItemConfigurations') }}
+                          </div>
+                        }
+                      </div>
+                    </td>
                   </tr>
                 </ng-container>
               }
@@ -1444,6 +1502,19 @@
               @if (isEditFieldInvalid('enumValues')) {
                 <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
                   {{ getEditErrorMessage('enumValues') }}
+                </div>
+              }
+            </div>
+
+            <!-- Line Item Configurations (full width) -->
+            <div class="md:col-span-2">
+              <label class="mb-2 block font-medium" appDynamicFontSize="body">Line Item Configurations</label>
+              <div class="modal-editor-container">
+                <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="lineItemConfigurations" class="modal-monaco-editor"></ngx-monaco-editor>
+              </div>
+              @if (isEditFieldInvalid('lineItemConfigurations')) {
+                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+                  {{ getEditErrorMessage('lineItemConfigurations') }}
                 </div>
               }
             </div>

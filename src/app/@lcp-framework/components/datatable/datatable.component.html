@@ -161,11 +161,15 @@
               }
             </button>
 
+            @if (isAdvancedFilterMenuOpen) {
+            <div class="fixed inset-0 bg-black/30" style="z-index:1040" (click)="cancelFilters()"></div>
+            }
+
             <div
               [hidden]="!isAdvancedFilterMenuOpen"
               aria-labelledby="options-menu"
               aria-orientation="vertical"
-              class="advancedfiltercontainer rigin-top-left absolute z-10 mt-2 divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+              class="advancedfiltercontainer origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
               role="menu"
               (click)="$event.stopPropagation()"
             >
@@ -655,6 +659,9 @@
                   [class.expanded-row]="expandedColumnChildGrid && expandedColumnChildGrid.rowIndex === row_index + 1"
                   [class.selected-row]="selectedRowIndex === row_index"
                   (click)="selectTableRow(row_index)"
+                  (contextmenu)="onRowContextMenu($event, item)"
+                  (keydown.enter)="onRowEnterKey($event, item)"
+                  tabindex="0"
                 >
                   @if(permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
                   <td class="align-items-center flex gap-2">
