@@ -184,23 +184,25 @@
     }
   }
 
-  /* Hidden scrollbar but scrolling enabled - flexible height with internal scroll */
+  /* Scroll container: plain overflow by default; sticky-header mode adds internal scroll + hidden scrollbar */
   .datatable-scroll-container {
-    max-height: calc(100vh - 250px);
-    overflow-y: scroll;
     overflow-x: auto;
-    
-    /* Hide scrollbar for Chrome, Safari, Edge */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
 
-    &::-webkit-scrollbar {
-      display: none; /* Chrome, Safari, Opera */
-    }
+    &.scroll-hidden-hover {
+      max-height: calc(100vh - 250px);
+      overflow-y: scroll;
 
-    /* Expand height when more than 10 rows */
-    &.expanded-rows {
-      max-height: calc(100vh - 120px);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      &.expanded-rows {
+        max-height: calc(100vh - 120px);
+      }
+
     }
   }
 }

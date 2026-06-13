@@ -592,7 +592,7 @@
 
     <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
       <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
-        <div class="table-responsive datatable-scroll-container overflow-x-auto" [class.expanded-rows]="items.length > 10">
+        <div class="table-responsive datatable-scroll-container overflow-x-auto" [class.expanded-rows]="items.length > 10" [class.scroll-hidden-hover]="isStickyHeaderEnabled">
           <table class="table-hover relative min-w-full">
             <thead class="bg-pink-50 dark:bg-pink-900/20">
               <tr>
