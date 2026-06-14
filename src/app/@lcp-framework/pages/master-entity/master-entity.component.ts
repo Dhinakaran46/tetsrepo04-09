@@ -78,25 +78,24 @@ export class MasterEntityComponent implements OnInit {
 
   insert_json_schema: any = {
     // it will be removed
-    action: ['insert', 'insert', 'insert'],
-    table: ['master_entities', 'permissions', 'master_entity_line_items'],
-    table_mapping: ['table1', 'table2', 'table3'],
+    action: ['insert', 'insert'],
+    table: ['master_entities', 'master_entity_line_items'],
+    table_mapping: ['table1', 'table3'],
     data: {
       table1: [],
-      table2: [],
       table3: [],
     },
   };
 
   update_json_schema: any = {
     // it will be removed
-    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
-    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5'],
+    action: ['update', 'hard_delete', 'insert', 'update'],
+    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4'],
     data: {
       table1: [],
       table3: [],
-      table5: [],
+      table4: [],
     },
     conditions: {
       table1: [],
@@ -1397,6 +1396,9 @@ export class MasterEntityComponent implements OnInit {
   staticPageEntities: any[] = [];
   entityNameSuggestions: string[] = [];
   allEntityNameSlugs: Set<string> = new Set();
+  entityNameEditable = false;
+  originalEntityName = '';
+  entityNameError = '';
 
   constructor(
     private fb: FormBuilder,
@@ -1438,8 +1440,13 @@ export class MasterEntityComponent implements OnInit {
     });
 
     this.form.get('name')?.valueChanges.subscribe((name) => {
-      if (!this.editTitle) {
+      if (!this.editTitle || this.entityNameEditable) {
         this.generateEntityNameSuggestions(name, this.form.get('entityType')?.value);
+      }
+      if (!(name || '').trim()) {
+        this.form.get('entityName')?.setValue('', { emitEvent: false });
+        this.entityNameSuggestions = [];
+        this.entityNameError = '';
       }
     });
 
@@ -1678,7 +1685,7 @@ export class MasterEntityComponent implements OnInit {
 
     const itemsControl = this.form.get('items');
 
-    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
+    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
     }
@@ -1846,11 +1853,18 @@ export class MasterEntityComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
+          this.originalEntityName = entity.entity_name || '';
           this.existing_actions = this.populateSelectedActionTypes(entity.permissions);
+
+          const entityTypePrefix = this.getEntityTypePrefix(entity.entity_type);
+          const entityNameSuffix =
+            entity.entity_name && entityTypePrefix && entity.entity_name.startsWith(entityTypePrefix + '_')
+              ? entity.entity_name.slice(entityTypePrefix.length + 1)
+              : entity.entity_name || '';
 
           this.form.patchValue({
             name: entity.name,
-            entityName: entity.entity_name,
+            entityName: entityNameSuffix,
             permissions: this.existing_actions,
             associateTable: entity.associated_tables ? this.prettyJSON(entity.associated_tables) : '',
             primaryTable: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
@@ -1926,8 +1940,10 @@ export class MasterEntityComponent implements OnInit {
   }
 
   getAddParams(formData: any) {
-    const formDataName = commonConfig.PREFIX_SHORTCODE[formData.entityType] + '_' + formData.name;
-    const entitySlug = (formData.entityName || '').trim() || this.localStorageService.generateSlugWithTimestamp(formDataName);
+    const prefix = this.getEntityTypePrefix(formData.entityType);
+    const suffix = (formData.entityName || '').trim();
+    const fullEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.localStorageService.generateSlugWithTimestamp(prefix ? `${prefix}_${formData.name}` : formData.name);
+    const entitySlug = fullEntityName;
 
     const master = [
       {
@@ -1967,14 +1983,6 @@ export class MasterEntityComponent implements OnInit {
         }),
       },
     ];
-
-    const permissions = formData.permissions.map((action_type_name: any, pindex: number) => ({
-      entity_id: '@table1.id',
-      name: action_type_name,
-      slug: `${action_type_name}_${entitySlug}`,
-      order_no: pindex + 1,
-      status_id: commonConfig.STATUS.ACTIVE,
-    }));
 
     // Use FormArray controls to get linkMode dynamically
     const itemsArray = this.form.get('items') as FormArray;
@@ -2016,15 +2024,20 @@ export class MasterEntityComponent implements OnInit {
     }
 
     this.insert_json_schema.data['table1'] = master;
-    this.insert_json_schema.data['table2'] = permissions;
 
     return this.insert_json_schema;
   }
 
   getEditParams(formData: any, id: any) {
+    const prefix = this.getEntityTypePrefix(formData.entityType);
+    const suffix = (formData.entityName ?? '').trim();
+    const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
+    const entityNameChanged = !!(this.originalEntityName && newEntityName && newEntityName !== this.originalEntityName);
+
     const master = [
       {
         name: formData.name,
+        entity_name: newEntityName || null,
         entity_type: formData.entityType,
         export_template_file_name: formData.exportTemplateFileName || null,
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
@@ -2114,28 +2127,15 @@ export class MasterEntityComponent implements OnInit {
       this.update_json_schema.data['table3'] = items;
     }
 
-    // Determine newly added items
-    let newly_added_items: any[] = formData.permissions
-      .filter((item: string) => !this.existing_actions.includes(item))
-      .map((action_type_name: any) => ({
-        entity_id: '@table1.id',
-        name: action_type_name,
-        slug: `${action_type_name}_${formData.entityName}`,
-        order_no: '1',
-        status_id: '1',
-      }));
+    if (entityNameChanged) {
+      // Per-row update: pair data[i] + conditions[i] so each permission gets its correct new slug
+      this.update_json_schema.data['table4'] = this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
+      this.update_json_schema.conditions['table4'] = this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
+    } else {
+      this.update_json_schema.data['table4'] = [];
+      this.update_json_schema.conditions['table4'] = [];
+    }
 
-    // Determine removed items
-    let removable_items = this.existing_actions
-      .filter((item) => !formData.permissions.includes(item))
-      .map((action_type_name: any) => ({
-        entity_id: '@table1.id',
-        name: action_type_name,
-      }));
-
-    this.update_json_schema.conditions['table4'] = removable_items;
-
-    this.update_json_schema.data['table5'] = newly_added_items;
     return this.update_json_schema;
   }
 
@@ -2249,7 +2249,10 @@ export class MasterEntityComponent implements OnInit {
   }
 
   isFormInvalid() {
-    return this.form.invalid || (this.form.value.entityType === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE && this.itemsControls.length === 0);
+    if (this.form.invalid) return true;
+    if (this.form.value.entityType === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name && this.itemsControls.length === 0) return true;
+    if (this.isEntityNameActive && !(this.form.get('entityName')?.value || '').trim()) return true;
+    return false;
   }
 
   logFormStatus(): void {
@@ -2518,25 +2521,61 @@ export class MasterEntityComponent implements OnInit {
       });
   }
 
+  get entityNamePrefix(): string {
+    return this.getEntityTypePrefix(this.form?.get('entityType')?.value || '');
+  }
+
+  get isEntityNameActive(): boolean {
+    return !!(this.form?.get('entityType')?.value && (this.form?.get('name')?.value || '').trim());
+  }
+
   generateEntityNameSuggestions(name: string, entityType: string): void {
     const cleanName = (name || '').trim();
     if (!cleanName) {
       this.entityNameSuggestions = [];
       return;
     }
-    const prefix = entityType ? ((commonConfig.PREFIX_SHORTCODE as any)[entityType] || '') : '';
+    const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
     const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
     const ts = Date.now().toString(36).slice(-5);
 
-    const candidates = prefix
-      ? [`${prefix}_${slug}`, `${prefix}_${slug}_${ts.slice(-4)}`, `${prefix}_${slug}_${ts}`]
-      : [slug, `${slug}_${ts.slice(-4)}`, `${slug}_${ts}`];
+    // Suffix-only candidates (prefix is shown separately in the UI)
+    const candidates = [slug, `${slug}_${ts.slice(-4)}`, `${slug}_${ts}`];
 
-    this.entityNameSuggestions = candidates.filter((c, i, arr) => c && arr.indexOf(c) === i && !this.allEntityNameSlugs.has(c));
+    // Uniqueness check against full slug (prefix + suffix)
+    this.entityNameSuggestions = candidates.filter((c, i, arr) => {
+      if (!c || arr.indexOf(c) !== i) return false;
+      const fullSlug = prefix ? `${prefix}_${c}` : c;
+      return !this.allEntityNameSlugs.has(fullSlug);
+    });
+  }
+
+  private getEntityTypePrefix(entityTypeName: string): string {
+    const entry = (Object.values(commonConfig.ENTITY_TYPES) as any[]).find((e) => e.name === entityTypeName);
+    return entry?.prefix_slug || '';
   }
 
   selectEntityNameSuggestion(slug: string): void {
     this.form.get('entityName')?.setValue(slug);
+    this.onEntityNameBlur();
+  }
+
+  enableEntityNameEdit(): void {
+    this.entityNameEditable = true;
+    this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+  }
+
+  onEntityNameBlur(): void {
+    const suffix = (this.form.get('entityName')?.value ?? '').trim();
+    if (!suffix) { this.entityNameError = ''; return; }
+    const prefix = this.entityNamePrefix;
+    const fullSlug = prefix ? `${prefix}_${suffix}` : suffix;
+    if (this.editTitle && fullSlug === this.originalEntityName) { this.entityNameError = ''; return; }
+    if (this.allEntityNameSlugs.has(fullSlug) && fullSlug !== this.originalEntityName) {
+      this.entityNameError = 'This entity name already exists. Please choose a different slug.';
+    } else {
+      this.entityNameError = '';
+    }
   }
 
   fetchAllMasterEntities() {
@@ -2567,34 +2606,34 @@ export class MasterEntityComponent implements OnInit {
             (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
           );
           this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name
           );
           // For 'child_process' linkType (only grid_builder_module)
           this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name
           );
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
               ![
-                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name,
                 // this.commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE,
-                this.commonConfig.ENTITY_TYPES.MENU_MODULE,
-                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE,
-                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE,
-                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE,
-                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE,
-                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE,
-                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE,
-                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE,
-                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE,
-                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE,
-                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE,
-                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
+                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.MENU_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE.name,
               ].includes(entity.entity_type)
           );
           this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];

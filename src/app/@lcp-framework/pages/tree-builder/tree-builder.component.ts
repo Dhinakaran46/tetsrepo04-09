@@ -625,7 +625,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   onDeleteNode(item: any) {
-    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
         this.commonService.procedureCall(procedureParams).subscribe({

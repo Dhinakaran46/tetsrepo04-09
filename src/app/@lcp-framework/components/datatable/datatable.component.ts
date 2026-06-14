@@ -3975,7 +3975,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       const routeInfo = userData?.unorgmenuList?.find((item: any) => item?.entity_name === entityName && item?.component_class_name);
       const componentClassName = routeInfo?.component_class_name;
 
-      if (componentClassName === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE) {
+      if (componentClassName === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
         return 'popup_grid';
       }
 

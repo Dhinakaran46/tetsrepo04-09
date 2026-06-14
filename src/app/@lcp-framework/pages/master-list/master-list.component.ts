@@ -3236,7 +3236,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   emailResendItem(item: any, event?: MouseEvent) {
-    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name) {
       Swal.fire({
         icon: 'info',
         title: 'Resend Notification?',
@@ -3268,7 +3268,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   deleteItem(item: any, event?: MouseEvent) {
-    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
         this.commonService.procedureCall(procedureParams).subscribe({
