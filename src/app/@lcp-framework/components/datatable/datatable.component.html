@@ -7,12 +7,13 @@
   [style.--table-level]="tableLevel"
 >
   <div class="mb-2.5">
-    @if (headerStaticEntityName) {
+    @if (headerStaticEntityName) { @if (showGridTitle) {
     <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
       <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
         {{ title | translate }}
       </div>
     </div>
+    }
     <div class="mb-4 pb-5 pt-5">
       <app-static-page
         [uuid]="staticPageUuid"
@@ -29,7 +30,7 @@
       #datatableToolbar
       [style.top.px]="tableLevel === 0 ? navbarHeight : null"
     >
-      @if (!headerStaticEntityName) {
+      @if (!headerStaticEntityName && showGridTitle) {
       <div class="mb-1 mt-0 flex flex-col gap-5 px-2 md:flex-row md:items-center">
         <div class="font-bold dark:text-white-light" appDynamicFontSize="title">
           {{ title | translate }}
@@ -128,8 +129,7 @@
             </button>
             }
           </div>
-          }
-
+          } @if (showGlobalSearch) {
           <div class="datatable-global-search relative mb-2 flex-grow md:mb-0">
             <input
               #searchInput
@@ -144,9 +144,11 @@
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
           </div>
+          }
 
           <!-- Filter Button -->
           <div class="datatable-filter-controls align-center align-items-center relative inline-flex justify-center" (click)="$event.stopPropagation()">
+            @if (showAdvancedSearch) {
             <button
               (click)="toggleAdvancedFilterMenu($event)"
               aria-expanded="true"
@@ -162,7 +164,7 @@
             </button>
 
             @if (isAdvancedFilterMenuOpen) {
-            <div class="fixed inset-0 bg-black/30" style="z-index:1040" (click)="cancelFilters()"></div>
+            <div class="fixed inset-0 bg-black/30" style="z-index: 1040" (click)="cancelFilters()"></div>
             }
 
             <div
@@ -390,7 +392,7 @@
                 </div>
               </div>
             </div>
-
+            } @if (showColumnFilter) {
             <div class="dropdown relative !z-[10] mb-2 md:mb-0" (click)="$event.stopPropagation()">
               <button
                 type="button"
@@ -428,7 +430,7 @@
               </ul>
               }
             </div>
-            @if (permissions && (this.masterInfo?.permissions?.export_excel || this.masterInfo?.permissions?.export_pdf)) {
+            } @if (permissions && (this.masterInfo?.permissions?.export_excel || this.masterInfo?.permissions?.export_pdf)) {
             <div class="flex">
               <div class="dropdown relative !z-[10] mb-2 md:mb-0">
                 <button
@@ -592,7 +594,11 @@
 
     <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
       <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
-        <div class="table-responsive datatable-scroll-container overflow-x-auto" [class.expanded-rows]="items.length > 10" [class.scroll-hidden-hover]="isStickyHeaderEnabled">
+        <div
+          class="table-responsive datatable-scroll-container overflow-x-auto"
+          [class.expanded-rows]="items.length > 10"
+          [class.scroll-hidden-hover]="isStickyHeaderEnabled"
+        >
           <table class="table-hover relative min-w-full">
             <thead class="bg-pink-50 dark:bg-pink-900/20">
               <tr>
@@ -676,7 +682,7 @@
                   } @for (col of headercolumns; track col.field || col.header || $index; let last = $last) {
                   <!--<td
                                   class="max-w-150 truncate whitespace-nowrap"
-                                  [ngClass]="last ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
+                                  [ngClass]="(last && enableStickyActionColumn) ? 'sticky right-0 z-10 bg-white' + col.cellClass : col.cellClass"
                                   *ngIf="!col.colFilterHide"
                                   >
                                   <ng-container *ngIf="!col.customTemplate && col.is_grid_column == 'true'">

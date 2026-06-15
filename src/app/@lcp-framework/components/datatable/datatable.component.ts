@@ -203,6 +203,29 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     );
   }
 
+  private gridCfg(key: string): boolean {
+    //console.log(this.masterInfo);
+    const cfg = this.masterInfo?.entity_configurations;
+    console.log('[gridCfg]', key, '→ cfg:', cfg, '| value:', cfg?.[key], '| result:', !cfg || cfg[key] == 'yes');
+    return !cfg || cfg[key] == 'yes';
+  }
+
+  get showGridTitle(): boolean {
+    return this.gridCfg('grid_show_title');
+  }
+  get showGlobalSearch(): boolean {
+    return this.gridCfg('grid_show_global_search');
+  }
+  get showAdvancedSearch(): boolean {
+    return this.gridCfg('grid_show_advanced_search');
+  }
+  get showColumnFilter(): boolean {
+    return this.gridCfg('grid_show_column_filter');
+  }
+  get enableStickyActionColumn(): boolean {
+    return this.gridCfg('grid_enable_sticky_action_column');
+  }
+
   headerContextMenu = {
     visible: false,
     x: 0,
@@ -4166,9 +4189,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         break;*/
 
       case 'copy':
-        const columnValues = this.items
-          .map((item: any) => item[col.header] ?? '')
-          .join('\n');
+        const columnValues = this.items.map((item: any) => item[col.header] ?? '').join('\n');
         navigator.clipboard.writeText(columnValues);
         break;
     }

@@ -1,4 +1,16 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, HostListener, Input, SimpleChanges, OnChanges, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  TemplateRef,
+  ViewChild,
+  AfterViewInit,
+  ChangeDetectorRef,
+  HostListener,
+  Input,
+  SimpleChanges,
+  OnChanges,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -403,7 +415,7 @@ export class MasterListComponent implements OnChanges {
 
       const masterListConfig = pageInfo;
       if (masterListConfig.entity_configurations != null) {
-        this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
+        this.stickyHeader = masterListConfig.entity_configurations?.grid_enable_sticky_header === 'yes' ? 'yes' : 'no';
       }
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
@@ -1116,6 +1128,15 @@ export class MasterListComponent implements OnChanges {
     return value === true || value === 'true' || value === 1 || value === '1';
   }
 
+  private parseJsonField(value: any): any {
+    if (!value) return null;
+    if (typeof value === 'object') return value;
+    if (typeof value === 'string') {
+      try { return JSON.parse(value); } catch { return null; }
+    }
+    return null;
+  }
+
   private buildGridBuilderLineItems(items: any[], companyId: number): any[] {
     if (!Array.isArray(items)) {
       return [];
@@ -1184,7 +1205,7 @@ export class MasterListComponent implements OnChanges {
       associated_entity_name: record?.associated_entity_name ?? null,
       associated_entity: record?.associated_entity ?? null,
       children: Array.isArray(record?.children) ? record.children : [],
-      entity_configurations: record?.entity_configurations && typeof record.entity_configurations === 'object' ? record.entity_configurations : null,
+      entity_configurations: this.parseJsonField(record?.entity_configurations),
       query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
       form_information: record?.form_information && typeof record.form_information === 'object' ? record.form_information : null,
       report_information: record?.report_information && typeof record.report_information === 'object' ? record.report_information : null,
@@ -1222,7 +1243,7 @@ export class MasterListComponent implements OnChanges {
       entity_name: record?.entity_name || '',
       entity_type: record?.entity_type || '',
       primary_table: record?.primary_table || '',
-      entity_configurations: record?.entity_configurations && typeof record.entity_configurations === 'object' ? record.entity_configurations : null,
+      entity_configurations: this.parseJsonField(record?.entity_configurations),
       form_information:
         record?.form_information && typeof record.form_information === 'object'
           ? record.form_information
@@ -2166,7 +2187,7 @@ export class MasterListComponent implements OnChanges {
 
                 // Include serial number column if enabled in config
                 // if (this.config.grid_show_serial_number == 'true') // global grid serial number config check (deprecated)
-                if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
                   // entity level serial number config check
                   this.headercolumns = [
                     {
@@ -2281,7 +2302,7 @@ export class MasterListComponent implements OnChanges {
                   }
                 }
 
-                if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
                   return {
                     table_column_sno: this.listQuery.start_index + index + 1,
                     ...formattedItem,
@@ -2688,7 +2709,7 @@ export class MasterListComponent implements OnChanges {
             }));
 
           // Include serial number column if enabled in config
-          if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+          if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
             this.previewHeaderColumns = [
               {
                 header: 'table_column_sno',
@@ -2762,7 +2783,7 @@ export class MasterListComponent implements OnChanges {
               }
             }
 
-            if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+            if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
               return {
                 table_column_sno: this.listQuery.start_index + index + 1,
                 ...formattedItem,
@@ -3236,7 +3257,10 @@ export class MasterListComponent implements OnChanges {
   }
 
   emailResendItem(item: any, event?: MouseEvent) {
-    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name) {
+    if (
+      this.masterInfo.children.email_resend &&
+      this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name
+    ) {
       Swal.fire({
         icon: 'info',
         title: 'Resend Notification?',

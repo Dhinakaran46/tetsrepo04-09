@@ -1149,7 +1149,8 @@ export class MasterEntityComponent implements OnInit {
                     },
                   },
                   {
-                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>2. Sibling Symmetrical Validation (phoneAndCountry)</h3>",
+                    template:
+                      "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>2. Sibling Symmetrical Validation (phoneAndCountry)</h3>",
                   },
                   {
                     key: 'country_code',
@@ -1349,8 +1350,13 @@ export class MasterEntityComponent implements OnInit {
           name: 'example_1',
           comments: [],
           data: {
-            enable_sticky_header: 'yes',
-            show_serial_number: 'yes',
+            grid_show_title: 'yes',
+            grid_enable_sticky_header: 'yes',
+            grid_show_serial_number: 'yes',
+            grid_show_global_search: 'yes',
+            grid_show_advanced_search: 'yes',
+            grid_show_column_filter: 'yes',
+            grid_enable_sticky_action_column: 'yes',
           },
         },
       ],
@@ -1395,6 +1401,7 @@ export class MasterEntityComponent implements OnInit {
   entitiesForDashboardWizard: any[] = [];
   staticPageEntities: any[] = [];
   entityNameSuggestions: string[] = [];
+  readonly entityNameSuggestionLimit = 1;
   allEntityNameSlugs: Set<string> = new Set();
   entityNameEditable = false;
   originalEntityName = '';
@@ -1436,6 +1443,20 @@ export class MasterEntityComponent implements OnInit {
       this.updateFormValidation(value);
       if (!this.editTitle) {
         this.generateEntityNameSuggestions(this.form.get('name')?.value, value);
+        if (value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
+          const defaultGridConfig = {
+            grid_show_title: 'yes',
+            grid_enable_sticky_header: 'yes',
+            grid_show_serial_number: 'yes',
+            grid_show_global_search: 'yes',
+            grid_show_advanced_search: 'yes',
+            grid_show_column_filter: 'yes',
+            grid_enable_sticky_action_column: 'yes',
+          };
+          this.form.get('entity_configurations')?.setValue(JSON.stringify(defaultGridConfig, null, 2));
+        } else {
+          this.form.get('entity_configurations')?.setValue('');
+        }
       }
     });
 
@@ -1942,7 +1963,11 @@ export class MasterEntityComponent implements OnInit {
   getAddParams(formData: any) {
     const prefix = this.getEntityTypePrefix(formData.entityType);
     const suffix = (formData.entityName || '').trim();
-    const fullEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.localStorageService.generateSlugWithTimestamp(prefix ? `${prefix}_${formData.name}` : formData.name);
+    const fullEntityName = suffix
+      ? prefix
+        ? `${prefix}_${suffix}`
+        : suffix
+      : this.localStorageService.generateSlugWithTimestamp(prefix ? `${prefix}_${formData.name}` : formData.name);
     const entitySlug = fullEntityName;
 
     const master = [
@@ -2017,7 +2042,11 @@ export class MasterEntityComponent implements OnInit {
           link_mode,
           field_html_content: control.value.fieldHtmlContent,
           enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
-          line_item_configurations: this.prepareOptionalJSON(control.value.lineItemConfigurations, false, `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`),
+          line_item_configurations: this.prepareOptionalJSON(
+            control.value.lineItemConfigurations,
+            false,
+            `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`
+          ),
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -2120,7 +2149,11 @@ export class MasterEntityComponent implements OnInit {
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
           enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
-          line_item_configurations: this.prepareOptionalJSON(control.value.lineItemConfigurations, false, `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`),
+          line_item_configurations: this.prepareOptionalJSON(
+            control.value.lineItemConfigurations,
+            false,
+            `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`
+          ),
           link_mode,
         };
       });
@@ -2536,18 +2569,37 @@ export class MasterEntityComponent implements OnInit {
       return;
     }
     const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
-    const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-    const ts = Date.now().toString(36).slice(-5);
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    // First candidate is the plain slug; rest use meaningful word suffixes only — no timestamps or random chars
+    const candidates = [
+      slug,
+      `${slug}_new`,
+      `${slug}_copy`,
+      `${slug}_alt`,
+      `${slug}_v2`,
+      `${slug}_v3`,
+      `${slug}_extra`,
+      `${slug}_main`,
+      `${slug}_base`,
+      `${slug}_core`,
+    ];
 
-    // Suffix-only candidates (prefix is shown separately in the UI)
-    const candidates = [slug, `${slug}_${ts.slice(-4)}`, `${slug}_${ts}`];
-
-    // Uniqueness check against full slug (prefix + suffix)
-    this.entityNameSuggestions = candidates.filter((c, i, arr) => {
-      if (!c || arr.indexOf(c) !== i) return false;
+    // Uniqueness check against full slug (prefix + suffix), deduplicate, apply limit
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const c of candidates) {
+      if (!c || seen.has(c)) continue;
+      seen.add(c);
       const fullSlug = prefix ? `${prefix}_${c}` : c;
-      return !this.allEntityNameSlugs.has(fullSlug);
-    });
+      if (!this.allEntityNameSlugs.has(fullSlug)) {
+        results.push(c);
+        if (results.length >= this.entityNameSuggestionLimit) break;
+      }
+    }
+    this.entityNameSuggestions = results;
   }
 
   private getEntityTypePrefix(entityTypeName: string): string {
@@ -2567,10 +2619,16 @@ export class MasterEntityComponent implements OnInit {
 
   onEntityNameBlur(): void {
     const suffix = (this.form.get('entityName')?.value ?? '').trim();
-    if (!suffix) { this.entityNameError = ''; return; }
+    if (!suffix) {
+      this.entityNameError = '';
+      return;
+    }
     const prefix = this.entityNamePrefix;
     const fullSlug = prefix ? `${prefix}_${suffix}` : suffix;
-    if (this.editTitle && fullSlug === this.originalEntityName) { this.entityNameError = ''; return; }
+    if (this.editTitle && fullSlug === this.originalEntityName) {
+      this.entityNameError = '';
+      return;
+    }
     if (this.allEntityNameSlugs.has(fullSlug) && fullSlug !== this.originalEntityName) {
       this.entityNameError = 'This entity name already exists. Please choose a different slug.';
     } else {

@@ -120,7 +120,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
     private commonService: MenuMapService,
     private titleService: Title,
     private fb: FormBuilder,
-    private timezoneService: TimezoneService,
+    private timezoneService: TimezoneService
   ) {}
 
   ngOnInit() {
@@ -446,8 +446,8 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
             this.localStorageService.replaceUniqueId(
               this.localStorageService.formatPayloadWithPolicyConditions(query, this.policyData, this.attachedPolicies),
               '$session_user_id',
-              this.user_info.main.id,
-            ),
+              this.user_info.main.id
+            )
           )
           .subscribe(
             (response) => {
@@ -476,7 +476,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
               const key = 'error';
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
-            },
+            }
           );
       }
     }
@@ -529,7 +529,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
       () => {
         this.fetchColumns();
         this.fetchData(this.listQuery);
-      },
+      }
     );
   }
 
@@ -610,7 +610,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
     const payload = this.localStorageService.replaceUniqueId(
       this.localStorageService.formatPayloadWithPolicyConditions(params, this.policyData, this.attachedPolicies),
       '$session_user_id',
-      this.user_info.main.id,
+      this.user_info.main.id
     );
     this.commonService.getCommonList(payload).subscribe(
       (response) => {
@@ -628,7 +628,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
             Object.keys(this.masterInfo.permissions).every((key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false);
 
           // Include serial number column if enabled in config
-          if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+          if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
             this.headercolumns = [
               {
                 header: 'table_column_sno',
@@ -707,7 +707,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
                 }
               }
 
-              if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+              if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
                 return {
                   table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,
@@ -744,7 +744,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
         this.cdr.markForCheck();
-      },
+      }
     );
   }
 
@@ -1028,7 +1028,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
             const key = 'error';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          },
+          }
         );
       }
     });
