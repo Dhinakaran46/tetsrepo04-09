@@ -77,24 +77,25 @@ export class MasterEntityComponent implements OnInit {
   @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
 
   insert_json_schema: any = {
-    action: ['insert', 'insert', 'insert'],
-    table: ['master_entities', 'master_entity_line_items', 'permissions'],
-    table_mapping: ['table1', 'table3', 'table4'],
+    // it will be removed
+    action: ['insert', 'insert'],
+    table: ['master_entities', 'master_entity_line_items'],
+    table_mapping: ['table1', 'table3'],
     data: {
       table1: [],
       table3: [],
-      table4: [],
     },
   };
 
   update_json_schema: any = {
-    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
-    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5'],
+    // it will be removed
+    action: ['update', 'hard_delete', 'insert', 'update'],
+    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4'],
     data: {
       table1: [],
       table3: [],
-      table5: [],
+      table4: [],
     },
     conditions: {
       table1: [],
@@ -2056,11 +2057,6 @@ export class MasterEntityComponent implements OnInit {
     }
 
     this.insert_json_schema.data['table1'] = master;
-    this.insert_json_schema.data['table4'] = (formData.permissions || []).map((action: string) => ({
-      entity_id: '@table1.id',
-      name: action,
-      slug: `${action}_${entitySlug}`,
-    }));
 
     return this.insert_json_schema;
   }
@@ -2069,6 +2065,7 @@ export class MasterEntityComponent implements OnInit {
     const prefix = this.getEntityTypePrefix(formData.entityType);
     const suffix = (formData.entityName ?? '').trim();
     const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
+    const entityNameChanged = !!(this.originalEntityName && newEntityName && newEntityName !== this.originalEntityName);
 
     const master = [
       {
@@ -2167,14 +2164,14 @@ export class MasterEntityComponent implements OnInit {
       this.update_json_schema.data['table3'] = items;
     }
 
-    // Hard-delete all existing permissions for this entity, then re-insert selected ones.
-    // This handles adds, removals, and slug renames in one step.
-    this.update_json_schema.conditions['table4'] = [{ entity_id: '@table1.id' }];
-    this.update_json_schema.data['table5'] = (formData.permissions || []).map((action: string) => ({
-      entity_id: '@table1.id',
-      name: action,
-      slug: `${action}_${newEntityName}`,
-    }));
+    if (entityNameChanged) {
+      // Per-row update: pair data[i] + conditions[i] so each permission gets its correct new slug
+      this.update_json_schema.data['table4'] = this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
+      this.update_json_schema.conditions['table4'] = this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
+    } else {
+      this.update_json_schema.data['table4'] = [];
+      this.update_json_schema.conditions['table4'] = [];
+    }
 
     return this.update_json_schema;
   }

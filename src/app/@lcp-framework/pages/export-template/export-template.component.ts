@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
+import { debounceTime } from 'rxjs/operators';
 import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -23,6 +24,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
 import { ClientDatatableComponent, TableConfig } from '../../components/client-datatable/client-datatable.component';
+import { LoaderComponent } from '../../components/loader/loader.component';
 import * as XLSX from 'xlsx';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
@@ -72,6 +74,7 @@ interface ExcelRow extends Array<any> {
     MonacoEditorModule,
     ReactiveFormsModule,
     ClientDatatableComponent,
+    LoaderComponent,
   ],
 
   templateUrl: './export-template.component.html',
@@ -371,6 +374,7 @@ export class ExportTemplateComponent implements OnInit {
     }
 
     this.isProcessingFile = true;
+    this.cdr.detectChanges();
 
     this.gridApiService.uploadExcelFile(file).subscribe(
       (response: any) => {
@@ -395,14 +399,19 @@ export class ExportTemplateComponent implements OnInit {
               }
             } catch {
               // Sheet names unavailable for this file format
+            } finally {
+              this.isProcessingFile = false;
+              this.cdr.detectChanges();
             }
           };
           sheetReader.onerror = () => {
-            // Silently ignore reader errors; upload already succeeded
+            this.isProcessingFile = false;
+            this.cdr.detectChanges();
           };
           sheetReader.readAsArrayBuffer(file);
+        } else {
+          this.isProcessingFile = false;
         }
-        this.isProcessingFile = false;
       },
       (error) => {
         this.fileError = 'Error uploading file. Please try again.';
@@ -643,6 +652,11 @@ export class ExportTemplateComponent implements OnInit {
       is_individual: false,
       sheet_name: this.excelSheetNames[0] || '',
     });
+    const filePath = this.form.get('data_filepath')?.value;
+    if (filePath && this.selectedLineItemSheetName) {
+      const headerRow = this.getSheetHeaderRow(this.selectedLineItemSheetName);
+      this.loadExcelHeaders(filePath, headerRow, this.selectedLineItemSheetName);
+    }
     this.isItemModalOpen = true;
   }
   initNewLineQuery() {
@@ -685,6 +699,7 @@ export class ExportTemplateComponent implements OnInit {
   onLineItemSheetChange(sheetName: string): void {
     this.selectedLineItemSheetName = sheetName;
     this.lineItemForm.get('column_name')?.setValue('');
+    this.excelHeaders = [];
     const filePath = this.form.get('data_filepath')?.value;
     const headerRow = this.getSheetHeaderRow(sheetName);
     if (filePath && headerRow) {
@@ -1467,15 +1482,23 @@ export class ExportTemplateComponent implements OnInit {
     const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
     sheetDetailsArray.clear();
     this.excelSheetNames.forEach((sheetName) => {
-      sheetDetailsArray.push(
-        this.fb.group({
-          sheet_name: [{ value: sheetName, disabled: true }],
-          max_row_count: [500, [Validators.required, Validators.min(1)]],
-          header_row: [1, [Validators.required, Validators.min(1)]],
-          data_start_row: [2, [Validators.required, Validators.min(1)]],
-          data_end_row: [10000, [Validators.required, Validators.min(0)]],
-        })
-      );
+      const group = this.fb.group({
+        sheet_name: [{ value: sheetName, disabled: true }],
+        max_row_count: [500, [Validators.required, Validators.min(1)]],
+        header_row: [1, [Validators.required, Validators.min(1)]],
+        data_start_row: [2, [Validators.required, Validators.min(1)]],
+        data_end_row: [10000, [Validators.required, Validators.min(0)]],
+      });
+
+      group.get('header_row')?.valueChanges.pipe(debounceTime(500)).subscribe((newHeaderRow) => {
+        if (!newHeaderRow || newHeaderRow < 1) return;
+        const filePath = this.form.get('data_filepath')?.value;
+        if (filePath && this.selectedLineItemSheetName === sheetName) {
+          this.loadExcelHeaders(filePath, newHeaderRow, sheetName);
+        }
+      });
+
+      sheetDetailsArray.push(group);
     });
   }
 

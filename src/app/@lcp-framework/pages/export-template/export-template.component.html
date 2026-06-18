@@ -201,53 +201,85 @@
     </div>
   </div>
 
-  @if (form.get('template_type')?.value === 'xlsx' && sheetDetailsControls.length > 0) {
+  @if (isProcessingFile) {
+  <app-loader></app-loader>
+  } @if (form.get('template_type')?.value === 'xlsx' && sheetDetailsControls.length > 0) {
   <div class="panel mt-5">
-    <div class="text-md font-bold uppercase">Export Template Excel Sheet Details</div>
+    <div class="text-base font-bold">Export Template Excel Sheet Details</div>
     <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
     <div class="overflow-x-auto">
-      <table class="w-full table-auto border-collapse">
+      <table class="w-full table-auto border-collapse text-xs">
         <thead>
           <tr class="bg-gray-50 dark:bg-gray-700">
-            <th class="border border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:border-gray-600 dark:text-gray-300">Sheet Name</th>
-            <th class="border border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:border-gray-600 dark:text-gray-300"><span class="required-mark">Max Row Count</span></th>
-            <th class="border border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:border-gray-600 dark:text-gray-300"><span class="required-mark">Header Row</span></th>
-            <th class="border border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:border-gray-600 dark:text-gray-300"><span class="required-mark">Data Start Row</span></th>
-            <th class="border border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:border-gray-600 dark:text-gray-300"><span class="required-mark">Data End Row</span></th>
+            <th class="border border-gray-200 px-2 py-1.5 text-left font-semibold tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+              Sheet Name
+            </th>
+            <th class="border border-gray-200 px-2 py-1.5 text-left font-semibold tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+              <span class="required-mark">Max Row Count</span>
+            </th>
+            <th class="border border-gray-200 px-2 py-1.5 text-left font-semibold tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+              <span class="required-mark">Header Row</span>
+            </th>
+            <th class="border border-gray-200 px-2 py-1.5 text-left font-semibold tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+              <span class="required-mark">Data Start Row</span>
+            </th>
+            <th class="border border-gray-200 px-2 py-1.5 text-left font-semibold tracking-wide text-gray-600 dark:border-gray-600 dark:text-gray-300">
+              <span class="required-mark">Data End Row</span>
+            </th>
           </tr>
         </thead>
         <tbody formArrayName="sheetDetails">
           @for (ctrl of sheetDetailsControls; track $index; let i = $index) {
           <tr [formGroupName]="i" class="border-b border-gray-200 dark:border-gray-700">
-            <td class="border border-gray-200 px-3 py-2 dark:border-gray-600">
-              <input type="text" formControlName="sheet_name" class="form-input w-full" />
+            <td class="border border-gray-200 px-2 py-1 dark:border-gray-600">
+              <input type="text" formControlName="sheet_name" class="form-input w-full py-1 text-xs" />
             </td>
-            <td class="border border-gray-200 px-3 py-2 dark:border-gray-600">
-              <input type="number" formControlName="max_row_count" min="1" class="form-input w-full"
-                [ngClass]="{ 'is-invalid': submitted && ctrl.get('max_row_count')?.invalid }" />
+            <td class="border border-gray-200 px-2 py-1 dark:border-gray-600">
+              <input
+                type="number"
+                formControlName="max_row_count"
+                min="1"
+                class="form-input w-full py-1 text-xs"
+                [ngClass]="{ 'is-invalid': submitted && ctrl.get('max_row_count')?.invalid }"
+              />
               @if (submitted && ctrl.get('max_row_count')?.hasError('required')) {
-              <div class="mt-1 text-xs text-danger">{{ 'required_message' | translate }}</div>
+              <div class="mt-0.5 text-xs text-danger">{{ 'required_message' | translate }}</div>
               }
             </td>
-            <td class="border border-gray-200 px-3 py-2 dark:border-gray-600">
-              <input type="number" formControlName="header_row" min="1" class="form-input w-full"
-                [ngClass]="{ 'is-invalid': submitted && ctrl.get('header_row')?.invalid }" />
+            <td class="border border-gray-200 px-2 py-1 dark:border-gray-600">
+              <input
+                type="number"
+                formControlName="header_row"
+                min="1"
+                class="form-input w-full py-1 text-xs"
+                [ngClass]="{ 'is-invalid': submitted && ctrl.get('header_row')?.invalid }"
+              />
               @if (submitted && ctrl.get('header_row')?.hasError('required')) {
-              <div class="mt-1 text-xs text-danger">{{ 'required_message' | translate }}</div>
+              <div class="mt-0.5 text-xs text-danger">{{ 'required_message' | translate }}</div>
               }
             </td>
-            <td class="border border-gray-200 px-3 py-2 dark:border-gray-600">
-              <input type="number" formControlName="data_start_row" min="1" class="form-input w-full"
-                [ngClass]="{ 'is-invalid': submitted && ctrl.get('data_start_row')?.invalid }" />
+            <td class="border border-gray-200 px-2 py-1 dark:border-gray-600">
+              <input
+                type="number"
+                formControlName="data_start_row"
+                min="1"
+                class="form-input w-full py-1 text-xs"
+                [ngClass]="{ 'is-invalid': submitted && ctrl.get('data_start_row')?.invalid }"
+              />
               @if (submitted && ctrl.get('data_start_row')?.hasError('required')) {
-              <div class="mt-1 text-xs text-danger">{{ 'required_message' | translate }}</div>
+              <div class="mt-0.5 text-xs text-danger">{{ 'required_message' | translate }}</div>
               }
             </td>
-            <td class="border border-gray-200 px-3 py-2 dark:border-gray-600">
-              <input type="number" formControlName="data_end_row" min="0" class="form-input w-full"
-                [ngClass]="{ 'is-invalid': submitted && ctrl.get('data_end_row')?.invalid }" />
+            <td class="border border-gray-200 px-2 py-1 dark:border-gray-600">
+              <input
+                type="number"
+                formControlName="data_end_row"
+                min="0"
+                class="form-input w-full py-1 text-xs"
+                [ngClass]="{ 'is-invalid': submitted && ctrl.get('data_end_row')?.invalid }"
+              />
               @if (submitted && ctrl.get('data_end_row')?.hasError('required')) {
-              <div class="mt-1 text-xs text-danger">{{ 'required_message' | translate }}</div>
+              <div class="mt-0.5 text-xs text-danger">{{ 'required_message' | translate }}</div>
               }
             </td>
           </tr>
@@ -281,7 +313,7 @@
 
 <!-- Line Items Modal -->
 @if (isItemModalOpen) {
-<div class="fixed inset-0 z-50 overflow-y-auto">
+<div class="fixed inset-0 z-[1000] overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Panel -->
@@ -396,7 +428,7 @@
                     class="w-full rounded-md border px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
                   >
                     @for (sheet of excelSheetNames; track sheet) {
-                      <option [value]="sheet">{{ sheet }}</option>
+                    <option [value]="sheet">{{ sheet }}</option>
                     }
                   </select>
                 </div>
@@ -487,7 +519,7 @@
 
 <!-- Line Queries Modal -->
 @if (isQueryModalOpen) {
-<div class="fixed inset-0 z-50 overflow-y-auto">
+<div class="fixed inset-0 z-[1000] overflow-y-auto">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Panel -->
@@ -541,7 +573,7 @@
               <select id="sheet_name" formControlName="sheet_name" class="form-select">
                 <option value="">Select Sheet</option>
                 @for (sheet of excelSheetNames; track sheet) {
-                  <option [value]="sheet">{{ sheet }}</option>
+                <option [value]="sheet">{{ sheet }}</option>
                 }
               </select>
             </div>
@@ -577,7 +609,7 @@
   </div>
 </div>
 } @if (isPdfModalOpen) {
-<div class="fixed inset-0 z-50 overflow-y-auto">
+<div class="fixed inset-0 z-[1000] overflow-y-auto">
   <!-- Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
