@@ -1132,7 +1132,11 @@ export class MasterListComponent implements OnChanges {
     if (!value) return null;
     if (typeof value === 'object') return value;
     if (typeof value === 'string') {
-      try { return JSON.parse(value); } catch { return null; }
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
     }
     return null;
   }
@@ -3587,7 +3591,11 @@ export class MasterListComponent implements OnChanges {
       return;
     }
     this.selectedItemUuid = selectedItemUuid;
+    this.uuid = selectedItemUuid;
     this.popupEntityName = popupEntityName;
+    if (popupEntityName) {
+      this.entity_name = popupEntityName;
+    }
     this.isViewPopupOpen = isViewPopupOpen;
     this.loadingpopup = true;
     setTimeout(() => {

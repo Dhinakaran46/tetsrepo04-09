@@ -43,9 +43,9 @@
               [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
             />
             @if (isFieldInvalid('name')) {
-              <div class="invalid-feedback mt-1 text-danger">
-                {{ getErrorMessage('name') }}
-              </div>
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('name') }}
+            </div>
             }
           </div>
 
@@ -60,13 +60,13 @@
             >
               <option value>{{ 'form_label_entity_type_dropdown' | translate }}</option>
               @for (item of entity_types; track item.value) {
-                <option [value]="item.value">{{ item.label }}</option>
+              <option [value]="item.value">{{ item.label }}</option>
               }
             </select>
             @if (isFieldInvalid('entityType')) {
-              <div class="invalid-feedback mt-1 text-danger">
-                {{ getErrorMessage('entityType') }}
-              </div>
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('entityType') }}
+            </div>
             }
           </div>
 
@@ -75,67 +75,62 @@
             <div class="mb-2 flex items-center gap-2">
               <label for="entityName" class="required-mark block font-medium">Entity Name (Slug)</label>
               @if (editTitle && !entityNameEditable && isEntityNameActive) {
-                <button type="button" (click)="openEntityNameEditModal()" title="Edit entity name" class="text-gray-400 transition-colors hover:text-primary">
-                  <i class="fa-solid fa-pen text-xs"></i>
-                </button>
+              <button type="button" (click)="openEntityNameEditModal()" title="Edit entity name" class="text-gray-400 transition-colors hover:text-primary">
+                <i class="fa-solid fa-pen text-xs"></i>
+              </button>
               }
             </div>
             <div class="flex">
               @if (editTitle && !entityNameEditable) {
-                <input
-                  type="text"
-                  [value]="originalEntityName"
-                  disabled
-                  appDynamicFontSize="body"
-                  class="form-input w-full bg-gray-50 dark:bg-[#1b2e4b]"
-                />
-              } @else {
-                @if (entityNamePrefix) {
-                  <span class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400">
-                    {{ entityNamePrefix }}_
-                  </span>
-                }
-                <input
-                  id="entityName"
-                  type="text"
-                  formControlName="entityName"
-                  appDynamicFontSize="body"
-                  class="form-input flex-1"
-                  [class.rounded-l-none]="entityNamePrefix"
-                  [ngClass]="{ 'bg-gray-50 dark:bg-[#1b2e4b]': !isEntityNameActive, 'is-invalid': entityNameError }"
-                  placeholder="Select a suggestion or type a custom slug"
-                  [readOnly]="!isEntityNameActive"
-                  (blur)="onEntityNameBlur()"
-                />
+              <input type="text" [value]="originalEntityName" disabled appDynamicFontSize="body" class="form-input w-full bg-gray-50 dark:bg-[#1b2e4b]" />
+              } @else { @if (entityNamePrefix) {
+              <span
+                class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400"
+              >
+                {{ entityNamePrefix }}_
+              </span>
+              }
+              <input
+                id="entityName"
+                type="text"
+                formControlName="entityName"
+                appDynamicFontSize="body"
+                class="form-input flex-1"
+                [class.rounded-l-none]="entityNamePrefix"
+                [ngClass]="{ 'bg-gray-50 dark:bg-[#1b2e4b]': !isEntityNameActive, 'is-invalid': entityNameError }"
+                placeholder="Select a suggestion or type a custom slug"
+                [readOnly]="!isEntityNameActive"
+                (blur)="onEntityNameBlur()"
+              />
               }
             </div>
             @if (!isEntityNameActive) {
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Select an entity type and enter a name to enable this field.</p>
-            }
-            @if (entityNameError) {
-              <div class="mt-1 text-sm text-danger">{{ entityNameError }}</div>
-            }
-            @if (isEntityNameActive && (!editTitle || entityNameEditable) && entityNameSuggestions.length > 0) {
-              <div class="mt-1.5">
-                <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
-                <div class="mt-1 flex flex-wrap gap-1.5">
-                  @for (slug of entityNameSuggestions; track slug) {
-                    <button
-                      type="button"
-                      (click)="selectEntityNameSuggestion(slug)"
-                      class="rounded border px-2 py-0.5 text-xs transition-colors"
-                      [ngClass]="form.get('entityName')?.value === slug
-                        ? 'border-primary bg-primary text-white'
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'"
-                    >
-                      {{ slug }}
-                    </button>
-                  }
-                </div>
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Select an entity type and enter a name to enable this field.</p>
+            } @if (entityNameError) {
+            <div class="mt-1 text-sm text-danger">{{ entityNameError }}</div>
+            } @if (isEntityNameActive && (!editTitle || entityNameEditable) && entityNameSuggestions.length > 0) {
+            <div class="mt-1.5">
+              <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
+              <div class="mt-1 flex flex-wrap gap-1.5">
+                @for (slug of entityNameSuggestions; track slug) {
+                <button
+                  type="button"
+                  (click)="selectEntityNameSuggestion(slug)"
+                  class="rounded border px-2 py-0.5 text-xs transition-colors"
+                  [ngClass]="
+                    form.get('entityName')?.value === slug
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'
+                  "
+                >
+                  {{ slug }}
+                </button>
+                }
               </div>
-            }
-            @if (isEntityNameActive && (!editTitle || entityNameEditable) && form.get('name')?.value && entityNameSuggestions.length === 0 && !form.get('entityName')?.value) {
-              <p class="mt-1 text-xs text-warning">All suggested slugs are already taken. Try a different name.</p>
+            </div>
+            } @if (isEntityNameActive && (!editTitle || entityNameEditable) && form.get('name')?.value && entityNameSuggestions.length === 0 &&
+            !form.get('entityName')?.value) {
+            <p class="mt-1 text-xs text-warning">All suggested slugs are already taken. Try a different name.</p>
             }
           </div>
 
@@ -152,80 +147,80 @@
               [ngClass]="{ 'is-invalid': isFieldInvalid('permissions') }"
             >
               @for (item of action_types; track item.value) {
-                <ng-option [value]="item.value">{{ item.label | translate }}</ng-option>
+              <ng-option [value]="item.value">{{ item.label | translate }}</ng-option>
               }
             </ng-select>
             @if (isFieldInvalid('permissions')) {
-              <div class="invalid-feedback mt-1 text-danger">
-                {{ getErrorMessage('permissions') }}
-              </div>
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('permissions') }}
+            </div>
             }
           </div>
 
-          @if ([commonConfig.ENTITY_TYPES.EXPORT_MODULE.name, commonConfig.ENTITY_TYPES.COMMON_PERMISSION_MODULE.name].includes(form.get('entityType')?.value)) {
-            @if ([commonConfig.ENTITY_TYPES.EXPORT_MODULE.name].includes(form.get('entityType')?.value)) {
-              <div class="mt-0">
-                <label for="export_templates" class="required-mark mb-2 block font-medium"> {{ 'form_label_export_templates' | translate }}</label>
-                <div class="mt-1.5 flex items-center space-x-2">
-                  <!-- Wizard Group Select -->
-                  <ng-select
-                    id="export_templates"
-                    formControlName="export_template_id"
-                    appDynamicFontSize="body"
-                    class="custom-multiselect min-w-[200px] flex-grow"
-                    [clearable]="false"
-                    placeholder="{{ 'select_export_templates' | translate }}"
-                    [ngClass]="{ 'is-invalid': isFieldInvalid('export_templates') }"
-                  >
-                    <ng-option value>
-                      {{ 'form_label_export_templates_dropdown' | translate }}
-                    </ng-option>
-                    @for (group of exportTemplates; track group.id) {
-                      <ng-option [value]="group.id">{{ group.name }}</ng-option>
-                    }
-                  </ng-select>
-                </div>
-              </div>
-            }
-            <div class="mt-0">
-              <label for="exportTemplateFileName" class="required-mark mb-2 block font-medium">{{ 'export_template_file_name' | translate }}</label>
-              <input
-                id="exportTemplateFileName"
-                type="text"
-                formControlName="exportTemplateFileName"
+          @if ([commonConfig.ENTITY_TYPES.EXPORT_MODULE.name, commonConfig.ENTITY_TYPES.COMMON_PERMISSION_MODULE.name].includes(form.get('entityType')?.value))
+          { @if ([commonConfig.ENTITY_TYPES.EXPORT_MODULE.name].includes(form.get('entityType')?.value)) {
+          <div class="mt-0">
+            <label for="export_templates" class="required-mark mb-2 block font-medium"> {{ 'form_label_export_templates' | translate }}</label>
+            <div class="mt-1.5 flex items-center space-x-2">
+              <!-- Wizard Group Select -->
+              <ng-select
+                id="export_templates"
+                formControlName="export_template_id"
                 appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'export_template_file_name_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('exportTemplateFileName') }"
-              />
-              @if (isFieldInvalid('exportTemplateFileName')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('exportTemplateFileName') }}
-                </div>
-              }
-            </div>
-          }
-          @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value)) {
-            <div class="mt-0">
-              <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
-              <select
-                id="primaryTable"
-                formControlName="primaryTable"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('primaryTable') }"
-                appDynamicFontSize="body"
+                class="custom-multiselect min-w-[200px] flex-grow"
+                [clearable]="false"
+                placeholder="{{ 'select_export_templates' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('export_templates') }"
               >
-                <option value>{{ 'form_label_primary_table_dropdown' | translate }}</option>
-                @for (item of tables_list; track item) {
-                  <option [value]="item">{{ item }}</option>
+                <ng-option value>
+                  {{ 'form_label_export_templates_dropdown' | translate }}
+                </ng-option>
+                @for (group of exportTemplates; track group.id) {
+                <ng-option [value]="group.id">{{ group.name }}</ng-option>
                 }
-              </select>
-              @if (isFieldInvalid('primaryTable')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('primaryTable') }}
-                </div>
-              }
+              </ng-select>
             </div>
+          </div>
+          }
+          <div class="mt-0">
+            <label for="exportTemplateFileName" class="required-mark mb-2 block font-medium">{{ 'export_template_file_name' | translate }}</label>
+            <input
+              id="exportTemplateFileName"
+              type="text"
+              formControlName="exportTemplateFileName"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'export_template_file_name_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('exportTemplateFileName') }"
+            />
+            @if (isFieldInvalid('exportTemplateFileName')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('exportTemplateFileName') }}
+            </div>
+            }
+          </div>
+          } @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name,
+          commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value)) {
+          <div class="mt-0">
+            <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
+            <select
+              id="primaryTable"
+              formControlName="primaryTable"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('primaryTable') }"
+              appDynamicFontSize="body"
+            >
+              <option value>{{ 'form_label_primary_table_dropdown' | translate }}</option>
+              @for (item of tables_list; track item) {
+              <option [value]="item">{{ item }}</option>
+              }
+            </select>
+            @if (isFieldInvalid('primaryTable')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('primaryTable') }}
+            </div>
+            }
+          </div>
           }
 
           <div class="mt-0">
@@ -243,9 +238,9 @@
             </div>
 
             @if (isFieldInvalid('statusId')) {
-              <div class="invalid-feedback mt-1 text-danger">
-                {{ getErrorMessage('statusId') }}
-              </div>
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('statusId') }}
+            </div>
             }
           </div>
 
@@ -264,73 +259,72 @@
             </div>
 
             @if (isFieldInvalid('isAdminModule')) {
-              <div class="invalid-feedback mt-1 text-danger">
-                {{ getErrorMessage('isAdminModule') }}
-              </div>
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('isAdminModule') }}
+            </div>
             }
           </div>
 
           @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
-            <div class="mt-0">
-              <label for="header_entity_id" class="mb-2 block font-medium">Header Entity</label>
-              <select
-                id="header_entity_id"
-                formControlName="header_entity_id"
-                class="form-select w-full"
-                appDynamicFontSize="body"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('header_entity_id') }"
-              >
-                <option value>{{ 'select_any' | translate }}</option>
-                @for (entity of staticPageEntities; track entity.value) {
-                  <option [value]="entity.value">{{ entity.label }}</option>
-                }
-              </select>
-              @if (isFieldInvalid('header_entity_id')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('header_entity_id') }}
-                </div>
+          <div class="mt-0">
+            <label for="header_entity_id" class="mb-2 block font-medium">Header Entity</label>
+            <select
+              id="header_entity_id"
+              formControlName="header_entity_id"
+              class="form-select w-full"
+              appDynamicFontSize="body"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('header_entity_id') }"
+            >
+              <option value>{{ 'select_any' | translate }}</option>
+              @for (entity of staticPageEntities; track entity.value) {
+              <option [value]="entity.value">{{ entity.label }}</option>
               }
+            </select>
+            @if (isFieldInvalid('header_entity_id')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('header_entity_id') }}
             </div>
-            <div class="mt-0">
-              <label for="footer_entity_id" class="mb-2 block font-medium">Footer Entity</label>
-              <select
-                id="footer_entity_id"
-                formControlName="footer_entity_id"
-                class="form-select w-full"
-                appDynamicFontSize="body"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('footer_entity_id') }"
-              >
-                <option value>{{ 'select_any' | translate }}</option>
-                @for (entity of staticPageEntities; track entity.value) {
-                  <option [value]="entity.value">{{ entity.label }}</option>
-                }
-              </select>
-              @if (isFieldInvalid('footer_entity_id')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('footer_entity_id') }}
-                </div>
+            }
+          </div>
+          <div class="mt-0">
+            <label for="footer_entity_id" class="mb-2 block font-medium">Footer Entity</label>
+            <select
+              id="footer_entity_id"
+              formControlName="footer_entity_id"
+              class="form-select w-full"
+              appDynamicFontSize="body"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('footer_entity_id') }"
+            >
+              <option value>{{ 'select_any' | translate }}</option>
+              @for (entity of staticPageEntities; track entity.value) {
+              <option [value]="entity.value">{{ entity.label }}</option>
               }
+            </select>
+            @if (isFieldInvalid('footer_entity_id')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('footer_entity_id') }}
             </div>
-          }
-          @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
-            <div class="mt-0">
-              <label for="draftMode" class="required-mark mb-2 block font-medium">{{ 'form_label_draft_mode' | translate }}</label>
-              <div class="flex items-center space-x-4">
-                <label class="flex cursor-pointer items-center">
-                  <input type="radio" [value]="true" formControlName="draftMode" class="form-radio" appDynamicFontSize="body" />
-                  <span class="ml-2 text-white-dark">{{ 'yes' | translate }}</span>
-                </label>
-                <label class="flex cursor-pointer items-center">
-                  <input type="radio" [value]="false" formControlName="draftMode" class="form-radio" appDynamicFontSize="body" />
-                  <span class="ml-2 text-white-dark">{{ 'no' | translate }}</span>
-                </label>
-              </div>
-              @if (isFieldInvalid('draftMode')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('draftMode') }}
-                </div>
-              }
+            }
+          </div>
+          } @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
+          <div class="mt-0">
+            <label for="draftMode" class="required-mark mb-2 block font-medium">{{ 'form_label_draft_mode' | translate }}</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="true" formControlName="draftMode" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'yes' | translate }}</span>
+              </label>
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="false" formControlName="draftMode" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'no' | translate }}</span>
+              </label>
             </div>
+            @if (isFieldInvalid('draftMode')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('draftMode') }}
+            </div>
+            }
+          </div>
           }
 
           <!--<ng-container *ngIf="form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name">
@@ -357,229 +351,220 @@
             </ng-container>-->
 
           @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name) {
-            <div class="mt-0">
-              <label for class="required-mark mb-2 block font-medium">{{ 'form_label_report_type' | translate }}</label>
-              <select
-                id="reportType"
-                formControlName="reportType"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('reportType') }"
+          <div class="mt-0">
+            <label for class="required-mark mb-2 block font-medium">{{ 'form_label_report_type' | translate }}</label>
+            <select
+              id="reportType"
+              formControlName="reportType"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('reportType') }"
+              appDynamicFontSize="body"
+            >
+              <!-- <option value>{{ 'form_label_report_type_dropdown' | translate }}</option> -->
+              @for (item of report_type_list; track item.value) {
+              <option [value]="item.value">{{ item.label | translate }}</option>
+              }
+            </select>
+            @if (isFieldInvalid('reportType')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('reportType') }}
+            </div>
+            }
+          </div>
+          @if (form.get('reportType')?.value === commonConfig.REPORT_TYPES.LCP) {
+          <div class="mt-0">
+            <label for="wizardType" class="required-mark mb-2 block font-medium">{{ 'form_label_wizard_type' | translate }}</label>
+            <select
+              id="wizardType"
+              formControlName="wizardType"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('wizardType') }"
+              appDynamicFontSize="body"
+            >
+              <option value>{{ 'form_label_wizard_type_dropdown' | translate }}</option>
+              @for (item of wizard_type_list; track item.value) {
+              <option [value]="item.value">{{ item.label | translate }}</option>
+              }
+            </select>
+            @if (isFieldInvalid('wizardType')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('wizardType') }}
+            </div>
+            }
+          </div>
+          }
+          <div class="mt-0">
+            <label for="wizardGroup" class="required-mark mb-2 block font-medium"> {{ 'form_label_wizard_group' | translate }}</label>
+            <div class="mt-1.5 flex items-center space-x-2">
+              <!-- Wizard Group Select -->
+              <ng-select
+                id="wizardGroup"
+                formControlName="wizardGroup"
+                appDynamicFontSize="body"
+                class="custom-multiselect min-w-[90px] flex-grow"
+                [clearable]="false"
+                placeholder="{{ 'select_wizard_group' | translate }}"
+                [ngClass]="{ 'is-invalid': isFieldInvalid('wizardGroup') }"
+              >
+                <ng-option value>
+                  {{ 'form_label_wizard_group_dropdown' | translate }}
+                </ng-option>
+                @for (group of wizardGroups; track group.id) {
+                <ng-option [value]="group.id">{{ group.name }}</ng-option>
+                }
+              </ng-select>
+              <button
+                aria-expanded="true"
+                aria-haspopup="true"
+                (click)="showAddNewWizardGroup()"
+                type="button"
+                class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
                 appDynamicFontSize="body"
               >
-                <!-- <option value>{{ 'form_label_report_type_dropdown' | translate }}</option> -->
-                @for (item of report_type_list; track item.value) {
-                  <option [value]="item.value">{{ item.label | translate }}</option>
-                }
-              </select>
-              @if (isFieldInvalid('reportType')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('reportType') }}
-                </div>
-              }
-            </div>
-            @if (form.get('reportType')?.value === commonConfig.REPORT_TYPES.LCP) {
-              <div class="mt-0">
-                <label for="wizardType" class="required-mark mb-2 block font-medium">{{ 'form_label_wizard_type' | translate }}</label>
-                <select
-                  id="wizardType"
-                  formControlName="wizardType"
-                  class="form-select w-full"
-                  [ngClass]="{ 'is-invalid': isFieldInvalid('wizardType') }"
-                  appDynamicFontSize="body"
-                >
-                  <option value>{{ 'form_label_wizard_type_dropdown' | translate }}</option>
-                  @for (item of wizard_type_list; track item.value) {
-                    <option [value]="item.value">{{ item.label | translate }}</option>
-                  }
-                </select>
-                @if (isFieldInvalid('wizardType')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('wizardType') }}
-                  </div>
-                }
+                <i class="fas fa-plus fa-xl"></i>&nbsp;
+              </button>
+              @if (isFieldInvalid('wizardGroup')) {
+              <div class="invalid-feedback mt-1 text-danger">
+                {{ getErrorMessage('wizardGroup') }}
               </div>
-            }
-            <div class="mt-0">
-              <label for="wizardGroup" class="required-mark mb-2 block font-medium"> {{ 'form_label_wizard_group' | translate }}</label>
-              <div class="mt-1.5 flex items-center space-x-2">
-                <!-- Wizard Group Select -->
-                <ng-select
-                  id="wizardGroup"
-                  formControlName="wizardGroup"
-                  appDynamicFontSize="body"
-                  class="custom-multiselect min-w-[90px] flex-grow"
-                  [clearable]="false"
-                  placeholder="{{ 'select_wizard_group' | translate }}"
-                  [ngClass]="{ 'is-invalid': isFieldInvalid('wizardGroup') }"
-                >
-                  <ng-option value>
-                    {{ 'form_label_wizard_group_dropdown' | translate }}
-                  </ng-option>
-                  @for (group of wizardGroups; track group.id) {
-                    <ng-option [value]="group.id">{{ group.name }}</ng-option>
-                  }
-                </ng-select>
-                <button
-                  aria-expanded="true"
-                  aria-haspopup="true"
-                  (click)="showAddNewWizardGroup()"
-                  type="button"
-                  class="btn-primary flex items-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark"
-                  appDynamicFontSize="body"
-                >
-                  <i class="fas fa-plus fa-xl"></i>&nbsp;
-                </button>
-                @if (isFieldInvalid('wizardGroup')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('wizardGroup') }}
+              } @if (showWizardGroupMenu) {
+              <div
+                aria-labelledby="options-menu"
+                aria-orientation="vertical"
+                class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                role="menu"
+              >
+                <form [formGroup]="wizardGroupForm" (ngSubmit)="addNewWizardGroup()">
+                  <!-- Header -->
+                  <div class="flex items-center justify-between border-b border-gray-200 p-4">
+                    <span>{{ 'add_new_wizard_group' | translate }}</span>
+                    <div class="flex items-center gap-4">
+                      <button type="button" class="close" (click)="cancelAddWizardGroup()">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
                   </div>
-                }
-                @if (showWizardGroupMenu) {
-                  <div
-                    aria-labelledby="options-menu"
-                    aria-orientation="vertical"
-                    class="advancedfiltercontainer absolute z-10 mt-2 origin-top-left divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                    role="menu"
-                  >
-                    <form [formGroup]="wizardGroupForm" (ngSubmit)="addNewWizardGroup()">
-                      <!-- Header -->
-                      <div class="flex items-center justify-between border-b border-gray-200 p-4">
-                        <span>{{ 'add_new_wizard_group' | translate }}</span>
-                        <div class="flex items-center gap-4">
-                          <button type="button" class="close" (click)="cancelAddWizardGroup()">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
+                  <!-- Body -->
+                  <!-- Body -->
+                  <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
+                    <div class="space-y-2 p-4">
+                      <div class="form-group">
+                        <label for="newWizardGroupName">{{ 'wizard_group_name' | translate }}</label>
+                        <input
+                          type="text"
+                          class="form-input"
+                          id="newWizardGroupName"
+                          formControlName="name"
+                          [ngClass]="{ 'is-invalid': isWizardGroupFieldInvalid('name') }"
+                        />
+                        @if (isWizardGroupFieldInvalid('name')) {
+                        <div class="invalid-feedback">
+                          {{ getWizardGroupErrorMessage('name') }}
                         </div>
+                        }
                       </div>
-                      <!-- Body -->
-                      <!-- Body -->
-                      <ng-scrollbar class="relative !h-[calc(40vh-40px)]" appearance="compact">
-                        <div class="space-y-2 p-4">
-                          <div class="form-group">
-                            <label for="newWizardGroupName">{{ 'wizard_group_name' | translate }}</label>
-                            <input
-                              type="text"
-                              class="form-input"
-                              id="newWizardGroupName"
-                              formControlName="name"
-                              [ngClass]="{ 'is-invalid': isWizardGroupFieldInvalid('name') }"
-                            />
-                            @if (isWizardGroupFieldInvalid('name')) {
-                              <div class="invalid-feedback">
-                                {{ getWizardGroupErrorMessage('name') }}
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      </ng-scrollbar>
-                      <!-- Footer -->
-                      <div class="flex items-center justify-between border-t border-gray-200 p-4">
-                        <button
-                          type="button"
-                          class="btn btn-secondary mr-3 ltr:rounded-r rtl:rounded-l"
-                          appDynamicFontSize="body"
-                          (click)="cancelAddWizardGroup()"
-                        >
-                          {{ 'cancel' | translate }}
-                        </button>
-                        <button type="submit" class="btn btn-primary" appDynamicFontSize="body" [disabled]="wizardGroupForm.invalid">
-                          {{ 'submit' | translate }}
-                        </button>
-                      </div>
-                    </form>
+                    </div>
+                  </ng-scrollbar>
+                  <!-- Footer -->
+                  <div class="flex items-center justify-between border-t border-gray-200 p-4">
+                    <button type="button" class="btn btn-secondary mr-3 ltr:rounded-r rtl:rounded-l" appDynamicFontSize="body" (click)="cancelAddWizardGroup()">
+                      {{ 'cancel' | translate }}
+                    </button>
+                    <button type="submit" class="btn btn-primary" appDynamicFontSize="body" [disabled]="wizardGroupForm.invalid">
+                      {{ 'submit' | translate }}
+                    </button>
                   </div>
-                }
+                </form>
               </div>
-            </div>
-            <div class="mt-0">
-              <label for="dashboard_wizard_rows" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_wizard_rows' | translate }}</label>
-              <input
-                id="dashboard_wizard_rows"
-                type="number"
-                formControlName="dashboard_wizard_rows"
-                appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'form_label_dashboard_wizard_rows_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_rows') }"
-              />
-              @if (isFieldInvalid('dashboard_wizard_rows')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('dashboard_wizard_rows') }}
-                </div>
               }
             </div>
-            <div class="mt-0">
-              <label for="dashboard_wizard_columns" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_wizard_columns' | translate }}</label>
-              <input
-                id="dashboard_wizard_columns"
-                type="number"
-                formControlName="dashboard_wizard_columns"
-                appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'form_label_dashboard_wizard_columns_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_columns') }"
-              />
-              @if (isFieldInvalid('dashboard_wizard_columns')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('dashboard_wizard_columns') }}
-                </div>
-              }
+          </div>
+          <div class="mt-0">
+            <label for="dashboard_wizard_rows" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_wizard_rows' | translate }}</label>
+            <input
+              id="dashboard_wizard_rows"
+              type="number"
+              formControlName="dashboard_wizard_rows"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_dashboard_wizard_rows_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_rows') }"
+            />
+            @if (isFieldInvalid('dashboard_wizard_rows')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('dashboard_wizard_rows') }}
             </div>
-            <div class="mt-0">
-              <label for="dashboard_wizard_order_no" class="required-mark mb-2 block font-medium">{{
-                'form_label_dashboard_wizard_order_no' | translate
-              }}</label>
-              <input
-                id="dashboard_wizard_order_no"
-                type="number"
-                formControlName="dashboard_wizard_order_no"
-                appDynamicFontSize="body"
-                step="0.01"
-                min="0.01"
-                class="form-input w-full"
-                placeholder="{{ 'form_label_dashboard_wizard_order_no_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_order_no') }"
-              />
-              @if (isFieldInvalid('dashboard_wizard_order_no')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('dashboard_wizard_order_no') }}
-                </div>
-              }
-            </div>
-            <div class="mt-0">
-              <label for="reload_timeout" class="required-mark mb-2 block font-medium">{{ 'form_label_reload_timeout' | translate }}</label>
-              <input
-                id="reload_timeout"
-                type="number"
-                formControlName="reload_timeout"
-                appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'form_label_reload_timeout_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isFieldInvalid('reload_timeout') }"
-              />
-              @if (isFieldInvalid('reload_timeout')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('reload_timeout') }}
-                </div>
-              }
-            </div>
-            @if ([commonConfig.WIZARD_TYPES.ENTITY].includes(form.get('wizardType')?.value)) {
-              <div class="mt-0">
-                <label for="dashboard_entity_name" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_entity' | translate }}</label>
-                <select id="dashboard_entity_name" formControlName="dashboard_entity_name" appDynamicFontSize="body" class="form-select w-full">
-                  <option value="">{{ 'select_any' | translate }}</option>
-                  @for (entity of entitiesForDashboardWizard; track $index) {
-                    <option [value]="entity.value">{{ entity.label }}</option>
-                  }
-                </select>
-                @if (isFieldInvalid('dashboard_entity_name')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('dashboard_entity_name') }}
-                  </div>
-                }
-              </div>
             }
-          }
+          </div>
+          <div class="mt-0">
+            <label for="dashboard_wizard_columns" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_wizard_columns' | translate }}</label>
+            <input
+              id="dashboard_wizard_columns"
+              type="number"
+              formControlName="dashboard_wizard_columns"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_dashboard_wizard_columns_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_columns') }"
+            />
+            @if (isFieldInvalid('dashboard_wizard_columns')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('dashboard_wizard_columns') }}
+            </div>
+            }
+          </div>
+          <div class="mt-0">
+            <label for="dashboard_wizard_order_no" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_wizard_order_no' | translate }}</label>
+            <input
+              id="dashboard_wizard_order_no"
+              type="number"
+              formControlName="dashboard_wizard_order_no"
+              appDynamicFontSize="body"
+              step="0.01"
+              min="0.01"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_dashboard_wizard_order_no_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('dashboard_wizard_order_no') }"
+            />
+            @if (isFieldInvalid('dashboard_wizard_order_no')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('dashboard_wizard_order_no') }}
+            </div>
+            }
+          </div>
+          <div class="mt-0">
+            <label for="reload_timeout" class="required-mark mb-2 block font-medium">{{ 'form_label_reload_timeout' | translate }}</label>
+            <input
+              id="reload_timeout"
+              type="number"
+              formControlName="reload_timeout"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'form_label_reload_timeout_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isFieldInvalid('reload_timeout') }"
+            />
+            @if (isFieldInvalid('reload_timeout')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('reload_timeout') }}
+            </div>
+            }
+          </div>
+          @if ([commonConfig.WIZARD_TYPES.ENTITY].includes(form.get('wizardType')?.value)) {
+          <div class="mt-0">
+            <label for="dashboard_entity_name" class="required-mark mb-2 block font-medium">{{ 'form_label_dashboard_entity' | translate }}</label>
+            <select id="dashboard_entity_name" formControlName="dashboard_entity_name" appDynamicFontSize="body" class="form-select w-full">
+              <option value="">{{ 'select_any' | translate }}</option>
+              @for (entity of entitiesForDashboardWizard; track $index) {
+              <option [value]="entity.value">{{ entity.label }}</option>
+              }
+            </select>
+            @if (isFieldInvalid('dashboard_entity_name')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('dashboard_entity_name') }}
+            </div>
+            }
+          </div>
+          } }
           <div class="mt-3">
             <div class="flex flex-row gap-3">
               <label for="entity_configurations" class="mb-2 block font-medium">{{ 'form_label_entity_config' | translate }}</label>
@@ -598,1178 +583,1146 @@
           </div>
         </div>
 
-        @if (
-          commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name === form.get('entityType')?.value ||
-          commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name === form.get('entityType')?.value ||
-          (commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name === form.get('entityType')?.value &&
-            form.get('reportType')?.value === commonConfig.REPORT_TYPES.LCP)
-        ) {
-          <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
-            @if (
-              [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name].includes(form.get('entityType')?.value) ||
-              [commonConfig.WIZARD_TYPES.CHART].includes(form.get('wizardType')?.value) ||
-              [commonConfig.WIZARD_TYPES.STATIC].includes(form.get('wizardType')?.value)
-            ) {
-              <div class="mt-3">
-                <div class="flex flex-row gap-3">
-                  <label for="queryInformation" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
-                  <i (click)="openInfoPopUp('queryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-                </div>
-                <div class="monaco-editor-container" appDynamicFontSize="body">
-                  <button type="button" class="copy-editor-btn" (click)="copyEditorContent('queryInformation')" title="Copy to clipboard">
-                    <i class="fas fa-copy"></i>
-                    <span>Copy</span>
-                  </button>
-                  <ngx-monaco-editor
-                    monacoEditor
-                    [options]="editorOptions"
-                    id="queryInformation"
-                    formControlName="queryInformation"
-                    class="monaco-editor"
-                  ></ngx-monaco-editor>
-                </div>
-                @if (isFieldInvalid('queryInformation')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('queryInformation') }}
-                  </div>
-                }
-              </div>
-            }
-            @if (
-              [commonConfig.WIZARD_TYPES.CHART].includes(form.get('wizardType')?.value) ||
-              commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name === form.get('entityType')?.value
-            ) {
-              <div class="mt-3">
-                <label for="dashboard_wizard_options" class="mb-2 block font-medium">{{ 'form_label_dashboard_wizard_content_json' | translate }}</label>
-                <div class="monaco-editor-container" appDynamicFontSize="body">
-                  <button type="button" class="copy-editor-btn" (click)="copyEditorContent('dashboard_wizard_options')" title="Copy to clipboard">
-                    <i class="fas fa-copy"></i>
-                    <span>Copy</span>
-                  </button>
-                  <ngx-monaco-editor
-                    monacoEditor
-                    [options]="editorOptions"
-                    id="dashboard_wizard_options"
-                    formControlName="dashboard_wizard_options"
-                    class="monaco-editor"
-                  ></ngx-monaco-editor>
-                </div>
-                @if (isFieldInvalid('dashboard_wizard_options')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('dashboard_wizard_options') }}
-                  </div>
-                }
-              </div>
-            }
-            @if (
-              [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name].includes(form.get('entityType')?.value) ||
-              [commonConfig.WIZARD_TYPES.STATIC].includes(form.get('wizardType')?.value)
-            ) {
-              <div class="mt-3">
-                <label for="staticPageContent" class="mb-2 block font-medium">
-                  {{
-                    form.get('entityType')?.value === commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name
-                      ? ('form_label_dashboard_wizard_content_html' | translate)
-                      : ('form_label_static_page_Content' | translate)
-                  }}
-                </label>
-                <div class="monaco-editor-container" appDynamicFontSize="body">
-                  <button type="button" class="copy-editor-btn" (click)="copyEditorContent('staticPageContent')" title="Copy to clipboard">
-                    <i class="fas fa-copy"></i>
-                    <span>Copy</span>
-                  </button>
-                  <ngx-monaco-editor
-                    monacoEditor
-                    [options]="htmlEditorOptions"
-                    id="staticPageContent"
-                    formControlName="staticPageContent"
-                    class="monaco-editor"
-                  ></ngx-monaco-editor>
-                </div>
-                @if (isFieldInvalid('staticPageContent')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('staticPageContent') }}
-                  </div>
-                }
-              </div>
+        @if ( commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name === form.get('entityType')?.value || commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name
+        === form.get('entityType')?.value || (commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name === form.get('entityType')?.value &&
+        form.get('reportType')?.value === commonConfig.REPORT_TYPES.LCP) ) {
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+          @if ( [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name,
+          commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name].includes(form.get('entityType')?.value) ||
+          [commonConfig.WIZARD_TYPES.CHART].includes(form.get('wizardType')?.value) ||
+          [commonConfig.WIZARD_TYPES.STATIC].includes(form.get('wizardType')?.value) ) {
+          <div class="mt-3">
+            <div class="flex flex-row gap-3">
+              <label for="queryInformation" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+              <i (click)="openInfoPopUp('queryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('queryInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="editorOptions"
+                id="queryInformation"
+                formControlName="queryInformation"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('queryInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('queryInformation') }}
+            </div>
             }
           </div>
-        }
-        @if (
-          commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name === form.get('entityType')?.value &&
-          form.get('reportType')?.value === commonConfig.REPORT_TYPES.POWERBI
-        ) {
-          <div class="grid grid-cols-1 gap-2 md:grid-cols-1">
-            <div class="mt-3">
-              <div class="flex flex-row gap-3">
-                <label for="reportInformation" class="mb-2 block font-medium">{{ 'form_label_report_information' | translate }}</label>
-                <i (click)="openInfoPopUp('reportInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('reportInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor
-                  monacoEditor
-                  [options]="editorOptions"
-                  id="reportInformation"
-                  formControlName="reportInformation"
-                  class="monaco-editor"
-                ></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('reportInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('reportInformation') }}
-                </div>
-              }
+          } @if ( [commonConfig.WIZARD_TYPES.CHART].includes(form.get('wizardType')?.value) || commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name ===
+          form.get('entityType')?.value ) {
+          <div class="mt-3">
+            <label for="dashboard_wizard_options" class="mb-2 block font-medium">{{ 'form_label_dashboard_wizard_content_json' | translate }}</label>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('dashboard_wizard_options')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="editorOptions"
+                id="dashboard_wizard_options"
+                formControlName="dashboard_wizard_options"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
             </div>
-          </div>
-        }
-        @if (
-          [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(
-            form.get('entityType')?.value
-          )
-        ) {
-          <div
-            class="grid grid-cols-1 gap-2"
-            [ngClass]="{ 'md:grid-cols-2': ![commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name].includes(form.get('entityType')?.value) }"
-          >
-            <div class="mt-3">
-              <div class="flex flex-row gap-3">
-                <label for="queryInformation" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
-                <i (click)="openInfoPopUp('jobBuilderQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('queryInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor
-                  monacoEditor
-                  [options]="editorOptions"
-                  id="queryInformation"
-                  formControlName="queryInformation"
-                  class="monaco-editor"
-                ></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('queryInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('queryInformation') }}
-                </div>
-              }
+            @if (isFieldInvalid('dashboard_wizard_options')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('dashboard_wizard_options') }}
             </div>
-            @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value)) {
-              <div class="mt-3">
-                <div class="flex flex-row gap-3">
-                  <label for="associateTable" class="mb-2 block font-medium">{{ 'form_label_associated_tables' | translate }}</label>
-                  <i (click)="openInfoPopUp('associatedTableInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-                </div>
-                <div class="monaco-editor-container" appDynamicFontSize="body">
-                  <button type="button" class="copy-editor-btn" (click)="copyEditorContent('associateTable')" title="Copy to clipboard">
-                    <i class="fas fa-copy"></i>
-                    <span>Copy</span>
-                  </button>
-                  <ngx-monaco-editor
-                    monacoEditor
-                    [options]="editorOptions"
-                    id="associateTable"
-                    formControlName="associateTable"
-                    class="monaco-editor"
-                  ></ngx-monaco-editor>
-                </div>
-                @if (isFieldInvalid('associateTable')) {
-                  <div class="invalid-feedback mt-1 text-danger">
-                    {{ getErrorMessage('associateTable') }}
-                  </div>
-                }
-              </div>
             }
           </div>
-        }
-        @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
-          <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <div class="mt-5">
-              <div class="flex flex-row gap-3">
-                <label for="formInformation" class="mb-2 block font-medium">Form Information</label>
-                <i (click)="openInfoPopUp('formInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('formInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor [options]="editorOptions" id="formInformation" formControlName="formInformation" class="monaco-editor"></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('formInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('formInformation') }}
-                </div>
-              }
+          } @if ( [commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name].includes(form.get('entityType')?.value) ||
+          [commonConfig.WIZARD_TYPES.STATIC].includes(form.get('wizardType')?.value) ) {
+          <div class="mt-3">
+            <label for="staticPageContent" class="mb-2 block font-medium">
+              {{
+                form.get('entityType')?.value === commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name
+                  ? ('form_label_dashboard_wizard_content_html' | translate)
+                  : ('form_label_static_page_Content' | translate)
+              }}
+            </label>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('staticPageContent')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="htmlEditorOptions"
+                id="staticPageContent"
+                formControlName="staticPageContent"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
             </div>
-            <div class="mt-5">
-              <div class="flex flex-row gap-3">
-                <label for="queryInformation" class="mb-2 block font-medium">
-                  {{ 'form_label_query_information' | translate }}
-                  <i
-                    class="fas"
-                    [ngClass]="isDarkTheme ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"
-                    aria-hidden="true"
-                    (click)="toggleTheme()"
-                    class="ml-2 cursor-pointer"
-                  ></i>
-                </label>
-                <i (click)="openInfoPopUp('formQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('queryInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor [options]="editorOptions" id="queryInformation" formControlName="queryInformation" class="monaco-editor"></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('queryInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('queryInformation') }}
-                </div>
-              }
+            @if (isFieldInvalid('staticPageContent')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('staticPageContent') }}
             </div>
-            <div class="mt-5">
-              <div class="flex flex-row gap-3">
-                <label for="addQueryInformation" class="mb-2 block font-medium">Add JSON Structure</label>
-                <i (click)="openInfoPopUp('addQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('addQueryInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor
-                  [options]="editorOptions"
-                  id="addQueryInformation"
-                  formControlName="addQueryInformation"
-                  class="monaco-editor"
-                ></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('addQueryInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('addQueryInformation') }}
-                </div>
-              }
-            </div>
-            <div class="mt-5">
-              <div class="flex flex-row gap-3">
-                <label for="editQueryInformation" class="mb-2 block font-medium">Edit JSON Structure</label>
-                <i (click)="openInfoPopUp('editQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('editQueryInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor
-                  [options]="editorOptions"
-                  id="editQueryInformation"
-                  formControlName="editQueryInformation"
-                  class="monaco-editor"
-                ></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('editQueryInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('editQueryInformation') }}
-                </div>
-              }
-            </div>
-            <div class="mt-5">
-              <div class="flex flex-row gap-3">
-                <label for="presetQueryInformation" class="mb-2 block font-medium">Preset JSON Structure</label>
-                <i (click)="openInfoPopUp('presetQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
-              </div>
-              <div class="monaco-editor-container" appDynamicFontSize="body">
-                <button type="button" class="copy-editor-btn" (click)="copyEditorContent('presetQueryInformation')" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <ngx-monaco-editor
-                  [options]="editorOptions"
-                  id="presetQueryInformation"
-                  formControlName="presetQueryInformation"
-                  class="monaco-editor"
-                ></ngx-monaco-editor>
-              </div>
-              @if (isFieldInvalid('presetQueryInformation')) {
-                <div class="invalid-feedback mt-1 text-danger">
-                  {{ getErrorMessage('presetQueryInformation') }}
-                </div>
-              }
-            </div>
+            }
           </div>
+          }
+        </div>
+        } @if ( commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name === form.get('entityType')?.value && form.get('reportType')?.value ===
+        commonConfig.REPORT_TYPES.POWERBI ) {
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-1">
+          <div class="mt-3">
+            <div class="flex flex-row gap-3">
+              <label for="reportInformation" class="mb-2 block font-medium">{{ 'form_label_report_information' | translate }}</label>
+              <i (click)="openInfoPopUp('reportInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('reportInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="editorOptions"
+                id="reportInformation"
+                formControlName="reportInformation"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('reportInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('reportInformation') }}
+            </div>
+            }
+          </div>
+        </div>
+        } @if ( [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name,
+        commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes( form.get('entityType')?.value ) ) {
+        <div
+          class="grid grid-cols-1 gap-2"
+          [ngClass]="{ 'md:grid-cols-2': ![commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name].includes(form.get('entityType')?.value) }"
+        >
+          <div class="mt-3">
+            <div class="flex flex-row gap-3">
+              <label for="queryInformation" class="mb-2 block font-medium">{{ 'form_label_query_information' | translate }}</label>
+              <i (click)="openInfoPopUp('jobBuilderQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('queryInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="editorOptions"
+                id="queryInformation"
+                formControlName="queryInformation"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('queryInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('queryInformation') }}
+            </div>
+            }
+          </div>
+          @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value))
+          {
+          <div class="mt-3">
+            <div class="flex flex-row gap-3">
+              <label for="associateTable" class="mb-2 block font-medium">{{ 'form_label_associated_tables' | translate }}</label>
+              <i (click)="openInfoPopUp('associatedTableInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('associateTable')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="editorOptions"
+                id="associateTable"
+                formControlName="associateTable"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('associateTable')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('associateTable') }}
+            </div>
+            }
+          </div>
+          }
+        </div>
+        } @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <div class="mt-5">
+            <div class="flex flex-row gap-3">
+              <label for="formInformation" class="mb-2 block font-medium">Form Information</label>
+              <i (click)="openInfoPopUp('formInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('formInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor [options]="editorOptions" id="formInformation" formControlName="formInformation" class="monaco-editor"></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('formInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('formInformation') }}
+            </div>
+            }
+          </div>
+          <div class="mt-5">
+            <div class="flex flex-row gap-3">
+              <label for="queryInformation" class="mb-2 block font-medium">
+                {{ 'form_label_query_information' | translate }}
+                <i
+                  class="fas"
+                  [ngClass]="isDarkTheme ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"
+                  aria-hidden="true"
+                  (click)="toggleTheme()"
+                  class="ml-2 cursor-pointer"
+                ></i>
+              </label>
+              <i (click)="openInfoPopUp('formQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('queryInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor [options]="editorOptions" id="queryInformation" formControlName="queryInformation" class="monaco-editor"></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('queryInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('queryInformation') }}
+            </div>
+            }
+          </div>
+          <div class="mt-5">
+            <div class="flex flex-row gap-3">
+              <label for="addQueryInformation" class="mb-2 block font-medium">Add JSON Structure</label>
+              <i (click)="openInfoPopUp('addQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('addQueryInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                [options]="editorOptions"
+                id="addQueryInformation"
+                formControlName="addQueryInformation"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('addQueryInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('addQueryInformation') }}
+            </div>
+            }
+          </div>
+          <div class="mt-5">
+            <div class="flex flex-row gap-3">
+              <label for="editQueryInformation" class="mb-2 block font-medium">Edit JSON Structure</label>
+              <i (click)="openInfoPopUp('editQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('editQueryInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                [options]="editorOptions"
+                id="editQueryInformation"
+                formControlName="editQueryInformation"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('editQueryInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('editQueryInformation') }}
+            </div>
+            }
+          </div>
+          <div class="mt-5">
+            <div class="flex flex-row gap-3">
+              <label for="presetQueryInformation" class="mb-2 block font-medium">Preset JSON Structure</label>
+              <i (click)="openInfoPopUp('presetQueryInfo')" class="fas fa-circle-info fa-lg cursor-pointer !leading-none"></i>
+            </div>
+            <div class="monaco-editor-container" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('presetQueryInformation')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                [options]="editorOptions"
+                id="presetQueryInformation"
+                formControlName="presetQueryInformation"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+            @if (isFieldInvalid('presetQueryInformation')) {
+            <div class="invalid-feedback mt-1 text-danger">
+              {{ getErrorMessage('presetQueryInformation') }}
+            </div>
+            }
+          </div>
+        </div>
         }
       </div>
     </div>
 
     @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value)) {
-      <div class="mt-5 flex flex-wrap justify-between">
-        <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>
-        <div class="relative inline-flex align-middle">
-          <button (click)="addItem()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l">
-            <i class="fa-solid fa-plus"></i>&nbsp;
-          </button>
-        </div>
+    <div class="mt-5 flex flex-wrap justify-between">
+      <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>
+      <div class="relative inline-flex align-middle">
+        <button (click)="addItem()" type="button" class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l"><i class="fa-solid fa-plus"></i>&nbsp;</button>
       </div>
-      <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
-      <div class="mt-2">
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th class="w-1/12">{{ 'table_action' | translate }}</th>
-                <th class="required-mark w-2/12">{{ 'table_field_name' | translate }}</th>
-                <th class="required-mark w-2/12">{{ 'table_display_name' | translate }}</th>
-                <th class="required-mark w-1/16">{{ 'table_order_no' | translate }}</th>
-                <th class="w-1/16">{{ 'table_is_grid_column' | translate }}</th>
-                <th class="w-1/16">{{ 'table_is_searchable' | translate }}</th>
-                <th class="w-1/12">{{ 'table_is_clause_type' | translate }}</th>
-                <th class="w-1/16">{{ 'table_is_sortable' | translate }}</th>
-                <th class="w-1/12">{{ 'table_field_type' | translate }}</th>
-                <th class="w-2/12">{{ 'link_type' | translate }}</th>
-                <th class="w-3/12">{{ 'link_action' | translate }}</th>
-                <th class="w-3/12">
+    </div>
+    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+    <div class="mt-2">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="w-1/12">{{ 'table_action' | translate }}</th>
+              <th class="required-mark w-2/12">{{ 'table_field_name' | translate }}</th>
+              <th class="required-mark w-2/12">{{ 'table_display_name' | translate }}</th>
+              <th class="required-mark w-1/16">{{ 'table_order_no' | translate }}</th>
+              <th class="w-1/16">{{ 'table_is_grid_column' | translate }}</th>
+              <th class="w-1/16">{{ 'table_is_searchable' | translate }}</th>
+              <th class="w-1/12">{{ 'table_is_clause_type' | translate }}</th>
+              <th class="w-1/16">{{ 'table_is_sortable' | translate }}</th>
+              <th class="w-1/12">{{ 'table_field_type' | translate }}</th>
+              <th class="w-2/12">{{ 'link_type' | translate }}</th>
+              <th class="w-3/12">{{ 'link_action' | translate }}</th>
+              <th class="w-3/12">
+                <div class="flex items-center gap-2">
+                  <span>{{ 'html_content' | translate }}</span>
+                  <i
+                    (click)="openInfoPopUp('fieldHtmlContentInfo')"
+                    class="fas fa-circle-info fa-sm cursor-pointer text-gray-500 transition hover:text-blue-600"
+                  ></i>
+                </div>
+              </th>
+              <th class="w-3/12">{{ 'table_enum_values' | translate }}</th>
+              <th class="w-3/12">Line Item Configurations</th>
+            </tr>
+          </thead>
+          <tbody formArrayName="items">
+            @if (itemsControls.length <= 0) {
+            <tr>
+              <td colspan="11" class="!text-center font-semibold">{{ 'no_records_found' | translate }}</td>
+            </tr>
+            } @for (item of itemsControls; track item; let i = $index) {
+            <ng-container [formGroupName]="i">
+              <tr class="align-top">
+                <td class="w-1/12">
                   <div class="flex items-center gap-2">
-                    <span>{{ 'html_content' | translate }}</span>
-                    <i
-                      (click)="openInfoPopUp('fieldHtmlContentInfo')"
-                      class="fas fa-circle-info fa-sm cursor-pointer text-gray-500 transition hover:text-blue-600"
-                    ></i>
+                    <button type="button" (click)="openEditModal(i)" class="text-blue-600 hover:text-blue-800" title="Edit">
+                      <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </button>
+                    <button type="button" (click)="removeItem(i)" class="text-red-600 hover:text-red-800" title="Remove">
+                      <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
                   </div>
-                </th>
-                <th class="w-3/12">{{ 'table_enum_values' | translate }}</th>
-                <th class="w-3/12">Line Item Configurations</th>
+                </td>
+                <td class="w-2/12">
+                  <div class="mb-2">
+                    <input
+                      [id]="'fieldName' + i"
+                      type="text"
+                      formControlName="fieldName"
+                      appDynamicFontSize="body"
+                      placeholder="{{ 'table_field_name_placeholder' | translate }}"
+                      class="form-input w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldName') }"
+                    />
+                    @if (isItemFieldInvalid(i, 'fieldName')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'fieldName') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-2/16">
+                  <div class="mb-2">
+                    <input
+                      [id]="'displayName' + i"
+                      type="text"
+                      formControlName="displayName"
+                      appDynamicFontSize="body"
+                      placeholder="{{ 'table_display_name_placeholder' | translate }}"
+                      class="form-input w-full"
+                      (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'displayName') }"
+                    />
+                    @if (isItemFieldInvalid(i, 'displayName')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'displayName') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/12">
+                  <div class="mb-2">
+                    <input
+                      [id]="'orderNo' + i"
+                      type="number"
+                      formControlName="orderNo"
+                      appDynamicFontSize="body"
+                      placeholder="{{ 'table_order_no_placeholder' | translate }}"
+                      class="form-input w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'orderNo') }"
+                    />
+                    @if (isItemFieldInvalid(i, 'orderNo')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'orderNo') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/12">
+                  <div class="mb-2">
+                    <select
+                      [id]="'isGridColumn' + i"
+                      formControlName="isGridColumn"
+                      appDynamicFontSize="body"
+                      class="form-select w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isGridColumn') }"
+                    >
+                      <option value selected disabled>{{ 'select_any' | translate }}</option>
+                      <option value="true">{{ 'yes' | translate }}</option>
+                      <option value="false">{{ 'no' | translate }}</option>
+                    </select>
+                    @if (isItemFieldInvalid(i, 'isGridColumn')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'isGridColumn') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/16">
+                  <div class="mb-2">
+                    <select
+                      [id]="'isSearchable' + i"
+                      formControlName="isSearchable"
+                      appDynamicFontSize="body"
+                      class="form-select w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSearchable') }"
+                    >
+                      <option value selected disabled>{{ 'select_any' | translate }}</option>
+                      <option value="true">{{ 'yes' | translate }}</option>
+                      <option value="false">{{ 'no' | translate }}</option>
+                    </select>
+                    @if (isItemFieldInvalid(i, 'isSearchable')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'isSearchable') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/12">
+                  <div class="mb-2">
+                    <select
+                      [id]="'clauseType' + i"
+                      formControlName="clauseType"
+                      appDynamicFontSize="body"
+                      class="form-select w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'clauseType') }"
+                    >
+                      <option value selected disabled>{{ 'select_any' | translate }}</option>
+                      <option value="where">{{ 'where' | translate }}</option>
+                      <option value="having">{{ 'having' | translate }}</option>
+                    </select>
+                    @if (isItemFieldInvalid(i, 'clauseType')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'clauseType') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/16">
+                  <div class="mb-2">
+                    <select
+                      [id]="'isSortable' + i"
+                      formControlName="isSortable"
+                      appDynamicFontSize="body"
+                      class="form-select w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSortable') }"
+                    >
+                      <option value selected disabled>{{ 'select_any' | translate }}</option>
+                      <option value="true">{{ 'yes' | translate }}</option>
+                      <option value="false">{{ 'no' | translate }}</option>
+                    </select>
+                    @if (isItemFieldInvalid(i, 'isSortable')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'isSortable') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/12">
+                  <div class="mb-2">
+                    <select
+                      [id]="'fieldType' + i"
+                      formControlName="fieldType"
+                      appDynamicFontSize="body"
+                      class="form-select w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldType') }"
+                    >
+                      <option value selected disabled>{{ 'select_any' | translate }}</option>
+                      @for (fieldType of field_types; track fieldType.value) {
+                      <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
+                      }
+                    </select>
+                    @if (isItemFieldInvalid(i, 'fieldType')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'fieldType') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-1/16">
+                  <div class="mb-2">
+                    <select
+                      [id]="'linkType' + i"
+                      formControlName="linkType"
+                      appDynamicFontSize="body"
+                      class="form-select w-full"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkType') }"
+                    >
+                      <option value="none">{{ 'none' | translate }}</option>
+                      <option value="component">{{ 'popup_component' | translate }}</option>
+                      <option value="child_component">{{ 'child_component' | translate }}</option>
+                      <option value="child_grid">{{ 'child_grid' | translate }}</option>
+                      <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
+                      <option value="url">{{ 'url' | translate }}</option>
+                    </select>
+                    @if (isItemFieldInvalid(i, 'linkType')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'linkType') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-2/16">
+                  <div class="mb-2">
+                    @switch (item.get('linkType')?.value) { @case (linkTypeComponentCase) {
+                    <ng-select
+                      formControlName="linkAction"
+                      appDynamicFontSize="body"
+                      class="custom-multiselect"
+                      [items]="masterEntities"
+                      bindValue="value"
+                      bindLabel="label"
+                      [searchable]="true"
+                      [clearable]="true"
+                      placeholder="{{ 'select_any' | translate }}"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                    ></ng-select>
+                    } @case (linkTypeChildComponentCase) {
+                    <ng-select
+                      formControlName="linkAction"
+                      appDynamicFontSize="body"
+                      class="custom-multiselect"
+                      [items]="masterEntities"
+                      bindValue="value"
+                      bindLabel="label"
+                      [searchable]="true"
+                      [clearable]="true"
+                      placeholder="{{ 'select_any' | translate }}"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                    ></ng-select>
+                    } @case ('child_grid') {
+                    <ng-select
+                      formControlName="linkAction"
+                      appDynamicFontSize="body"
+                      class="custom-multiselect"
+                      [items]="masterEntitiesForChildProcess"
+                      bindValue="value"
+                      bindLabel="label"
+                      [searchable]="true"
+                      [clearable]="true"
+                      placeholder="{{ 'select_any' | translate }}"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                    ></ng-select>
+                    } @case ('popup_grid') {
+                    <ng-select
+                      formControlName="linkAction"
+                      appDynamicFontSize="body"
+                      class="custom-multiselect"
+                      [items]="masterEntitiesForChildProcess"
+                      bindValue="value"
+                      bindLabel="label"
+                      [searchable]="true"
+                      [clearable]="true"
+                      placeholder="{{ 'select_any' | translate }}"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                    ></ng-select>
+                    } @case ('url') {
+                    <input
+                      [id]="'linkAction' + i"
+                      type="text"
+                      formControlName="linkAction"
+                      appDynamicFontSize="body"
+                      class="form-input w-full"
+                      placeholder="{{ 'enter_url' | translate }}"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
+                    />
+                    } @default {
+                    <span>-</span>
+                    } } @if (isItemFieldInvalid(i, 'linkAction')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'linkAction') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <!-- NEW: HTML content cell (textarea) -->
+                <td class="w-3/12">
+                  <div class="mb-2">
+                    <textarea
+                      [id]="'fieldHtmlContent' + i"
+                      formControlName="fieldHtmlContent"
+                      appDynamicFontSize="body"
+                      class="form-textarea w-full"
+                      rows="3"
+                      placeholder="{{ 'enter_html_content' | translate }}"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldHtmlContent') }"
+                    ></textarea>
+                    @if (isItemFieldInvalid(i, 'fieldHtmlContent')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'fieldHtmlContent') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-4/12">
+                  <div class="mb-2">
+                    <textarea
+                      [id]="'enumValues' + i"
+                      rows="3"
+                      formControlName="enumValues"
+                      appDynamicFontSize="body"
+                      class="form-textarea w-full"
+                      placeholder="{{ 'enter_enum_values' | translate }}"
+                      appJsonValidator="object"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'enumValues') }"
+                    ></textarea>
+                    @if (isItemFieldInvalid(i, 'enumValues')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'enumValues') }}
+                    </div>
+                    }
+                  </div>
+                </td>
+                <td class="w-3/12">
+                  <div class="mb-2">
+                    <textarea
+                      [id]="'lineItemConfigurations' + i"
+                      rows="3"
+                      formControlName="lineItemConfigurations"
+                      appDynamicFontSize="body"
+                      class="form-textarea w-full"
+                      placeholder="Enter line item configurations (JSON)"
+                      appJsonValidator="object"
+                      [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'lineItemConfigurations') }"
+                    ></textarea>
+                    @if (isItemFieldInvalid(i, 'lineItemConfigurations')) {
+                    <div class="invalid-feedback text-danger">
+                      {{ getItemErrorMessage(i, 'lineItemConfigurations') }}
+                    </div>
+                    }
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody formArrayName="items">
-              @if (itemsControls.length <= 0) {
-                <tr>
-                  <td colspan="11" class="!text-center font-semibold">{{ 'no_records_found' | translate }}</td>
-                </tr>
-              }
-              @for (item of itemsControls; track item; let i = $index) {
-                <ng-container [formGroupName]="i">
-                  <tr class="align-top">
-                    <td class="w-1/12">
-                      <div class="flex items-center gap-2">
-                        <button type="button" (click)="openEditModal(i)" class="text-blue-600 hover:text-blue-800" title="Edit">
-                          <i class="fa-solid fa-pen-to-square text-lg"></i>
-                        </button>
-                        <button type="button" (click)="removeItem(i)" class="text-red-600 hover:text-red-800" title="Remove">
-                          <i class="fa-solid fa-xmark text-xl"></i>
-                        </button>
-                      </div>
-                    </td>
-                    <td class="w-2/12">
-                      <div class="mb-2">
-                        <input
-                          [id]="'fieldName' + i"
-                          type="text"
-                          formControlName="fieldName"
-                          appDynamicFontSize="body"
-                          placeholder="{{ 'table_field_name_placeholder' | translate }}"
-                          class="form-input w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldName') }"
-                        />
-                        @if (isItemFieldInvalid(i, 'fieldName')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'fieldName') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-2/16">
-                      <div class="mb-2">
-                        <input
-                          [id]="'displayName' + i"
-                          type="text"
-                          formControlName="displayName"
-                          appDynamicFontSize="body"
-                          placeholder="{{ 'table_display_name_placeholder' | translate }}"
-                          class="form-input w-full"
-                          (keydown)="localStorageService.handleKeyPress($event, { type: commonConfig.keypress_config.allow_only_lowercase_alphanumeric })"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'displayName') }"
-                        />
-                        @if (isItemFieldInvalid(i, 'displayName')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'displayName') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/12">
-                      <div class="mb-2">
-                        <input
-                          [id]="'orderNo' + i"
-                          type="number"
-                          formControlName="orderNo"
-                          appDynamicFontSize="body"
-                          placeholder="{{ 'table_order_no_placeholder' | translate }}"
-                          class="form-input w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'orderNo') }"
-                        />
-                        @if (isItemFieldInvalid(i, 'orderNo')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'orderNo') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/12">
-                      <div class="mb-2">
-                        <select
-                          [id]="'isGridColumn' + i"
-                          formControlName="isGridColumn"
-                          appDynamicFontSize="body"
-                          class="form-select w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isGridColumn') }"
-                        >
-                          <option value selected disabled>{{ 'select_any' | translate }}</option>
-                          <option value="true">{{ 'yes' | translate }}</option>
-                          <option value="false">{{ 'no' | translate }}</option>
-                        </select>
-                        @if (isItemFieldInvalid(i, 'isGridColumn')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'isGridColumn') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/16">
-                      <div class="mb-2">
-                        <select
-                          [id]="'isSearchable' + i"
-                          formControlName="isSearchable"
-                          appDynamicFontSize="body"
-                          class="form-select w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSearchable') }"
-                        >
-                          <option value selected disabled>{{ 'select_any' | translate }}</option>
-                          <option value="true">{{ 'yes' | translate }}</option>
-                          <option value="false">{{ 'no' | translate }}</option>
-                        </select>
-                        @if (isItemFieldInvalid(i, 'isSearchable')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'isSearchable') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/12">
-                      <div class="mb-2">
-                        <select
-                          [id]="'clauseType' + i"
-                          formControlName="clauseType"
-                          appDynamicFontSize="body"
-                          class="form-select w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'clauseType') }"
-                        >
-                          <option value selected disabled>{{ 'select_any' | translate }}</option>
-                          <option value="where">{{ 'where' | translate }}</option>
-                          <option value="having">{{ 'having' | translate }}</option>
-                        </select>
-                        @if (isItemFieldInvalid(i, 'clauseType')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'clauseType') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/16">
-                      <div class="mb-2">
-                        <select
-                          [id]="'isSortable' + i"
-                          formControlName="isSortable"
-                          appDynamicFontSize="body"
-                          class="form-select w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isSortable') }"
-                        >
-                          <option value selected disabled>{{ 'select_any' | translate }}</option>
-                          <option value="true">{{ 'yes' | translate }}</option>
-                          <option value="false">{{ 'no' | translate }}</option>
-                        </select>
-                        @if (isItemFieldInvalid(i, 'isSortable')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'isSortable') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/12">
-                      <div class="mb-2">
-                        <select
-                          [id]="'fieldType' + i"
-                          formControlName="fieldType"
-                          appDynamicFontSize="body"
-                          class="form-select w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldType') }"
-                        >
-                          <option value selected disabled>{{ 'select_any' | translate }}</option>
-                          @for (fieldType of field_types; track fieldType.value) {
-                            <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
-                          }
-                        </select>
-                        @if (isItemFieldInvalid(i, 'fieldType')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'fieldType') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-1/16">
-                      <div class="mb-2">
-                        <select
-                          [id]="'linkType' + i"
-                          formControlName="linkType"
-                          appDynamicFontSize="body"
-                          class="form-select w-full"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkType') }"
-                        >
-                          <option value="none">{{ 'none' | translate }}</option>
-                          <option value="component">{{ 'popup_component' | translate }}</option>
-                          <option value="child_component">{{ 'child_component' | translate }}</option>
-                          <option value="child_grid">{{ 'child_grid' | translate }}</option>
-                          <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
-                          <option value="url">{{ 'url' | translate }}</option>
-                        </select>
-                        @if (isItemFieldInvalid(i, 'linkType')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'linkType') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-2/12">
-                      <div class="mb-2">
-                        @switch (item.get('linkType')?.value) {
-                          @case (linkTypeComponentCase) {
-                            <select
-                              [id]="'linkAction' + i"
-                              formControlName="linkAction"
-                              appDynamicFontSize="body"
-                              class="form-select w-full"
-                              [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
-                            >
-                              <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntities; track entity.value) {
-                                <option [value]="entity.value">{{ entity.label }}</option>
-                              }
-                            </select>
-                          }
-                          @case (linkTypeChildComponentCase) {
-                            <select
-                              [id]="'linkAction' + i"
-                              formControlName="linkAction"
-                              appDynamicFontSize="body"
-                              class="form-select w-full"
-                              [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
-                            >
-                              <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntities; track entity.value) {
-                                <option [value]="entity.value">{{ entity.label }}</option>
-                              }
-                            </select>
-                          }
-                          @case ('child_grid') {
-                            <select
-                              [id]="'linkAction' + i"
-                              formControlName="linkAction"
-                              appDynamicFontSize="body"
-                              class="form-select w-full"
-                              [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
-                            >
-                              <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntitiesForChildProcess; track entity.value) {
-                                <option [value]="entity.value">{{ entity.label }}</option>
-                              }
-                            </select>
-                          }
-                          @case ('popup_grid') {
-                            <select
-                              [id]="'linkAction' + i"
-                              formControlName="linkAction"
-                              appDynamicFontSize="body"
-                              class="form-select w-full"
-                              [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
-                            >
-                              <option value>{{ 'select_any' | translate }}</option>
-                              @for (entity of masterEntitiesForChildProcess; track entity.value) {
-                                <option [value]="entity.value">{{ entity.label }}</option>
-                              }
-                            </select>
-                          }
-                          @case ('url') {
-                            <input
-                              [id]="'linkAction' + i"
-                              type="text"
-                              formControlName="linkAction"
-                              appDynamicFontSize="body"
-                              class="form-input w-full"
-                              placeholder="{{ 'enter_url' | translate }}"
-                              [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'linkAction') }"
-                            />
-                          }
-                          @default {
-                            <span>-</span>
-                          }
-                        }
-                        @if (isItemFieldInvalid(i, 'linkAction')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'linkAction') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <!-- NEW: HTML content cell (textarea) -->
-                    <td class="w-3/12">
-                      <div class="mb-2">
-                        <textarea
-                          [id]="'fieldHtmlContent' + i"
-                          formControlName="fieldHtmlContent"
-                          appDynamicFontSize="body"
-                          class="form-textarea w-full"
-                          rows="3"
-                          placeholder="{{ 'enter_html_content' | translate }}"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'fieldHtmlContent') }"
-                        ></textarea>
-                        @if (isItemFieldInvalid(i, 'fieldHtmlContent')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'fieldHtmlContent') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-4/12">
-                      <div class="mb-2">
-                        <textarea
-                          [id]="'enumValues' + i"
-                          rows="3"
-                          formControlName="enumValues"
-                          appDynamicFontSize="body"
-                          class="form-textarea w-full"
-                          placeholder="{{ 'enter_enum_values' | translate }}"
-                          appJsonValidator="object"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'enumValues') }"
-                        ></textarea>
-                        @if (isItemFieldInvalid(i, 'enumValues')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'enumValues') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="w-3/12">
-                      <div class="mb-2">
-                        <textarea
-                          [id]="'lineItemConfigurations' + i"
-                          rows="3"
-                          formControlName="lineItemConfigurations"
-                          appDynamicFontSize="body"
-                          class="form-textarea w-full"
-                          placeholder="Enter line item configurations (JSON)"
-                          appJsonValidator="object"
-                          [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'lineItemConfigurations') }"
-                        ></textarea>
-                        @if (isItemFieldInvalid(i, 'lineItemConfigurations')) {
-                          <div class="invalid-feedback text-danger">
-                            {{ getItemErrorMessage(i, 'lineItemConfigurations') }}
-                          </div>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                </ng-container>
-              }
-            </tbody>
-          </table>
-        </div>
+            </ng-container>
+            }
+          </tbody>
+        </table>
       </div>
+    </div>
     }
   </div>
 </div>
 
 <!-- Edit Item Modal -->
 @if (isEditModalOpen) {
-  <div class="fixed inset-0 z-50 overflow-y-auto">
-    <!-- Modal Backdrop -->
-    <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeEditModal()"></div>
-    <!-- Modal Panel -->
-    <div class="flex min-h-screen items-center justify-center p-4">
-      <div
-        class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-        (click)="$event.stopPropagation()"
-      >
-        <!-- Modal Header -->
-        <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ 'edit_item' | translate }}</h3>
-            <button type="button" class="close-btn" (click)="closeEditModal()">
-              <span class="sr-only">Close</span>
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-          </div>
+<div class="fixed inset-0 z-50 overflow-y-auto">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeEditModal()"></div>
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ 'edit_item' | translate }}</h3>
+          <button type="button" class="close-btn" (click)="closeEditModal()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
         </div>
-        <!-- Modal Content -->
-        <div class="max-h-[70vh] overflow-y-auto px-6 py-4" [formGroup]="editItemForm">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <!-- Field Name -->
-            <div>
-              <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_name' | translate }}</label>
-              <input
-                type="text"
-                formControlName="fieldName"
-                appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'table_field_name_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldName') }"
-              />
-              @if (isEditFieldInvalid('fieldName')) {
-                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
-                  {{ getEditErrorMessage('fieldName') }}
-                </div>
+      </div>
+      <!-- Modal Content -->
+      <div class="max-h-[70vh] overflow-y-auto px-6 py-4" [formGroup]="editItemForm">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- Field Name -->
+          <div>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_name' | translate }}</label>
+            <input
+              type="text"
+              formControlName="fieldName"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'table_field_name_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldName') }"
+            />
+            @if (isEditFieldInvalid('fieldName')) {
+            <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+              {{ getEditErrorMessage('fieldName') }}
+            </div>
+            }
+          </div>
+          <!-- Display Name -->
+          <div>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_display_name' | translate }}</label>
+            <input
+              type="text"
+              formControlName="displayName"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'table_display_name_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('displayName') }"
+            />
+            @if (isEditFieldInvalid('displayName')) {
+            <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+              {{ getEditErrorMessage('displayName') }}
+            </div>
+            }
+          </div>
+          <!-- Order No -->
+          <div>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_order_no' | translate }}</label>
+            <input
+              type="number"
+              formControlName="orderNo"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'table_order_no_placeholder' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('orderNo') }"
+            />
+            @if (isEditFieldInvalid('orderNo')) {
+            <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+              {{ getEditErrorMessage('orderNo') }}
+            </div>
+            }
+          </div>
+          <!-- Is Grid Column -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_grid_column' | translate }}</label>
+            <select
+              formControlName="isGridColumn"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('isGridColumn') }"
+            >
+              <option value disabled>{{ 'select_any' | translate }}</option>
+              <option value="true">{{ 'yes' | translate }}</option>
+              <option value="false">{{ 'no' | translate }}</option>
+            </select>
+          </div>
+          <!-- Is Searchable -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_searchable' | translate }}</label>
+            <select
+              formControlName="isSearchable"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSearchable') }"
+            >
+              <option value disabled>{{ 'select_any' | translate }}</option>
+              <option value="true">{{ 'yes' | translate }}</option>
+              <option value="false">{{ 'no' | translate }}</option>
+            </select>
+          </div>
+          <!-- Clause Type -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_clause_type' | translate }}</label>
+            <select
+              formControlName="clauseType"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('clauseType') }"
+            >
+              <option value disabled>{{ 'select_any' | translate }}</option>
+              <option value="where">{{ 'where' | translate }}</option>
+              <option value="having">{{ 'having' | translate }}</option>
+            </select>
+          </div>
+          <!-- Is Sortable -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_sortable' | translate }}</label>
+            <select
+              formControlName="isSortable"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSortable') }"
+            >
+              <option value disabled>{{ 'select_any' | translate }}</option>
+              <option value="true">{{ 'yes' | translate }}</option>
+              <option value="false">{{ 'no' | translate }}</option>
+            </select>
+          </div>
+          <!-- Field Type -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_type' | translate }}</label>
+            <select
+              formControlName="fieldType"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldType') }"
+            >
+              <option value disabled>{{ 'select_any' | translate }}</option>
+              @for (fieldType of field_types; track fieldType.value) {
+              <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
               }
+            </select>
+          </div>
+          <!-- Link Type -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'link_type' | translate }}</label>
+            <select
+              formControlName="linkType"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkType') }"
+            >
+              <option value="none">{{ 'none' | translate }}</option>
+              <option value="component">{{ 'component' | translate }}</option>
+              <option value="child_grid">{{ 'child_grid' | translate }}</option>
+              <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
+              <option value="url">{{ 'url' | translate }}</option>
+            </select>
+          </div>
+          <!-- Link Action -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'link_action' | translate }}</label>
+            @switch (editItemForm.get('linkType')?.value) { @case ('component') {
+            <ng-select
+              formControlName="linkAction"
+              appDynamicFontSize="body"
+              class="custom-multiselect"
+              [items]="masterEntities"
+              bindValue="value"
+              bindLabel="label"
+              [searchable]="true"
+              [clearable]="true"
+              placeholder="{{ 'select_any' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
+            ></ng-select>
+            } @case ('child_grid') {
+            <ng-select
+              formControlName="linkAction"
+              appDynamicFontSize="body"
+              class="custom-multiselect"
+              [items]="masterEntitiesForChildProcess"
+              bindValue="value"
+              bindLabel="label"
+              [searchable]="true"
+              [clearable]="true"
+              placeholder="{{ 'select_any' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
+            ></ng-select>
+            } @case ('popup_grid') {
+            <ng-select
+              formControlName="linkAction"
+              appDynamicFontSize="body"
+              class="custom-multiselect"
+              [items]="masterEntitiesForChildProcess"
+              bindValue="value"
+              bindLabel="label"
+              [searchable]="true"
+              [clearable]="true"
+              placeholder="{{ 'select_any' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
+            ></ng-select>
+            } @case ('url') {
+            <input
+              type="text"
+              formControlName="linkAction"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="{{ 'enter_url' | translate }}"
+              [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
+            />
+            } @default {
+            <span class="form-input w-full bg-gray-100 text-gray-400" appDynamicFontSize="body">-</span>
+            } }
+          </div>
+          <!-- HTML Content (full width) -->
+          <div class="md:col-span-2">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'html_content' | translate }}</label>
+            <div class="modal-editor-container">
+              <ngx-monaco-editor [options]="modalHtmlEditorOptions" formControlName="fieldHtmlContent" class="modal-monaco-editor"></ngx-monaco-editor>
             </div>
-            <!-- Display Name -->
-            <div>
-              <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_display_name' | translate }}</label>
-              <input
-                type="text"
-                formControlName="displayName"
-                appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'table_display_name_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('displayName') }"
-              />
-              @if (isEditFieldInvalid('displayName')) {
-                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
-                  {{ getEditErrorMessage('displayName') }}
-                </div>
-              }
+            @if (isEditFieldInvalid('fieldHtmlContent')) {
+            <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+              {{ getEditErrorMessage('fieldHtmlContent') }}
             </div>
-            <!-- Order No -->
-            <div>
-              <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_order_no' | translate }}</label>
-              <input
-                type="number"
-                formControlName="orderNo"
-                appDynamicFontSize="body"
-                class="form-input w-full"
-                placeholder="{{ 'table_order_no_placeholder' | translate }}"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('orderNo') }"
-              />
-              @if (isEditFieldInvalid('orderNo')) {
-                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
-                  {{ getEditErrorMessage('orderNo') }}
-                </div>
-              }
+            }
+          </div>
+          <!-- Enum Values (full width) -->
+          <div class="md:col-span-2">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_enum_values' | translate }}</label>
+            <div class="modal-editor-container">
+              <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="enumValues" class="modal-monaco-editor"></ngx-monaco-editor>
             </div>
-            <!-- Is Grid Column -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_grid_column' | translate }}</label>
-              <select
-                formControlName="isGridColumn"
-                appDynamicFontSize="body"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('isGridColumn') }"
-              >
-                <option value disabled>{{ 'select_any' | translate }}</option>
-                <option value="true">{{ 'yes' | translate }}</option>
-                <option value="false">{{ 'no' | translate }}</option>
-              </select>
+            @if (isEditFieldInvalid('enumValues')) {
+            <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+              {{ getEditErrorMessage('enumValues') }}
             </div>
-            <!-- Is Searchable -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_searchable' | translate }}</label>
-              <select
-                formControlName="isSearchable"
-                appDynamicFontSize="body"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSearchable') }"
-              >
-                <option value disabled>{{ 'select_any' | translate }}</option>
-                <option value="true">{{ 'yes' | translate }}</option>
-                <option value="false">{{ 'no' | translate }}</option>
-              </select>
-            </div>
-            <!-- Clause Type -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_clause_type' | translate }}</label>
-              <select
-                formControlName="clauseType"
-                appDynamicFontSize="body"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('clauseType') }"
-              >
-                <option value disabled>{{ 'select_any' | translate }}</option>
-                <option value="where">{{ 'where' | translate }}</option>
-                <option value="having">{{ 'having' | translate }}</option>
-              </select>
-            </div>
-            <!-- Is Sortable -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_is_sortable' | translate }}</label>
-              <select
-                formControlName="isSortable"
-                appDynamicFontSize="body"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('isSortable') }"
-              >
-                <option value disabled>{{ 'select_any' | translate }}</option>
-                <option value="true">{{ 'yes' | translate }}</option>
-                <option value="false">{{ 'no' | translate }}</option>
-              </select>
-            </div>
-            <!-- Field Type -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_type' | translate }}</label>
-              <select
-                formControlName="fieldType"
-                appDynamicFontSize="body"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('fieldType') }"
-              >
-                <option value disabled>{{ 'select_any' | translate }}</option>
-                @for (fieldType of field_types; track fieldType.value) {
-                  <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
-                }
-              </select>
-            </div>
-            <!-- Link Type -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'link_type' | translate }}</label>
-              <select
-                formControlName="linkType"
-                appDynamicFontSize="body"
-                class="form-select w-full"
-                [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkType') }"
-              >
-                <option value="none">{{ 'none' | translate }}</option>
-                <option value="component">{{ 'component' | translate }}</option>
-                <option value="child_grid">{{ 'child_grid' | translate }}</option>
-                <option value="popup_grid">{{ 'popup_grid' | translate }}</option>
-                <option value="url">{{ 'url' | translate }}</option>
-              </select>
-            </div>
-            <!-- Link Action -->
-            <div>
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'link_action' | translate }}</label>
-              @switch (editItemForm.get('linkType')?.value) {
-                @case ('component') {
-                  <select
-                    formControlName="linkAction"
-                    appDynamicFontSize="body"
-                    class="form-select w-full"
-                    [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
-                  >
-                    <option value>{{ 'select_any' | translate }}</option>
-                    @for (entity of masterEntities; track entity.value) {
-                      <option [value]="entity.value">{{ entity.label }}</option>
-                    }
-                  </select>
-                }
-                @case ('child_grid') {
-                  <select
-                    formControlName="linkAction"
-                    appDynamicFontSize="body"
-                    class="form-select w-full"
-                    [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
-                  >
-                    <option value>{{ 'select_any' | translate }}</option>
-                    @for (entity of masterEntitiesForChildProcess; track entity.value) {
-                      <option [value]="entity.value">{{ entity.label }}</option>
-                    }
-                  </select>
-                }
-                @case ('popup_grid') {
-                  <select
-                    formControlName="linkAction"
-                    appDynamicFontSize="body"
-                    class="form-select w-full"
-                    [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
-                  >
-                    <option value>{{ 'select_any' | translate }}</option>
-                    @for (entity of masterEntitiesForChildProcess; track entity.value) {
-                      <option [value]="entity.value">{{ entity.label }}</option>
-                    }
-                  </select>
-                }
-                @case ('url') {
-                  <input
-                    type="text"
-                    formControlName="linkAction"
-                    appDynamicFontSize="body"
-                    class="form-input w-full"
-                    placeholder="{{ 'enter_url' | translate }}"
-                    [ngClass]="{ 'is-invalid': isEditFieldInvalid('linkAction') }"
-                  />
-                }
-                @default {
-                  <span class="form-input w-full bg-gray-100 text-gray-400" appDynamicFontSize="body">-</span>
-                }
-              }
-            </div>
-            <!-- HTML Content (full width) -->
-            <div class="md:col-span-2">
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'html_content' | translate }}</label>
-              <div class="modal-editor-container">
-                <ngx-monaco-editor [options]="modalHtmlEditorOptions" formControlName="fieldHtmlContent" class="modal-monaco-editor"></ngx-monaco-editor>
-              </div>
-              @if (isEditFieldInvalid('fieldHtmlContent')) {
-                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
-                  {{ getEditErrorMessage('fieldHtmlContent') }}
-                </div>
-              }
-            </div>
-            <!-- Enum Values (full width) -->
-            <div class="md:col-span-2">
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_enum_values' | translate }}</label>
-              <div class="modal-editor-container">
-                <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="enumValues" class="modal-monaco-editor"></ngx-monaco-editor>
-              </div>
-              @if (isEditFieldInvalid('enumValues')) {
-                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
-                  {{ getEditErrorMessage('enumValues') }}
-                </div>
-              }
-            </div>
+            }
+          </div>
 
-            <!-- Line Item Configurations (full width) -->
-            <div class="md:col-span-2">
-              <label class="mb-2 block font-medium" appDynamicFontSize="body">Line Item Configurations</label>
-              <div class="modal-editor-container">
-                <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="lineItemConfigurations" class="modal-monaco-editor"></ngx-monaco-editor>
-              </div>
-              @if (isEditFieldInvalid('lineItemConfigurations')) {
-                <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
-                  {{ getEditErrorMessage('lineItemConfigurations') }}
-                </div>
-              }
+          <!-- Line Item Configurations (full width) -->
+          <div class="md:col-span-2">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">Line Item Configurations</label>
+            <div class="modal-editor-container">
+              <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="lineItemConfigurations" class="modal-monaco-editor"></ngx-monaco-editor>
             </div>
+            @if (isEditFieldInvalid('lineItemConfigurations')) {
+            <div class="invalid-feedback mt-1 text-danger" appDynamicFontSize="body">
+              {{ getEditErrorMessage('lineItemConfigurations') }}
+            </div>
+            }
           </div>
         </div>
-        <!-- Modal Footer -->
-        <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
-          <div class="flex items-center justify-end gap-3">
-            <button type="button" class="btn btn-secondary" appDynamicFontSize="body" (click)="closeEditModal()">{{ 'cancel' | translate }}</button>
-            <button type="button" class="btn btn-primary" appDynamicFontSize="body" (click)="submitEditModal()" [disabled]="editItemForm.invalid">
-              {{ 'submit' | translate }}
-            </button>
-          </div>
+      </div>
+      <!-- Modal Footer -->
+      <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-end gap-3">
+          <button type="button" class="btn btn-secondary" appDynamicFontSize="body" (click)="closeEditModal()">{{ 'cancel' | translate }}</button>
+          <button type="button" class="btn btn-primary" appDynamicFontSize="body" (click)="submitEditModal()" [disabled]="editItemForm.invalid">
+            {{ 'submit' | translate }}
+          </button>
         </div>
       </div>
     </div>
   </div>
+</div>
 }
 
 <!--Modal for Copy sample content-->
 
 <!-- Entity Name Edit Modal -->
 @if (isEntityNameModalOpen) {
-  <div class="fixed inset-0 z-50 overflow-y-auto">
-    <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeEntityNameEditModal()"></div>
-    <div class="flex min-h-screen items-center justify-center p-4">
-      <div
-        class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-        (click)="$event.stopPropagation()"
-      >
-        <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Entity Name (Slug)</h3>
-            <button type="button" class="close-btn" (click)="closeEntityNameEditModal()">
-              <span class="sr-only">Close</span>
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-          </div>
+<div class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeEntityNameEditModal()"></div>
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Entity Name (Slug)</h3>
+          <button type="button" class="close-btn" (click)="closeEntityNameEditModal()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
         </div>
-        <div class="px-6 py-4" [formGroup]="entityNameModalForm">
-          <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">Entity Name (Slug)</label>
-          <div class="flex">
-            @if (entityNamePrefix) {
-              <span class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400">
-                {{ entityNamePrefix }}_
-              </span>
-            }
-            <input
-              type="text"
-              formControlName="entityName"
-              appDynamicFontSize="body"
-              class="form-input flex-1"
-              [class.rounded-l-none]="entityNamePrefix"
-              [ngClass]="{ 'is-invalid': entityNameModalError }"
-              placeholder="Enter entity slug"
-              (blur)="onEntityNameModalBlur()"
-            />
-          </div>
-          @if (entityNameModalError) {
-            <div class="mt-1 text-sm text-danger">{{ entityNameModalError }}</div>
+      </div>
+      <div class="px-6 py-4" [formGroup]="entityNameModalForm">
+        <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">Entity Name (Slug)</label>
+        <div class="flex">
+          @if (entityNamePrefix) {
+          <span
+            class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400"
+          >
+            {{ entityNamePrefix }}_
+          </span>
           }
-          @if (entityNameModalSuggestions.length > 0) {
-            <div class="mt-1.5">
-              <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
-              <div class="mt-1 flex flex-wrap gap-1.5">
-                @for (slug of entityNameModalSuggestions; track slug) {
-                  <button
-                    type="button"
-                    (click)="selectEntityNameModalSuggestion(slug)"
-                    class="rounded border px-2 py-0.5 text-xs transition-colors"
-                    [ngClass]="entityNameModalForm.get('entityName')?.value === slug
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'"
-                  >
-                    {{ slug }}
-                  </button>
-                }
-              </div>
-            </div>
-          }
+          <input
+            type="text"
+            formControlName="entityName"
+            appDynamicFontSize="body"
+            class="form-input flex-1"
+            [class.rounded-l-none]="entityNamePrefix"
+            [ngClass]="{ 'is-invalid': entityNameModalError }"
+            placeholder="Enter entity slug"
+            (blur)="onEntityNameModalBlur()"
+          />
         </div>
-        <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
-          <div class="flex items-center justify-end gap-3">
-            <button type="button" class="btn btn-secondary" id="closeEntitySlug" appDynamicFontSize="body" (click)="closeEntityNameEditModal()">{{ 'cancel' | translate }}</button>
+        @if (entityNameModalError) {
+        <div class="mt-1 text-sm text-danger">{{ entityNameModalError }}</div>
+        } @if (entityNameModalSuggestions.length > 0) {
+        <div class="mt-1.5">
+          <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            @for (slug of entityNameModalSuggestions; track slug) {
             <button
               type="button"
-              class="btn btn-primary"
-              appDynamicFontSize="body"
-              (click)="submitEntityNameEditModal()"
-              [disabled]="!entityNameModalForm.get('entityName')?.value?.trim() || !!entityNameModalError"
+              (click)="selectEntityNameModalSuggestion(slug)"
+              class="rounded border px-2 py-0.5 text-xs transition-colors"
+              [ngClass]="
+                entityNameModalForm.get('entityName')?.value === slug
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'
+              "
             >
-              {{ 'submit' | translate }}
+              {{ slug }}
             </button>
+            }
           </div>
+        </div>
+        }
+      </div>
+      <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-end gap-3">
+          <button type="button" class="btn btn-secondary" id="closeEntitySlug" appDynamicFontSize="body" (click)="closeEntityNameEditModal()">
+            {{ 'cancel' | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            appDynamicFontSize="body"
+            (click)="submitEntityNameEditModal()"
+            [disabled]="!entityNameModalForm.get('entityName')?.value?.trim() || !!entityNameModalError"
+          >
+            {{ 'submit' | translate }}
+          </button>
         </div>
       </div>
     </div>
   </div>
-}
-
-@if (isInfoModalOpen) {
-  <div class="popup-modal fixed inset-0 z-50 overflow-y-auto">
-    <!-- Modal Backdrop -->
-    <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
-    <!-- Modal Panel -->
-    <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
-      <div
-        class="max-w-auto relative w-10/12 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800 sm:w-8/12"
-      >
-        <!-- Modal Header -->
-        <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
-          <div class="flex items-center justify-between">
-            <div class="flex gap-4">
-              <p class="text-md font-bold" appDynamicFontSize="body">{{ popupInformation.header | translate }}</p>
-            </div>
-            <button class="close-btn" (click)="closeInfoPopUp()">
-              <span class="sr-only">Close</span>
-              <i class="fa-solid fa-xmark"></i>
-            </button>
+</div>
+} @if (isInfoModalOpen) {
+<div class="popup-modal fixed inset-0 z-50 overflow-y-auto">
+  <!-- Modal Backdrop -->
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+  <!-- Modal Panel -->
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="max-w-auto relative w-10/12 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800 sm:w-8/12"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <div class="flex gap-4">
+            <p class="text-md font-bold" appDynamicFontSize="body">{{ popupInformation.header | translate }}</p>
           </div>
+          <button class="close-btn" (click)="closeInfoPopUp()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-        <!-- Modal Content -->
-        <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
-          <!-- Tabs Navigation -->
-          <div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
-            @for (name of popupInformation.tabNames; track name; let i = $index) {
-              <button
-                class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
-                [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': selectedInfoTab == i }"
-                (click)="selectTab(i)"
-              >
-                {{ name }}
-              </button>
+      </div>
+      <!-- Modal Content -->
+      <div class="max-h-auto gap-5 overflow-y-auto px-4 py-4 sm:px-6">
+        <!-- Tabs Navigation -->
+        <div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]">
+          @for (name of popupInformation.tabNames; track name; let i = $index) {
+          <button
+            class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
+            [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': selectedInfoTab == i }"
+            (click)="selectTab(i)"
+          >
+            {{ name }}
+          </button>
+          }
+        </div>
+        <!--comments-->
+        <div class="px-4 sm:px-6">
+          <ul class="flex list-disc flex-col gap-3">
+            @for (item of popupInformation.comments; track $index) {
+            <li>
+              <div class="flex items-center gap-2">
+                <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>
+              </div>
+            </li>
             }
+          </ul>
+        </div>
+        <div class="relative">
+          @if (!popupInformation.hasSplitEditors) {
+          <div class="monaco-editor-container editor-container mt-3 rounded border border-gray-300">
+            <!-- Copy Button -->
+            <button type="button" class="copy-editor-btn" (click)="copyModalContent()" title="Copy to clipboard">
+              <i class="fas fa-copy"></i>
+              <span>Copy</span>
+            </button>
+            <!-- Monaco Editor -->
+            <ngx-monaco-editor
+              monacoEditor
+              [options]="popupInfoEditorOptions"
+              id="popupInformation"
+              [(ngModel)]="popupInformation.data"
+              class="monaco-editor"
+            ></ngx-monaco-editor>
           </div>
-          <!--comments-->
-          <div class="px-4 sm:px-6">
-            <ul class="flex list-disc flex-col gap-3">
-              @for (item of popupInformation.comments; track $index) {
-                <li>
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm" appDynamicFontSize="body">{{ item | translate }}</span>
-                  </div>
-                </li>
-              }
-            </ul>
-          </div>
-          <div class="relative">
-            @if (!popupInformation.hasSplitEditors) {
-              <div class="monaco-editor-container editor-container mt-3 rounded border border-gray-300">
-                <!-- Copy Button -->
-                <button type="button" class="copy-editor-btn" (click)="copyModalContent()" title="Copy to clipboard">
-                  <i class="fas fa-copy"></i>
-                  <span>Copy</span>
-                </button>
-                <!-- Monaco Editor -->
+          }
+          <!-- Split Editor View -->
+          @if (popupInformation.hasSplitEditors) {
+          <div class="relative mt-3 grid grid-cols-2 gap-4">
+            <!-- Left Editor -->
+            <div class="flex h-full flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-medium">{{ popupInformation.leftEditor.title }}</h4>
+                <div class="flex gap-2">
+                  <button (click)="copyToClipboardData(popupInformation.leftEditor.content, 'Query')" class="btn btn-outline-primary btn-sm">Copy Query</button>
+                  <button (click)="convertToJson()" class="btn btn-primary btn-sm">Convert to JSON</button>
+                </div>
+              </div>
+              <div class="monaco-editor-container editor-container flex-1 rounded border border-gray-300">
                 <ngx-monaco-editor
                   monacoEditor
-                  [options]="popupInfoEditorOptions"
-                  id="popupInformation"
-                  [(ngModel)]="popupInformation.data"
-                  class="monaco-editor"
+                  [options]="LeftEditorOptionsForAI"
+                  [(ngModel)]="popupInformation.leftEditor.content"
+                  class="monaco-editor h-full"
                 ></ngx-monaco-editor>
               </div>
-            }
-            <!-- Split Editor View -->
-            @if (popupInformation.hasSplitEditors) {
-              <div class="relative mt-3 grid grid-cols-2 gap-4">
-                <!-- Left Editor -->
-                <div class="flex h-full flex-col gap-2">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-medium">{{ popupInformation.leftEditor.title }}</h4>
-                    <div class="flex gap-2">
-                      <button (click)="copyToClipboardData(popupInformation.leftEditor.content, 'Query')" class="btn btn-outline-primary btn-sm">
-                        Copy Query
-                      </button>
-                      <button (click)="convertToJson()" class="btn btn-primary btn-sm">Convert to JSON</button>
-                    </div>
-                  </div>
-                  <div class="monaco-editor-container editor-container flex-1 rounded border border-gray-300">
-                    <ngx-monaco-editor
-                      monacoEditor
-                      [options]="LeftEditorOptionsForAI"
-                      [(ngModel)]="popupInformation.leftEditor.content"
-                      class="monaco-editor h-full"
-                    ></ngx-monaco-editor>
-                  </div>
+            </div>
+            <!-- Right Editor -->
+            <div class="flex h-full flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-medium">{{ popupInformation.rightEditor.title }}</h4>
+                <div class="flex gap-2">
+                  <button (click)="copyToClipboardData(popupInformation.rightEditor.content, 'JSON')" class="btn btn-outline-primary btn-sm">Copy JSON</button>
+                  <button (click)="convertToQuery()" class="btn btn-primary btn-sm">Convert to Query</button>
                 </div>
-                <!-- Right Editor -->
-                <div class="flex h-full flex-col gap-2">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-medium">{{ popupInformation.rightEditor.title }}</h4>
-                    <div class="flex gap-2">
-                      <button (click)="copyToClipboardData(popupInformation.rightEditor.content, 'JSON')" class="btn btn-outline-primary btn-sm">
-                        Copy JSON
-                      </button>
-                      <button (click)="convertToQuery()" class="btn btn-primary btn-sm">Convert to Query</button>
-                    </div>
-                  </div>
-                  <div class="monaco-editor-container editor-container flex-1 rounded border border-gray-300">
-                    <ngx-monaco-editor
-                      monacoEditor
-                      [options]="RightEditorOptionsForAI"
-                      [(ngModel)]="popupInformation.rightEditor.content"
-                      class="monaco-editor h-full"
-                    ></ngx-monaco-editor>
-                  </div>
-                </div>
-                <!-- Loading Overlay -->
-                @if (popupInformation.isProcessing) {
-                  <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
-                    <div class="flex items-center rounded bg-white p-4 shadow-lg dark:bg-gray-800">
-                      <i class="fas fa-spinner fa-spin mr-2 text-primary"></i>
-                      <span>Converting...</span>
-                    </div>
-                  </div>
-                }
               </div>
+              <div class="monaco-editor-container editor-container flex-1 rounded border border-gray-300">
+                <ngx-monaco-editor
+                  monacoEditor
+                  [options]="RightEditorOptionsForAI"
+                  [(ngModel)]="popupInformation.rightEditor.content"
+                  class="monaco-editor h-full"
+                ></ngx-monaco-editor>
+              </div>
+            </div>
+            <!-- Loading Overlay -->
+            @if (popupInformation.isProcessing) {
+            <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+              <div class="flex items-center rounded bg-white p-4 shadow-lg dark:bg-gray-800">
+                <i class="fas fa-spinner fa-spin mr-2 text-primary"></i>
+                <span>Converting...</span>
+              </div>
+            </div>
             }
           </div>
+          }
         </div>
       </div>
     </div>
   </div>
+</div>
 }

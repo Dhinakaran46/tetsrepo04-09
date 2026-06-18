@@ -206,7 +206,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private gridCfg(key: string): boolean {
     //console.log(this.masterInfo);
     const cfg = this.masterInfo?.entity_configurations;
-    console.log('[gridCfg]', key, '→ cfg:', cfg, '| value:', cfg?.[key], '| result:', !cfg || cfg[key] == 'yes');
+    //  console.log('[gridCfg]', key, '→ cfg:', cfg, '| value:', cfg?.[key], '| result:', !cfg || cfg[key] == 'yes');
     return !cfg || cfg[key] == 'yes';
   }
 
@@ -881,10 +881,18 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const perms = this.masterInfo?.permissions;
     if (!perms) return false;
     return !!(
-      perms.email_resend || perms.details || perms.popup_details ||
-      perms.edit || perms.popup_edit || perms.assign || perms.print ||
-      perms.record_export || perms.generate_vector || perms.get_code ||
-      perms.delete || perms.reset_password
+      perms.email_resend ||
+      perms.details ||
+      perms.popup_details ||
+      perms.edit ||
+      perms.popup_edit ||
+      perms.assign ||
+      perms.print ||
+      perms.record_export ||
+      perms.generate_vector ||
+      perms.get_code ||
+      perms.delete ||
+      perms.reset_password
     );
   }
 

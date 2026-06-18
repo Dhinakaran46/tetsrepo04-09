@@ -2796,16 +2796,16 @@ export class MasterEntityComponent implements OnInit {
             this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
           }
           // For 'component' linkType
-          this.masterEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
-          );
+          this.masterEntities = response.data.records
+            .filter((entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module')
+            .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
           this.staticPageEntities = response.data.records.filter(
             (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name
           );
           // For 'child_process' linkType (only grid_builder_module)
-          this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name
-          );
+          this.masterEntitiesForChildProcess = response.data.records
+            .filter((entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name)
+            .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
               ![

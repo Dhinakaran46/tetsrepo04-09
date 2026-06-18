@@ -217,7 +217,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     public idleService: IdleService,
     public authService: AuthService,
     private routeUpdateService: RouteUpdateService,
-    private zone: NgZone,
+    private zone: NgZone
   ) {
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
@@ -517,12 +517,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                         view: this.permissionsList?.[`view_` + item.entity_name] || false,
                       },
                     };
-                  }),
+                  })
                 );
               }
 
               return mainElem;
-            }),
+            })
           );
           // Set the first tab with at least one viewable card as active
           const tabsWithActiveCards = this.getTabsWithActiveCards();
@@ -543,7 +543,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         this.dashboardLoadError = errorMessage;
         this.isDashboardLoading = false;
         this.cdr.markForCheck();
-      },
+      }
     );
   }
 
@@ -653,8 +653,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                 'number',
                 card.chart_format[0].tooltip.y.formatter.substring(
                   card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                  card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
-                ),
+                  card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+                )
               );
             }
           }
@@ -762,7 +762,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             const key = 'failed_to_load';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          },
+          }
         );
     } catch (error: any) {
       console.error(`Error loading Power BI report - ${index}:`, error);
@@ -809,8 +809,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                       'number',
                       card.chart_format[0].tooltip.y.formatter.substring(
                         card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
-                      ),
+                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+                      )
                     );
                   }
                 }
@@ -875,7 +875,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               }
             });
           }
-        }),
+        })
       );
     }
     this.cdr.detectChanges();
@@ -1007,7 +1007,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   hasNonEntityCards(): boolean {
     return this.getActiveCards().some(
-      (card) => card?.permissions?.view && (card.type !== this.commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module'),
+      (card) => card?.permissions?.view && (card.type !== this.commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module')
     );
   }
 
