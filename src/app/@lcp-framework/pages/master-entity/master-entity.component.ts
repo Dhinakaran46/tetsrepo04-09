@@ -77,25 +77,24 @@ export class MasterEntityComponent implements OnInit {
   @ViewChild('monacoEditor') monacoEditor: EditorComponent | undefined;
 
   insert_json_schema: any = {
-    // it will be removed
-    action: ['insert', 'insert'],
-    table: ['master_entities', 'master_entity_line_items'],
-    table_mapping: ['table1', 'table3'],
-    data: {
-      table1: [],
-      table3: [],
-    },
-  };
-
-  update_json_schema: any = {
-    // it will be removed
-    action: ['update', 'hard_delete', 'insert', 'update'],
-    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4'],
+    action: ['insert', 'insert', 'insert'],
+    table: ['master_entities', 'master_entity_line_items', 'permissions'],
+    table_mapping: ['table1', 'table3', 'table4'],
     data: {
       table1: [],
       table3: [],
       table4: [],
+    },
+  };
+
+  update_json_schema: any = {
+    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
+    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5'],
+    data: {
+      table1: [],
+      table3: [],
+      table5: [],
     },
     conditions: {
       table1: [],
@@ -1406,6 +1405,10 @@ export class MasterEntityComponent implements OnInit {
   entityNameEditable = false;
   originalEntityName = '';
   entityNameError = '';
+  isEntityNameModalOpen = false;
+  entityNameModalError = '';
+  entityNameModalSuggestions: string[] = [];
+  entityNameModalForm!: FormGroup;
 
   constructor(
     private fb: FormBuilder,
@@ -2053,6 +2056,11 @@ export class MasterEntityComponent implements OnInit {
     }
 
     this.insert_json_schema.data['table1'] = master;
+    this.insert_json_schema.data['table4'] = (formData.permissions || []).map((action: string) => ({
+      entity_id: '@table1.id',
+      name: action,
+      slug: `${action}_${entitySlug}`,
+    }));
 
     return this.insert_json_schema;
   }
@@ -2061,7 +2069,6 @@ export class MasterEntityComponent implements OnInit {
     const prefix = this.getEntityTypePrefix(formData.entityType);
     const suffix = (formData.entityName ?? '').trim();
     const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
-    const entityNameChanged = !!(this.originalEntityName && newEntityName && newEntityName !== this.originalEntityName);
 
     const master = [
       {
@@ -2160,14 +2167,14 @@ export class MasterEntityComponent implements OnInit {
       this.update_json_schema.data['table3'] = items;
     }
 
-    if (entityNameChanged) {
-      // Per-row update: pair data[i] + conditions[i] so each permission gets its correct new slug
-      this.update_json_schema.data['table4'] = this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
-      this.update_json_schema.conditions['table4'] = this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
-    } else {
-      this.update_json_schema.data['table4'] = [];
-      this.update_json_schema.conditions['table4'] = [];
-    }
+    // Hard-delete all existing permissions for this entity, then re-insert selected ones.
+    // This handles adds, removals, and slug renames in one step.
+    this.update_json_schema.conditions['table4'] = [{ entity_id: '@table1.id' }];
+    this.update_json_schema.data['table5'] = (formData.permissions || []).map((action: string) => ({
+      entity_id: '@table1.id',
+      name: action,
+      slug: `${action}_${newEntityName}`,
+    }));
 
     return this.update_json_schema;
   }
@@ -2615,6 +2622,138 @@ export class MasterEntityComponent implements OnInit {
   enableEntityNameEdit(): void {
     this.entityNameEditable = true;
     this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+  }
+
+  openEntityNameEditModal(): void {
+    this.entityNameModalForm = this.fb.group({
+      entityName: [this.form.get('entityName')?.value || '', [Validators.required]],
+    });
+    this.entityNameModalError = '';
+    this.generateEntityNameModalSuggestions();
+    this.isEntityNameModalOpen = true;
+  }
+
+  closeEntityNameEditModal(): void {
+    console.log('Closing modal and resetting state');
+    this.isEntityNameModalOpen = false;
+    this.entityNameModalError = '';
+    this.entityNameModalSuggestions = [];
+  }
+
+  private generateEntityNameModalSuggestions(): void {
+    const name = this.form.get('name')?.value;
+    const entityType = this.form.get('entityType')?.value;
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      this.entityNameModalSuggestions = [];
+      return;
+    }
+    const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    const candidates = [
+      slug,
+      `${slug}_new`,
+      `${slug}_copy`,
+      `${slug}_alt`,
+      `${slug}_v2`,
+      `${slug}_v3`,
+      `${slug}_extra`,
+      `${slug}_main`,
+      `${slug}_base`,
+      `${slug}_core`,
+    ];
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const c of candidates) {
+      if (!c || seen.has(c)) continue;
+      seen.add(c);
+      const fullSlug = prefix ? `${prefix}_${c}` : c;
+      if (!this.allEntityNameSlugs.has(fullSlug) || fullSlug === this.originalEntityName) {
+        results.push(c);
+        if (results.length >= this.entityNameSuggestionLimit) break;
+      }
+    }
+    this.entityNameModalSuggestions = results;
+  }
+
+  onEntityNameModalBlur(): void {
+    const suffix = (this.entityNameModalForm.get('entityName')?.value ?? '').trim();
+    if (!suffix) {
+      this.entityNameModalError = '';
+      return;
+    }
+    const prefix = this.entityNamePrefix;
+    const fullSlug = prefix ? `${prefix}_${suffix}` : suffix;
+    if (fullSlug === this.originalEntityName) {
+      this.entityNameModalError = '';
+      return;
+    }
+    if (this.allEntityNameSlugs.has(fullSlug)) {
+      this.entityNameModalError = 'This entity name already exists. Please choose a different slug.';
+    } else {
+      this.entityNameModalError = '';
+    }
+  }
+
+  selectEntityNameModalSuggestion(slug: string): void {
+    this.entityNameModalForm.get('entityName')?.setValue(slug);
+    this.onEntityNameModalBlur();
+  }
+
+  submitEntityNameEditModal(): void {
+    const suffix = (this.entityNameModalForm.get('entityName')?.value ?? '').trim();
+    if (!suffix) return;
+
+    const prefix = this.entityNamePrefix;
+    const newEntityName = prefix ? `${prefix}_${suffix}` : suffix;
+
+    if (newEntityName === this.originalEntityName) {
+      this.closeEntityNameEditModal();
+      return;
+    }
+
+    if (this.allEntityNameSlugs.has(newEntityName)) {
+      this.entityNameModalError = 'This entity name already exists. Please choose a different slug.';
+      return;
+    }
+
+    const payload = {
+      action: ['update', 'update', 'update'],
+      table: ['master_entities', 'permissions', 'master_entity_line_items'],
+      table_mapping: ['table1', 'table4', 'table5'],
+      data: {
+        table1: [{ entity_name: newEntityName }],
+        table4: this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` })),
+        table5: [{ link_action: newEntityName }],
+      },
+      conditions: {
+        table1: [{ uuid: this.id }],
+        table4: this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a })),
+        table5: [{ link_action: this.originalEntityName }],
+      },
+    };
+
+    this.gridApiService.executeRecords(payload).subscribe({
+      next: (response) => {
+        if (response.status && response.code === 200) {
+          this.allEntityNameSlugs.delete(this.originalEntityName);
+          this.allEntityNameSlugs.add(newEntityName);
+          this.originalEntityName = newEntityName;
+          this.form.get('entityName')?.setValue(suffix, { emitEvent: false });
+          this.toastr.success(this.translate.instant('record_updated_successfully'));
+          (document.getElementById('closeEntitySlug') as HTMLElement)?.click();
+          this.closeEntityNameEditModal();
+        } else {
+          this.toastr.error(this.translate.instant(response.message || 'error'), 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error(this.translate.instant('error'), 'Error');
+      },
+    });
   }
 
   onEntityNameBlur(): void {

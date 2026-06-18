@@ -877,15 +877,28 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.selectedRowIndex = rowIndex;
   }
 
+  get hasRowActions(): boolean {
+    const perms = this.masterInfo?.permissions;
+    if (!perms) return false;
+    return !!(
+      perms.email_resend || perms.details || perms.popup_details ||
+      perms.edit || perms.popup_edit || perms.assign || perms.print ||
+      perms.record_export || perms.generate_vector || perms.get_code ||
+      perms.delete || perms.reset_password
+    );
+  }
+
   onRowContextMenu(event: MouseEvent, item: any) {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.hasRowActions) return;
     this.rowContextMenu.emit({ item, event });
   }
 
   onRowEnterKey(event: Event, item: any) {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.hasRowActions) return;
     const syntheticEvent = new MouseEvent('contextmenu', {
       clientX: (event.target as HTMLElement)?.getBoundingClientRect()?.right ?? 0,
       clientY: (event.target as HTMLElement)?.getBoundingClientRect()?.top ?? 0,

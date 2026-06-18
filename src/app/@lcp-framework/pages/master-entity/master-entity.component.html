@@ -75,29 +75,39 @@
             <div class="mb-2 flex items-center gap-2">
               <label for="entityName" class="required-mark block font-medium">Entity Name (Slug)</label>
               @if (editTitle && !entityNameEditable && isEntityNameActive) {
-                <button type="button" (click)="enableEntityNameEdit()" title="Edit entity name" class="text-gray-400 transition-colors hover:text-primary">
+                <button type="button" (click)="openEntityNameEditModal()" title="Edit entity name" class="text-gray-400 transition-colors hover:text-primary">
                   <i class="fa-solid fa-pen text-xs"></i>
                 </button>
               }
             </div>
             <div class="flex">
-              @if (entityNamePrefix) {
-                <span class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400">
-                  {{ entityNamePrefix }}_
-                </span>
+              @if (editTitle && !entityNameEditable) {
+                <input
+                  type="text"
+                  [value]="originalEntityName"
+                  disabled
+                  appDynamicFontSize="body"
+                  class="form-input w-full bg-gray-50 dark:bg-[#1b2e4b]"
+                />
+              } @else {
+                @if (entityNamePrefix) {
+                  <span class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400">
+                    {{ entityNamePrefix }}_
+                  </span>
+                }
+                <input
+                  id="entityName"
+                  type="text"
+                  formControlName="entityName"
+                  appDynamicFontSize="body"
+                  class="form-input flex-1"
+                  [class.rounded-l-none]="entityNamePrefix"
+                  [ngClass]="{ 'bg-gray-50 dark:bg-[#1b2e4b]': !isEntityNameActive, 'is-invalid': entityNameError }"
+                  placeholder="Select a suggestion or type a custom slug"
+                  [readOnly]="!isEntityNameActive"
+                  (blur)="onEntityNameBlur()"
+                />
               }
-              <input
-                id="entityName"
-                type="text"
-                formControlName="entityName"
-                appDynamicFontSize="body"
-                class="form-input flex-1"
-                [class.rounded-l-none]="entityNamePrefix"
-                [ngClass]="{ 'bg-gray-50 dark:bg-[#1b2e4b]': !isEntityNameActive || (editTitle && !entityNameEditable), 'is-invalid': entityNameError }"
-                placeholder="Select a suggestion or type a custom slug"
-                [readOnly]="!isEntityNameActive || (editTitle && !entityNameEditable)"
-                (blur)="onEntityNameBlur()"
-              />
             </div>
             @if (!isEntityNameActive) {
               <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Select an entity type and enter a name to enable this field.</p>
@@ -1558,6 +1568,85 @@
 }
 
 <!--Modal for Copy sample content-->
+
+<!-- Entity Name Edit Modal -->
+@if (isEntityNameModalOpen) {
+  <div class="fixed inset-0 z-50 overflow-y-auto">
+    <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeEntityNameEditModal()"></div>
+    <div class="flex min-h-screen items-center justify-center p-4">
+      <div
+        class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Entity Name (Slug)</h3>
+            <button type="button" class="close-btn" (click)="closeEntityNameEditModal()">
+              <span class="sr-only">Close</span>
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+        </div>
+        <div class="px-6 py-4" [formGroup]="entityNameModalForm">
+          <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">Entity Name (Slug)</label>
+          <div class="flex">
+            @if (entityNamePrefix) {
+              <span class="inline-flex items-center rounded-l border border-r-0 border-[#e0e6ed] bg-[#eee] px-3 py-2 text-sm font-medium text-gray-600 dark:border-[#17263c] dark:bg-[#1b2e4b] dark:text-gray-400">
+                {{ entityNamePrefix }}_
+              </span>
+            }
+            <input
+              type="text"
+              formControlName="entityName"
+              appDynamicFontSize="body"
+              class="form-input flex-1"
+              [class.rounded-l-none]="entityNamePrefix"
+              [ngClass]="{ 'is-invalid': entityNameModalError }"
+              placeholder="Enter entity slug"
+              (blur)="onEntityNameModalBlur()"
+            />
+          </div>
+          @if (entityNameModalError) {
+            <div class="mt-1 text-sm text-danger">{{ entityNameModalError }}</div>
+          }
+          @if (entityNameModalSuggestions.length > 0) {
+            <div class="mt-1.5">
+              <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
+              <div class="mt-1 flex flex-wrap gap-1.5">
+                @for (slug of entityNameModalSuggestions; track slug) {
+                  <button
+                    type="button"
+                    (click)="selectEntityNameModalSuggestion(slug)"
+                    class="rounded border px-2 py-0.5 text-xs transition-colors"
+                    [ngClass]="entityNameModalForm.get('entityName')?.value === slug
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'"
+                  >
+                    {{ slug }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <div class="flex items-center justify-end gap-3">
+            <button type="button" class="btn btn-secondary" id="closeEntitySlug" appDynamicFontSize="body" (click)="closeEntityNameEditModal()">{{ 'cancel' | translate }}</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              appDynamicFontSize="body"
+              (click)="submitEntityNameEditModal()"
+              [disabled]="!entityNameModalForm.get('entityName')?.value?.trim() || !!entityNameModalError"
+            >
+              {{ 'submit' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 @if (isInfoModalOpen) {
   <div class="popup-modal fixed inset-0 z-50 overflow-y-auto">
