@@ -78,29 +78,31 @@ export class MasterEntityComponent implements OnInit {
 
   insert_json_schema: any = {
     // it will be removed
-    action: ['insert', 'insert'],
-    table: ['master_entities', 'master_entity_line_items'],
-    table_mapping: ['table1', 'table3'],
+    action: ['insert', 'insert', 'insert'],
+    table: ['master_entities', 'permissions', 'master_entity_line_items'],
+    table_mapping: ['table1', 'table2', 'table3'],
     data: {
       table1: [],
+      table2: [],
       table3: [],
     },
   };
 
   update_json_schema: any = {
-    // it will be removed
-    action: ['update', 'hard_delete', 'insert', 'update'],
-    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4'],
+    action: ['update', 'hard_delete', 'insert', 'update', 'insert', 'hard_delete'],
+    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions', 'permissions'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5', 'table6'],
     data: {
       table1: [],
       table3: [],
       table4: [],
+      table5: [],
     },
     conditions: {
       table1: [],
       table2: [],
       table4: [],
+      table6: [],
     },
   };
 
@@ -2013,6 +2015,14 @@ export class MasterEntityComponent implements OnInit {
       },
     ];
 
+    const permissions = formData.permissions.map((action_type_name: any, pindex: number) => ({
+      entity_id: '@table1.id',
+      name: action_type_name,
+      slug: `${action_type_name}_${entitySlug}`,
+      order_no: pindex + 1,
+      status_id: commonConfig.STATUS.ACTIVE,
+    }));
+
     // Use FormArray controls to get linkMode dynamically
     const itemsArray = this.form.get('items') as FormArray;
     if (itemsArray && itemsArray.length > 0) {
@@ -2057,6 +2067,7 @@ export class MasterEntityComponent implements OnInit {
     }
 
     this.insert_json_schema.data['table1'] = master;
+    this.insert_json_schema.data['table2'] = permissions;
 
     return this.insert_json_schema;
   }
@@ -2065,7 +2076,6 @@ export class MasterEntityComponent implements OnInit {
     const prefix = this.getEntityTypePrefix(formData.entityType);
     const suffix = (formData.entityName ?? '').trim();
     const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
-    const entityNameChanged = !!(this.originalEntityName && newEntityName && newEntityName !== this.originalEntityName);
 
     const master = [
       {
@@ -2164,14 +2174,28 @@ export class MasterEntityComponent implements OnInit {
       this.update_json_schema.data['table3'] = items;
     }
 
-    if (entityNameChanged) {
-      // Per-row update: pair data[i] + conditions[i] so each permission gets its correct new slug
-      this.update_json_schema.data['table4'] = this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
-      this.update_json_schema.conditions['table4'] = this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
-    } else {
-      this.update_json_schema.data['table4'] = [];
-      this.update_json_schema.conditions['table4'] = [];
-    }
+    // Diff-based permission sync
+    const existingSet = new Set<string>(this.existing_actions || []);
+    const selectedPermissions: string[] = formData.permissions || [];
+    const selectedSet = new Set<string>(selectedPermissions);
+
+    const keptPermissions = selectedPermissions.filter((p) => existingSet.has(p));
+    const addedPermissions = selectedPermissions.filter((p) => !existingSet.has(p));
+    const removedPermissions = (this.existing_actions || []).filter((p: string) => !selectedSet.has(p));
+
+    // Update slug for kept permissions (handles entity name renames)
+    this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
+    this.update_json_schema.conditions['table4'] = keptPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
+
+    // Insert newly added permissions
+    this.update_json_schema.data['table5'] = addedPermissions.map((a: string) => ({
+      entity_id: '@table1.id',
+      name: a,
+      slug: `${a}_${newEntityName}`,
+    }));
+
+    // Hard_delete permissions that were removed
+    this.update_json_schema.conditions['table6'] = removedPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
 
     return this.update_json_schema;
   }
@@ -2256,6 +2280,7 @@ export class MasterEntityComponent implements OnInit {
           let key;
           if (this.id) {
             key = 'record_updated_successfully';
+            this.existing_actions = formData.permissions || [];
           } else {
             key = 'record_inserted_successfully';
           }
@@ -2718,18 +2743,22 @@ export class MasterEntityComponent implements OnInit {
     }
 
     const payload = {
-      action: ['update', 'update', 'update'],
-      table: ['master_entities', 'permissions', 'master_entity_line_items'],
-      table_mapping: ['table1', 'table4', 'table5'],
+      action: ['select', 'update', 'update', 'update'],
+      table: ['master_entities', 'master_entities', 'permissions', 'master_entity_line_items'],
+      table_mapping: ['table1', 'table2', 'table3', 'table4'],
+      columns: {
+        table1: ['id', 'entity_name'],
+      },
       data: {
-        table1: [{ entity_name: newEntityName }],
-        table4: this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` })),
-        table5: [{ link_action: newEntityName }],
+        table2: [{ entity_name: newEntityName }],
+        table3: this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` })),
+        table4: [{ link_action: newEntityName }],
       },
       conditions: {
         table1: [{ uuid: this.id }],
-        table4: this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a })),
-        table5: [{ link_action: this.originalEntityName }],
+        table2: [{ uuid: this.id }],
+        table3: this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a })),
+        table4: [{ link_action: '@table1.entity_name' }],
       },
     };
 
