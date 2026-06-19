@@ -2075,7 +2075,8 @@ export class MasterEntityComponent implements OnInit {
   getEditParams(formData: any, id: any) {
     const prefix = this.getEntityTypePrefix(formData.entityType);
     const suffix = (formData.entityName ?? '').trim();
-    const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
+    //const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
+    const newEntityName = this.originalEntityName;
 
     const master = [
       {
@@ -2184,6 +2185,7 @@ export class MasterEntityComponent implements OnInit {
     const removedPermissions = (this.existing_actions || []).filter((p: string) => !selectedSet.has(p));
 
     // Update slug for kept permissions (handles entity name renames)
+    //this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
     this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
     this.update_json_schema.conditions['table4'] = keptPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
 

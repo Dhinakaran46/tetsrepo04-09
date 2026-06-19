@@ -104,6 +104,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     },
   };
 
+  @Input() popupName: any;
   @Input() gridParams: any;
   @Input() uuid!: string | null;
   @Input() entityName!: string;
@@ -161,6 +162,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
         this.originaluid = value;
         this.unique_id = value;
+
+        if (this.popupName === 'popup_add') {
+          this.unique_id = null; // Reset unique_id for popup_add to ensure a new record is created
+        }
 
         if (Object.keys(this.routeGParams).length > 0) {
           this.model = { ...this.model, ...this.routeGParams };
