@@ -61,7 +61,7 @@
                     {{ 'config_table_field_categorytype' | translate }}
                   </th>
                   }
-                  <th class="w-36 px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
+                  <th class="w-48 px-6 py-3 text-left font-bold tracking-wider dark:text-gray-300" appDynamicFontSize="body">
                     {{ 'config_table_field_label' | translate }}
                   </th>
                   @if (masterInfo?.permissions?.edit) {
@@ -689,12 +689,13 @@
         >
           {{ 'submit' | translate }}
         </button>
-        <button
+        <a
+          href="javascript:void(0)"
           (click)="toggleMenu()"
           class="btn-secondary mx-auto flex w-full items-center justify-center rounded-md border border-[#e0e6ed] px-4 py-2 font-semibold dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark sm:w-auto"
         >
           {{ 'cancel' | translate }}
-        </button>
+        </a>
       </div>
     </div>
   </form>

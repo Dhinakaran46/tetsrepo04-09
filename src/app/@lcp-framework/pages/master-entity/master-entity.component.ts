@@ -1709,11 +1709,16 @@ export class MasterEntityComponent implements OnInit {
     this.form.clearValidators();
 
     const primaryTableControl = this.form.get('primaryTable');
-
     const itemsControl = this.form.get('items');
 
-    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
+    if (entityType == commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
+    } else {
+      primaryTableControl?.clearValidators();
+    }
+    primaryTableControl?.updateValueAndValidity();
+
+    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
     }
     this.form.updateValueAndValidity();
