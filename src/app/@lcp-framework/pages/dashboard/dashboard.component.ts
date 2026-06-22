@@ -419,7 +419,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         params = {
           company_id: 1,
           primary_table: 'wizard_group',
-          sort_columns: [['wizard_group.id', 'asc']],
+          sort_columns: [['wizard_group.id', 'desc']],
           limit_range: 1000,
           print_query: true,
           search_all: [

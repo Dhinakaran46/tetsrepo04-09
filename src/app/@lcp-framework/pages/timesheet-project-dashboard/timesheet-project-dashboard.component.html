@@ -10,12 +10,13 @@
     <!-- Date Filter Bar -->
     <div class="date-filter-section">
       <div class="filter-inputs">
-        <div class="filter-group">
-          <label>From Date</label>
+        <span class="filter-showing-label">Showing Data</span>
+        <div class="filter-input-inline">
+          <span class="filter-prefix">From</span>
           <input type="date" [(ngModel)]="fromDate" class="date-input" />
         </div>
-        <div class="filter-group">
-          <label>To Date</label>
+        <div class="filter-input-inline">
+          <span class="filter-prefix">To</span>
           <input type="date" [(ngModel)]="toDate" class="date-input" />
         </div>
         <button class="filter-btn" (click)="applyFilters()">
@@ -44,20 +45,51 @@
         <p>Loading project summary...</p>
       </div>
 
-      <!-- Category Summary Cards Grid -->
+      <!-- Category Summary Cards Grid (2 rows, 5 columns: 1x3 spans Summary) -->
       <div class="category-grid" *ngIf="!loadingSummary">
         
-        <!-- Summary Card (Cream Background) -->
-        <div class="summary-card">
-          <div class="summary-header">SUMMARY</div>
-          <div class="summary-body">
-            <div class="summary-row">
-              <span class="summary-label">Total projects</span>
-              <span class="summary-value">{{ summary.totalProjects }}</span>
+        <!-- Summary Dashboard Card (spans 3 columns) -->
+        <div class="summary-dashboard-card animate-fade-in">
+          <!-- Top Row: Total Counts (3 columns) -->
+          <div class="metrics-row total-counts-row">
+            <div class="metric-box">
+              <span class="metric-title">TOTAL PROJECTS</span>
+              <span class="metric-value">{{ summary.totalProjects }}</span>
             </div>
-            <div class="summary-row">
-              <span class="summary-label">Total customers</span>
-              <span class="summary-value">{{ summary.totalCustomers }}</span>
+            <div class="metric-box">
+              <span class="metric-title">TOTAL CUSTOMERS</span>
+              <span class="metric-value">{{ summary.totalCustomers }}</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">ACTIVE CATEGORIES</span>
+              <span class="metric-value">
+                {{ summary.activeCategories }}<span class="metric-total-denom"> / {{ summary.totalCategories }}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Project Health (3 columns) -->
+          <div class="metrics-row health-status-row">
+            <div class="metric-box healthy">
+              <span class="metric-title">HEALTHY</span>
+              <div class="metric-value-wrapper">
+                <i class="fa-regular fa-circle-check health-icon"></i>
+                <span class="metric-value">{{ summary.healthyProjects }}</span>
+              </div>
+            </div>
+            <div class="metric-box attention">
+              <span class="metric-title">NEED ATTENTION</span>
+              <div class="metric-value-wrapper">
+                <i class="fa-solid fa-triangle-exclamation health-icon"></i>
+                <span class="metric-value">{{ summary.needAttentionProjects }}</span>
+              </div>
+            </div>
+            <div class="metric-box critical">
+              <span class="metric-title">CRITICAL</span>
+              <div class="metric-value-wrapper">
+                <i class="fa-solid fa-circle-exclamation health-icon"></i>
+                <span class="metric-value">{{ summary.criticalProjects }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -70,8 +102,7 @@
                 {{ cat.name }}
               </span>
               <div class="card-top-right">
-                <span class="cat-total-count">{{ cat.total }} <span class="cat-total-label">{{ cat.total === 1 ? 'project' : 'projects' }}</span></span>
-                <span class="cat-pct">{{ cat.percentage }}</span>
+                <span class="cat-pct">{{ cat.total }} <span class="cat-pct-val">({{ cat.percentage }})</span></span>
               </div>
             </div>
 

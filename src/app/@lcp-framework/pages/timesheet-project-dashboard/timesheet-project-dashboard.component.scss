@@ -17,37 +17,51 @@
 
 .filter-inputs {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.filter-showing-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
 
-  label {
-    font-size: 11px;
+.filter-input-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 12px;
+  transition: border-color 0.15s ease;
+
+  &:focus-within {
+    border-color: #6366f1;
+  }
+
+  .filter-prefix {
+    font-size: 12px;
     font-weight: 700;
-    text-transform: uppercase;
     color: #64748b;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    border-right: 1px solid #e2e8f0;
+    padding-right: 8px;
   }
 
   .date-input {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    padding: 0;
     font-size: 13px;
     color: #1e293b;
     outline: none;
-    transition: border-color 0.15s ease;
-
-    &:focus {
-      border-color: #6366f1;
-    }
+    cursor: pointer;
   }
 }
 
@@ -162,82 +176,389 @@
 // Category Cards Grid
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 48px;
-  max-width: 1400px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  max-width: 100%;
   width: 100%;
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 32px;
+    gap: 16px;
   }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 16px;
   }
 }
 
-// Summary Card (Specific Gray Layout)
-.summary-card {
-  background: #f2f1eb;
-  border: 1px solid #e2e1d7;
-  border-radius: 8px;
-  padding: 16px;
+.summary-dashboard-card {
+  grid-column: span 3;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 180px;
+  gap: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  height: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 1200px) {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 768px) {
+    grid-column: span 1;
+    padding: 16px;
+    height: auto;
+  }
 }
 
-.summary-header {
-  font-size: 11px;
+.total-counts-row {
+  flex: 1;
+  border-bottom: 1px solid #f1f5f9;
+  display: grid;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex: none;
+    display: grid;
+    align-items: stretch;
+  }
+}
+
+.health-status-row {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex: none;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+
+  .metric-box {
+    border-right: none;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 8px 16px;
+
+    @media (max-width: 768px) {
+      border-bottom: none;
+      padding: 10px 16px;
+    }
+  }
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  border-right: 1px solid #f1f5f9;
+
+  &:nth-child(3n) {
+    border-right: none;
+  }
+
+  @media (max-width: 768px) {
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 6px 0;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .metric-value-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .health-icon {
+    font-size: 15px;
+  }
+
+  &.healthy {
+    background: #f0fdf4;
+    border-color: #dcfce7;
+    .metric-value, .health-icon {
+      color: #166534;
+    }
+    .metric-title {
+      color: #166534;
+      opacity: 0.8;
+    }
+  }
+
+  &.attention {
+    background: #fffbeb;
+    border-color: #fef3c7;
+    .metric-value, .health-icon {
+      color: #92400e;
+    }
+    .metric-title {
+      color: #92400e;
+      opacity: 0.8;
+    }
+  }
+
+  &.critical {
+    background: #fef2f2;
+    border-color: #fee2e2;
+    .metric-value, .health-icon {
+      color: #991b1b;
+    }
+    .metric-title {
+      color: #991b1b;
+      opacity: 0.8;
+    }
+  }
+}
+
+.metric-title {
+  font-size: 10px;
   font-weight: 700;
   color: #64748b;
   letter-spacing: 0.05em;
 }
 
-.summary-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: auto;
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
 }
 
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  padding-bottom: 8px;
+.metric-total-denom {
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+}
 
-  &:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+// Custom Horizontal Dividers
+.summary-divider {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  margin: 12px 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+    z-index: 1;
+  }
+
+  .divider-text {
+    position: relative;
+    z-index: 2;
+    background: #ffffff;
+    padding: 0 16px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.08em;
   }
 }
 
-.summary-label {
-  font-size: 13px;
-  color: #475569;
+// Categories Badges List
+.categories-badges-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.summary-value {
-  font-size: 24px;
-  font-weight: 500;
-  color: #1e293b;
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.15s ease;
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .badge-label {
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .badge-count {
+    font-weight: 700;
+    color: #1e293b;
+    margin-left: 2px;
+  }
+
+  // Colored Badges matching Categories
+  &.project-blue {
+    border-color: #bae6fd;
+    background: #f0f9ff;
+    .badge-dot { background: #0284c7; }
+    .badge-label { color: #0369a1; }
+  }
+
+  &.amc-green {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    .badge-dot { background: #16a34a; }
+    .badge-label { color: #15803d; }
+  }
+
+  &.outsourced-purple {
+    border-color: #e9d5ff;
+    background: #faf5ff;
+    .badge-dot { background: #7c3aed; }
+    .badge-label { color: #6d28d9; }
+  }
+
+  &.poc-pink {
+    border-color: #fbcfe8;
+    background: #fdf2f8;
+    .badge-dot { background: #db2777; }
+    .badge-label { color: #be185d; }
+  }
+
+  &.product-orange {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    .badge-dot { background: #ea580c; }
+    .badge-label { color: #c2410c; }
+  }
+
+  &.internal-green {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    .badge-dot { background: #15803d; }
+    .badge-label { color: #166534; }
+  }
+
+  &.office-admin {
+    border-color: #fee2e2;
+    background: #fef2f2;
+    .badge-dot { background: #dc2626; }
+    .badge-label { color: #b91c1c; }
+  }
+
+  &.total-badge {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    .badge-label { color: #475569; }
+    .badge-count { color: #0f172a; }
+  }
+}
+
+// Health Section Row
+.health-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.health-box {
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid transparent;
+
+  .health-icon-value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .health-icon {
+    font-size: 20px;
+  }
+
+  .health-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .health-label {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  &.healthy {
+    background: #f0fdf4;
+    border-color: #dcfce7;
+    .health-icon, .health-value, .health-label { color: #166534; }
+  }
+
+  &.attention {
+    background: #fffbeb;
+    border-color: #fef3c7;
+    .health-icon, .health-value, .health-label { color: #92400e; }
+  }
+
+  &.critical {
+    background: #fef2f2;
+    border-color: #fee2e2;
+    .health-icon, .health-value, .health-label { color: #991b1b; }
+  }
 }
 
 // Generic Category Cards
 .category-card {
+  grid-column: span 1;
   border-radius: 8px;
   padding: 16px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 12px;
   min-height: 160px;
   border: 1px solid transparent;
   position: relative;
+
+  @media (max-width: 1200px) {
+    grid-column: span 1;
+  }
+
+  @media (max-width: 768px) {
+    grid-column: span 1;
+  }
 
   // Colors mapping matching the screenshots
   &.project-blue {
@@ -362,10 +683,20 @@
 }
 
 .cat-pct {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 4px 10px;
   border-radius: 12px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cat-pct-val {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 // Progress Bar Wrapper
