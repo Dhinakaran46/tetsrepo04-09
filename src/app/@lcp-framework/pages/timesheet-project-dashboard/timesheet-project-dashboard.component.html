@@ -1,28 +1,28 @@
 <div class="dashboard-container">
   
-  <!-- Main Header (Now at the top) -->
+  <!-- Main Header -->
   <div class="dashboard-header animate-fade-in">
     <div class="header-left">
       <h1 class="dashboard-title">Timesheet & Project Summary Dashboard</h1>
       <p class="dashboard-subtitle">Real-time performance analytics & project breakdown metrics</p>
     </div>
-  </div>
 
-  <!-- Date Filter Bar (Now below the header) -->
-  <div class="date-filter-section">
-    <div class="filter-inputs">
-      <div class="filter-group">
-        <label>From Date</label>
-        <input type="date" [(ngModel)]="fromDate" class="date-input" />
+    <!-- Date Filter Bar -->
+    <div class="date-filter-section">
+      <div class="filter-inputs">
+        <div class="filter-group">
+          <label>From Date</label>
+          <input type="date" [(ngModel)]="fromDate" class="date-input" />
+        </div>
+        <div class="filter-group">
+          <label>To Date</label>
+          <input type="date" [(ngModel)]="toDate" class="date-input" />
+        </div>
+        <button class="filter-btn" (click)="applyFilters()">
+          <i class="fa-solid fa-filter"></i>
+          <span>Apply Filters</span>
+        </button>
       </div>
-      <div class="filter-group">
-        <label>To Date</label>
-        <input type="date" [(ngModel)]="toDate" class="date-input" />
-      </div>
-      <button class="filter-btn" (click)="applyFilters()">
-        <i class="fa-solid fa-filter"></i>
-        <span>Apply Filters</span>
-      </button>
     </div>
   </div>
 
@@ -36,61 +36,109 @@
       </div>
     </div>
 
-    <!-- Category Summary Cards Grid -->
-    <div class="category-grid">
-      
-      <!-- Summary Card (Cream Background) -->
-      <div class="summary-card">
-        <div class="summary-header">SUMMARY</div>
-        <div class="summary-body">
-          <div class="summary-row">
-            <span class="summary-label">Total projects</span>
-            <span class="summary-value">{{ summary.totalProjects }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="summary-label">Total customers</span>
-            <span class="summary-value">{{ summary.totalCustomers }}</span>
-          </div>
-        </div>
+    <!-- Category Summary Cards Grid Wrapper -->
+    <div class="category-grid-wrapper" style="position: relative; min-height: 180px; width: 100%;">
+      <!-- Loader Overlay -->
+      <div class="loader-overlay" *ngIf="loadingSummary">
+        <div class="spinner"></div>
+        <p>Loading project summary...</p>
       </div>
 
-      <!-- Individual Category Cards -->
-      <ng-container *ngFor="let cat of categoriesData">
-        <div class="category-card" [ngClass]="cat.colorClass">
-          <div class="card-top">
-            <span class="cat-name">
-              <span class="cat-dot">●</span> {{ cat.name }}
-            </span>
-            <span class="cat-pct">{{ cat.percentage }}</span>
-          </div>
-          
-          <div class="card-main">
-            <div class="main-count">{{ cat.total }}</div>
-            <div class="main-label">total projects</div>
-          </div>
-
-          <!-- Dual Progress Bar -->
-          <div class="progress-container">
-            <div class="progress-bar-segment fc" [style.width.%]="(cat.fc / (cat.fc + cat.tm || 1)) * 100"></div>
-            <div class="progress-bar-segment tm" [style.width.%]="(cat.tm / (cat.fc + cat.tm || 1)) * 100"></div>
-          </div>
-
-          <!-- Items list -->
-          <div class="items-list">
-            <div class="item-row" *ngFor="let item of cat.items">
-              <span class="item-label">
-                <span class="item-dot">●</span> {{ item.label }}
-              </span>
-              <div class="item-values">
-                <span class="val-total">{{ item.total }}</span>
-                <span class="val-fc">{{ item.fc }}</span>
-                <span class="val-tm">{{ item.tm }}</span>
-              </div>
+      <!-- Category Summary Cards Grid -->
+      <div class="category-grid" *ngIf="!loadingSummary">
+        
+        <!-- Summary Card (Cream Background) -->
+        <div class="summary-card">
+          <div class="summary-header">SUMMARY</div>
+          <div class="summary-body">
+            <div class="summary-row">
+              <span class="summary-label">Total projects</span>
+              <span class="summary-value">{{ summary.totalProjects }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Total customers</span>
+              <span class="summary-value">{{ summary.totalCustomers }}</span>
             </div>
           </div>
         </div>
-      </ng-container>
-      
+
+        <!-- Individual Category Cards -->
+        <ng-container *ngFor="let cat of categoriesData">
+          <div class="category-card" [ngClass]="cat.colorClass">
+            <div class="card-top">
+              <span class="cat-name">
+                {{ cat.name }}
+              </span>
+              <div class="card-top-right">
+                <span class="cat-total-count">{{ cat.total }} <span class="cat-total-label">{{ cat.total === 1 ? 'project' : 'projects' }}</span></span>
+                <span class="cat-pct">{{ cat.percentage }}</span>
+              </div>
+            </div>
+
+            <!-- Segmented Progress Bar by Status -->
+            <div class="progress-bar-wrapper">
+              <div class="progress-container">
+                <!-- In Progress segment with its own tooltip -->
+                <div class="progress-bar-segment in-progress" [style.width.%]="(cat.items[0].total / ((cat.items[0].total + cat.items[1].total + cat.items[2].total) || 1)) * 100">
+                  <div class="segment-tooltip" *ngIf="cat.items[0].total > 0">
+                    <span class="tooltip-label">
+                      <span class="tooltip-dot in-progress"></span> In Progress
+                    </span>
+                    <div class="tooltip-values">
+                      <span class="val-total">{{ cat.items[0].total }}</span>
+                      <span class="val-fc">{{ cat.items[0].fc }}</span>
+                      <span class="val-tm">{{ cat.items[0].tm }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Free Support segment with its own tooltip -->
+                <div class="progress-bar-segment free-support" [style.width.%]="(cat.items[1].total / ((cat.items[0].total + cat.items[1].total + cat.items[2].total) || 1)) * 100">
+                  <div class="segment-tooltip" *ngIf="cat.items[1].total > 0">
+                    <span class="tooltip-label">
+                      <span class="tooltip-dot free-support"></span> Free Support
+                    </span>
+                    <div class="tooltip-values">
+                      <span class="val-total">{{ cat.items[1].total }}</span>
+                      <span class="val-fc">{{ cat.items[1].fc }}</span>
+                      <span class="val-tm">{{ cat.items[1].tm }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Waiting signoff segment with its own tooltip -->
+                <div class="progress-bar-segment waiting-signoff" [style.width.%]="(cat.items[2].total / ((cat.items[0].total + cat.items[1].total + cat.items[2].total) || 1)) * 100">
+                  <div class="segment-tooltip" *ngIf="cat.items[2].total > 0">
+                    <span class="tooltip-label">
+                      <span class="tooltip-dot waiting-signoff"></span> Waiting signoff
+                    </span>
+                    <div class="tooltip-values">
+                      <span class="val-total">{{ cat.items[2].total }}</span>
+                      <span class="val-fc">{{ cat.items[2].fc }}</span>
+                      <span class="val-tm">{{ cat.items[2].tm }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items list permanently visible below the bar -->
+            <div class="items-list">
+              <div class="item-row" *ngFor="let item of cat.items; let idx = index">
+                <span class="item-label">
+                  <span class="item-dot" [ngClass]="['in-progress', 'free-support', 'waiting-signoff'][idx]"></span> {{ item.label }}
+                </span>
+                <div class="item-values">
+                  <span class="val-total">{{ item.total }}</span>
+                  <span class="val-fc">{{ item.fc }}</span>
+                  <span class="val-tm">{{ item.tm }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        
+      </div>
     </div>
   </div>
 
