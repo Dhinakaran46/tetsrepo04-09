@@ -1,0 +1,638 @@
+.dashboard-container {
+  padding: 24px;
+  background: #ffffff;
+  min-height: 100vh;
+  color: #1e293b;
+  font-family: 'Nunito', 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// Date Filter Section
+.date-filter-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.filter-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+  }
+
+  .date-input {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.15s ease;
+
+    &:focus {
+      border-color: #6366f1;
+    }
+  }
+}
+
+.filter-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+
+  i {
+    font-size: 12px;
+  }
+}
+
+// Dashboard Header (Page Title)
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 16px;
+}
+
+.dashboard-title {
+  font-family: 'Nunito', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.dashboard-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+// Sections
+.section-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.section-title {
+  font-family: 'Nunito', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+// Legend Badges
+.legend-badges {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .badge-text {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  &.fc .badge-text {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+  }
+
+  &.tm .badge-text {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+}
+
+// Category Cards Grid
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Summary Card (Specific Gray Layout)
+.summary-card {
+  background: #f2f1eb;
+  border: 1px solid #e2e1d7;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+}
+
+.summary-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 8px;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #475569;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+// Generic Category Cards
+.category-card {
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 180px;
+  border: 1px solid transparent;
+
+  // Colors mapping matching the screenshots
+  &.project-blue {
+    background: #e0f2fe;
+    border-color: #bae6fd;
+    .cat-name, .cat-dot { color: #0284c7; }
+    .cat-pct { background: #bae6fd; color: #0369a1; }
+    .progress-bar-segment.fc { background: #0284c7; }
+    .progress-bar-segment.tm { background: #65a30d; }
+  }
+
+  &.amc-green {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    .cat-name, .cat-dot { color: #16a34a; }
+    .cat-pct { background: #bbf7d0; color: #15803d; }
+    .progress-bar-segment.fc { background: #16a34a; }
+    .progress-bar-segment.tm { background: #a16207; }
+  }
+
+  &.outsourced-purple {
+    background: #faf5ff;
+    border-color: #e9d5ff;
+    .cat-name, .cat-dot { color: #7c3aed; }
+    .cat-pct { background: #e9d5ff; color: #6d28d9; }
+    .progress-bar-segment.fc { background: #7c3aed; }
+    .progress-bar-segment.tm { background: #06b6d4; }
+  }
+
+  &.poc-pink {
+    background: #fdf2f8;
+    border-color: #fbcfe8;
+    .cat-name, .cat-dot { color: #db2777; }
+    .cat-pct { background: #fbcfe8; color: #be185d; }
+    .progress-bar-segment.fc { background: #db2777; }
+    .progress-bar-segment.tm { background: #ea580c; }
+  }
+
+  &.product-orange {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    .cat-name, .cat-dot { color: #ea580c; }
+    .cat-pct { background: #fed7aa; color: #c2410c; }
+    .progress-bar-segment.fc { background: #ea580c; }
+    .progress-bar-segment.tm { background: #10b981; }
+  }
+
+  &.internal-green {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    .cat-name, .cat-dot { color: #15803d; }
+    .cat-pct { background: #bbf7d0; color: #166534; }
+    .progress-bar-segment.fc { background: #15803d; }
+    .progress-bar-segment.tm { background: #84cc16; }
+  }
+
+  &.office-admin {
+    background: #fff5f5;
+    border-color: #fee2e2;
+    .cat-name, .cat-dot { color: #dc2626; }
+    .cat-pct { background: #fee2e2; color: #b91c1c; }
+    .progress-bar-segment.fc { background: #dc2626; }
+    .progress-bar-segment.tm { background: #f97316; }
+  }
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cat-name {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-dot {
+  font-size: 8px;
+}
+
+.cat-pct {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
+.card-main {
+  margin-top: 4px;
+}
+
+.main-count {
+  font-size: 26px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.1;
+}
+
+.main-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+// Dual Progress Bar
+.progress-container {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  display: flex;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.progress-bar-segment {
+  height: 100%;
+  &.fc {
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+  }
+  &.tm {
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+  }
+}
+
+// Items List
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-label {
+  font-size: 11px;
+  color: #334155;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .item-dot {
+    font-size: 7px;
+    color: #475569;
+  }
+}
+
+.item-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.val-total {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+  width: 18px;
+  text-align: right;
+}
+
+.val-fc {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  width: 18px;
+  text-align: center;
+}
+
+.val-tm {
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #f0fdf4;
+  border-radius: 4px;
+  padding: 1px 5px;
+  width: 18px;
+  text-align: center;
+}
+
+// Charts Layout
+.chart-card-wrapper {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  min-height: 280px;
+
+  &.flex-row-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+}
+
+.chart-content {
+  width: 100%;
+}
+
+// Scrollable chart layout with fixed Y-axis
+.scrollable-chart-container {
+  display: flex;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.fixed-y-axis {
+  width: 45px;
+  flex-shrink: 0;
+  background: #ffffff;
+  z-index: 2;
+  margin-top: -12px; 
+}
+
+.scrollable-bars-wrapper {
+  flex-grow: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 1;
+  margin-top: -12px;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+.scrollable-bars-content {
+  width: 1800px;
+}
+
+// Horizontal Legend
+.chart-legend-horizontal {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #475569;
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: inline-block;
+
+    &.missed { background: #F57E7E; }
+    &.under-approval { background: #74A7E8; }
+    &.approved { background: #86C963; }
+    &.billing { background: #0f9f90; }
+    &.non-billing { background: #c7c7c7; }
+  }
+}
+
+// Grid Layout for bottom Row
+.charts-row {
+  display: grid;
+  grid-template-columns: 4fr 8fr;
+  gap: 24px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-col-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chart-col-8 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Donut Aligned Legend List
+.donut-chart-container {
+  flex: 1.2;
+}
+
+.donut-legend-container {
+  flex: 1.8;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-left: 1px solid #f1f5f9;
+  padding-left: 16px;
+}
+
+.donut-legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.legend-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.legend-name {
+  color: #475569;
+}
+
+.legend-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.legend-count {
+  font-weight: 600;
+  color: #1e293b;
+  width: 20px;
+  text-align: right;
+}
+
+.legend-pct {
+  color: #64748b;
+  width: 32px;
+  text-align: right;
+}
+
+// Loader Utilities
+.loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(37, 99, 235, 0.1);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s infinite linear;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

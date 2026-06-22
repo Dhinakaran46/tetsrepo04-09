@@ -1,0 +1,231 @@
+<div class="dashboard-container">
+  
+  <!-- Main Header (Now at the top) -->
+  <div class="dashboard-header animate-fade-in">
+    <div class="header-left">
+      <h1 class="dashboard-title">Timesheet & Project Summary Dashboard</h1>
+      <p class="dashboard-subtitle">Real-time performance analytics & project breakdown metrics</p>
+    </div>
+  </div>
+
+  <!-- Date Filter Bar (Now below the header) -->
+  <div class="date-filter-section">
+    <div class="filter-inputs">
+      <div class="filter-group">
+        <label>From Date</label>
+        <input type="date" [(ngModel)]="fromDate" class="date-input" />
+      </div>
+      <div class="filter-group">
+        <label>To Date</label>
+        <input type="date" [(ngModel)]="toDate" class="date-input" />
+      </div>
+      <button class="filter-btn" (click)="applyFilters()">
+        <i class="fa-solid fa-filter"></i>
+        <span>Apply Filters</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 1: Category Wise Project Summary -->
+  <div class="section-container">
+    <div class="section-header">
+      <h2 class="section-title">Category wise project summary</h2>
+      <div class="legend-badges">
+        <span class="legend-badge fc"><span class="badge-text">FC</span> Fixed Cost</span>
+        <span class="legend-badge tm"><span class="badge-text">T&M</span> Time & Material</span>
+      </div>
+    </div>
+
+    <!-- Category Summary Cards Grid -->
+    <div class="category-grid">
+      
+      <!-- Summary Card (Cream Background) -->
+      <div class="summary-card">
+        <div class="summary-header">SUMMARY</div>
+        <div class="summary-body">
+          <div class="summary-row">
+            <span class="summary-label">Total projects</span>
+            <span class="summary-value">{{ summary.totalProjects }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Total customers</span>
+            <span class="summary-value">{{ summary.totalCustomers }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual Category Cards -->
+      <ng-container *ngFor="let cat of categoriesData">
+        <div class="category-card" [ngClass]="cat.colorClass">
+          <div class="card-top">
+            <span class="cat-name">
+              <span class="cat-dot">●</span> {{ cat.name }}
+            </span>
+            <span class="cat-pct">{{ cat.percentage }}</span>
+          </div>
+          
+          <div class="card-main">
+            <div class="main-count">{{ cat.total }}</div>
+            <div class="main-label">total projects</div>
+          </div>
+
+          <!-- Dual Progress Bar -->
+          <div class="progress-container">
+            <div class="progress-bar-segment fc" [style.width.%]="(cat.fc / (cat.fc + cat.tm || 1)) * 100"></div>
+            <div class="progress-bar-segment tm" [style.width.%]="(cat.tm / (cat.fc + cat.tm || 1)) * 100"></div>
+          </div>
+
+          <!-- Items list -->
+          <div class="items-list">
+            <div class="item-row" *ngFor="let item of cat.items">
+              <span class="item-label">
+                <span class="item-dot">●</span> {{ item.label }}
+              </span>
+              <div class="item-values">
+                <span class="val-total">{{ item.total }}</span>
+                <span class="val-fc">{{ item.fc }}</span>
+                <span class="val-tm">{{ item.tm }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      
+    </div>
+  </div>
+
+  <!-- Section 2: Timesheet Status by Employee (Scrollable + Fixed Y-axis) -->
+  <div class="section-container">
+    <div class="section-header">
+      <h2 class="section-title">Timesheet status by employee</h2>
+      <div class="chart-legend-horizontal">
+        <span class="legend-item"><span class="legend-color missed"></span> Missed timesheets</span>
+        <span class="legend-item"><span class="legend-color under-approval"></span> Under approval</span>
+        <span class="legend-item"><span class="legend-color approved"></span> Approved</span>
+      </div>
+    </div>
+
+    <div class="chart-card-wrapper">
+      <!-- Loader Overlay -->
+      <div class="loader-overlay" *ngIf="loadingStatusChart">
+        <div class="spinner"></div>
+        <p>Loading timesheet status...</p>
+      </div>
+
+      <!-- Scrollable Chart Container with Fixed Y-axis -->
+      <div class="scrollable-chart-container" *ngIf="!loadingStatusChart">
+        <!-- Fixed Y-axis (just the y-axis chart) -->
+        <div class="fixed-y-axis">
+          <apx-chart
+            [series]="statusChartYAxisOptions.series"
+            [chart]="statusChartYAxisOptions.chart"
+            [colors]="statusChartYAxisOptions.colors"
+            [xaxis]="statusChartYAxisOptions.xaxis"
+            [yaxis]="statusChartYAxisOptions.yaxis"
+            [grid]="statusChartYAxisOptions.grid"
+            [legend]="statusChartYAxisOptions.legend">
+          </apx-chart>
+        </div>
+        <!-- Scrollable Bars -->
+        <div class="scrollable-bars-wrapper">
+          <div class="scrollable-bars-content">
+            <apx-chart
+              [series]="statusChartOptions.series"
+              [chart]="statusChartOptions.chart"
+              [colors]="statusChartOptions.colors"
+              [plotOptions]="statusChartOptions.plotOptions"
+              [dataLabels]="statusChartOptions.dataLabels"
+              [xaxis]="statusChartOptions.xaxis"
+              [yaxis]="statusChartOptions.yaxis"
+              [grid]="statusChartOptions.grid"
+              [legend]="statusChartOptions.legend"
+              [tooltip]="statusChartOptions.tooltip">
+            </apx-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row with Donut & Horizontal Bar Charts -->
+  <div class="charts-row">
+    
+    <!-- Department Distribution Donut Card -->
+    <div class="chart-col-4">
+      <div class="section-header">
+        <h2 class="section-title">Department distribution</h2>
+      </div>
+      <div class="chart-card-wrapper flex-row-layout">
+        <!-- Loader Overlay -->
+        <div class="loader-overlay" *ngIf="loadingDeptChart">
+          <div class="spinner"></div>
+          <p>Analyzing departments...</p>
+        </div>
+
+        <ng-container *ngIf="!loadingDeptChart">
+          <!-- Donut chart -->
+          <div class="donut-chart-container">
+            <apx-chart
+              [series]="deptChartOptions.series"
+              [chart]="deptChartOptions.chart"
+              [labels]="deptChartOptions.labels"
+              [colors]="deptChartOptions.colors"
+              [stroke]="deptChartOptions.stroke"
+              [dataLabels]="deptChartOptions.dataLabels"
+              [plotOptions]="deptChartOptions.plotOptions"
+              [legend]="deptChartOptions.legend">
+            </apx-chart>
+          </div>
+          <!-- Custom aligned legend list -->
+          <div class="donut-legend-container">
+            <div class="donut-legend-item" *ngFor="let item of deptLegendData">
+              <span class="legend-label-group">
+                <span class="legend-dot" [style.background-color]="item.color"></span>
+                <span class="legend-name">{{ item.name }}</span>
+              </span>
+              <span class="legend-stats">
+                <span class="legend-count">{{ item.count }}</span>
+                <span class="legend-pct">{{ item.pct }}</span>
+              </span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Top Performers Horizontal Bar Card -->
+    <div class="chart-col-8">
+      <div class="section-header">
+        <h2 class="section-title">Top performers — billing vs non-billing hours</h2>
+        <div class="chart-legend-horizontal">
+          <span class="legend-item"><span class="legend-color billing"></span> Billing hours</span>
+          <span class="legend-item"><span class="legend-color non-billing"></span> Non-billing hours</span>
+        </div>
+      </div>
+      <div class="chart-card-wrapper">
+        <!-- Loader Overlay -->
+        <div class="loader-overlay" *ngIf="loadingPerfChart">
+          <div class="spinner"></div>
+          <p>Loading performer metrics...</p>
+        </div>
+        <!-- Apex Chart -->
+        <div class="chart-content" *ngIf="!loadingPerfChart">
+          <apx-chart
+            [series]="perfChartOptions.series"
+            [chart]="perfChartOptions.chart"
+            [colors]="perfChartOptions.colors"
+            [plotOptions]="perfChartOptions.plotOptions"
+            [dataLabels]="perfChartOptions.dataLabels"
+            [xaxis]="perfChartOptions.xaxis"
+            [yaxis]="perfChartOptions.yaxis"
+            [grid]="perfChartOptions.grid"
+            [legend]="perfChartOptions.legend"
+            [tooltip]="perfChartOptions.tooltip">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
