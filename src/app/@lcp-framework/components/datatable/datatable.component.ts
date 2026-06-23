@@ -231,6 +231,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     x: 0,
     y: 0,
     column: null as any,
+    isFilterable: false,
   };
 
   headerMenuItems = [
@@ -238,8 +239,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     { label: 'Sort Descending', action: 'sortDesc', icon: 'fa fa-arrow-down' },
     { label: 'Clear Sorting', action: 'clearSort', icon: 'fa fa-times' },
     { divider: true },
-    { label: 'Filter Column', action: 'filter', icon: 'fa fa-filter' },
-    { label: 'Clear Filter', action: 'clearFilter', icon: 'fa fa-broom' },
+    { label: 'Filter Column', action: 'filter', icon: 'fa fa-filter', filterOnly: true },
+    { label: 'Clear Filter', action: 'clearFilter', icon: 'fa fa-broom', filterOnly: true },
     { divider: true },
     { label: 'Hide Column', action: 'hide', icon: 'fa fa-eye-slash' },
     /*{ label: 'Auto Fit Width', action: 'autoFit', icon: 'fa fa-ruler' },*/
@@ -264,11 +265,18 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       y = window.innerHeight - menuHeight - 10;
     }
 
+    const norm = (v: any) => String(v ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+    const colNorm = norm(col.header);
+    const isFilterable = !!col.header && this.filteredColumns.some(
+      (fc: any) => fc.display_name === col.header || (colNorm && norm(fc.display_name) === colNorm),
+    );
+
     this.headerContextMenu = {
       visible: true,
       x,
       y,
       column: col,
+      isFilterable,
     };
   }
   get stickyModeClass(): string {
@@ -880,20 +888,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   get hasRowActions(): boolean {
     const perms = this.masterInfo?.permissions;
     if (!perms) return false;
-    return !!(
-      perms.email_resend ||
-      perms.details ||
-      perms.popup_details ||
-      perms.edit ||
-      perms.popup_edit ||
-      perms.assign ||
-      perms.print ||
-      perms.record_export ||
-      perms.generate_vector ||
-      perms.get_code ||
-      perms.delete ||
-      perms.reset_password
-    );
+    return Object.values(commonConfig.ACTION_TYPE).some((action) => !!perms[action as string]);
   }
 
   onRowContextMenu(event: MouseEvent, item: any) {
@@ -1259,7 +1254,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const data = this.filteredColumns.find((col) => col.field === column);
     const columnType = data?.field_type_id;
     this.filterConditions[index].clause_type = data?.clause_type || 'where';
-    const operator = data?.enum_values ? 'in' : this.searchConditions[columnType][0].value;
+    const operator = data?.enum_values ? 'in' : this.searchConditions[columnType]?.[0]?.value ?? '=';
     this.filterConditions[index].operator = operator;
     this.filterConditions[index].value = '';
     this.filterConditions[index].enum_values = [];
@@ -1338,8 +1333,86 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   openAdvancedFilterMenu() {
+    console.log('openAdvancedFilterMenu');
     this.closeToolbarMenus('filter');
     this.syncDraftFiltersFromApplied();
+  }
+
+  async openAdvancedFilterMenuForColumn(col: any): Promise<void> {
+    this.openAdvancedFilterMenu();
+
+    const norm = (v: any) =>
+      String(v ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, '');
+    const colNorm = norm(col.header);
+
+    const columnMatch = (src: any): boolean => {
+      if (!col.header) return false;
+      if (src.display_name === col.header) return true;
+      if (colNorm && norm(src.display_name) === colNorm) return true;
+      return false;
+    };
+
+    // 1. Try filteredColumns (already-searchable columns).
+    let matchedColumn: any = this.filteredColumns.find(columnMatch);
+
+    // 2. Try all selectcolumns (searchable or not).
+    if (!matchedColumn) {
+      const selectCol = this.selectcolumns.find(columnMatch);
+
+      if (selectCol) {
+        matchedColumn = {
+          colSearchHide: false,
+          ...selectCol,
+          field: selectCol.field || selectCol.field_name || col.field_name || col.header,
+          title: this.translate.instant(col.header) || selectCol.title || col.header,
+        };
+      } else {
+        // 3. Last resort: build directly from the headercolumn entry.
+        //    col.header is proven to be the data field key (master-list line 2286).
+        //    col.field_type_id is confirmed on headercolumns (master-list line 2287).
+        const fieldId = col.header;
+        if (!fieldId) return;
+        matchedColumn = {
+          colSearchHide: false,
+          field: fieldId,
+          field_name: fieldId,
+          display_name: col.header,
+          title: this.translate.instant(col.header) || col.header,
+          field_type_id: col.field_type_id ?? 1,
+          clause_type: col.clause_type || 'where',
+          searchable: false,
+          enum_values: col.enum_values ?? null,
+        };
+      }
+
+      // Inject so the <select> dropdown can render and bind the new option.
+      this.filteredColumns = [...this.filteredColumns, matchedColumn];
+    }
+
+    if (!matchedColumn?.field) return;
+
+    // Always add a new row (allows stacking multiple conditions for same column).
+    // Reuse the trailing empty condition or append a new one.
+    const lastIdx = this.filterConditions.length - 1;
+    const lastCondition = this.filterConditions[lastIdx];
+    let targetIndex: number;
+    if (lastCondition && !lastCondition.field) {
+      targetIndex = lastIdx;
+    } else {
+      this.addCondition();
+      targetIndex = this.filterConditions.length - 1;
+    }
+    this.filterConditions[targetIndex].field = matchedColumn.field;
+    this.cdr.detectChanges();
+    try {
+      await this.onColumnChange(new Event('change'), targetIndex);
+    } catch {
+      // operator loading failure is non-fatal; column is already pre-selected above
+    }
+    this.cdr.detectChanges();
   }
 
   toggleColumnsMenu(event?: Event): void {
@@ -4178,23 +4251,36 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const col = this.headerContextMenu.column;
 
     switch (action) {
-      case 'sortAsc':
+      case 'sortAsc': {
         col.sortDirection = 'asc';
-        this.sortColumn(col);
+        const keyAsc = this.getColumnUniqueKey(col);
+        if (!this.activeSortOrder.includes(keyAsc)) {
+          this.activeSortOrder.push(keyAsc);
+        }
+        this.columnSort.emit({ ...col, sortColumns: this.getSortedColumnsByPriority() });
         break;
+      }
 
-      case 'sortDesc':
+      case 'sortDesc': {
         col.sortDirection = 'desc';
-        this.sortColumn(col);
+        const keyDesc = this.getColumnUniqueKey(col);
+        if (!this.activeSortOrder.includes(keyDesc)) {
+          this.activeSortOrder.push(keyDesc);
+        }
+        this.columnSort.emit({ ...col, sortColumns: this.getSortedColumnsByPriority() });
         break;
+      }
 
-      case 'clearSort':
+      case 'clearSort': {
         col.sortDirection = '';
-        //this.loadItems(); // or your refresh method
+        const keyClear = this.getColumnUniqueKey(col);
+        this.activeSortOrder = this.activeSortOrder.filter((k) => k !== keyClear);
+        this.columnSort.emit({ ...col, sortColumns: this.getSortedColumnsByPriority() });
         break;
+      }
 
       case 'filter':
-        this.openAdvancedFilterMenu();
+        this.openAdvancedFilterMenuForColumn(col);
         break;
 
       case 'clearFilter':

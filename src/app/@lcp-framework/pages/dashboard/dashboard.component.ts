@@ -187,6 +187,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     selectedItemUuid: string | null;
     popupEntityName: string;
     isViewPopupOpen: boolean;
+    properties: Record<string, any>;
   } | null = null;
 
   // NEW: keep track of per-widget timers
@@ -1169,15 +1170,25 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const uuid = target.getAttribute('data-uuid') || '';
     const entityName = target.getAttribute('data-entity') || '';
     const popupName = target.getAttribute('data-popup') || '';
-    this.openMasterList(uuid, entityName, popupName);
+    const propertiesRaw = target.getAttribute('data-properties') || '';
+    let properties: Record<string, any> = {};
+    if (propertiesRaw) {
+      try {
+        properties = JSON.parse(propertiesRaw);
+      } catch {
+        properties = {};
+      }
+    }
+    this.openMasterList(uuid, entityName, popupName, properties);
   }
 
-  openMasterList(uuid: string, entityName: string, popupName: string) {
+  openMasterList(uuid: string, entityName: string, popupName: string, properties: Record<string, any> = {}) {
     this.popupConfig = {
       popupName,
       selectedItemUuid: uuid ? uuid : null,
       popupEntityName: entityName,
       isViewPopupOpen: true,
+      properties,
     };
     this.showMasterListPopup = true;
   }

@@ -106,9 +106,11 @@ export class MasterListComponent implements OnChanges {
     columns?: any[];
     grid_params?: any;
   } | null = null;
-  @Input() set popupConfig(config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean } | null) {
+  @Input() set popupConfig(
+    config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean; properties?: Record<string, any> } | null
+  ) {
     if (config) {
-      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
+      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen, config.properties?.['grid_params'] ?? null);
     }
   }
   private _nonGridPage = false;
@@ -3554,7 +3556,12 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, gridParams: any = null) {
+    console.log(gridParams);
+    if (gridParams !== null) {
+      this.grid_params = gridParams;
+      console.log('Grid params set for popup:', this.grid_params);
+    }
     this.popupName = popupName;
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
@@ -3602,6 +3609,12 @@ export class MasterListComponent implements OnChanges {
       this.loadingpopup = false;
       this.cdr.markForCheck();
     }, 500);
+
+    // When grid_params are supplied for a popup_grid, reload data so the filter applies.
+    if (gridParams && popupName === 'popup_grid' && this.listQuery) {
+      const popupParams = { ...this.listQuery, entity_name: popupEntityName || this.listQuery.entity_name, start_index: 0 };
+      this.fetchData(popupParams);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
