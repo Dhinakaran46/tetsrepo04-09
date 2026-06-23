@@ -1171,6 +1171,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const entityName = target.getAttribute('data-entity') || '';
     const popupName = target.getAttribute('data-popup') || '';
     const propertiesRaw = target.getAttribute('data-properties') || '';
+    console.log(propertiesRaw);
     let properties: Record<string, any> = {};
     if (propertiesRaw) {
       try {
@@ -1183,6 +1184,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   openMasterList(uuid: string, entityName: string, popupName: string, properties: Record<string, any> = {}) {
+    console.log(properties);
     this.popupConfig = {
       popupName,
       selectedItemUuid: uuid ? uuid : null,
