@@ -85,6 +85,9 @@ interface AcceptedParentParamRule {
   providers: [DatePipe],
 })
 export class MasterListComponent implements OnChanges {
+  search_all: any[] = [];
+  search_any: any[] = [];
+
   @Input() uuid: any = null;
   @Input() entity_name: any = '';
   @Input() popupName: any = '';
@@ -110,7 +113,7 @@ export class MasterListComponent implements OnChanges {
     config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean; properties?: Record<string, any> } | null
   ) {
     if (config) {
-      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen, config.properties?.['grid_params'] ?? null);
+      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen, config.properties);
     }
   }
   private _nonGridPage = false;
@@ -2156,6 +2159,13 @@ export class MasterListComponent implements OnChanges {
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
+    if (this.search_all) {
+      payload.search_all = [...payload.search_all, ...this.search_all];
+    }
+
+    if (this.search_any) {
+      payload.search_any = [...payload.search_any, ...this.search_any];
+    }
     if (this.line_item_configurations) {
       payload.line_item_configurations = this.line_item_configurations;
     }
@@ -3556,11 +3566,20 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, gridParams: any = null) {
-    console.log(gridParams);
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, properties: any = null) {
+    const gridParams = properties?.['grid_params'] ?? null;
+    const searchAll = properties?.['search_all'] ?? null;
+    const searchAny = properties?.['search_any'] ?? null;
+
+    if (searchAll !== null) {
+      this.search_all = searchAll;
+    }
+    if (searchAny !== null) {
+      this.search_any = searchAny;
+    }
+
     if (gridParams !== null) {
       this.grid_params = gridParams;
-      console.log('Grid params set for popup:', this.grid_params);
     }
     this.popupName = popupName;
     // Enhanced permission check using unorgmenuList and permissions
