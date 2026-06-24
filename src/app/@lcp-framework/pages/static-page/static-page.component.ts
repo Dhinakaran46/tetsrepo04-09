@@ -47,6 +47,7 @@ export class StaticPageComponent implements OnChanges {
   @Input() entityName!: string;
   @Input() isModal: boolean = false;
   @Input() gridParams!: any;
+  @Input() lineItemConfigurations: any = null;
   @Input() parentGridFilters: {
     search_all?: any[];
     search_any?: any[];
@@ -299,7 +300,7 @@ export class StaticPageComponent implements OnChanges {
       this.titleService.setTitle(translateTitle);
     }
 
-    if ((changes['entityName'] || changes['uuid'] || changes['gridParams'] || changes['parentGridFilters']) && this.entity_name) {
+    if ((changes['entityName'] || changes['uuid'] || changes['gridParams'] || changes['parentGridFilters'] || changes['lineItemConfigurations']) && this.entity_name) {
       this.requestLoadData();
     }
   }
@@ -314,6 +315,7 @@ export class StaticPageComponent implements OnChanges {
       unique_id: this.unique_id || null,
       gridParams: this.gridParams || null,
       parentGridFilters: this.parentGridFilters || null,
+      lineItemConfigurations: this.lineItemConfigurations || null,
       currentTab: this.currentTab,
       currentAccordion: this.currentAccordion,
     });
@@ -514,11 +516,33 @@ export class StaticPageComponent implements OnChanges {
     return walk(obj);
   }
 
+  private replaceColumnAdditionalConfig(obj: any): any {
+    if (!this.lineItemConfigurations || typeof this.lineItemConfigurations !== 'object') {
+      return obj;
+    }
+    const walk = (value: any): any => {
+      if (Array.isArray(value)) return value.map((item) => walk(item));
+      if (value && typeof value === 'object') {
+        const out: any = {};
+        Object.keys(value).forEach((key) => { out[key] = walk(value[key]); });
+        return out;
+      }
+      if (typeof value === 'string') {
+        return value.replace(/\$column_additional_config\.(\w+)/g, (match, key) => {
+          return this.lineItemConfigurations[key] !== undefined ? String(this.lineItemConfigurations[key]) : match;
+        });
+      }
+      return value;
+    };
+    return walk(obj);
+  }
+
   private loadDefaultData() {
     if (this.unique_id) {
       this.query_information = this.replaceUniqueId(this.query_information, '$unique_id', this.unique_id);
     }
     this.query_information = this.mergeAcceptedParentFiltersIntoQueryInformation(this.query_information);
+    this.query_information = this.replaceColumnAdditionalConfig(this.query_information);
     this.query_information.grid_params = this.gridParams;
     delete this.query_information?.accepted_parent_params;
     this.gridApiService.getAllList(this.query_information).subscribe(
@@ -892,16 +916,65 @@ export class StaticPageComponent implements OnChanges {
     staticContent = staticContent.replace(/<code class="xml">([\s\S]*?)<\/code>/g, (match, p1) => {
       return `<code class="xml">${this.escapeHtml(p1)}</code>`;
     });
+    // Convert {{#if a == b}} / {{#if a > b}} etc. → {{#hbp_ifCond a '==' b}}
+    staticContent = this.preprocessIfConditions(staticContent);
     // Pretty-print JSON if data contains JSON fields
     const formattedData = this.prettifyJsonFields(data);
     // Recursively format all date-like values
     const dateFormattedData = this.formatDatesInObject(formattedData);
     // Compile the static content using Handlebars
-    const compiledTemplate = Handlebars.compile(staticContent);
+    let compiledTemplate: Handlebars.TemplateDelegate;
+    try {
+      compiledTemplate = Handlebars.compile(staticContent);
+    } catch (e) {
+      console.error('[StaticPage] Handlebars compile error:', e, '\nTemplate:\n', staticContent);
+      return `<pre style="color:red">Template compile error: ${(e as Error).message}</pre>`;
+    }
     let rendered = compiledTemplate(dateFormattedData);
     rendered = this.escapeRenderIntoHtml(rendered);
     rendered = this.replaceRenderHtmlTags(rendered);
     return rendered;
+  }
+
+  private preprocessIfConditions(template: string): string {
+    // Matches any {{...}} token that has no } inside (covers all standard Handlebars tokens)
+    const tokenRegex = /\{\{[^}]*?\}\}/g;
+    // {{#if left op right}} — comparison operators
+    const ifCompareRegex = /^\{\{#if\s+([\w.[\]'"]+)\s*(===|!==|==|!=|>=|<=|>|<)\s*([^\s}][^}]*?)\s*\}\}$/;
+    // {{ left op right }} — arithmetic: spaces required around operator to distinguish from hyphenated paths
+    const mathRegex = /^\{\{\s*([\w.[\]]+)\s+([-+*/%])\s+([\w.[\]]+)\s*\}\}$/;
+    const stack: ('if' | 'ifcond')[] = [];
+    let result = '';
+    let lastIndex = 0;
+    let m: RegExpExecArray | null;
+
+    tokenRegex.lastIndex = 0;
+    while ((m = tokenRegex.exec(template)) !== null) {
+      result += template.substring(lastIndex, m.index);
+      lastIndex = m.index + m[0].length;
+
+      const token = m[0];
+      if (/^\{\{#if[\s}]/.test(token)) {
+        const cmp = ifCompareRegex.exec(token);
+        if (cmp) {
+          result += `{{#hbp_ifCond ${cmp[1]} '${cmp[2]}' ${cmp[3].trim()}}}`;
+          stack.push('ifcond');
+        } else {
+          result += token;
+          stack.push('if');
+        }
+      } else if (/^\{\{\/if\s*\}\}$/.test(token)) {
+        result += stack.pop() === 'ifcond' ? '{{/hbp_ifCond}}' : token;
+      } else if (/^\{\{\s*[\w.[\]]/.test(token) && !token.startsWith('{{#') && !token.startsWith('{{/') && !token.startsWith('{{>') && !token.startsWith('{{!')) {
+        const math = mathRegex.exec(token);
+        result += math ? `{{hbp_math ${math[1]} '${math[2]}' ${math[3]}}}` : token;
+      } else {
+        result += token;
+      }
+    }
+
+    result += template.substring(lastIndex);
+    return result;
   }
 
   escapeRenderIntoHtml(html: string): string {

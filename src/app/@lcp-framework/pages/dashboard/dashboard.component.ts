@@ -187,6 +187,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     selectedItemUuid: string | null;
     popupEntityName: string;
     isViewPopupOpen: boolean;
+    properties: Record<string, any>;
   } | null = null;
 
   // NEW: keep track of per-widget timers
@@ -217,7 +218,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     public idleService: IdleService,
     public authService: AuthService,
     private routeUpdateService: RouteUpdateService,
-    private zone: NgZone,
+    private zone: NgZone
   ) {
     this.idleService.startIdleWatcher();
     registerHandlebarsHelpers(this.translate);
@@ -392,12 +393,13 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         params = {
           company_id: 1,
           primary_table: 'wizard_group',
-          sort_columns: [['wizard_group.id', 'asc']],
+          sort_columns: [['wizard_group.order_number', 'asc']],
           limit_range: 1000,
           print_query: true,
           select_columns: [
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
+            ['wizard_group.order_number', 'order_number'],
             [
               'CASE WHEN COUNT(master_entities.id) = 0 THEN NULL ELSE (SELECT sub.id AS id, sub.title, sub.format, sub.chart_format, sub.type, sub.rows, sub.cols, sub.order_no, sub.query_information, sub.report_information, sub.report_type, sub.entity_name, sub.dashboard_entity_name, sub.dashboard_entity_type FROM (SELECT master_entities.id AS id, master_entities.name AS title, master_entities.static_page_content AS format, master_entities.dashboard_wizard_options AS chart_format, master_entities.dashboard_wizard_type AS type, master_entities.dashboard_wizard_rows AS rows, master_entities.dashboard_wizard_columns AS cols, master_entities.dashboard_entity_name AS dashboard_entity_name, ref_ent.entity_type AS dashboard_entity_type, master_entities.dashboard_wizard_order_no AS order_no, master_entities.reload_timeout, master_entities.query_information AS query_information, master_entities.report_information AS report_information, master_entities.report_type AS report_type, master_entities.entity_name AS entity_name FROM master_entities LEFT JOIN master_entities AS ref_ent ON ref_ent.entity_name = master_entities.dashboard_entity_name WHERE master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1) sub ORDER BY sub.order_no FOR JSON PATH) END',
               'cards',
@@ -411,7 +413,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               join_condition: 'master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1',
             },
           ],
-          group_by: ['wizard_group.id', 'wizard_group.name', 'wizard_group.show_daterange_filter'],
+          group_by: ['wizard_group.id', 'wizard_group.name', 'wizard_group.order_number', 'wizard_group.show_daterange_filter'],
         };
         break;
       case 'pg':
@@ -419,7 +421,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         params = {
           company_id: 1,
           primary_table: 'wizard_group',
-          sort_columns: [['wizard_group.id', 'asc']],
+          sort_columns: [['wizard_group.order_number', 'asc']],
           limit_range: 1000,
           print_query: true,
           search_all: [
@@ -432,6 +434,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
           select_columns: [
             ['wizard_group.id', 'id'],
             ['wizard_group.name', 'name'],
+            ['wizard_group.order_number', 'order_number'],
             ['wizard_group.show_daterange_filter', 'show_daterange_filter'],
             [
               `CASE
@@ -483,7 +486,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               join_condition: 'TRUE',
             },
           ],
-          group_by: ['wizard_group.id'],
+          group_by: ['wizard_group.id', 'wizard_group.order_number'],
         };
         break;
     }
@@ -517,12 +520,12 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                         view: this.permissionsList?.[`view_` + item.entity_name] || false,
                       },
                     };
-                  }),
+                  })
                 );
               }
 
               return mainElem;
-            }),
+            })
           );
           // Set the first tab with at least one viewable card as active
           const tabsWithActiveCards = this.getTabsWithActiveCards();
@@ -543,7 +546,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         this.dashboardLoadError = errorMessage;
         this.isDashboardLoading = false;
         this.cdr.markForCheck();
-      },
+      }
     );
   }
 
@@ -653,8 +656,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                 'number',
                 card.chart_format[0].tooltip.y.formatter.substring(
                   card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                  card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
-                ),
+                  card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+                )
               );
             }
           }
@@ -762,7 +765,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             const key = 'failed_to_load';
             const errorMessage = this.translate.instant(key);
             this.toastr.error(errorMessage, 'Error');
-          },
+          }
         );
     } catch (error: any) {
       console.error(`Error loading Power BI report - ${index}:`, error);
@@ -809,8 +812,8 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
                       'number',
                       card.chart_format[0].tooltip.y.formatter.substring(
                         card.chart_format[0].tooltip.y.formatter.indexOf('{') + 1,
-                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}'),
-                      ),
+                        card.chart_format[0].tooltip.y.formatter.lastIndexOf('}')
+                      )
                     );
                   }
                 }
@@ -875,7 +878,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               }
             });
           }
-        }),
+        })
       );
     }
     this.cdr.detectChanges();
@@ -1007,7 +1010,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   hasNonEntityCards(): boolean {
     return this.getActiveCards().some(
-      (card) => card?.permissions?.view && (card.type !== this.commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module'),
+      (card) => card?.permissions?.view && (card.type !== this.commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module')
     );
   }
 
@@ -1167,15 +1170,27 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const uuid = target.getAttribute('data-uuid') || '';
     const entityName = target.getAttribute('data-entity') || '';
     const popupName = target.getAttribute('data-popup') || '';
-    this.openMasterList(uuid, entityName, popupName);
+    const propertiesRaw = target.getAttribute('data-properties') || '';
+    console.log(propertiesRaw);
+    let properties: Record<string, any> = {};
+    if (propertiesRaw) {
+      try {
+        properties = JSON.parse(propertiesRaw);
+      } catch {
+        properties = {};
+      }
+    }
+    this.openMasterList(uuid, entityName, popupName, properties);
   }
 
-  openMasterList(uuid: string, entityName: string, popupName: string) {
+  openMasterList(uuid: string, entityName: string, popupName: string, properties: Record<string, any> = {}) {
+    console.log(properties);
     this.popupConfig = {
       popupName,
       selectedItemUuid: uuid ? uuid : null,
       popupEntityName: entityName,
       isViewPopupOpen: true,
+      properties,
     };
     this.showMasterListPopup = true;
   }

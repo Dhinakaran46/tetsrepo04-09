@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
+import { debounceTime } from 'rxjs/operators';
 import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -23,6 +24,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
 import { ClientDatatableComponent, TableConfig } from '../../components/client-datatable/client-datatable.component';
+import { LoaderComponent } from '../../components/loader/loader.component';
 import * as XLSX from 'xlsx';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
@@ -72,6 +74,7 @@ interface ExcelRow extends Array<any> {
     MonacoEditorModule,
     ReactiveFormsModule,
     ClientDatatableComponent,
+    LoaderComponent,
   ],
 
   templateUrl: './export-template.component.html',
@@ -122,33 +125,38 @@ export class ExportTemplateComponent implements OnInit {
   isProcessingFile = false;
   fileError: string = '';
   excelHeaders: string[] = [];
+  excelSheetNames: string[] = [];
+  selectedLineItemSheetName: string = '';
 
   insert_json_schema: any = {
     // it will be removed
-    action: ['insert', 'insert', 'insert'],
-    table: ['export_templates', 'export_template_line_items', 'export_template_queries'],
-    table_mapping: ['table1', 'table2', 'table3'],
+    action: ['insert', 'insert', 'insert', 'insert'],
+    table: ['export_templates', 'export_template_line_items', 'export_template_queries', 'export_template_excel_sheet_details'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4'],
     data: {
       table1: [],
       table2: [],
       table3: [],
+      table4: [],
     },
   };
 
   update_json_schema: any = {
     // it will be removed
-    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
-    table: ['export_templates', 'export_template_line_items', 'export_template_line_items', 'export_template_queries', 'export_template_queries'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5'],
+    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert', 'hard_delete', 'insert'],
+    table: ['export_templates', 'export_template_line_items', 'export_template_line_items', 'export_template_queries', 'export_template_queries', 'export_template_excel_sheet_details', 'export_template_excel_sheet_details'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5', 'table6', 'table7'],
     data: {
       table1: [],
       table3: [],
       table5: [],
+      table7: [],
     },
     conditions: {
       table1: [],
       table2: [],
       table4: [],
+      table6: [],
     },
   };
 
@@ -360,37 +368,50 @@ export class ExportTemplateComponent implements OnInit {
 
     if (!file) return;
 
-    // Validate file type
     if (!this.isExcelFile(file)) {
       this.fileError = 'Please upload only Excel files (.xlsx, .xls, .csv)';
       return;
     }
 
-    const headerRow = this.form.get('header_row')?.value;
-    if (!headerRow) {
-      this.fileError = 'Please specify the header row number first';
-      return;
-    }
-
     this.isProcessingFile = true;
+    this.cdr.detectChanges();
 
     this.gridApiService.uploadExcelFile(file).subscribe(
       (response: any) => {
         if (response.body && response.body.status) {
-          // Store the file path
           const filePath = response.body.data;
-
           this.commonFile = filePath;
           this.form.patchValue({ data_filepath: filePath });
-
-          // Process the file for headers
           this.selectedFile = file;
-          // this.processExcelFile(file, headerRow);
 
-          // Load headers after successful upload
-          this.loadExcelHeaders(filePath, headerRow);
+          const sheetReader = new FileReader();
+          sheetReader.onload = (e: ProgressEvent<FileReader>) => {
+            try {
+              if (e.target?.result) {
+                const data = new Uint8Array(e.target.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array', bookSheets: true });
+                this.excelSheetNames = workbook.SheetNames;
+                this.selectedLineItemSheetName = this.excelSheetNames[0] || '';
+                this.populateSheetDetails();
+                if (filePath && this.excelSheetNames.length > 0) {
+                  this.loadExcelHeaders(filePath, 1, this.excelSheetNames[0]);
+                }
+              }
+            } catch {
+              // Sheet names unavailable for this file format
+            } finally {
+              this.isProcessingFile = false;
+              this.cdr.detectChanges();
+            }
+          };
+          sheetReader.onerror = () => {
+            this.isProcessingFile = false;
+            this.cdr.detectChanges();
+          };
+          sheetReader.readAsArrayBuffer(file);
+        } else {
+          this.isProcessingFile = false;
         }
-        this.isProcessingFile = false;
       },
       (error) => {
         this.fileError = 'Error uploading file. Please try again.';
@@ -403,11 +424,15 @@ export class ExportTemplateComponent implements OnInit {
   }
 
   removeFile(): void {
-    // Clear file-related data
     this.selectedFile = null;
     this.fileError = '';
     this.excelHeaders = [];
+    this.excelSheetNames = [];
+    this.selectedLineItemSheetName = '';
     this.form.patchValue({ data_filepath: '' });
+
+    const sheetDetails = this.form.get('sheetDetails') as FormArray;
+    sheetDetails.clear();
 
     // Clear line items FormArray
     const items = this.form.get('items') as FormArray;
@@ -529,16 +554,20 @@ export class ExportTemplateComponent implements OnInit {
     }
   }
 
-  private loadExcelHeaders(filePath: string, headerRow: number) {
+  private loadExcelHeaders(filePath: string, headerRow: number, sheetName?: string) {
     if (!filePath || !headerRow) {
       this.excelHeaders = [];
       return;
     }
 
-    const params = {
+    const params: any = {
       file_path: filePath,
       header_row: headerRow,
     };
+
+    if (sheetName) {
+      params.sheet_name = sheetName;
+    }
 
     this.gridApiService.getExcelHeaders(params).subscribe(
       (response: any) => {
@@ -563,6 +592,7 @@ export class ExportTemplateComponent implements OnInit {
       field_table: ['', Validators.required],
       default_value: [''],
       column_name: [''],
+      sheet_name: [''],
 
       is_individual: [false],
       individual_column: [''],
@@ -571,12 +601,6 @@ export class ExportTemplateComponent implements OnInit {
     });
 
     this.addFormArraySubscriptions();
-
-    this.form.get('header_row')?.valueChanges.subscribe(() => {
-      if (this.selectedFile) {
-        this.removeFile();
-      }
-    });
   }
   initLineQueryForm() {
     this.lineQueryForm = this.fb.group({
@@ -584,6 +608,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: ['', [Validators.required, Validators.min(0)]],
       query_name: ['', [Validators.required, Validators.min(0)]],
       query_procedure: ['', [Validators.required]],
+      sheet_name: [''],
     });
   }
 
@@ -622,9 +647,16 @@ export class ExportTemplateComponent implements OnInit {
   initNewLineItem() {
     this.editingItemIndex = -1;
     this.selectedItem = {};
+    this.selectedLineItemSheetName = this.excelSheetNames[0] || '';
     this.lineItemForm.reset({
       is_individual: false,
+      sheet_name: this.excelSheetNames[0] || '',
     });
+    const filePath = this.form.get('data_filepath')?.value;
+    if (filePath && this.selectedLineItemSheetName) {
+      const headerRow = this.getSheetHeaderRow(this.selectedLineItemSheetName);
+      this.loadExcelHeaders(filePath, headerRow, this.selectedLineItemSheetName);
+    }
     this.isItemModalOpen = true;
   }
   initNewLineQuery() {
@@ -635,6 +667,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: '',
       query_name: '',
       query_procedure: '',
+      sheet_name: '',
     });
     this.isQueryModalOpen = true;
   }
@@ -650,17 +683,28 @@ export class ExportTemplateComponent implements OnInit {
   editLineItem(index: any) {
     this.selectedItem = index;
     this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
+    this.selectedLineItemSheetName = index.sheet_name || this.excelSheetNames[0] || '';
 
-    // Load headers if we have file and row number
     const filePath = this.form.get('data_filepath')?.value;
-    const headerRow = this.form.get('header_row')?.value;
-
-    if (filePath && headerRow) {
-      this.loadExcelHeaders(filePath, headerRow);
+    if (filePath) {
+      const headerRow = this.getSheetHeaderRow(this.selectedLineItemSheetName);
+      this.loadExcelHeaders(filePath, headerRow, this.selectedLineItemSheetName || undefined);
     }
 
     this.lineItemForm.patchValue(index);
+    this.lineItemForm.get('sheet_name')?.setValue(this.selectedLineItemSheetName);
     this.isItemModalOpen = true;
+  }
+
+  onLineItemSheetChange(sheetName: string): void {
+    this.selectedLineItemSheetName = sheetName;
+    this.lineItemForm.get('column_name')?.setValue('');
+    this.excelHeaders = [];
+    const filePath = this.form.get('data_filepath')?.value;
+    const headerRow = this.getSheetHeaderRow(sheetName);
+    if (filePath && headerRow) {
+      this.loadExcelHeaders(filePath, headerRow, sheetName || undefined);
+    }
   }
 
   cancelLineItemEdit() {
@@ -753,7 +797,7 @@ export class ExportTemplateComponent implements OnInit {
 
   private updateTemplateValidators(type: string): void {
     const pdfGroup = this.form.get('pdfDetails') as FormGroup;
-    const xlsxFields = ['header_row', 'data_start_row', 'data_end_row', 'max_row_count', 'data_filepath'].map((f) => this.form.get(f)!);
+    const xlsxFields = ['data_filepath'].map((f) => this.form.get(f)!);
 
     // Clear all validators first
     xlsxFields.forEach((ctrl) => ctrl?.clearValidators());
@@ -802,14 +846,11 @@ export class ExportTemplateComponent implements OnInit {
       slug: [''],
       template_type: ['xlsx', Validators.required],
       description: ['', Validators.required],
-      max_row_count: [0],
       data_filepath: [''],
-      header_row: [0],
-      data_start_row: [0],
-      data_end_row: [0],
       status_id: [1],
       items: this.fb.array([]),
       queries: this.fb.array([]),
+      sheetDetails: this.fb.array([]),
       pdfDetails: this.fb.group({
         pdf_page_size: ['A4', Validators.required],
         pdf_orientation: ['portrait', Validators.required],
@@ -1040,12 +1081,16 @@ export class ExportTemplateComponent implements OnInit {
         ['export_templates.*'],
 
         [
-          "CASE WHEN COUNT(export_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', export_template_line_items.field_name, 'display_name', export_template_line_items.display_name, 'field_table', export_template_line_items.field_table, 'order_no', export_template_line_items.order_no, 'default_value', export_template_line_items.default_value, 'column_name', export_template_line_items.column_name, 'is_individual', export_template_line_items.is_individual, 'individual_column', export_template_line_items.individual_column,  'field_type_id', export_template_line_items.field_type_id))) END",
+          "CASE WHEN COUNT(export_template_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('field_name', export_template_line_items.field_name, 'display_name', export_template_line_items.display_name, 'field_table', export_template_line_items.field_table, 'order_no', export_template_line_items.order_no, 'default_value', export_template_line_items.default_value, 'column_name', export_template_line_items.column_name, 'sheet_name', export_template_line_items.sheet_name, 'is_individual', export_template_line_items.is_individual, 'individual_column', export_template_line_items.individual_column,  'field_type_id', export_template_line_items.field_type_id))) END",
           'items',
         ],
         [
-          "CASE WHEN COUNT(export_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('query_string', export_template_queries.query_string,'query_name', export_template_queries.query_name,'query_procedure', export_template_queries.query_procedure, 'order_no', export_template_queries.order_no))) END",
+          "CASE WHEN COUNT(export_template_queries.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('query_string', export_template_queries.query_string,'query_name', export_template_queries.query_name,'query_procedure', export_template_queries.query_procedure, 'sheet_name', export_template_queries.sheet_name, 'order_no', export_template_queries.order_no))) END",
           'queries',
+        ],
+        [
+          "CASE WHEN COUNT(DISTINCT export_template_excel_sheet_details.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('sheet_name', export_template_excel_sheet_details.sheet_name, 'max_row_count', export_template_excel_sheet_details.max_row_count, 'header_row', export_template_excel_sheet_details.header_row, 'data_start_row', export_template_excel_sheet_details.data_start_row, 'data_end_row', export_template_excel_sheet_details.data_end_row))) END",
+          'sheet_details',
         ],
       ],
       includes: [
@@ -1058,6 +1103,11 @@ export class ExportTemplateComponent implements OnInit {
           table_name: 'export_template_queries',
           join_type: 'LEFT',
           join_condition: `export_templates.id = export_template_queries.export_template_id`,
+        },
+        {
+          table_name: 'export_template_excel_sheet_details',
+          join_type: 'LEFT',
+          join_condition: `export_templates.id = export_template_excel_sheet_details.export_template_id`,
         },
       ],
       group_by: ['export_templates.id'],
@@ -1073,12 +1123,7 @@ export class ExportTemplateComponent implements OnInit {
             slug: entity.slug,
             template_type: entity.template_type,
             description: entity.description,
-            max_row_count: entity.max_row_count,
             data_filepath: entity.data_filepath,
-            header_row: entity.header_row,
-            data_start_row: entity.data_start_row,
-            data_end_row: entity.data_end_row,
-
             status_id: entity.status_id,
           });
 
@@ -1108,20 +1153,35 @@ export class ExportTemplateComponent implements OnInit {
             pdf_watermark_image: entity?.pdf_configurations?.watermark_image || '',
             pdf_watermark_position: entity?.pdf_configurations?.watermark_position || 'center',
           });
-          // Handle Excel file display
-
           if (entity.data_filepath) {
             this.commonFile = entity.data_filepath;
             const fileName = entity.data_filepath.split('/').pop() || '';
             this.selectedFile = {
               name: fileName,
-              size: 0, // We don't have the actual file size
+              size: 0,
               type: fileName.split('.').pop() || '',
             } as File;
+          }
 
-            // Load Excel headers if we have both file path and header row
-            if (entity.header_row) {
-              this.loadExcelHeaders(entity.data_filepath, entity.header_row);
+          if (entity.sheet_details && entity.sheet_details.length > 0) {
+            const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+            sheetDetailsArray.clear();
+            this.excelSheetNames = entity.sheet_details.map((d: any) => d.sheet_name);
+            this.selectedLineItemSheetName = this.excelSheetNames[0] || '';
+            entity.sheet_details.forEach((detail: any) => {
+              sheetDetailsArray.push(
+                this.fb.group({
+                  sheet_name: [{ value: detail.sheet_name, disabled: true }],
+                  max_row_count: [detail.max_row_count, [Validators.required, Validators.min(1)]],
+                  header_row: [detail.header_row, [Validators.required, Validators.min(1)]],
+                  data_start_row: [detail.data_start_row, [Validators.required, Validators.min(1)]],
+                  data_end_row: [detail.data_end_row, [Validators.required, Validators.min(0)]],
+                })
+              );
+            });
+            if (entity.data_filepath) {
+              const first = entity.sheet_details[0];
+              this.loadExcelHeaders(entity.data_filepath, first.header_row || 1, first.sheet_name);
             }
           }
 
@@ -1138,6 +1198,7 @@ export class ExportTemplateComponent implements OnInit {
                   field_table: [item.field_table, Validators.required],
                   default_value: [item.default_value],
                   column_name: [item.column_name],
+                  sheet_name: [item.sheet_name || ''],
 
                   is_individual: [item.is_individual],
                   individual_column: [item.individual_column],
@@ -1159,6 +1220,7 @@ export class ExportTemplateComponent implements OnInit {
                   order_no: [query.order_no, [Validators.required, Validators.min(0)]],
                   query_name: [query.query_name, Validators.required],
                   query_procedure: [query.query_procedure, Validators.required],
+                  sheet_name: [query.sheet_name || ''],
                 })
               );
             });
@@ -1177,16 +1239,11 @@ export class ExportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData?.name,
-
         status_id: formData?.status_id,
         slug: formData?.slug,
         template_type: formData?.template_type,
         description: formData?.description,
-        max_row_count: formData?.max_row_count,
         data_filepath: formData?.data_filepath,
-        header_row: formData?.header_row,
-        data_start_row: formData?.data_start_row,
-        data_end_row: formData?.data_end_row,
         pdf_configurations: {
           page_size: formData?.pdfDetails?.pdf_page_size ?? 'A4',
           orientation: formData?.pdfDetails?.pdf_orientation ?? 'portrait',
@@ -1225,6 +1282,7 @@ export class ExportTemplateComponent implements OnInit {
         field_table: item.field_table,
         default_value: item.default_value,
         column_name: item.column_name,
+        sheet_name: item.sheet_name || null,
 
         is_individual: item.is_individual,
         individual_column: item.is_individual ? (item.individual_column ? item.individual_column : null) : null,
@@ -1241,8 +1299,21 @@ export class ExportTemplateComponent implements OnInit {
         order_no: query.order_no,
         query_name: query.query_name,
         query_procedure: query.query_procedure,
+        sheet_name: query.sheet_name || null,
       }));
       this.insert_json_schema.data['table3'] = queries;
+    }
+
+    const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+    if (sheetDetailsArray.length > 0) {
+      this.insert_json_schema.data['table4'] = sheetDetailsArray.controls.map((ctrl) => ({
+        export_template_id: '@table1.id',
+        sheet_name: ctrl.get('sheet_name')?.value,
+        max_row_count: ctrl.get('max_row_count')?.value,
+        header_row: ctrl.get('header_row')?.value,
+        data_start_row: ctrl.get('data_start_row')?.value,
+        data_end_row: ctrl.get('data_end_row')?.value,
+      }));
     }
 
     this.insert_json_schema.data['table1'] = master;
@@ -1254,16 +1325,11 @@ export class ExportTemplateComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-
         status_id: formData.status_id,
         slug: formData?.slug,
         template_type: formData?.template_type,
         description: formData?.description,
-        max_row_count: formData?.max_row_count,
         data_filepath: formData?.data_filepath,
-        header_row: formData?.header_row,
-        data_start_row: formData?.data_start_row,
-        data_end_row: formData?.data_end_row,
         pdf_configurations: {
           page_size: formData?.pdfDetails?.pdf_page_size ?? 'A4',
           orientation: formData?.pdfDetails?.pdf_orientation ?? 'portrait',
@@ -1308,6 +1374,7 @@ export class ExportTemplateComponent implements OnInit {
         field_table: item.field_table,
         default_value: item.default_value,
         column_name: item.column_name,
+        sheet_name: item.sheet_name || null,
 
         is_individual: item.is_individual,
         individual_column: item.is_individual ? (item.individual_column ? item.individual_column : null) : null,
@@ -1324,9 +1391,23 @@ export class ExportTemplateComponent implements OnInit {
         order_no: query.order_no,
         query_name: query.query_name,
         query_procedure: query.query_procedure,
+        sheet_name: query.sheet_name || null,
       }));
 
       this.update_json_schema.data['table5'] = queries;
+    }
+
+    this.update_json_schema.conditions['table6'] = [{ export_template_id: '@table1.id' }];
+    const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+    if (sheetDetailsArray.length > 0) {
+      this.update_json_schema.data['table7'] = sheetDetailsArray.controls.map((ctrl) => ({
+        export_template_id: '@table1.id',
+        sheet_name: ctrl.get('sheet_name')?.value,
+        max_row_count: ctrl.get('max_row_count')?.value,
+        header_row: ctrl.get('header_row')?.value,
+        data_start_row: ctrl.get('data_start_row')?.value,
+        data_end_row: ctrl.get('data_end_row')?.value,
+      }));
     }
 
     return this.update_json_schema;
@@ -1381,8 +1462,44 @@ export class ExportTemplateComponent implements OnInit {
   isFormInvalid(): boolean {
     const templateType = this.form.get('template_type')?.value;
     const isPdfInvalid = templateType === 'pdf' ? this.form.get('pdfDetails')?.invalid : false;
+    const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+    const isSheetDetailsInvalid = templateType === 'xlsx' && sheetDetailsArray.controls.some((c) => c.invalid);
 
-    return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0 || !!isPdfInvalid;
+    return this.form.invalid || this.itemsControls.length === 0 || this.queriesControls.length === 0 || !!isPdfInvalid || isSheetDetailsInvalid;
+  }
+
+  get sheetDetailsControls() {
+    return (this.form.get('sheetDetails') as FormArray).controls;
+  }
+
+  getSheetHeaderRow(sheetName: string): number {
+    const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+    const match = sheetDetailsArray.controls.find((c) => c.get('sheet_name')?.value === sheetName);
+    return match ? match.get('header_row')?.value || 1 : 1;
+  }
+
+  private populateSheetDetails(): void {
+    const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+    sheetDetailsArray.clear();
+    this.excelSheetNames.forEach((sheetName) => {
+      const group = this.fb.group({
+        sheet_name: [{ value: sheetName, disabled: true }],
+        max_row_count: [500, [Validators.required, Validators.min(1)]],
+        header_row: [1, [Validators.required, Validators.min(1)]],
+        data_start_row: [2, [Validators.required, Validators.min(1)]],
+        data_end_row: [10000, [Validators.required, Validators.min(0)]],
+      });
+
+      group.get('header_row')?.valueChanges.pipe(debounceTime(500)).subscribe((newHeaderRow) => {
+        if (!newHeaderRow || newHeaderRow < 1) return;
+        const filePath = this.form.get('data_filepath')?.value;
+        if (filePath && this.selectedLineItemSheetName === sheetName) {
+          this.loadExcelHeaders(filePath, newHeaderRow, sheetName);
+        }
+      });
+
+      sheetDetailsArray.push(group);
+    });
   }
 
   logFormStatus(): void {
@@ -1509,6 +1626,7 @@ export class ExportTemplateComponent implements OnInit {
       field_table: [item.field_table, Validators.required],
       default_value: [item.default_value],
       column_name: [item.column_name],
+      sheet_name: [item.sheet_name || ''],
 
       is_individual: [item.is_individual],
       individual_column: [item.individual_column],
@@ -1523,6 +1641,7 @@ export class ExportTemplateComponent implements OnInit {
       order_no: [query.order_no, [Validators.required, Validators.min(0)]],
       query_name: [query.query_name, Validators.required],
       query_procedure: [query.query_procedure],
+      sheet_name: [query.sheet_name || ''],
     });
   }
 

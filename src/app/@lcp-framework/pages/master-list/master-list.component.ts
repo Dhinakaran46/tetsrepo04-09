@@ -1,4 +1,16 @@
-import { Component, TemplateRef, ViewChild, AfterViewInit, ChangeDetectorRef, Input, SimpleChanges, OnChanges, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  TemplateRef,
+  ViewChild,
+  AfterViewInit,
+  ChangeDetectorRef,
+  HostListener,
+  Input,
+  SimpleChanges,
+  OnChanges,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DataTableComponent } from '../../components/datatable/datatable.component';
@@ -82,6 +94,7 @@ export class MasterListComponent implements OnChanges {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
+  @Input() line_item_configurations: any = null;
   @Input() showBackButton: boolean = true;
   @Input() parentGridFilters: {
     search_all?: any[];
@@ -93,9 +106,11 @@ export class MasterListComponent implements OnChanges {
     columns?: any[];
     grid_params?: any;
   } | null = null;
-  @Input() set popupConfig(config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean } | null) {
+  @Input() set popupConfig(
+    config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean; properties?: Record<string, any> } | null
+  ) {
     if (config) {
-      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen);
+      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen, config.properties?.['grid_params'] ?? null);
     }
   }
   private _nonGridPage = false;
@@ -223,6 +238,10 @@ export class MasterListComponent implements OnChanges {
   grid_unique_id: any;
   popupComponentGridParams: any;
   popupParentGridFilters: any = null;
+  popupLineItemConfigurations: any = null;
+  contextMenuVisible = false;
+  contextMenuPosition = { x: 0, y: 0 };
+  contextMenuItem: any = null;
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
@@ -398,8 +417,7 @@ export class MasterListComponent implements OnChanges {
 
       const masterListConfig = pageInfo;
       if (masterListConfig.entity_configurations != null) {
-        this.stickyHeader = masterListConfig.entity_configurations?.enable_sticky_header === 'yes' ? 'yes' : 'no';
-        // this.stickyHeader = 'yes';
+        this.stickyHeader = masterListConfig.entity_configurations?.grid_enable_sticky_header === 'yes' ? 'yes' : 'no';
       }
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
@@ -1112,6 +1130,19 @@ export class MasterListComponent implements OnChanges {
     return value === true || value === 'true' || value === 1 || value === '1';
   }
 
+  private parseJsonField(value: any): any {
+    if (!value) return null;
+    if (typeof value === 'object') return value;
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
   private buildGridBuilderLineItems(items: any[], companyId: number): any[] {
     if (!Array.isArray(items)) {
       return [];
@@ -1180,7 +1211,7 @@ export class MasterListComponent implements OnChanges {
       associated_entity_name: record?.associated_entity_name ?? null,
       associated_entity: record?.associated_entity ?? null,
       children: Array.isArray(record?.children) ? record.children : [],
-      entity_configurations: record?.entity_configurations && typeof record.entity_configurations === 'object' ? record.entity_configurations : null,
+      entity_configurations: this.parseJsonField(record?.entity_configurations),
       query_information: record?.query_information && typeof record.query_information === 'object' ? record.query_information : {},
       form_information: record?.form_information && typeof record.form_information === 'object' ? record.form_information : null,
       report_information: record?.report_information && typeof record.report_information === 'object' ? record.report_information : null,
@@ -1218,7 +1249,7 @@ export class MasterListComponent implements OnChanges {
       entity_name: record?.entity_name || '',
       entity_type: record?.entity_type || '',
       primary_table: record?.primary_table || '',
-      entity_configurations: record?.entity_configurations && typeof record.entity_configurations === 'object' ? record.entity_configurations : null,
+      entity_configurations: this.parseJsonField(record?.entity_configurations),
       form_information:
         record?.form_information && typeof record.form_information === 'object'
           ? record.form_information
@@ -2126,6 +2157,9 @@ export class MasterListComponent implements OnChanges {
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
+    if (this.line_item_configurations) {
+      payload.line_item_configurations = this.line_item_configurations;
+    }
     if (this.attachedPolicies) {
       payload.attached_policies = this.attachedPolicies;
     }
@@ -2143,10 +2177,14 @@ export class MasterListComponent implements OnChanges {
               if (this.headercolumns.length == 0) {
                 const data = response.data.headers
                   .filter((key: any) => key.is_grid_column == 'true')
-                  .map((key: any) => ({
-                    ...key,
-                    column_width: '40px',
-                  }));
+                  .map((key: any) => {
+                    const matched = this.selectcolumns.find((sc: any) => sc.display_name === key.header);
+                    return {
+                      ...key,
+                      column_width: '40px',
+                      ...(matched?.line_item_configurations != null ? { line_item_configurations: matched.line_item_configurations } : {}),
+                    };
+                  });
 
                 // Action menu will be only enabled if any one of the permission except 'child_details' & 'create' is true
 
@@ -2156,7 +2194,7 @@ export class MasterListComponent implements OnChanges {
 
                 // Include serial number column if enabled in config
                 // if (this.config.grid_show_serial_number == 'true') // global grid serial number config check (deprecated)
-                if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
                   // entity level serial number config check
                   this.headercolumns = [
                     {
@@ -2271,7 +2309,7 @@ export class MasterListComponent implements OnChanges {
                   }
                 }
 
-                if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+                if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
                   return {
                     table_column_sno: this.listQuery.start_index + index + 1,
                     ...formattedItem,
@@ -2678,7 +2716,7 @@ export class MasterListComponent implements OnChanges {
             }));
 
           // Include serial number column if enabled in config
-          if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+          if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
             this.previewHeaderColumns = [
               {
                 header: 'table_column_sno',
@@ -2752,7 +2790,7 @@ export class MasterListComponent implements OnChanges {
               }
             }
 
-            if (this.masterInfo.entity_configurations?.show_serial_number === 'yes') {
+            if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
               return {
                 table_column_sno: this.listQuery.start_index + index + 1,
                 ...formattedItem,
@@ -2827,6 +2865,38 @@ export class MasterListComponent implements OnChanges {
     this.noPopupPermission = false;
     this.previewPopupPermission = false;
     this.selectedItemEntityType = null;
+    this.popupLineItemConfigurations = null;
+  }
+
+  onRowContextMenu(data: { item: any; event: MouseEvent }) {
+    data.event.preventDefault();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const menuW = 200;
+    const menuH = 320;
+    let x = data.event.clientX;
+    let y = data.event.clientY;
+    if (x + menuW > vw) x = vw - menuW - 8;
+    if (y + menuH > vh) y = vh - menuH - 8;
+    this.contextMenuPosition = { x, y };
+    this.contextMenuItem = data.item;
+    this.contextMenuVisible = true;
+    this.cdr.detectChanges();
+  }
+
+  closeContextMenu() {
+    this.contextMenuVisible = false;
+    this.contextMenuItem = null;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.contextMenuVisible) this.closeContextMenu();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    if (this.contextMenuVisible) this.closeContextMenu();
   }
 
   editItem(item: any, event?: MouseEvent) {
@@ -2851,7 +2921,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        const url = window.location.origin + '/#' + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
         window.open(url, '_blank');
       } else {
         this.router.navigate([targetRoute]);
@@ -3020,7 +3090,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
+        const url = window.location.origin + '/#' + this.router.serializeUrl(this.router.createUrlTree([targetRoute]));
         window.open(url, '_blank');
       } else {
         this.router.navigate([targetRoute]);
@@ -3194,7 +3264,10 @@ export class MasterListComponent implements OnChanges {
   }
 
   emailResendItem(item: any, event?: MouseEvent) {
-    if (this.masterInfo.children.email_resend && this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+    if (
+      this.masterInfo.children.email_resend &&
+      this.masterInfo.children.email_resend.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name
+    ) {
       Swal.fire({
         icon: 'info',
         title: 'Resend Notification?',
@@ -3226,7 +3299,7 @@ export class MasterListComponent implements OnChanges {
   }
 
   deleteItem(item: any, event?: MouseEvent) {
-    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
         this.commonService.procedureCall(procedureParams).subscribe({
@@ -3329,7 +3402,7 @@ export class MasterListComponent implements OnChanges {
       }
 
       if (event && (event.ctrlKey || event.metaKey)) {
-        const url = this.adminUrl + this.router.serializeUrl(this.router.createUrlTree([targetRoute], { queryParams }));
+        const url = window.location.origin + '/#' + this.router.serializeUrl(this.router.createUrlTree([targetRoute], { queryParams }));
         window.open(url, '_blank');
       } else {
         this.router.navigate([targetRoute], { queryParams });
@@ -3399,9 +3472,15 @@ export class MasterListComponent implements OnChanges {
   }
 
   onLinkComponentClick(event: { col: any; item: any }) {
+    //console.log(event.col);
+    //console.log(event.col.link_type);
     if (event.col.link_type === 'component' || event.col.link_type === 'child_component' || event.col.link_type === 'popup_grid') {
+      //console.log(event.col.link_mode);
+      //console.log(this.masterInfo.permissions);
       const mode = event.col.link_mode || 'popup_details';
-      if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
+      //console.log('Link component clicked with mode:', mode);
+      /*if (mode == 'popup_details' && !this.masterInfo.permissions.popup_details && !this.masterInfo.permissions.details) {
+        console.log('coming');
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
@@ -3410,6 +3489,42 @@ export class MasterListComponent implements OnChanges {
         this.isViewPopupOpen = true;
         return;
       } else if (mode == 'popup_edit' && !this.masterInfo.permissions.popup_edit && !this.masterInfo.permissions.edit) {
+        this.noPopupPermission = true;
+        this.isViewPopupOpen = true;
+        return;
+      }*/
+      this.popupEntityName = event.col.link_action;
+      const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
+      const unorgmenuList = userData?.unorgmenuList || [];
+      const permissions = userData?.permissions || {};
+      let menuPermissionId = null;
+      if (unorgmenuList && Array.isArray(unorgmenuList)) {
+        let menuItem = null;
+        if (mode === 'popup_add') {
+          menuItem = unorgmenuList.find(
+            (item: any) => item.entity_name === this.popupEntityName && (item.action_slug === 'add' || item.action_slug === 'popup_add')
+          );
+        } else if (mode === 'popup_edit') {
+          menuItem = unorgmenuList.find(
+            (item: any) => item.entity_name === this.popupEntityName && (item.action_slug === 'edit' || item.action_slug === 'popup_edit')
+          );
+        } else if (mode === 'popup_details') {
+          menuItem = unorgmenuList.find(
+            (item: any) => item.entity_name === this.popupEntityName && (item.action_slug === 'details' || item.action_slug === 'popup_details')
+          );
+        } else if (mode === 'popup_grid') {
+          menuItem = unorgmenuList.find((item: any) => item.entity_name === this.popupEntityName);
+        }
+        if (menuItem) {
+          menuPermissionId = menuItem.permission_id;
+        }
+      }
+      let hasPermission = true;
+      if (menuPermissionId && userData?.main?.permissions && Array.isArray(userData.main.permissions)) {
+        const permObj = userData.main.permissions.find((perm: any) => perm.id == menuPermissionId);
+        hasPermission = !!(permObj && permObj.accessible);
+      }
+      if (!hasPermission) {
         this.noPopupPermission = true;
         this.isViewPopupOpen = true;
         return;
@@ -3423,6 +3538,7 @@ export class MasterListComponent implements OnChanges {
         }
       });
       this.popupComponentGridParams = gridParams;
+      this.popupLineItemConfigurations = event.col?.line_item_configurations || null;
 
       this.popupParentGridFilters = this.getCurrentGridFilters();
 
@@ -3431,7 +3547,7 @@ export class MasterListComponent implements OnChanges {
       if (mode === 'popup_add') {
         this.selectedItemUuid = null;
       }
-      this.popupEntityName = event.col.link_action;
+
       this.isViewPopupOpen = true;
       this.loadingpopup = true;
       setTimeout(() => {
@@ -3441,7 +3557,12 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean) {
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, gridParams: any = null) {
+    console.log(gridParams);
+    if (gridParams !== null) {
+      this.grid_params = gridParams;
+      console.log('Grid params set for popup:', this.grid_params);
+    }
     this.popupName = popupName;
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
@@ -3478,13 +3599,23 @@ export class MasterListComponent implements OnChanges {
       return;
     }
     this.selectedItemUuid = selectedItemUuid;
+    this.uuid = selectedItemUuid;
     this.popupEntityName = popupEntityName;
+    if (popupEntityName) {
+      this.entity_name = popupEntityName;
+    }
     this.isViewPopupOpen = isViewPopupOpen;
     this.loadingpopup = true;
     setTimeout(() => {
       this.loadingpopup = false;
       this.cdr.markForCheck();
     }, 500);
+
+    // When grid_params are supplied for a popup_grid, reload data so the filter applies.
+    if (gridParams && popupName === 'popup_grid' && this.listQuery) {
+      const popupParams = { ...this.listQuery, entity_name: popupEntityName || this.listQuery.entity_name, start_index: 0 };
+      this.fetchData(popupParams);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {

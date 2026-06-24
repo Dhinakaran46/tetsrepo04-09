@@ -1,11 +1,13 @@
 <li class="py-1">
   <div
     class="group flex cursor-pointer items-center rounded-md px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-    [class.bg-primary-light]="selectedNodeUuid === item.uuid"
+    [ngClass]="{
+      'bg-primary-light': selectedNodeUuid && selectedNodeUuid === item.uuid
+    }"
     (click)="onSelect(item)"
   >
     <!-- Expand/Collapse Icon -->
-    <div class="flex w-6 cursor-pointer items-center justify-center" (click)="$event.stopPropagation(); toggleTreeview(item.id)">
+    <div class="flex w-6 shrink-0 cursor-pointer items-center justify-center" (click)="$event.stopPropagation(); toggleTreeview(item.id)">
       @if (item.children && item.children.length > 0) {
       <i class="fa-solid" [class.fa-angle-right]="!isExpanded(item.id)" [class.fa-angle-down]="isExpanded(item.id)"></i>
       }
@@ -13,14 +15,21 @@
 
     <!-- Folder/File Icon -->
     <i
-      class="fa-solid mr-2 text-primary"
+      class="fa-solid mr-2 shrink-0 text-primary"
       [class.fa-folder]="item.children && item.children.length > 0"
       [class.fa-file]="!item.children || item.children.length === 0"
     ></i>
 
     <!-- Node Name -->
-    <span class="flex-grow text-sm font-medium">
-      {{ item.name | translate }}
+    <span
+      class="min-w-0 flex-grow truncate text-sm font-medium transition-colors"
+      [ngClass]="{
+        'font-bold text-primary': isHighlighted(),
+        'text-gray-700 dark:text-gray-300': !isHighlighted()
+      }"
+      [title]="item.name | translate"
+      [innerHTML]="getHighlightedText(item.name)"
+    >
     </span>
 
     <!-- Actions (Visible on Hover or if Selected) -->
@@ -41,12 +50,13 @@
   @if (isExpanded(item.id)) {
   <div [@slideDownUp] class="overflow-hidden">
     <ul class="ml-6 border-l border-gray-200 dark:border-gray-700">
-      @for (child of getSortedChildren(item.children); track child) {
+      @for (child of getSortedChildren(item.children); track child.id) {
       <app-tree-view-item
         [item]="child"
         [treeview]="treeview"
         [permissions]="permissions"
         [selectedNodeUuid]="selectedNodeUuid"
+        [searchQuery]="searchQuery"
         (selectNode)="selectNode.emit($event)"
         (deleteNode)="deleteNode.emit($event)"
         (addChild)="addChild.emit($event)"

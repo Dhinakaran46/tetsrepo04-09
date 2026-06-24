@@ -463,7 +463,7 @@ export class MigrateEntityComponent {
             Object.keys(this.masterInfo.permissions).every((key) => key === 'export_excel' || key === 'create' || this.masterInfo.permissions[key] === false);
 
           // Include serial number column if enabled in config
-          if (this.config.grid_show_serial_number == 'true') {
+          if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
             this.headercolumns = [
               {
                 header: 'table_column_sno',
@@ -538,7 +538,7 @@ export class MigrateEntityComponent {
                 }
               }
 
-              if (this.config.grid_show_serial_number == 'true') {
+              if (this.masterInfo.entity_configurations?.grid_show_serial_number === 'yes') {
                 return {
                   table_column_sno: this.listQuery.start_index + index + 1,
                   ...formattedItem,

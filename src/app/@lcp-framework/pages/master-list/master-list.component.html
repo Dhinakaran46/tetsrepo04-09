@@ -45,6 +45,7 @@
     [attachedPolicies]="attachedPolicies"
     [parentGridFilters]="parentGridFilters"
     [tableLevel]="tableLevel"
+    (rowContextMenu)="onRowContextMenu($event)"
   ></app-datatable>
   }
 
@@ -476,7 +477,7 @@
           [enableCheckBox]="enableCheckBox"
           [customTemplates]="customTemplates"
           [headercolumns]="headercolumns"
-          [stickyHeader]="stickyHeader"
+          [stickyHeader]="null"
           [selectcolumns]="selectcolumns"
           [items]="items"
           [totalItems]="totalItems"
@@ -509,6 +510,7 @@
           [attachedPolicies]="attachedPolicies"
           [parentGridFilters]="parentGridFilters"
           [tableLevel]="tableLevel"
+          (rowContextMenu)="onRowContextMenu($event)"
         >
         </app-datatable>
         } @if (popupName == 'popup_details') {
@@ -518,10 +520,12 @@
           [parentGridFilters]="getCurrentGridFilters()"
           [isModal]="true"
           [gridParams]="popupComponentGridParams"
+          [lineItemConfigurations]="popupLineItemConfigurations"
           (closeModal)="closeViewPopup()"
         ></app-static-page>
         } @if (popupName == 'popup_add' || popupName == 'popup_edit') {
         <app-form-builder
+          [popupName]="popupName"
           [uuid]="selectedItemUuid"
           [entityName]="popupEntityName"
           [isModal]="true"
@@ -532,5 +536,134 @@
       </div>
     </div>
   </div>
+</div>
+} @if (contextMenuVisible && contextMenuItem && masterInfo) {
+<div
+  class="fixed z-[9999] min-w-[180px] rounded-md border border-[#e0e6ed] bg-white py-1 shadow-xl dark:border-[#1b2e4b] dark:bg-[#1b2e4b]"
+  [style.left.px]="contextMenuPosition.x"
+  [style.top.px]="contextMenuPosition.y"
+  (click)="$event.stopPropagation()"
+>
+  @if (masterInfo.permissions.email_resend) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="emailResendItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa-solid fa-arrows-rotate w-4 text-center"></i>
+    <span>Resend Email</span>
+  </button>
+  } @if (masterInfo.permissions.details) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="viewItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa-regular fa-eye w-4 text-center"></i>
+    <span>Details</span>
+  </button>
+  } @if (masterInfo.permissions.popup_details) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="viewPopupItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa-regular fa-eye w-4 text-center"></i>
+    <span>Details</span>
+  </button>
+  } @if (masterInfo.permissions.edit && (masterInfo?.Listname == 'mrn_grid' ? contextMenuItem?.mrn_status != 'completed' : true && masterInfo?.Listname ==
+  'min_grid' ? contextMenuItem?.min_status != 'completed' : true)) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="editItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa-regular fa-pen-to-square w-4 text-center"></i>
+    <span>Edit</span>
+  </button>
+  } @if (masterInfo.permissions.popup_edit && (masterInfo?.Listname == 'mrn_grid' ? contextMenuItem?.mrn_status != 'completed' : true && masterInfo?.Listname ==
+  'min_grid' ? contextMenuItem?.min_status != 'completed' : true)) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="editPopupItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa-regular fa-pen-to-square w-4 text-center"></i>
+    <span>Edit</span>
+  </button>
+  } @if (masterInfo.permissions.assign) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="assignItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-tasks w-4 text-center"></i>
+    <span>Assign</span>
+  </button>
+  } @if (masterInfo.permissions.print) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="printItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-print w-4 text-center"></i>
+    <span>Print</span>
+  </button>
+  } @if (masterInfo.permissions.record_export || contextMenuItem?.downloadables != null) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="recordExport(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-download w-4 text-center"></i>
+    <span>Export</span>
+  </button>
+  } @if (masterInfo.permissions.generate_vector) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="generateVector(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-sync w-4 text-center"></i>
+    <span>Generate Vector</span>
+  </button>
+  } @if (masterInfo.permissions.get_code) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="getCode(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-code w-4 text-center"></i>
+    <span>Get Code</span>
+  </button>
+  } @if (EntityName == 'master_entity') {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="exportEntityAsZip(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-file-export w-4 text-center"></i>
+    <span>Export as Zip</span>
+  </button>
+  } @if (masterInfo.permissions.delete) {
+  <hr class="my-1 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-[#fff5f5] dark:hover:bg-[#1b2e4b]"
+    (click)="deleteItem(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa-regular fa-trash-can w-4 text-center"></i>
+    <span>Delete</span>
+  </button>
+  } @if (masterInfo.permissions.reset_password) {
+  <button
+    type="button"
+    class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
+    (click)="passwordModal(contextMenuItem); closeContextMenu()"
+  >
+    <i class="fa fa-key w-4 text-center"></i>
+    <span>{{ !contextMenuItem.password ? 'Set Password' : 'Reset Password' }}</span>
+  </button>
+  }
 </div>
 }

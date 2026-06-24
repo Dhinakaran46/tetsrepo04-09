@@ -110,11 +110,11 @@
       <div class="pagination items-center justify-between border-t border-gray-200 py-2 md:flex">
         <div class="flex items-center">
           <div class="mr-4">
-            <select id="results-per-page" class="py-1.5 text-xs" [(ngModel)]="pageSize" appDynamicFontSize="body">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+            <select id="results-per-page" class="py-1.5 text-xs" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)" appDynamicFontSize="body">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
             </select>
           </div>
           <div>

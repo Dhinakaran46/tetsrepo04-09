@@ -14,6 +14,7 @@ import {
   QueryList,
   ViewContainerRef,
   AfterViewChecked,
+  AfterViewInit,
   HostListener,
   OnDestroy,
   Optional,
@@ -147,12 +148,13 @@ interface UserSearchConfigurationTemp {
     ]),
   ],
 })
-export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, AfterViewInit, OnDestroy {
   // Add this property to your component class:
-  pendingPopupData: { item: any; entityName: string } | null = null;
+  pendingPopupData: { item: any; entityName: string; col?: any } | null = null;
   private childComponentResolvedModes: Record<string, string> = {};
 
   expandedItem: any = null;
+  selectedRowIndex: number | null = null;
   expandedColumnChildGrid: { uuid: string; colHeader: string; rowIndex: number } | null = null;
   @Input() permissions: boolean = true;
   @Input() unique_id: any;
@@ -201,8 +203,83 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     );
   }
 
+  private gridCfg(key: string): boolean {
+    //console.log(this.masterInfo);
+    const cfg = this.masterInfo?.entity_configurations;
+    //  console.log('[gridCfg]', key, '→ cfg:', cfg, '| value:', cfg?.[key], '| result:', !cfg || cfg[key] == 'yes');
+    return !cfg || cfg[key] == 'yes';
+  }
+
+  get showGridTitle(): boolean {
+    return this.gridCfg('grid_show_title');
+  }
+  get showGlobalSearch(): boolean {
+    return this.gridCfg('grid_show_global_search');
+  }
+  get showAdvancedSearch(): boolean {
+    return this.gridCfg('grid_show_advanced_search');
+  }
+  get showColumnFilter(): boolean {
+    return this.gridCfg('grid_show_column_filter');
+  }
+  get enableStickyActionColumn(): boolean {
+    return this.gridCfg('grid_enable_sticky_action_column');
+  }
+
+  headerContextMenu = {
+    visible: false,
+    x: 0,
+    y: 0,
+    column: null as any,
+    isFilterable: false,
+  };
+
+  headerMenuItems = [
+    { label: 'Sort Ascending', action: 'sortAsc', icon: 'fa fa-arrow-up' },
+    { label: 'Sort Descending', action: 'sortDesc', icon: 'fa fa-arrow-down' },
+    { label: 'Clear Sorting', action: 'clearSort', icon: 'fa fa-times' },
+    { divider: true },
+    { label: 'Filter Column', action: 'filter', icon: 'fa fa-filter', filterOnly: true },
+    { label: 'Clear Filter', action: 'clearFilter', icon: 'fa fa-broom', filterOnly: true },
+    { divider: true },
+    { label: 'Hide Column', action: 'hide', icon: 'fa fa-eye-slash' },
+    /*{ label: 'Auto Fit Width', action: 'autoFit', icon: 'fa fa-ruler' },*/
+    { divider: true },
+    { label: 'Copy Column Values', action: 'copy', icon: 'fa fa-copy' },
+  ];
+
+  onHeaderRightClick(event: MouseEvent, col: any): void {
+    event.preventDefault();
+
+    const menuWidth = 220;
+    const menuHeight = 300;
+
+    let x = event.clientX;
+    let y = event.clientY;
+
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10;
+    }
+
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10;
+    }
+
+    const norm = (v: any) => String(v ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+    const colNorm = norm(col.header);
+    const isFilterable = !!col.header && this.filteredColumns.some(
+      (fc: any) => fc.display_name === col.header || (colNorm && norm(fc.display_name) === colNorm),
+    );
+
+    this.headerContextMenu = {
+      visible: true,
+      x,
+      y,
+      column: col,
+      isFilterable,
+    };
+  }
   get stickyModeClass(): string {
-    console.log('this.isStickyHeaderEnabled', this.isStickyHeaderEnabled);
     return this.isStickyHeaderEnabled ? 'sticky-enabled' : 'sticky-disabled';
   }
 
@@ -225,6 +302,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Output() advancedSearchQuery = new EventEmitter<any>();
   @Output() linkComponentClick = new EventEmitter<{ col: any; item: any }>();
   @Output() selectionChange = new EventEmitter<any>();
+  @Output() rowContextMenu = new EventEmitter<{ item: any; event: MouseEvent }>();
   autocompleteSearchSubject = new Subject<string>();
 
   search: any = '';
@@ -370,6 +448,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @ViewChild('childMasterListContainer', { read: ViewContainerRef }) childMasterListContainer!: ViewContainerRef;
   @ViewChild('columnChildMasterListContainer', { read: ViewContainerRef }) columnChildMasterListContainer!: ViewContainerRef;
   @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
+  @ViewChild('datatableToolbar') toolbarElRef?: ElementRef;
+  @ViewChild('datatableTheadRef') theadElRef?: ElementRef;
+
+  navbarHeight: number = 56;
+  private toolbarResizeObserver?: ResizeObserver;
 
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
@@ -455,14 +538,46 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   ngAfterViewChecked() {
     // if a popup is requested and the container is now available, create it once
     if (this.isViewPopupOpenDirect && this.pendingPopupData && this.popupChildMasterListContainer) {
-      const { item, entityName } = this.pendingPopupData;
+      const { item, entityName, col } = this.pendingPopupData;
       this.pendingPopupData = null; // prevent double-create
-      this.createColumnPopupChildMasterList(item, entityName);
+      this.createColumnPopupChildMasterList(item, entityName, col);
       this.cdr.detectChanges(); // flush changes
     }
   }
 
+  ngAfterViewInit(): void {
+    this.measureNavbarHeight();
+    if (this.toolbarElRef?.nativeElement) {
+      this.toolbarResizeObserver = new ResizeObserver(() => {
+        this.applyStickyTop();
+      });
+      this.toolbarResizeObserver.observe(this.toolbarElRef.nativeElement);
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.measureNavbarHeight();
+    this.applyStickyTop();
+  }
+
+  private applyStickyTop(): void {
+    if (this.tableLevel !== 0 || !this.theadElRef?.nativeElement) return;
+    const toolbarH: number = this.toolbarElRef?.nativeElement?.offsetHeight ?? 0;
+    const top = this.navbarHeight + toolbarH;
+    (this.theadElRef.nativeElement as HTMLElement).style.top = `${top}px`;
+  }
+
+  private measureNavbarHeight(): void {
+    const header = document.querySelector('header');
+    if (header) {
+      const h = header.offsetHeight;
+      if (h > 0) this.navbarHeight = h;
+    }
+  }
+
   ngOnDestroy(): void {
+    this.toolbarResizeObserver?.disconnect();
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
     });
@@ -539,30 +654,22 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     // 1) Resolve ternary/conditional expressions first:
     //    {{ condition ? trueValue : falseValue }} or {{ some.prop }}
     const exprRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    processedHtml = processedHtml.replace(exprRegex, (_m, expression: string) => {
-      const exp = expression.trim();
+    processedHtml = processedHtml.replace(/\{\{\s*(.+?)\s*\}\}/g, (_m, expression: string) => {
+      try {
+        const result = new Function(
+          'context',
+          `
+        with(context) {
+          return ${expression};
+        }
+        `
+        )(context);
 
-      // ternary?
-      const qIdx = exp.indexOf('?');
-      const cIdx = exp.lastIndexOf(':');
-      if (qIdx > -1 && cIdx > qIdx) {
-        const condition = exp.slice(0, qIdx).trim();
-        const truePart = exp.slice(qIdx + 1, cIdx).trim();
-        const falsePart = exp.slice(cIdx + 1).trim();
-
-        const condResult = this.evaluateCondition(condition, context);
-
-        // resolve each branch as either literal, path, or raw
-        const chosen = condResult ? truePart : falsePart;
-        const val = this.getContextValue(chosen, context);
-        return val === undefined
-          ? chosen.replace(/^['"]|['"]$/g, '') // strip quotes if they used them
-          : this.formatHtmlTemplateValue(val);
+        return result == null ? '' : this.formatHtmlTemplateValue(result);
+      } catch (e) {
+        console.error('Expression error:', expression, e);
+        return '';
       }
-
-      // non-ternary: try to resolve as path/literal (supports row_object.name, value, etc.)
-      const v = this.getContextValue(exp, context);
-      return v !== undefined && v !== null ? this.formatHtmlTemplateValue(v) : '';
     });
 
     // (optional) final pass for the explicit {{ value }} or {{ key }} placeholders
@@ -769,6 +876,37 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (this.columnChildMasterListContainer) {
       this.columnChildMasterListContainer.clear();
     }
+  }
+
+  /**
+   * Select table row for highlighting (like Excel row selection)
+   */
+  selectTableRow(rowIndex: number) {
+    this.selectedRowIndex = rowIndex;
+  }
+
+  get hasRowActions(): boolean {
+    const perms = this.masterInfo?.permissions;
+    if (!perms) return false;
+    return Object.values(commonConfig.ACTION_TYPE).some((action) => !!perms[action as string]);
+  }
+
+  onRowContextMenu(event: MouseEvent, item: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.hasRowActions) return;
+    this.rowContextMenu.emit({ item, event });
+  }
+
+  onRowEnterKey(event: Event, item: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.hasRowActions) return;
+    const syntheticEvent = new MouseEvent('contextmenu', {
+      clientX: (event.target as HTMLElement)?.getBoundingClientRect()?.right ?? 0,
+      clientY: (event.target as HTMLElement)?.getBoundingClientRect()?.top ?? 0,
+    });
+    this.rowContextMenu.emit({ item, event: syntheticEvent });
   }
 
   ngOnInit() {
@@ -1116,7 +1254,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const data = this.filteredColumns.find((col) => col.field === column);
     const columnType = data?.field_type_id;
     this.filterConditions[index].clause_type = data?.clause_type || 'where';
-    const operator = data?.enum_values ? 'in' : this.searchConditions[columnType][0].value;
+    const operator = data?.enum_values ? 'in' : this.searchConditions[columnType]?.[0]?.value ?? '=';
     this.filterConditions[index].operator = operator;
     this.filterConditions[index].value = '';
     this.filterConditions[index].enum_values = [];
@@ -1195,8 +1333,86 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   openAdvancedFilterMenu() {
+    console.log('openAdvancedFilterMenu');
     this.closeToolbarMenus('filter');
     this.syncDraftFiltersFromApplied();
+  }
+
+  async openAdvancedFilterMenuForColumn(col: any): Promise<void> {
+    this.openAdvancedFilterMenu();
+
+    const norm = (v: any) =>
+      String(v ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, '');
+    const colNorm = norm(col.header);
+
+    const columnMatch = (src: any): boolean => {
+      if (!col.header) return false;
+      if (src.display_name === col.header) return true;
+      if (colNorm && norm(src.display_name) === colNorm) return true;
+      return false;
+    };
+
+    // 1. Try filteredColumns (already-searchable columns).
+    let matchedColumn: any = this.filteredColumns.find(columnMatch);
+
+    // 2. Try all selectcolumns (searchable or not).
+    if (!matchedColumn) {
+      const selectCol = this.selectcolumns.find(columnMatch);
+
+      if (selectCol) {
+        matchedColumn = {
+          colSearchHide: false,
+          ...selectCol,
+          field: selectCol.field || selectCol.field_name || col.field_name || col.header,
+          title: this.translate.instant(col.header) || selectCol.title || col.header,
+        };
+      } else {
+        // 3. Last resort: build directly from the headercolumn entry.
+        //    col.header is proven to be the data field key (master-list line 2286).
+        //    col.field_type_id is confirmed on headercolumns (master-list line 2287).
+        const fieldId = col.header;
+        if (!fieldId) return;
+        matchedColumn = {
+          colSearchHide: false,
+          field: fieldId,
+          field_name: fieldId,
+          display_name: col.header,
+          title: this.translate.instant(col.header) || col.header,
+          field_type_id: col.field_type_id ?? 1,
+          clause_type: col.clause_type || 'where',
+          searchable: false,
+          enum_values: col.enum_values ?? null,
+        };
+      }
+
+      // Inject so the <select> dropdown can render and bind the new option.
+      this.filteredColumns = [...this.filteredColumns, matchedColumn];
+    }
+
+    if (!matchedColumn?.field) return;
+
+    // Always add a new row (allows stacking multiple conditions for same column).
+    // Reuse the trailing empty condition or append a new one.
+    const lastIdx = this.filterConditions.length - 1;
+    const lastCondition = this.filterConditions[lastIdx];
+    let targetIndex: number;
+    if (lastCondition && !lastCondition.field) {
+      targetIndex = lastIdx;
+    } else {
+      this.addCondition();
+      targetIndex = this.filterConditions.length - 1;
+    }
+    this.filterConditions[targetIndex].field = matchedColumn.field;
+    this.cdr.detectChanges();
+    try {
+      await this.onColumnChange(new Event('change'), targetIndex);
+    } catch {
+      // operator loading failure is non-fatal; column is already pre-selected above
+    }
+    this.cdr.detectChanges();
   }
 
   toggleColumnsMenu(event?: Event): void {
@@ -2823,6 +3039,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    this.headerContextMenu.visible = false;
     const path = (event.composedPath?.() || []) as Array<EventTarget>;
     const clickedInsideNgSelect = path.some((node) => {
       const element = node as HTMLElement;
@@ -3708,11 +3925,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.loadingpopup = true;
 
     // Store the parameters for use after the view is initialized
-    this.pendingPopupData = { item, entityName: col.link_action };
+    this.pendingPopupData = { item, entityName: col.link_action, col };
 
     // Use setTimeout to ensure the DOM is updated and ViewChild is available
     setTimeout(() => {
-      this.createColumnPopupChildMasterList(item, col.link_action);
+      this.createColumnPopupChildMasterList(item, col.link_action, col);
     }, 100); // Increased delay to ensure DOM is ready
   }
   toggleColumnChildGrid(item: any, col: any, row_index: number) {
@@ -3732,7 +3949,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
     if (col?.link_type === 'child_grid') {
       setTimeout(() => {
-        this.createColumnChildMasterList(item, col.link_action);
+        this.createColumnChildMasterList(item, col.link_action, col);
       }, 250);
     }
   }
@@ -3759,7 +3976,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const resolvedMode = this.getChildComponentMode(col);
     if (resolvedMode === 'popup_grid') {
       setTimeout(() => {
-        this.createColumnChildMasterList(item, col.link_action);
+        this.createColumnChildMasterList(item, col.link_action, col);
       }, 250);
     }
   }
@@ -3875,7 +4092,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       const routeInfo = userData?.unorgmenuList?.find((item: any) => item?.entity_name === entityName && item?.component_class_name);
       const componentClassName = routeInfo?.component_class_name;
 
-      if (componentClassName === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE) {
+      if (componentClassName === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
         return 'popup_grid';
       }
 
@@ -3936,7 +4153,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     video.pause();
   }
 
-  createColumnPopupChildMasterList(item: any, entityName: string) {
+  createColumnPopupChildMasterList(item: any, entityName: string, col?: any) {
     // Add safety check
     if (!this.popupChildMasterListContainer) {
       this.loadingpopup = false;
@@ -3963,12 +4180,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     });
     componentRef.instance.grid_params = gridParams;
 
+    const lineItemConfig = col?.line_item_configurations;
+    if (lineItemConfig && typeof lineItemConfig === 'object') {
+      componentRef.instance.line_item_configurations = lineItemConfig;
+    }
+
     setTimeout(() => {
       this.loadingpopup = false;
       this.cdr.detectChanges();
     }, 500);
   }
-  createColumnChildMasterList(item: any, entityName: string) {
+  createColumnChildMasterList(item: any, entityName: string, col?: any) {
     if (!this.columnChildMasterListContainer) return;
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
@@ -3991,6 +4213,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       }
     });
     componentRef.instance.grid_params = gridParams;
+
+    const lineItemConfig = col?.line_item_configurations;
+    if (lineItemConfig && typeof lineItemConfig === 'object') {
+      componentRef.instance.line_item_configurations = lineItemConfig;
+    }
   }
 
   getParentGridFilterContext() {
@@ -4018,6 +4245,63 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       columns: [...ancestorColumns, ...ownColumns],
       grid_params: this.getCombinedGridParams(),
     };
+  }
+
+  onHeaderMenuAction(action: any) {
+    const col = this.headerContextMenu.column;
+
+    switch (action) {
+      case 'sortAsc': {
+        col.sortDirection = 'asc';
+        const keyAsc = this.getColumnUniqueKey(col);
+        if (!this.activeSortOrder.includes(keyAsc)) {
+          this.activeSortOrder.push(keyAsc);
+        }
+        this.columnSort.emit({ ...col, sortColumns: this.getSortedColumnsByPriority() });
+        break;
+      }
+
+      case 'sortDesc': {
+        col.sortDirection = 'desc';
+        const keyDesc = this.getColumnUniqueKey(col);
+        if (!this.activeSortOrder.includes(keyDesc)) {
+          this.activeSortOrder.push(keyDesc);
+        }
+        this.columnSort.emit({ ...col, sortColumns: this.getSortedColumnsByPriority() });
+        break;
+      }
+
+      case 'clearSort': {
+        col.sortDirection = '';
+        const keyClear = this.getColumnUniqueKey(col);
+        this.activeSortOrder = this.activeSortOrder.filter((k) => k !== keyClear);
+        this.columnSort.emit({ ...col, sortColumns: this.getSortedColumnsByPriority() });
+        break;
+      }
+
+      case 'filter':
+        this.openAdvancedFilterMenuForColumn(col);
+        break;
+
+      case 'clearFilter':
+        this.clearFilters();
+        break;
+
+      case 'hide':
+        col.colFilterHide = true;
+        break;
+
+      /*case 'autoFit':
+        console.log('Auto fit', col);
+        break;*/
+
+      case 'copy':
+        const columnValues = this.items.map((item: any) => item[col.header] ?? '').join('\n');
+        navigator.clipboard.writeText(columnValues);
+        break;
+    }
+
+    this.headerContextMenu.visible = false;
   }
 
   private replaceSearchTermInObject(obj: any, searchText: string): any {

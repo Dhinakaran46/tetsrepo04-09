@@ -4,8 +4,8 @@
 }
 
 .bg-primary-light {
-  background-color: rgba(var(--primary-rgb), 0.1);
-  border-left: 3px solid var(--primary);
+  background-color: #eaf1ff;
+  border-left: 3px solid var(--app-primary-color, #4361ee);
 }
 
 .accordion-content {
@@ -13,8 +13,8 @@
 }
 
 .btn {
-  @apply px-4 py-2 rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2;
-  
+  @apply rounded-md px-4 py-2 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2;
+
   &-primary {
     @apply bg-primary text-white hover:opacity-90 focus:ring-primary;
   }
@@ -23,6 +23,6 @@
 // Dark mode support
 :host-context(.dark) {
   .bg-primary-light {
-    background-color: rgba(var(--primary-rgb), 0.2);
+    background-color: #1b2e4b;
   }
 }

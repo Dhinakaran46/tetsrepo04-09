@@ -149,12 +149,25 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
               this.formControl.setValue(response.data.records[0].value ?? null, { emitEvent: true });
               hasSetFirstValue = true; // Prevent subsequent value setting
             }
-            return response.data.records.map((record: any) => ({
-              ...record,
-              value: record[valueColumn] || record['value'],
-              label: record[labelColumn] || record['label'],
-              uuid: record['uuid'] || record['uuid'],
-            }));
+            const options = response.data.records.map((record: any) => {
+              const val = record[valueColumn] !== undefined ? record[valueColumn] : record['value'] !== undefined ? record['value'] : record['id'];
+              const lbl =
+                record[labelColumn] !== undefined
+                  ? record[labelColumn]
+                  : record['label'] !== undefined
+                  ? record['label']
+                  : record['concat'] !== undefined
+                  ? record['concat']
+                  : record['name'];
+              return {
+                ...record,
+                value: val,
+                label: lbl,
+                uuid: record['uuid'] || record['uuid'],
+              };
+            });
+            this.resolveStringValuesToIds(options);
+            return options;
           }
           return [];
         }),
@@ -244,6 +257,42 @@ export class FormlyFieldSelectFromDbComponent extends FieldType implements OnIni
     if (componentInstance && typeof componentInstance.openNestedFormModal === 'function') {
       // Call openNestedFormModal with uuid for edit mode, entityType as 'popup_edit'
       componentInstance.openNestedFormModal(entityName, fieldKey, modalConfig, option.uuid, 'popup_edit');
+    }
+  }
+
+  private resolveStringValuesToIds(options: any[]) {
+    const val = this.formControl?.value;
+    if (val === null || val === undefined || val === '') return;
+
+    const mapSingleValue = (v: any) => {
+      if (typeof v === 'string') {
+        const found = options.find((opt: any) => {
+          const labelStr = String(opt.label || '');
+          const nameStr = String(opt.name || '');
+          const valStr = String(v);
+
+          if (labelStr === valStr || nameStr === valStr) return true;
+          if (labelStr.includes('___') && labelStr.split('___')[0] === valStr) return true;
+          if (labelStr.toLowerCase().startsWith(valStr.toLowerCase())) return true;
+          return false;
+        });
+        if (found) {
+          return found.id !== undefined ? found.id : found.value;
+        }
+      }
+      return v;
+    };
+
+    if (Array.isArray(val)) {
+      const mapped = val.map(mapSingleValue);
+      if (JSON.stringify(mapped) !== JSON.stringify(val)) {
+        this.formControl.setValue(mapped, { emitEvent: false });
+      }
+    } else {
+      const mapped = mapSingleValue(val);
+      if (mapped !== val) {
+        this.formControl.setValue(mapped, { emitEvent: false });
+      }
     }
   }
 }

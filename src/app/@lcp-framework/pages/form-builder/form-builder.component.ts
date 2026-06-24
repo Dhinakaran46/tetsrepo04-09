@@ -1,4 +1,16 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChildren, QueryList, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChildren,
+  QueryList,
+  AfterViewInit,
+  ViewChild,
+  ViewContainerRef,
+  ComponentRef,
+} from '@angular/core';
 import { initialState } from '../../../store/index.reducer';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { GridApiService } from '../../service/common/grid.service';
@@ -16,6 +28,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { FormlyFieldSelectFromDbComponent } from '../../formly/components/formly-field-select-from-db/formly-field-select-from-db.component';
+// NOTE: TreeBuilderComponent is loaded lazily to break the circular dependency
+// (TreeBuilder imports FormBuilder which would import TreeBuilder back)
 
 @Component({
   selector: 'app-form-builder',
@@ -58,6 +72,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
   public nestedFormFieldKey: string | null = null;
   public nestedFormModalConfig: any = null;
   public nestedModalEntityType: 'popup_add' | 'popup_edit' = 'popup_add';
+  public isNestedTreeBuilder = false;
+  /** Lazily loaded TreeBuilderComponent ref – created via ViewContainerRef to avoid circular static import */
+  private _treeBuilderRef: ComponentRef<any> | null = null;
+  @ViewChild('treeBuilderHost', { read: ViewContainerRef }) treeBuilderHost!: ViewContainerRef;
 
   processStatuses: any = {
     submitted: {
@@ -86,6 +104,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     },
   };
 
+  @Input() popupName: any;
   @Input() gridParams: any;
   @Input() uuid!: string | null;
   @Input() entityName!: string;
@@ -143,6 +162,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
         this.originaluid = value;
         this.unique_id = value;
+
+        if (this.popupName === 'popup_add') {
+          this.unique_id = null; // Reset unique_id for popup_add to ensure a new record is created
+        }
 
         if (Object.keys(this.routeGParams).length > 0) {
           this.model = { ...this.model, ...this.routeGParams };
@@ -378,8 +401,54 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           }
         );
       } else {
-        observer.next([]);
-        observer.complete();
+        const props = field?.props || field?.templateOptions || {};
+        const tableName = props.table || props.primary_table;
+        const valueColumn = props.valueColumn;
+        const labelColumn = props.labelColumn;
+        if (tableName && valueColumn && labelColumn) {
+          const searchAll = props.search_all
+            ? JSON.parse(JSON.stringify(props.search_all))
+            : [{ column_name: `${tableName}.status_id`, operator: '=', value: '1' }];
+          const listParams = {
+            company_id: 1,
+            primary_table: tableName,
+            start_index: 0,
+            limit_range: 1000,
+            select_columns: [
+              [valueColumn, 'value'],
+              [labelColumn, 'label'],
+            ],
+            search_all: searchAll,
+          };
+
+          this.gridApiService.getAllList(listParams).subscribe(
+            (response) => {
+              if (response.status && response.code === 200) {
+                const records = response.data?.records || [];
+                const options = records.map((record: any) => ({
+                  ...record,
+                  value: record[valueColumn] || record['value'],
+                  label: record[labelColumn] || record['label'],
+                }));
+                this.listDatas[key] = options;
+                if (field && field.props) {
+                  field.props.options = options;
+                }
+                observer.next(options);
+                observer.complete();
+              } else {
+                observer.next([]);
+                observer.complete();
+              }
+            },
+            (error) => {
+              observer.error(error);
+            }
+          );
+        } else {
+          observer.next([]);
+          observer.complete();
+        }
       }
     });
   }
@@ -452,7 +521,7 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
     // Synchronize form control values to model before proceeding
     this.model = this.deepMerge(this.model, this.form.getRawValue());
-
+    this.sanitizeSelfReferencingParentIds(this.model);
     const uploadObservables = this.collectFileUploadObservables();
     if (uploadObservables.length === 0) {
       // If there are no files to upload, directly proceed with the transaction
@@ -467,6 +536,63 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
           if (this.uploadedFiles.length) this.deleteImageByName(this.uploadedFiles);
         },
       });
+    }
+  }
+
+  private findIdByUuid(obj: any, targetUuid: string): number | undefined {
+    if (typeof obj !== 'object' || obj === null) return undefined;
+    if (obj.uuid === targetUuid && obj.id !== undefined) {
+      return obj.id;
+    }
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null) {
+        const foundId = this.findIdByUuid(obj[key], targetUuid);
+        if (foundId !== undefined) return foundId;
+      }
+    }
+    return undefined;
+  }
+
+  private sanitizeSelfReferencingParentIds(obj: any, currentPath: string = '') {
+    if (typeof obj !== 'object' || obj === null) return;
+    const parentIdColumn = this.formEntity?.entity_configurations?.parent_id_column || 'parent_id';
+
+    if (obj[parentIdColumn] !== undefined) {
+      let recordId = obj.id;
+      if (recordId === undefined) {
+        const pathForId = currentPath ? `${currentPath}.id` : 'id';
+        recordId = this.getNestedValueFromPath(this.defaultData, pathForId);
+      }
+      if (recordId === undefined && this.unique_id) {
+        recordId = this.findIdByUuid(this.defaultData, this.unique_id);
+      }
+      if (recordId === undefined) {
+        if (this.unique_id && !isNaN(Number(this.unique_id))) {
+          recordId = Number(this.unique_id);
+        }
+      }
+
+      const isSelfOrDescendant =
+        (recordId !== undefined && recordId !== null && String(recordId) === String(obj[parentIdColumn])) ||
+        (this.defaultData?.excluded_parent_ids &&
+          Array.isArray(this.defaultData.excluded_parent_ids) &&
+          this.defaultData.excluded_parent_ids.some((id: any) => String(id) === String(obj[parentIdColumn])));
+
+      if (isSelfOrDescendant && obj[parentIdColumn] !== null) {
+        obj[parentIdColumn] = null;
+        const controlPath = currentPath ? `${currentPath}.${parentIdColumn}` : parentIdColumn;
+        const control = this.form.get(controlPath);
+        if (control) {
+          control.setValue(null, { emitEvent: false });
+        }
+      }
+    }
+
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null) {
+        const nextPath = currentPath ? `${currentPath}.${key}` : key;
+        this.sanitizeSelfReferencingParentIds(obj[key], nextPath);
+      }
     }
   }
 
@@ -1741,6 +1867,9 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.noNestedFormPermission = false;
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
     const unorgmenuList = userData?.unorgmenuList || [];
+
+    const isTree = unorgmenuList.some((item: any) => item.entity_name === entityName && item.component_class_name === 'tree_builder_module');
+    this.isNestedTreeBuilder = isTree;
     let menuPermissionId = null;
     if (unorgmenuList && Array.isArray(unorgmenuList)) {
       // For edit mode, check for 'edit' or 'popup_edit' permission; for add, check 'add' or 'popup_add'
@@ -1775,6 +1904,34 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.nestedFormFieldKey = fieldKey || null;
     this.nestedFormModalConfig = { ...(modalConfig || {}), open: true };
     // Do NOT call this.resetForm() here!
+
+    // For tree-builder entities, dynamically create the component after the modal is open
+    if (isTree) {
+      // Use a microtask so the #treeBuilderHost container is in the DOM
+      setTimeout(() => this.renderNestedTreeBuilder(), 0);
+    }
+  }
+
+  /** Dynamically creates TreeBuilderComponent inside #treeBuilderHost to avoid circular static imports */
+  private async renderNestedTreeBuilder(): Promise<void> {
+    if (!this.treeBuilderHost) return;
+    this.treeBuilderHost.clear();
+    this._treeBuilderRef = null;
+
+    const { TreeBuilderComponent } = await import('../tree-builder/tree-builder.component');
+    const ref = this.treeBuilderHost.createComponent(TreeBuilderComponent);
+
+    // Bind @Inputs
+    ref.setInput('entityName', this.nestedFormEntityName);
+    ref.setInput('isNested', true);
+    ref.setInput('fieldKey', this.nestedFormFieldKey);
+
+    // Bind @Outputs
+    ref.instance.closeModal.subscribe((event: any) => this.onNestedFormSubmitted(event));
+    ref.instance.nestedFormSuccess.subscribe((event: any) => this.onNestedFormSuccess(event));
+
+    ref.changeDetectorRef.detectChanges();
+    this._treeBuilderRef = ref;
   }
 
   // Method to close nested form-builder modal
@@ -1785,6 +1942,14 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.nestedFormEntityName = null;
     this.nestedFormUuid = null;
     this.nestedModalEntityType = 'popup_add'; // Always reset modal mode to add
+    // Destroy the lazy tree-builder instance if one was created
+    if (this._treeBuilderRef) {
+      this._treeBuilderRef.destroy();
+      this._treeBuilderRef = null;
+    }
+    if (this.treeBuilderHost) {
+      this.treeBuilderHost.clear();
+    }
   }
 
   // Method to handle nested form submission
@@ -1812,9 +1977,25 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
     this.toastr.success('Record created successfully. Form data refreshed.');
   }
 
+  private cloneFields(fields: FormlyFieldConfig[]): FormlyFieldConfig[] {
+    return fields.map((field) => {
+      const cloned: any = { ...field };
+      if (cloned.fieldGroup) {
+        cloned.fieldGroup = this.cloneFields(cloned.fieldGroup);
+      }
+      if (cloned.fieldArray) {
+        cloned.fieldArray = {
+          ...cloned.fieldArray,
+          fieldGroup: cloned.fieldArray.fieldGroup ? this.cloneFields(cloned.fieldArray.fieldGroup) : undefined,
+        };
+      }
+      return cloned;
+    });
+  }
+
   public refreshSelectFromDbOptions() {
-    // Deep clone the fields array to force Angular and Formly to re-render the form
-    this.fields = JSON.parse(JSON.stringify(this.fields));
+    // Clone fields while preserving functions to force Angular/Formly re-render without losing validators
+    this.fields = this.cloneFields(this.fields);
     this.cdRef.detectChanges();
   }
 
@@ -1846,42 +2027,57 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
       const fieldConfig = this.findFieldConfigByKey(this.fields, event.fieldKey);
       // Fetch and wait for options to be available before updating value
       this.fetchList(fieldConfig, event.fieldKey, true).subscribe(() => {
-        // Debug: log all keys and char codes
-
-        Object.keys(this.listDatas).forEach((k) => {});
         // Normalize key by trimming whitespace
         const normalizedKey = event.fieldKey.trim();
         const options = this.listDatas[normalizedKey] || [];
 
-        // Always set the value immediately
-        this.model[event.fieldKey] = event.value;
+        let finalValue = event.value;
+        const isMultiple = fieldConfig?.props?.['multiple'] || fieldConfig?.templateOptions?.['multiple'] || false;
+
+        if (Array.isArray(options)) {
+          const labelColumn = fieldConfig?.props?.['labelColumn'] || fieldConfig?.templateOptions?.['labelColumn'];
+          const valueColumn = fieldConfig?.props?.['valueColumn'] || fieldConfig?.templateOptions?.['valueColumn'];
+          const found = options.find((opt: any) => {
+            const labelStr = String(opt.label || opt.concat || opt.name || (labelColumn ? opt[labelColumn] : '') || '');
+            const nameStr = String(opt.name || '');
+            const valStr = String(event.value);
+
+            if (labelStr === valStr || nameStr === valStr) return true;
+            if (labelStr.includes('___') && labelStr.split('___')[0] === valStr) return true;
+            if (labelStr.toLowerCase().startsWith(valStr.toLowerCase())) return true;
+            return false;
+          });
+          if (found) {
+            finalValue = found.id !== undefined ? found.id : found.value !== undefined ? found.value : valueColumn ? found[valueColumn] : undefined;
+            if (finalValue === undefined) {
+              finalValue = event.value;
+            }
+          }
+        }
+
+        let updatedValue: any;
+        if (isMultiple) {
+          const currentValue = fieldConfig?.formControl?.value;
+          let currentArray: any[] = [];
+          if (Array.isArray(currentValue)) {
+            currentArray = currentValue;
+          } else if (currentValue !== undefined && currentValue !== null) {
+            currentArray = [currentValue];
+          }
+          updatedValue = currentArray.includes(finalValue) ? currentArray : [...currentArray, finalValue];
+        } else {
+          updatedValue = finalValue;
+        }
+
+        this.model[event.fieldKey] = updatedValue;
         const control = this.form.get(event.fieldKey);
         if (control) {
-          control.setValue(event.value);
+          control.setValue(updatedValue);
         }
-        const currentValue = fieldConfig?.formControl?.value;
         if (fieldConfig?.formControl) {
-          let updatedValue: any[] = [];
-          if (Array.isArray(currentValue)) {
-            updatedValue = currentValue.includes(event.value) ? currentValue : [...currentValue, event.value];
-          } else if (currentValue !== undefined && currentValue !== null) {
-            updatedValue = [currentValue, event.value];
-          } else {
-            updatedValue = [event.value];
-          }
-          if (Array.isArray(options)) {
-            updatedValue = updatedValue.map((val) => {
-              if (typeof val === 'string') {
-                const found = options.find((opt: any) => opt.label === val || opt.name === val);
-                if (found) {
-                  return found.id !== undefined ? found.id : found.value;
-                }
-              }
-              return val;
-            });
-          }
           fieldConfig.formControl.setValue(updatedValue);
         }
+
         // Always close the modal after success
         this.closeNestedFormModal();
       });

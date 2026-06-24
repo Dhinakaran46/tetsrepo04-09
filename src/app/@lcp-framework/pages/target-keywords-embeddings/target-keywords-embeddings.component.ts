@@ -265,6 +265,12 @@ export class TargetKeywordsEmbeddingsComponent implements OnInit {
     itemsArray.push(group);
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize = +size;
+    this.currentPage = 1;
+    this.updateFilteredControls();
+  }
+
   updateFilteredControls() {
     const controls = this.getItemControls();
     controls.forEach((control) => {

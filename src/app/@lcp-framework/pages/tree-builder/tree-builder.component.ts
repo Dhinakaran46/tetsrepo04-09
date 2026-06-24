@@ -55,8 +55,15 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   private destroy$ = new Subject<void>();
   @Input() grid_params: any = null;
   @Input() uuid: any = null;
+  @Input() entityName: string | null = null;
+  @Input() isNested: boolean = false;
+  @Input() fieldKey: string | null = null;
   @Output() deleteTriggred = new EventEmitter<any>();
+  @Output() nestedFormSuccess = new EventEmitter<any>();
+  @Output() closeModal = new EventEmitter<any>();
   pageInfo: any;
+  searchQuery: string = '';
+
   treeData: any[] = [];
   flatData: any[] = [];
   treeview: string[] = [];
@@ -126,20 +133,38 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   async ngOnInit() {
     this.initStore();
     this.config = JSON.parse(this.localStorageService.getData('config'));
-    this.route.data.pipe(takeUntil(this.destroy$)).subscribe((data) => {
-      this.pageInfo = data['pageInfo'];
+    if (this.entityName) {
+      this.EntityName = this.entityName;
+      const routes = await this.routeUpdateService.getPageInfo(this.entityName);
+      this.pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
       if (this.pageInfo) {
         this.permissions = this.pageInfo.permissions;
-        this.EntityName = this.pageInfo.fullEntity;
         this.primmaryTable = this?.pageInfo?.additionalData?.primary_table || null;
         if (this.pageInfo?.children?.['add']?.entity_name) {
           this.setFormDefaultData(this.pageInfo?.children?.['add']?.entity_name);
         }
       }
-    });
+      const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
+      this.setupPageInfo(this.pageInfo, defaultPermission);
+    } else {
+      this.route.data.pipe(takeUntil(this.destroy$)).subscribe((data) => {
+        this.pageInfo = data['pageInfo'];
+        if (this.pageInfo) {
+          this.permissions = this.pageInfo.permissions;
+          this.EntityName = this.pageInfo.fullEntity;
+          this.primmaryTable = this?.pageInfo?.additionalData?.primary_table || null;
+          if (this.pageInfo?.children?.['add']?.entity_name) {
+            this.setFormDefaultData(this.pageInfo?.children?.['add']?.entity_name);
+          }
+        }
+      });
+    }
   }
 
   async ngAfterContentInit() {
+    if (this.entityName) {
+      return; // Already initialized in ngOnInit
+    }
     if (this.EntityName) {
       const routes = await this.routeUpdateService.getPageInfo(this.EntityName);
       const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
@@ -301,7 +326,11 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       next: (res: any) => {
         if (res.code === 200 && res.status) {
           this.flatData = res.data.records;
-          this.treeData = this.buildHierarchy(this.flatData);
+          if (this.searchQuery) {
+            this.applyTreeFilter();
+          } else {
+            this.treeData = this.buildHierarchy(this.flatData);
+          }
           this.cdr.markForCheck();
         }
       },
@@ -320,14 +349,16 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   buildHierarchy(flat: any[]): any[] {
     const map: any = {};
     const roots: any[] = [];
+    const parentIdColumn = this.pageInfo?.entity_configurations?.parent_id_column || 'parent_id';
 
     flat.forEach((item) => {
       map[item.id] = { ...item, children: [] };
     });
 
     flat.forEach((item) => {
-      if (item.parent_id && map[item.parent_id]) {
-        map[item.parent_id].children.push(map[item.id]);
+      const parentIdVal = item[parentIdColumn];
+      if (parentIdVal && map[parentIdVal]) {
+        map[parentIdVal].children.push(map[item.id]);
       } else {
         roots.push(map[item.id]);
       }
@@ -345,6 +376,10 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
         this.formUuid = node.uuid;
         this.formEntityName = this.pageInfo.children?.['edit']?.entity_name || this.pageInfo.fullEntity;
         this.formEntityType = 'edit';
+        const excludedIds = this.getRecursiveIds(node);
+        this.formDefaultData = {
+          excluded_parent_ids: excludedIds,
+        };
         this.showForm = true;
         this.cdr.markForCheck();
       }, 0);
@@ -356,14 +391,15 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
 
   setParentId(obj: any, parentId: any = null) {
     if (typeof obj !== 'object' || obj === null) return;
+    const parentIdColumn = this.pageInfo?.entity_configurations?.parent_id_column || 'parent_id';
 
     for (const key in obj) {
       const value = obj[key];
 
       if (typeof value === 'object' && value !== null) {
-        // set parent_id if exists
-        if ('parent_id' in value) {
-          value.parent_id = parentId;
+        // set parent_id column if exists
+        if (parentIdColumn in value) {
+          value[parentIdColumn] = parentId;
         }
 
         // recursive call
@@ -385,7 +421,10 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
       this.formUuid = null;
       this.formEntityName = this.pageInfo.children?.['add']?.entity_name || this.pageInfo.fullEntity;
       this.formEntityType = 'add';
-      this.formDefaultData = { parent_id: null };
+      const parentIdColumn = this.pageInfo?.entity_configurations?.parent_id_column || 'parent_id';
+      const defaultData: any = {};
+      defaultData[parentIdColumn] = null;
+      this.formDefaultData = defaultData;
       this.showForm = true;
       this.cdr.markForCheck();
     }, 0);
@@ -426,6 +465,63 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
     if (this.formType === 'add') {
       this.showForm = false;
     }
+    if (this.isNested) {
+      this.nestedFormSuccess.emit(event);
+    }
+    this.cdr.markForCheck();
+  }
+
+  onSearchQueryChange() {
+    this.applyTreeFilter();
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.applyTreeFilter();
+  }
+
+  applyTreeFilter() {
+    if (!this.searchQuery || this.searchQuery.trim() === '') {
+      this.treeData = this.buildHierarchy(this.flatData);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const query = this.searchQuery.toLowerCase().trim();
+    const searchFields = ['name', 'code', 'title', 'label'];
+
+    const matchesNode = (node: any): boolean => {
+      return searchFields.some((field) => node[field] && String(node[field]).toLowerCase().includes(query));
+    };
+
+    const fullHierarchy = this.buildHierarchy(this.flatData);
+    const nodesToExpand = new Set<string>();
+
+    const filterNodesRecursive = (nodes: any[]): any[] => {
+      const result: any[] = [];
+      for (const node of nodes) {
+        const matchesSelf = matchesNode(node);
+        const filteredChildren = filterNodesRecursive(node.children || []);
+
+        if (matchesSelf || filteredChildren.length > 0) {
+          const nodeCopy = { ...node, children: filteredChildren };
+          result.push(nodeCopy);
+          if (filteredChildren.length > 0) {
+            nodesToExpand.add(node.id.toString());
+          }
+        }
+      }
+      return result;
+    };
+
+    this.treeData = filterNodesRecursive(fullHierarchy);
+
+    nodesToExpand.forEach((idStr) => {
+      if (!this.treeview.includes(idStr)) {
+        this.treeview.push(idStr);
+      }
+    });
+
     this.cdr.markForCheck();
   }
 
@@ -529,7 +625,7 @@ export class TreeBuilderComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   onDeleteNode(item: any) {
-    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE) {
+    if (this.masterInfo.children.delete && this.masterInfo.children.delete.component_class_name === commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name) {
       if (this.grid_records_delete == 'true') {
         const procedureParams = { proc_name: 'check_for_related_records', params: { entity_name: this.listQuery.entity_name, record_id: item.id } };
         this.commonService.procedureCall(procedureParams).subscribe({

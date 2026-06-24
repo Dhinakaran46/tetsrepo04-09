@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { initialState } from '../../../store/index.reducer';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
+
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { IconXComponent } from '../../shared/icon/icon-x';
 import { IconSendComponent } from '../../shared/icon/icon-send';
@@ -37,11 +38,7 @@ export function viewMandatoryValidator(): ValidatorFn {
 @Component({
   selector: 'app-add-master-entity',
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    MonacoEditorModule,
-    ReactiveFormsModule,
-  ],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule],
   templateUrl: './master-entity.component.html',
   styleUrl: './master-entity.component.scss',
   animations: [
@@ -92,19 +89,20 @@ export class MasterEntityComponent implements OnInit {
   };
 
   update_json_schema: any = {
-    // it will be removed
-    action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert'],
-    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5'],
+    action: ['update', 'hard_delete', 'insert', 'update', 'insert', 'hard_delete'],
+    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions', 'permissions'],
+    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5', 'table6'],
     data: {
       table1: [],
       table3: [],
+      table4: [],
       table5: [],
     },
     conditions: {
       table1: [],
       table2: [],
       table4: [],
+      table6: [],
     },
   };
 
@@ -1047,6 +1045,202 @@ export class MasterEntityComponent implements OnInit {
             ],
           },
         },
+        {
+          name: 'validator_example',
+          comments: [],
+          data: {
+            model: {
+              demo: {
+                email: null,
+                comments: null,
+                coupon_code: null,
+                employee_id: null,
+                website: null,
+                username_field: null,
+                dob: null,
+                country_code: null,
+                phone_number: null,
+                first_name: null,
+                last_name: null,
+                address: null,
+                email_no_html: null,
+              },
+            },
+            fields: [
+              {
+                key: 'demo',
+                wrappers: ['form-field'],
+                fieldGroup: [
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>1. Standard Built-in Validators</h3>",
+                  },
+                  {
+                    key: 'email',
+                    type: 'input',
+                    props: {
+                      label: 'Email Address (email)',
+                      placeholder: 'Enter email',
+                    },
+                    validators: {
+                      validation: ['email'],
+                    },
+                  },
+                  {
+                    key: 'comments',
+                    type: 'textarea',
+                    props: {
+                      label: 'Comments (noHtml)',
+                      placeholder: 'Enter comments',
+                    },
+                    validators: {
+                      validation: ['noHtml'],
+                    },
+                  },
+                  {
+                    key: 'coupon_code',
+                    type: 'input',
+                    props: {
+                      label: 'Coupon Code (alphanumeric)',
+                      placeholder: 'Enter coupon code',
+                    },
+                    validators: {
+                      validation: ['alphanumeric'],
+                    },
+                  },
+                  {
+                    key: 'employee_id',
+                    type: 'input',
+                    props: {
+                      label: 'Employee ID (numeric)',
+                      placeholder: 'Enter employee ID',
+                    },
+                    validators: {
+                      validation: ['numeric'],
+                    },
+                  },
+                  {
+                    key: 'website',
+                    type: 'input',
+                    props: {
+                      label: 'Website URL (url)',
+                      placeholder: 'https://example.com',
+                    },
+                    validators: {
+                      validation: ['url'],
+                    },
+                  },
+                  {
+                    key: 'username_field',
+                    type: 'input',
+                    props: {
+                      label: 'Username (username)',
+                      placeholder: 'Enter username',
+                    },
+                    validators: {
+                      validation: ['username'],
+                    },
+                  },
+                  {
+                    key: 'dob',
+                    type: 'input',
+                    props: {
+                      type: 'date',
+                      label: 'Date of Birth (noFutureDate)',
+                    },
+                    validators: {
+                      validation: ['noFutureDate'],
+                    },
+                  },
+                  {
+                    template:
+                      "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>2. Sibling Symmetrical Validation (phoneAndCountry)</h3>",
+                  },
+                  {
+                    key: 'country_code',
+                    type: 'select-from-db',
+                    props: {
+                      label: 'Country Code',
+                      table: 'phone_country_codes',
+                      labelColumn: 'name',
+                      valueColumn: 'id',
+                      placeholder: 'Select country code',
+                      phoneNumberField: 'phone_number',
+                    },
+                  },
+                  {
+                    key: 'phone_number',
+                    type: 'input',
+                    props: {
+                      label: 'Phone Number',
+                      placeholder: 'Enter phone number',
+                      countryCodeField: 'country_code',
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>3. Custom Regex Validator</h3>",
+                  },
+                  {
+                    key: 'first_name',
+                    type: 'input',
+                    props: {
+                      label: 'First Name (letters & spaces only)',
+                      placeholder: 'Enter first name',
+                    },
+                    validators: {
+                      lettersOnly: {
+                        expression: '/^[a-zA-Z\\s]+$/',
+                        message: 'First name can only contain letters and spaces',
+                      },
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>4. Custom Arrow Function Validator</h3>",
+                  },
+                  {
+                    key: 'last_name',
+                    type: 'input',
+                    props: {
+                      label: 'Last Name (profanity check)',
+                      placeholder: 'Enter last name',
+                    },
+                    validators: {
+                      noProfanity: {
+                        expression: "(control) => control.value && ['badword', 'test'].includes(control.value.toLowerCase()) ? { noProfanity: true } : null",
+                        message: 'Invalid last name entered',
+                      },
+                    },
+                  },
+                  {
+                    template: "<h3 class='text-md font-bold text-gray-700 col-span-full border-b pb-1 mb-1'>5. Heuristic Opt-Out Configurations</h3>",
+                  },
+                  {
+                    key: 'address',
+                    type: 'textarea',
+                    props: {
+                      label: 'Address (disableValidation: true — all auto validators off)',
+                      placeholder: 'Enter address',
+                      disableValidation: true,
+                    },
+                  },
+                  {
+                    key: 'email_no_html',
+                    type: 'input',
+                    props: {
+                      label: 'Email (disableValidation: [noHtml] — only email validator runs)',
+                      placeholder: 'Enter email',
+                      disableValidation: ['noHtml'],
+                    },
+                    validators: {
+                      validation: ['email'],
+                    },
+                  },
+                ],
+                fieldGroupClassName: 'grid grid-cols-1 gap-4 md:grid-cols-3',
+              },
+            ],
+            options: {},
+          },
+        },
       ],
     },
     presetQueryInfo: {
@@ -1159,8 +1353,13 @@ export class MasterEntityComponent implements OnInit {
           name: 'example_1',
           comments: [],
           data: {
-            enable_sticky_header: 'yes',
-            show_serial_number: 'yes',
+            grid_show_title: 'yes',
+            grid_enable_sticky_header: 'yes',
+            grid_show_serial_number: 'yes',
+            grid_show_global_search: 'yes',
+            grid_show_advanced_search: 'yes',
+            grid_show_column_filter: 'yes',
+            grid_enable_sticky_action_column: 'yes',
           },
         },
       ],
@@ -1204,6 +1403,16 @@ export class MasterEntityComponent implements OnInit {
   entitiesForChildProcess: any[] = [];
   entitiesForDashboardWizard: any[] = [];
   staticPageEntities: any[] = [];
+  entityNameSuggestions: string[] = [];
+  readonly entityNameSuggestionLimit = 1;
+  allEntityNameSlugs: Set<string> = new Set();
+  entityNameEditable = false;
+  originalEntityName = '';
+  entityNameError = '';
+  isEntityNameModalOpen = false;
+  entityNameModalError = '';
+  entityNameModalSuggestions: string[] = [];
+  entityNameModalForm!: FormGroup;
 
   constructor(
     private fb: FormBuilder,
@@ -1241,6 +1450,34 @@ export class MasterEntityComponent implements OnInit {
     // To listen "entityType" on value change
     this.form.get('entityType')?.valueChanges.subscribe((value) => {
       this.updateFormValidation(value);
+      if (!this.editTitle) {
+        this.generateEntityNameSuggestions(this.form.get('name')?.value, value);
+        if (value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
+          const defaultGridConfig = {
+            grid_show_title: 'yes',
+            grid_enable_sticky_header: 'yes',
+            grid_show_serial_number: 'yes',
+            grid_show_global_search: 'yes',
+            grid_show_advanced_search: 'yes',
+            grid_show_column_filter: 'yes',
+            grid_enable_sticky_action_column: 'yes',
+          };
+          this.form.get('entity_configurations')?.setValue(JSON.stringify(defaultGridConfig, null, 2));
+        } else {
+          this.form.get('entity_configurations')?.setValue('');
+        }
+      }
+    });
+
+    this.form.get('name')?.valueChanges.subscribe((name) => {
+      if (!this.editTitle || this.entityNameEditable) {
+        this.generateEntityNameSuggestions(name, this.form.get('entityType')?.value);
+      }
+      if (!(name || '').trim()) {
+        this.form.get('entityName')?.setValue('', { emitEvent: false });
+        this.entityNameSuggestions = [];
+        this.entityNameError = '';
+      }
     });
 
     // Clear dashboard_entity_name whenever wizard type changes to avoid stale values
@@ -1347,6 +1584,7 @@ export class MasterEntityComponent implements OnInit {
       linkAction: [''],
       fieldHtmlContent: [''],
       enumValues: [''],
+      lineItemConfigurations: [''],
     });
   }
 
@@ -1484,11 +1722,16 @@ export class MasterEntityComponent implements OnInit {
     this.form.clearValidators();
 
     const primaryTableControl = this.form.get('primaryTable');
-
     const itemsControl = this.form.get('items');
 
-    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE) {
+    if (entityType == commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
+    } else {
+      primaryTableControl?.clearValidators();
+    }
+    primaryTableControl?.updateValueAndValidity();
+
+    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
       itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
     }
     this.form.updateValueAndValidity();
@@ -1538,6 +1781,7 @@ export class MasterEntityComponent implements OnInit {
       linkAction: [''],
       fieldHtmlContent: [''],
       enumValues: [''],
+      lineItemConfigurations: [''],
     });
     this.setupLinkModeAutoUpdate(group);
     items.push(group);
@@ -1571,6 +1815,7 @@ export class MasterEntityComponent implements OnInit {
       linkAction: [currentItem.get('linkAction')?.value],
       fieldHtmlContent: [currentItem.get('fieldHtmlContent')?.value],
       enumValues: [currentItem.get('enumValues')?.value],
+      lineItemConfigurations: [currentItem.get('lineItemConfigurations')?.value],
     });
 
     this.setupLinkModeAutoUpdate(this.editItemForm);
@@ -1630,7 +1875,7 @@ export class MasterEntityComponent implements OnInit {
         ['master_entities.*'],
         ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values))) END",
+          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values, 'line_item_configurations', master_entity_line_items.line_item_configurations))) END",
           'items',
         ],
       ],
@@ -1653,11 +1898,18 @@ export class MasterEntityComponent implements OnInit {
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
+          this.originalEntityName = entity.entity_name || '';
           this.existing_actions = this.populateSelectedActionTypes(entity.permissions);
+
+          const entityTypePrefix = this.getEntityTypePrefix(entity.entity_type);
+          const entityNameSuffix =
+            entity.entity_name && entityTypePrefix && entity.entity_name.startsWith(entityTypePrefix + '_')
+              ? entity.entity_name.slice(entityTypePrefix.length + 1)
+              : entity.entity_name || '';
 
           this.form.patchValue({
             name: entity.name,
-            entityName: entity.entity_name,
+            entityName: entityNameSuffix,
             permissions: this.existing_actions,
             associateTable: entity.associated_tables ? this.prettyJSON(entity.associated_tables) : '',
             primaryTable: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
@@ -1708,6 +1960,7 @@ export class MasterEntityComponent implements OnInit {
                 linkAction: [linkAction],
                 fieldHtmlContent: [item.field_html_content],
                 enumValues: [item.enum_values ? this.prettyJSON(item.enum_values) : null],
+                lineItemConfigurations: [item.line_item_configurations ? this.prettyJSON(item.line_item_configurations) : null],
               });
               this.setupLinkModeAutoUpdate(group, linkAction);
               items.push(group);
@@ -1732,8 +1985,14 @@ export class MasterEntityComponent implements OnInit {
   }
 
   getAddParams(formData: any) {
-    const formDataName = commonConfig.PREFIX_SHORTCODE[formData.entityType] + '_' + formData.name;
-    const entitySlug = this.localStorageService.generateSlugWithTimestamp(formDataName);
+    const prefix = this.getEntityTypePrefix(formData.entityType);
+    const suffix = (formData.entityName || '').trim();
+    const fullEntityName = suffix
+      ? prefix
+        ? `${prefix}_${suffix}`
+        : suffix
+      : this.localStorageService.generateSlugWithTimestamp(prefix ? `${prefix}_${formData.name}` : formData.name);
+    const entitySlug = fullEntityName;
 
     const master = [
       {
@@ -1815,6 +2074,11 @@ export class MasterEntityComponent implements OnInit {
           link_mode,
           field_html_content: control.value.fieldHtmlContent,
           enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
+          line_item_configurations: this.prepareOptionalJSON(
+            control.value.lineItemConfigurations,
+            false,
+            `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`
+          ),
         };
       });
       this.insert_json_schema.data['table3'] = items;
@@ -1827,9 +2091,15 @@ export class MasterEntityComponent implements OnInit {
   }
 
   getEditParams(formData: any, id: any) {
+    const prefix = this.getEntityTypePrefix(formData.entityType);
+    const suffix = (formData.entityName ?? '').trim();
+    //const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
+    const newEntityName = this.originalEntityName;
+
     const master = [
       {
         name: formData.name,
+        entity_name: newEntityName || null,
         entity_type: formData.entityType,
         export_template_file_name: formData.exportTemplateFileName || null,
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
@@ -1912,34 +2182,41 @@ export class MasterEntityComponent implements OnInit {
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
           enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
+          line_item_configurations: this.prepareOptionalJSON(
+            control.value.lineItemConfigurations,
+            false,
+            `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`
+          ),
           link_mode,
         };
       });
       this.update_json_schema.data['table3'] = items;
     }
 
-    // Determine newly added items
-    let newly_added_items: any[] = formData.permissions
-      .filter((item: string) => !this.existing_actions.includes(item))
-      .map((action_type_name: any) => ({
-        entity_id: '@table1.id',
-        name: action_type_name,
-        slug: `${action_type_name}_${formData.entityName}`,
-        order_no: '1',
-        status_id: '1',
-      }));
+    // Diff-based permission sync
+    const existingSet = new Set<string>(this.existing_actions || []);
+    const selectedPermissions: string[] = formData.permissions || [];
+    const selectedSet = new Set<string>(selectedPermissions);
 
-    // Determine removed items
-    let removable_items = this.existing_actions
-      .filter((item) => !formData.permissions.includes(item))
-      .map((action_type_name: any) => ({
-        entity_id: '@table1.id',
-        name: action_type_name,
-      }));
+    const keptPermissions = selectedPermissions.filter((p) => existingSet.has(p));
+    const addedPermissions = selectedPermissions.filter((p) => !existingSet.has(p));
+    const removedPermissions = (this.existing_actions || []).filter((p: string) => !selectedSet.has(p));
 
-    this.update_json_schema.conditions['table4'] = removable_items;
+    // Update slug for kept permissions (handles entity name renames)
+    //this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
+    this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
+    this.update_json_schema.conditions['table4'] = keptPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
 
-    this.update_json_schema.data['table5'] = newly_added_items;
+    // Insert newly added permissions
+    this.update_json_schema.data['table5'] = addedPermissions.map((a: string) => ({
+      entity_id: '@table1.id',
+      name: a,
+      slug: `${a}_${newEntityName}`,
+    }));
+
+    // Hard_delete permissions that were removed
+    this.update_json_schema.conditions['table6'] = removedPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
+
     return this.update_json_schema;
   }
 
@@ -2023,6 +2300,7 @@ export class MasterEntityComponent implements OnInit {
           let key;
           if (this.id) {
             key = 'record_updated_successfully';
+            this.existing_actions = formData.permissions || [];
           } else {
             key = 'record_inserted_successfully';
           }
@@ -2051,7 +2329,10 @@ export class MasterEntityComponent implements OnInit {
   }
 
   isFormInvalid() {
-    return this.form.invalid || (this.form.value.entityType === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE && this.itemsControls.length === 0);
+    if (this.form.invalid) return true;
+    if (this.form.value.entityType === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name && this.itemsControls.length === 0) return true;
+    if (this.isEntityNameActive && !(this.form.get('entityName')?.value || '').trim()) return true;
+    return false;
   }
 
   logFormStatus(): void {
@@ -2320,6 +2601,224 @@ export class MasterEntityComponent implements OnInit {
       });
   }
 
+  get entityNamePrefix(): string {
+    return this.getEntityTypePrefix(this.form?.get('entityType')?.value || '');
+  }
+
+  get isEntityNameActive(): boolean {
+    return !!(this.form?.get('entityType')?.value && (this.form?.get('name')?.value || '').trim());
+  }
+
+  generateEntityNameSuggestions(name: string, entityType: string): void {
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      this.entityNameSuggestions = [];
+      return;
+    }
+    const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    // First candidate is the plain slug; rest use meaningful word suffixes only — no timestamps or random chars
+    const candidates = [
+      slug,
+      `${slug}_new`,
+      `${slug}_copy`,
+      `${slug}_alt`,
+      `${slug}_v2`,
+      `${slug}_v3`,
+      `${slug}_extra`,
+      `${slug}_main`,
+      `${slug}_base`,
+      `${slug}_core`,
+    ];
+
+    // Uniqueness check against full slug (prefix + suffix), deduplicate, apply limit
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const c of candidates) {
+      if (!c || seen.has(c)) continue;
+      seen.add(c);
+      const fullSlug = prefix ? `${prefix}_${c}` : c;
+      if (!this.allEntityNameSlugs.has(fullSlug)) {
+        results.push(c);
+        if (results.length >= this.entityNameSuggestionLimit) break;
+      }
+    }
+    this.entityNameSuggestions = results;
+  }
+
+  private getEntityTypePrefix(entityTypeName: string): string {
+    const entry = (Object.values(commonConfig.ENTITY_TYPES) as any[]).find((e) => e.name === entityTypeName);
+    return entry?.prefix_slug || '';
+  }
+
+  selectEntityNameSuggestion(slug: string): void {
+    this.form.get('entityName')?.setValue(slug);
+    this.onEntityNameBlur();
+  }
+
+  enableEntityNameEdit(): void {
+    this.entityNameEditable = true;
+    this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+  }
+
+  openEntityNameEditModal(): void {
+    this.entityNameModalForm = this.fb.group({
+      entityName: [this.form.get('entityName')?.value || '', [Validators.required]],
+    });
+    this.entityNameModalError = '';
+    this.generateEntityNameModalSuggestions();
+    this.isEntityNameModalOpen = true;
+  }
+
+  closeEntityNameEditModal(): void {
+    console.log('Closing modal and resetting state');
+    this.isEntityNameModalOpen = false;
+    this.entityNameModalError = '';
+    this.entityNameModalSuggestions = [];
+  }
+
+  private generateEntityNameModalSuggestions(): void {
+    const name = this.form.get('name')?.value;
+    const entityType = this.form.get('entityType')?.value;
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      this.entityNameModalSuggestions = [];
+      return;
+    }
+    const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    const candidates = [
+      slug,
+      `${slug}_new`,
+      `${slug}_copy`,
+      `${slug}_alt`,
+      `${slug}_v2`,
+      `${slug}_v3`,
+      `${slug}_extra`,
+      `${slug}_main`,
+      `${slug}_base`,
+      `${slug}_core`,
+    ];
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const c of candidates) {
+      if (!c || seen.has(c)) continue;
+      seen.add(c);
+      const fullSlug = prefix ? `${prefix}_${c}` : c;
+      if (!this.allEntityNameSlugs.has(fullSlug) || fullSlug === this.originalEntityName) {
+        results.push(c);
+        if (results.length >= this.entityNameSuggestionLimit) break;
+      }
+    }
+    this.entityNameModalSuggestions = results;
+  }
+
+  onEntityNameModalBlur(): void {
+    const suffix = (this.entityNameModalForm.get('entityName')?.value ?? '').trim();
+    if (!suffix) {
+      this.entityNameModalError = '';
+      return;
+    }
+    const prefix = this.entityNamePrefix;
+    const fullSlug = prefix ? `${prefix}_${suffix}` : suffix;
+    if (fullSlug === this.originalEntityName) {
+      this.entityNameModalError = '';
+      return;
+    }
+    if (this.allEntityNameSlugs.has(fullSlug)) {
+      this.entityNameModalError = 'This entity name already exists. Please choose a different slug.';
+    } else {
+      this.entityNameModalError = '';
+    }
+  }
+
+  selectEntityNameModalSuggestion(slug: string): void {
+    this.entityNameModalForm.get('entityName')?.setValue(slug);
+    this.onEntityNameModalBlur();
+  }
+
+  submitEntityNameEditModal(): void {
+    const suffix = (this.entityNameModalForm.get('entityName')?.value ?? '').trim();
+    if (!suffix) return;
+
+    const prefix = this.entityNamePrefix;
+    const newEntityName = prefix ? `${prefix}_${suffix}` : suffix;
+
+    if (newEntityName === this.originalEntityName) {
+      this.closeEntityNameEditModal();
+      return;
+    }
+
+    if (this.allEntityNameSlugs.has(newEntityName)) {
+      this.entityNameModalError = 'This entity name already exists. Please choose a different slug.';
+      return;
+    }
+
+    const payload = {
+      action: ['select', 'update', 'update', 'update'],
+      table: ['master_entities', 'master_entities', 'permissions', 'master_entity_line_items'],
+      table_mapping: ['table1', 'table2', 'table3', 'table4'],
+      columns: {
+        table1: ['id', 'entity_name'],
+      },
+      data: {
+        table2: [{ entity_name: newEntityName }],
+        table3: this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` })),
+        table4: [{ link_action: newEntityName }],
+      },
+      conditions: {
+        table1: [{ uuid: this.id }],
+        table2: [{ uuid: this.id }],
+        table3: this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a })),
+        table4: [{ link_action: '@table1.entity_name' }],
+      },
+    };
+
+    this.gridApiService.executeRecords(payload).subscribe({
+      next: (response) => {
+        if (response.status && response.code === 200) {
+          this.allEntityNameSlugs.delete(this.originalEntityName);
+          this.allEntityNameSlugs.add(newEntityName);
+          this.originalEntityName = newEntityName;
+          this.form.get('entityName')?.setValue(suffix, { emitEvent: false });
+          this.toastr.success(this.translate.instant('record_updated_successfully'));
+          (document.getElementById('closeEntitySlug') as HTMLElement)?.click();
+          this.closeEntityNameEditModal();
+        } else {
+          this.toastr.error(this.translate.instant(response.message || 'error'), 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error(this.translate.instant('error'), 'Error');
+      },
+    });
+  }
+
+  onEntityNameBlur(): void {
+    const suffix = (this.form.get('entityName')?.value ?? '').trim();
+    if (!suffix) {
+      this.entityNameError = '';
+      return;
+    }
+    const prefix = this.entityNamePrefix;
+    const fullSlug = prefix ? `${prefix}_${suffix}` : suffix;
+    if (this.editTitle && fullSlug === this.originalEntityName) {
+      this.entityNameError = '';
+      return;
+    }
+    if (this.allEntityNameSlugs.has(fullSlug) && fullSlug !== this.originalEntityName) {
+      this.entityNameError = 'This entity name already exists. Please choose a different slug.';
+    } else {
+      this.entityNameError = '';
+    }
+  }
+
   fetchAllMasterEntities() {
     const params = {
       company_id: 1,
@@ -2338,40 +2837,45 @@ export class MasterEntityComponent implements OnInit {
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
+          this.allEntityNameSlugs = new Set(response.data.records.map((e: any) => e.value as string));
+          // regenerate suggestions now that slugs are loaded
+          if (!this.editTitle) {
+            this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+          }
           // For 'component' linkType
-          this.masterEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module'
-          );
+          this.masterEntities = response.data.records
+            .filter((entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module')
+            .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
           this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE
+            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name
           );
           // For 'child_process' linkType (only grid_builder_module)
-          this.masterEntitiesForChildProcess = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE
-          );
+          this.masterEntitiesForChildProcess = response.data.records
+            .filter((entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name)
+            .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
               ![
-                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE,
+                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name,
                 // this.commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE,
-                this.commonConfig.ENTITY_TYPES.MENU_MODULE,
-                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE,
-                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE,
-                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE,
-                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE,
-                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE,
+                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.MENU_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE.name,
                 this.commonConfig.ENTITY_TYPES.USER_COMPANY_MAP_MODULE,
-                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE,
-                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE,
-                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE,
-                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE,
-                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE,
-                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE,
+                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE.name,
               ].includes(entity.entity_type)
           );
           this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];
@@ -2443,6 +2947,3 @@ export class MasterEntityComponent implements OnInit {
     });
   }
 }
-
-
-

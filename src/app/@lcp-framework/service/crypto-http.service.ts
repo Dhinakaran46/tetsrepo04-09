@@ -70,7 +70,10 @@ export class CryptoHttpService {
   }
 
   encryptedPut<T>(url: string, body: any, options?: HttpBodyOptions): Observable<T> {
-    const encryptedBody = this.encPayload ? { payload: this.encryptService.encrypt(body) } : body;
+    if (body instanceof FormData || !this.encPayload) {
+      return this.http.put<T>(url, body, options);
+    }
+    const encryptedBody = { payload: this.encryptService.encrypt(body) };
     return this.http.put<T>(url, encryptedBody, options);
   }
 
