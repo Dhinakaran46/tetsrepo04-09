@@ -477,7 +477,10 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
     for (const key of Object.keys(source)) {
       const sourceVal = source[key];
-      if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+      // Skip File, FileList, and other non-plain objects that cannot be merged
+      if (sourceVal instanceof File || sourceVal instanceof FileList || sourceVal instanceof Blob) {
+        target[key] = sourceVal;
+      } else if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
         target[key] = this.deepMerge(target[key], sourceVal);
       } else {
         target[key] = sourceVal;
