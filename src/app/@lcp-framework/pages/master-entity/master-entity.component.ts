@@ -1941,7 +1941,7 @@ export class MasterEntityComponent implements OnInit {
           });
 
           const items = this.form.get('items') as FormArray;
-          //items.clear();
+          items.clear();
           if (entity.items && entity.items.length > 0) {
             entity.items.forEach((item: any) => {
               const linkType = item.link_type || 'none';
@@ -2288,6 +2288,7 @@ export class MasterEntityComponent implements OnInit {
     let payload;
     try {
       payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
+      console.log(payload);
     } catch (error: any) {
       console.error('Error preparing payload:', error);
       this.toastr.error(error.message || 'Invalid JSON format in one of the fields.', 'Error');

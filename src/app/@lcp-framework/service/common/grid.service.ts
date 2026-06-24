@@ -60,13 +60,7 @@ export class GridApiService {
     if (selectedCompanyId) return selectedCompanyId;
 
     const userData = this.readUserData();
-    return Number(
-      userData?.main?.company_id ||
-        userData?.company?.id ||
-        userData?.main?.company?.id ||
-        userData?.main?.selected_company_id ||
-        0,
-    );
+    return Number(userData?.main?.company_id || userData?.company?.id || userData?.main?.company?.id || userData?.main?.selected_company_id || 0);
   }
 
   private withActiveCompany(data: any): any {

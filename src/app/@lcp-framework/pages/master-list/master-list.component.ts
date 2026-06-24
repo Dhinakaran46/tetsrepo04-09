@@ -85,6 +85,9 @@ interface AcceptedParentParamRule {
   providers: [DatePipe],
 })
 export class MasterListComponent implements OnChanges {
+  search_all: any[] = [];
+  search_any: any[] = [];
+
   @Input() uuid: any = null;
   @Input() entity_name: any = '';
   @Input() popupName: any = '';
@@ -94,6 +97,7 @@ export class MasterListComponent implements OnChanges {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
+
   @Input() line_item_configurations: any = null;
   @Input() showBackButton: boolean = true;
   @Input() parentGridFilters: {
@@ -110,7 +114,7 @@ export class MasterListComponent implements OnChanges {
     config: { popupName: string; selectedItemUuid: string | null; popupEntityName: string; isViewPopupOpen: boolean; properties?: Record<string, any> } | null
   ) {
     if (config) {
-      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen, config.properties?.['grid_params'] ?? null);
+      this.processPopup(config.popupName, config.selectedItemUuid, config.popupEntityName, config.isViewPopupOpen, config.properties);
     }
   }
   private _nonGridPage = false;
@@ -245,6 +249,7 @@ export class MasterListComponent implements OnChanges {
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
+
   private isGridBootstrapReady: boolean = false;
   private pendingGridFetchRequest: boolean = false;
   private queuedInitialFetchParams: FetchDataParams | null = null;
@@ -2157,6 +2162,15 @@ export class MasterListComponent implements OnChanges {
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
+
+    if (this.search_all) {
+      payload.search_all = [...payload.search_all, ...this.search_all];
+    }
+
+    if (this.search_any) {
+      payload.search_any = [...payload.search_any, ...this.search_any];
+    }
+
     if (this.line_item_configurations) {
       payload.line_item_configurations = this.line_item_configurations;
     }
@@ -3557,8 +3571,30 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, gridParams: any = null) {
-    console.log(gridParams);
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, properties: any = null) {
+    console.log(properties);
+    const gridParams = properties?.['grid_params'] ?? null;
+    const searchAll = properties?.['search_all'] ?? null;
+    const searchAny = properties?.['search_any'] ?? null;
+
+    if (searchAll !== null) {
+      this.search_all = searchAll;
+      console.log('Search all set for popup:', this.search_all);
+    }
+    if (searchAny !== null) {
+      this.search_any = searchAny;
+      console.log('Search any set for popup:', this.search_any);
+    }
+
+    if (gridParams !== null) {
+      this.grid_params = gridParams;
+      console.log('Grid params set for popup:', this.grid_params);
+    }
+    if (gridParams !== null) {
+      this.grid_params = gridParams;
+      console.log('Grid params set for popup:', this.grid_params);
+    }
+
     if (gridParams !== null) {
       this.grid_params = gridParams;
       console.log('Grid params set for popup:', this.grid_params);
@@ -3611,6 +3647,7 @@ export class MasterListComponent implements OnChanges {
       this.cdr.markForCheck();
     }, 500);
 
+    console.log(this.listQuery);
     // When grid_params are supplied for a popup_grid, reload data so the filter applies.
     if (gridParams && popupName === 'popup_grid' && this.listQuery) {
       const popupParams = { ...this.listQuery, entity_name: popupEntityName || this.listQuery.entity_name, start_index: 0 };

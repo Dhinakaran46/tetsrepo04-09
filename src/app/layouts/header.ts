@@ -290,9 +290,7 @@ export class HeaderComponent implements OnInit {
     if (Array.isArray(storedCompanies) && storedCompanies.length) {
       this.companyList = storedCompanies.map((company: any) => this.normalizeCompanyOption(company));
       this.selectedCompanyName =
-        this.isCompanySelectionPending() && this.companyList.length > 1
-          ? 'Select Company'
-          : this.getSelectedCompany()?.name || this.companyList[0]?.name || '';
+        this.isCompanySelectionPending() && this.companyList.length > 1 ? 'Select Company' : this.getSelectedCompany()?.name || this.companyList[0]?.name || '';
       this.fetchCompanyList();
       return;
     }
@@ -324,11 +322,7 @@ export class HeaderComponent implements OnInit {
   }
 
   getCompanyTenantLabel(company: any): string {
-    return (
-      company?.tenant_name ||
-      company?.tenant_code ||
-      (company?.tenant_id ? `Tenant ${company.tenant_id}` : '')
-    );
+    return company?.tenant_name || company?.tenant_code || (company?.tenant_id ? `Tenant ${company.tenant_id}` : '');
   }
 
   private getSelectedCompany(): any {
@@ -415,9 +409,7 @@ export class HeaderComponent implements OnInit {
         if (item.link_type == 4) {
           // Hide a link_type 4 menu only when ALL its direct children are link_type 5 (or 2).
           // link_type 5 items elsewhere in the tree are unaffected.
-          const hasNonHiddenChild = (item.children || []).some(
-            (child: any) => child.link_type !== 5 && child.link_type !== 2,
-          );
+          const hasNonHiddenChild = (item.children || []).some((child: any) => child.link_type !== 5 && child.link_type !== 2);
           return hasNonHiddenChild;
         }
         if (item.parent_id == null) {
@@ -585,7 +577,7 @@ export class HeaderComponent implements OnInit {
           switchedUser.company_tenant_id ||
             selectedCompany.tenant_id ||
             companies.find((company: any) => Number(company.id) === Number(this.companyId))?.tenant_id ||
-            0,
+            0
         );
 
         const permissionsObj = (switchedUser.permissions || []).reduce((acc: any, permission: any) => {
