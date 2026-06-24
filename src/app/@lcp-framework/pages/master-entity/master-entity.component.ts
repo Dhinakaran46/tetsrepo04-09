@@ -2288,7 +2288,6 @@ export class MasterEntityComponent implements OnInit {
     let payload;
     try {
       payload = this.id ? this.getEditParams(formData, this.id) : this.getAddParams(formData);
-      console.log(payload);
     } catch (error: any) {
       console.error('Error preparing payload:', error);
       this.toastr.error(error.message || 'Invalid JSON format in one of the fields.', 'Error');
