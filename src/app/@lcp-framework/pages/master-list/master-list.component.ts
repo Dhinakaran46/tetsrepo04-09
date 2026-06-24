@@ -3590,15 +3590,7 @@ export class MasterListComponent implements OnChanges {
       this.grid_params = gridParams;
       console.log('Grid params set for popup:', this.grid_params);
     }
-    if (gridParams !== null) {
-      this.grid_params = gridParams;
-      console.log('Grid params set for popup:', this.grid_params);
-    }
 
-    if (gridParams !== null) {
-      this.grid_params = gridParams;
-      console.log('Grid params set for popup:', this.grid_params);
-    }
     this.popupName = popupName;
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
