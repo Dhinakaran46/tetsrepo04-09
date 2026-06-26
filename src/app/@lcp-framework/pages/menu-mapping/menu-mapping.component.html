@@ -173,8 +173,14 @@
                 formControlName="url"
                 placeholder="{{ 'form_label_target_url_placeholder' | translate }}"
                 class="form-input w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+                [class.is-invalid]="duplicateTargetUrlWarningText"
               />
             </div>
+            @if (duplicateTargetUrlWarningText) {
+            <div class="text-danger">
+              {{ duplicateTargetUrlWarningText }}
+            </div>
+            }
           </div>
           <div class="mb-5">
             <label for="order_no">{{ 'form_label_order_no' | translate }}</label>
@@ -263,9 +269,9 @@
           <button
             type="submit"
             class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]"
-            [disabled]="loading || duplicateMenuNameWarningText !== ''"
-            [class.cursor-not-allowed]="loading || duplicateMenuNameWarningText !== ''"
-            [class.opacity-60]="loading || duplicateMenuNameWarningText !== ''"
+            [disabled]="loading || duplicateMenuNameWarningText !== '' || duplicateTargetUrlWarningText !== ''"
+            [class.cursor-not-allowed]="loading || duplicateMenuNameWarningText !== '' || duplicateTargetUrlWarningText !== ''"
+            [class.opacity-60]="loading || duplicateMenuNameWarningText !== '' || duplicateTargetUrlWarningText !== ''"
           >
             {{ (editMode ? 'update' : 'submit') | translate }}
           </button>

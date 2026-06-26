@@ -52,6 +52,7 @@ export class MenuMappingComponent implements OnInit {
   isSubmitted = false;
   loading = false;
   duplicateMenuNameWarningText = '';
+  duplicateTargetUrlWarningText = '';
   entityElement = true;
   getActionItem = false;
 
@@ -138,6 +139,10 @@ export class MenuMappingComponent implements OnInit {
 
     this.menuForm.get('name')?.valueChanges.subscribe(() => {
       this.clearDuplicateMenuNameWarning();
+    });
+
+    this.menuForm.get('url')?.valueChanges.subscribe(() => {
+      this.clearDuplicateTargetUrlWarning();
     });
 
     if (this.menu_id) {
@@ -654,6 +659,11 @@ export class MenuMappingComponent implements OnInit {
     this.menuForm.get('MenuTypeName')?.updateValueAndValidity();
 
     if (this.menuForm.invalid) {
+      if (this.duplicateMenuNameWarningText) {
+        this.focusControl('name');
+      } else if (this.duplicateTargetUrlWarningText) {
+        this.focusControl('url');
+      }
       return;
     }
 
@@ -732,6 +742,7 @@ export class MenuMappingComponent implements OnInit {
       ...(nameControl.errors || {}),
       duplicateMenuName: true,
     });
+    this.focusControl('name');
   }
 
   private clearDuplicateMenuNameWarning() {
@@ -748,6 +759,39 @@ export class MenuMappingComponent implements OnInit {
     const errors = { ...(nameControl.errors || {}) };
     delete errors['duplicateMenuName'];
     nameControl.setErrors(Object.keys(errors).length ? errors : null);
+  }
+
+  private setDuplicateTargetUrlWarning() {
+    this.duplicateTargetUrlWarningText = 'This URL is already in use. Please try another URL.';
+    const urlControl = this.menuForm.get('url');
+    urlControl?.setErrors({
+      ...(urlControl.errors || {}),
+      duplicateTargetUrl: true,
+    });
+    this.focusControl('url');
+  }
+
+  private clearDuplicateTargetUrlWarning() {
+    if (!this.duplicateTargetUrlWarningText) {
+      return;
+    }
+
+    this.duplicateTargetUrlWarningText = '';
+    const urlControl = this.menuForm.get('url');
+    if (!urlControl?.hasError('duplicateTargetUrl')) {
+      return;
+    }
+
+    const errors = { ...(urlControl.errors || {}) };
+    delete errors['duplicateTargetUrl'];
+    urlControl.setErrors(Object.keys(errors).length ? errors : null);
+  }
+
+  private focusControl(controlId: string) {
+    setTimeout(() => {
+      const element = document.getElementById(controlId) as HTMLInputElement | null;
+      element?.focus();
+    });
   }
 
   private checkTargetUrlAndSave(formData: any, currentDate: string) {
@@ -779,6 +823,7 @@ export class MenuMappingComponent implements OnInit {
               if (this.editMode && existingItemId == this.currentItemId) {
                 this.saveMenuData(formData, currentDate);
               } else {
+                this.setDuplicateTargetUrlWarning();
                 this.toastr.warning('This URL is already in use. Please try another URL.');
                 this.loading = false;
                 this.cdr.markForCheck();
