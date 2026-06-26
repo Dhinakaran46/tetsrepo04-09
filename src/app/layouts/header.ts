@@ -337,15 +337,13 @@ export class HeaderComponent implements OnInit {
       .filter((item) => {
         const permissionKey = item.entity_name;
         const hasPermission = viewPermissions.includes(permissionKey);
-        // Menu item.link_type external must have either target or childern in order to display in application
         if (item.link_type == 4) {
-          const hasTargetOrChildren = (item?.target && item.target.trim() !== '') || (item?.children && item.children.length > 0);
-
-          if (hasTargetOrChildren) {
-            return true;
-          } else {
-            return false;
-          }
+          // Hide a link_type 4 menu only when ALL its direct children are link_type 5 (or 2).
+          // link_type 5 items elsewhere in the tree are unaffected.
+          const hasNonHiddenChild = (item.children || []).some(
+            (child: any) => child.link_type !== 5 && child.link_type !== 2,
+          );
+          return hasNonHiddenChild;
         }
         if (item.parent_id == null) {
           return true;

@@ -1116,8 +1116,8 @@
   <ng-container *ngFor="let item of headerMenuItems">
     <hr *ngIf="item.divider" class="my-1" />
 
-    @if (!item.divider) {
-    <div class="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-gray-100" (click)="onHeaderMenuAction(item.action)">
+    @if (!item.divider && (!item['filterOnly'] || headerContextMenu.isFilterable)) {
+    <div class="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-gray-100" (click)="$event.stopPropagation(); onHeaderMenuAction(item.action)">
       <i [class]="item.icon"></i>
       <span>{{ item.label }}</span>
     </div>

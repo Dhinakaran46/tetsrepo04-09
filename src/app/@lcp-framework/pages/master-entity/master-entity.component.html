@@ -210,7 +210,7 @@
               [ngClass]="{ 'is-invalid': isFieldInvalid('primaryTable') }"
               appDynamicFontSize="body"
             >
-              <option value>{{ 'form_label_primary_table_dropdown' | translate }}</option>
+              <option value disabled>{{ 'form_label_primary_table_dropdown' | translate }}</option>
               @for (item of tables_list; track item) {
               <option [value]="item">{{ item }}</option>
               }
