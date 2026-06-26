@@ -112,6 +112,10 @@ interface DashboardTab {
   name: string;
   cards: Card[];
   show_daterange_filter?: boolean | string | number;
+  start_date?: string | Date;
+  end_date?: string | Date;
+  end_date_current_day?: boolean | string | number;
+  reload_timeout?: number | string;
 }
 
 @Component({
@@ -405,6 +409,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               'cards',
             ],
             ['wizard_group.show_daterange_filter', 'show_daterange_filter'],
+            ['wizard_group.start_date', 'start_date'],
+            ['wizard_group.end_date', 'end_date'],
+            ['wizard_group.end_date_current_day', 'end_date_current_day'],
+            ['wizard_group.reload_timeout', 'reload_timeout'],
           ],
           includes: [
             {
@@ -413,7 +421,16 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
               join_condition: 'master_entities.dashboard_wizard_group_id = wizard_group.id AND master_entities.status_id = 1',
             },
           ],
-          group_by: ['wizard_group.id', 'wizard_group.name', 'wizard_group.order_number', 'wizard_group.show_daterange_filter'],
+          group_by: [
+            'wizard_group.id',
+            'wizard_group.name',
+            'wizard_group.order_number',
+            'wizard_group.show_daterange_filter',
+            'wizard_group.start_date',
+            'wizard_group.end_date',
+            'wizard_group.end_date_current_day',
+            'wizard_group.reload_timeout',
+          ],
         };
         break;
       case 'pg':
@@ -436,6 +453,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
             ['wizard_group.name', 'name'],
             ['wizard_group.order_number', 'order_number'],
             ['wizard_group.show_daterange_filter', 'show_daterange_filter'],
+            ['wizard_group.start_date', 'start_date'],
+            ['wizard_group.end_date', 'end_date'],
+            ['wizard_group.end_date_current_day', 'end_date_current_day'],
+            ['wizard_group.reload_timeout', 'reload_timeout'],
             [
               `CASE
             WHEN COUNT(subquery.id) = 0 THEN null
@@ -586,6 +607,44 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         activeTab.show_daterange_filter !== '0'
       : true;
     this.displayDateRangeFilter = globalShow && tabShow;
+
+    // Apply custom dates if configured on the active tab
+    if (activeTab && (activeTab.start_date || activeTab.end_date || activeTab.end_date_current_day)) {
+      const fromDate = activeTab.start_date ? new Date(activeTab.start_date) : new Date('1950-01-01');
+      let toDate = new Date('2050-01-01');
+      if (
+        activeTab.end_date_current_day === true ||
+        activeTab.end_date_current_day === 'true' ||
+        activeTab.end_date_current_day === 1 ||
+        activeTab.end_date_current_day === '1'
+      ) {
+        toDate = new Date();
+      } else if (activeTab.end_date) {
+        toDate = new Date(activeTab.end_date);
+      }
+
+      this.dateRange = {
+        fromDate,
+        toDate,
+      };
+
+      this.grid_params = {
+        ...this.grid_params,
+        $gparam_1: this.formatDate(fromDate),
+        $gparam_2: this.formatDate(toDate),
+      };
+    } else {
+      // Reset to defaults if no custom dates are configured on this tab
+      this.dateRange = {
+        fromDate: new Date('1950-01-01'),
+        toDate: new Date('2050-01-01'),
+      };
+      this.grid_params = {
+        ...this.grid_params,
+        $gparam_1: this.formatDate(this.dateRange.fromDate),
+        $gparam_2: this.formatDate(this.dateRange.toDate),
+      };
+    }
 
     //if (activeTab && activeTab.cards.some((card) => card.data.length === 0)) {
     if (activeTab) {
@@ -983,6 +1042,31 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         // Pass grid_params if the component supports it
         if ((componentRef.instance as any).grid_params !== undefined) {
           (componentRef.instance as any).grid_params = { ...this.grid_params };
+        }
+        // Resolve if the active tab has show_daterange_filter enabled
+        const activeTab = this.dashboardTabs.find((tab) => tab.id === this.activeTabId);
+        const tabShowDatePicker = activeTab
+          ? activeTab.show_daterange_filter !== false &&
+            activeTab.show_daterange_filter !== 'false' &&
+            activeTab.show_daterange_filter !== 0 &&
+            activeTab.show_daterange_filter !== '0'
+          : true;
+
+        // Pass showDatePicker if supported
+        if ((componentRef.instance as any).showDatePicker !== undefined) {
+          (componentRef.instance as any).showDatePicker = tabShowDatePicker;
+        }
+        // Pass fromDate if supported
+        if ((componentRef.instance as any).fromDate !== undefined) {
+          (componentRef.instance as any).fromDate = this.formatDate(this.dateRange.fromDate);
+        }
+        // Pass toDate if supported
+        if ((componentRef.instance as any).toDate !== undefined) {
+          (componentRef.instance as any).toDate = this.formatDate(this.dateRange.toDate);
+        }
+        // Pass reload_timeout if supported
+        if ((componentRef.instance as any).reload_timeout !== undefined) {
+          (componentRef.instance as any).reload_timeout = activeTab?.reload_timeout || null;
         }
         // Pass uuid from card data if supported
         if (card.data && card.data.length > 0 && (componentRef.instance as any).uuid !== undefined) {
