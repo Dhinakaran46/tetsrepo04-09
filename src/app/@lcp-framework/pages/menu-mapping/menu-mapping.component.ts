@@ -51,6 +51,7 @@ export class MenuMappingComponent implements OnInit {
   currentItem: any;
   isSubmitted = false;
   loading = false;
+  duplicateMenuNameWarningText = '';
   entityElement = true;
   getActionItem = false;
 
@@ -99,13 +100,13 @@ export class MenuMappingComponent implements OnInit {
       name: ['', Validators.required],
       menuIcon: [''],
       link_type: [1, Validators.required],
-      parent: [''],
+      parent: [null],
       parentActionItem: [''],
       url: [''],
       order_no: ['1.00', [this.decimalValidator]],
       menu_status: [1, Validators.required],
-      entityType: [''],
-      module: [''],
+      entityType: [null],
+      module: [null],
       MenuTypeName: [''],
       menuTypeSlug: '',
       menuDevice: 1,
@@ -135,6 +136,10 @@ export class MenuMappingComponent implements OnInit {
       this.updateOrderNo(value);
     });
 
+    this.menuForm.get('name')?.valueChanges.subscribe(() => {
+      this.clearDuplicateMenuNameWarning();
+    });
+
     if (this.menu_id) {
       this.getMenuList(this.menu_id);
     }
@@ -147,7 +152,7 @@ export class MenuMappingComponent implements OnInit {
       }
     });
 
-    this.entityOptions = commonConfig.entity_types;
+    this.entityOptions = this.sortByDisplayName(commonConfig.entity_types, 'label');
   }
 
   loadIconClasses(): void {
@@ -207,6 +212,54 @@ export class MenuMappingComponent implements OnInit {
       this.iconClasses = this.mergeAndDeduplicateIcons(this.iconClasses, menuIcons);
       this.refreshView();
     });
+  }
+
+  private sortByDisplayName(items: any[], field: string = 'name'): any[] {
+    return [...(items || [])].sort((first, second) => {
+      const firstValue = (first?.[field] || '').toString().toLowerCase();
+      const secondValue = (second?.[field] || '').toString().toLowerCase();
+      return firstValue.localeCompare(secondValue);
+    });
+  }
+
+  private getSelectionValue(selection: any, fallbackControlName: string, field: string): any {
+    if (selection instanceof Event) {
+      const target = selection.target as HTMLSelectElement;
+      return target?.value;
+    }
+
+    if (selection && typeof selection === 'object') {
+      return selection[field] ?? selection.value ?? selection.id;
+    }
+
+    return selection ?? this.menuForm.get(fallbackControlName)?.value;
+  }
+
+  compareSelectValue = (firstValue: any, secondValue: any): boolean => {
+    const firstCompareValue = this.getCompareValue(firstValue);
+    const secondCompareValue = this.getCompareValue(secondValue);
+
+    if (firstCompareValue === null || firstCompareValue === undefined || secondCompareValue === null || secondCompareValue === undefined) {
+      return firstCompareValue === secondCompareValue;
+    }
+
+    return firstCompareValue.toString() === secondCompareValue.toString();
+  };
+
+  private getCompareValue(value: any): any {
+    if (value && typeof value === 'object') {
+      return value.id ?? value.value ?? value.name ?? value.label;
+    }
+
+    return value;
+  }
+
+  private findSelectedOption(items: any[], field: string, value: any): any {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    return (items || []).find((item) => this.compareSelectValue(item?.[field], value)) || null;
   }
 
   getMenuType() {
@@ -274,7 +327,7 @@ export class MenuMappingComponent implements OnInit {
 
   flattenMenu(menu: any[], parentName = null, level = 0): any[] {
     let result: any[] = [];
-    for (const item of menu) {
+    for (const item of this.sortByDisplayName(menu)) {
       const indentation = '\u2003'.repeat(level) + '-'.repeat(level + 1);
       const flatItem = {
         ...item,
@@ -299,7 +352,7 @@ export class MenuMappingComponent implements OnInit {
 
   selectMenu(item: any) {
     this.selectedMenu = item;
-    this.entityOptions = commonConfig.entity_types;
+    this.entityOptions = this.sortByDisplayName(commonConfig.entity_types, 'label');
     this.currentItemId = item.id;
 
     if (item.entity_id == null) {
@@ -362,11 +415,11 @@ export class MenuMappingComponent implements OnInit {
       parentActionItem: item.permission_id || null,
       name: item.name,
       menuIcon: item.menu_img || null,
-      parent: item.parent_id || '',
+      parent: this.findSelectedOption(this.flatMenu, 'id', item.parent_id),
       url: item.target || '',
       order_no: item.order_no || 0.0,
-      entityType: this.entity_type || '',
-      module: '',
+      entityType: this.findSelectedOption(this.entityOptions, 'value', this.entity_type),
+      module: null,
       menu_status: item.status_id || 1,
     });
     this.setInitialSelectedIcon(); // Set selected icon after patching value
@@ -383,12 +436,12 @@ export class MenuMappingComponent implements OnInit {
       menu_type: [this.menu_id ?? ''],
       menuIcon: '',
       link_type: 1,
-      parent: '',
+      parent: null,
       parentActionItem: '',
-      entityType: '',
+      entityType: null,
       url: '',
       order_no: '1.00',
-      module: '',
+      module: null,
       menu_status: 1,
     });
     this.setInitialSelectedIcon(); // Set selected icon after patching value
@@ -427,10 +480,10 @@ export class MenuMappingComponent implements OnInit {
     }));
   }
 
-  onSelectionChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    const selectedValue = target.value;
-    this.menuForm.patchValue({ module: '' });
+  onSelectionChange(event: any) {
+    const selectedValue = this.getSelectionValue(event, 'entityType', 'value');
+    this.menuForm.patchValue({ module: null });
+    this.entityModules = [];
 
     if (selectedValue) {
       this.fetchAndSelectModules(selectedValue, null);
@@ -440,7 +493,7 @@ export class MenuMappingComponent implements OnInit {
   fetchAndSelectModules(entityTypeSlug: string | null, selectedEntityID: number | null) {
     if (!entityTypeSlug) {
       this.entityModules = [];
-      this.menuForm.patchValue({ module: '' });
+      this.menuForm.patchValue({ module: null });
       return;
     }
 
@@ -450,7 +503,7 @@ export class MenuMappingComponent implements OnInit {
       primary_table: 'master_entities',
       start_index: 0,
       limit_range: 100000,
-      sort_columns: [['master_entities.id', 'asc']],
+      sort_columns: [['master_entities.name', 'asc']],
       search_all: [
         {
           column_name: 'master_entities.entity_type',
@@ -469,9 +522,9 @@ export class MenuMappingComponent implements OnInit {
     this.menuMapService.getCommonList(getModuleList).subscribe({
       next: (response: any) => {
         if (response.code === 200 && response.status) {
-          this.entityModules = response.data.records;
+          this.entityModules = this.sortByDisplayName(response.data.records);
           if (selectedEntityID) {
-            this.menuForm.patchValue({ module: selectedEntityID });
+            this.menuForm.patchValue({ module: this.findSelectedOption(this.entityModules, 'id', selectedEntityID) });
             this.getViewPermission(selectedEntityID);
           }
           this.refreshView();
@@ -480,25 +533,27 @@ export class MenuMappingComponent implements OnInit {
       error: (error) => {
         console.error('Error fetching modules:', error);
         this.entityModules = [];
-        this.menuForm.patchValue({ module: '' });
+        this.menuForm.patchValue({ module: null });
         this.refreshView();
       },
     });
   }
 
-  onParentMenuChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    const selectedParentMenuID = target.value;
+  onParentMenuChange(event: any) {
+    const selectedParentMenuID = this.getSelectionValue(event, 'parent', 'id');
+    this.menuForm.patchValue({ parentActionItem: '' });
     if (selectedParentMenuID) {
-      this.menuForm.patchValue({ parentActionItem: '' });
       this.getActionItems(selectedParentMenuID);
+    } else {
+      this.parentActionList = [];
     }
   }
 
-  onModuleChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    const selectedModuleID = target.value;
-    this.getViewPermission(parseInt(selectedModuleID));
+  onModuleChange(event: any) {
+    const selectedModuleID = Number(this.getSelectionValue(event, 'module', 'id'));
+    if (selectedModuleID) {
+      this.getViewPermission(selectedModuleID);
+    }
   }
 
   getViewPermission(entityModuleId: number) {
@@ -607,6 +662,95 @@ export class MenuMappingComponent implements OnInit {
     const formData = this.menuForm.value;
     const currentDate = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
+    this.checkMenuNameAndSave(formData, currentDate);
+  }
+
+  private checkMenuNameAndSave(formData: any, currentDate: string) {
+    const searchAll: any[] = [
+      {
+        column_name: 'menu_items.menu_id',
+        value: this.menu_id,
+        operator: '=',
+      },
+      {
+        column_name: 'menu_items.name',
+        value: formData.name,
+        operator: '=',
+      },
+    ];
+
+    if (this.editMode && this.currentItemId) {
+      searchAll.push({
+        column_name: 'menu_items.id',
+        value: this.currentItemId,
+        operator: '!=',
+      });
+    }
+
+    const getMenuName = {
+      company_id: this.companyId,
+      print_query: false,
+      primary_table: 'menu_items',
+      start_index: 0,
+      limit_range: 1,
+      sort_columns: [['menu_items.id', 'asc']],
+      search_all: searchAll,
+      select_columns: [['menu_items.id']],
+    };
+
+    this.menuMapService.getCommonList(getMenuName).subscribe({
+      next: (response: any) => {
+        if (response.code === 200 && response.status) {
+          const records = response.data.records;
+          if (records.length > 0) {
+            this.setDuplicateMenuNameWarning();
+            this.toastr.warning('This menu name is already in use. Please try another name.');
+            this.loading = false;
+            this.cdr.markForCheck();
+            return;
+          }
+
+          this.checkTargetUrlAndSave(formData, currentDate);
+          return;
+        }
+
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error fetching menu name details:', error);
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private setDuplicateMenuNameWarning() {
+    this.duplicateMenuNameWarningText = 'Its already exists. Change new menu link name';
+    const nameControl = this.menuForm.get('name');
+    nameControl?.setErrors({
+      ...(nameControl.errors || {}),
+      duplicateMenuName: true,
+    });
+  }
+
+  private clearDuplicateMenuNameWarning() {
+    if (!this.duplicateMenuNameWarningText) {
+      return;
+    }
+
+    this.duplicateMenuNameWarningText = '';
+    const nameControl = this.menuForm.get('name');
+    if (!nameControl?.hasError('duplicateMenuName')) {
+      return;
+    }
+
+    const errors = { ...(nameControl.errors || {}) };
+    delete errors['duplicateMenuName'];
+    nameControl.setErrors(Object.keys(errors).length ? errors : null);
+  }
+
+  private checkTargetUrlAndSave(formData: any, currentDate: string) {
     if (formData.url) {
       // Perform URL existence check
       const gettargetUrl = {
@@ -675,8 +819,8 @@ export class MenuMappingComponent implements OnInit {
             permission_id: formData.parentActionItem || null,
             target: formData.url || '',
             order_no: formData.order_no || 1.0,
-            parent_id: formData.parent || null,
-            entity_id: formData.module || null,
+            parent_id: this.getSelectionValue(formData.parent, 'parent', 'id') || null,
+            entity_id: this.getSelectionValue(formData.module, 'module', 'id') || null,
             status_id: formData.menu_status,
             ...(this.editMode
               ? {}

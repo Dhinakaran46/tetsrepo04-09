@@ -74,6 +74,11 @@
               {{ 'form_label_menu_link_name_req' | translate }}
             </div>
             }
+            @if (duplicateMenuNameWarningText) {
+            <div class="text-danger">
+              {{ duplicateMenuNameWarningText }}
+            </div>
+            }
           </div>
           <div class="mb-5">
             <label for="menuIcon"> {{ 'form_label_menu_icon' | translate }} </label>
@@ -126,19 +131,25 @@
           </div>
           <div class="mb-5">
             <label for="parent">{{ 'form_label_parent_menu' | translate }}</label>
-            <select
+            <ng-select
+              [items]="flatMenu"
+              bindLabel="indentedName"
               id="parent"
               formControlName="parent"
-              class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+              class="w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+              [placeholder]="'form_label_parent_menu_dropdown' | translate"
+              [searchable]="true"
+              [clearable]="true"
+              [compareWith]="compareSelectValue"
               (change)="onParentMenuChange($event)"
             >
-              <option value>{{ 'form_label_parent_menu_dropdown' | translate }}</option>
-              @for (menuItem of flatMenu; track menuItem) {
-              <option [value]="menuItem.id">
-                {{ menuItem.indentedName | translate }}
-              </option>
-              }
-            </select>
+              <ng-template ng-option-tmp let-item="item">
+                {{ item.indentedName | translate }}
+              </ng-template>
+              <ng-template ng-label-tmp let-item="item">
+                {{ item.indentedName | translate }}
+              </ng-template>
+            </ng-select>
           </div>
           @if (getActionItem && parentActionList.length > 0) {
           <div class="mb-5">
@@ -189,17 +200,25 @@
           @if (entityElement) {
           <div class="mb-5">
             <label for="entityType">{{ 'form_label_entity_type' | translate }}</label>
-            <select
+            <ng-select
+              [items]="entityOptions"
+              bindLabel="label"
               id="entityType"
               formControlName="entityType"
-              class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+              class="w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+              [placeholder]="'form_label_entity_type_dropdown' | translate"
+              [searchable]="true"
+              [clearable]="true"
+              [compareWith]="compareSelectValue"
               (change)="onSelectionChange($event)"
             >
-              <option value>{{ 'form_label_entity_type_dropdown' | translate }}</option>
-              @for (option of entityOptions; track option) {
-              <option [value]="option.value">{{ option.label | translate }}</option>
-              }
-            </select>
+              <ng-template ng-option-tmp let-item="item">
+                {{ item.label | translate }}
+              </ng-template>
+              <ng-template ng-label-tmp let-item="item">
+                {{ item.label | translate }}
+              </ng-template>
+            </ng-select>
             @if (isSubmitted && menuForm.controls['entityType'].hasError('required')) {
             <div class="text-danger">
               {{ 'Entity type is required. Select one entity type' | translate }}
@@ -208,17 +227,25 @@
           </div>
           <div class="mb-5">
             <label for="module">{{ 'form_label_module' | translate }}</label>
-            <select
+            <ng-select
+              [items]="entityModules"
+              bindLabel="name"
               id="module"
               formControlName="module"
-              class="form-select w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+              class="w-full py-1.5 text-xs placeholder:text-white-dark lg:w-1/2"
+              [placeholder]="'form_label_module_dropdown' | translate"
+              [searchable]="true"
+              [clearable]="true"
+              [compareWith]="compareSelectValue"
               (change)="onModuleChange($event)"
             >
-              <option value>{{ 'form_label_module_dropdown' | translate }}</option>
-              @for (option of entityModules; track option) {
-              <option [value]="option.id">{{ option.name | translate }}</option>
-              }
-            </select>
+              <ng-template ng-option-tmp let-item="item">
+                {{ item.name | translate }}
+              </ng-template>
+              <ng-template ng-label-tmp let-item="item">
+                {{ item.name | translate }}
+              </ng-template>
+            </ng-select>
           </div>
           }
           <div class="mb-5">
@@ -233,7 +260,13 @@
               </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+          <button
+            type="submit"
+            class="btn btn-gradient !mt-6 w-1/2 border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]"
+            [disabled]="loading || duplicateMenuNameWarningText !== ''"
+            [class.cursor-not-allowed]="loading || duplicateMenuNameWarningText !== ''"
+            [class.opacity-60]="loading || duplicateMenuNameWarningText !== ''"
+          >
             {{ (editMode ? 'update' : 'submit') | translate }}
           </button>
         </div>
