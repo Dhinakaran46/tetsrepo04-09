@@ -4,210 +4,152 @@
     <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
   </div>
   } @if (!nonGridPage && !noPermission) {
-  <app-datatable
-    [loading]="gridloading"
-    [masterInfo]="masterInfo"
-    [enableCheckBox]="enableCheckBox"
-    [customTemplates]="customTemplates"
-    [headercolumns]="headercolumns"
-    [stickyHeader]="stickyHeader"
-    [selectcolumns]="selectcolumns"
-    [items]="items"
-    [totalItems]="totalItems"
-    [currentPage]="currentPage"
-    [resultsPerPage]="resultsPerPage"
-    [column]="column"
-    [title]="title"
-    [query]="query"
-    [activeSearchAll]="listQuery?.search_all || []"
-    [activeSearchAny]="listQuery?.search_any || []"
-    [activeHavingAll]="listQuery?.having_conditions || []"
-    [activeHavingAny]="listQuery?.having_any_conditions || []"
-    (delete)="deleteItems($event)"
-    (edit)="editItem($event)"
-    (view)="viewItem($event)"
-    (customAction)="handleCustomAction($event)"
-    (pageChange)="onPageChange($event)"
-    (resultsPerPageChange)="onResultsPerPageChange($event)"
-    (columnSort)="sortColumn($event)"
-    (searchQuery)="searchData($event)"
-    (exportType)="exportTable($event)"
-    (advancedSearchQuery)="advancedSearchData($event)"
-    (linkComponentClick)="onLinkComponentClick($event)"
-    [unique_id]="uniqueId"
-    [showBackButton]="showBackButton"
-    (selectionChange)="onSelectionChange($event)"
-    [selectedItems]="selectedItems"
-    [headerStaticEntityName]="headerStaticEntityName"
-    [footerStaticEntityName]="footerStaticEntityName"
-    [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
-    [staticPageGridParams]="popupComponentGridParams || grid_params"
-    [attachedPolicies]="attachedPolicies"
-    [parentGridFilters]="parentGridFilters"
-    [tableLevel]="tableLevel"
-    (rowContextMenu)="onRowContextMenu($event)"
-  ></app-datatable>
+  <app-datatable [loading]="gridloading" [masterInfo]="masterInfo" [enableCheckBox]="enableCheckBox"
+    [customTemplates]="customTemplates" [headercolumns]="headercolumns" [stickyHeader]="stickyHeader"
+    [selectcolumns]="selectcolumns" [items]="items" [totalItems]="totalItems" [currentPage]="currentPage"
+    [resultsPerPage]="resultsPerPage" [column]="column" [title]="title" [query]="query"
+    [activeSearchAll]="listQuery?.search_all || []" [activeSearchAny]="listQuery?.search_any || []"
+    [activeHavingAll]="listQuery?.having_conditions || []" [activeHavingAny]="listQuery?.having_any_conditions || []"
+    (delete)="deleteItems($event)" (edit)="editItem($event)" (view)="viewItem($event)"
+    (customAction)="handleCustomAction($event)" (pageChange)="onPageChange($event)"
+    (resultsPerPageChange)="onResultsPerPageChange($event)" (columnSort)="sortColumn($event)"
+    (searchQuery)="searchData($event)" (exportType)="exportTable($event)"
+    (advancedSearchQuery)="advancedSearchData($event)" (linkComponentClick)="onLinkComponentClick($event)"
+    [unique_id]="uniqueId" [showBackButton]="showBackButton" (selectionChange)="onSelectionChange($event)"
+    [selectedItems]="selectedItems" [headerStaticEntityName]="headerStaticEntityName"
+    [footerStaticEntityName]="footerStaticEntityName" [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
+    [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
+    [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel"
+    (rowContextMenu)="onRowContextMenu($event)"></app-datatable>
   }
 
   <ng-template #actionTemplate let-item>
     <div class="flex items-center gap-4">
       <!-- mail resend -->
       @if (this.masterInfo.permissions.email_resend) {
-      <button
-        type="button"
-        class="hover:text-primary"
-        (click)="this.emailResendItem(item, $event)"
-        ngxTippy
-        data-tippy-content="Resend Email"
-        appDynamicFontSize="body"
-      >
-        <i class="fa-solid fa-arrows-rotate {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" (click)="this.emailResendItem(item, $event)" ngxTippy
+        data-tippy-content="Resend Email" appDynamicFontSize="body">
+        <i
+          class="fa-solid fa-arrows-rotate {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.details) {
-      <button type="button" class="hover:text-primary" (click)="this.viewItem(item, $event)" ngxTippy data-tippy-content="Details" appDynamicFontSize="body">
-        <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" (click)="this.viewItem(item, $event)" ngxTippy
+        data-tippy-content="Details" appDynamicFontSize="body">
+        <i
+          class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.popup_details) {
-      <button type="button" class="hover:text-primary" (click)="this.viewPopupItem(item)" ngxTippy data-tippy-content="Details" appDynamicFontSize="body">
-        <i class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
-      </button>
-      } @if ( this.masterInfo.permissions.edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed' : true && this.masterInfo?.Listname
-      == 'min_grid' ? item?.min_status != 'completed' : true) ) {
-      <button type="button" class="hover:text-info" appDynamicFontSize="body" (click)="this.editItem(item, $event)" ngxTippy data-tippy-content="Edit">
+      <button type="button" class="hover:text-primary" (click)="this.viewPopupItem(item)" ngxTippy
+        data-tippy-content="Details" appDynamicFontSize="body">
         <i
-          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
-        ></i>
+          class="fa-regular fa-eye {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      </button>
+      } @if ( this.masterInfo.permissions.edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status !=
+      'completed' : true && this.masterInfo?.Listname
+      == 'min_grid' ? item?.min_status != 'completed' : true) ) {
+      <button type="button" class="hover:text-info" appDynamicFontSize="body" (click)="this.editItem(item, $event)"
+        ngxTippy data-tippy-content="Edit">
+        <i
+          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (EntityName == 'master_entity') {
-      <button
-        type="button"
-        class="hover:text-success"
-        appDynamicFontSize="body"
-        (click)="this.exportEntityAsZip(item, $event)"
-        ngxTippy
-        [attr.data-tippy-content]="'Export ' + item.name + ' as Zip'"
-      >
-        <i
-          class="fa fa-file-export"
-          [ngClass]="{
+      <button type="button" class="hover:text-success" appDynamicFontSize="body"
+        (click)="this.exportEntityAsZip(item, $event)" ngxTippy
+        [attr.data-tippy-content]="'Export ' + item.name + ' as Zip'">
+        <i class="fa fa-file-export" [ngClass]="{
             'h-5.5 w-5.5': store.fontsize === 'large',
             'h-4.5 w-4.5': store.fontsize === 'medium',
             'h-3.5 w-3.5': store.fontsize === 'small'
-          }"
-        ></i>
+          }"></i>
       </button>
       } @if (EntityName == 'master_entity') {
-      <button type="button" class="hover:text-primary" (click)="this.previewPopupItem(item)" data-tippy-content="Preview" ngxTippy appDynamicFontSize="body">
+      <button type="button" class="hover:text-primary" (click)="this.previewPopupItem(item)"
+        data-tippy-content="Preview" ngxTippy appDynamicFontSize="body">
         <i class="fa-regular fa-file-lines"></i>
       </button>
-      } @if ( this.masterInfo.permissions.popup_edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status != 'completed' : true &&
+      } @if ( this.masterInfo.permissions.popup_edit && (this.masterInfo?.Listname == 'mrn_grid' ? item?.mrn_status !=
+      'completed' : true &&
       this.masterInfo?.Listname == 'min_grid' ? item?.min_status != 'completed' : true) ) {
-      <button type="button" class="hover:text-info" appDynamicFontSize="body" (click)="this.editPopupItem(item)" ngxTippy data-tippy-content="Edit">
+      <button type="button" class="hover:text-info" appDynamicFontSize="body" (click)="this.editPopupItem(item)"
+        ngxTippy data-tippy-content="Edit">
         <i
-          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"
-        ></i>
+          class="fa-regular fa-pen-to-square {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.delete) {
-      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.deleteItem(item, $event)" ngxTippy data-tippy-content="Delete">
-        <i class="fa-regular fa-trash-can {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.deleteItem(item, $event)"
+        ngxTippy data-tippy-content="Delete">
+        <i
+          class="fa-regular fa-trash-can {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.get_code) {
-      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.getCode(item, $event)" ngxTippy data-tippy-content="Get Code">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.8"
-          stroke="currentColor"
-          [ngClass]="store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5'"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 21 12l-3.75 5.25M6.75 6.75 3 12l3.75 5.25M14.25 3l-4.5 18" />
+      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.getCode(item, $event)"
+        ngxTippy data-tippy-content="Get Code">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"
+          [ngClass]="store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5'">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17.25 6.75 21 12l-3.75 5.25M6.75 6.75 3 12l3.75 5.25M14.25 3l-4.5 18" />
         </svg>
       </button>
       } @if (this.masterInfo.permissions.assign) {
-      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.assignItem(item, $event)" ngxTippy data-tippy-content="Assign">
-        <i class="fa fa-tasks {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.assignItem(item, $event)"
+        ngxTippy data-tippy-content="Assign">
+        <i
+          class="fa fa-tasks {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.print) {
-      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.printItem(item, $event)" ngxTippy data-tippy-content="Print">
-        <i class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" appDynamicFontSize="body" (click)="this.printItem(item, $event)"
+        ngxTippy data-tippy-content="Print">
+        <i
+          class="fa fa-print {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.record_export || item?.downloadables != null) {
-      <button
-        type="button"
-        class="hover:text-primary"
-        appDynamicFontSize="body"
-        (click)="this.recordExport(item, $event)"
-        ngxTippy
-        data-tippy-content="Record Export"
-      >
-        <i class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" appDynamicFontSize="body"
+        (click)="this.recordExport(item, $event)" ngxTippy data-tippy-content="Record Export">
+        <i
+          class="fa fa-download {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.generate_vector) {
-      <button
-        type="button"
-        class="hover:text-primary"
-        appDynamicFontSize="body"
-        (click)="this.generateVector(item, $event)"
-        ngxTippy
-        data-tippy-content="Generate Vector"
-      >
-        <i class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
+      <button type="button" class="hover:text-primary" appDynamicFontSize="body"
+        (click)="this.generateVector(item, $event)" ngxTippy data-tippy-content="Generate Vector">
+        <i
+          class="fa fa-sync {{ store.fontsize === 'large' ? 'h-5.5 w-5.5' : store.fontsize === 'medium' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5' }}"></i>
       </button>
       } @if (this.masterInfo.permissions.reset_password) {
-      <button
-        type="button"
-        [class.text-red-500]="!item.password"
-        [class.hover:text-primary]="item.password"
-        appDynamicFontSize="body"
-        (click)="this.passwordModal(item, $event)"
-        ngxTippy
-        [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'"
-      >
-        <i
-          class="fa fa-key"
-          [ngClass]="{
+      <button type="button" [class.text-red-500]="!item.password" [class.hover:text-primary]="item.password"
+        appDynamicFontSize="body" (click)="this.passwordModal(item, $event)" ngxTippy
+        [attr.data-tippy-content]="!item.password ? 'Set New Password' : 'Reset Password'">
+        <i class="fa fa-key" [ngClass]="{
             'h-5.5 w-5.5': store.fontsize === 'large',
             'h-4.5 w-4.5': store.fontsize === 'medium',
             'h-3.5 w-3.5': store.fontsize === 'small',
             'text-red-500': !item.password
-          }"
-        ></i>
+          }"></i>
       </button>
       }
     </div>
   </ng-template>
 
   <ng-template #statusTemplate let-item>
-    <span
-      class="badge"
-      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color || '']"
-    >
+    <span class="badge"
+      [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs', statuses[item.status]?.border_color || '']">
       {{ statuses[item.status].value | translate }}
     </span>
   </ng-template>
 
   <ng-template #processStatusTemplate let-item>
-    <span
-      class="badge"
-      [ngClass]="[
+    <span class="badge" [ngClass]="[
         store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs',
         processStatuses[item.process_status]?.border_color || ''
-      ]"
-    >
+      ]">
       {{ processStatuses[item.process_status].value | translate }}
     </span>
   </ng-template>
 
   <ng-template #linkDownloadVideoURLTemplate let-item>
     @if (item.documentation_video_url) {
-    <a
-      [href]="item.documentation_video_url"
-      target="_blank"
-      rel="noopener noreferrer"
+    <a [href]="item.documentation_video_url" target="_blank" rel="noopener noreferrer"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
-      class="flex items-center gap-2 text-blue-600 hover:underline"
-    >
+      class="flex items-center gap-2 text-blue-600 hover:underline">
       <i class="fa-solid fa-up-right-from-square"></i>
       {{ item.documentation_video_url }}
     </a>
@@ -216,13 +158,9 @@
 
   <ng-template #linkDownloadPdfURLTemplate let-item>
     @if (item.documentation_pdf) {
-    <a
-      [href]="apiUrl + '/' + item.documentation_pdf"
-      target="_blank"
-      rel="noopener noreferrer"
+    <a [href]="apiUrl + '/' + item.documentation_pdf" target="_blank" rel="noopener noreferrer"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
-      class="flex items-center gap-2 text-blue-600 hover:underline"
-    >
+      class="flex items-center gap-2 text-blue-600 hover:underline">
       <i class="fa-solid fa-download"></i>
       {{ item.documentation_pdf }}
     </a>
@@ -231,13 +169,9 @@
 
   <ng-template #linkDownloadWordURLTemplate let-item>
     @if (item.documentation_word) {
-    <a
-      [href]="apiUrl + '/' + item.documentation_word"
-      target="_blank"
-      rel="noopener noreferrer"
+    <a [href]="apiUrl + '/' + item.documentation_word" target="_blank" rel="noopener noreferrer"
       [ngClass]="[store.fontsize === 'large' ? 'text-base' : store.fontsize === 'medium' ? 'text-sm' : 'text-xs']"
-      class="flex items-center gap-2 text-blue-600 hover:underline"
-    >
+      class="flex items-center gap-2 text-blue-600 hover:underline">
       <i class="fa-solid fa-download"></i>
       {{ item.documentation_word }}
     </a>
@@ -258,23 +192,17 @@
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
       class="relative w-full max-w-5xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-    >
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
       <!-- Modal Header -->
-      <div
-        class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6"
-        style="
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6" style="
           background-color: var(--app-table-header-color, var(--app-sidebar-bg-color));
           border-color: var(--app-table-border-color, var(--app-border-color));
-        "
-      >
+        ">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">Code</h3>
-          <button
-            type="button"
+          <button type="button"
             class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
-            (click)="closeGetCodeModal()"
-          >
+            (click)="closeGetCodeModal()">
             <span class="sr-only">Close</span>
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -284,27 +212,18 @@
       <div class="px-4 py-4 sm:px-6">
         <form [formGroup]="getCodeForm">
           <div class="modal-monaco-editor-wrapper relative" style="height: 450px">
-            <button
-              type="button"
+            <button type="button"
               class="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-blue-700"
-              (click)="copyGetCodeContent()"
-              title="Copy to clipboard"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-3.5 w-3.5">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 0 1 3 20.625V10.125C3 9.504 3.504 9 4.125 9H7.5m8.25 8.25h4.125c.621 0 1.125-.504 1.125-1.125V5.625A1.125 1.125 0 0 0 19.875 4.5H9.375c-.621 0-1.125.504-1.125 1.125V9m7.5 8.25H9.375A1.125 1.125 0 0 1 8.25 16.125V9m7.5 8.25V9"
-                />
+              (click)="copyGetCodeContent()" title="Copy to clipboard">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="h-3.5 w-3.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 0 1 3 20.625V10.125C3 9.504 3.504 9 4.125 9H7.5m8.25 8.25h4.125c.621 0 1.125-.504 1.125-1.125V5.625A1.125 1.125 0 0 0 19.875 4.5H9.375c-.621 0-1.125.504-1.125 1.125V9m7.5 8.25H9.375A1.125 1.125 0 0 1 8.25 16.125V9m7.5 8.25V9" />
               </svg>
               <span>Copy</span>
             </button>
-            <ngx-monaco-editor
-              [options]="modalJsonEditorOptions"
-              formControlName="codeContent"
-              class="modal-monaco-editor"
-              style="height: 100%"
-            ></ngx-monaco-editor>
+            <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="codeContent"
+              class="modal-monaco-editor" style="height: 100%"></ngx-monaco-editor>
           </div>
         </form>
       </div>
@@ -322,25 +241,19 @@
   <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
     <div
       class="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-    >
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
       <!-- Modal Header -->
-      <div
-        class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6"
-        style="
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6" style="
           background-color: var(--app-table-header-color, var(--app-sidebar-bg-color));
           border-color: var(--app-table-border-color, var(--app-border-color));
-        "
-      >
+        ">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 sm:text-lg">
             {{ 'title_reset_password' | translate }}
           </h3>
-          <button
-            type="button"
+          <button type="button"
             class="rounded-md p-2 text-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:text-gray-100"
-            (click)="cancelResetPwd()"
-          >
+            (click)="cancelResetPwd()">
             <span class="sr-only">Close</span>
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -348,16 +261,12 @@
       </div>
       <!-- Line Items Modal Content Section -->
       <div class="px-4 py-4 sm:px-6">
-        <form
-          [formGroup]="changePasswordForm"
-          (ngSubmit)="onChangePassword()"
-          class="mb-5 rounded-md border border-[#ebedf2] bg-white p-4 dark:border-[#191e3a] dark:bg-[#0e1726]"
-          style="
+        <form [formGroup]="changePasswordForm" (ngSubmit)="onChangePassword()"
+          class="mb-5 rounded-md border border-[#ebedf2] bg-white p-4 dark:border-[#191e3a] dark:bg-[#0e1726]" style="
             background-color: var(--app-table-bg-color, var(--app-bg-color));
             border-color: var(--app-table-border-color, var(--app-border-color));
             color: var(--app-table-text-color, var(--app-text-color));
-          "
-        >
+          ">
           <div class="flex flex-col sm:flex-row">
             <div class="grid flex-1 gap-5 sm:grid-cols-2">
               <div>
@@ -366,7 +275,8 @@
                 <!--<div *ngIf="changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched" class="text-red-500">
                     {{ 'form_label_confirm_new_pwd' | translate }}
                   </div>-->
-                @if (changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched) {
+                @if (changePasswordForm.get('new_password')?.invalid && changePasswordForm.get('new_password')?.touched)
+                {
                 <div class="text-red-500">
                   @if ( changePasswordForm.get('new_password')?.errors?.['passwordInvalid'] ) {
                   {{ passwordValidationMessage }}
@@ -386,9 +296,12 @@
                 }
               </div>
               <div>
-                <label for="confirm_new_password" class="form-label">{{ 'form_label_confirm_new_pwd' | translate }}</label>
-                <input type="password" formControlName="confirm_new_password" class="form-input" id="confirm_new_password" />
-                @if (changePasswordForm.get('confirm_new_password')?.invalid && changePasswordForm.get('confirm_new_password')?.touched) {
+                <label for="confirm_new_password" class="form-label">{{ 'form_label_confirm_new_pwd' | translate
+                  }}</label>
+                <input type="password" formControlName="confirm_new_password" class="form-input"
+                  id="confirm_new_password" />
+                @if (changePasswordForm.get('confirm_new_password')?.invalid &&
+                changePasswordForm.get('confirm_new_password')?.touched) {
                 <div class="text-red-500">
                   {{ 'form_confirm_new_pwd_req_msg' | translate }}
                 </div>
@@ -399,7 +312,8 @@
           <div class="mt-5 flex flex-col items-center">
             <button appDynamicFontSize="body" type="submit" class="btn btn-primary">{{ 'submit' | translate }}</button>
           </div>
-          <p class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400"><strong>Note:</strong> {{ passwordValidationMessage }}</p>
+          <p class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400"><strong>Note:</strong> {{
+            passwordValidationMessage }}</p>
         </form>
       </div>
     </div>
@@ -415,15 +329,13 @@
   <!-- Modal Content -->
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
-      class="relative w-full max-w-5xl transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
-      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-    >
+      class="relative w-full transform overflow-visible rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      [ngClass]="getResolvedWidthClass()"
+      style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
       <!-- Corner Close Button -->
-      <button
-        type="button"
+      <button type="button"
         class="btn-xs absolute -right-5 -top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-lg hover:bg-gray-100 hover:text-gray-700 focus:outline-none"
-        (click)="closeViewPopup()"
-      >
+        (click)="closeViewPopup()">
         <span class="sr-only">Close</span>
         <i class="fa-solid fa-xmark text-2xl"></i>
       </button>
@@ -434,104 +346,52 @@
         } @if (noPopupPermission && selectedItemEntityType !== 'grid_builder_module') {
         <div class="flex min-h-[200px] flex-col items-center justify-center">
           <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
-          <button class="btn btn-danger rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" (click)="closeViewPopup()">Close</button>
+          <button class="btn btn-danger rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            (click)="closeViewPopup()">Close</button>
         </div>
         }
         <ng-container>
           @if (selectedItemEntityType == 'grid_builder_module') {
-          <app-datatable
-            [headercolumns]="previewHeaderColumns"
-            [stickyHeader]="stickyHeader"
-            [selectcolumns]="previewSelectColumns"
-            [items]="previewItems"
-            [totalItems]="previewTotalItems"
-            [currentPage]="previewCurrentPage"
-            [resultsPerPage]="previewResultsPerPage"
-            [column]="column"
-            [title]="previewTitle"
-            [query]="query"
-            [activeSearchAll]="previewListQuery?.search_all || []"
+          <app-datatable [headercolumns]="previewHeaderColumns" [stickyHeader]="stickyHeader"
+            [selectcolumns]="previewSelectColumns" [items]="previewItems" [totalItems]="previewTotalItems"
+            [currentPage]="previewCurrentPage" [resultsPerPage]="previewResultsPerPage" [column]="column"
+            [title]="previewTitle" [query]="query" [activeSearchAll]="previewListQuery?.search_all || []"
             [activeSearchAny]="previewListQuery?.search_any || []"
             [activeHavingAll]="previewListQuery?.having_conditions || []"
-            [activeHavingAny]="previewListQuery?.having_any_conditions || []"
-            (pageChange)="previewOnPageChange($event)"
-            (resultsPerPageChange)="previewOnResultsPerPageChange($event)"
-            (columnSort)="previewSortColumn($event)"
-            (searchQuery)="previewSearchData($event)"
-            (advancedSearchQuery)="previewAdvancedSearchData($event)"
-            (linkComponentClick)="onLinkComponentClick($event)"
-            [permissions]="false"
+            [activeHavingAny]="previewListQuery?.having_any_conditions || []" (pageChange)="previewOnPageChange($event)"
+            (resultsPerPageChange)="previewOnResultsPerPageChange($event)" (columnSort)="previewSortColumn($event)"
+            (searchQuery)="previewSearchData($event)" (advancedSearchQuery)="previewAdvancedSearchData($event)"
+            (linkComponentClick)="onLinkComponentClick($event)" [permissions]="false"
             [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
-            [staticPageGridParams]="popupComponentGridParams || grid_params"
-            [attachedPolicies]="attachedPolicies"
-            [parentGridFilters]="parentGridFilters"
-            [tableLevel]="tableLevel"
-          >
+            [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
+            [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel">
           </app-datatable>
           }
         </ng-container>
         @if (!noPopupPermission) { @if (popupName == 'popup_grid') {
-        <app-datatable
-          [loading]="gridloading"
-          [masterInfo]="masterInfo"
-          [enableCheckBox]="enableCheckBox"
-          [customTemplates]="customTemplates"
-          [headercolumns]="headercolumns"
-          [stickyHeader]="null"
-          [selectcolumns]="selectcolumns"
-          [items]="items"
-          [totalItems]="totalItems"
-          [currentPage]="currentPage"
-          [resultsPerPage]="resultsPerPage"
-          [column]="column"
-          [title]="title"
-          [query]="query"
-          [activeSearchAll]="listQuery?.search_all || []"
-          [activeSearchAny]="listQuery?.search_any || []"
+        <app-datatable [loading]="gridloading" [masterInfo]="masterInfo" [enableCheckBox]="enableCheckBox"
+          [customTemplates]="customTemplates" [headercolumns]="headercolumns" [stickyHeader]="null"
+          [selectcolumns]="selectcolumns" [items]="items" [totalItems]="totalItems" [currentPage]="currentPage"
+          [resultsPerPage]="resultsPerPage" [column]="column" [title]="title" [query]="query"
+          [activeSearchAll]="listQuery?.search_all || []" [activeSearchAny]="listQuery?.search_any || []"
           [activeHavingAll]="listQuery?.having_conditions || []"
-          [activeHavingAny]="listQuery?.having_any_conditions || []"
-          (delete)="deleteItems($event)"
-          (edit)="editItem($event)"
-          (view)="viewItem($event)"
-          (customAction)="handleCustomAction($event)"
-          (pageChange)="onPageChange($event)"
-          (resultsPerPageChange)="onResultsPerPageChange($event)"
-          (columnSort)="sortColumn($event)"
-          (searchQuery)="searchData($event)"
-          (exportType)="exportTable($event)"
-          (advancedSearchQuery)="advancedSearchData($event)"
-          (linkComponentClick)="onLinkComponentClick($event)"
-          [unique_id]="uniqueId"
-          [showBackButton]="showBackButton"
-          [headerStaticEntityName]="headerStaticEntityName"
-          [footerStaticEntityName]="footerStaticEntityName"
-          [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
-          [staticPageGridParams]="popupComponentGridParams || grid_params"
-          [attachedPolicies]="attachedPolicies"
-          [parentGridFilters]="parentGridFilters"
-          [tableLevel]="tableLevel"
-          (rowContextMenu)="onRowContextMenu($event)"
-        >
+          [activeHavingAny]="listQuery?.having_any_conditions || []" (delete)="deleteItems($event)"
+          (edit)="editItem($event)" (view)="viewItem($event)" (customAction)="handleCustomAction($event)"
+          (pageChange)="onPageChange($event)" (resultsPerPageChange)="onResultsPerPageChange($event)"
+          (columnSort)="sortColumn($event)" (searchQuery)="searchData($event)" (exportType)="exportTable($event)"
+          (advancedSearchQuery)="advancedSearchData($event)" (linkComponentClick)="onLinkComponentClick($event)"
+          [unique_id]="uniqueId" [showBackButton]="showBackButton" [headerStaticEntityName]="headerStaticEntityName"
+          [footerStaticEntityName]="footerStaticEntityName" [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
+          [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
+          [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel" (rowContextMenu)="onRowContextMenu($event)">
         </app-datatable>
         } @if (popupName == 'popup_details') {
-        <app-static-page
-          [uuid]="selectedItemUuid"
-          [entityName]="popupEntityName"
-          [parentGridFilters]="getCurrentGridFilters()"
-          [isModal]="true"
-          [gridParams]="popupComponentGridParams"
-          [lineItemConfigurations]="popupLineItemConfigurations"
-          (closeModal)="closeViewPopup()"
-        ></app-static-page>
+        <app-static-page [uuid]="selectedItemUuid" [entityName]="popupEntityName"
+          [parentGridFilters]="getCurrentGridFilters()" [isModal]="true" [gridParams]="popupComponentGridParams"
+          [lineItemConfigurations]="popupLineItemConfigurations" (closeModal)="closeViewPopup()"></app-static-page>
         } @if (popupName == 'popup_add' || popupName == 'popup_edit') {
-        <app-form-builder
-          [popupName]="popupName"
-          [uuid]="selectedItemUuid"
-          [entityName]="popupEntityName"
-          [isModal]="true"
-          [gridParams]="popupComponentGridParams"
-          (closeModal)="closeViewPopup()"
-        ></app-form-builder>
+        <app-form-builder [popupName]="popupName" [uuid]="selectedItemUuid" [entityName]="popupEntityName"
+          [isModal]="true" [gridParams]="popupComponentGridParams" (closeModal)="closeViewPopup()"></app-form-builder>
         } }
       </div>
     </div>
@@ -540,127 +400,100 @@
 } @if (contextMenuVisible && contextMenuItem && masterInfo) {
 <div
   class="fixed z-[9999] min-w-[180px] rounded-md border border-[#e0e6ed] bg-white py-1 shadow-xl dark:border-[#1b2e4b] dark:bg-[#1b2e4b]"
-  [style.left.px]="contextMenuPosition.x"
-  [style.top.px]="contextMenuPosition.y"
-  (click)="$event.stopPropagation()"
->
+  [style.left.px]="contextMenuPosition.x" [style.top.px]="contextMenuPosition.y" (click)="$event.stopPropagation()">
   @if (masterInfo.permissions.email_resend) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="emailResendItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="emailResendItem(contextMenuItem); closeContextMenu()">
     <i class="fa-solid fa-arrows-rotate w-4 text-center"></i>
     <span>Resend Email</span>
   </button>
   } @if (masterInfo.permissions.details) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="viewItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="viewItem(contextMenuItem); closeContextMenu()">
     <i class="fa-regular fa-eye w-4 text-center"></i>
     <span>Details</span>
   </button>
   } @if (masterInfo.permissions.popup_details) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="viewPopupItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="viewPopupItem(contextMenuItem); closeContextMenu()">
     <i class="fa-regular fa-eye w-4 text-center"></i>
     <span>Details</span>
   </button>
-  } @if (masterInfo.permissions.edit && (masterInfo?.Listname == 'mrn_grid' ? contextMenuItem?.mrn_status != 'completed' : true && masterInfo?.Listname ==
+  } @if (masterInfo.permissions.edit && (masterInfo?.Listname == 'mrn_grid' ? contextMenuItem?.mrn_status != 'completed'
+  : true && masterInfo?.Listname ==
   'min_grid' ? contextMenuItem?.min_status != 'completed' : true)) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="editItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="editItem(contextMenuItem); closeContextMenu()">
     <i class="fa-regular fa-pen-to-square w-4 text-center"></i>
     <span>Edit</span>
   </button>
-  } @if (masterInfo.permissions.popup_edit && (masterInfo?.Listname == 'mrn_grid' ? contextMenuItem?.mrn_status != 'completed' : true && masterInfo?.Listname ==
+  } @if (masterInfo.permissions.popup_edit && (masterInfo?.Listname == 'mrn_grid' ? contextMenuItem?.mrn_status !=
+  'completed' : true && masterInfo?.Listname ==
   'min_grid' ? contextMenuItem?.min_status != 'completed' : true)) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="editPopupItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="editPopupItem(contextMenuItem); closeContextMenu()">
     <i class="fa-regular fa-pen-to-square w-4 text-center"></i>
     <span>Edit</span>
   </button>
   } @if (masterInfo.permissions.assign) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="assignItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="assignItem(contextMenuItem); closeContextMenu()">
     <i class="fa fa-tasks w-4 text-center"></i>
     <span>Assign</span>
   </button>
   } @if (masterInfo.permissions.print) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="printItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="printItem(contextMenuItem); closeContextMenu()">
     <i class="fa fa-print w-4 text-center"></i>
     <span>Print</span>
   </button>
   } @if (masterInfo.permissions.record_export || contextMenuItem?.downloadables != null) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="recordExport(contextMenuItem); closeContextMenu()"
-  >
+    (click)="recordExport(contextMenuItem); closeContextMenu()">
     <i class="fa fa-download w-4 text-center"></i>
     <span>Export</span>
   </button>
   } @if (masterInfo.permissions.generate_vector) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="generateVector(contextMenuItem); closeContextMenu()"
-  >
+    (click)="generateVector(contextMenuItem); closeContextMenu()">
     <i class="fa fa-sync w-4 text-center"></i>
     <span>Generate Vector</span>
   </button>
   } @if (masterInfo.permissions.get_code) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="getCode(contextMenuItem); closeContextMenu()"
-  >
+    (click)="getCode(contextMenuItem); closeContextMenu()">
     <i class="fa fa-code w-4 text-center"></i>
     <span>Get Code</span>
   </button>
   } @if (EntityName == 'master_entity') {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="exportEntityAsZip(contextMenuItem); closeContextMenu()"
-  >
+    (click)="exportEntityAsZip(contextMenuItem); closeContextMenu()">
     <i class="fa fa-file-export w-4 text-center"></i>
     <span>Export as Zip</span>
   </button>
   } @if (masterInfo.permissions.delete) {
   <hr class="my-1 border-[#e0e6ed] dark:border-[#1b2e4b]" />
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm text-danger hover:bg-[#fff5f5] dark:hover:bg-[#1b2e4b]"
-    (click)="deleteItem(contextMenuItem); closeContextMenu()"
-  >
+    (click)="deleteItem(contextMenuItem); closeContextMenu()">
     <i class="fa-regular fa-trash-can w-4 text-center"></i>
     <span>Delete</span>
   </button>
   } @if (masterInfo.permissions.reset_password) {
-  <button
-    type="button"
+  <button type="button"
     class="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-[#eaf1ff] dark:hover:bg-[#0e1726]"
-    (click)="passwordModal(contextMenuItem); closeContextMenu()"
-  >
+    (click)="passwordModal(contextMenuItem); closeContextMenu()">
     <i class="fa fa-key w-4 text-center"></i>
     <span>{{ !contextMenuItem.password ? 'Set Password' : 'Reset Password' }}</span>
   </button>

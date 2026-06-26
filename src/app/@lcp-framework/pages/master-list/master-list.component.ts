@@ -87,7 +87,6 @@ interface AcceptedParentParamRule {
 export class MasterListComponent implements OnChanges {
   search_all: any[] = [];
   search_any: any[] = [];
-
   @Input() uuid: any = null;
   @Input() entity_name: any = '';
   @Input() popupName: any = '';
@@ -126,10 +125,29 @@ export class MasterListComponent implements OnChanges {
 
   @Output() selectionChange = new EventEmitter<any[]>();
   @Output() deleteTriggred = new EventEmitter<any>();
+  @Output() closeModal = new EventEmitter<any>();
   @Input() selectedItems: any[] = [];
+  @Input() widthClass: string = '';
+  @Input() name: string = '';
+  @Input() fromDate: string = '';
+  @Input() toDate: string = '';
 
   get nonGridPage() {
     return this._nonGridPage;
+  }
+
+  getResolvedWidthClass(): string {
+    if (!this.widthClass) {
+      return 'max-w-5xl';
+    }
+    const trimmed = this.widthClass.trim();
+    if (trimmed.startsWith('max-w-')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('max-')) {
+      return 'max-w-' + trimmed.substring(4);
+    }
+    return trimmed;
   }
 
   store: any = initialState;
@@ -177,7 +195,7 @@ export class MasterListComponent implements OnChanges {
   selectedItemEntityType: string | null = null;
   EntityName: string | null = null;
 
-  title: any = '';
+  @Input() title: any = '';
   previewTitle: any = '';
   listQuery: any = '';
   previewListQuery: any = '';
@@ -399,6 +417,17 @@ export class MasterListComponent implements OnChanges {
     }, 0);
   }
 
+  getDateRangeBadge(): string {
+    if (!this.fromDate || !this.toDate) return '';
+    return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700 ml-3" style="font-family: 'Nunito', sans-serif;">
+      <i class="fa-solid fa-calendar-days text-blue-500 text-[10px]"></i>
+      <span class="text-slate-500 mr-0.5">Showing Data between</span>
+      <span class="font-bold text-sm text-slate-800 dark:text-slate-100">${this.fromDate}</span>
+      <i class="fa-solid fa-arrow-right text-[8px] text-slate-400"></i>
+      <span class="font-bold text-sm text-slate-800 dark:text-slate-100">${this.toDate}</span>
+    </span>`;
+  }
+
   setupPageInfo(pageInfo: any, defaultPermission: any) {
     this.user_info = JSON.parse(this.localStorageService.getData('user_data'));
     this.resultsPerPage = this.normalizeResultsPerPage(this.config?.grid_pagination_default);
@@ -432,10 +461,24 @@ export class MasterListComponent implements OnChanges {
         this.enableCheckBox = masterListConfig.enable_row_checkbox;
       }
 
-      if (this.entity_name) {
-        this.title = this.entity_name;
+      if (this.name) {
+        this.title = this.name;
+      } else if (this.title) {
+        // If title is passed as a prop, use it exactly as is
+        this.title = this.title;
       } else {
-        this.title = masterListConfig.fullEntity;
+        // If no title or name is passed, resolve the default title
+        if (this.entity_name) {
+          this.title = this.entity_name;
+        } else {
+          this.title = masterListConfig.fullEntity;
+        }
+        // Append the date range badge if dates are provided
+        if (this.fromDate && this.toDate) {
+          const badge = this.getDateRangeBadge();
+          const baseTitle = this.translate.instant(this.title);
+          this.title = `<div class="flex flex-wrap items-center gap-2"><span>${baseTitle}</span>${badge}</div>`;
+        }
       }
 
       this.defaultQuery = masterListConfig.ListQuery;
@@ -448,7 +491,7 @@ export class MasterListComponent implements OnChanges {
 
       this.fetchAttachedPolicies(this.listQuery);
     } else {
-      this.title = 'Default Title';
+      this.title = this.name || 'Default Title';
       this.headercolumns = [];
       this.items = [];
     }
@@ -2869,6 +2912,8 @@ export class MasterListComponent implements OnChanges {
     }
   }
   closeViewPopup() {
+    // need to destroy the popup component and reset the state variables
+    this.closeModal.emit();
     this.isViewPopupOpen = false;
     this.selectedItemUuid = null;
     this.noPopupPermission = false;
@@ -3566,7 +3611,7 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, properties: any = null) {
+processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, properties: any = null) {
     const gridParams = properties?.['grid_params'] ?? null;
     const searchAll = properties?.['search_all'] ?? null;
     const searchAny = properties?.['search_any'] ?? null;
@@ -3577,10 +3622,10 @@ export class MasterListComponent implements OnChanges {
     if (searchAny !== null) {
       this.search_any = searchAny;
     }
-
     if (gridParams !== null) {
       this.grid_params = gridParams;
     }
+
     this.popupName = popupName;
     // Enhanced permission check using unorgmenuList and permissions
     const userData = this.user_info || JSON.parse(this.localStorageService.getData('user_data'));
@@ -3628,7 +3673,7 @@ export class MasterListComponent implements OnChanges {
       this.loadingpopup = false;
       this.cdr.markForCheck();
     }, 500);
-
+ 
     // When grid_params are supplied for a popup_grid, reload data so the filter applies.
     if (gridParams && popupName === 'popup_grid' && this.listQuery) {
       const popupParams = { ...this.listQuery, entity_name: popupEntityName || this.listQuery.entity_name, start_index: 0 };
