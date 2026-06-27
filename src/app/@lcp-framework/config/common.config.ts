@@ -107,7 +107,6 @@ export const commonConfig: any = {
     TARGET_KEYWORDS_EMBEDDINGS_MODULE: { name: 'target_keywords_embeddings_module', prefix_slug: 'targetkeywordsembeddingsmodule' },
     AUDIT_LOG_MANAGEMENT_MODULE: { name: 'audit_log_management_module', prefix_slug: 'auditlogmanagement' },
     CHART_BUILDER_MODULE: { name: 'chart_builder_module', prefix_slug: 'chartbuilder' },
-    TIMESHEET_PROJECT_SUMMARY_MODULE: { name: 'timesheet_project_summary_module', prefix_slug: 'timesheetprojectsummary' },
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -231,7 +230,6 @@ export const commonConfig: any = {
     { label: 'Target Keywords Embeddings Module', value: 'target_keywords_embeddings_module' },
     { label: 'Audit Log Management Module', value: 'audit_log_management_module' },
     { label: 'Chart Builder Module', value: 'chart_builder_module' },
-    { label: 'Timesheet project Summary Dashboard', value: 'timesheet_project_summary_module' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',
