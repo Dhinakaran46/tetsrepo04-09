@@ -42,8 +42,6 @@ export function viewMandatoryValidator(): ValidatorFn {
 
 interface LineItem {
   field_name: string;
-  display_name: string;
-  field_table: string;
   order_no: number;
   default_value: string;
   column_name: string;
@@ -168,8 +166,6 @@ export class ExportTemplateComponent implements OnInit {
   itemsTableConfig: TableConfig = {
     columns: [
       { key: 'field_name', label: 'Field Name', sortable: true, searchable: true },
-      { key: 'display_name', label: 'Display Name', sortable: true, searchable: true },
-      { key: 'field_table', label: 'Field Table', sortable: true, searchable: true },
       { key: 'order_no', label: 'Order No', sortable: true, searchable: true },
       { key: 'field_type_id', label: 'Field Type', sortable: true, searchable: true },
       {
@@ -587,9 +583,7 @@ export class ExportTemplateComponent implements OnInit {
   initLineItemForm() {
     this.lineItemForm = this.fb.group({
       field_name: ['', [Validators.required, Validators.maxLength(100)]],
-      display_name: ['', [Validators.required, Validators.maxLength(100)]],
       order_no: ['', [Validators.required, Validators.min(0)]],
-      field_table: ['', Validators.required],
       default_value: [''],
       column_name: [''],
       sheet_name: [''],
@@ -1193,9 +1187,7 @@ export class ExportTemplateComponent implements OnInit {
               items.push(
                 this.fb.group({
                   field_name: [item.field_name, Validators.required],
-                  display_name: [item.display_name, Validators.required],
                   order_no: [item.order_no, [Validators.required, Validators.min(0)]],
-                  field_table: [item.field_table, Validators.required],
                   default_value: [item.default_value],
                   column_name: [item.column_name],
                   sheet_name: [item.sheet_name || ''],
@@ -1277,9 +1269,7 @@ export class ExportTemplateComponent implements OnInit {
       const items = formData.items.map((item: any) => ({
         export_template_id: '@table1.id',
         field_name: item.field_name,
-        display_name: item.display_name,
         order_no: item.order_no,
-        field_table: item.field_table,
         default_value: item.default_value,
         column_name: item.column_name,
         sheet_name: item.sheet_name || null,
@@ -1369,9 +1359,7 @@ export class ExportTemplateComponent implements OnInit {
       const items = formData.items.map((item: any) => ({
         export_template_id: '@table1.id',
         field_name: item.field_name,
-        display_name: item.display_name,
         order_no: item.order_no,
-        field_table: item.field_table,
         default_value: item.default_value,
         column_name: item.column_name,
         sheet_name: item.sheet_name || null,
@@ -1621,9 +1609,7 @@ export class ExportTemplateComponent implements OnInit {
   private createItemFormGroup(item: any) {
     return this.fb.group({
       field_name: [item.field_name, Validators.required],
-      display_name: [item.display_name, Validators.required],
       order_no: [item.order_no, [Validators.required, Validators.min(0)]],
-      field_table: [item.field_table, Validators.required],
       default_value: [item.default_value],
       column_name: [item.column_name],
       sheet_name: [item.sheet_name || ''],

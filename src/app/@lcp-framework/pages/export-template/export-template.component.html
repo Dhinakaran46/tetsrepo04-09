@@ -362,15 +362,6 @@
                 }
               </div>
             </div>
-            <!-- Display Name -->
-            <div class="col-span-1">
-              <label for="display_name" class="required-mark form-label">
-                {{ 'form_label_display_name' | translate }}
-              </label>
-              <div class="mt-1">
-                <input id="display_name" type="text" formControlName="display_name" class="form-input w-full" />
-              </div>
-            </div>
             <!-- Order Number -->
             <div class="col-span-1">
               <label for="order_no" class="required-mark form-label">
@@ -378,20 +369,6 @@
               </label>
               <div class="mt-1">
                 <input id="order_no" type="number" formControlName="order_no" class="form-input w-full" />
-              </div>
-            </div>
-            <!-- Field Table -->
-            <div class="col-span-1">
-              <label for="field_table" class="required-mark form-label">
-                {{ 'form_label_field_table' | translate }}
-              </label>
-              <div class="mt-1">
-                <select id="field_table" formControlName="field_table" class="form-select">
-                  <option value="">Select Table</option>
-                  @for (table of tables_list; track table) {
-                  <option [value]="table">{{ table }}</option>
-                  }
-                </select>
               </div>
             </div>
             <!-- Field Type -->

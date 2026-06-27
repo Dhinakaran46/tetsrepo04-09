@@ -58,9 +58,7 @@ export class RouteUpdateService {
       import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
     audit_log_management_module: () => import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
     chart_builder_module: () => import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
-    dashboard_wizard_builder_module: () => import('../../pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-    timesheet_project_summary_module: () =>
-      import('../../pages/timesheet-project-dashboard/timesheet-project-dashboard.component').then((m) => m.TimesheetProjectDashboardComponent),
+    dashboard_wizard_builder_module: () => import('../../pages/dashboard/dashboard.component').then((m) => m.DashboardComponent)
   };
 
   constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {
