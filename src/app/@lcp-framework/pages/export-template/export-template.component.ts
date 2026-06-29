@@ -67,13 +67,7 @@ interface ExcelRow extends Array<any> {
 @Component({
   selector: 'app-export-template',
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    MonacoEditorModule,
-    ReactiveFormsModule,
-    ClientDatatableComponent,
-    LoaderComponent,
-  ],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule, ClientDatatableComponent, LoaderComponent],
 
   templateUrl: './export-template.component.html',
   styleUrl: './export-template.component.scss',
@@ -142,7 +136,15 @@ export class ExportTemplateComponent implements OnInit {
   update_json_schema: any = {
     // it will be removed
     action: ['update', 'hard_delete', 'insert', 'hard_delete', 'insert', 'hard_delete', 'insert'],
-    table: ['export_templates', 'export_template_line_items', 'export_template_line_items', 'export_template_queries', 'export_template_queries', 'export_template_excel_sheet_details', 'export_template_excel_sheet_details'],
+    table: [
+      'export_templates',
+      'export_template_line_items',
+      'export_template_line_items',
+      'export_template_queries',
+      'export_template_queries',
+      'export_template_excel_sheet_details',
+      'export_template_excel_sheet_details',
+    ],
     table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5', 'table6', 'table7'],
     data: {
       table1: [],
@@ -306,8 +308,7 @@ export class ExportTemplateComponent implements OnInit {
     private http: HttpClient,
     private zone: NgZone,
     private cdr: ChangeDetectorRef
-  ) {
-  }
+  ) {}
 
   ngOnInit() {
     this.initStore();
@@ -1157,27 +1158,7 @@ export class ExportTemplateComponent implements OnInit {
             } as File;
           }
 
-          if (entity.sheet_details && entity.sheet_details.length > 0) {
-            const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
-            sheetDetailsArray.clear();
-            this.excelSheetNames = entity.sheet_details.map((d: any) => d.sheet_name);
-            this.selectedLineItemSheetName = this.excelSheetNames[0] || '';
-            entity.sheet_details.forEach((detail: any) => {
-              sheetDetailsArray.push(
-                this.fb.group({
-                  sheet_name: [{ value: detail.sheet_name, disabled: true }],
-                  max_row_count: [detail.max_row_count, [Validators.required, Validators.min(1)]],
-                  header_row: [detail.header_row, [Validators.required, Validators.min(1)]],
-                  data_start_row: [detail.data_start_row, [Validators.required, Validators.min(1)]],
-                  data_end_row: [detail.data_end_row, [Validators.required, Validators.min(0)]],
-                })
-              );
-            });
-            if (entity.data_filepath) {
-              const first = entity.sheet_details[0];
-              this.loadExcelHeaders(entity.data_filepath, first.header_row || 1, first.sheet_name);
-            }
-          }
+          this.hydrateSheetDetailsFromSource(entity.data_filepath, entity.sheet_details ?? []);
 
           const items = this.form.get('items') as FormArray;
 
@@ -1466,6 +1447,80 @@ export class ExportTemplateComponent implements OnInit {
     return match ? match.get('header_row')?.value || 1 : 1;
   }
 
+  private hydrateSheetDetailsFromSource(filePath: string, savedSheetDetails: any[] = []): void {
+    const safeSavedDetails = Array.isArray(savedSheetDetails) ? savedSheetDetails : [];
+
+    // If file path is not available, fallback to saved table-driven sheet list.
+    if (!filePath) {
+      this.applySheetDetailsFromNames([], safeSavedDetails);
+      return;
+    }
+
+    const apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
+    const normalizedPath = String(filePath || '');
+    const baseUrl = normalizedPath.startsWith('http') ? normalizedPath : `${apiUrl}/${normalizedPath}`;
+    const cacheBustedUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}_ts=${Date.now()}`;
+
+    this.http.get(cacheBustedUrl, { responseType: 'arraybuffer' }).subscribe({
+      next: (buffer) => {
+        try {
+          const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array', bookSheets: true });
+          const liveSheetNames = Array.isArray(workbook.SheetNames) ? workbook.SheetNames : [];
+          this.applySheetDetailsFromNames(liveSheetNames, safeSavedDetails);
+        } catch {
+          // If parsing fails, fallback to saved sheet details.
+          this.applySheetDetailsFromNames([], safeSavedDetails);
+        }
+      },
+      error: () => {
+        // If fetching fails, fallback to saved sheet details.
+        this.applySheetDetailsFromNames([], safeSavedDetails);
+      },
+    });
+  }
+
+  private applySheetDetailsFromNames(liveSheetNames: string[], savedSheetDetails: any[]): void {
+    const savedDetailsMap = new Map<string, any>();
+    savedSheetDetails.forEach((d: any) => {
+      const name = d?.sheet_name;
+      if (name) savedDetailsMap.set(name, d);
+    });
+
+    // Preserve existing configured sheets while appending newly discovered sheets.
+    const mergedSheetNames = [
+      ...liveSheetNames,
+      ...savedSheetDetails.map((d: any) => d?.sheet_name).filter((name: string) => !!name && !liveSheetNames.includes(name)),
+    ];
+
+    this.excelSheetNames = mergedSheetNames;
+    this.selectedLineItemSheetName = this.excelSheetNames[0] || '';
+
+    this.populateSheetDetails();
+
+    const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
+    sheetDetailsArray.controls.forEach((ctrl) => {
+      const name = ctrl.get('sheet_name')?.value;
+      const saved = savedDetailsMap.get(name);
+      if (!saved) return;
+
+      ctrl.patchValue(
+        {
+          max_row_count: saved.max_row_count ?? 500,
+          header_row: saved.header_row ?? 1,
+          data_start_row: saved.data_start_row ?? 2,
+          data_end_row: saved.data_end_row ?? 10000,
+        },
+        { emitEvent: false }
+      );
+    });
+
+    const filePath = this.form.get('data_filepath')?.value;
+    const firstSheet = this.selectedLineItemSheetName;
+    if (filePath && firstSheet) {
+      this.loadExcelHeaders(filePath, this.getSheetHeaderRow(firstSheet), firstSheet);
+    }
+  }
+
   private populateSheetDetails(): void {
     const sheetDetailsArray = this.form.get('sheetDetails') as FormArray;
     sheetDetailsArray.clear();
@@ -1478,13 +1533,16 @@ export class ExportTemplateComponent implements OnInit {
         data_end_row: [10000, [Validators.required, Validators.min(0)]],
       });
 
-      group.get('header_row')?.valueChanges.pipe(debounceTime(500)).subscribe((newHeaderRow) => {
-        if (!newHeaderRow || newHeaderRow < 1) return;
-        const filePath = this.form.get('data_filepath')?.value;
-        if (filePath && this.selectedLineItemSheetName === sheetName) {
-          this.loadExcelHeaders(filePath, newHeaderRow, sheetName);
-        }
-      });
+      group
+        .get('header_row')
+        ?.valueChanges.pipe(debounceTime(500))
+        .subscribe((newHeaderRow) => {
+          if (!newHeaderRow || newHeaderRow < 1) return;
+          const filePath = this.form.get('data_filepath')?.value;
+          if (filePath && this.selectedLineItemSheetName === sheetName) {
+            this.loadExcelHeaders(filePath, newHeaderRow, sheetName);
+          }
+        });
 
       sheetDetailsArray.push(group);
     });
