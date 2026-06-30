@@ -70,3 +70,24 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
+
+.dashboard-title {
+  font-family: 'Nunito', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.date-selector-pill {
+  &:hover {
+    border-color: var(--app-header-color, var(--app-primary-color)) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 0 0 1px var(--app-header-color, var(--app-primary-color)) !important;
+  }
+}

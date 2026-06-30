@@ -181,6 +181,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   companyId: any;
 
   permissionsList: any;
+  customHeaderConfig: { title: string; subtitle: string; customTemplate?: any; } | null = null;
 
   showMasterList = false;
   showMasterListPopup = false;
@@ -593,6 +594,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   async setActiveTab(tabId: any) {
     this.activeTabId = tabId;
+    this.customHeaderConfig = null;
     // NEW: stop existing reloads before re-init
     this.clearReloadTimers();
 
@@ -1282,6 +1284,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   closeMasterListPopup() {
     this.showMasterListPopup = false;
     this.popupConfig = null;
+  }
+
+  triggerChangeDetection() {
+    this.cdr.detectChanges();
   }
 
   private refreshDashboardData(): void {
