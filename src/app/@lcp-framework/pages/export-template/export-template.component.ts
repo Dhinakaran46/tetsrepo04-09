@@ -669,7 +669,7 @@ export class ExportTemplateComponent implements OnInit {
 
   editQueryItem(index: any) {
     this.selectedQuery = index;
-    this.editingQueryIndex = this.queriesData.findIndex((q) => q === index);
+    this.editingQueryIndex = this.queriesData.findIndex((q) => q.query_name === index?.query_name && q.order_no === index?.order_no);
     this.lineQueryForm.patchValue(index);
 
     this.isQueryModalOpen = true;
@@ -677,7 +677,7 @@ export class ExportTemplateComponent implements OnInit {
 
   editLineItem(index: any) {
     this.selectedItem = index;
-    this.editingItemIndex = this.itemsData.findIndex((i) => i === index);
+    this.editingItemIndex = this.itemsData.findIndex((i) => i.field_name === index?.field_name && i.order_no === index?.order_no);
     this.selectedLineItemSheetName = index.sheet_name || this.excelSheetNames[0] || '';
 
     const filePath = this.form.get('data_filepath')?.value;
@@ -693,6 +693,7 @@ export class ExportTemplateComponent implements OnInit {
 
   onLineItemSheetChange(sheetName: string): void {
     this.selectedLineItemSheetName = sheetName;
+    this.lineItemForm.get('sheet_name')?.setValue(sheetName);
     this.lineItemForm.get('column_name')?.setValue('');
     this.excelHeaders = [];
     const filePath = this.form.get('data_filepath')?.value;
@@ -1514,8 +1515,24 @@ export class ExportTemplateComponent implements OnInit {
       );
     });
 
+    // Backfill items that have no sheet_name with the first available sheet.
+    const firstSheet = this.excelSheetNames[0];
+    if (firstSheet) {
+      const itemsArray = this.form.get('items') as FormArray;
+      itemsArray.controls.forEach((ctrl) => {
+        const sheetCtrl = ctrl.get('sheet_name');
+        if (sheetCtrl && !sheetCtrl.value) {
+          sheetCtrl.setValue(firstSheet, { emitEvent: false });
+        }
+      });
+      this._originalItems.forEach((item) => {
+        if (!item.sheet_name) {
+          item.sheet_name = firstSheet;
+        }
+      });
+    }
+
     const filePath = this.form.get('data_filepath')?.value;
-    const firstSheet = this.selectedLineItemSheetName;
     if (filePath && firstSheet) {
       this.loadExcelHeaders(filePath, this.getSheetHeaderRow(firstSheet), firstSheet);
     }
@@ -1694,7 +1711,21 @@ export class ExportTemplateComponent implements OnInit {
     items.clear();
 
     // If data is empty or undefined, use original data
-    const itemsToUse = !data || data.length === 0 ? this._originalItems : data;
+    const itemsToUse =
+      !data || data.length === 0
+        ? this._originalItems
+        : data.map((item, idx) => {
+            const originalByIndex = this._originalItems[idx];
+            const originalByKey = this._originalItems.find((o) => o.field_name === item?.field_name && o.order_no === item?.order_no);
+            const original = originalByKey || originalByIndex || {};
+
+            return {
+              ...original,
+              ...item,
+              // Datatable may emit only visible columns; keep persisted sheet if omitted.
+              sheet_name: item?.sheet_name ?? original?.sheet_name ?? '',
+            };
+          });
 
     itemsToUse.forEach((item) => {
       items.push(this.createItemFormGroup(item));
