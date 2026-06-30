@@ -356,7 +356,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   loadConfig() {
     this.config = this.parseJson(this.localstore.getData('config'));
-    this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
+    // this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
     this.cdr.detectChanges();
   }
 
@@ -608,7 +608,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         activeTab.show_daterange_filter !== 0 &&
         activeTab.show_daterange_filter !== '0'
       : true;
-    this.displayDateRangeFilter = globalShow && tabShow;
+    this.displayDateRangeFilter = tabShow;
 
     // Apply custom dates if configured on the active tab
     if (activeTab && (activeTab.start_date || activeTab.end_date || activeTab.end_date_current_day)) {
