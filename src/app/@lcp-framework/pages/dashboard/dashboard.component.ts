@@ -181,6 +181,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   companyId: any;
 
   permissionsList: any;
+  customHeaderConfig: { title: string; subtitle: string; customTemplate?: any; } | null = null;
 
   showMasterList = false;
   showMasterListPopup = false;
@@ -355,7 +356,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   loadConfig() {
     this.config = this.parseJson(this.localstore.getData('config'));
-    this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
+    // this.displayDateRangeFilter = this.config?.display_dashboard_daterange_filter === 'true';
     this.cdr.detectChanges();
   }
 
@@ -593,6 +594,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   async setActiveTab(tabId: any) {
     this.activeTabId = tabId;
+    this.customHeaderConfig = null;
     // NEW: stop existing reloads before re-init
     this.clearReloadTimers();
 
@@ -606,7 +608,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         activeTab.show_daterange_filter !== 0 &&
         activeTab.show_daterange_filter !== '0'
       : true;
-    this.displayDateRangeFilter = globalShow && tabShow;
+    this.displayDateRangeFilter = tabShow;
 
     // Apply custom dates if configured on the active tab
     if (activeTab && (activeTab.start_date || activeTab.end_date || activeTab.end_date_current_day)) {
@@ -1282,6 +1284,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   closeMasterListPopup() {
     this.showMasterListPopup = false;
     this.popupConfig = null;
+  }
+
+  triggerChangeDetection() {
+    this.cdr.detectChanges();
   }
 
   private refreshDashboardData(): void {
