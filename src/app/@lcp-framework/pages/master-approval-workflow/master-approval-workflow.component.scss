@@ -1,0 +1,88 @@
+.monaco-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 50vh; /* Initial height */
+  resize: vertical; /* Allow vertical resizing only */
+  // overflow: auto; /* Ensure the content remains scrollable if needed */
+  min-height: 60vh; /* Set a minimum height to prevent collapsing */
+  max-height: 100vh; /* Prevent the container from exceeding the viewport height */
+  position: relative; /* Required for absolute positioning of copy button */
+}
+
+.monaco-editor {
+  flex: 1;
+  width: 100%;
+}
+
+.editor-container {
+  position: relative;
+}
+
+.copy-editor-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  padding: 6px 12px;
+  background-color: rgba(37, 99, 235, 0.9);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background-color: rgba(29, 78, 216, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  padding: 4px;
+
+  &:hover {
+    color: #ef4444;
+  }
+
+  i {
+    font-size: 20px;
+  }
+}
+
+.modal-editor-container {
+  height: 250px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  overflow: hidden;
+
+  &:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+}
+
+.modal-monaco-editor {
+  height: 100%;
+  width: 100%;
+}

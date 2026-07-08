@@ -1,0 +1,16 @@
+.modal-editor-container {
+  height: 200px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  overflow: hidden;
+
+  &:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+}
+
+.modal-monaco-editor {
+  height: 100%;
+  width: 100%;
+}
