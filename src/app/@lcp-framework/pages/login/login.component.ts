@@ -272,11 +272,37 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
             const userID = response.data.id;
             const activeCompanyId = Number(response.data.company_id || this.companyId);
             this.companyId = activeCompanyId;
+            const companies = Array.isArray(response.data?.companies) ? response.data.companies : [];
+            const activeCompany = companies.find((company: any) => Number(company?.id || company?.company_id) === activeCompanyId);
+            const activeCompanyTenantId = Number(
+              response.data.company_tenant_id ||
+                response.data.selected_company_tenant_id ||
+                activeCompany?.tenant_id ||
+                response.data.tenant_id ||
+                0
+            );
 
             const permissionsObj = response.data.permissions.reduce((acc: any, perm: any) => {
               acc[perm.slug] = perm.accessible;
               return acc;
             }, {});
+            const userData = {
+              main: {
+                ...response.data,
+                selected_company_id: activeCompanyId,
+                selected_company_tenant_id: activeCompanyTenantId || response.data.selected_company_tenant_id,
+              },
+              permissions: permissionsObj,
+              user_id: userID,
+              company: {
+                id: activeCompanyId,
+                name: response.data.company_name || activeCompany?.name || activeCompany?.company_name,
+                code: response.data.company_code || activeCompany?.code || activeCompany?.company_code,
+                tenant_id: activeCompanyTenantId || activeCompany?.tenant_id,
+                tenant_name: response.data.tenant_name || activeCompany?.tenant_name || activeCompany?.tenant?.name,
+                tenant_code: response.data.tenant_code || activeCompany?.tenant_code || activeCompany?.tenant?.code,
+              },
+            };
 
             // Store the user data along with permissions and menu lists
             const conf: any = this.localstore.getData('config');
@@ -297,20 +323,12 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
             if (enc_config != null && enc_config.encrypt_local_storage == 'true') {
               this.localstore.storeDataEncrypted(
                 'user_data',
-                JSON.stringify({
-                  main: response.data,
-                  permissions: permissionsObj,
-                  user_id: userID,
-                })
+                JSON.stringify(userData)
               );
             } else {
               this.localstore.storeData(
                 'user_data',
-                JSON.stringify({
-                  main: response.data,
-                  permissions: permissionsObj,
-                  user_id: userID,
-                })
+                JSON.stringify(userData)
               );
             }
 
@@ -326,7 +344,6 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               this.localstore.removeData('rememberme');
             }
 
-            const companies = Array.isArray(response.data?.companies) ? response.data.companies : [];
             if (companies.length > 1) {
               this.localstore.storeData('company_selection_pending', 'true');
               this.localstore.removeData('selected_company_id');

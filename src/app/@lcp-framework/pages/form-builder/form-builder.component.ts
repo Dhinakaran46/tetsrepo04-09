@@ -473,17 +473,24 @@ export class FormBuilderComponent implements OnInit, AfterViewInit {
 
   deepMerge(target: any, source: any): any {
     if (!source || typeof source !== 'object') return target;
-    if (!target || typeof target !== 'object') target = {};
+    if (!this.isPlainObject(source)) return source;
+    if (!this.isPlainObject(target)) target = {};
 
     for (const key of Object.keys(source)) {
       const sourceVal = source[key];
-      if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+      if (this.isPlainObject(sourceVal)) {
         target[key] = this.deepMerge(target[key], sourceVal);
       } else {
         target[key] = sourceVal;
       }
     }
     return target;
+  }
+
+  private isPlainObject(value: any): value is Record<string, any> {
+    if (!value || typeof value !== 'object') return false;
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
   }
 
   onSubmit(draft_mode: boolean = false) {

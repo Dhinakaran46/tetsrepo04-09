@@ -143,7 +143,7 @@ export class RouteUpdateService {
       return [...base, { column_name: 'request_logs.res_status', value: false, operator: '=' }];
     }
     if (routeData.entity_name === 'user') {
-      return [...base, { value: ['super_admin', 'company_admin'], operator: 'NOT IN', column_name: 'tenant_users.role' }];
+      return [...base, { value: ['super_admin', 'company_admin'], operator: 'NOT IN', column_name: 'user_information.role' }];
     }
     if (routeData.entity_name === 'master_entity') {
       return [...base, { column_name: `${routeData.primary_table}.entity_type`, value: 'help_page_module', operator: '!=' }];

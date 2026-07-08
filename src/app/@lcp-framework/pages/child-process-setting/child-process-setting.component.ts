@@ -261,7 +261,7 @@ export class ChildProcessSettingComponent implements OnInit, OnDestroy {
 
   setDefaultQuery() {
     this.defaultQuery = {
-      cte: 'WITH active_users AS ( SELECT tenant_users.username, users.status_id FROM users LEFT JOIN tenant_users ON tenant_users.id = users.tenant_user_id WHERE users.status_id = 3 )',
+      cte: 'WITH active_users AS ( SELECT username, status_id FROM user_information WHERE status_id = 3 )',
       print_query: true,
       company_id: 1,
       primary_table: 'child_processes',

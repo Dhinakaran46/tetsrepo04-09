@@ -471,9 +471,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               clause_type: 'where',
               field_value: `(
             SELECT string_agg(ud3.email, ', ')
-            FROM users u3
-            LEFT JOIN tenant_users ud3 ON ud3.id = u3.tenant_user_id
-            WHERE u3.id IN (
+            FROM user_information ud3
+            WHERE ud3.user_id IN (
               SELECT apjwu1.user_id
               FROM approval_process_job_workflow_users apjwu1
               WHERE apjwu1.approval_process_job_workflow_id = approval_process_job_workflow_users.approval_process_job_workflow_id
@@ -528,23 +527,13 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'tenant_users ud1',
-            join_condition: 'ud1.id = u1.tenant_user_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'tenant_users ud2',
-            join_condition: 'ud2.id = u2.tenant_user_id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
         ],
         // having_conditions: null,
@@ -623,32 +612,21 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'tenant_users ud1',
-            join_condition: 'ud1.id = u1.tenant_user_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'tenant_users ud2',
-            join_condition: 'ud2.id = u2.tenant_user_id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
           {
             join_type: 'LEFT',
             table_name: `LATERAL (
               SELECT awf.approver_type, awf.approver_order_no, (
                   SELECT string_agg(ud4.email, ', ')
-                  FROM users u4
-                  LEFT JOIN tenant_users ud4 ON ud4.id = u4.tenant_user_id
-                  WHERE u4.id IN (
+                  FROM user_information ud4
+                  WHERE ud4.user_id IN (
                     SELECT apjwu1.user_id
                     FROM approval_process_job_workflow_users apjwu1
                     WHERE apjwu1.approval_process_job_workflow_id = awf.id
@@ -782,23 +760,13 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'tenant_users ud1',
-            join_condition: 'ud1.id = u1.tenant_user_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'tenant_users ud2',
-            join_condition: 'ud2.id = u2.tenant_user_id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
         ],
         // having_conditions: null,
@@ -841,7 +809,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
           'approval_process_job_workflows.approval_workflow_slug',
-          'u_delegator.email',
+          'ud_delegator.email',
           'd.start_date',
           'd.end_date',
           'approval_process_job_workflows.details',
@@ -865,33 +833,18 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'tenant_users ud1',
-            join_condition: 'ud1.id = u1.tenant_user_id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'tenant_users ud2',
-            join_condition: 'ud2.id = u2.tenant_user_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u_delegator',
-            join_condition: 'u_delegator.id = d.user_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'tenant_users ud_delegator',
-            join_condition: 'ud_delegator.id = u_delegator.tenant_user_id',
+            table_name: 'user_information ud_delegator',
+            join_condition: 'ud_delegator.user_id = d.user_id',
           },
         ],
         // having_conditions: null,

@@ -646,7 +646,7 @@ export class UserConfigurationComponent implements OnInit {
   getUserList() {
     let search_all: any[] = [
       {
-        column_name: 'users.status_id',
+        column_name: 'user_information.status_id',
         value: '1',
         operator: '=',
       },
@@ -655,25 +655,19 @@ export class UserConfigurationComponent implements OnInit {
       search_all.push({
         value: ['super_admin', 'company_admin'],
         operator: 'NOT IN',
-        column_name: 'tenant_users.role',
+        column_name: 'user_information.role',
       });
     }
     const param: any = {
       company_id: 1,
       print_query: false,
-      primary_table: 'users',
+      primary_table: 'user_information',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'asc']],
+      sort_columns: [['user_information.full_name', 'asc']],
       search_all: search_all,
-      includes: [
-        {
-          table_name: 'tenant_users',
-          join_type: 'INNER',
-          join_condition: 'tenant_users.id = users.tenant_user_id',
-        },
-      ],
-      select_columns: [['users.id'], ["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'name'], ['users.uuid']],
+      includes: [],
+      select_columns: [['user_information.user_id', 'id'], ['user_information.full_name', 'name'], ['user_information.uuid']],
     };
     this.gridApiService.getListData(param).subscribe(
       (response: any) => {

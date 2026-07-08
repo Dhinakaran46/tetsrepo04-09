@@ -320,10 +320,12 @@ export const lcpPresetExtension: FormlyExtension = {
                   const siblingHasError = siblingControl.hasError('phoneAndCountry');
                   if (hasError && !siblingHasError) {
                     siblingControl.setErrors({ ...siblingControl.errors, phoneAndCountry: true }, { emitEvent: false });
+                    siblingControl.markAsTouched();
                   } else if (!hasError && siblingHasError) {
                     const errors = { ...siblingControl.errors };
                     delete errors['phoneAndCountry'];
                     siblingControl.setErrors(Object.keys(errors).length ? errors : null, { emitEvent: false });
+                    siblingControl.markAsTouched();
                   }
                 }
 

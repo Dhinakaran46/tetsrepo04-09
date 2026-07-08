@@ -160,21 +160,16 @@ export class UserRolePolicyComponent {
       sort_columns: [['policies.name', 'asc']],
       group_by: [
         'policies.id',
-        'tenant_users.first_name',
-        'tenant_users.last_name',
+        'updated_user.first_name',
+        'updated_user.last_name',
         ...(role_id && ['role_policies.role_id']),
         ...(user_id && ['user_policies.user_id']),
       ],
       includes: [
         {
           join_type: 'LEFT',
-          table_name: 'users as updated_user',
-          join_condition: 'updated_user.id = policies.updated_by AND updated_user.company_id = policies.company_id',
-        },
-        {
-          join_type: 'LEFT',
-          table_name: 'tenant_users',
-          join_condition: 'tenant_users.id = updated_user.tenant_user_id',
+          table_name: 'user_information as updated_user',
+          join_condition: 'updated_user.user_id = policies.updated_by AND updated_user.company_id = policies.company_id',
         },
         ...joinCondition,
       ],
@@ -191,7 +186,7 @@ export class UserRolePolicyComponent {
         ['policies.uuid'],
         ['policies.slug'],
         ['policies.description'],
-        ["CONCAT(tenant_users.first_name, ' ', tenant_users.last_name)", 'updated_by'],
+        ['updated_user.full_name', 'updated_by'],
         ['policies.updated_at'],
         ...(role_id && [['role_policies.role_id']]),
         ...(user_id && [['user_policies.user_id']]),
@@ -278,30 +273,24 @@ export class UserRolePolicyComponent {
     const param: any = {
       company_id: 1,
       print_query: false,
-      primary_table: 'users',
+      primary_table: 'user_information',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'asc']],
+      sort_columns: [['user_information.full_name', 'asc']],
       search_all: [
         {
-          column_name: 'users.status_id',
+          column_name: 'user_information.status_id',
           value: '1',
           operator: '=',
         },
         {
           value: ['super_admin', 'company_admin'],
           operator: 'NOT IN',
-          column_name: 'tenant_users.role',
+          column_name: 'user_information.role',
         },
       ],
-      includes: [
-        {
-          table_name: 'tenant_users',
-          join_type: 'INNER',
-          join_condition: 'tenant_users.id = users.tenant_user_id',
-        },
-      ],
-      select_columns: [['users.id'], ["concat(tenant_users.first_name, ' ', tenant_users.last_name)", 'name'], ['users.uuid']],
+      includes: [],
+      select_columns: [['user_information.user_id', 'id'], ['user_information.full_name', 'name'], ['user_information.uuid']],
     };
     this.gridApiService.getListData(param).subscribe(
       (response: ApiResponce) => {

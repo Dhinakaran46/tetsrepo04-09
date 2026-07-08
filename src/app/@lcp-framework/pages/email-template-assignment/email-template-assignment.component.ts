@@ -478,24 +478,24 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         {
           value: '1',
           operator: '=',
-          column_name: 'status_id',
+          column_name: 'user_information.status_id',
         },
       ],
       limit_range: 25,
       print_query: false,
       start_index: 0,
-      sort_columns: [['email', 'asc']],
-      primary_table: 'users',
+      sort_columns: [['user_information.email', 'asc']],
+      primary_table: 'user_information',
       select_columns: [
-        ['email', 'value'],
-        ['email', 'label'],
+        ['user_information.email', 'value'],
+        ['user_information.email', 'label'],
       ],
     };
     if (uname) {
       payload.search_all.push({
         value: '%' + uname + '%',
         operator: 'ILIKE',
-        column_name: 'email',
+        column_name: 'user_information.email',
       });
     }
     this.commonService.getCommonList(payload).subscribe({

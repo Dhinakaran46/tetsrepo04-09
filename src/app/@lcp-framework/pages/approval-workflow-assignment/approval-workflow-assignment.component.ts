@@ -75,12 +75,12 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
     approve_query_information: {
       header: 'Approve Query Information',
       comments: [],
-      data: ['select * from users limit 1', 'select * from tenant_users limit 1'],
+      data: ['select * from user_information limit 1'],
     },
     reject_query_information: {
       header: 'Reject Query Information',
       comments: [],
-      data: ['select * from users limit 1', 'select * from tenant_users limit 1'],
+      data: ['select * from user_information limit 1'],
     },
   };
   popupInformation: any = null;
@@ -434,7 +434,7 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
         {
           value: '1',
           operator: '=',
-          column_name: 'status_id',
+          column_name: 'user_information.status_id',
         },
         // ...(mappedUsers.length > 0
         //   ? [
@@ -449,18 +449,18 @@ export class ApprovalWorkflowAssignmentComponent implements OnInit {
       limit_range: 25,
       print_query: false,
       start_index: 0,
-      sort_columns: [['email', 'asc']],
-      primary_table: 'users',
+      sort_columns: [['user_information.email', 'asc']],
+      primary_table: 'user_information',
       select_columns: [
-        ['id', 'value'],
-        ['email', 'label'],
+        ['user_information.user_id', 'value'],
+        ['user_information.email', 'label'],
       ],
     };
     if (uname) {
       payload.search_all.push({
         value: '%' + uname || '' + '%',
         operator: 'ILIKE',
-        column_name: 'email',
+        column_name: 'user_information.email',
       });
     }
     this.commonService.getCommonList(payload).subscribe({

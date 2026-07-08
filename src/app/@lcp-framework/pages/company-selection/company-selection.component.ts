@@ -58,6 +58,7 @@ export class CompanySelectionComponent implements OnInit {
     this.selectedCompanyId = companyId;
 
     if (companyId === this.currentCompanyId) {
+      this.storeSelectedCompanyContext(company);
       this.finalizeCompanySelection(companyId, this.userInfo?.main?.id);
       return;
     }
@@ -127,6 +128,16 @@ export class CompanySelectionComponent implements OnInit {
 
   private storeSwitchedUser(switchedUser: any, selectedCompany: any): void {
     const companies = switchedUser.companies?.length ? switchedUser.companies : this.companies;
+    const companyId = Number(switchedUser.company_id || selectedCompany.id);
+    const companyFromList = companies.find((company: any) => Number(company?.id || company?.company_id) === companyId);
+    const selectedCompanyTenantId = Number(
+      switchedUser.company_tenant_id ||
+        switchedUser.selected_company_tenant_id ||
+        selectedCompany.tenant_id ||
+        companyFromList?.tenant_id ||
+        this.userInfo?.company?.tenant_id ||
+        0
+    );
     const permissionsObj = (switchedUser.permissions || []).reduce((acc: any, permission: any) => {
       acc[permission.slug] = permission.accessible;
       return acc;
@@ -138,28 +149,28 @@ export class CompanySelectionComponent implements OnInit {
       main: {
         ...switchedUser,
         companies,
+        selected_company_id: companyId,
+        selected_company_tenant_id: selectedCompanyTenantId || switchedUser.selected_company_tenant_id,
       },
       permissions: permissionsObj,
       user_id: switchedUser.id,
       company: {
         ...(this.userInfo?.company || {}),
-        id: Number(switchedUser.company_id || selectedCompany.id),
+        id: companyId,
         name: switchedUser.company_name || selectedCompany.name,
         code: switchedUser.company_code || selectedCompany.code,
+        tenant_id: selectedCompanyTenantId || selectedCompany.tenant_id,
+        tenant_name: switchedUser.tenant_name || selectedCompany.tenant_name || companyFromList?.tenant_name,
+        tenant_code: switchedUser.tenant_code || selectedCompany.tenant_code || companyFromList?.tenant_code,
       },
     };
 
+    this.persistUserInfo(nextUserInfo);
+    this.userInfo = nextUserInfo;
     this.localstore.storeData('base_app_url', JSON.stringify(switchedUser.base_app_url));
     this.localstore.storeData('version_info', JSON.stringify(switchedUser.version_info));
     if (switchedUser.theme_info) {
       this.localstore.storeData('theme_info', JSON.stringify(switchedUser.theme_info));
-    }
-
-    const payload = JSON.stringify(nextUserInfo);
-    if (this.config?.encrypt_local_storage === 'true') {
-      this.localstore.storeDataEncrypted('user_data', payload);
-    } else {
-      this.localstore.storeData('user_data', payload);
     }
 
     this.localstore.removeData('menuList');
@@ -167,7 +178,53 @@ export class CompanySelectionComponent implements OnInit {
     this.localstore.removeData('menu_id');
 
     const languageCode = this.languageService.getSavedLanguageCode();
-    this.languageService.serviceChangeLanguage(Number(switchedUser.company_id || selectedCompany.id), languageCode.toLowerCase());
+    this.languageService.serviceChangeLanguage(companyId, languageCode.toLowerCase());
+  }
+
+  private storeSelectedCompanyContext(selectedCompany: any): void {
+    const companies = this.userInfo?.main?.companies?.length ? this.userInfo.main.companies : this.companies;
+    const companyId = Number(selectedCompany?.id || this.currentCompanyId || this.userInfo?.main?.company_id || 0);
+    const companyFromList = companies.find((company: any) => Number(company?.id || company?.company_id) === companyId);
+    const selectedCompanyTenantId = Number(
+      selectedCompany?.tenant_id ||
+        companyFromList?.tenant_id ||
+        this.userInfo?.company?.tenant_id ||
+        this.userInfo?.main?.selected_company_tenant_id ||
+        this.userInfo?.main?.company_tenant_id ||
+        0
+    );
+
+    const nextUserInfo = {
+      ...this.userInfo,
+      main: {
+        ...(this.userInfo?.main || {}),
+        companies,
+        company_id: companyId,
+        selected_company_id: companyId,
+        selected_company_tenant_id: selectedCompanyTenantId || this.userInfo?.main?.selected_company_tenant_id,
+      },
+      company: {
+        ...(this.userInfo?.company || {}),
+        id: companyId,
+        name: selectedCompany?.name || companyFromList?.name || this.userInfo?.company?.name,
+        code: selectedCompany?.code || companyFromList?.code || this.userInfo?.company?.code,
+        tenant_id: selectedCompanyTenantId || selectedCompany?.tenant_id || companyFromList?.tenant_id,
+        tenant_name: selectedCompany?.tenant_name || companyFromList?.tenant_name || this.userInfo?.company?.tenant_name,
+        tenant_code: selectedCompany?.tenant_code || companyFromList?.tenant_code || this.userInfo?.company?.tenant_code,
+      },
+    };
+
+    this.persistUserInfo(nextUserInfo);
+    this.userInfo = nextUserInfo;
+  }
+
+  private persistUserInfo(userInfo: any): void {
+    const payload = JSON.stringify(userInfo);
+    if (this.config?.encrypt_local_storage === 'true') {
+      this.localstore.storeDataEncrypted('user_data', payload);
+    } else {
+      this.localstore.storeData('user_data', payload);
+    }
   }
 
   private finalizeCompanySelection(companyId: number, userId: number): void {

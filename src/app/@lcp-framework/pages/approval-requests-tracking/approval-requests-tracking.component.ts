@@ -78,23 +78,13 @@ export class ApprovalRequestsTrackingComponent implements OnInit {
         includes: [
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id',
           },
           {
             join_type: 'LEFT',
-            table_name: 'tenant_users ud1',
-            join_condition: 'ud1.id = u1.tenant_user_id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'tenant_users ud2',
-            join_condition: 'ud2.id = u2.tenant_user_id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by',
           },
         ],
         company_id: 1,

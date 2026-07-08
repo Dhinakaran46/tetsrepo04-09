@@ -50,32 +50,26 @@ export class PolicyComponent implements OnInit {
       header: 'Sample Policy Information',
       comments: [],
       data: {
-        sort_columns: [['users.id', 'desc']],
+        sort_columns: [['user_information.user_id', 'desc']],
         search_all: [
           {
-            column_name: 'users.deleted_at',
+            column_name: 'user_information.deleted_at',
             value: null,
             operator: 'IS',
           },
         ],
         search_any: [
           {
-            column_name: 'users.deleted_at',
+            column_name: 'user_information.deleted_at',
             value: null,
             operator: 'IS',
           },
         ],
-        includes: [
-          {
-            table_name: 'tenant_users',
-            join_type: 'INNER',
-            join_condition: 'tenant_users.id = users.tenant_user_id',
-          },
-        ],
-        group_by: ['users.id', 'tenant_users.first_name', 'tenant_users.last_name'],
+        includes: [],
+        group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
         having_conditions: [
           {
-            column_name: 'users.deleted_at',
+            column_name: 'user_information.deleted_at',
             value: null,
             operator: 'IS',
           },
@@ -84,7 +78,7 @@ export class PolicyComponent implements OnInit {
           {
             value: '%Mukesh%',
             operator: 'ILIKE',
-            column_name: "concat(tenant_users.first_name, ' ', tenant_users.last_name)",
+            column_name: 'user_information.full_name',
           },
         ],
       },
