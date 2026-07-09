@@ -23,12 +23,8 @@
         <div
           class="grid grid-cols-1 gap-2"
           [ngClass]="{
-            'md:grid-cols-4': [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name].includes(
-              form.get('entityType')?.value
-            ),
-            'md:grid-cols-3': ![commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name].includes(
-              form.get('entityType')?.value
-            ),
+            'md:grid-cols-4': isGridLikeEntityType(form.get('entityType')?.value) || form.get('entityType')?.value === commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name,
+            'md:grid-cols-3': !isGridLikeEntityType(form.get('entityType')?.value) && form.get('entityType')?.value !== commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE.name,
           }"
         >
           <div class="mt-0">
@@ -199,8 +195,7 @@
             </div>
             }
           </div>
-          } @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name,
-          commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value)) {
+          } @if (isGridStructuredEntityType(form.get('entityType')?.value)) {
           <div class="mt-0">
             <label for="primaryTable" class="required-mark mb-2 block font-medium">{{ 'form_label_primary_table' | translate }}</label>
             <select
@@ -265,7 +260,7 @@
             }
           </div>
 
-          @if (form.get('entityType')?.value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
+          @if (isGridLikeEntityType(form.get('entityType')?.value)) {
           <div class="mt-0">
             <label for="header_entity_id" class="mb-2 block font-medium">Header Entity</label>
             <select
@@ -697,8 +692,8 @@
             }
           </div>
         </div>
-        } @if ( [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name,
-        commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes( form.get('entityType')?.value ) ) {
+        } @if ( isGridStructuredEntityType(form.get('entityType')?.value) || commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name === form.get('entityType')?.value
+        ) {
         <div
           class="grid grid-cols-1 gap-2"
           [ngClass]="{ 'md:grid-cols-2': ![commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name].includes(form.get('entityType')?.value) }"
@@ -727,8 +722,7 @@
             </div>
             }
           </div>
-          @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value))
-          {
+          @if (isGridStructuredEntityType(form.get('entityType')?.value)) {
           <div class="mt-3">
             <div class="flex flex-row gap-3">
               <label for="associateTable" class="mb-2 block font-medium">{{ 'form_label_associated_tables' | translate }}</label>
@@ -876,7 +870,7 @@
       </div>
     </div>
 
-    @if ([commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name].includes(form.get('entityType')?.value)) {
+    @if (isGridStructuredEntityType(form.get('entityType')?.value)) {
     <div class="mt-5 flex flex-wrap justify-between">
       <div class="text-md required-mark font-bold">{{ 'title_entity_line_items' | translate }}</div>
       <div class="relative inline-flex align-middle">

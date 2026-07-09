@@ -112,6 +112,8 @@ export const commonConfig: any = {
     AUDIT_LOG_MANAGEMENT_MODULE: { name: 'audit_log_management_module', prefix_slug: 'auditlogmanagement' },
     CHART_BUILDER_MODULE: { name: 'chart_builder_module', prefix_slug: 'chartbuilder' },
     USER_COMPANY_MAP_MODULE: { name: 'user_company_map_module', prefix_slug: 'usercompany' },
+    APPROVAL_WORKFLOW_BUILDER_MODULE: { name: 'approval_workflow_builder_module', prefix_slug: 'approvalworkflowbuilder' },
+    APPROVAL_WORKFLOW: { name: 'approval_workflow', prefix_slug: 'approvalworkflow' },
   },
   MENU_LINK_TYPE: {
     GENERAL: 1,
@@ -236,6 +238,8 @@ export const commonConfig: any = {
     { label: 'Target Keywords Embeddings Module', value: 'target_keywords_embeddings_module' },
     { label: 'Audit Log Management Module', value: 'audit_log_management_module' },
     { label: 'Chart Builder Module', value: 'chart_builder_module' },
+    { label: 'Approval Workflow Builder Module', value: 'approval_workflow_builder_module' },
+    { label: 'Approval Workflow', value: 'approval_workflow' },
   ],
   keypress_config: {
     allow_only_lowercase_alphanumeric: 'allow_only_lowercase_alphanumeric',

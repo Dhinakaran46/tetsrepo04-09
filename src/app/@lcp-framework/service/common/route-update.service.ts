@@ -26,6 +26,8 @@ export class RouteUpdateService {
     entity_user_role_map_module: () => import('../../pages/user-role-permission/user-role-permission.component').then((m) => m.UserRolePermissionComponent),
     user_company_map_module: () => import('../../pages/user-company-map/user-company-map.component').then((m) => m.UserCompanyMapComponent),
     entity_form_module: () => import('../../pages/master-entity/master-entity.component').then((m) => m.MasterEntityComponent),
+    approval_workflow_builder_module: () =>
+      import('../../pages/master-approval-workflow/master-approval-workflow.component').then((m) => m.MasterApprovalWorkflowComponent),
     about_lcp_form_module: () => import('../../pages/aboutlcp/aboutlcp.component').then((m) => m.AboutlcpComponent),
     ai_playground_module: () => import('../../pages/ai-playground/ai-playground.component').then((m) => m.AiPlaygroundComponent),
     query_builder_module: () => import('../../pages/query-builder/query-builder.component').then((m) => m.QueryBuilderComponent),
@@ -60,6 +62,9 @@ export class RouteUpdateService {
       import('../../pages/target-keywords-embeddings/target-keywords-embeddings.component').then((m) => m.TargetKeywordsEmbeddingsComponent),
     audit_log_management_module: () => import('../../pages/audit-log-management/audit-log-management.component').then((m) => m.AuditLogManagementComponent),
     chart_builder_module: () => import('../../pages/chart-builder/chart-builder.component').then((m) => m.ChartBuilderComponent),
+    dashboard_wizard_builder_module: () => import('../../pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+
+    approval_workflow: () => import('../../pages/approval-workflow/approval-workflow.component').then((m) => m.ApprovalWorkflowComponent),
   };
 
   constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {

@@ -1,164 +1,224 @@
 @if (isDashboardLoading) {
-  <div class="flex min-h-[240px] items-center justify-center">
-    <div class="flex items-center gap-3 text-base font-medium" style="color: var(--app-text-color, var(--app-text-color-default))">
-      <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
-      Loading dashboard...
-    </div>
+<div class="flex min-h-[240px] items-center justify-center">
+  <div class="flex items-center gap-3 text-base font-medium"
+    style="color: var(--app-text-color, var(--app-text-color-default))">
+    <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+    Loading dashboard...
   </div>
+</div>
 } @else {
-  @if (getTabsWithActiveCards().length > 1) {
-    <div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a]" style="border-color: var(--app-table-border-color, var(--app-border-color))">
-      @for (tab of getTabsWithActiveCards(); track tab) {
-        <button
-          class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
-          [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTabId == tab.id }"
-          (click)="setActiveTab(tab.id)"
-        >
-          {{ tab.name }}
-        </button>
-      }
-    </div>
-    <br />
+@if (getTabsWithActiveCards().length > 1) {
+<div class="flex flex-wrap border-b border-white-light dark:border-[#191e3a] mb-4"
+  style="border-color: var(--app-table-border-color, var(--app-border-color))">
+  @for (tab of getTabsWithActiveCards(); track tab) {
+  <button
+    class="-mb-[1px] block border border-transparent p-3.5 py-2 !outline-none transition duration-300 hover:text-primary dark:hover:border-b-black"
+    [ngClass]="{ '!border-white-light !border-b-white text-primary dark:!border-[#191e3a] dark:!border-b-black': activeTabId == tab.id }"
+    (click)="setActiveTab(tab.id)">
+    {{ tab.name }}
+  </button>
   }
-  @if (displayDateRangeFilter) {
-    <div class="flex w-full justify-end pr-4">
-      <div class="relative">
-        <button
-          (click)="showDateRangePicker = !showDateRangePicker"
-          style="color: var(--app-header-text-color, var(--app-bg-color)); background-color: var(--app-header-color, var(--app-primary-color))"
-          class="-mb-px flex cursor-pointer items-center rounded-md px-4 py-2 transition-all duration-300"
-        >
-          {{ getDateRangeText() }}
-          <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        @if (showDateRangePicker) {
-          <div
-            @toggleAnimation
-            class="absolute right-0 z-10 mt-1 w-[800px] rounded-md bg-white shadow-lg focus:outline-none"
-            (click)="$event.stopPropagation()"
-            style="transform: translateX(0)"
-          >
-            <app-date-range-picker
-              [dateRange]="dateRange"
-              (dateRangeChange)="onDateRangeChange($event)"
-              (submitted)="showDateRangePicker = false"
-              class="date-range-tab p-4"
-              (click)="$event.stopPropagation()"
-              style="min-width: 100%"
-            ></app-date-range-picker>
-          </div>
-        }
-      </div>
-    </div>
-  }
+</div>
+}
 
-  <!-- Click outside to close -->
-  @if (showDateRangePicker) {
-    <div class="fixed inset-0 z-0" (click)="showDateRangePicker = false"></div>
-  }
-  @if (dashboardLoadError) {
-    <div class="mt-5 rounded-md border border-danger/40 bg-danger/10 p-4 text-danger">{{ dashboardLoadError }}</div>
-  }
-  @if (!dashboardLoadError && !getTabsWithActiveCards().length) {
-    <div
-      class="mt-5 rounded-md border border-white-light p-6 text-center text-base"
-      style="border-color: var(--app-table-border-color, var(--app-border-color))"
-    >
-      No dashboard widgets are available for your account.
-    </div>
-  }
+@if (customHeaderConfig) {
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 w-full"
+  style="background: transparent; border: none; box-shadow: none; padding: 0 24px;">
 
-  <div [class]="'flex-1'">
-    @for (card of getActiveCards(); track card; let i = $index) {
-      @if (card.permissions.view && card.type === commonConfig.WIZARD_TYPES.ENTITY && card.dashboard_entity_type !== 'grid_builder_module') {
-        <ng-template #entityContainer></ng-template>
-      }
+  <!-- Title & Subtitle -->
+  <div class="flex flex-col justify-center">
+    <h1 class="dashboard-title">
+      {{ customHeaderConfig.title }}
+    </h1>
+    @if (customHeaderConfig.subtitle) {
+    <p class="dashboard-subtitle">
+      {{ customHeaderConfig.subtitle }}
+    </p>
     }
-    @if (hasNonEntityCards()) {
-      <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
-        @for (card of getActiveCards(); track card; let i = $index) {
-          @if (card.permissions.view && (card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module')) {
-            <div
-              class="relative rounded-lg bg-white dark:bg-black"
-              [ngStyle]="getCardStyle(card)"
-              style="
+  </div>
+
+  <!-- Controls & Date Picker (Single Row) -->
+  <div class="flex items-center gap-3">
+    @if (customHeaderConfig.customTemplate) {
+    <ng-container *ngTemplateOutlet="customHeaderConfig.customTemplate"></ng-container>
+    }
+
+    @if (displayDateRangeFilter) {
+    <div class="relative">
+      <button (click)="showDateRangePicker = !showDateRangePicker"
+        style="color: #475569; background-color: #ffffff; border: 1px solid var(--app-header-color, var(--app-primary-color)); font-size: 15px; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; cursor: pointer; gap: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); transition: all 0.2s ease;"
+        class="date-selector-pill">
+        <i class="fa-regular fa-calendar-days"
+          style="color: var(--app-header-color, var(--app-primary-color)); font-size: 16px;"></i>
+        <span style="color: #334155; font-weight: 700; font-size: 14px;">Showing Results</span>
+        @if (dateRange && dateRange.fromDate && dateRange.toDate) {
+        <span
+          style="background-color: var(--app-header-color, var(--app-primary-color)); color: var(--app-header-text-color, var(--app-bg-color)); font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">
+          {{ formatDate(dateRange.fromDate) }}
+        </span>
+        <i class="fa-solid fa-arrow-right-long"
+          style="color: var(--app-header-color, var(--app-primary-color)); font-size: 14px; margin: 0 2px;"></i>
+        <span
+          style="background-color: var(--app-header-color, var(--app-primary-color)); color: var(--app-header-text-color, var(--app-bg-color)); font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">
+          {{ formatDate(dateRange.toDate) }}
+        </span>
+        } @else {
+        <span
+          style="background-color: var(--app-header-color, var(--app-primary-color)); color: var(--app-header-text-color, var(--app-bg-color)); font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center;">
+          Select Range
+        </span>
+        }
+        <i class="fa-solid fa-chevron-down" style="color: #94a3b8; font-size: 12px;"></i>
+      </button>
+      @if (showDateRangePicker) {
+      <div @toggleAnimation
+        class="absolute right-0 z-50 mt-1 w-[800px] rounded-md bg-white shadow-lg focus:outline-none"
+        (click)="$event.stopPropagation()" style="transform: translateX(0)">
+        <app-date-range-picker [dateRange]="dateRange" (dateRangeChange)="onDateRangeChange($event)"
+          (submitted)="showDateRangePicker = false" class="date-range-tab p-4" (click)="$event.stopPropagation()"
+          style="min-width: 100%"></app-date-range-picker>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+</div>
+<div class="border-t border-white-light dark:border-[#191e3a] mx-6 mb-4"
+  style="border-top: 1px solid var(--app-table-border-color, var(--app-border-color, #e2e8f0));"></div>
+} @else {
+@if (displayDateRangeFilter) {
+<div class="flex w-full justify-end pr-4">
+  <div class="relative">
+    <button (click)="showDateRangePicker = !showDateRangePicker"
+      style="color: #475569; background-color: #ffffff; border: 1px solid var(--app-header-color, var(--app-primary-color)); font-size: 15px; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; cursor: pointer; gap: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); transition: all 0.2s ease;"
+      class="date-selector-pill">
+      <i class="fa-regular fa-calendar-days"
+        style="color: var(--app-header-color, var(--app-primary-color)); font-size: 16px;"></i>
+      <span style="color: #334155; font-weight: 700; font-size: 14px;">Showing Results</span>
+      @if (dateRange && dateRange.fromDate && dateRange.toDate) {
+      <span
+        style="background-color: var(--app-header-color, var(--app-primary-color)); color: var(--app-header-text-color, var(--app-bg-color)); font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">
+        {{ formatDate(dateRange.fromDate) }}
+      </span>
+      <i class="fa-solid fa-arrow-right-long"
+        style="color: var(--app-header-color, var(--app-primary-color)); font-size: 14px; margin: 0 2px;"></i>
+      <span
+        style="background-color: var(--app-header-color, var(--app-primary-color)); color: var(--app-header-text-color, var(--app-bg-color)); font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">
+        {{ formatDate(dateRange.toDate) }}
+      </span>
+      } @else {
+      <span
+        style="background-color: var(--app-header-color, var(--app-primary-color)); color: var(--app-header-text-color, var(--app-bg-color)); font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center;">
+        Select Range
+      </span>
+      }
+      <i class="fa-solid fa-chevron-down" style="color: #94a3b8; font-size: 12px;"></i>
+    </button>
+    @if (showDateRangePicker) {
+    <div @toggleAnimation class="absolute right-0 z-10 mt-1 w-[800px] rounded-md bg-white shadow-lg focus:outline-none"
+      (click)="$event.stopPropagation()" style="transform: translateX(0)">
+      <app-date-range-picker [dateRange]="dateRange" (dateRangeChange)="onDateRangeChange($event)"
+        (submitted)="showDateRangePicker = false" class="date-range-tab p-4" (click)="$event.stopPropagation()"
+        style="min-width: 100%"></app-date-range-picker>
+    </div>
+    }
+  </div>
+</div>
+}
+}
+
+<!-- Click outside to close -->
+@if (showDateRangePicker) {
+<div class="fixed inset-0 z-0" (click)="showDateRangePicker = false"></div>
+}
+@if (dashboardLoadError) {
+<div class="mt-5 rounded-md border border-danger/40 bg-danger/10 p-4 text-danger">{{ dashboardLoadError }}</div>
+}
+@if (!dashboardLoadError && !getTabsWithActiveCards().length) {
+<div class="mt-5 rounded-md border border-white-light p-6 text-center text-base"
+  style="border-color: var(--app-table-border-color, var(--app-border-color))">
+  No dashboard widgets are available for your account.
+</div>
+}
+
+<div [class]="'flex-1'">
+  @for (card of getActiveCards(); track card; let i = $index) {
+  @if (card.permissions.view && card.type === commonConfig.WIZARD_TYPES.ENTITY && card.dashboard_entity_type !==
+  'grid_builder_module') {
+  <ng-template #entityContainer></ng-template>
+  }
+  }
+  @if (hasNonEntityCards()) {
+  <div class="grid-cols-4 gap-4 p-4 sm:grid-cols-2 md:grid md:grid-cols-3 lg:grid lg:grid-cols-4">
+    @for (card of getActiveCards(); track card; let i = $index) {
+    @if (card.permissions.view && (card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type ===
+    'grid_builder_module')) {
+    <div class="relative rounded-lg bg-white dark:bg-black" [ngStyle]="getCardStyle(card)" style="
                 background-color: var(--app-table-bg-color, var(--app-bg-color));
                 color: var(--app-table-text-color, var(--app-text-color));
                 border-color: var(--app-table-border-color, var(--app-border-color));
-              "
-            >
-              <div
-                [ngClass]="
+              ">
+      <div [ngClass]="
                   card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module'
                     ? 'overflow-x-auto overflow-y-auto p-2'
                     : ''
-                "
-                [ngStyle]="
+                " [ngStyle]="
                   card.type !== commonConfig.WIZARD_TYPES.ENTITY || card.dashboard_entity_type === 'grid_builder_module'
                     ? getScrollContainerStyle(card.rows, card.cols)
                     : {}
-                "
-              >
-                <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
-                @if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
-                  @if ([commonConfig.WIZARD_TYPES.STATIC].includes(card.type)) {
-                    <div>
-                      @for (content of getStaticContent(card); track content) {
-                        <div [innerHTML]="content | safeHtml"></div>
-                      }
-                    </div>
-                  }
-                  @if ([commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)) {
-                    <div>
-                      <div
-                        class="panel"
-                        style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))"
-                      >
-                        <div class="mb-5 flex items-center justify-between">
-                          <h5 class="text-lg font-semibold dark:text-white" style="color: var(--app-table-text-color, var(--app-text-color))">
-                            {{ card.title }}
-                          </h5>
-                        </div>
-                        <div class="mb-5 overflow-hidden">
-                          @if (card.chart_format[0]) {
-                            <apx-chart
-                              [series]="card.chart_format[0].series"
-                              [chart]="card.chart_format[0].chart"
-                              [xaxis]="card.chart_format[0].xaxis"
-                              [yaxis]="card.chart_format[0].yaxis!"
-                              [dataLabels]="card.chart_format[0].dataLabels!"
-                              [grid]="card.chart_format[0].grid"
-                              [stroke]="card.chart_format[0].stroke"
-                              [title]="card.chart_format[0].title!"
-                              [plotOptions]="card.chart_format[0].plotOptions!"
-                              [fill]="card.chart_format[0].fill!"
-                              [tooltip]="card.chart_format[0].tooltip!"
-                            ></apx-chart>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  }
-                  @if (card.type === commonConfig.WIZARD_TYPES.ENTITY && card.dashboard_entity_type === 'grid_builder_module') {
-                    <div class="mt-5">
-                      <ng-template #gridContainer></ng-template>
-                    </div>
-                  }
-                } @else {
-                  <div #powerBiContainer [attr.id]="'powerbi-container-' + i" style="width: 100%; height: 100%"></div>
-                }
-              </div>
-              <!--</ng-scrollbar>-->
-            </div>
+                ">
+        <!-- <ng-scrollbar appearance="compact" [autoHeightDisabled]="true" track="all">-->
+        @if (card.report_type === commonConfig.REPORT_TYPES.LCP) {
+        @if ([commonConfig.WIZARD_TYPES.STATIC].includes(card.type)) {
+        <div>
+          @for (content of getStaticContent(card); track content) {
+          <div [innerHTML]="content | safeHtml"></div>
           }
+        </div>
+        }
+        @if ([commonConfig.WIZARD_TYPES.CHART].includes(card.type) && card.chart_format && validateChartData(card)) {
+        <div>
+          <div class="panel"
+            style="background-color: var(--app-table-bg-color, var(--app-bg-color)); color: var(--app-table-text-color, var(--app-text-color))">
+            <div class="mb-5 flex items-center justify-between">
+              <h5 class="text-lg font-semibold dark:text-white"
+                style="color: var(--app-table-text-color, var(--app-text-color))">
+                {{ card.title }}
+              </h5>
+            </div>
+            <div class="mb-5 overflow-hidden">
+              @if (card.chart_format[0]) {
+              <apx-chart [series]="card.chart_format[0].series" [chart]="card.chart_format[0].chart"
+                [xaxis]="card.chart_format[0].xaxis" [yaxis]="card.chart_format[0].yaxis!"
+                [dataLabels]="card.chart_format[0].dataLabels!" [grid]="card.chart_format[0].grid"
+                [stroke]="card.chart_format[0].stroke" [title]="card.chart_format[0].title!"
+                [plotOptions]="card.chart_format[0].plotOptions!" [fill]="card.chart_format[0].fill!"
+                [tooltip]="card.chart_format[0].tooltip!"></apx-chart>
+              }
+            </div>
+          </div>
+        </div>
+        }
+        @if (card.type === commonConfig.WIZARD_TYPES.ENTITY && card.dashboard_entity_type === 'grid_builder_module') {
+        <div class="">
+          <ng-template #gridContainer></ng-template>
+        </div>
+        }
+        } @else {
+        <div #powerBiContainer [attr.id]="'powerbi-container-' + i" style="width: 100%; height: 100%"></div>
         }
       </div>
+      <!--</ng-scrollbar>-->
+    </div>
+    }
     }
   </div>
-
-  @if (showMasterListPopup) {
-    <master-list [popupConfig]="popupConfig" [isViewPopupOpen]="showMasterListPopup" [nonGridPage]="true" (closeModal)="closeMasterListPopup()"></master-list>
   }
+</div>
+
+@if (showMasterListPopup) {
+<master-list [popupConfig]="popupConfig" [isViewPopupOpen]="showMasterListPopup" [nonGridPage]="true"
+  (closeModal)="closeMasterListPopup()"></master-list>
+}
 }

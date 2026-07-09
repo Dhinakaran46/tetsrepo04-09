@@ -1,0 +1,634 @@
+<div [formGroup]="form">
+  <div class="panel">
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <div class="flex flex-wrap items-center justify-between">
+      <div class="text-md font-bold uppercase">
+        {{ editTitle ? ('title_edit_approval_workflow' | translate) : ('title_add_approval_workflow' | translate) }}
+      </div>
+      <div class="flex items-center gap-3">
+        <button appDynamicFontSize="body" type="button" class="btn btn-danger" (click)="location.back()">
+          {{ 'back' | translate }}
+        </button>
+        <button appDynamicFontSize="body" type="button" class="btn btn-primary" [disabled]="loading" (click)="onSubmit()">
+          <i class="fa-solid fa-floppy-disk mr-2"></i>{{ 'submit' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!--<hr class="my-4 border-[#e0e6ed] dark:border-[#1b2e4b]" />-->
+
+    <!--    <div class="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Workflow</div>-->
+    <div class="mt-3 rounded-xl border border-[#e0e6ed] bg-white/60 p-4 dark:border-[#1b2e4b] dark:bg-[#0f1728]">
+      <div class="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <!-- Workflow Module -->
+        <div class="xl:col-span-2">
+          <label class="required-mark mb-2 block font-medium">Workflow Module</label>
+          <!-- <div class="rounded-lg border border-[#d8e0ea] bg-[#fafbfd] p-2 dark:border-[#223a5d] dark:bg-[#101c33]">-->
+          <ng-select
+            formControlName="approval_workflow_module_id"
+            bindLabel="name"
+            bindValue="id"
+            [items]="modules"
+            [clearable]="true"
+            [searchable]="true"
+            placeholder="Select Workflow Entity"
+            class="custom-multiselect"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('approval_workflow_module_id') }"
+            (change)="onModuleChange($event, 'reset')"
+          ></ng-select>
+          <!--</div>-->
+          @if (isFieldInvalid('approval_workflow_module_id')) {
+          <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('approval_workflow_module_id') | translate }}</div>
+          }
+        </div>
+
+        <!-- Name -->
+        <div class="xl:col-span-2">
+          <label class="required-mark mb-2 block font-medium">{{ 'form_label_name' | translate }}</label>
+          <input
+            type="text"
+            formControlName="name"
+            appDynamicFontSize="body"
+            class="form-input w-full"
+            placeholder="{{ 'form_label_name_placeholder' | translate }}"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
+          />
+          @if (isFieldInvalid('name')) {
+          <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('name') | translate }}</div>
+          }
+        </div>
+
+        <!-- Slug -->
+        <div class="xl:col-span-2">
+          <div class="mb-2 flex items-center gap-2">
+            <label class="required-mark block font-medium">{{ 'form_label_slug' | translate }}</label>
+            @if (editTitle && !slugEditable && isSlugActive) {
+            <button type="button" (click)="openSlugEditModal()" title="Edit slug" class="text-gray-400 transition-colors hover:text-primary">
+              <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            }
+          </div>
+          @if (editTitle && !slugEditable) {
+          <div class="flex items-stretch">
+            <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark">approval_workflow_</span>
+            <input type="text" [value]="stripSlugPrefix(originalSlug)" disabled appDynamicFontSize="body" class="form-input w-full rounded-l-none bg-gray-50 dark:bg-[#1b2e4b]" />
+          </div>
+          } @else {
+          <div class="flex items-stretch">
+            <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark">approval_workflow_</span>
+            <input
+              type="text"
+              formControlName="slug"
+              appDynamicFontSize="body"
+              class="form-input w-full rounded-l-none"
+              [ngClass]="{ 'bg-gray-50 dark:bg-[#1b2e4b]': !isSlugActive, 'is-invalid': isFieldInvalid('slug') || slugError }"
+              placeholder="{{ 'form_label_slug_placeholder' | translate }}"
+              [readOnly]="!isSlugActive"
+              (blur)="onSlugBlur()"
+            />
+          </div>
+          }
+          @if (isFieldInvalid('slug')) {
+          <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('slug') | translate }}</div>
+          } @if (!isSlugActive) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Enter a name to enable this field.</p>
+          } @if (slugError) {
+          <div class="mt-1 text-sm text-danger">{{ slugError }}</div>
+          } @if (isSlugActive && (!editTitle || slugEditable) && slugSuggestions.length > 0) {
+          <div class="mt-1.5">
+            <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
+            <div class="mt-1 flex flex-wrap gap-1.5">
+              @for (slugOption of slugSuggestions; track slugOption) {
+              <button
+                type="button"
+                (click)="selectSlugSuggestion(slugOption)"
+                class="rounded border px-2 py-0.5 text-xs transition-colors"
+                [ngClass]="
+                  form.get('slug')?.value === slugOption
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'
+                "
+              >
+                {{ slugOption }}
+              </button>
+              }
+            </div>
+          </div>
+          } @if (isSlugActive && (!editTitle || slugEditable) && form.get('name')?.value && slugSuggestions.length === 0 && !form.get('slug')?.value) {
+          <p class="mt-1 text-xs text-warning">All suggested slugs are already taken. Try a different name.</p>
+          }
+        </div>
+
+        <!-- Page URL -->
+        <div class="xl:col-span-2">
+          <label class="mb-2 block font-medium">Page URL</label>
+          <input type="text" formControlName="url" appDynamicFontSize="body" class="form-input w-full" placeholder="e.g. /purchase-requests" />
+        </div>
+
+        <!-- Description -->
+        <div class="xl:col-span-4">
+          <label class="mb-2 block font-medium">{{ 'form_label_description' | translate }}</label>
+          <input
+            type="text"
+            formControlName="description"
+            appDynamicFontSize="body"
+            class="form-input w-full"
+            placeholder="{{ 'form_label_description_placeholder' | translate }}"
+          />
+        </div>
+      </div>
+
+      <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <span class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Common Approval Rules</span>
+        @if (form.get('approval_workflow_module_id')?.value) {
+        <button type="button" class="btn btn-primary btn-sm flex w-full items-center justify-center gap-2 md:w-auto" (click)="openConditionsModal()">
+          <i class="fa-solid fa-plus"></i> Add / Edit Rule
+        </button>
+        }
+      </div>
+
+      <div class="mt-3 min-h-[56px] rounded-lg border border-[#d8e0ea] bg-[#fafbfd] p-2.5 dark:border-[#223a5d] dark:bg-[#101c33]">
+        @if (!form.get('approval_workflow_module_id')?.value) {
+        <p class="py-2 text-center text-sm text-gray-400">Select a workflow module to configure rule conditions.</p>
+        } @else if (committedConditions.length === 0) {
+        <p class="py-2 text-center text-sm text-gray-400">No rules added yet. Click "+ Add Rule" to create your first condition.</p>
+        } @else {
+        <div
+          class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3"
+          cdkDropList
+          [cdkDropListData]="committedConditions"
+          (cdkDropListDropped)="dropCommittedConditions($event)"
+        >
+          @for (cond of committedConditions; track cond; let ci = $index) {
+          <div class="group flex items-center gap-2 rounded-md border border-[#d6deea] bg-white px-2.5 py-2 dark:border-[#2a4266] dark:bg-[#0d172b]" cdkDrag>
+            <span cdkDragHandle class="cursor-grab text-gray-500" title="Drag to reorder">
+              <i class="fa-solid fa-grip-vertical text-xs"></i>
+            </span>
+            <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">{{ ci + 1 }}</span>
+            <span class="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">{{ conditionDisplayLabel(cond) }}</span>
+            <button type="button" class="flex-shrink-0 text-danger transition-opacity hover:opacity-80" (click)="removeCommittedCondition(ci)">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Conditions Modal -->
+    @if (showConditionsModal) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
+      <div class="w-full max-w-2xl rounded-xl border border-[#d8e0ea] bg-white p-6 shadow-2xl dark:border-[#223a5d] dark:bg-[#101c33]">
+        <!-- Modal Header -->
+        <div class="mb-1 flex items-start justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Common Approval Rules</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">Add common conditions that apply to the full approval workflow.</p>
+          </div>
+          <button type="button" class="text-gray-400 hover:text-gray-700 dark:hover:text-white" (click)="closeConditionsModal()">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <hr class="my-4 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+        <!-- Condition Rows -->
+        <div
+          class="max-h-80 space-y-3 overflow-y-auto pr-1"
+          formArrayName="conditions"
+          cdkDropList
+          [cdkDropListData]="conditionsControls"
+          (cdkDropListDropped)="dropConditions($event)"
+        >
+          @if (conditionsControls.length === 0) {
+          <p class="py-4 text-center text-sm text-gray-400">No conditions yet. Click "+ Add Condition" below.</p>
+          } @for (condGroup of conditionsControls; track condGroup; let ci = $index) {
+          <div [formGroupName]="ci" class="flex items-center gap-3" cdkDrag>
+            <!-- Drag handle -->
+            <div cdkDragHandle class="cursor-grab text-gray-500" title="Drag to reorder">
+              <i class="fa-solid fa-grip-vertical"></i>
+            </div>
+
+            <!-- Field -->
+            <div class="min-w-0 flex-1">
+              <select
+                formControlName="field_name"
+                appDynamicFontSize="body"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isConditionFieldInvalid(condGroup, 'field_name') }"
+                (change)="onConditionFieldChange(condGroup, condGroup.get('field_name')?.value)"
+              >
+                <option value="">-- Select Field --</option>
+                @for (opt of moduleRuleOptions; track opt.id) {
+                <option [value]="opt.field_name">{{ opt.display_name || opt.field_name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Operator -->
+            <div class="w-36 flex-shrink-0">
+              <select
+                formControlName="operator"
+                appDynamicFontSize="body"
+                class="form-select w-full"
+                [ngClass]="{ 'is-invalid': isConditionFieldInvalid(condGroup, 'operator') }"
+              >
+                @for (op of getConditionOperators(condGroup); track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Value -->
+            <div class="min-w-0 flex-1">
+              @if (condGroup.get('enum_values')?.value?.length > 0) {
+              <ng-select
+                formControlName="value"
+                [items]="condGroup.get('enum_values')?.value || []"
+                bindLabel="label"
+                bindValue="value"
+                [multiple]="true"
+                [searchable]="true"
+                [closeOnSelect]="false"
+                [hideSelected]="true"
+                [clearable]="true"
+                appendTo="body"
+                dropdownPosition="bottom"
+                placeholder="Select Value"
+                class="custom-multiselect w-full"
+                [ngClass]="{ 'is-invalid': isConditionFieldInvalid(condGroup, 'value') }"
+              ></ng-select>
+              } @else {
+              <input
+                type="text"
+                formControlName="value"
+                appDynamicFontSize="body"
+                class="form-input w-full"
+                placeholder="Value"
+                [ngClass]="{ 'is-invalid': isConditionFieldInvalid(condGroup, 'value') }"
+              />
+              }
+            </div>
+
+            <!-- Remove -->
+            <button type="button" class="flex-shrink-0 text-danger" (click)="removeCondition(ci)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="mt-5 flex items-center justify-between">
+          <button type="button" class="flex items-center gap-2 text-sm text-primary hover:underline" (click)="addCondition()">
+            <i class="fa-solid fa-plus"></i> Add Condition
+          </button>
+          <div class="flex items-center gap-3">
+            <button type="button" class="btn btn-outline-danger btn-sm" (click)="closeConditionsModal()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="!isConditionsModalSavable()" (click)="saveConditionsModal()">Save Rules</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Slug Edit Modal -->
+    @if (isSlugModalOpen) {
+    <div class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeSlugEditModal()"></div>
+      <div class="flex min-h-screen items-center justify-center p-4">
+        <div
+          class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Slug</h3>
+              <button type="button" class="close-btn" (click)="closeSlugEditModal()">
+                <span class="sr-only">Close</span>
+                <i class="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
+          </div>
+          <div class="px-6 py-4" [formGroup]="slugModalForm">
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'form_label_slug' | translate }}</label>
+            <div class="flex items-stretch">
+              <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark">approval_workflow_</span>
+              <input
+                type="text"
+                formControlName="slug"
+                appDynamicFontSize="body"
+                class="form-input w-full rounded-l-none"
+                [ngClass]="{ 'is-invalid': slugModalError }"
+                placeholder="{{ 'form_label_slug_placeholder' | translate }}"
+                (blur)="onSlugModalBlur()"
+              />
+            </div>
+            @if (slugModalError) {
+            <div class="mt-1 text-sm text-danger">{{ slugModalError }}</div>
+            } @if (slugModalSuggestions.length > 0) {
+            <div class="mt-1.5">
+              <span class="text-xs text-gray-400 dark:text-gray-500">Suggestions (click to select):</span>
+              <div class="mt-1 flex flex-wrap gap-1.5">
+                @for (slugOption of slugModalSuggestions; track slugOption) {
+                <button
+                  type="button"
+                  (click)="selectSlugModalSuggestion(slugOption)"
+                  class="rounded border px-2 py-0.5 text-xs transition-colors"
+                  [ngClass]="
+                    slugModalForm.get('slug')?.value === slugOption
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-[#253b5c] dark:bg-[#1b2e4b] dark:text-white-dark'
+                  "
+                >
+                  {{ slugOption }}
+                </button>
+                }
+              </div>
+            </div>
+            }
+          </div>
+          <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+            <div class="flex items-center justify-end gap-3">
+              <button type="button" class="btn btn-secondary" appDynamicFontSize="body" (click)="closeSlugEditModal()">
+                {{ 'cancel' | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                appDynamicFontSize="body"
+                (click)="submitSlugEditModal()"
+                [disabled]="!slugModalForm.get('slug')?.value?.trim() || !!slugModalError"
+              >
+                {{ 'submit' | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <hr class="my-5 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+    <!-- ── Section 3: Approval Levels ─────────────────────────────────────── -->
+    <div class="mb-3 flex items-center justify-between">
+      <div class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        Approval Levels
+        <span class="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-white">{{ levelControls.length }}</span>
+      </div>
+      <button type="button" class="btn btn-outline-primary btn-sm flex items-center gap-2" (click)="addLevel()">
+        <i class="fa-solid fa-plus"></i> Add Level
+      </button>
+    </div>
+
+    <div formArrayName="levels" class="space-y-3" cdkDropList [cdkDropListData]="levelControls" (cdkDropListDropped)="dropLevels($event)">
+      @for (levelGroup of levelControls; track levelGroup; let li = $index) {
+      <div [formGroupName]="li" class="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" cdkDrag>
+        <!-- Accordion Header -->
+        <button
+          type="button"
+          class="flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b]"
+          [ngClass]="{ '!text-primary': levelGroup.get('accordion')?.value }"
+          (click)="toggleAccordion(levelGroup)"
+        >
+          <span cdkDragHandle class="mr-2 cursor-grab text-gray-500" (click)="$event.stopPropagation()" title="Drag to reorder">
+            <i class="fa-solid fa-grip-vertical"></i>
+          </span>
+          <span class="mr-3 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm text-white">{{ li + 1 }}</span>
+          <span class="font-semibold">Level {{ li + 1 }}</span>
+          <div class="ml-2 inline-flex rounded border border-[#d8e0ea] bg-[#f8fafc] p-0.5 dark:border-[#2a4266] dark:bg-[#0d172b]">
+            <button
+              type="button"
+              class="rounded px-2.5 py-1 text-[11px] font-semibold transition"
+              [ngClass]="levelGroup.get('approver_conditional_logic')?.value === 'AND' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-300'"
+              (click)="$event.stopPropagation(); levelGroup.get('approver_conditional_logic')?.setValue('AND')"
+            >
+              AND
+            </button>
+            <button
+              type="button"
+              class="rounded px-2.5 py-1 text-[11px] font-semibold transition"
+              [ngClass]="levelGroup.get('approver_conditional_logic')?.value === 'OR' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-300'"
+              (click)="$event.stopPropagation(); levelGroup.get('approver_conditional_logic')?.setValue('OR')"
+            >
+              OR
+            </button>
+          </div>
+          @if (getSelectedApproverValues(levelGroup).length) {
+          <div class="ml-3 flex flex-wrap items-center gap-1.5">
+            <span
+              class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase"
+              [ngClass]="{
+                'border-[#f8c9a8] bg-[#fff2e8] text-[#b44c12] dark:border-[#7a3b1a] dark:bg-[#2a1811] dark:text-[#ffbe97]':
+                  levelGroup.get('approver_type')?.value === 'tag',
+                'border-[#bcd7ff] bg-[#eaf3ff] text-[#1e4f9b] dark:border-[#2d4f7a] dark:bg-[#12243c] dark:text-[#9fc6ff]':
+                  levelGroup.get('approver_type')?.value === 'user_id',
+                'border-[#cdbbff] bg-[#f1ebff] text-[#5d35b0] dark:border-[#4b3a79] dark:bg-[#1f1736] dark:text-[#cbb7ff]':
+                  levelGroup.get('approver_type')?.value === 'role_id'
+              }"
+            >
+              {{ getApproverTypeLabel(levelGroup.get('approver_type')?.value) }}
+            </span>
+            @for (selectedValue of getSelectedApproverValues(levelGroup); track selectedValue) {
+            <span
+              class="inline-flex items-center rounded-full border border-[#d4dceb] bg-[#f3f6fc] px-2 py-0.5 text-[11px] font-medium text-[#4a5f82] dark:border-[#2a4266] dark:bg-[#0d172b] dark:text-[#c7d5eb]"
+            >
+              {{ getApproverDisplayLabel(levelGroup, selectedValue) }}
+            </span>
+            }
+          </div>
+          }
+          <div class="flex items-center gap-3 ltr:ml-auto rtl:mr-auto">
+            @if (levelControls.length > 1) {
+            <button type="button" class="btn btn-danger btn-sm" (click)="$event.stopPropagation(); removeLevel(li)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+            }
+            <i class="fa-solid fa-chevron-down transition-transform" [ngClass]="{ 'rotate-180': levelGroup.get('accordion')?.value }"></i>
+          </div>
+        </button>
+
+        <!-- Accordion Body -->
+        <div [@slideDownUp]="levelGroup.get('accordion')?.value?.toString()" class="accordion-content overflow-hidden">
+          <div class="space-y-4 border-t border-[#d3d3d3] p-4 dark:border-[#1b2e4b]">
+            <!-- Row 1: Type (25%) + Select Approver (25%) + Saved Approvers (50%) -->
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+              <!-- Approver Type -->
+              <div class="md:col-span-1">
+                <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">Approver Type</label>
+                <ng-select
+                  formControlName="approver_type"
+                  bindLabel="label"
+                  bindValue="value"
+                  [items]="approverTypes"
+                  [clearable]="false"
+                  placeholder="Select Type"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                  (change)="onApproverTypeChange(levelGroup, li)"
+                ></ng-select>
+              </div>
+
+              <!-- Select Approver -->
+              <div class="md:col-span-1">
+                <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{
+                  getApproverTypeLabel(levelGroup.get('approver_type')?.value)
+                }}</label>
+                <div class="flex gap-2">
+                  <ng-select
+                    formControlName="approver_candidate"
+                    bindLabel="label"
+                    bindValue="value"
+                    [items]="getApproverOptions(levelGroup)"
+                    [clearable]="true"
+                    [searchable]="true"
+                    placeholder="Select approver..."
+                    appendTo="body"
+                    dropdownPosition="bottom"
+                    class="custom-multiselect flex-1"
+                    (search)="onApproverCandidateSearch(levelGroup, li, $event.term || '')"
+                    (clear)="onApproverCandidateSearch(levelGroup, li, '')"
+                  ></ng-select>
+                  <button type="button" class="btn btn-primary btn-sm px-3" (click)="addApproverCandidate(levelGroup)">Add</button>
+                </div>
+              </div>
+
+              <!-- Saved Approvers (same style idea as common approval rules box) -->
+              <div class="md:col-span-2">
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Saved {{ getApproverTypeLabel(levelGroup.get('approver_type')?.value) }}</label>
+                <div class="min-h-[42px] rounded border border-[#e0e6ed] bg-white p-2 dark:border-[#1b2e4b] dark:bg-[#101c33]">
+                  @if (getSelectedApproverValues(levelGroup).length === 0) {
+                  <p class="py-1 text-center text-sm text-gray-400">No approvers added yet.</p>
+                  } @else {
+                  <div
+                    class="flex flex-wrap gap-2"
+                    cdkDropList
+                    [cdkDropListData]="getSelectedApproverValues(levelGroup)"
+                    (cdkDropListDropped)="dropApproverValues($event, levelGroup)"
+                  >
+                    @for (selectedValue of getSelectedApproverValues(levelGroup); track selectedValue; let ai = $index) {
+                    <div
+                      class="flex items-center gap-2 rounded border border-[#d6deea] bg-[#f3f6fa] px-3 py-1.5 dark:border-[#2a4266] dark:bg-[#0d172b]"
+                      cdkDrag
+                    >
+                      <span cdkDragHandle class="cursor-grab text-gray-500" title="Drag to reorder">
+                        <i class="fa-solid fa-grip-vertical text-xs"></i>
+                      </span>
+                      <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">{{
+                        ai + 1
+                      }}</span>
+                      <span class="max-w-[180px] truncate text-sm font-medium text-gray-800 dark:text-gray-100">{{
+                        getApproverDisplayLabel(levelGroup, selectedValue)
+                      }}</span>
+                      <button type="button" class="text-danger hover:opacity-80" (click)="removeApproverValue(levelGroup, selectedValue)">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                      </button>
+                    </div>
+                    }
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2: Email / Whatsapp / Query templates -->
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+              <div>
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Accept Email Template</label>
+                <ng-select
+                  formControlName="accept_email"
+                  bindLabel="name"
+                  bindValue="id"
+                  [items]="emailTemplateList"
+                  [clearable]="true"
+                  placeholder="Select Template"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                ></ng-select>
+              </div>
+              <div>
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Reject Email Template</label>
+                <ng-select
+                  formControlName="reject_email"
+                  bindLabel="name"
+                  bindValue="id"
+                  [items]="emailTemplateList"
+                  [clearable]="true"
+                  placeholder="Select Template"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                ></ng-select>
+              </div>
+              <div>
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Accept WhatsApp Template</label>
+                <ng-select
+                  formControlName="accept_whatsapp"
+                  bindLabel="name"
+                  bindValue="id"
+                  [items]="whatsappTemplateList"
+                  [clearable]="true"
+                  placeholder="Select Template"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                ></ng-select>
+              </div>
+              <div>
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Reject WhatsApp Template</label>
+                <ng-select
+                  formControlName="reject_whatsapp"
+                  bindLabel="name"
+                  bindValue="id"
+                  [items]="whatsappTemplateList"
+                  [clearable]="true"
+                  placeholder="Select Template"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                ></ng-select>
+              </div>
+              <div>
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Approve Query Information</label>
+                <ng-select
+                  formControlName="approve_query_line_item_id"
+                  bindLabel="label"
+                  bindValue="id"
+                  [items]="moduleApproveQueryLineItems"
+                  [clearable]="true"
+                  [searchable]="true"
+                  placeholder="Select Approve Query Line Item"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                  (change)="onLevelApproveQuerySelectionChange(levelGroup)"
+                ></ng-select>
+              </div>
+              <div>
+                <label class="mb-2 block font-medium" appDynamicFontSize="body">Reject Query Information</label>
+                <ng-select
+                  formControlName="reject_query_line_item_id"
+                  bindLabel="label"
+                  bindValue="id"
+                  [items]="moduleRejectQueryLineItems"
+                  [clearable]="true"
+                  [searchable]="true"
+                  placeholder="Select Reject Query Line Item"
+                  appendTo="body"
+                  dropdownPosition="bottom"
+                  class="custom-multiselect"
+                  (change)="onLevelRejectQuerySelectionChange(levelGroup)"
+                ></ng-select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</div>

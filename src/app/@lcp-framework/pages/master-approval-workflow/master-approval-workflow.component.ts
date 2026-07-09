@@ -36,11 +36,11 @@ export function viewMandatoryValidator(): ValidatorFn {
 }
 
 @Component({
-  selector: 'app-add-master-entity',
+  selector: 'app-add-master-approval-workflow',
   standalone: true,
   imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule],
-  templateUrl: './master-entity.component.html',
-  styleUrl: './master-entity.component.scss',
+  templateUrl: './master-approval-workflow.component.html',
+  styleUrl: './master-approval-workflow.component.scss',
   animations: [
     trigger('toggleAnimation', [
       transition(':enter', [style({ opacity: 0, transform: 'scale(0.95)' }), animate('100ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))]),
@@ -48,16 +48,14 @@ export function viewMandatoryValidator(): ValidatorFn {
     ]),
   ],
 })
-export class MasterEntityComponent implements OnInit {
-  readonly linkTypeComponentCase = 'component';
-  readonly linkTypeChildComponentCase = 'child_component';
-  readonly gridLikeEntityTypes = [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.APPROVAL_WORKFLOW_BUILDER_MODULE.name];
-  readonly gridStructuredEntityTypes = [...this.gridLikeEntityTypes, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name];
+export class MasterApprovalWorkflowComponent implements OnInit {
+  readonly approvalWorkflowEntityNamePrefix = 'approval_workflow';
+  readonly lineItemTypeLineItem = 'line_item';
+  readonly lineItemTypeApproveQuery = 'approve_query';
+  readonly lineItemTypeRejectQuery = 'reject_query';
   store: any = initialState;
   form!: FormGroup;
   items: any = [];
-  entity_types: any = [];
-  action_types: any[] = [];
   field_types: any[] = [];
   tables_list: any = [];
   wizard_type_list: any[] = [];
@@ -66,7 +64,6 @@ export class MasterEntityComponent implements OnInit {
   editTitle = false;
   submitted = false;
   commonConfig = commonConfig;
-  existing_actions: string[] = [];
   redirect_url: string = '';
   rowsLength: number = 26;
 
@@ -80,35 +77,32 @@ export class MasterEntityComponent implements OnInit {
 
   insert_json_schema: any = {
     // it will be removed
-    action: ['insert', 'insert', 'insert'],
-    table: ['master_entities', 'permissions', 'master_entity_line_items'],
-    table_mapping: ['table1', 'table2', 'table3'],
+    action: ['insert', 'insert'],
+    table: ['master_approval_workflows', 'master_approval_workflow_line_items'],
+    table_mapping: ['table1', 'table2'],
     data: {
       table1: [],
       table2: [],
-      table3: [],
     },
   };
 
   update_json_schema: any = {
-    action: ['update', 'hard_delete', 'insert', 'update', 'insert', 'hard_delete'],
-    table: ['master_entities', 'master_entity_line_items', 'master_entity_line_items', 'permissions', 'permissions', 'permissions'],
-    table_mapping: ['table1', 'table2', 'table3', 'table4', 'table5', 'table6'],
+    action: ['update', 'hard_delete', 'insert'],
+    table: ['master_approval_workflows', 'master_approval_workflow_line_items', 'master_approval_workflow_line_items'],
+    table_mapping: ['table1', 'table2', 'table3'],
     data: {
       table1: [],
       table3: [],
-      table4: [],
-      table5: [],
     },
     conditions: {
       table1: [],
       table2: [],
-      table4: [],
-      table6: [],
     },
   };
 
   exportTemplates: any[] = [];
+  emailTemplateList: { id: number; name: string }[] = [];
+  whatsappTemplateList: { id: number; name: string }[] = [];
   // wizard group properties
   wizardGroups: any[] = [];
   showWizardGroupMenu: boolean = false;
@@ -157,7 +151,6 @@ export class MasterEntityComponent implements OnInit {
         },
       ],
     },
-
     reportInfo: {
       header: 'sample_report_information',
       examples: [
@@ -192,7 +185,7 @@ export class MasterEntityComponent implements OnInit {
             start_index: 0,
             limit_range: 15,
             attached_policies: ['user_filer1'],
-            sort_columns: [['user_information.user_id', 'desc']],
+            sort_columns: [['user_information.id', 'desc']],
             search_all: [
               {
                 column_name: 'user_information.deleted_at',
@@ -207,9 +200,7 @@ export class MasterEntityComponent implements OnInit {
                 operator: 'IS',
               },
             ],
-            select_columns: [['user_information.user_id'], ['user_information.email', 'user_mail'], ['user_information.full_name', 'full_name']],
-            includes: [],
-            group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
+            select_columns: [['user_information.id'], ['user_information.email', 'user_mail'], ['user_information.full_name']],
             having_conditions: [
               {
                 column_name: 'user_information.deleted_at',
@@ -242,7 +233,7 @@ export class MasterEntityComponent implements OnInit {
             start_index: 0,
             limit_range: 15,
             attached_policies: ['user_filer1'],
-            sort_columns: [['user_information.user_id', 'desc']],
+            sort_columns: [['user_information.id', 'desc']],
             search_all: [
               {
                 column_name: 'user_information.deleted_at',
@@ -257,9 +248,7 @@ export class MasterEntityComponent implements OnInit {
                 operator: 'IS',
               },
             ],
-            select_columns: [['user_information.user_id'], ['user_information.email', 'user_mail'], ['user_information.full_name', 'full_name']],
-            includes: [],
-            group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
+            select_columns: [['user_information.id'], ['user_information.email', 'user_mail'], ['user_information.full_name']],
             having_conditions: [
               {
                 column_name: 'user_information.deleted_at',
@@ -301,7 +290,7 @@ export class MasterEntityComponent implements OnInit {
             start_index: 0,
             limit_range: 15,
             attached_policies: ['user_filer1'],
-            sort_columns: [['user_information.user_id', 'desc']],
+            sort_columns: [['user_information.id', 'desc']],
             search_all: [
               {
                 column_name: 'user_information.deleted_at',
@@ -316,9 +305,7 @@ export class MasterEntityComponent implements OnInit {
                 operator: 'IS',
               },
             ],
-            select_columns: [['user_information.user_id'], ['user_information.email', 'user_mail'], ['user_information.full_name', 'full_name']],
-            includes: [],
-            group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
+            select_columns: [['user_information.id'], ['user_information.email', 'user_mail'], ['user_information.full_name']],
             having_conditions: [
               {
                 column_name: 'user_information.deleted_at',
@@ -354,7 +341,7 @@ export class MasterEntityComponent implements OnInit {
           comments: [],
           data: [
             {
-              table: 'tenant_users',
+              table: 'user_details',
               where_clause: 'user_id = $1',
             },
           ],
@@ -371,9 +358,9 @@ export class MasterEntityComponent implements OnInit {
             data: {
               table1: [
                 {
-                  role: '$tenant_users.role',
-                  email: '$tenant_users.email',
-                  username: '$tenant_users.username',
+                  role: '$users.role',
+                  email: '$users.email',
+                  username: '$users.username',
                   status_id: '$users.status_id',
                   created_at: true,
                   created_by: true,
@@ -383,22 +370,22 @@ export class MasterEntityComponent implements OnInit {
               ],
               table2: [
                 {
-                  dob: '$tenant_users.dob',
-                  code: '$users.code',
-                  gender: '$tenant_users.gender',
-                  address: '$tenant_users.address',
-                  culture: '$tenant_users.culture',
+                  dob: '$user_details.dob',
+                  code: '$user_details.code',
+                  gender: '$user_details.gender',
+                  address: '$user_details.address',
+                  culture: '$user_details.culture',
                   user_id: '@table1.id',
-                  last_name: '$tenant_users.last_name',
+                  last_name: '$user_details.last_name',
                   created_at: true,
                   created_by: true,
-                  first_name: '$tenant_users.first_name',
+                  first_name: '$user_details.first_name',
                   updated_at: true,
                   updated_by: true,
-                  profile_pic: '$tenant_users.profile_pic',
-                  phone_number: '$tenant_users.phone_number',
-                  department_id: '$users.department_id',
-                  designation_id: '$users.designation_id',
+                  profile_pic: '$user_details.profile_pic',
+                  phone_number: '$user_details.phone_number',
+                  department_id: '$user_details.department_id',
+                  designation_id: '$user_details.designation_id',
                 },
               ],
               table3: [
@@ -418,7 +405,7 @@ export class MasterEntityComponent implements OnInit {
                 },
               ],
             },
-            table: ['users', 'tenant_users', 'user_roles', 'email_process_jobs'],
+            table: ['users', 'user_details', 'user_roles', 'email_process_jobs'],
             action: ['insert', 'insert', 'insert', 'insert'],
             table_mapping: ['table1', 'table2', 'table3', 'table4'],
           },
@@ -435,8 +422,8 @@ export class MasterEntityComponent implements OnInit {
             data: {
               table1: [
                 {
-                  email: '$tenant_users.email',
-                  username: '$tenant_users.username',
+                  email: '$users.email',
+                  username: '$users.username',
                   status_id: '$users.status_id',
                   updated_at: true,
                   updated_by: true,
@@ -444,19 +431,19 @@ export class MasterEntityComponent implements OnInit {
               ],
               table2: [
                 {
-                  dob: '$tenant_users.dob',
-                  code: '$users.code',
-                  gender: '$tenant_users.gender',
-                  address: '$tenant_users.address',
-                  culture: '$tenant_users.culture',
-                  last_name: '$tenant_users.last_name',
-                  first_name: '$tenant_users.first_name',
+                  dob: '$user_details.dob',
+                  code: '$user_details.code',
+                  gender: '$user_details.gender',
+                  address: '$user_details.address',
+                  culture: '$user_details.culture',
+                  last_name: '$user_details.last_name',
+                  first_name: '$user_details.first_name',
                   updated_at: true,
                   updated_by: true,
-                  profile_pic: '$tenant_users.profile_pic',
-                  phone_number: '$tenant_users.phone_number',
-                  department_id: '$users.department_id',
-                  designation_id: '$users.designation_id',
+                  profile_pic: '$user_details.profile_pic',
+                  phone_number: '$user_details.phone_number',
+                  department_id: '$user_details.department_id',
+                  designation_id: '$user_details.designation_id',
                 },
               ],
               table4: [
@@ -466,7 +453,7 @@ export class MasterEntityComponent implements OnInit {
                 },
               ],
             },
-            table: ['users', 'tenant_users', 'user_roles', 'user_roles'],
+            table: ['users', 'user_details', 'user_roles', 'user_roles'],
             action: ['update', 'update', 'hard_delete', 'insert'],
             conditions: {
               table1: [
@@ -508,7 +495,7 @@ export class MasterEntityComponent implements OnInit {
               user_roles: {
                 role_id: [],
               },
-              tenant_users: {
+              user_details: {
                 dob: null,
                 code: null,
                 gender: 'male',
@@ -553,7 +540,7 @@ export class MasterEntityComponent implements OnInit {
                 fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-3',
               },
               {
-                key: 'tenant_users',
+                key: 'user_details',
                 wrappers: ['form-field'],
                 fieldGroup: [
                   {
@@ -1251,7 +1238,7 @@ export class MasterEntityComponent implements OnInit {
               limit_range: 1,
               print_query: false,
               start_index: 0,
-              sort_columns: [['user_information.user_id', 'asc']],
+              sort_columns: [['user_information.id', 'asc']],
               primary_table: 'user_information',
               select_columns: [['email'], ['username'], ['role'], ['status_id']],
             },
@@ -1261,7 +1248,7 @@ export class MasterEntityComponent implements OnInit {
                 {
                   join_type: 'INNER',
                   table_name: 'user_information',
-                  join_condition: 'user_information.user_id = user_roles.user_id',
+                  join_condition: 'user_information.id = user_roles.user_id',
                 },
               ],
               company_id: 1,
@@ -1284,8 +1271,7 @@ export class MasterEntityComponent implements OnInit {
               primary_table: 'user_roles',
               select_columns: [['json_agg(user_roles.role_id::int)', 'role_id']],
             },
-            tenant_users: {
-              includes: [],
+            user_details: {
               company_id: 1,
               search_all: [
                 {
@@ -1302,22 +1288,22 @@ export class MasterEntityComponent implements OnInit {
               limit_range: 1,
               print_query: false,
               start_index: 0,
-              sort_columns: [['user_information.user_id', 'asc']],
+              sort_columns: [['user_information.id', 'asc']],
               primary_table: 'user_information',
               select_columns: [
-                ['user_information.code'],
-                ['user_information.first_name'],
-                ['user_information.last_name'],
-                ['user_information.designation_id'],
-                ['user_information.department_id'],
-                ['user_information.dob'],
-                ['user_information.phone_number'],
-                ['user_information.country_code'],
-                ['user_information.gender'],
-                ['user_information.user_time_zone'],
-                ['user_information.address'],
-                ['user_information.culture'],
-                ['user_information.profile_pic'],
+                ['code'],
+                ['first_name'],
+                ['last_name'],
+                ['designation_id'],
+                ['department_id'],
+                ['dob'],
+                ['phone_number'],
+                ['country_code'],
+                ['gender'],
+                ['user_time_zone'],
+                ['address'],
+                ['culture'],
+                ['profile_pic'],
               ],
             },
           },
@@ -1376,11 +1362,6 @@ export class MasterEntityComponent implements OnInit {
     formatOnType: true,
     autoClosingQuotes: 'always',
   };
-  masterEntities: any[] = [];
-  masterEntitiesForChildProcess: any[] = [];
-  entitiesForChildProcess: any[] = [];
-  entitiesForDashboardWizard: any[] = [];
-  staticPageEntities: any[] = [];
   entityNameSuggestions: string[] = [];
   readonly entityNameSuggestionLimit = 1;
   allEntityNameSlugs: Set<string> = new Set();
@@ -1415,53 +1396,23 @@ export class MasterEntityComponent implements OnInit {
     this.initWizardGroupForm();
     this.loadWizardGroups();
     this.loadExportTemplates();
+    this.loadEmailTemplates();
+    this.loadWhatsappTemplates();
     //this.loadWizardTypes();
 
     // To load all the lookups
     this.field_types = this.commonConfig.field_types;
-    this.entity_types = this.commonConfig.entity_types;
-    this.action_types = this.commonConfig.action_types;
-    this.wizard_type_list = this.commonConfig.wizard_type;
-    this.report_type_list = this.commonConfig.report_type;
-    this.fetchAllTables();
-
-    // To listen "entityType" on value change
-    this.form.get('entityType')?.valueChanges.subscribe((value) => {
-      this.updateFormValidation(value);
-      if (!this.editTitle) {
-        this.generateEntityNameSuggestions(this.form.get('name')?.value, value);
-        if (this.isGridLikeEntityType(value)) {
-          const defaultGridConfig = {
-            grid_show_title: 'yes',
-            grid_enable_sticky_header: 'yes',
-            grid_show_serial_number: 'yes',
-            grid_show_global_search: 'yes',
-            grid_show_advanced_search: 'yes',
-            grid_show_column_filter: 'yes',
-            grid_enable_sticky_action_column: 'yes',
-          };
-          this.form.get('entity_configurations')?.setValue(JSON.stringify(defaultGridConfig, null, 2));
-        } else {
-          this.form.get('entity_configurations')?.setValue('');
-        }
-      }
-    });
+    this.updateFormValidation();
 
     this.form.get('name')?.valueChanges.subscribe((name) => {
       if (!this.editTitle || this.entityNameEditable) {
-        this.generateEntityNameSuggestions(name, this.form.get('entityType')?.value);
+        this.generateEntityNameSuggestions(name);
       }
       if (!(name || '').trim()) {
         this.form.get('entityName')?.setValue('', { emitEvent: false });
         this.entityNameSuggestions = [];
         this.entityNameError = '';
       }
-    });
-
-    // Clear dashboard_entity_name whenever wizard type changes to avoid stale values
-    // (e.g. switching between ENTITY and GRID uses the same field for different data)
-    this.form.get('wizardType')?.valueChanges.subscribe(() => {
-      this.form.get('dashboard_entity_name')?.setValue('');
     });
 
     setTimeout(() => {
@@ -1477,16 +1428,6 @@ export class MasterEntityComponent implements OnInit {
       this.fetchAllMasterEntities();
       this.cdr.detectChanges();
     });
-
-    // If "id" is not available we need consider it as "Add", otherwise "Edit"
-    if (!this.id) {
-      this.editTitle = false;
-    } else {
-      this.editTitle = true;
-      this.loadData(this.id);
-    }
-    this.titleChange();
-    this.fetchAllMasterEntities();
   }
 
   async initStore() {
@@ -1506,14 +1447,6 @@ export class MasterEntityComponent implements OnInit {
     this.titleService.setTitle(translateTitle);
   }
 
-  isGridLikeEntityType(entityType: string | null | undefined): boolean {
-    return this.gridLikeEntityTypes.includes(entityType ?? '');
-  }
-
-  isGridStructuredEntityType(entityType: string | null | undefined): boolean {
-    return this.gridStructuredEntityTypes.includes(entityType ?? '');
-  }
-
   decimalValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
     if (value !== null && value !== undefined && !/^\d+(\.\d{1,2})?$/.test(value)) {
@@ -1526,8 +1459,6 @@ export class MasterEntityComponent implements OnInit {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       entityName: [''],
-      entityType: ['', Validators.required],
-      permissions: ['', [Validators.required, viewMandatoryValidator()]],
       primaryTable: [''],
       statusId: [1],
       isAdminModule: [false],
@@ -1552,6 +1483,10 @@ export class MasterEntityComponent implements OnInit {
       editQueryInformation: [''],
       presetQueryInformation: [''],
       entity_configurations: [''],
+      approve_mail_id: [null],
+      reject_mail_id: [null],
+      approve_whatsapp_id: [null],
+      reject_whatsapp_id: [null],
       staticPageContent: [''],
       items: this.fb.array([]),
       exportTemplateFileName: [''],
@@ -1559,18 +1494,20 @@ export class MasterEntityComponent implements OnInit {
 
     // Initialize edit item form
     this.editItemForm = this.fb.group({
+      type: [this.lineItemTypeLineItem],
       fieldName: [''],
       displayName: [''],
       orderNo: [''],
+      defaultQuery: [false],
       isGridColumn: [''],
       isSearchable: [''],
       clauseType: [''],
       isSortable: [''],
       fieldType: [''],
-      linkType: [''],
-      linkAction: [''],
       fieldHtmlContent: [''],
       enumValues: [''],
+      approveQueryInformation: ['[]'],
+      rejectQueryInformation: ['[]'],
       lineItemConfigurations: [''],
     });
   }
@@ -1624,6 +1561,64 @@ export class MasterEntityComponent implements OnInit {
         }
       },
       (error) => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  loadEmailTemplates() {
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'notification_templates',
+      start_index: 0,
+      limit_range: 1000,
+      sort_columns: [['notification_templates.id', 'desc']],
+      search_all: [
+        { value: 'email', operator: '=', column_name: 'notification_templates.notification_type' },
+        { value: 3, operator: '!=', column_name: 'notification_templates.status_id' },
+      ],
+      select_columns: [['notification_templates.id'], ['notification_templates.name']],
+    };
+
+    this.gridApiService.getAllList(params).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          this.emailTemplateList = response.data.records || [];
+        }
+      },
+      () => {
+        const key = 'error';
+        const errorMessage = this.translate.instant(key);
+        this.toastr.error(errorMessage, 'Error');
+      }
+    );
+  }
+
+  loadWhatsappTemplates() {
+    const params = {
+      company_id: 1,
+      print_query: true,
+      primary_table: 'notification_templates',
+      start_index: 0,
+      limit_range: 1000,
+      sort_columns: [['notification_templates.id', 'desc']],
+      search_all: [
+        { value: 'whatsapp', operator: '=', column_name: 'notification_templates.notification_type' },
+        { value: 3, operator: '!=', column_name: 'notification_templates.status_id' },
+      ],
+      select_columns: [['notification_templates.id'], ['notification_templates.name']],
+    };
+
+    this.gridApiService.getAllList(params).subscribe(
+      (response) => {
+        if (response.status && response.code === 200) {
+          this.whatsappTemplateList = response.data.records || [];
+        }
+      },
+      () => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
@@ -1705,22 +1700,12 @@ export class MasterEntityComponent implements OnInit {
     this.wizardGroupForm.reset();
   }
 
-  updateFormValidation(entityType: any) {
+  updateFormValidation() {
     this.form.clearValidators();
 
     const primaryTableControl = this.form.get('primaryTable');
-    const itemsControl = this.form.get('items');
-
-    if (this.isGridLikeEntityType(entityType)) {
-      primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
-    } else {
-      primaryTableControl?.clearValidators();
-    }
+    primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
     primaryTableControl?.updateValueAndValidity();
-
-    if (entityType == commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name) {
-      itemsControl?.setValidators([Validators.required, Validators.minLength(1)]);
-    }
     this.form.updateValueAndValidity();
   }
 
@@ -1756,28 +1741,32 @@ export class MasterEntityComponent implements OnInit {
   addItem() {
     const items = this.form.get('items') as FormArray;
     const group = this.fb.group({
+      type: [this.lineItemTypeLineItem, Validators.required],
       fieldName: ['', [Validators.required, Validators.maxLength(1000)]],
       displayName: ['', [Validators.required, Validators.maxLength(100)]],
       orderNo: ['', [Validators.required, Validators.min(0)]],
+      defaultQuery: [false],
       isGridColumn: ['true', Validators.required],
       isSearchable: ['true', Validators.required],
       clauseType: ['where', Validators.required],
       isSortable: ['true', Validators.required],
       fieldType: [this.commonConfig.field_types[0].value, Validators.required],
-      linkType: ['none', Validators.required],
-      linkAction: [''],
       fieldHtmlContent: [''],
       enumValues: [''],
+      approveQueryInformation: ['[]'],
+      rejectQueryInformation: ['[]'],
       lineItemConfigurations: [''],
     });
-    this.setupLinkModeAutoUpdate(group);
+    this.setupLineItemTypeAutoUpdate(group);
     items.push(group);
+    this.applyDefaultQueryRules();
   }
 
   removeItem(index: number) {
     const items = this.form.get('items') as FormArray;
     if (items.length > 0) {
       items.removeAt(index);
+      this.applyDefaultQueryRules();
     } else {
       this.toastr.warning('At least one item is required.');
     }
@@ -1790,22 +1779,24 @@ export class MasterEntityComponent implements OnInit {
 
     // Create a separate form for editing
     this.editItemForm = this.fb.group({
+      type: [currentItem.get('type')?.value || this.lineItemTypeLineItem, Validators.required],
       fieldName: [currentItem.get('fieldName')?.value, Validators.required],
       displayName: [currentItem.get('displayName')?.value, Validators.required],
       orderNo: [currentItem.get('orderNo')?.value, [Validators.required, Validators.min(0)]],
+      defaultQuery: [!!currentItem.get('defaultQuery')?.value],
       isGridColumn: [currentItem.get('isGridColumn')?.value, Validators.required],
       isSearchable: [currentItem.get('isSearchable')?.value, Validators.required],
       clauseType: [currentItem.get('clauseType')?.value, Validators.required],
       isSortable: [currentItem.get('isSortable')?.value, Validators.required],
       fieldType: [currentItem.get('fieldType')?.value, Validators.required],
-      linkType: [currentItem.get('linkType')?.value, Validators.required],
-      linkAction: [currentItem.get('linkAction')?.value],
       fieldHtmlContent: [currentItem.get('fieldHtmlContent')?.value],
       enumValues: [currentItem.get('enumValues')?.value],
+      approveQueryInformation: [currentItem.get('approveQueryInformation')?.value || '[]'],
+      rejectQueryInformation: [currentItem.get('rejectQueryInformation')?.value || '[]'],
       lineItemConfigurations: [currentItem.get('lineItemConfigurations')?.value],
     });
 
-    this.setupLinkModeAutoUpdate(this.editItemForm);
+    this.setupLineItemTypeAutoUpdate(this.editItemForm, false);
     this.isEditModalOpen = true;
   }
 
@@ -1825,6 +1816,8 @@ export class MasterEntityComponent implements OnInit {
       const items = this.form.get('items') as FormArray;
       const itemToUpdate = items.at(this.editItemIndex);
       itemToUpdate.patchValue(this.editItemForm.value);
+      this.applyTypeSpecificControls(itemToUpdate as FormGroup, true);
+      this.applyDefaultQueryRules();
       this.toastr.success('Item updated successfully');
       this.closeEditModal();
     }
@@ -1854,31 +1847,25 @@ export class MasterEntityComponent implements OnInit {
     const params = {
       company_id: 1,
       print_query: true,
-      primary_table: 'master_entities',
+      primary_table: 'master_approval_workflows',
       start_index: 0,
       limit_range: 1,
-      sort_columns: [['master_entities.id', 'desc']],
+      sort_columns: [['master_approval_workflows.id', 'desc']],
       select_columns: [
-        ['master_entities.*'],
-        ["COALESCE(Json_agg(DISTINCT jsonb_build_object('name', permissions.name)))", 'permissions'],
+        ['master_approval_workflows.*'],
         [
-          "CASE WHEN COUNT(master_entity_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_entity_line_items.id,'field_name', master_entity_line_items.field_name,'display_name', master_entity_line_items.display_name,'field_html_content', master_entity_line_items.field_html_content,'order_no', master_entity_line_items.order_no,'link_type', master_entity_line_items.link_type,'link_action', master_entity_line_items.link_action,'link_mode', master_entity_line_items.link_mode,'is_grid_column', master_entity_line_items.is_grid_column,'is_searchable', master_entity_line_items.is_searchable,'is_sortable', master_entity_line_items.is_sortable,'field_type_id', master_entity_line_items.field_type_id, 'clause_type', master_entity_line_items.clause_type, 'enum_values', master_entity_line_items.enum_values, 'line_item_configurations', master_entity_line_items.line_item_configurations))) END",
+          "CASE WHEN COUNT(master_approval_workflow_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_approval_workflow_line_items.id,'type', master_approval_workflow_line_items.type,'default_query', master_approval_workflow_line_items.default_query,'field_name', master_approval_workflow_line_items.field_name,'display_name', master_approval_workflow_line_items.display_name,'order_no', master_approval_workflow_line_items.order_no,'is_searchable', master_approval_workflow_line_items.is_searchable,'field_type_id', master_approval_workflow_line_items.field_type_id,'approve_query_information', master_approval_workflow_line_items.approve_query_information, 'reject_query_information', master_approval_workflow_line_items.reject_query_information))) END",
           'items',
         ],
       ],
       includes: [
         {
-          table_name: 'permissions',
-          join_type: 'INNER',
-          join_condition: `master_entities.id = permissions.entity_id AND master_entities.uuid = '${id}'`,
-        },
-        {
-          table_name: 'master_entity_line_items',
+          table_name: 'master_approval_workflow_line_items',
           join_type: 'LEFT',
-          join_condition: `master_entities.id = master_entity_line_items.master_grid_id AND master_entities.uuid = '${id}'`,
+          join_condition: `master_approval_workflows.id = master_approval_workflow_line_items.master_approval_workflow_id AND master_approval_workflows.uuid = '${id}'`,
         },
       ],
-      group_by: ['master_entities.id'],
+      group_by: ['master_approval_workflows.id'],
     };
 
     this.gridApiService.getAllList(params).subscribe(
@@ -1886,72 +1873,45 @@ export class MasterEntityComponent implements OnInit {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
           this.originalEntityName = entity.entity_name || '';
-          this.existing_actions = this.populateSelectedActionTypes(entity.permissions);
 
-          const entityTypePrefix = this.getEntityTypePrefix(entity.entity_type);
+          const prefix = this.approvalWorkflowEntityNamePrefix;
           const entityNameSuffix =
-            entity.entity_name && entityTypePrefix && entity.entity_name.startsWith(entityTypePrefix + '_')
-              ? entity.entity_name.slice(entityTypePrefix.length + 1)
-              : entity.entity_name || '';
+            entity.entity_name && entity.entity_name.startsWith(prefix + '_') ? entity.entity_name.slice(prefix.length + 1) : entity.entity_name || '';
 
           this.form.patchValue({
             name: entity.name,
             entityName: entityNameSuffix,
-            permissions: this.existing_actions,
-            associateTable: entity.associated_tables ? this.prettyJSON(entity.associated_tables) : '',
             primaryTable: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
             statusId: entity.status_id,
-            isAdminModule: entity.is_admin_module,
-            header_entity_id: entity.header_entity_id,
-            footer_entity_id: entity.footer_entity_id,
-            draftMode: entity.draft_mode || false,
-            entityType: entity.entity_type,
-            entity_configurations: entity.entity_configurations ? this.prettyJSON(entity.entity_configurations) : '',
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
-            reportInformation: entity.report_information ? this.prettyJSON(entity.report_information) : '',
-            formInformation: entity.form_information ? this.prettyJSON(entity.form_information) : '',
-            addQueryInformation: entity.add_query_information ? this.prettyJSON(entity.add_query_information) : '',
-            editQueryInformation: entity.edit_query_information ? this.prettyJSON(entity.edit_query_information) : '',
-            presetQueryInformation: entity.preset_query_information ? this.prettyJSON(entity.preset_query_information) : '',
-            staticPageContent: entity.static_page_content,
-            wizardType: entity.dashboard_wizard_type,
-            reportType: entity?.report_type || this.commonConfig.REPORT_TYPES.LCP,
-            wizardGroup: entity.dashboard_wizard_group_id,
-            export_template_id: entity.export_template_id,
-            dashboard_wizard_rows: entity.dashboard_wizard_rows,
-            dashboard_wizard_columns: entity.dashboard_wizard_columns,
-            dashboard_wizard_order_no: entity.dashboard_wizard_order_no,
-            reload_timeout: entity.reload_timeout,
-            dashboard_entity_name: entity.dashboard_entity_name,
-            dashboard_wizard_options: entity.dashboard_wizard_options ? this.prettyJSON(entity.dashboard_wizard_options) : '',
-            exportTemplateFileName: entity.export_template_file_name || '',
+            approve_mail_id: entity.approve_mail_id,
+            reject_mail_id: entity.reject_mail_id,
+            approve_whatsapp_id: entity.approve_whatsapp_id,
+            reject_whatsapp_id: entity.reject_whatsapp_id,
           });
 
           const items = this.form.get('items') as FormArray;
-          items.clear();
+          //items.clear();
           if (entity.items && entity.items.length > 0) {
             entity.items.forEach((item: any) => {
-              const linkType = item.link_type || 'none';
-              const linkAction = item.link_action || '';
-              // linkMode will be set by logic, not user
+              const itemType = item.type || this.lineItemTypeLineItem;
               const group = this.fb.group({
+                type: [itemType, Validators.required],
                 fieldName: [item.field_name, Validators.required],
                 displayName: [item.display_name, Validators.required],
                 orderNo: [item.order_no, [Validators.required, Validators.min(0)]],
-                isGridColumn: [item.is_grid_column, Validators.required],
+                defaultQuery: [!!item.default_query],
                 isSearchable: [item.is_searchable, Validators.required],
-                clauseType: [item?.clause_type || 'where', Validators.required],
-                isSortable: [item.is_sortable, Validators.required],
                 fieldType: [item.field_type_id, Validators.required],
-                linkType: [linkType, Validators.required],
-                linkAction: [linkAction],
-                fieldHtmlContent: [item.field_html_content],
-                enumValues: [item.enum_values ? this.prettyJSON(item.enum_values) : null],
-                lineItemConfigurations: [item.line_item_configurations ? this.prettyJSON(item.line_item_configurations) : null],
+                enumValues: [item.enum_values ? this.prettyJSON(item.enum_values) : ''],
+                approveQueryInformation: [item.approve_query_information ? this.prettyJSON(item.approve_query_information) : null],
+                rejectQueryInformation: [item.reject_query_information ? this.prettyJSON(item.reject_query_information) : null],
               });
-              this.setupLinkModeAutoUpdate(group, linkAction);
+              this.setupLineItemTypeAutoUpdate(group);
+              this.applyTypeSpecificControls(group, true);
               items.push(group);
             });
+            this.applyDefaultQueryRules();
           }
         }
       },
@@ -1963,16 +1923,8 @@ export class MasterEntityComponent implements OnInit {
     );
   }
 
-  populateSelectedActionTypes(permissions: any) {
-    const permissionList = permissions.map((item: any) => {
-      const actionType = this.action_types.find((elem: any) => elem.value == item.name);
-      return actionType ? actionType.value : '';
-    });
-    return permissionList;
-  }
-
   getAddParams(formData: any) {
-    const prefix = this.getEntityTypePrefix(formData.entityType);
+    const prefix = this.approvalWorkflowEntityNamePrefix;
     const suffix = (formData.entityName || '').trim();
     const fullEntityName = suffix
       ? prefix
@@ -1985,224 +1937,111 @@ export class MasterEntityComponent implements OnInit {
       {
         name: formData.name,
         entity_name: entitySlug,
-        entity_type: formData.entityType,
-        export_template_file_name: formData.exportTemplateFileName || null,
         ...(formData.primaryTable && { primary_table: formData.primaryTable }),
         ...(formData.statusId && { status_id: formData.statusId }),
-        ...(formData.isAdminModule && { is_admin_module: formData.isAdminModule ? formData.isAdminModule : false }),
-        ...(formData.header_entity_id && { header_entity_id: formData.header_entity_id }),
-        ...(formData.footer_entity_id && { footer_entity_id: formData.footer_entity_id }),
-        ...(formData.draftMode && { draft_mode: formData.draftMode ? formData.draftMode : false }),
-        ...(formData.associateTable && { associated_tables: this.prepareJSON(formData.associateTable, true, 'Associate Tables') }),
         ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }),
-        ...(formData.reportInformation && { report_information: this.prepareJSON(formData.reportInformation, true, 'Report Information') }),
-        ...(formData.formInformation && { form_information: this.prepareJSON(formData.formInformation, true, 'Form Information') }),
-        ...(formData.addQueryInformation && { add_query_information: this.prepareJSON(formData.addQueryInformation, true, 'Add Query Information') }),
-        ...(formData.editQueryInformation && { edit_query_information: this.prepareJSON(formData.editQueryInformation, true, 'Edit Query Information') }),
-        ...(formData.presetQueryInformation && {
-          preset_query_information: this.prepareJSON(formData.presetQueryInformation, true, 'Preset Query Information'),
-        }),
-        ...(formData.entity_configurations && { entity_configurations: this.prepareJSON(formData.entity_configurations, true, 'Entity Configurations') }),
-        ...(formData.staticPageContent && { static_page_content: formData.staticPageContent }),
-        ...(formData.wizardType && { dashboard_wizard_type: formData.wizardType }),
-        ...(formData.reportType && { report_type: formData.reportType }),
-        ...(formData.wizardGroup && { dashboard_wizard_group_id: formData.wizardGroup }),
-
-        ...(formData.export_template_id && { export_template_id: formData.export_template_id }),
-        ...(formData.dashboard_wizard_rows && { dashboard_wizard_rows: formData.dashboard_wizard_rows }),
-        ...(formData.dashboard_wizard_columns && { dashboard_wizard_columns: formData.dashboard_wizard_columns }),
-        ...(formData.dashboard_wizard_order_no && { dashboard_wizard_order_no: formData.dashboard_wizard_order_no }),
-        ...(formData.reload_timeout && { reload_timeout: formData.reload_timeout }),
-        ...(formData.dashboard_entity_name && { dashboard_entity_name: formData.dashboard_entity_name }),
-        ...(formData.dashboard_wizard_options && {
-          dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true, 'Dashboard Wizard Options'),
-        }),
+        ...(formData.approve_mail_id && { approve_mail_id: formData.approve_mail_id }),
+        ...(formData.reject_mail_id && { reject_mail_id: formData.reject_mail_id }),
+        ...(formData.approve_whatsapp_id && { approve_whatsapp_id: formData.approve_whatsapp_id }),
+        ...(formData.reject_whatsapp_id && { reject_whatsapp_id: formData.reject_whatsapp_id }),
       },
     ];
 
-    const permissions = formData.permissions.map((action_type_name: any, pindex: number) => ({
-      entity_id: '@table1.id',
-      name: action_type_name,
-      slug: `${action_type_name}_${entitySlug}`,
-      order_no: pindex + 1,
-      status_id: commonConfig.STATUS.ACTIVE,
-    }));
-
-    // Use FormArray controls to get linkMode dynamically
     const itemsArray = this.form.get('items') as FormArray;
     if (itemsArray && itemsArray.length > 0) {
       const items = itemsArray.controls.map((control: any) => {
-        const linkActionValue = control.value.linkAction;
-        let link_mode = 'none';
-        if (control.value.linkType === 'component' || control.value.linkType === 'child_component') {
-          const entity = this.masterEntities.find((e: any) => e.value === linkActionValue);
-          if (entity) {
-            if (entity.entity_type === 'static_page_builder_module') {
-              link_mode = 'popup_details';
-            } else if (entity.entity_type === 'form_builder_module') {
-              link_mode = 'popup_edit';
-            } else if (this.isGridLikeEntityType(entity.entity_type)) {
-              link_mode = control.value.linkType === 'child_component' ? 'popup_grid' : 'child_grid';
-            }
-          }
-        }
+        const itemType = control.value.type || this.lineItemTypeLineItem;
+        const isQueryLineItem = this.isQueryType(itemType);
+        const isApproveQuery = this.isApproveQueryType(itemType);
+        const isRejectQuery = this.isRejectQueryType(itemType);
+
         return {
-          master_grid_id: '@table1.id',
+          master_approval_workflow_id: '@table1.id',
+          type: itemType,
+          default_query: isQueryLineItem ? !!control.value.defaultQuery : false,
           field_name: control.value.fieldName,
           display_name: control.value.displayName,
           order_no: control.value.orderNo,
-          is_grid_column: control.value.isGridColumn,
-          is_searchable: control.value.isSearchable,
-          clause_type: control.value.clauseType || 'where',
-          is_sortable: control.value.isSortable,
-          field_type_id: control.value.fieldType,
-          link_type: control.value.linkType,
-          link_action: control.value.linkAction,
-          link_mode,
-          field_html_content: control.value.fieldHtmlContent,
-          enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
-          line_item_configurations: this.prepareOptionalJSON(
-            control.value.lineItemConfigurations,
-            false,
-            `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`
-          ),
+          is_searchable: isQueryLineItem ? false : control.value.isSearchable,
+          field_type_id: isQueryLineItem ? this.commonConfig.field_types[0]?.value : control.value.fieldType,
+          approve_query_information: isApproveQuery
+            ? this.prepareTextArray(
+                control.value.approveQueryInformation,
+                `Approve Query Information for ${control.value.displayName || control.value.fieldName}`
+              )
+            : null,
+          reject_query_information: isRejectQuery
+            ? this.prepareTextArray(
+                control.value.rejectQueryInformation,
+                `Reject Query Information for ${control.value.displayName || control.value.fieldName}`
+              )
+            : null,
         };
       });
-      this.insert_json_schema.data['table3'] = items;
+      this.insert_json_schema.data['table2'] = items;
     }
 
     this.insert_json_schema.data['table1'] = master;
-    this.insert_json_schema.data['table2'] = permissions;
 
     return this.insert_json_schema;
   }
 
   getEditParams(formData: any, id: any) {
-    const prefix = this.getEntityTypePrefix(formData.entityType);
-    const suffix = (formData.entityName ?? '').trim();
-    //const newEntityName = suffix ? (prefix ? `${prefix}_${suffix}` : suffix) : this.originalEntityName;
     const newEntityName = this.originalEntityName;
 
     const master = [
       {
         name: formData.name,
         entity_name: newEntityName || null,
-        entity_type: formData.entityType,
-        export_template_file_name: formData.exportTemplateFileName || null,
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
-        ...(formData.isAdminModule ? { is_admin_module: formData.isAdminModule } : { is_admin_module: false }),
-        ...(formData.header_entity_id ? { header_entity_id: formData.header_entity_id } : { header_entity_id: null }),
-        ...(formData.footer_entity_id ? { footer_entity_id: formData.footer_entity_id } : { footer_entity_id: null }),
-        ...(formData.draftMode ? { draft_mode: formData.draftMode } : { draft_mode: false }),
-        ...(formData.associateTable ? { associated_tables: this.prepareJSON(formData.associateTable, true, 'Associate Tables') } : { associated_tables: null }),
         ...(formData.queryInformation
           ? { query_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }
           : { query_information: null }),
-        ...(formData.reportInformation
-          ? { report_information: this.prepareJSON(formData.reportInformation, true, 'Report Information') }
-          : { report_information: null }),
-        ...(formData.formInformation ? { form_information: this.prepareJSON(formData.formInformation, true, 'Form Information') } : { form_information: null }),
-        ...(formData.addQueryInformation
-          ? { add_query_information: this.prepareJSON(formData.addQueryInformation, true, 'Add Query Information') }
-          : { add_query_information: null }),
-        ...(formData.editQueryInformation
-          ? { edit_query_information: this.prepareJSON(formData.editQueryInformation, true, 'Edit Query Information') }
-          : { edit_query_information: null }),
-        ...(formData.presetQueryInformation
-          ? { preset_query_information: this.prepareJSON(formData.presetQueryInformation, true, 'Preset Query Information') }
-          : { preset_query_information: null }),
-        ...(formData.entity_configurations
-          ? { entity_configurations: this.prepareJSON(formData.entity_configurations, true, 'Entity Configurations') }
-          : { entity_configurations: null }),
-        ...(formData.staticPageContent ? { static_page_content: formData.staticPageContent } : { static_page_content: null }),
-        ...(formData.wizardType ? { dashboard_wizard_type: formData.wizardType } : { dashboard_wizard_type: null }),
-        ...(formData?.reportType ? { report_type: formData.reportType } : { report_type: this.commonConfig.REPORT_TYPES.LCP }),
-        ...(formData.wizardGroup ? { dashboard_wizard_group_id: formData.wizardGroup } : { dashboard_wizard_group_id: null }),
-
-        ...(formData.export_template_id ? { export_template_id: formData.export_template_id } : { export_template_id: null }),
-        ...(formData.dashboard_wizard_rows ? { dashboard_wizard_rows: formData.dashboard_wizard_rows } : { dashboard_wizard_rows: null }),
-        ...(formData.dashboard_wizard_columns ? { dashboard_wizard_columns: formData.dashboard_wizard_columns } : { dashboard_wizard_columns: null }),
-        ...(formData.dashboard_wizard_order_no ? { dashboard_wizard_order_no: formData.dashboard_wizard_order_no } : { dashboard_wizard_order_no: null }),
-        ...(formData.reload_timeout ? { reload_timeout: formData.reload_timeout } : { reload_timeout: null }),
-        ...(formData.dashboard_entity_name ? { dashboard_entity_name: formData.dashboard_entity_name } : { dashboard_entity_name: null }),
-        ...(formData.dashboard_wizard_options
-          ? { dashboard_wizard_options: this.prepareJSON(formData.dashboard_wizard_options, true, 'Dashboard Wizard Options') }
-          : { dashboard_wizard_options: null }),
+        ...(formData.approve_mail_id ? { approve_mail_id: formData.approve_mail_id } : { approve_mail_id: null }),
+        ...(formData.reject_mail_id ? { reject_mail_id: formData.reject_mail_id } : { reject_mail_id: null }),
+        ...(formData.approve_whatsapp_id ? { approve_whatsapp_id: formData.approve_whatsapp_id } : { approve_whatsapp_id: null }),
+        ...(formData.reject_whatsapp_id ? { reject_whatsapp_id: formData.reject_whatsapp_id } : { reject_whatsapp_id: null }),
       },
     ];
 
     this.update_json_schema.data['table1'] = master;
     this.update_json_schema.conditions['table1'] = [{ uuid: id }];
 
-    this.update_json_schema.conditions['table2'] = [{ master_grid_id: '@table1.id' }];
-
-    // Use FormArray controls to get linkMode dynamically
+    this.update_json_schema.conditions['table2'] = [{ master_approval_workflow_id: '@table1.id' }];
     const itemsArray = this.form.get('items') as FormArray;
     if (itemsArray && itemsArray.length > 0) {
       const items = itemsArray.controls.map((control: any) => {
-        const linkActionValue = control.value.linkAction;
-        let link_mode = 'none';
-        if (control.value.linkType === 'component' || control.value.linkType === 'child_component') {
-          const entity = this.masterEntities.find((e: any) => e.value === linkActionValue);
-          if (entity) {
-            if (entity.entity_type === 'static_page_builder_module') {
-              link_mode = 'popup_details';
-            } else if (entity.entity_type === 'form_builder_module') {
-              link_mode = 'popup_edit';
-            } else if (this.isGridLikeEntityType(entity.entity_type)) {
-              link_mode = control.value.linkType === 'child_component' ? 'popup_grid' : 'child_grid';
-            }
-          }
-        }
+        const itemType = control.value.type || this.lineItemTypeLineItem;
+        const isQueryLineItem = this.isQueryType(itemType);
+        const isApproveQuery = this.isApproveQueryType(itemType);
+        const isRejectQuery = this.isRejectQueryType(itemType);
+
         return {
-          master_grid_id: '@table1.id',
+          master_approval_workflow_id: '@table1.id',
+          type: itemType,
+          default_query: isQueryLineItem ? !!control.value.defaultQuery : false,
           field_name: control.value.fieldName,
           display_name: control.value.displayName,
           order_no: control.value.orderNo,
-          is_grid_column: control.value.isGridColumn,
-          is_searchable: control.value.isSearchable,
-          clause_type: control.value.clauseType || 'where',
-          is_sortable: control.value.isSortable,
-          field_type_id: control.value.fieldType,
-          link_type: control.value.linkType,
-          link_action: control.value.linkAction,
-          field_html_content: control.value.fieldHtmlContent,
-          enum_values: this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
-          line_item_configurations: this.prepareOptionalJSON(
-            control.value.lineItemConfigurations,
-            false,
-            `Line Item Configurations for ${control.value.displayName || control.value.fieldName}`
-          ),
-          link_mode,
+          is_searchable: isQueryLineItem ? false : control.value.isSearchable,
+          field_type_id: isQueryLineItem ? this.commonConfig.field_types[0]?.value : control.value.fieldType,
+          approve_query_information: isApproveQuery
+            ? this.prepareTextArray(
+                control.value.approveQueryInformation,
+                `Approve Query Information for ${control.value.displayName || control.value.fieldName}`
+              )
+            : null,
+          reject_query_information: isRejectQuery
+            ? this.prepareTextArray(
+                control.value.rejectQueryInformation,
+                `Reject Query Information for ${control.value.displayName || control.value.fieldName}`
+              )
+            : null,
         };
       });
       this.update_json_schema.data['table3'] = items;
     }
-
-    // Diff-based permission sync
-    const existingSet = new Set<string>(this.existing_actions || []);
-    const selectedPermissions: string[] = formData.permissions || [];
-    const selectedSet = new Set<string>(selectedPermissions);
-
-    const keptPermissions = selectedPermissions.filter((p) => existingSet.has(p));
-    const addedPermissions = selectedPermissions.filter((p) => !existingSet.has(p));
-    const removedPermissions = (this.existing_actions || []).filter((p: string) => !selectedSet.has(p));
-
-    // Update slug for kept permissions (handles entity name renames)
-    //this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
-    this.update_json_schema.data['table4'] = keptPermissions.map((a: string) => ({ slug: `${a}_${newEntityName}` }));
-    this.update_json_schema.conditions['table4'] = keptPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
-
-    // Insert newly added permissions
-    this.update_json_schema.data['table5'] = addedPermissions.map((a: string) => ({
-      entity_id: '@table1.id',
-      name: a,
-      slug: `${a}_${newEntityName}`,
-    }));
-
-    // Hard_delete permissions that were removed
-    this.update_json_schema.conditions['table6'] = removedPermissions.map((a: string) => ({ entity_id: '@table1.id', name: a }));
 
     return this.update_json_schema;
   }
@@ -2230,9 +2069,6 @@ export class MasterEntityComponent implements OnInit {
     return obj;
   }
 
-  // prepareJSON(data: any): string {
-  //   return JSON.stringify(JSON.parse(data));
-  // }
   prepareJSON(data: any, replace_param: boolean = false, fieldName: string = 'JSON field'): string {
     try {
       // Parse the input data into a JavaScript object
@@ -2264,6 +2100,50 @@ export class MasterEntityComponent implements OnInit {
     return this.prepareJSON(source, replace_param, fieldName);
   }
 
+  prepareTextArray(data: any, fieldName: string = 'text array'): string[] {
+    if (data === null || data === undefined) {
+      return [];
+    }
+
+    if (Array.isArray(data)) {
+      return data.map((item) => (item === null || item === undefined ? '' : String(item).trim())).filter((item) => item !== '');
+    }
+
+    if (typeof data === 'string') {
+      const trimmed = data.trim();
+      if (!trimmed) {
+        return [];
+      }
+
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (!Array.isArray(parsed)) {
+          throw new Error(`Invalid JSON type in "${fieldName}". Expected a JSON array.`);
+        }
+        return parsed.map((item) => (item === null || item === undefined ? '' : String(item).trim())).filter((item) => item !== '');
+      } catch (error) {
+        if (error instanceof Error && error.message.startsWith('Invalid JSON type')) {
+          throw error;
+        }
+        throw new Error(`Invalid JSON syntax in "${fieldName}". Expected a JSON array, for example ["update ... where id = $unique_id"].`);
+      }
+    }
+
+    throw new Error(`Invalid value in "${fieldName}". Expected a JSON array.`);
+  }
+
+  private getQueryInfoEditorValue(value: any): string {
+    if (value === null || value === undefined) {
+      return '[]';
+    }
+    if (Array.isArray(value)) {
+      return JSON.stringify(value);
+    }
+
+    const stringValue = String(value).trim();
+    return stringValue ? stringValue : '[]';
+  }
+
   prettyJSON(data: any) {
     return JSON.stringify(JSON.parse(JSON.stringify(data)), null, 2);
   }
@@ -2287,7 +2167,6 @@ export class MasterEntityComponent implements OnInit {
           let key;
           if (this.id) {
             key = 'record_updated_successfully';
-            this.existing_actions = formData.permissions || [];
           } else {
             key = 'record_inserted_successfully';
           }
@@ -2298,6 +2177,8 @@ export class MasterEntityComponent implements OnInit {
           this.router.navigate([this.redirect_url]);
         } else {
           const key = response.message;
+          console.log('Error key:', key);
+          console.log('Error response:', response);
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }
@@ -2317,7 +2198,7 @@ export class MasterEntityComponent implements OnInit {
 
   isFormInvalid() {
     if (this.form.invalid) return true;
-    if (this.isGridLikeEntityType(this.form.value.entityType) && this.itemsControls.length === 0) return true;
+    if (this.itemsControls.length === 0) return true;
     if (this.isEntityNameActive && !(this.form.get('entityName')?.value || '').trim()) return true;
     return false;
   }
@@ -2384,6 +2265,195 @@ export class MasterEntityComponent implements OnInit {
       }
     }
     return '';
+  }
+
+  isApproveQueryType(type: string | null | undefined): boolean {
+    return (type || '').toLowerCase() === this.lineItemTypeApproveQuery;
+  }
+
+  isRejectQueryType(type: string | null | undefined): boolean {
+    return (type || '').toLowerCase() === this.lineItemTypeRejectQuery;
+  }
+
+  isQueryType(type: string | null | undefined): boolean {
+    return this.isApproveQueryType(type) || this.isRejectQueryType(type);
+  }
+
+  isLineItemQuery(index: number): boolean {
+    const items = this.form.get('items') as FormArray;
+    const typeValue = items?.at(index)?.get('type')?.value;
+    return this.isQueryType(typeValue);
+  }
+
+  isSingleQueryItem(index: number): boolean {
+    const items = this.form.get('items') as FormArray;
+    if (!items || items.length === 0 || !this.isLineItemQuery(index)) return false;
+    const currentType = items.at(index).get('type')?.value;
+    const sameTypeIndexes = items.controls.map((ctrl, i) => (ctrl.get('type')?.value === currentType ? i : -1)).filter((i) => i >= 0);
+    return sameTypeIndexes.length === 1 && sameTypeIndexes[0] === index;
+  }
+
+  isEditItemQuery(): boolean {
+    return this.isQueryType(this.editItemForm?.get('type')?.value);
+  }
+
+  isEditItemApproveQuery(): boolean {
+    return this.isApproveQueryType(this.editItemForm?.get('type')?.value);
+  }
+
+  isEditItemRejectQuery(): boolean {
+    return this.isRejectQueryType(this.editItemForm?.get('type')?.value);
+  }
+
+  isEditSingleQueryItem(): boolean {
+    if (this.editItemIndex === null) return false;
+    return this.isSingleQueryItem(this.editItemIndex);
+  }
+
+  private setupLineItemTypeAutoUpdate(group: FormGroup, syncDefaultQueryAcrossItems: boolean = true): void {
+    const typeControl = group.get('type');
+    const defaultQueryControl = group.get('defaultQuery');
+    if (!typeControl || !defaultQueryControl) return;
+
+    this.applyTypeSpecificControls(group, syncDefaultQueryAcrossItems);
+
+    typeControl.valueChanges.subscribe(() => {
+      this.applyTypeSpecificControls(group, syncDefaultQueryAcrossItems);
+      if (syncDefaultQueryAcrossItems) {
+        this.applyDefaultQueryRules(group);
+      }
+    });
+
+    defaultQueryControl.valueChanges.subscribe((checked) => {
+      if (!this.isQueryType(typeControl.value)) {
+        defaultQueryControl.setValue(false, { emitEvent: false });
+        return;
+      }
+
+      if (syncDefaultQueryAcrossItems && checked) {
+        this.clearOtherDefaultQuerySelections(group);
+      }
+
+      if (syncDefaultQueryAcrossItems) {
+        this.applyDefaultQueryRules(group);
+      }
+    });
+  }
+
+  private applyTypeSpecificControls(group: FormGroup, syncDefaultQueryAcrossItems: boolean): void {
+    const typeValue = group.get('type')?.value;
+    const isApproveQuery = this.isApproveQueryType(typeValue);
+    const isRejectQuery = this.isRejectQueryType(typeValue);
+    const isQuery = isApproveQuery || isRejectQuery;
+    const existingApproveQueryInformation = group.get('approveQueryInformation')?.value;
+    const existingRejectQueryInformation = group.get('rejectQueryInformation')?.value;
+    const controlsToReset = ['isGridColumn', 'isSearchable', 'clauseType', 'isSortable', 'fieldType', 'fieldHtmlContent', 'enumValues'];
+
+    if (isQuery) {
+      controlsToReset.forEach((name) => {
+        const control = group.get(name);
+        if (!control) return;
+        control.clearValidators();
+        control.setErrors(null);
+      });
+
+      group.patchValue(
+        {
+          defaultQuery: true,
+          isGridColumn: false,
+          isSearchable: false,
+          clauseType: 'where',
+          isSortable: false,
+          fieldType: this.commonConfig.field_types[0]?.value,
+          approveQueryInformation: isApproveQuery ? this.getQueryInfoEditorValue(existingApproveQueryInformation) : null,
+          rejectQueryInformation: isRejectQuery ? this.getQueryInfoEditorValue(existingRejectQueryInformation) : null,
+          fieldHtmlContent: null,
+          lineItemConfigurations: null,
+        },
+        { emitEvent: false }
+      );
+    } else {
+      group.get('isGridColumn')?.setValidators([Validators.required]);
+      group.get('isSearchable')?.setValidators([Validators.required]);
+      group.get('clauseType')?.setValidators([Validators.required]);
+      group.get('isSortable')?.setValidators([Validators.required]);
+      group.get('fieldType')?.setValidators([Validators.required]);
+
+      group.patchValue(
+        {
+          defaultQuery: false,
+          isGridColumn: group.get('isGridColumn')?.value ?? 'true',
+          isSearchable: group.get('isSearchable')?.value ?? 'true',
+          clauseType: group.get('clauseType')?.value ?? 'where',
+          isSortable: group.get('isSortable')?.value ?? 'true',
+          fieldType: group.get('fieldType')?.value ?? this.commonConfig.field_types[0]?.value,
+          approveQueryInformation: null,
+          rejectQueryInformation: null,
+        },
+        { emitEvent: false }
+      );
+    }
+
+    [...controlsToReset, 'approveQueryInformation', 'rejectQueryInformation', 'lineItemConfigurations'].forEach((name) => {
+      group.get(name)?.updateValueAndValidity({ emitEvent: false });
+    });
+
+    if (!syncDefaultQueryAcrossItems && isQuery) {
+      // Keep modal behavior deterministic even before submit.
+      group.get('defaultQuery')?.setValue(!!group.get('defaultQuery')?.value, { emitEvent: false });
+    }
+  }
+
+  private clearOtherDefaultQuerySelections(selectedGroup: FormGroup): void {
+    const items = this.form.get('items') as FormArray;
+    if (!items || items.length === 0) return;
+
+    const selectedType = selectedGroup.get('type')?.value;
+
+    items.controls.forEach((control) => {
+      if (control === selectedGroup) return;
+      if (control.get('type')?.value !== selectedType) return;
+      control.get('defaultQuery')?.setValue(false, { emitEvent: false });
+    });
+  }
+
+  private applyDefaultQueryRules(changedGroup?: FormGroup): void {
+    const items = this.form.get('items') as FormArray;
+    if (!items || items.length === 0) return;
+
+    items.controls.forEach((control) => {
+      if (!this.isQueryType(control.get('type')?.value)) {
+        control.get('defaultQuery')?.setValue(false, { emitEvent: false });
+      }
+    });
+
+    [this.lineItemTypeApproveQuery, this.lineItemTypeRejectQuery].forEach((queryType) => {
+      const queryItems = items.controls.filter((control) => control.get('type')?.value === queryType);
+      if (queryItems.length === 0) return;
+
+      if (queryItems.length === 1) {
+        queryItems[0].get('defaultQuery')?.setValue(true, { emitEvent: false });
+        return;
+      }
+
+      if (changedGroup && changedGroup.get('type')?.value === queryType && changedGroup.get('defaultQuery')?.value) {
+        queryItems.forEach((control) => {
+          if (control !== changedGroup) {
+            control.get('defaultQuery')?.setValue(false, { emitEvent: false });
+          }
+        });
+        return;
+      }
+
+      const selectedDefaults = queryItems.filter((control) => !!control.get('defaultQuery')?.value);
+      if (selectedDefaults.length === 0) {
+        queryItems[0].get('defaultQuery')?.setValue(true, { emitEvent: false });
+      } else if (selectedDefaults.length > 1) {
+        selectedDefaults.slice(1).forEach((control) => {
+          control.get('defaultQuery')?.setValue(false, { emitEvent: false });
+        });
+      }
+    });
   }
 
   openInfoPopUp(popup: string) {
@@ -2589,20 +2659,20 @@ export class MasterEntityComponent implements OnInit {
   }
 
   get entityNamePrefix(): string {
-    return this.getEntityTypePrefix(this.form?.get('entityType')?.value || '');
+    return this.approvalWorkflowEntityNamePrefix;
   }
 
   get isEntityNameActive(): boolean {
-    return !!(this.form?.get('entityType')?.value && (this.form?.get('name')?.value || '').trim());
+    return !!(this.form?.get('name')?.value || '').trim();
   }
 
-  generateEntityNameSuggestions(name: string, entityType: string): void {
+  generateEntityNameSuggestions(name: string): void {
     const cleanName = (name || '').trim();
     if (!cleanName) {
       this.entityNameSuggestions = [];
       return;
     }
-    const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
+    const prefix = this.approvalWorkflowEntityNamePrefix;
     const slug = cleanName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_')
@@ -2636,11 +2706,6 @@ export class MasterEntityComponent implements OnInit {
     this.entityNameSuggestions = results;
   }
 
-  private getEntityTypePrefix(entityTypeName: string): string {
-    const entry = (Object.values(commonConfig.ENTITY_TYPES) as any[]).find((e) => e.name === entityTypeName);
-    return entry?.prefix_slug || '';
-  }
-
   selectEntityNameSuggestion(slug: string): void {
     this.form.get('entityName')?.setValue(slug);
     this.onEntityNameBlur();
@@ -2648,7 +2713,7 @@ export class MasterEntityComponent implements OnInit {
 
   enableEntityNameEdit(): void {
     this.entityNameEditable = true;
-    this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+    this.generateEntityNameSuggestions(this.form.get('name')?.value);
   }
 
   openEntityNameEditModal(): void {
@@ -2669,13 +2734,12 @@ export class MasterEntityComponent implements OnInit {
 
   private generateEntityNameModalSuggestions(): void {
     const name = this.form.get('name')?.value;
-    const entityType = this.form.get('entityType')?.value;
     const cleanName = (name || '').trim();
     if (!cleanName) {
       this.entityNameModalSuggestions = [];
       return;
     }
-    const prefix = entityType ? this.getEntityTypePrefix(entityType) : '';
+    const prefix = this.approvalWorkflowEntityNamePrefix;
     const slug = cleanName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_')
@@ -2748,22 +2812,14 @@ export class MasterEntityComponent implements OnInit {
     }
 
     const payload = {
-      action: ['select', 'update', 'update', 'update'],
-      table: ['master_entities', 'master_entities', 'permissions', 'master_entity_line_items'],
-      table_mapping: ['table1', 'table2', 'table3', 'table4'],
-      columns: {
-        table1: ['id', 'entity_name'],
-      },
+      action: ['update'],
+      table: ['master_approval_workflows'],
+      table_mapping: ['table1'],
       data: {
-        table2: [{ entity_name: newEntityName }],
-        table3: this.existing_actions.map((a: string) => ({ slug: `${a}_${newEntityName}` })),
-        table4: [{ link_action: newEntityName }],
+        table1: [{ entity_name: newEntityName }],
       },
       conditions: {
         table1: [{ uuid: this.id }],
-        table2: [{ uuid: this.id }],
-        table3: this.existing_actions.map((a: string) => ({ entity_id: '@table1.id', name: a })),
-        table4: [{ link_action: '@table1.entity_name' }],
       },
     };
 
@@ -2810,62 +2866,21 @@ export class MasterEntityComponent implements OnInit {
     const params = {
       company_id: 1,
       print_query: false,
-      primary_table: 'master_entities',
+      primary_table: 'master_approval_workflows',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [['master_entities.id', 'desc']],
-      select_columns: [
-        ['master_entities.entity_name', 'value'],
-        ['master_entities.name', 'label'],
-        ['master_entities.entity_type', 'entity_type'],
-        ['master_entities.primary_table', 'primary_table'],
-      ],
+      sort_columns: [['master_approval_workflows.id', 'desc']],
+      select_columns: [['master_approval_workflows.entity_name', 'value']],
     };
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
-          this.allEntityNameSlugs = new Set(response.data.records.map((e: any) => e.value as string));
+          const records = response.data.records || [];
+          this.allEntityNameSlugs = new Set(records.map((e: any) => e.value as string));
           // regenerate suggestions now that slugs are loaded
           if (!this.editTitle) {
-            this.generateEntityNameSuggestions(this.form.get('name')?.value, this.form.get('entityType')?.value);
+            this.generateEntityNameSuggestions(this.form.get('name')?.value);
           }
-          // For 'component' linkType
-          this.masterEntities = response.data.records
-            .filter((entity: any) => entity.entity_type === 'static_page_builder_module' || entity.entity_type === 'form_builder_module')
-            .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
-          this.staticPageEntities = response.data.records.filter(
-            (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name
-          );
-          // For child grid link types, allow all grid-like entity modules.
-          this.masterEntitiesForChildProcess = response.data.records
-            .filter((entity: any) => this.isGridLikeEntityType(entity.entity_type))
-            .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
-          this.entitiesForChildProcess = response.data.records.filter(
-            (entity: any) =>
-              ![
-                this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name,
-                // this.commonConfig.ENTITY_TYPES.DASHBOARD_WIZARD_BUILDER_MODULE,
-                this.commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.FORM_BUILDER_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.JOB_BUILDER_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.CAROUSEL_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.MENU_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.EXPORT_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.IMPORT_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.USER_COMPANY_MAP_MODULE,
-                this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.IMPORT_TEMPLATE_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.USER_ROLE_POLICY_MODULE.name,
-                this.commonConfig.ENTITY_TYPES.POLICY_ADD_EDIT_MODULE.name,
-              ].includes(entity.entity_type)
-          );
-          this.entitiesForDashboardWizard = [...this.entitiesForChildProcess];
         }
       },
       (error) => {
@@ -2874,63 +2889,5 @@ export class MasterEntityComponent implements OnInit {
         this.toastr.error(errorMessage, 'Error');
       }
     );
-  }
-
-  setupLinkModeAutoUpdate(group: FormGroup, initialLinkAction?: string) {
-    // Set linkMode based on linkAction selection
-    const linkTypeControl = group.get('linkType');
-    const linkActionControl = group.get('linkAction');
-    // Add a property to hold the current linkMode
-    (group as any)._linkMode = 'none';
-    // Helper to set linkMode
-    const setLinkMode = (entityName: string) => {
-      const type = linkTypeControl?.value;
-      let entity;
-      if (type === 'component' || type === 'child_component') {
-        entity = this.masterEntities.find((e: any) => e.value === entityName);
-      } else if (type === 'popup_grid') {
-        entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
-      } else if (type === 'child_grid') {
-        entity = this.masterEntitiesForChildProcess.find((e: any) => e.value === entityName);
-      }
-      if (entity) {
-        if (entity.entity_type === 'static_page_builder_module') {
-          (group as any)._linkMode = 'popup_details';
-        } else if (entity.entity_type === 'form_builder_module') {
-          (group as any)._linkMode = 'popup_edit';
-        } else if (this.isGridLikeEntityType(entity.entity_type) && type === 'child_component') {
-          (group as any)._linkMode = 'popup_grid';
-        } else {
-          (group as any)._linkMode = 'none';
-        }
-      } else {
-        (group as any)._linkMode = 'none';
-      }
-    };
-    // Initial set if value provided
-    if (initialLinkAction) {
-      setLinkMode(initialLinkAction);
-    }
-    // Subscribe to changes
-    linkActionControl?.valueChanges.subscribe((entityName: string) => {
-      if (
-        linkTypeControl?.value === 'component' ||
-        linkTypeControl?.value === 'child_component' ||
-        linkTypeControl?.value === 'child_grid' ||
-        linkTypeControl?.value === 'popup_grid'
-      ) {
-        setLinkMode(entityName);
-      } else {
-        (group as any)._linkMode = 'none';
-      }
-    });
-    // Also update on linkType change
-    linkTypeControl?.valueChanges.subscribe((type: string) => {
-      if (type !== 'component' && type !== 'child_component' && type !== 'child_grid' && type !== 'popup_grid') {
-        (group as any)._linkMode = 'none';
-      } else {
-        setLinkMode(linkActionControl?.value);
-      }
-    });
   }
 }
