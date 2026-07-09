@@ -73,6 +73,19 @@ export class ApprovalWorkflowComponent implements OnInit {
     { label: 'Role', value: 'role_id' },
   ];
 
+  // ── Slug (entity name) model ────────────────────────────────────────────────
+  readonly slugPrefix = 'approval_workflow_';
+  slugSuggestions: string[] = [];
+  readonly slugSuggestionLimit = 1;
+  allSlugs: Set<string> = new Set();
+  slugEditable = false;
+  originalSlug = '';
+  slugError = '';
+  isSlugModalOpen = false;
+  slugModalError = '';
+  slugModalSuggestions: string[] = [];
+  slugModalForm!: FormGroup;
+
   editorOptions = { theme: 'vs-dark', language: 'json', tabSize: 2, insertSpaces: true, minimap: { enabled: false }, automaticLayout: true };
   queryEditorOptions = { theme: 'vs-dark', language: 'sql', tabSize: 2, insertSpaces: true, minimap: { enabled: false }, automaticLayout: true };
 
@@ -115,9 +128,21 @@ export class ApprovalWorkflowComponent implements OnInit {
     this.initForm();
     this.titleChange();
 
+    this.form.get('name')?.valueChanges.subscribe((name) => {
+      if (!this.editTitle || this.slugEditable) {
+        this.generateSlugSuggestions(name);
+      }
+      if (!(name || '').trim()) {
+        this.form.get('slug')?.setValue('', { emitEvent: false });
+        this.slugSuggestions = [];
+        this.slugError = '';
+      }
+    });
+
     await this.loadModules();
     await this.loadEmailTemplates();
     await this.loadWhatsappTemplates();
+    await this.fetchAllApprovalWorkflows();
 
     if (this.id) {
       this.loadData(this.id);
@@ -988,17 +1013,17 @@ export class ApprovalWorkflowComponent implements OnInit {
   loadUsersForLevel(group: FormGroup, index: number, search: string) {
     const payload: any = {
       company_id: 1,
-      primary_table: 'users',
+      primary_table: 'user_information',
       start_index: 0,
       limit_range: 25,
-      sort_columns: [['email', 'asc']],
+      sort_columns: [['full_name', 'asc']],
       search_all: [{ value: 1, operator: '=', column_name: 'status_id' }],
       select_columns: [
         ['id', 'value'],
-        ['email', 'label'],
+        ['full_name', 'label'],
       ],
     };
-    if (search) payload.search_all.push({ value: `%${search}%`, operator: 'ILIKE', column_name: 'email' });
+    if (search) payload.search_all.push({ value: `%${search}%`, operator: 'ILIKE', column_name: 'full_name' });
     this.commonService.getCommonList(payload).subscribe({
       next: (res: any) => {
         if (res.status) group.get('user_list')?.setValue(res.data.records);
@@ -1044,6 +1069,239 @@ export class ApprovalWorkflowComponent implements OnInit {
     this.commonService.getCommonList(payload).subscribe({
       next: (res: any) => {
         if (res.status) group.get('tag_list')?.setValue(res.data.records);
+      },
+    });
+  }
+
+  // ── Slug (entity name) model ────────────────────────────────────────────────
+
+  get isSlugActive(): boolean {
+    return !!(this.form?.get('name')?.value || '').trim();
+  }
+
+  toFullSlug(suffix: string): string {
+    const trimmed = (suffix || '').trim();
+    return trimmed ? `${this.slugPrefix}${trimmed}` : '';
+  }
+
+  stripSlugPrefix(fullSlug: string): string {
+    const value = fullSlug || '';
+    return value.startsWith(this.slugPrefix) ? value.slice(this.slugPrefix.length) : value;
+  }
+
+  async fetchAllApprovalWorkflows(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const params = {
+        company_id: 1,
+        print_query: false,
+        primary_table: 'approval_workflows',
+        start_index: 0,
+        limit_range: 1000,
+        sort_columns: [['approval_workflows.id', 'desc']],
+        select_columns: [['approval_workflows.slug', 'value']],
+      };
+      this.gridApiService.getAllList(params).subscribe(
+        (res: any) => {
+          if (res.status && res.code === 200) {
+            const records = res.data.records || [];
+            this.allSlugs = new Set(records.map((e: any) => e.value as string));
+            if (!this.editTitle) {
+              this.generateSlugSuggestions(this.form.get('name')?.value);
+            }
+          }
+          resolve();
+        },
+        () => resolve()
+      );
+    });
+  }
+
+  generateSlugSuggestions(name: string): void {
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      this.slugSuggestions = [];
+      return;
+    }
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    // First candidate is the plain slug; rest use meaningful word suffixes only — no timestamps or random chars
+    const candidates = [
+      slug,
+      `${slug}_new`,
+      `${slug}_copy`,
+      `${slug}_alt`,
+      `${slug}_v2`,
+      `${slug}_v3`,
+      `${slug}_extra`,
+      `${slug}_main`,
+      `${slug}_base`,
+      `${slug}_core`,
+    ];
+
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const c of candidates) {
+      if (!c || seen.has(c)) continue;
+      seen.add(c);
+      if (!this.allSlugs.has(this.toFullSlug(c))) {
+        results.push(c);
+        if (results.length >= this.slugSuggestionLimit) break;
+      }
+    }
+    this.slugSuggestions = results;
+  }
+
+  selectSlugSuggestion(slug: string): void {
+    this.form.get('slug')?.setValue(slug);
+    this.onSlugBlur();
+  }
+
+  enableSlugEdit(): void {
+    this.slugEditable = true;
+    this.generateSlugSuggestions(this.form.get('name')?.value);
+  }
+
+  onSlugBlur(): void {
+    const value = (this.form.get('slug')?.value ?? '').trim();
+    if (!value) {
+      this.slugError = '';
+      return;
+    }
+    const fullSlug = this.toFullSlug(value);
+    if (this.editTitle && fullSlug === this.originalSlug) {
+      this.slugError = '';
+      return;
+    }
+    if (this.allSlugs.has(fullSlug) && fullSlug !== this.originalSlug) {
+      this.slugError = 'This slug already exists. Please choose a different slug.';
+    } else {
+      this.slugError = '';
+    }
+  }
+
+  openSlugEditModal(): void {
+    this.slugModalForm = this.fb.group({
+      slug: [this.form.get('slug')?.value || '', [Validators.required]],
+    });
+    this.slugModalError = '';
+    this.generateSlugModalSuggestions();
+    this.isSlugModalOpen = true;
+  }
+
+  closeSlugEditModal(): void {
+    this.isSlugModalOpen = false;
+    this.slugModalError = '';
+    this.slugModalSuggestions = [];
+  }
+
+  private generateSlugModalSuggestions(): void {
+    const name = this.form.get('name')?.value;
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      this.slugModalSuggestions = [];
+      return;
+    }
+    const slug = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    const candidates = [
+      slug,
+      `${slug}_new`,
+      `${slug}_copy`,
+      `${slug}_alt`,
+      `${slug}_v2`,
+      `${slug}_v3`,
+      `${slug}_extra`,
+      `${slug}_main`,
+      `${slug}_base`,
+      `${slug}_core`,
+    ];
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const c of candidates) {
+      if (!c || seen.has(c)) continue;
+      seen.add(c);
+      const fullC = this.toFullSlug(c);
+      if (!this.allSlugs.has(fullC) || fullC === this.originalSlug) {
+        results.push(c);
+        if (results.length >= this.slugSuggestionLimit) break;
+      }
+    }
+    this.slugModalSuggestions = results;
+  }
+
+  onSlugModalBlur(): void {
+    const value = (this.slugModalForm.get('slug')?.value ?? '').trim();
+    if (!value) {
+      this.slugModalError = '';
+      return;
+    }
+    const fullSlug = this.toFullSlug(value);
+    if (fullSlug === this.originalSlug) {
+      this.slugModalError = '';
+      return;
+    }
+    if (this.allSlugs.has(fullSlug)) {
+      this.slugModalError = 'This slug already exists. Please choose a different slug.';
+    } else {
+      this.slugModalError = '';
+    }
+  }
+
+  selectSlugModalSuggestion(slug: string): void {
+    this.slugModalForm.get('slug')?.setValue(slug);
+    this.onSlugModalBlur();
+  }
+
+  submitSlugEditModal(): void {
+    const newSlugSuffix = (this.slugModalForm.get('slug')?.value ?? '').trim();
+    if (!newSlugSuffix) return;
+
+    const newSlug = this.toFullSlug(newSlugSuffix);
+
+    if (newSlug === this.originalSlug) {
+      this.closeSlugEditModal();
+      return;
+    }
+
+    if (this.allSlugs.has(newSlug)) {
+      this.slugModalError = 'This slug already exists. Please choose a different slug.';
+      return;
+    }
+
+    // Cascade the rename to approval_workflow_assignments, which references the parent by slug (not id).
+    const payload = {
+      action: ['update', 'update'],
+      table: ['approval_workflows', 'approval_workflow_assignments'],
+      table_mapping: ['table1', 'table2'],
+      data: {
+        table1: [{ slug: newSlug }],
+        table2: [{ approval_workflow_slug: newSlug }],
+      },
+      conditions: {
+        table1: [{ uuid: this.id }],
+        table2: [{ approval_workflow_slug: this.originalSlug }],
+      },
+    };
+
+    this.gridApiService.executeRecords(payload).subscribe({
+      next: (response) => {
+        if (response.status && response.code === 200) {
+          this.allSlugs.delete(this.originalSlug);
+          this.allSlugs.add(newSlug);
+          this.originalSlug = newSlug;
+          this.form.get('slug')?.setValue(newSlugSuffix, { emitEvent: false });
+          this.toastr.success(this.translate.instant('record_updated_successfully'));
+          this.closeSlugEditModal();
+        } else {
+          this.toastr.error(this.translate.instant(response.message || 'error'), 'Error');
+        }
+      },
+      error: () => {
+        this.toastr.error(this.translate.instant('error'), 'Error');
       },
     });
   }
@@ -1096,9 +1354,10 @@ export class ApprovalWorkflowComponent implements OnInit {
         this.loading = false;
         if (res.status && res.code === 200 && res.data.records.length) {
           const entity = res.data.records[0];
+          this.originalSlug = entity.slug || '';
           this.form.patchValue({
             name: entity.name,
-            slug: entity.slug,
+            slug: this.stripSlugPrefix(entity.slug),
             url: entity.url || '',
             description: entity.description || '',
             status_id: entity.status_id,
@@ -1197,7 +1456,7 @@ export class ApprovalWorkflowComponent implements OnInit {
     }
 
     const formData = this.form.value;
-    const slug = String(formData.slug || '').trim();
+    const slug = this.toFullSlug(String(formData.slug || ''));
     const conditions = this.committedConditions || [];
     const queryInformation = this.buildWorkflowQueryInformation(formData.approval_workflow_module_id, conditions);
 
