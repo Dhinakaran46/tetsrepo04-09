@@ -337,6 +337,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   field_types = commonConfig.field_types;
   inputTypes: InputTypes = commonConfig.field_type;
   searchConditions: SearchConditions = commonConfig.search_conditions;
+  // ids of field_types rows whose field_type column is 'String' / 'BigString', loaded from the DB in ngOnInit
+  private stringFieldTypeIds: number[] = [];
   isSchemaChunks: boolean = false;
   policyData: any = null;
 
@@ -952,6 +954,25 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.hasSavedViewConfiguration = this.getSavedViewConfiguration() !== null;
     this.refreshEntityViews();
     this.scheduleTryApplySavedView();
+    this.loadStringFieldTypeIds();
+  }
+
+  private loadStringFieldTypeIds(): void {
+    const params = {
+      primary_table: 'field_types',
+      start_index: 0,
+      limit_range: 50,
+      select_columns: [['field_types.id']],
+      search_all: [{ column_name: 'field_types.field_type', operator: 'IN', value: ['String', 'BigString'] }],
+    };
+
+    this.gridApiService.getListData(params).subscribe({
+      next: (response: any) => {
+        if (response?.status && response.data?.records) {
+          this.stringFieldTypeIds = response.data.records.map((record: any) => Number(record.id));
+        }
+      },
+    });
   }
 
   private emitInitialFetchIfNoSavedView(): void {
@@ -3548,7 +3569,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private buildCommonSearchPayload(searchValue: string) {
     let hereColumns = [...this.filteredColumns];
-    const items = [3, 4];
+    const items = this.stringFieldTypeIds;
     hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
 
     const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
@@ -3577,7 +3598,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
   private buildCommonSearchPayloadLabelPurpose(searchValue: string) {
     let hereColumns = [...this.filteredColumns];
-    const items = [3, 4];
+    const items = this.stringFieldTypeIds;
     hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
 
     const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
@@ -3609,7 +3630,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const sourceColumns = this.selectedColumns.length > 0 ? this.selectedColumns : this.filteredColumns;
 
     return (sourceColumns || [])
-      .filter((column: any) => [3, 4].includes(Number(column?.field_type_id)))
+      .filter((column: any) => this.stringFieldTypeIds.includes(Number(column?.field_type_id)))
       .filter(
         (column: any, index: number, allColumns: any[]) =>
           index === allColumns.findIndex((entry: any) => String(entry?.field || '') === String(column?.field || ''))

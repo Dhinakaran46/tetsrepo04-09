@@ -1,0 +1,110 @@
+<div class="company-selection-page">
+  <div class="company-selection-shell">
+    <aside class="company-context">
+      <div class="brand-mark">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+
+      <div class="company-selection-heading">
+        <p class="eyebrow">Company Access</p>
+        <h1>Select Company</h1>
+        <p>Choose the workspace for this session.</p>
+      </div>
+
+      <div class="session-card">
+        <span class="session-label">Signed in as</span>
+        <strong>{{ userInfo?.main?.first_name || userInfo?.main?.username || userInfo?.main?.email }}</strong>
+        <span>{{ userInfo?.main?.email }}</span>
+      </div>
+
+      <div class="company-stats" [class.single]="isSelectionPending">
+        <div>
+          <strong>{{ companies.length }}</strong>
+          <span>Companies</span>
+        </div>
+        @if (!isSelectionPending) {
+        <div>
+          <strong>{{ currentCompany?.code || '-' }}</strong>
+          <span>Current</span>
+        </div>
+        }
+      </div>
+    </aside>
+
+    <section class="company-panel">
+      <div class="company-panel-header">
+        <div>
+          <h2>Available Companies</h2>
+          <p>{{ filteredCompanies.length }} of {{ companies.length }} shown</p>
+        </div>
+
+        <label class="company-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="search"
+            name="companySearch"
+            [(ngModel)]="searchTerm"
+            autocomplete="off"
+            placeholder="Search company or code"
+          />
+          @if (hasSearch) {
+          <button type="button" class="search-clear" aria-label="Clear search" (click)="clearSearch()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          }
+        </label>
+      </div>
+
+      <div class="company-grid">
+        @for (company of filteredCompanies; track company.id) {
+        <button
+          type="button"
+          class="company-option"
+          [class.active]="company.id === selectedCompanyId"
+          [class.current]="!isSelectionPending && company.id === currentCompanyId"
+          [disabled]="loadingCompanyId !== 0"
+          (click)="selectCompany(company)"
+        >
+          <span class="company-icon" aria-hidden="true">
+            {{ companyInitials(company) }}
+          </span>
+
+          <span class="company-copy">
+            <span class="company-row">
+              <span class="company-name">{{ company.name }}</span>
+              @if (!isSelectionPending && company.id === currentCompanyId) {
+              <span class="company-badge">Current</span>
+              }
+              @if (company.is_primary) {
+              <span class="company-badge muted">Primary</span>
+              }
+            </span>
+            <span class="company-meta">
+              <span>{{ company.code || 'Company' }}</span>
+              @if (companyTenantLabel(company)) {
+              <span>{{ companyTenantLabel(company) }}</span>
+              }
+            </span>
+          </span>
+
+          @if (loadingCompanyId === company.id) {
+          <span class="company-spinner"></span>
+          } @else if (company.id === selectedCompanyId) {
+          <span class="company-check">
+            <i class="fa-solid fa-check"></i>
+          </span>
+          } @else {
+          <i class="fa-solid fa-arrow-right company-arrow"></i>
+          }
+        </button>
+        } @empty {
+        <div class="empty-state">
+          <i class="fa-regular fa-building"></i>
+          <strong>No companies found</strong>
+          <span>Try a different company name or code.</span>
+        </div>
+        }
+      </div>
+    </section>
+  </div>
+</div>

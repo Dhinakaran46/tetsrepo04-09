@@ -276,7 +276,7 @@ export class CronSettingComponent implements OnInit, OnDestroy {
 
   setDefaultQuery() {
     this.defaultQuery = {
-      cte: 'WITH active_users AS ( SELECT username, status_id FROM users WHERE status_id = 3 )',
+      cte: 'WITH active_users AS ( SELECT username, status_id FROM user_information WHERE status_id = 3 )',
       print_query: true,
       company_id: 1,
       primary_table: 'scheduled_jobs',

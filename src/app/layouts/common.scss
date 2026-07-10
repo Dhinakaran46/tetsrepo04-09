@@ -43,6 +43,15 @@
   position: relative;
 }
 
+.company-dropdown {
+  position: relative;
+  z-index: 100000 !important;
+}
+
+.company-dropdown .company-dropdown-menu {
+  z-index: 100001 !important;
+}
+
 .notification-dropdown-box {
   position: absolute;
   top: 100%;

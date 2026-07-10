@@ -1,4 +1,4 @@
-// Comprehensive IANA timezone list with offsets
+﻿// Comprehensive IANA timezone list with offsets
 // Source: https://github.com/vvo/tzdb, https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 // This list includes all canonical IANA zones with their standard UTC offsets (not DST).
 

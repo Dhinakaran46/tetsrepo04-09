@@ -29,11 +29,7 @@ interface IUserPolicy {
 @Component({
   selector: 'app-user-role-policy',
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    ReactiveFormsModule,
-    ClientDatatableComponent,
-  ],
+  imports: [CommonSharedModule, ReactiveFormsModule, ClientDatatableComponent],
   templateUrl: './user-role-policy.component.html',
   styleUrl: './user-role-policy.component.scss',
   providers: [DatePipe],
@@ -107,7 +103,6 @@ export class UserRolePolicyComponent {
   }
 
   mapPolicies() {
-   
     if (this.mappingForm.invalid) {
       const key = 'please_select_all_the_required_fields';
       const errorMessage = this.translate.instant(key);
@@ -160,16 +155,17 @@ export class UserRolePolicyComponent {
       sort_columns: [['policies.name', 'asc']],
       group_by: [
         'policies.id',
-        'user_details.first_name',
-        'user_details.last_name',
+        'updated_user.first_name',
+        'updated_user.last_name',
+        'updated_user.full_name',
         ...(role_id && ['role_policies.role_id']),
         ...(user_id && ['user_policies.user_id']),
       ],
       includes: [
         {
           join_type: 'LEFT',
-          table_name: 'user_details',
-          join_condition: 'user_details.user_id = policies.updated_by',
+          table_name: 'user_information as updated_user',
+          join_condition: 'updated_user.user_id = policies.updated_by AND updated_user.company_id = policies.company_id',
         },
         ...joinCondition,
       ],
@@ -186,7 +182,7 @@ export class UserRolePolicyComponent {
         ['policies.uuid'],
         ['policies.slug'],
         ['policies.description'],
-        ["CONCAT(user_details.first_name, ' ', user_details.last_name)", 'updated_by'],
+        ['updated_user.full_name', 'updated_by'],
         ['policies.updated_at'],
         ...(role_id && [['role_policies.role_id']]),
         ...(user_id && [['user_policies.user_id']]),
@@ -273,30 +269,24 @@ export class UserRolePolicyComponent {
     const param: any = {
       company_id: 1,
       print_query: false,
-      primary_table: 'users',
+      primary_table: 'user_information',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [["concat(user_details.first_name, ' ', user_details.last_name)", 'asc']],
+      sort_columns: [['user_information.full_name', 'asc']],
       search_all: [
         {
-          column_name: 'users.status_id',
+          column_name: 'user_information.status_id',
           value: '1',
           operator: '=',
         },
         {
           value: ['super_admin', 'company_admin'],
           operator: 'NOT IN',
-          column_name: 'users.role',
+          column_name: 'user_information.role',
         },
       ],
-      includes: [
-        {
-          table_name: 'user_details',
-          join_type: 'INNER',
-          join_condition: 'users.id = user_details.user_id',
-        },
-      ],
-      select_columns: [['users.id'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'name'], ['users.uuid']],
+      includes: [],
+      select_columns: [['user_information.user_id', 'id'], ['user_information.full_name', 'name'], ['user_information.uuid']],
     };
     this.gridApiService.getListData(param).subscribe(
       (response: ApiResponce) => {
@@ -338,7 +328,7 @@ export class UserRolePolicyComponent {
           policy_id: p.id,
         };
       });
-    
+
     param.data.table2 = selectedPolicies;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {
@@ -380,7 +370,7 @@ export class UserRolePolicyComponent {
           policy_id: p.id,
         };
       });
-    
+
     param.data.table2 = selectedPolicies;
     this.gridApiService.executeTransaction(param).subscribe(
       (response: ApiResponce) => {

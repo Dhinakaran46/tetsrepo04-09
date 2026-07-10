@@ -50,32 +50,26 @@ export class PolicyComponent implements OnInit {
       header: 'Sample Policy Information',
       comments: [],
       data: {
-        sort_columns: [['users.id', 'desc']],
+        sort_columns: [['user_information.user_id', 'desc']],
         search_all: [
           {
-            column_name: 'users.deleted_at',
+            column_name: 'user_information.deleted_at',
             value: null,
             operator: 'IS',
           },
         ],
         search_any: [
           {
-            column_name: 'users.deleted_at',
+            column_name: 'user_information.deleted_at',
             value: null,
             operator: 'IS',
           },
         ],
-        includes: [
-          {
-            table_name: 'user_details',
-            join_type: 'INNER',
-            join_condition: 'users.id = user_details.user_id',
-          },
-        ],
-        group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+        includes: [],
+        group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
         having_conditions: [
           {
-            column_name: 'users.deleted_at',
+            column_name: 'user_information.deleted_at',
             value: null,
             operator: 'IS',
           },
@@ -84,7 +78,7 @@ export class PolicyComponent implements OnInit {
           {
             value: '%Mukesh%',
             operator: 'ILIKE',
-            column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+            column_name: 'user_information.full_name',
           },
         ],
       },
@@ -340,3 +334,4 @@ export class PolicyComponent implements OnInit {
       .catch((err) => console.error('Failed to copy:', err));
   }
 }
+

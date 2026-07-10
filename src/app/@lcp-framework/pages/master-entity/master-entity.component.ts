@@ -51,6 +51,8 @@ export function viewMandatoryValidator(): ValidatorFn {
 export class MasterEntityComponent implements OnInit {
   readonly linkTypeComponentCase = 'component';
   readonly linkTypeChildComponentCase = 'child_component';
+  readonly gridLikeEntityTypes = [commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name, commonConfig.ENTITY_TYPES.APPROVAL_WORKFLOW_BUILDER_MODULE.name];
+  readonly gridStructuredEntityTypes = [...this.gridLikeEntityTypes, commonConfig.ENTITY_TYPES.TREE_BUILDER_MODULE.name];
   store: any = initialState;
   form!: FormGroup;
   items: any = [];
@@ -155,6 +157,7 @@ export class MasterEntityComponent implements OnInit {
         },
       ],
     },
+
     reportInfo: {
       header: 'sample_report_information',
       examples: [
@@ -185,37 +188,31 @@ export class MasterEntityComponent implements OnInit {
             cte: 'WITH test_constants AS ( SELECT 1 AS dummy_id )',
             company_id: 1,
             print_query: false,
-            primary_table: 'users',
+            primary_table: 'user_information',
             start_index: 0,
             limit_range: 15,
             attached_policies: ['user_filer1'],
-            sort_columns: [['users.id', 'desc']],
+            sort_columns: [['user_information.user_id', 'desc']],
             search_all: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
             ],
             search_any: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
             ],
-            select_columns: [['users.id'], ['users.email', 'user_mail'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'full_name']],
-            includes: [
-              {
-                table_name: 'user_details',
-                join_type: 'INNER',
-                join_condition: 'users.id = user_details.user_id',
-              },
-            ],
-            group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+            select_columns: [['user_information.user_id'], ['user_information.email', 'user_mail'], ['user_information.full_name', 'full_name']],
+            includes: [],
+            group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
             having_conditions: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
@@ -224,7 +221,7 @@ export class MasterEntityComponent implements OnInit {
               {
                 value: '%Mukesh%',
                 operator: 'ILIKE',
-                column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+                column_name: 'user_information.full_name',
               },
             ],
           },
@@ -241,37 +238,31 @@ export class MasterEntityComponent implements OnInit {
             cte: 'WITH test_constants AS ( SELECT 1 AS dummy_id )',
             company_id: 1,
             print_query: false,
-            primary_table: 'users',
+            primary_table: 'user_information',
             start_index: 0,
             limit_range: 15,
             attached_policies: ['user_filer1'],
-            sort_columns: [['users.id', 'desc']],
+            sort_columns: [['user_information.user_id', 'desc']],
             search_all: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
             ],
             search_any: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
             ],
-            select_columns: [['users.id'], ['users.email', 'user_mail'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'full_name']],
-            includes: [
-              {
-                table_name: 'user_details',
-                join_type: 'INNER',
-                join_condition: 'users.id = user_details.user_id',
-              },
-            ],
-            group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+            select_columns: [['user_information.user_id'], ['user_information.email', 'user_mail'], ['user_information.full_name', 'full_name']],
+            includes: [],
+            group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
             having_conditions: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
@@ -280,7 +271,7 @@ export class MasterEntityComponent implements OnInit {
               {
                 value: '%Mukesh%',
                 operator: 'ILIKE',
-                column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+                column_name: 'user_information.full_name',
               },
             ],
           },
@@ -306,37 +297,31 @@ export class MasterEntityComponent implements OnInit {
             cte: 'WITH test_constants AS ( SELECT 1 AS dummy_id )',
             company_id: 1,
             print_query: false,
-            primary_table: 'users',
+            primary_table: 'user_information',
             start_index: 0,
             limit_range: 15,
             attached_policies: ['user_filer1'],
-            sort_columns: [['users.id', 'desc']],
+            sort_columns: [['user_information.user_id', 'desc']],
             search_all: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
             ],
             search_any: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
             ],
-            select_columns: [['users.id'], ['users.email', 'user_mail'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'full_name']],
-            includes: [
-              {
-                table_name: 'user_details',
-                join_type: 'INNER',
-                join_condition: 'users.id = user_details.user_id',
-              },
-            ],
-            group_by: ['users.id', 'user_details.first_name', 'user_details.last_name'],
+            select_columns: [['user_information.user_id'], ['user_information.email', 'user_mail'], ['user_information.full_name', 'full_name']],
+            includes: [],
+            group_by: ['user_information.user_id', 'user_information.first_name', 'user_information.last_name'],
             having_conditions: [
               {
-                column_name: 'users.deleted_at',
+                column_name: 'user_information.deleted_at',
                 value: null,
                 operator: 'IS',
               },
@@ -345,7 +330,7 @@ export class MasterEntityComponent implements OnInit {
               {
                 value: '%Mukesh%',
                 operator: 'ILIKE',
-                column_name: "concat(user_details.first_name, ' ', user_details.last_name)",
+                column_name: 'user_information.full_name',
               },
             ],
           },
@@ -369,7 +354,7 @@ export class MasterEntityComponent implements OnInit {
           comments: [],
           data: [
             {
-              table: 'user_details',
+              table: 'tenant_users',
               where_clause: 'user_id = $1',
             },
           ],
@@ -386,9 +371,9 @@ export class MasterEntityComponent implements OnInit {
             data: {
               table1: [
                 {
-                  role: '$users.role',
-                  email: '$users.email',
-                  username: '$users.username',
+                  role: '$tenant_users.role',
+                  email: '$tenant_users.email',
+                  username: '$tenant_users.username',
                   status_id: '$users.status_id',
                   created_at: true,
                   created_by: true,
@@ -398,22 +383,22 @@ export class MasterEntityComponent implements OnInit {
               ],
               table2: [
                 {
-                  dob: '$user_details.dob',
-                  code: '$user_details.code',
-                  gender: '$user_details.gender',
-                  address: '$user_details.address',
-                  culture: '$user_details.culture',
+                  dob: '$tenant_users.dob',
+                  code: '$users.code',
+                  gender: '$tenant_users.gender',
+                  address: '$tenant_users.address',
+                  culture: '$tenant_users.culture',
                   user_id: '@table1.id',
-                  last_name: '$user_details.last_name',
+                  last_name: '$tenant_users.last_name',
                   created_at: true,
                   created_by: true,
-                  first_name: '$user_details.first_name',
+                  first_name: '$tenant_users.first_name',
                   updated_at: true,
                   updated_by: true,
-                  profile_pic: '$user_details.profile_pic',
-                  phone_number: '$user_details.phone_number',
-                  department_id: '$user_details.department_id',
-                  designation_id: '$user_details.designation_id',
+                  profile_pic: '$tenant_users.profile_pic',
+                  phone_number: '$tenant_users.phone_number',
+                  department_id: '$users.department_id',
+                  designation_id: '$users.designation_id',
                 },
               ],
               table3: [
@@ -433,7 +418,7 @@ export class MasterEntityComponent implements OnInit {
                 },
               ],
             },
-            table: ['users', 'user_details', 'user_roles', 'email_process_jobs'],
+            table: ['users', 'tenant_users', 'user_roles', 'email_process_jobs'],
             action: ['insert', 'insert', 'insert', 'insert'],
             table_mapping: ['table1', 'table2', 'table3', 'table4'],
           },
@@ -450,8 +435,8 @@ export class MasterEntityComponent implements OnInit {
             data: {
               table1: [
                 {
-                  email: '$users.email',
-                  username: '$users.username',
+                  email: '$tenant_users.email',
+                  username: '$tenant_users.username',
                   status_id: '$users.status_id',
                   updated_at: true,
                   updated_by: true,
@@ -459,19 +444,19 @@ export class MasterEntityComponent implements OnInit {
               ],
               table2: [
                 {
-                  dob: '$user_details.dob',
-                  code: '$user_details.code',
-                  gender: '$user_details.gender',
-                  address: '$user_details.address',
-                  culture: '$user_details.culture',
-                  last_name: '$user_details.last_name',
-                  first_name: '$user_details.first_name',
+                  dob: '$tenant_users.dob',
+                  code: '$users.code',
+                  gender: '$tenant_users.gender',
+                  address: '$tenant_users.address',
+                  culture: '$tenant_users.culture',
+                  last_name: '$tenant_users.last_name',
+                  first_name: '$tenant_users.first_name',
                   updated_at: true,
                   updated_by: true,
-                  profile_pic: '$user_details.profile_pic',
-                  phone_number: '$user_details.phone_number',
-                  department_id: '$user_details.department_id',
-                  designation_id: '$user_details.designation_id',
+                  profile_pic: '$tenant_users.profile_pic',
+                  phone_number: '$tenant_users.phone_number',
+                  department_id: '$users.department_id',
+                  designation_id: '$users.designation_id',
                 },
               ],
               table4: [
@@ -481,7 +466,7 @@ export class MasterEntityComponent implements OnInit {
                 },
               ],
             },
-            table: ['users', 'user_details', 'user_roles', 'user_roles'],
+            table: ['users', 'tenant_users', 'user_roles', 'user_roles'],
             action: ['update', 'update', 'hard_delete', 'insert'],
             conditions: {
               table1: [
@@ -523,7 +508,7 @@ export class MasterEntityComponent implements OnInit {
               user_roles: {
                 role_id: [],
               },
-              user_details: {
+              tenant_users: {
                 dob: null,
                 code: null,
                 gender: 'male',
@@ -568,7 +553,7 @@ export class MasterEntityComponent implements OnInit {
                 fieldGroupClassName: 'grid grid-cols-1 gap-2 md:grid-cols-3',
               },
               {
-                key: 'user_details',
+                key: 'tenant_users',
                 wrappers: ['form-field'],
                 fieldGroup: [
                   {
@@ -1255,19 +1240,19 @@ export class MasterEntityComponent implements OnInit {
                 {
                   value: '$unique_id',
                   operator: '=',
-                  column_name: 'users.uuid',
+                  column_name: 'user_information.uuid',
                 },
                 {
                   value: '3',
                   operator: '!=',
-                  column_name: 'users.status_id',
+                  column_name: 'user_information.status_id',
                 },
               ],
               limit_range: 1,
               print_query: false,
               start_index: 0,
-              sort_columns: [['users.id', 'asc']],
-              primary_table: 'users',
+              sort_columns: [['user_information.user_id', 'asc']],
+              primary_table: 'user_information',
               select_columns: [['email'], ['username'], ['role'], ['status_id']],
             },
             user_roles: {
@@ -1275,8 +1260,8 @@ export class MasterEntityComponent implements OnInit {
               includes: [
                 {
                   join_type: 'INNER',
-                  table_name: 'users',
-                  join_condition: 'users.id = user_roles.user_id',
+                  table_name: 'user_information',
+                  join_condition: 'user_information.user_id = user_roles.user_id',
                 },
               ],
               company_id: 1,
@@ -1284,12 +1269,12 @@ export class MasterEntityComponent implements OnInit {
                 {
                   value: '$unique_id',
                   operator: '=',
-                  column_name: 'users.uuid',
+                  column_name: 'user_information.uuid',
                 },
                 {
                   value: '3',
                   operator: '!=',
-                  column_name: 'users.status_id',
+                  column_name: 'user_information.status_id',
                 },
               ],
               limit_range: 15,
@@ -1299,46 +1284,40 @@ export class MasterEntityComponent implements OnInit {
               primary_table: 'user_roles',
               select_columns: [['json_agg(user_roles.role_id::int)', 'role_id']],
             },
-            user_details: {
-              includes: [
-                {
-                  join_type: 'INNER',
-                  table_name: 'user_details',
-                  join_condition: 'users.id = user_details.user_id',
-                },
-              ],
+            tenant_users: {
+              includes: [],
               company_id: 1,
               search_all: [
                 {
                   value: '$unique_id',
                   operator: '=',
-                  column_name: 'users.uuid',
+                  column_name: 'user_information.uuid',
                 },
                 {
                   value: '3',
                   operator: '!=',
-                  column_name: 'users.status_id',
+                  column_name: 'user_information.status_id',
                 },
               ],
               limit_range: 1,
               print_query: false,
               start_index: 0,
-              sort_columns: [['users.id', 'asc']],
-              primary_table: 'users',
+              sort_columns: [['user_information.user_id', 'asc']],
+              primary_table: 'user_information',
               select_columns: [
-                ['user_details.code'],
-                ['user_details.first_name'],
-                ['user_details.last_name'],
-                ['user_details.designation_id'],
-                ['user_details.department_id'],
-                ['user_details.dob'],
-                ['user_details.phone_number'],
-                ['user_details.country_code'],
-                ['user_details.gender'],
-                ['user_details.user_time_zone'],
-                ['user_details.address'],
-                ['user_details.culture'],
-                ['user_details.profile_pic'],
+                ['user_information.code'],
+                ['user_information.first_name'],
+                ['user_information.last_name'],
+                ['user_information.designation_id'],
+                ['user_information.department_id'],
+                ['user_information.dob'],
+                ['user_information.phone_number'],
+                ['user_information.country_code'],
+                ['user_information.gender'],
+                ['user_information.user_time_zone'],
+                ['user_information.address'],
+                ['user_information.culture'],
+                ['user_information.profile_pic'],
               ],
             },
           },
@@ -1444,12 +1423,14 @@ export class MasterEntityComponent implements OnInit {
     this.action_types = this.commonConfig.action_types;
     this.wizard_type_list = this.commonConfig.wizard_type;
     this.report_type_list = this.commonConfig.report_type;
+    this.fetchAllTables();
+
     // To listen "entityType" on value change
     this.form.get('entityType')?.valueChanges.subscribe((value) => {
       this.updateFormValidation(value);
       if (!this.editTitle) {
         this.generateEntityNameSuggestions(this.form.get('name')?.value, value);
-        if (value === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
+        if (this.isGridLikeEntityType(value)) {
           const defaultGridConfig = {
             grid_show_title: 'yes',
             grid_enable_sticky_header: 'yes',
@@ -1496,6 +1477,16 @@ export class MasterEntityComponent implements OnInit {
       this.fetchAllMasterEntities();
       this.cdr.detectChanges();
     });
+
+    // If "id" is not available we need consider it as "Add", otherwise "Edit"
+    if (!this.id) {
+      this.editTitle = false;
+    } else {
+      this.editTitle = true;
+      this.loadData(this.id);
+    }
+    this.titleChange();
+    this.fetchAllMasterEntities();
   }
 
   async initStore() {
@@ -1514,6 +1505,15 @@ export class MasterEntityComponent implements OnInit {
     const translateTitle = this.translate.instant(title);
     this.titleService.setTitle(translateTitle);
   }
+
+  isGridLikeEntityType(entityType: string | null | undefined): boolean {
+    return this.gridLikeEntityTypes.includes(entityType ?? '');
+  }
+
+  isGridStructuredEntityType(entityType: string | null | undefined): boolean {
+    return this.gridStructuredEntityTypes.includes(entityType ?? '');
+  }
+
   decimalValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
     if (value !== null && value !== undefined && !/^\d+(\.\d{1,2})?$/.test(value)) {
@@ -1711,7 +1711,7 @@ export class MasterEntityComponent implements OnInit {
     const primaryTableControl = this.form.get('primaryTable');
     const itemsControl = this.form.get('items');
 
-    if (entityType == commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name) {
+    if (this.isGridLikeEntityType(entityType)) {
       primaryTableControl?.setValidators([Validators.required, Validators.maxLength(100)]);
     } else {
       primaryTableControl?.clearValidators();
@@ -1928,7 +1928,7 @@ export class MasterEntityComponent implements OnInit {
           });
 
           const items = this.form.get('items') as FormArray;
-          //items.clear();
+          items.clear();
           if (entity.items && entity.items.length > 0) {
             entity.items.forEach((item: any) => {
               const linkType = item.link_type || 'none';
@@ -2041,7 +2041,7 @@ export class MasterEntityComponent implements OnInit {
               link_mode = 'popup_details';
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
-            } else if (entity.entity_type === 'grid_builder_module') {
+            } else if (this.isGridLikeEntityType(entity.entity_type)) {
               link_mode = control.value.linkType === 'child_component' ? 'popup_grid' : 'child_grid';
             }
           }
@@ -2150,7 +2150,7 @@ export class MasterEntityComponent implements OnInit {
               link_mode = 'popup_details';
             } else if (entity.entity_type === 'form_builder_module') {
               link_mode = 'popup_edit';
-            } else if (entity.entity_type === 'grid_builder_module') {
+            } else if (this.isGridLikeEntityType(entity.entity_type)) {
               link_mode = control.value.linkType === 'child_component' ? 'popup_grid' : 'child_grid';
             }
           }
@@ -2298,8 +2298,6 @@ export class MasterEntityComponent implements OnInit {
           this.router.navigate([this.redirect_url]);
         } else {
           const key = response.message;
-          console.log('Error key:', key);
-          console.log('Error response:', response);
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }
@@ -2319,7 +2317,7 @@ export class MasterEntityComponent implements OnInit {
 
   isFormInvalid() {
     if (this.form.invalid) return true;
-    if (this.form.value.entityType === commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name && this.itemsControls.length === 0) return true;
+    if (this.isGridLikeEntityType(this.form.value.entityType) && this.itemsControls.length === 0) return true;
     if (this.isEntityNameActive && !(this.form.get('entityName')?.value || '').trim()) return true;
     return false;
   }
@@ -2838,9 +2836,9 @@ export class MasterEntityComponent implements OnInit {
           this.staticPageEntities = response.data.records.filter(
             (entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name
           );
-          // For 'child_process' linkType (only grid_builder_module)
+          // For child grid link types, allow all grid-like entity modules.
           this.masterEntitiesForChildProcess = response.data.records
-            .filter((entity: any) => entity.entity_type === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name)
+            .filter((entity: any) => this.isGridLikeEntityType(entity.entity_type))
             .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
           this.entitiesForChildProcess = response.data.records.filter(
             (entity: any) =>
@@ -2858,6 +2856,7 @@ export class MasterEntityComponent implements OnInit {
                 this.commonConfig.ENTITY_TYPES.MIGRATION_MODULE.name,
                 this.commonConfig.ENTITY_TYPES.USER_ROLE_PERMISSION_MAP_MODULE.name,
                 this.commonConfig.ENTITY_TYPES.ENTITY_USER_ROLE_MAP_MODULE.name,
+                this.commonConfig.ENTITY_TYPES.USER_COMPANY_MAP_MODULE,
                 this.commonConfig.ENTITY_TYPES.ENTITY_FORM_MODULE.name,
                 this.commonConfig.ENTITY_TYPES.EXPORT_TEMPLATE_MODULE.name,
                 this.commonConfig.ENTITY_TYPES.IMPORT_JOB_DETAIL_MODULE.name,
@@ -2899,7 +2898,7 @@ export class MasterEntityComponent implements OnInit {
           (group as any)._linkMode = 'popup_details';
         } else if (entity.entity_type === 'form_builder_module') {
           (group as any)._linkMode = 'popup_edit';
-        } else if (entity.entity_type === 'grid_builder_module' && type === 'child_component') {
+        } else if (this.isGridLikeEntityType(entity.entity_type) && type === 'child_component') {
           (group as any)._linkMode = 'popup_grid';
         } else {
           (group as any)._linkMode = 'none';

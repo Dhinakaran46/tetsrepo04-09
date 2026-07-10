@@ -1,0 +1,158 @@
+<div class="user-company-map-page">
+  <div class="map-header">
+    <div>
+      <p class="eyebrow">Access Control</p>
+      <h1>User Company Mapping</h1>
+      <p>Assign company access and mandatory company roles for each user.</p>
+    </div>
+
+    <button type="button" class="save-button" [disabled]="!canSave" (click)="save()">
+      <i class="fa" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+      <span>{{ saving ? 'Saving' : 'Save Mapping' }}</span>
+    </button>
+  </div>
+
+  <div class="map-layout">
+    <aside class="user-panel">
+      <div class="panel-title">
+        <div>
+          <h2>Users</h2>
+          <span>{{ filteredUsers.length }} of {{ users.length }}</span>
+        </div>
+      </div>
+
+      <label class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" [(ngModel)]="userSearch" placeholder="Search user, email, tenant" />
+      </label>
+
+      <div class="user-list">
+        @if (loadingUsers) {
+        <div class="loading-state">
+          <i class="fa fa-spinner fa-spin"></i>
+          <span>Loading users</span>
+        </div>
+        } @else {
+          @for (user of filteredUsers; track user.id) {
+          <button
+            type="button"
+            class="user-card"
+            [class.active]="selectedUser?.id === user.id"
+            (click)="selectUser(user)"
+          >
+            <span class="avatar">{{ (user.full_name || user.email || 'U').slice(0, 2).toUpperCase() }}</span>
+            <span class="user-copy">
+              <strong>{{ user.full_name || user.email }}</strong>
+              <span>{{ user.email }}</span>
+              <span class="meta">Tenant {{ user.tenant_id }} · {{ user.role }} · {{ user.mapped_company_count }} companies</span>
+            </span>
+          </button>
+          } @empty {
+          <div class="empty-state">
+            <i class="fa-regular fa-user"></i>
+            <strong>No users found</strong>
+            <span>Try another search.</span>
+          </div>
+          }
+        }
+      </div>
+    </aside>
+
+    <section class="company-panel">
+      @if (!selectedUser) {
+      <div class="select-user-state">
+        <i class="fa-solid fa-users-gear"></i>
+        <strong>Select a user</strong>
+        <span>Choose a user to manage company and role access.</span>
+      </div>
+      } @else {
+      <div class="company-panel-header">
+        <div class="selected-user-summary">
+          <span class="avatar large">{{ (selectedUser.full_name || selectedUser.email || 'U').slice(0, 2).toUpperCase() }}</span>
+          <div>
+            <h2>{{ selectedUser.full_name || selectedUser.email }}</h2>
+            <p>{{ selectedUser.email }} · Tenant {{ selectedUser.tenant_id }}</p>
+          </div>
+        </div>
+
+        <label class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" [(ngModel)]="companySearch" placeholder="Search company or code" />
+        </label>
+      </div>
+
+      <div class="company-toolbar">
+        <label class="select-all">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [checked]="allVisibleCompaniesSelected"
+            [disabled]="!filteredCompanies.length || loadingCompanies"
+            (change)="toggleAllVisibleCompanies($any($event.target).checked)"
+          />
+          <span>Select all companies</span>
+        </label>
+
+        <span class="selection-count" [class.error]="!selectedCompanies.length && !loadingCompanies">
+          {{ selectedCompanies.length }} selected
+          @if (invalidSelectedCompanies.length) {
+          · {{ invalidSelectedCompanies.length }} need role
+          } @else if (!selectedCompanies.length && !loadingCompanies) {
+          · at least one company required
+          }
+        </span>
+      </div>
+
+      <div class="company-list">
+        @if (loadingCompanies) {
+        <div class="loading-state">
+          <i class="fa fa-spinner fa-spin"></i>
+          <span>Loading companies</span>
+        </div>
+        } @else {
+          @for (company of filteredCompanies; track company.company_id) {
+          <div class="company-row" [class.active]="company.mapped" [class.invalid]="hasCompanyRoleError(company)">
+            <label class="company-check">
+              <input
+                type="checkbox"
+                class="form-checkbox"
+                [checked]="company.mapped"
+                (change)="toggleCompany(company, $any($event.target).checked)"
+              />
+              <span class="company-copy">
+                <strong>{{ company.name }}</strong>
+                <span>{{ company.code || 'Company' }} · Tenant {{ company.tenant_id }}</span>
+              </span>
+            </label>
+
+            <div class="role-picker">
+              <ng-select
+                [items]="company.roles"
+                bindLabel="name"
+                bindValue="id"
+                [multiple]="true"
+                [closeOnSelect]="false"
+                [clearable]="true"
+                placeholder="Select role"
+                [(ngModel)]="company.selected_role_ids"
+                [disabled]="!company.mapped"
+              >
+              </ng-select>
+              <div class="role-footer" [class.error]="hasCompanyRoleError(company)">
+                {{ hasCompanyRoleError(company) ? 'At least one role is required.' : roleLabel(company) }}
+              </div>
+            </div>
+          </div>
+          } @empty {
+          <div class="empty-state">
+            <i class="fa-regular fa-building"></i>
+            <strong>No companies found</strong>
+            <span>Try another search.</span>
+          </div>
+          }
+        }
+      </div>
+      }
+    </section>
+  </div>
+</div>

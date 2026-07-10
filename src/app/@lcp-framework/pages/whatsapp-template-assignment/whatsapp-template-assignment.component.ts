@@ -378,21 +378,15 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
   getUsers(formGroup: any, pno?: string) {
     let payload: any = {
       company_id: 1,
-      includes: [
-        {
-          join_type: 'INNER',
-          table_name: 'user_details',
-          join_condition: 'users.id = user_details.user_id',
-        },
-      ],
+      includes: [],
       limit_range: 25,
       print_query: false,
       start_index: 0,
-      sort_columns: [['email', 'asc']],
-      primary_table: 'users',
+      sort_columns: [['user_information.email', 'asc']],
+      primary_table: 'user_information',
       select_columns: [
-        ['user_details.phone_number', 'value'],
-        ["concat(email, ' - ', user_details.phone_number)", 'label'],
+        ['user_information.phone_number', 'value'],
+        ["concat(user_information.email, ' - ', user_information.phone_number)", 'label'],
       ],
     };
     if (pno) {
@@ -400,7 +394,7 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
         {
           value: '%' + pno + '%',
           operator: 'ILIKE',
-          column_name: 'user_details.phone_number',
+          column_name: 'user_information.phone_number',
         },
       ];
     }
@@ -479,3 +473,6 @@ export class WhatsappTemplateAssignmentComponent implements OnInit {
     }
   }
 }
+
+
+

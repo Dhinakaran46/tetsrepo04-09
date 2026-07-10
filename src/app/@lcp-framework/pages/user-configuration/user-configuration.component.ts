@@ -268,7 +268,7 @@ export class UserConfigurationComponent implements OnInit {
       },
     ];
     // If a user is selected, filter by user_id
-    let appcondition = `app_categories.category_id = app_user_configurations.category_id`;
+    let appcondition = `app_categories.category_id = app_user_configurations.category_id AND app_categories.category_type_id = app_user_configurations.category_type_id AND app_categories.company_id = app_user_configurations.company_id`;
     if (this.selectedUserId) {
       appcondition += ` AND app_user_configurations.user_id = ` + this.selectedUserId;
     }
@@ -646,7 +646,7 @@ export class UserConfigurationComponent implements OnInit {
   getUserList() {
     let search_all: any[] = [
       {
-        column_name: 'users.status_id',
+        column_name: 'user_information.status_id',
         value: '1',
         operator: '=',
       },
@@ -655,25 +655,19 @@ export class UserConfigurationComponent implements OnInit {
       search_all.push({
         value: ['super_admin', 'company_admin'],
         operator: 'NOT IN',
-        column_name: 'users.role',
+        column_name: 'user_information.role',
       });
     }
     const param: any = {
       company_id: 1,
       print_query: false,
-      primary_table: 'users',
+      primary_table: 'user_information',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [["concat(user_details.first_name, ' ', user_details.last_name)", 'asc']],
+      sort_columns: [['user_information.full_name', 'asc']],
       search_all: search_all,
-      includes: [
-        {
-          table_name: 'user_details',
-          join_type: 'INNER',
-          join_condition: 'users.id = user_details.user_id',
-        },
-      ],
-      select_columns: [['users.id'], ["concat(user_details.first_name, ' ', user_details.last_name)", 'name'], ['users.uuid']],
+      includes: [],
+      select_columns: [['user_information.user_id', 'id'], ['user_information.full_name', 'name'], ['user_information.uuid']],
     };
     this.gridApiService.getListData(param).subscribe(
       (response: any) => {
@@ -878,3 +872,6 @@ export class UserConfigurationComponent implements OnInit {
     this.jsonEditorOpenNew = false;
   }
 }
+
+
+

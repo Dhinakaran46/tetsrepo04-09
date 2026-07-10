@@ -273,7 +273,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             {
               header: 'delegated_by',
               clause_type: 'where',
-              field_value: `u_delegator.email`,
+              field_value: `ud_delegator.email`,
               is_sortable: 'true',
               column_order: '4.00',
               column_width: '1.00',
@@ -325,7 +325,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
       {
         header: 'requested_by',
         clause_type: 'where',
-        field_value: 'u1.email',
+        field_value: 'ud1.email',
         is_sortable: 'true',
         column_order: '7.00',
         column_width: '1.00',
@@ -371,7 +371,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             {
               header: 'reviewed_by',
               clause_type: 'where',
-              field_value: 'u2.email',
+              field_value: 'ud2.email',
               is_sortable: 'true',
               column_order: '10.00',
               column_width: '3.00',
@@ -470,11 +470,11 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               header: 'approvers',
               clause_type: 'where',
               field_value: `(
-            SELECT string_agg(u3.email, ', ')
-            FROM users u3
-            WHERE u3.id IN (
-              SELECT apjwu1.user_id 
-              FROM approval_process_job_workflow_users apjwu1 
+            SELECT string_agg(ud3.email, ', ')
+            FROM user_information ud3
+            WHERE ud3.user_id IN (
+              SELECT apjwu1.user_id
+              FROM approval_process_job_workflow_users apjwu1
               WHERE apjwu1.approval_process_job_workflow_id = approval_process_job_workflow_users.approval_process_job_workflow_id
                 AND apjwu1.status_id != 3
             )
@@ -503,8 +503,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.review_status',
           'approval_process_job_workflows.approver_type',
           'approval_process_job_workflows.approver_order_no',
@@ -521,29 +521,19 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'INNER',
             table_name: 'approval_process_job_workflows',
-            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id
               AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
               AND approval_process_job_workflows.status_id != 3`,
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
         ],
         // having_conditions: null,
@@ -575,8 +565,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.reason',
           'approval_process_job_workflows.screen_id',
           'approval_process_job_workflows.url',
@@ -616,37 +606,27 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               AND apjwu.status_id != 3
               AND apjwu.company_id = 1
             )  user_jobs`,
-            join_condition: `approval_process_job_workflows.approval_process_job_id = user_jobs.approval_process_job_id 
+            join_condition: `approval_process_job_workflows.approval_process_job_id = user_jobs.approval_process_job_id
               AND approval_process_job_workflows.company_id = user_jobs.company_id
               AND approval_process_job_workflows.status_id != 3`,
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
           {
             join_type: 'LEFT',
             table_name: `LATERAL (
               SELECT awf.approver_type, awf.approver_order_no, (
-                  SELECT string_agg(u4.email, ', ')
-                  FROM users u4
-                  WHERE u4.id IN (
+                  SELECT string_agg(ud4.email, ', ')
+                  FROM user_information ud4
+                  WHERE ud4.user_id IN (
                     SELECT apjwu1.user_id
                     FROM approval_process_job_workflow_users apjwu1
                     WHERE apjwu1.approval_process_job_workflow_id = awf.id
@@ -696,8 +676,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.review_status',
           'approval_process_job_workflows.approver_type',
           'approval_process_job_workflows.approver_order_no',
@@ -715,12 +695,12 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
             join_type: 'INNER',
             table_name: 'approval_process_job_workflows',
             join_condition: `
-              approval_process_job_workflows.company_id = approval_process_job_workflow_users.company_id 
+              approval_process_job_workflows.company_id = approval_process_job_workflow_users.company_id
               AND approval_process_job_workflows.status_id != 3
               AND approval_process_job_workflows.approval_process_job_id IN (
-                SELECT DISTINCT 
+                SELECT DISTINCT
                     apjw1.approval_process_job_id
-                FROM 
+                FROM
                     approval_process_job_workflows apjw1
                 LEFT JOIN approval_process_job_workflow_users apjwu1
                   ON apjwu1.approval_process_job_workflow_id = apjw1.id
@@ -780,23 +760,13 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
         ],
         // having_conditions: null,
@@ -827,8 +797,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflows.approval_process_job_name',
           'ud1.first_name',
           'ud1.last_name',
-          'u1.email',
-          'u2.email',
+          'ud1.email',
+          'ud2.email',
           'approval_process_job_workflows.review_status',
           'approval_process_job_workflows.approver_type',
           'approval_process_job_workflows.approver_order_no',
@@ -839,7 +809,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           'approval_process_job_workflow_users.approval_process_job_workflow_id',
           'approval_process_job_workflows.approval_process_job_id',
           'approval_process_job_workflows.approval_workflow_slug',
-          'u_delegator.email',
+          'ud_delegator.email',
           'd.start_date',
           'd.end_date',
           'approval_process_job_workflows.details',
@@ -848,8 +818,8 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'INNER',
             table_name: 'delegations d',
-            join_condition: `D.delegated_user_id = ${this.user_info.main?.id} 
-            AND d.status_id != 3 
+            join_condition: `D.delegated_user_id = ${this.user_info.main?.id}
+            AND d.status_id != 3
             AND d.company_id = approval_process_job_workflow_users.company_id
             AND NOW() BETWEEN d.start_date AND d.end_date
             AND approval_process_job_workflow_users.user_id = d.user_id`,
@@ -857,34 +827,24 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
           {
             join_type: 'INNER',
             table_name: 'approval_process_job_workflows',
-            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id 
+            join_condition: `approval_process_job_workflows.id = approval_process_job_workflow_users.approval_process_job_workflow_id
               AND approval_process_job_workflows.review_status IN (${this.approvalStatusData[this.activeTab].map((status: string) => `'${status}'`).join(',')})
               AND approval_process_job_workflows.status_id != 3`,
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id AND u1.status_id != 3',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id AND ud1.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'user_details ud1',
-            join_condition: 'ud1.user_id = u1.id',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by AND ud2.status_id != 3',
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by AND u2.status_id != 3',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'user_details ud2',
-            join_condition: 'ud2.user_id = u2.id',
-          },
-          {
-            join_type: 'LEFT',
-            table_name: 'users u_delegator',
-            join_condition: 'u_delegator.id = d.user_id',
+            table_name: 'user_information ud_delegator',
+            join_condition: 'ud_delegator.user_id = d.user_id',
           },
         ],
         // having_conditions: null,
@@ -1219,7 +1179,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
         order_no: 5,
         status_id: 1,
         company_id: 1,
-        field: 'u1.email',
+        field: 'ud1.email',
         clause_type: 'where',
         sorting: true,
         title: this.translate.instant('requested_by'),
@@ -1273,7 +1233,7 @@ export class ApprovalRequestsComponent implements AfterViewInit, OnDestroy {
               order_no: 8,
               status_id: 1,
               company_id: 1,
-              field: 'u2.email',
+              field: 'ud2.email',
               clause_type: 'where',
               sorting: true,
               title: this.translate.instant('reviewed_by'),

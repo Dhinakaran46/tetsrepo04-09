@@ -1,0 +1,232 @@
+<div [formGroup]="form">
+  <div class="panel">
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between">
+      <div class="text-md font-bold uppercase">
+        {{ editTitle ? ('title_edit_entity' | translate) : ('title_add_entity' | translate) }}
+      </div>
+      <div class="relative inline-flex align-middle">
+        <button appDynamicFontSize="body" type="button" class="btn btn-danger mr-5 ltr:rounded-r rtl:rounded-l" (click)="location.back()">
+          {{ 'back' | translate }}
+        </button>
+        <button
+          appDynamicFontSize="body"
+          type="button"
+          [disabled]="isFormInvalid()"
+          class="btn btn-outline-secondary ltr:rounded-r rtl:rounded-l"
+          (click)="onSubmit()"
+        >
+          {{ 'submit' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <hr class="my-3 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+    <!-- Main Fields -->
+    <div class="mt-2">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+
+        <!-- Name -->
+        <div>
+          <label for="name" class="required-mark mb-2 block font-medium">{{ 'form_label_name' | translate }}</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            appDynamicFontSize="body"
+            class="form-input w-full"
+            placeholder="{{ 'form_label_name_placeholder' | translate }}"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('name') }"
+          />
+          @if (isFieldInvalid('name')) {
+          <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('name') | translate }}</div>
+          }
+        </div>
+
+        <!-- Slug -->
+        <div>
+          <label for="slug" class="mb-2 block font-medium">{{ 'form_label_slug' | translate }}</label>
+          <input
+            id="slug"
+            type="text"
+            formControlName="slug"
+            appDynamicFontSize="body"
+            class="form-input w-full"
+            placeholder="{{ 'form_label_slug_placeholder' | translate }}"
+          />
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="mb-2 block font-medium">{{ 'form_label_status' | translate }}</label>
+          <div class="flex items-center space-x-4 pt-1">
+            <label class="flex cursor-pointer items-center">
+              <input type="radio" [value]="1" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+              <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+            </label>
+            <label class="flex cursor-pointer items-center">
+              <input type="radio" [value]="2" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+              <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="md:col-span-4">
+          <label for="description" class="mb-2 block font-medium">{{ 'form_label_description' | translate }}</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            appDynamicFontSize="body"
+            class="form-input w-full"
+            rows="3"
+            placeholder="{{ 'form_label_description_placeholder' | translate }}"
+          ></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <hr class="my-5 border-[#e0e6ed] dark:border-[#1b2e4b]" />
+
+    <!-- Rule Options Datatable -->
+    <div class="mt-4">
+      <app-client-datatable
+        [data]="ruleOptionsData"
+        [config]="ruleOptionsTableConfig"
+        (dataChange)="onRuleOptionsDataChange($event)"
+      ></app-client-datatable>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Rule Option Modal ──────────────────────────────────────────────────── -->
+@if (isRuleOptionModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto" @toggleAnimation>
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
+  <div class="flex min-h-screen items-center justify-center p-2 sm:p-4">
+    <div
+      class="relative w-full max-w-2xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+    >
+      <!-- Modal Header -->
+      <div class="border-b bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex items-center justify-between">
+          <p class="text-md font-bold" appDynamicFontSize="body">
+            {{ editingRuleOptionIndex !== -1 ? ('edit' | translate) : ('add' | translate) }} Rule Option
+          </p>
+          <button class="close-btn" type="button" (click)="cancelRuleOptionEdit()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="px-4 py-4 sm:px-6" [formGroup]="ruleOptionForm">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+          <!-- Field Name -->
+          <div>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">Field Name</label>
+            <input
+              type="text"
+              formControlName="field_name"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="Enter field name"
+              [ngClass]="{ 'is-invalid': isRuleOptionFieldInvalid('field_name') }"
+            />
+            @if (isRuleOptionFieldInvalid('field_name')) {
+            <div class="invalid-feedback mt-1 text-danger">{{ getRuleOptionErrorMessage('field_name') | translate }}</div>
+            }
+          </div>
+
+          <!-- Display Name -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">Display Name</label>
+            <input
+              type="text"
+              formControlName="display_name"
+              appDynamicFontSize="body"
+              class="form-input w-full"
+              placeholder="Enter display name"
+            />
+          </div>
+
+          <!-- Table Name -->
+          <div>
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">Table Name</label>
+            <select
+              formControlName="table_name"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+            >
+              <option value="">-- Select Table --</option>
+              @for (item of tables_list; track item) {
+              <option [value]="item">{{ item }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Field Type -->
+          <div>
+            <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">Field Type</label>
+            <select
+              formControlName="field_type_id"
+              appDynamicFontSize="body"
+              class="form-select w-full"
+              [ngClass]="{ 'is-invalid': isRuleOptionFieldInvalid('field_type_id') }"
+            >
+              <option value="">-- Select Field Type --</option>
+              @for (ft of field_types; track ft.value) {
+              <option [value]="ft.value">{{ ft.label }}</option>
+              }
+            </select>
+            @if (isRuleOptionFieldInvalid('field_type_id')) {
+            <div class="invalid-feedback mt-1 text-danger">{{ getRuleOptionErrorMessage('field_type_id') | translate }}</div>
+            }
+          </div>
+
+          <!-- Enum Values -->
+          <div class="md:col-span-2">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_enum_values' | translate }}</label>
+            <div class="modal-editor-container">
+              <ngx-monaco-editor [options]="modalJsonEditorOptions" formControlName="enum_values" class="modal-monaco-editor"></ngx-monaco-editor>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="md:col-span-2">
+            <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'form_label_status' | translate }}</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="1" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_0' | translate }}</span>
+              </label>
+              <label class="flex cursor-pointer items-center">
+                <input type="radio" [value]="2" formControlName="status_id" class="form-radio" appDynamicFontSize="body" />
+                <span class="ml-2 text-white-dark">{{ 'table_status_val_1' | translate }}</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-danger" (click)="cancelRuleOptionEdit()">
+            {{ 'cancel' | translate }}
+          </button>
+          <button type="button" class="btn btn-primary" (click)="onRuleOptionSubmit()">
+            {{ editingRuleOptionIndex !== -1 ? ('update' | translate) : ('save' | translate) }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}

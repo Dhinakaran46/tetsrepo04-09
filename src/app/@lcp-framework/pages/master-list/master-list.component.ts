@@ -87,6 +87,7 @@ interface AcceptedParentParamRule {
 export class MasterListComponent implements OnChanges {
   search_all: any[] = [];
   search_any: any[] = [];
+
   @Input() uuid: any = null;
   @Input() entity_name: any = '';
   @Input() popupName: any = '';
@@ -96,6 +97,7 @@ export class MasterListComponent implements OnChanges {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
+
   @Input() line_item_configurations: any = null;
   @Input() showBackButton: boolean = true;
   @Input() parentGridFilters: {
@@ -266,6 +268,7 @@ export class MasterListComponent implements OnChanges {
   entities: any[] = [];
   headerStaticEntityName: string = '';
   footerStaticEntityName: string = '';
+
   private isGridBootstrapReady: boolean = false;
   private pendingGridFetchRequest: boolean = false;
   private queuedInitialFetchParams: FetchDataParams | null = null;
@@ -1507,6 +1510,7 @@ export class MasterListComponent implements OnChanges {
       'export_template_module',
       'menu_module',
       'entity_user_role_map_module',
+      'user_company_map_module',
       'entity_form_module',
       'language_contents_module',
       'help_page_module',
@@ -2202,6 +2206,7 @@ export class MasterListComponent implements OnChanges {
     if (this.grid_params) {
       payload.grid_params = this.grid_params;
     }
+
     if (this.search_all) {
       payload.search_all = [...payload.search_all, ...this.search_all];
     }
@@ -2209,6 +2214,7 @@ export class MasterListComponent implements OnChanges {
     if (this.search_any) {
       payload.search_any = [...payload.search_any, ...this.search_any];
     }
+
     if (this.line_item_configurations) {
       payload.line_item_configurations = this.line_item_configurations;
     }
@@ -3673,7 +3679,7 @@ processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName
       this.loadingpopup = false;
       this.cdr.markForCheck();
     }, 500);
- 
+
     // When grid_params are supplied for a popup_grid, reload data so the filter applies.
     if (gridParams && popupName === 'popup_grid' && this.listQuery) {
       const popupParams = { ...this.listQuery, entity_name: popupEntityName || this.listQuery.entity_name, start_index: 0 };

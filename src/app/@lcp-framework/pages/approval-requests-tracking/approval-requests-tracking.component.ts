@@ -74,17 +74,17 @@ export class ApprovalRequestsTrackingComponent implements OnInit {
   async getApprovalWorkflowDetail() {
     if (this.uniqueId) {
       const payload = {
-        group_by: ['approval_process_job_workflows.id', 'u1.email', 'u2.email'],
+        group_by: ['approval_process_job_workflows.id', 'ud1.email', 'ud2.email'],
         includes: [
           {
             join_type: 'LEFT',
-            table_name: 'users u1',
-            join_condition: 'u1.id = approval_process_job_workflows.user_id',
+            table_name: 'user_information ud1',
+            join_condition: 'ud1.user_id = approval_process_job_workflows.user_id',
           },
           {
             join_type: 'LEFT',
-            table_name: 'users u2',
-            join_condition: 'u2.id = approval_process_job_workflows.reviewed_by',
+            table_name: 'user_information ud2',
+            join_condition: 'ud2.user_id = approval_process_job_workflows.reviewed_by',
           },
         ],
         company_id: 1,
@@ -115,8 +115,8 @@ export class ApprovalRequestsTrackingComponent implements OnInit {
           ['approval_process_job_workflows.reason', 'reason'],
           [`TO_CHAR(approval_process_job_workflows.assigned_at, 'YYYY-MM-DD\" \"HH24:MI')`, 'assigned_at'],
           [`TO_CHAR(approval_process_job_workflows.processed_at, 'YYYY-MM-DD\" \"HH24:MI')`, 'processed_at'],
-          ['u2.email', 'reviewed_by'],
-          ['u1.email', 'requested_by'],
+          ['ud2.email', 'reviewed_by'],
+          ['ud1.email', 'requested_by'],
         ],
       };
       this.loading = true;

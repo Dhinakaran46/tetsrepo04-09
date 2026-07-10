@@ -1,4 +1,4 @@
-import { Injectable, OnInit } from '@angular/core';
+﻿import { Injectable, OnInit } from '@angular/core';
 import { HttpService } from './http.service';
 import * as CryptoJS from 'crypto-js';
 import { environment } from '../../../../environments/environment';
@@ -117,6 +117,8 @@ export class LocalStorageService implements OnInit {
       localStorage.removeItem(this.getScopedKey('user_data'));
       localStorage.removeItem(this.getScopedKey('config'));
       localStorage.removeItem(this.getScopedKey('menu_id'));
+      localStorage.removeItem(this.getScopedKey('company_selection_pending'));
+      localStorage.removeItem(this.getScopedKey('selected_company_id'));
     } catch (error: any) {
       console.warn('Logout Error: ', error);
     }

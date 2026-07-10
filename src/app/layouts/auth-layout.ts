@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, Renderer2 } from '@angular/core';
+﻿import { ChangeDetectorRef, Component, Renderer2 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppService } from '../@lcp-framework/service/common/app.service';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { CommonSharedModule } from '../@lcp-framework/shared/common/common.module';
@@ -14,6 +14,7 @@ import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { ThemeService } from '../@lcp-framework/service/common/theme.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -29,6 +30,7 @@ import { ThemeService } from '../@lcp-framework/service/common/theme.service';
 })
 export class AuthLayout {
   slideInterval: any;
+  private routerEventsSubscription?: Subscription;
   private readonly onWindowScroll = () => {
     this.showTopButton = document.body.scrollTop > 50 || document.documentElement.scrollTop > 50;
   };
@@ -49,6 +51,7 @@ export class AuthLayout {
   mediaItems: any = [];
   configLoaded = false;
   selectedLanguageCode = 'en';
+  hideMedia = false;
   constructor(
     private renderer: Renderer2,
     private toastr: ToastrService,
@@ -61,7 +64,9 @@ export class AuthLayout {
     private localstore: LocalStorageService,
     private gridApiService: GridApiService,
     private themeService: ThemeService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     // Pre-populate from cache so DOM renders with values on first paint
     this.loadConfigFromCache();
@@ -121,6 +126,12 @@ export class AuthLayout {
 
   ngOnInit() {
     this.initStore();
+    this.updateLayoutRouteData();
+    this.routerEventsSubscription = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.updateLayoutRouteData();
+      }
+    });
 
     const languageCode = this.languageService.getSavedLanguageCode();
     this.selectedLanguageCode = this.resolveLanguageCode(languageCode || this.store?.locale || this.translate.currentLang || 'en');
@@ -369,7 +380,12 @@ export class AuthLayout {
     if (this.slideInterval) {
       clearInterval(this.slideInterval);
     }
+    this.routerEventsSubscription?.unsubscribe();
     window.removeEventListener('scroll', this.onWindowScroll);
+  }
+
+  private updateLayoutRouteData(): void {
+    this.hideMedia = Boolean(this.route.firstChild?.snapshot.data?.['hideMedia']);
   }
 
   initStore() {

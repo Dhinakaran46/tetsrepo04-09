@@ -23,6 +23,7 @@ import { SafeHtmlPipe } from '../pipes/safehtml/safe-html.pipe';
 import { WhatsappTagsComponent } from './components/whatsapp-tags/whatsapp-tags.component';
 import { SplitLabelPipe } from '../pipes/split-label.pipe';
 import { FormlyFieldColorPickerComponent } from './components/formly-field-color-picker/formly-field-color-picker.component';
+import { FormlyOrderedTransferListComponent } from './components/formly-ordered-transfer-list/formly-ordered-transfer-list.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormlyFieldTreeSelectComponent } from './components/formly-field-tree-select/formly-field-tree-select.component';
 
@@ -213,6 +214,7 @@ export const lcpPresetExtension: FormlyExtension = {
     SplitLabelPipe,
   ],
   imports: [
+    FormlyOrderedTransferListComponent,
     QuillModule,
     MonacoEditorModule,
     CommonModule,
@@ -318,10 +320,12 @@ export const lcpPresetExtension: FormlyExtension = {
                   const siblingHasError = siblingControl.hasError('phoneAndCountry');
                   if (hasError && !siblingHasError) {
                     siblingControl.setErrors({ ...siblingControl.errors, phoneAndCountry: true }, { emitEvent: false });
+                    siblingControl.markAsTouched();
                   } else if (!hasError && siblingHasError) {
                     const errors = { ...siblingControl.errors };
                     delete errors['phoneAndCountry'];
                     siblingControl.setErrors(Object.keys(errors).length ? errors : null, { emitEvent: false });
+                    siblingControl.markAsTouched();
                   }
                 }
 
@@ -453,6 +457,7 @@ export const lcpPresetExtension: FormlyExtension = {
         { name: 'repeat-table', component: FormlyRepeatTableFieldComponent, wrappers: ['form-field'] },
         { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] },
         { name: 'tree-select', component: FormlyFieldTreeSelectComponent, wrappers: ['form-field'] },
+        { name: 'ordered-transfer-list', component: FormlyOrderedTransferListComponent, wrappers: ['form-field'] },
       ],
     }),
   ],
@@ -466,6 +471,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyFieldSelectFromDbComponent,
     FormlyFieldAutocompleteComponent,
     FormlyFieldTreeSelectComponent,
+    FormlyOrderedTransferListComponent,
     NgSelectModule,
     FormlyBootstrapModule,
     SplitLabelPipe,

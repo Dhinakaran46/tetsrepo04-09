@@ -1,0 +1,557 @@
+﻿<section class="tenant-registration mx-auto w-full max-w-[1450px] px-2 pb-8 pt-14 sm:px-6 lg:px-10">
+  <div class="rounded-md px-6 py-8 sm:px-10 lg:px-12">
+    <div class="mb-6 flex justify-end">
+      <a routerLink="/login" class="tenant-btn tenant-btn-secondary min-w-[140px] justify-center">
+        <i class="fa fa-arrow-left"></i>
+        Back to Login
+      </a>
+    </div>
+
+    <div class="mb-10 text-center">
+      <h1 class="text-2xl font-extrabold uppercase tracking-normal text-[#0f2948] dark:text-white sm:text-3xl">
+        New Tenant Registration
+      </h1>
+
+      <nav class="mt-9 flex flex-col items-start justify-center gap-4 text-sm font-bold sm:flex-row sm:items-center sm:gap-5 md:text-base">
+        @for (step of steps; track step.id; let last = $last) {
+        <button
+          type="button"
+          class="group flex items-center gap-3 text-left"
+          [class.cursor-default]="step.id > currentStep"
+          [class.cursor-pointer]="step.id <= currentStep"
+          (click)="goToStep(step.id)"
+        >
+          <span
+            class="grid h-8 w-8 place-content-center rounded-full text-sm font-extrabold transition"
+            [ngClass]="step.id <= currentStep ? 'bg-[#9a0000] text-white' : 'bg-[#e8edf3] text-[#607088]'"
+          >
+            {{ step.id }}
+          </span>
+          <span [ngClass]="step.id <= currentStep ? 'text-[#9a0000]' : 'text-[#8b9bb5]'">{{ step.label }}</span>
+        </button>
+
+        @if (!last) {
+        <div class="hidden h-px w-16 bg-[#cbd5e1] sm:block">
+          <span class="block h-px w-full" [ngClass]="step.id < currentStep ? 'bg-[#9a0000]' : 'bg-[#cbd5e1]'"></span>
+        </div>
+        }
+        }
+      </nav>
+    </div>
+
+    <div class="grid gap-8 xl:grid-cols-[350px_minmax(0,1fr)] xl:gap-10">
+      <aside class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-7 dark:border-[#253b5c] dark:bg-[#111c2d]">
+        <h2 class="text-xl font-extrabold text-[#07182f] dark:text-white">Create Your Workspace</h2>
+        <div class="mt-5 h-px bg-[#dce4ee] dark:bg-[#253b5c]"></div>
+
+        <div class="mt-6 space-y-6">
+          <div class="flex gap-4">
+            <span class="mt-1 grid h-5 w-5 shrink-0 place-content-center rounded-full bg-[#9a0000] text-[10px] text-white">
+              <i class="fa fa-check"></i>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-[#163154] dark:text-white">Your Admin Account</h3>
+              <p class="mt-2 max-w-[230px] text-sm leading-6 text-[#516785] dark:text-white-dark">
+                Enter the details for the person who will manage this workspace.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <span class="mt-1 grid h-5 w-5 shrink-0 place-content-center text-[#9a0000]">
+              <i class="fa fa-building text-lg"></i>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-[#163154] dark:text-white">Company Details</h3>
+              <p class="mt-2 max-w-[245px] text-sm leading-6 text-[#516785] dark:text-white-dark">
+                Add your business information now. You can create additional companies after setup.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <form class="min-w-0" [formGroup]="tenantForm" (ngSubmit)="nextStep()">
+        @if (currentStep === 1) {
+        <div class="space-y-7">
+          <section class="tenant-section">
+            <div class="tenant-section-title">
+              <i class="fa fa-building text-[#9a0000]"></i>
+              <h2>Company Info</h2>
+            </div>
+
+            <div class="grid gap-x-6 gap-y-6 md:grid-cols-2">
+              <label class="tenant-field">
+                <span>Company Name <b>*</b></span>
+                <input type="text" formControlName="companyName" class="form-input" placeholder="e.g. RK Distributions" />
+                @if (isInvalid('companyName')) {
+                <small>Company name is required.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>No. of Companies <b>*</b></span>
+                <input type="number" formControlName="noOfCompanies" class="form-input" min="1" max="5" />
+                @if (isInvalid('noOfCompanies')) {
+                <small>Enter a value between 1 and 5.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Business Type <b>*</b></span>
+                <select formControlName="businessTypeId" class="form-input">
+                  <option [ngValue]="null">Select Business Type</option>
+                  @for (type of businessTypes; track type.id) {
+                  <option [ngValue]="type.id">{{ type.name }}</option>
+                  }
+                </select>
+                @if (isInvalid('businessTypeId')) {
+                <small>Business type is required.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Employee Size <b>*</b></span>
+                <select formControlName="employeeSizeId" class="form-input">
+                  <option [ngValue]="null">Select Size Range</option>
+                  @for (size of employeeSizes; track size.id) {
+                  <option [ngValue]="size.id">{{ size.name }}</option>
+                  }
+                </select>
+                @if (isInvalid('employeeSizeId')) {
+                <small>Employee size is required.</small>
+                }
+              </label>
+            </div>
+          </section>
+
+          <section class="tenant-section">
+            <div class="tenant-section-title">
+              <i class="fa fa-user-shield text-[#9a0000]"></i>
+              <h2>Tenant Info</h2>
+            </div>
+
+            <div class="grid gap-x-6 gap-y-6 md:grid-cols-2">
+              <label class="tenant-field">
+                <span>First Name <b>*</b></span>
+                <input type="text" formControlName="firstName" class="form-input" placeholder="e.g. Ravi" />
+                @if (isInvalid('firstName')) {
+                <small>First name is required.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Last Name</span>
+                <input type="text" formControlName="lastName" class="form-input" placeholder="e.g. Kumar" />
+              </label>
+
+              <label class="tenant-field">
+                <span>Email Address <b>*</b></span>
+                <input type="email" formControlName="email" class="form-input" placeholder="name@example.com" />
+                @if (isInvalid('email')) {
+                <small>Enter a valid email address.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Password <b>*</b></span>
+                <input type="password" formControlName="password" class="form-input" placeholder="Create password" />
+                @if (isInvalid('password')) {
+                <small>Password is required.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Designation</span>
+                <input type="text" formControlName="designation" class="form-input" placeholder="e.g. CEO / Director" />
+              </label>
+
+              <label class="tenant-field">
+                <span>Mobile Number <b>*</b></span>
+                <input type="tel" formControlName="mobileNumber" class="form-input" placeholder="Enter mobile number" />
+                @if (isInvalid('mobileNumber')) {
+                <small>Mobile number is required.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Country <b>*</b></span>
+                <select formControlName="countryId" class="form-input">
+                  <option [ngValue]="null">Select Country</option>
+                  @for (country of countries; track country.id) {
+                  <option [ngValue]="country.id">{{ country.name }}</option>
+                  }
+                </select>
+                @if (isInvalid('countryId')) {
+                <small>Country is required.</small>
+                }
+              </label>
+
+              <label class="tenant-field">
+                <span>Address</span>
+                <textarea rows="2" formControlName="address" class="form-input" placeholder="Tenant or billing address"></textarea>
+              </label>
+            </div>
+          </section>
+        </div>
+        }
+
+        @if (currentStep === 2) {
+        <div class="space-y-5" [formGroup]="companySetupForm">
+          <div class="max-h-[520px] space-y-4 overflow-y-auto pr-1" formArrayName="companies">
+            @for (company of companies.controls; track company; let i = $index) {
+            <div
+              class="overflow-hidden rounded-md border bg-white shadow-sm dark:bg-[#0e1726]"
+              [ngClass]="companyHasVisibleError(i) ? 'border-[#9a0000] dark:border-[#9a0000]' : 'border-[#dce4ee] dark:border-[#253b5c]'"
+              [formGroupName]="i"
+            >
+              <div class="flex items-center justify-between gap-3 border-b border-[#dce4ee] bg-[#f8fafc] px-4 py-3 dark:border-[#253b5c] dark:bg-[#111c2d]">
+                <button type="button" class="flex min-w-0 items-center gap-2 text-left" (click)="toggleCompany(i)">
+                  <i class="fa fa-building text-[#9a0000]"></i>
+                  <span class="truncate text-sm font-extrabold text-[#163154] dark:text-white">{{ companyTitle(i) }}</span>
+                  @if (company.get('isPrimary')?.value) {
+                  <span class="rounded-full border border-[#f0d5d5] bg-[#fff7f7] px-2 py-0.5 text-[10px] font-extrabold text-[#9a0000]">PRIMARY</span>
+                  }
+                  @if (companyHasVisibleError(i)) {
+                  <span class="rounded-full bg-[#9a0000] px-2 py-0.5 text-[10px] font-extrabold text-white">NEEDS ATTENTION</span>
+                  }
+                </button>
+
+                <div class="flex items-center gap-3">
+                  @if (i !== 0) {
+                  <button type="button" class="text-[#8a9ab4] hover:text-[#9a0000]" title="Delete Company" (click)="deleteCompany(i)">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                  }
+                  <button type="button" class="text-[#8a9ab4] hover:text-[#163154]" (click)="toggleCompany(i)">
+                    <i class="fa fa-chevron-down transition-transform" [ngClass]="{ 'rotate-180': company.get('isOpen')?.value }"></i>
+                  </button>
+                </div>
+              </div>
+
+              @if (company.get('isOpen')?.value) {
+              <div class="grid gap-x-5 gap-y-4 p-4 md:grid-cols-2">
+                <label class="tenant-field">
+                  <span>Company Code <b>*</b></span>
+                  <input type="text" formControlName="code" class="form-input" placeholder="e.g. RKD" />
+                  @if (companyInvalid(i, 'code')) {
+                  <small>Company code is required.</small>
+                  }
+                </label>
+
+                <label class="tenant-field">
+                  <span>Company Name <b>*</b></span>
+                  <input type="text" formControlName="name" class="form-input" placeholder="e.g. RK Distributions" />
+                  @if (companyInvalid(i, 'name')) {
+                  <small>Company name is required.</small>
+                  }
+                </label>
+
+                <label class="tenant-field">
+                  <span>Trade Name</span>
+                  <input type="text" formControlName="tradeName" class="form-input" placeholder="e.g. RK Trade" />
+                </label>
+
+                <label class="tenant-field">
+                  <span>Corporate Email</span>
+                  <input type="email" formControlName="corporateEmail" class="form-input" placeholder="e.g. corp@rkdist.co" />
+                  @if (companyInvalid(i, 'corporateEmail')) {
+                  <small>Enter a valid corporate email.</small>
+                  }
+                </label>
+
+                <label class="tenant-field">
+                  <span>Tax Registration Number</span>
+                  <input type="text" formControlName="taxRegistrationNumber" class="form-input" placeholder="e.g. GSTIN91606390" />
+                </label>
+
+                <label class="tenant-field">
+                  <span>Registration Number</span>
+                  <input type="text" formControlName="registrationNumber" class="form-input" placeholder="Company registration number" />
+                </label>
+
+                <label class="tenant-field">
+                  <span>Mobile No.</span>
+                  <input type="tel" formControlName="mobileNo" class="form-input" placeholder="Company mobile number" />
+                </label>
+
+                <label class="tenant-field">
+                  <span>Website</span>
+                  <input type="url" formControlName="website" class="form-input" placeholder="https://example.com" />
+                </label>
+
+                <label class="tenant-field logo-upload-field">
+                  <span>Logo</span>
+                  <input
+                    type="file"
+                    class="sr-only"
+                    accept="image/*"
+                    (change)="onCompanyLogoChange(i, $event)"
+                  />
+                  <span class="logo-upload-box">
+                    @if (logoPreviewUrls[i]) {
+                    <img [src]="logoPreviewUrls[i]" alt="Company logo preview" />
+                    } @else {
+                    <i class="fa fa-image"></i>
+                    }
+                    <span class="logo-upload-copy">
+                      <strong>{{ companyLogoFileName(i) || 'Choose logo image' }}</strong>
+                      <small>PNG, JPG, JPEG, or WebP</small>
+                    </span>
+                  </span>
+                </label>
+
+                <label class="tenant-field">
+                  <span>Country <b>*</b></span>
+                  <select formControlName="countryId" class="form-input">
+                    <option [ngValue]="null">Select Country</option>
+                    @for (country of countries; track country.id) {
+                    <option [ngValue]="country.id">{{ country.name }}</option>
+                    }
+                  </select>
+                  @if (companyInvalid(i, 'countryId')) {
+                  <small>Country is required.</small>
+                  }
+                </label>
+
+                <label class="tenant-field">
+                  <span>Business Type</span>
+                  <select formControlName="businessTypeId" class="form-input">
+                    <option [ngValue]="null">Select Business Type</option>
+                    @for (type of businessTypes; track type.id) {
+                    <option [ngValue]="type.id">{{ type.name }}</option>
+                    }
+                  </select>
+                </label>
+
+                <label class="tenant-field">
+                  <span>Employee Size</span>
+                  <select formControlName="employeeSizeId" class="form-input">
+                    <option [ngValue]="null">Select Size Range</option>
+                    @for (size of employeeSizes; track size.id) {
+                    <option [ngValue]="size.id">{{ size.name }}</option>
+                    }
+                  </select>
+                </label>
+
+                <label class="tenant-field md:col-span-2">
+                  <span>Address</span>
+                  <textarea formControlName="address" class="form-input min-h-[82px]" placeholder="Company address"></textarea>
+                </label>
+
+                <label class="flex cursor-pointer items-center gap-3 rounded-md border border-[#f0d5d5] bg-[#fff7f7] p-3 text-xs font-bold text-[#7a1010] dark:border-[#3b2633] dark:bg-[#1b1018] dark:text-white-dark">
+                  <input
+                    type="checkbox"
+                    formControlName="isPrimary"
+                    class="form-checkbox bg-white dark:bg-black"
+                    (change)="selectPrimaryCompany(i, $any($event.target).checked)"
+                  />
+                  <span class="flex items-center gap-2">
+                    <i class="fa fa-star text-[#9a0000]"></i>
+                    Primary company
+                  </span>
+                </label>
+              </div>
+              }
+            </div>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed border-[#9a0000] px-4 py-2 text-sm font-extrabold text-[#9a0000] transition hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-[#cbd5e1] disabled:bg-[#f8fafc] disabled:text-[#8a9ab4]"
+            [disabled]="companies.length >= maxCompanies"
+            (click)="addCompany()"
+          >
+            <i class="fa" [ngClass]="companies.length >= maxCompanies ? 'fa-triangle-exclamation' : 'fa-plus-circle'"></i>
+            {{ companies.length >= maxCompanies ? 'Configured company count reached.' : 'Add Another Company (' + companies.length + ' of ' + maxCompanies + ')' }}
+          </button>
+          @if (primaryCompanyInvalid()) {
+          <p class="rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
+            Please select one primary company before continuing.
+          </p>
+          }
+          @if (companyCountInvalid()) {
+          <p class="rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
+            Please configure exactly {{ maxCompanies }} compan{{ maxCompanies === 1 ? 'y' : 'ies' }} before continuing. Currently configured:
+            {{ companies.length }}.
+          </p>
+          }
+        </div>
+        }
+
+        @if (currentStep === 3 && !registrationSubmitted) {
+        <div class="space-y-6">
+          <div class="flex gap-3 rounded-md border border-[#fde2a8] bg-[#fffbeb] p-4 text-sm text-[#7c4a03] dark:border-[#4d3613] dark:bg-[#211908] dark:text-[#f8d98a]">
+            <i class="fa fa-exclamation-triangle mt-0.5 text-lg text-[#a86400]"></i>
+            <div>
+              <p class="font-extrabold">Review and Validation Submission</p>
+              <p class="mt-1 text-xs leading-5">
+                Please evaluate all parameters prior to submittal. Registrations move to review state before account activation is sent.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid gap-5 lg:grid-cols-3">
+            <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 shadow-sm dark:border-[#253b5c] dark:bg-[#111c2d]">
+              <div class="flex items-center justify-between border-b border-[#dce4ee] pb-3 dark:border-[#253b5c]">
+                <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Tenant User</h2>
+                <button type="button" class="text-xs font-extrabold text-[#9a0000] hover:underline" (click)="goToStep(1)">Edit</button>
+              </div>
+
+              <div class="mt-4 space-y-3 text-sm text-[#516785] dark:text-white-dark">
+                <div>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Name</span>
+                  <span class="font-bold text-[#163154] dark:text-white">{{ tenantDisplayName }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Email</span>
+                  <span class="break-all font-semibold">{{ tenantForm.controls.email.value || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Country</span>
+                  <span class="font-semibold">{{ tenantCountryName }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Business Type</span>
+                    <span class="text-xs font-semibold">{{ tenantBusinessTypeName }}</span>
+                  </div>
+                  <div>
+                    <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Companies</span>
+                    <span class="text-xs font-semibold">{{ tenantForm.controls.noOfCompanies.value || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 shadow-sm dark:border-[#253b5c] dark:bg-[#111c2d] lg:col-span-2">
+              <div class="flex items-center justify-between border-b border-[#dce4ee] pb-3 dark:border-[#253b5c]">
+                <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Configured Companies</h2>
+                <button type="button" class="text-xs font-extrabold text-[#9a0000] hover:underline" (click)="goToStep(2)">Edit</button>
+              </div>
+
+              <div class="mt-4 max-h-[220px] space-y-3 overflow-y-auto pr-1">
+                @for (company of companies.controls; track company; let i = $index) {
+                <article class="rounded-md border border-[#dce4ee] bg-white p-3 text-xs dark:border-[#253b5c] dark:bg-[#0e1726]">
+                  <div class="flex flex-col gap-2 border-b border-[#eef2f6] pb-2 dark:border-[#253b5c] sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex min-w-0 items-center gap-2">
+                      <i class="fa fa-building shrink-0 text-[#9a0000]"></i>
+                      <span class="truncate font-extrabold text-[#163154] dark:text-white">{{ companyTitle(i) }}</span>
+                      @if (company.get('isPrimary')?.value) {
+                      <span class="rounded-full border border-[#f0d5d5] bg-[#fff7f7] px-2 py-0.5 text-[10px] font-extrabold text-[#9a0000]">PRIMARY</span>
+                      }
+                    </div>
+                    <span class="w-max rounded bg-[#eef2f6] px-2 py-0.5 text-[10px] font-bold text-[#607088] dark:bg-[#1b2a43] dark:text-white-dark">
+                      {{ company.get('code')?.value || 'NO CODE' }}
+                    </span>
+                  </div>
+
+                  <div class="mt-3 grid gap-3 text-[#516785] dark:text-white-dark sm:grid-cols-2">
+                    <div>
+                      <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Corp Email</span>
+                      <span class="break-all font-semibold">{{ company.get('corporateEmail')?.value || '-' }}</span>
+                    </div>
+                    <div>
+                      <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Business Type</span>
+                      <span class="font-semibold">{{ companyBusinessTypeName(i) }}</span>
+                    </div>
+                    <div>
+                      <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Employee Size</span>
+                      <span class="font-semibold">{{ companyEmployeeSizeName(i) }}</span>
+                    </div>
+                    <div>
+                      <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Mobile</span>
+                      <span class="font-semibold">{{ company.get('mobileNo')?.value || '-' }}</span>
+                    </div>
+                  </div>
+                </article>
+                }
+              </div>
+            </section>
+          </div>
+
+          <div>
+            <label
+              class="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#516785] dark:text-white-dark"
+              [ngClass]="termsTouched && !termsAccepted ? 'text-[#9a0000]' : ''"
+            >
+              <input
+                type="checkbox"
+                class="form-checkbox mt-0.5 bg-white dark:bg-black"
+                [checked]="termsAccepted"
+                (change)="acceptTerms($any($event.target).checked)"
+              />
+              <span>
+                By completing this registration process, you affirm all declared company profiles are legally owned and agree to the platform's standard SaaS Terms of Service.
+              </span>
+            </label>
+            @if (termsTouched && !termsAccepted) {
+            <p class="mt-2 text-xs font-bold text-[#9a0000]">Please accept the Terms of Service to complete registration.</p>
+            }
+            @if (submitError) {
+            <p class="mt-2 rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
+              {{ submitError }}
+            </p>
+            }
+          </div>
+        </div>
+        }
+
+        @if (registrationSubmitted) {
+        <div class="flex min-h-[390px] flex-col items-center justify-center py-8 text-center">
+          <div class="grid h-20 w-20 place-content-center rounded-full border-2 border-[#26a269] bg-[#eaf8f0] text-3xl text-[#198754] shadow-lg shadow-[#198754]/10">
+            <i class="fa fa-check-circle"></i>
+          </div>
+          <h2 class="mt-6 text-2xl font-extrabold text-[#0f2948] dark:text-white">Registration Successful!</h2>
+          <p class="mt-2 max-w-lg text-sm text-[#516785] dark:text-white-dark">
+            Your tenant and company data has been saved. Company setup will continue in the background.
+          </p>
+
+          <div class="mt-6 w-full max-w-md rounded-md border border-dashed border-[#cbd7e6] bg-[#f8fafc] p-5 text-left text-xs text-[#516785] dark:border-[#253b5c] dark:bg-[#111c2d] dark:text-white-dark">
+            <p class="leading-6">
+              Our administrators will manually verify the credentials submitted for
+              <strong class="text-[#163154] dark:text-white">{{ tenantForm.controls.companyName.value }}</strong>.
+              Once the setup process is complete, a notification email will be sent to the email address you provided.
+            </p>
+            <div class="mt-4 flex items-center justify-between border-t border-[#dce4ee] pt-4 dark:border-[#253b5c]">
+              <span class="text-[10px] font-extrabold uppercase tracking-wide text-[#8a9ab4]">Reference ID</span>
+              <span class="font-mono text-sm font-extrabold text-[#9a0000]">{{ registrationReference }}</span>
+            </div>
+          </div>
+
+          <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+            <a routerLink="/login" class="tenant-btn tenant-btn-secondary justify-center px-7">
+              <i class="fa fa-arrow-left"></i>
+              Back to Login
+            </a>
+            <button type="button" class="tenant-btn bg-[#163154] px-7 text-white hover:bg-[#07182f]" (click)="registerAnother()">
+              <i class="fa fa-rotate-right"></i>
+              Register Another Account
+            </button>
+          </div>
+        </div>
+        }
+
+        @if (!registrationSubmitted) {
+        <div class="mt-8 border-t border-[#dce4ee] pt-6 dark:border-[#253b5c]">
+          @if (submitError) {
+          <p class="mb-4 rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-sm font-bold text-[#9a0000]">
+            {{ submitError }}
+          </p>
+          }
+          <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button type="button" class="tenant-btn tenant-btn-secondary min-w-[126px] justify-center" (click)="currentStep === 1 ? cancel() : previousStep()">
+              {{ currentStep === 1 ? 'Cancel' : 'Back' }}
+            </button>
+            <button type="submit" class="tenant-btn tenant-btn-primary login-form min-w-[150px] border-0" [disabled]="isSubmitting">
+              {{ submitButtonLabel }}
+              <i class="fa" [ngClass]="isSubmitting ? 'fa-spinner fa-spin' : currentStep === steps.length ? 'fa-cloud-upload-alt' : 'fa-arrow-right'"></i>
+            </button>
+          </div>
+        </div>
+        }
+      </form>
+    </div>
+  </div>
+</section>

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -13,7 +13,7 @@ export class ProfileApiService {
   private get apiUrl() {
     return localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   }
-  constructor(private http: HttpClient, private cryptoHttp: CryptoHttpService) {}
+  constructor(private http: HttpClient, private cryptoHttp: CryptoHttpService) { }
 
   getUserProfile(): Observable<any> {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.getallprofile}`);
@@ -46,5 +46,9 @@ export class ProfileApiService {
 
   resetPasswordMail(data: any): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.resetpasswordEmail}`, data);
+  }
+
+  validateDateRange(data: any): Observable<any> {
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.validate_date_range}`, data);
   }
 }
