@@ -286,7 +286,7 @@ export class ApprovalWorkflowComponent implements OnInit {
       ],
       select_columns: [
         [
-          'master_approval_workflow_line_items.id, master_approval_workflow_line_items.type, master_approval_workflow_line_items.default_query, master_approval_workflow_line_items.field_name, master_approval_workflow_line_items.display_name, master_approval_workflow_line_items.field_type_id, master_approval_workflow_line_items.enum_values, master_approval_workflow_line_items.order_no, master_approval_workflow_line_items.approve_query_information, master_approval_workflow_line_items.reject_query_information',
+          'master_approval_workflow_line_items.id, master_approval_workflow_line_items.type, master_approval_workflow_line_items.default_query, master_approval_workflow_line_items.field_name, master_approval_workflow_line_items.display_name, master_approval_workflow_line_items.field_type_id, master_approval_workflow_line_items.enum_values, master_approval_workflow_line_items.order_no, master_approval_workflow_line_items.approve_query_information, master_approval_workflow_line_items.reject_query_information, master_approval_workflow_line_items.is_searchable',
         ],
       ],
     };
@@ -297,7 +297,7 @@ export class ApprovalWorkflowComponent implements OnInit {
           const records = res.data.records || [];
 
           this.moduleRuleOptions = records
-            .filter((item: any) => !this.isApproveQueryLineItem(item) && !this.isRejectQueryLineItem(item))
+            .filter((item: any) => !this.isApproveQueryLineItem(item) && !this.isRejectQueryLineItem(item) && this.normalizeBoolean(item?.is_searchable))
             .map((item: any) => ({
               ...item,
               table_name: selectedTableName,
@@ -339,6 +339,10 @@ export class ApprovalWorkflowComponent implements OnInit {
 
   private isRejectQueryLineItem(item: any): boolean {
     return String(item?.type || '') === 'reject_query';
+  }
+
+  private normalizeBoolean(value: any): boolean {
+    return value === true || value === 'true' || value === 1 || value === '1';
   }
 
   private normalizeTextArray(value: any): string[] {
@@ -854,6 +858,7 @@ export class ApprovalWorkflowComponent implements OnInit {
         approve_query_information: [[]],
         reject_query_information: [[]],
         accordion: [false],
+        templatesExpanded: [false],
         user_list: [null],
         role_list: [null],
         tag_list: [null],
@@ -885,6 +890,10 @@ export class ApprovalWorkflowComponent implements OnInit {
     levelsArray.removeAt(event.previousIndex);
     levelsArray.insert(event.currentIndex, movedControl);
     levelsArray.controls.forEach((ctrl, i) => ctrl.patchValue({ approver_order_no: i + 1 }));
+  }
+
+  toggleTemplatesSection(group: FormGroup) {
+    group.get('templatesExpanded')?.setValue(!group.get('templatesExpanded')?.value);
   }
 
   toggleAccordion(group: FormGroup) {
@@ -1400,6 +1409,7 @@ export class ApprovalWorkflowComponent implements OnInit {
                     approve_query_information: [this.normalizeTextArray(each.approve_query_information)],
                     reject_query_information: [this.normalizeTextArray(each.reject_query_information)],
                     accordion: [false],
+                    templatesExpanded: [false],
                     user_list: [null],
                     role_list: [null],
                     tag_list: [null],

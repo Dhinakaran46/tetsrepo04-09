@@ -535,6 +535,15 @@
             </div>
 
             <!-- Row 2: Email / Whatsapp / Query templates -->
+            <button
+              type="button"
+              class="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+              (click)="toggleTemplatesSection(levelGroup)"
+            >
+              <i class="fa-solid fa-chevron-down transition-transform" [ngClass]="{ '-rotate-90': !levelGroup.get('templatesExpanded')?.value }"></i>
+              Email / WhatsApp / Query Templates
+            </button>
+            @if (levelGroup.get('templatesExpanded')?.value) {
             <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
               <div>
                 <label class="mb-2 block font-medium" appDynamicFontSize="body">Accept Email Template</label>
@@ -625,6 +634,7 @@
                 ></ng-select>
               </div>
             </div>
+            }
           </div>
         </div>
       </div>

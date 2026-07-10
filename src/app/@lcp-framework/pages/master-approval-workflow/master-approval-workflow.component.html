@@ -250,7 +250,7 @@
           <thead>
             <tr>
               <th class="w-1/12">{{ 'table_action' | translate }}</th>
-              <th class="required-mark w-1/12">Type</th>
+              <th class="required-mark w-2/12">Type</th>
               <th class="required-mark w-2/12">{{ 'table_field_name' | translate }}</th>
               <th class="required-mark w-2/12">{{ 'table_display_name' | translate }}</th>
               <th class="required-mark w-1/12">{{ 'table_order_no' | translate }}</th>
@@ -516,6 +516,7 @@
           </div>
           }
           <!-- Field Type -->
+          @if (!isEditItemQuery()) {
           <div>
             <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_field_type' | translate }}</label>
             <select
@@ -530,7 +531,7 @@
               }
             </select>
           </div>
-          @if (!isEditItemQuery()) {
+          } @if (!isEditItemQuery()) {
           <div class="md:col-span-2">
             <label class="mb-2 block font-medium" appDynamicFontSize="body">{{ 'table_enum_values' | translate }}</label>
             <div class="modal-editor-container">

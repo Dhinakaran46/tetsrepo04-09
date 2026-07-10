@@ -49,7 +49,7 @@ export function viewMandatoryValidator(): ValidatorFn {
   ],
 })
 export class MasterApprovalWorkflowComponent implements OnInit {
-  readonly approvalWorkflowEntityNamePrefix = 'approval_workflow';
+  readonly approvalWorkflowEntityNamePrefix = 'master_approval_workflow';
   readonly lineItemTypeLineItem = 'line_item';
   readonly lineItemTypeApproveQuery = 'approve_query';
   readonly lineItemTypeRejectQuery = 'reject_query';
@@ -1854,7 +1854,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
       select_columns: [
         ['master_approval_workflows.*'],
         [
-          "CASE WHEN COUNT(master_approval_workflow_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_approval_workflow_line_items.id,'type', master_approval_workflow_line_items.type,'default_query', master_approval_workflow_line_items.default_query,'field_name', master_approval_workflow_line_items.field_name,'display_name', master_approval_workflow_line_items.display_name,'order_no', master_approval_workflow_line_items.order_no,'is_searchable', master_approval_workflow_line_items.is_searchable,'field_type_id', master_approval_workflow_line_items.field_type_id,'approve_query_information', master_approval_workflow_line_items.approve_query_information, 'reject_query_information', master_approval_workflow_line_items.reject_query_information))) END",
+          "CASE WHEN COUNT(master_approval_workflow_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_approval_workflow_line_items.id,'type', master_approval_workflow_line_items.type,'default_query', master_approval_workflow_line_items.default_query,'field_name', master_approval_workflow_line_items.field_name,'display_name', master_approval_workflow_line_items.display_name,'order_no', master_approval_workflow_line_items.order_no,'is_searchable', master_approval_workflow_line_items.is_searchable,'field_type_id', master_approval_workflow_line_items.field_type_id,'enum_values', master_approval_workflow_line_items.enum_values,'approve_query_information', master_approval_workflow_line_items.approve_query_information, 'reject_query_information', master_approval_workflow_line_items.reject_query_information))) END",
           'items',
         ],
       ],
@@ -1964,6 +1964,9 @@ export class MasterApprovalWorkflowComponent implements OnInit {
           order_no: control.value.orderNo,
           is_searchable: isQueryLineItem ? false : control.value.isSearchable,
           field_type_id: isQueryLineItem ? this.commonConfig.field_types[0]?.value : control.value.fieldType,
+          enum_values: isQueryLineItem
+            ? null
+            : this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
           approve_query_information: isApproveQuery
             ? this.prepareTextArray(
                 control.value.approveQueryInformation,
@@ -2026,6 +2029,9 @@ export class MasterApprovalWorkflowComponent implements OnInit {
           order_no: control.value.orderNo,
           is_searchable: isQueryLineItem ? false : control.value.isSearchable,
           field_type_id: isQueryLineItem ? this.commonConfig.field_types[0]?.value : control.value.fieldType,
+          enum_values: isQueryLineItem
+            ? null
+            : this.prepareOptionalJSON(control.value.enumValues, false, `Enum Values for ${control.value.displayName || control.value.fieldName}`),
           approve_query_information: isApproveQuery
             ? this.prepareTextArray(
                 control.value.approveQueryInformation,
