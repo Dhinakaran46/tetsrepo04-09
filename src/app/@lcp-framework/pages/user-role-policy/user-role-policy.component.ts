@@ -29,11 +29,7 @@ interface IUserPolicy {
 @Component({
   selector: 'app-user-role-policy',
   standalone: true,
-  imports: [
-    CommonSharedModule,
-    ReactiveFormsModule,
-    ClientDatatableComponent,
-  ],
+  imports: [CommonSharedModule, ReactiveFormsModule, ClientDatatableComponent],
   templateUrl: './user-role-policy.component.html',
   styleUrl: './user-role-policy.component.scss',
   providers: [DatePipe],
@@ -107,7 +103,6 @@ export class UserRolePolicyComponent {
   }
 
   mapPolicies() {
-
     if (this.mappingForm.invalid) {
       const key = 'please_select_all_the_required_fields';
       const errorMessage = this.translate.instant(key);
@@ -162,6 +157,7 @@ export class UserRolePolicyComponent {
         'policies.id',
         'updated_user.first_name',
         'updated_user.last_name',
+        'updated_user.full_name',
         ...(role_id && ['role_policies.role_id']),
         ...(user_id && ['user_policies.user_id']),
       ],
@@ -412,6 +408,3 @@ export class UserRolePolicyComponent {
     this.onPolicyDataChange(items);
   }
 }
-
-
-
