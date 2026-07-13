@@ -284,6 +284,18 @@ export class MasterListComponent implements OnChanges {
     return this.tableLevel > 0 ? Math.max(10, resolvedValue) : resolvedValue;
   }
 
+  private normalizeFieldTypeId(value: any): number {
+    const numericValue = Number(value);
+    const seedCount = commonConfig.field_types?.length || 11;
+    if (!Number.isInteger(numericValue) || numericValue <= 0) return 1;
+    return ((numericValue - 1) % seedCount) + 1;
+  }
+
+  private getCurrentCompanyId(): number {
+    const userData = this.user_info || {};
+    return Number(userData?.company?.id || userData?.main?.company_id || this.listQuery?.company_id || this.masterInfo?.ListQuery?.company_id || 0);
+  }
+
   private parsePasswordValidationRegexp(pattern: string): RegExp {
     // Accept both plain regex strings and slash-delimited strings (/.../flags).
     const literalMatch = pattern.match(/^\/(.*)\/([a-z]*)$/i);
@@ -1839,7 +1851,8 @@ export class MasterListComponent implements OnChanges {
       const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
       if (!entitySlug) return false;
 
-      return configurations.some((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
+      const companyId = this.getCurrentCompanyId();
+      return configurations.some((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug && Number(item?.company_id || 0) === companyId);
     } catch {
       return false;
     }
@@ -1854,6 +1867,7 @@ export class MasterListComponent implements OnChanges {
       const entitySlug = String(this.listQuery?.entity_name || this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || '');
       if (!entitySlug) return null;
 
+      const companyId = this.getCurrentCompanyId();
       const tempState = this.getTempViewStateForEntity(entitySlug);
 
       if (!isSaveFilterEnabled) {
@@ -1865,7 +1879,9 @@ export class MasterListComponent implements OnChanges {
       const configurations = Array.isArray(userData?.main?.user_search_configurations) ? userData.main.user_search_configurations : [];
       if (!configurations.length) return tempState;
 
-      const entityViews = configurations.filter((item: any) => String(item?.entity_slug || item?.key || '') === entitySlug);
+      const entityViews = configurations.filter(
+        (item: any) => String(item?.entity_slug || item?.key || '') === entitySlug && Number(item?.company_id || 0) === companyId
+      );
       if (!entityViews.length) return tempState;
 
       const selectedView = entityViews.find((item: any) => !!item?.is_default) || entityViews[0];
@@ -1893,7 +1909,8 @@ export class MasterListComponent implements OnChanges {
     const parsedTemp = typeof rawTemp === 'string' ? this.parseSavedViewState(rawTemp) : rawTemp;
     if (!Array.isArray(parsedTemp)) return null;
 
-    return parsedTemp.find((item: any) => String(item?.entity_slug || '') === entitySlug && !!item?.localstoreOnly) || null;
+    const companyId = this.getCurrentCompanyId();
+    return parsedTemp.find((item: any) => String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId && !!item?.localstoreOnly) || null;
   }
 
   private getTempViewStateForEntity(entitySlug: string): any | null {
@@ -1983,8 +2000,10 @@ export class MasterListComponent implements OnChanges {
   }
 
   private getInputTypeForSavedFilter(columnName: string): string {
-    const fieldTypeId = this.selectcolumns.find((column: any) => String(column?.field || column?.field_name || '') === String(columnName || ''))?.field_type_id;
-    switch (Number(fieldTypeId)) {
+    const fieldTypeId = this.normalizeFieldTypeId(
+      this.selectcolumns.find((column: any) => String(column?.field || column?.field_name || '') === String(columnName || ''))?.field_type_id
+    );
+    switch (fieldTypeId) {
       case 5:
       case 10:
         return 'date';
@@ -2042,7 +2061,10 @@ export class MasterListComponent implements OnChanges {
 
     const selectableWhereColumns = Array.isArray(this.selectcolumns)
       ? this.selectcolumns
-          .filter((column: any) => column?.searchable && Number(column?.field_type_id) >= 3 && Number(column?.field_type_id) <= 4)
+          .filter((column: any) => {
+            const fieldTypeId = this.normalizeFieldTypeId(column?.field_type_id);
+            return column?.searchable && fieldTypeId >= 3 && fieldTypeId <= 4;
+          })
           .map((column: any) => String(column?.field || column?.field_name || ''))
           .filter(Boolean)
       : [];

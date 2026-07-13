@@ -317,7 +317,7 @@ export class MenuLoadService {
         {
           table_name: 'menu',
           join_type: 'INNER',
-          join_condition: 'menu.id = menu_items.menu_id AND menu.company_id = menu_items.company_id',
+          join_condition: 'menu.id = menu_items.menu_id',
         },
         {
           table_name: 'master_entities',
@@ -333,7 +333,7 @@ export class MenuLoadService {
       search_all: [
         { column_name: 'menu_items.status_id', operator: '=', value: '1' },
         { column_name: 'menu.slug', operator: 'IN', value: this.menu_slug },
-        { column_name: 'menu.company_id', operator: '=', value: companyId },
+        { column_name: 'menu_items.company_id', operator: '=', value: companyId },
       ],
     };
 

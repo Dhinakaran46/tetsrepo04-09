@@ -989,7 +989,7 @@
                       class="form-select w-full"
                       [ngClass]="{ 'is-invalid': isItemFieldInvalid(i, 'isGridColumn') }"
                     >
-                      <option value selected disabled>{{ 'select_any' | translate }}</option>
+                      <option [ngValue]="null" disabled>{{ 'select_any' | translate }}</option>
                       <option value="true">{{ 'yes' | translate }}</option>
                       <option value="false">{{ 'no' | translate }}</option>
                     </select>
@@ -1071,7 +1071,7 @@
                     >
                       <option value selected disabled>{{ 'select_any' | translate }}</option>
                       @for (fieldType of field_types; track fieldType.value) {
-                      <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
+                      <option [ngValue]="fieldType.value">{{ fieldType.label | translate }}</option>
                       }
                     </select>
                     @if (isItemFieldInvalid(i, 'fieldType')) {
@@ -1329,7 +1329,7 @@
               class="form-select w-full"
               [ngClass]="{ 'is-invalid': isEditFieldInvalid('isGridColumn') }"
             >
-              <option value disabled>{{ 'select_any' | translate }}</option>
+              <option [ngValue]="null" disabled>{{ 'select_any' | translate }}</option>
               <option value="true">{{ 'yes' | translate }}</option>
               <option value="false">{{ 'no' | translate }}</option>
             </select>
@@ -1387,7 +1387,7 @@
             >
               <option value disabled>{{ 'select_any' | translate }}</option>
               @for (fieldType of field_types; track fieldType.value) {
-              <option [value]="fieldType.value">{{ fieldType.label | translate }}</option>
+              <option [ngValue]="fieldType.value">{{ fieldType.label | translate }}</option>
               }
             </select>
           </div>

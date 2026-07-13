@@ -88,6 +88,10 @@ export class UserRolePermissionComponent {
     this.resetComponent();
   }
 
+  private getActiveCompanyId(): number {
+    return Number(this.user_info?.company?.id || this.user_info?.main?.company_id || 1);
+  }
+
   resetComponent() {
     this.mappingForm.reset({
       permission_type: 'user',
@@ -156,7 +160,7 @@ export class UserRolePermissionComponent {
     const role_id = this.mappingForm.get('role')?.value || 0;
 
     const params = {
-      company_id: 1,
+      company_id: this.getActiveCompanyId(),
       primary_table: 'wizard_group',
       sort_columns: [['wizard_group.id', 'asc']],
       limit_range: 1000,
@@ -635,7 +639,7 @@ export class UserRolePermissionComponent {
 
   getActionTypes() {
     const param: any = {
-      company_id: 1,
+      company_id: this.getActiveCompanyId(),
       print_query: false,
       primary_table: 'action_types',
       start_index: 0,
@@ -723,7 +727,7 @@ export class UserRolePermissionComponent {
 
   getRoleList() {
     const param: any = {
-      company_id: 1,
+      company_id: this.getActiveCompanyId(),
       print_query: false,
       primary_table: 'roles',
       start_index: 0,
@@ -762,7 +766,7 @@ export class UserRolePermissionComponent {
 
   getUserList() {
     const param: any = {
-      company_id: 1,
+      company_id: this.getActiveCompanyId(),
       print_query: false,
       primary_table: 'user_information',
       start_index: 0,

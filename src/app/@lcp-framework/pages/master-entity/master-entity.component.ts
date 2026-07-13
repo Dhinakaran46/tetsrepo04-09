@@ -1500,6 +1500,27 @@ export class MasterEntityComponent implements OnInit {
       });
   }
 
+  private parseJsonSafe(value: any, fallback: any = null): any {
+    if (!value) return fallback;
+    if (typeof value === 'object') return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+
+  private getDefaultFieldTypeId(): number {
+    return Number(this.field_types?.[0]?.value || this.commonConfig.field_types[0].value);
+  }
+
+  private normalizeFieldTypeId(value: any): number | null {
+    const numericValue = Number(value);
+    const seedCount = this.commonConfig.field_types.length;
+    if (!Number.isInteger(numericValue) || numericValue <= 0) return null;
+    return ((numericValue - 1) % seedCount) + 1;
+  }
+
   titleChange() {
     const title = this.editTitle ? 'title_edit_entity' : 'title_add_entity';
     const translateTitle = this.translate.instant(title);
@@ -1763,7 +1784,7 @@ export class MasterEntityComponent implements OnInit {
       isSearchable: ['true', Validators.required],
       clauseType: ['where', Validators.required],
       isSortable: ['true', Validators.required],
-      fieldType: [this.commonConfig.field_types[0].value, Validators.required],
+      fieldType: [this.getDefaultFieldTypeId(), Validators.required],
       linkType: ['none', Validators.required],
       linkAction: [''],
       fieldHtmlContent: [''],
@@ -1942,7 +1963,7 @@ export class MasterEntityComponent implements OnInit {
                 isSearchable: [item.is_searchable, Validators.required],
                 clauseType: [item?.clause_type || 'where', Validators.required],
                 isSortable: [item.is_sortable, Validators.required],
-                fieldType: [item.field_type_id, Validators.required],
+                fieldType: [this.normalizeFieldTypeId(item.field_type_id), Validators.required],
                 linkType: [linkType, Validators.required],
                 linkAction: [linkAction],
                 fieldHtmlContent: [item.field_html_content],
@@ -2055,7 +2076,7 @@ export class MasterEntityComponent implements OnInit {
           is_searchable: control.value.isSearchable,
           clause_type: control.value.clauseType || 'where',
           is_sortable: control.value.isSortable,
-          field_type_id: control.value.fieldType,
+          field_type_id: this.normalizeFieldTypeId(control.value.fieldType),
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           link_mode,
@@ -2164,7 +2185,7 @@ export class MasterEntityComponent implements OnInit {
           is_searchable: control.value.isSearchable,
           clause_type: control.value.clauseType || 'where',
           is_sortable: control.value.isSortable,
-          field_type_id: control.value.fieldType,
+          field_type_id: this.normalizeFieldTypeId(control.value.fieldType),
           link_type: control.value.linkType,
           link_action: control.value.linkAction,
           field_html_content: control.value.fieldHtmlContent,
