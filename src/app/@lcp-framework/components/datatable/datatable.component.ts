@@ -105,6 +105,7 @@ interface GridViewState {
 
 interface UserSearchConfiguration {
   entity_slug: string;
+  company_id?: number;
   view_name?: string;
   is_default?: boolean;
   search_values: GridViewState;
@@ -113,6 +114,7 @@ interface UserSearchConfiguration {
 
 interface UserSearchConfigurationTemp {
   entity_slug: string;
+  company_id?: number;
   view_name: string;
   localstoreOnly: boolean;
   search_values: GridViewState;
@@ -337,8 +339,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   field_types = commonConfig.field_types;
   inputTypes: InputTypes = commonConfig.field_type;
   searchConditions: SearchConditions = commonConfig.search_conditions;
-  // ids of field_types rows whose field_type column is 'String' / 'BigString', loaded from the DB in ngOnInit
-  private stringFieldTypeIds: number[] = [];
+  private stringFieldTypeIds: number[] = [3, 4];
   isSchemaChunks: boolean = false;
   policyData: any = null;
 
@@ -954,25 +955,34 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.hasSavedViewConfiguration = this.getSavedViewConfiguration() !== null;
     this.refreshEntityViews();
     this.scheduleTryApplySavedView();
-    this.loadStringFieldTypeIds();
   }
 
-  private loadStringFieldTypeIds(): void {
-    const params = {
-      primary_table: 'field_types',
-      start_index: 0,
-      limit_range: 50,
-      select_columns: [['field_types.id']],
-      search_all: [{ column_name: 'field_types.field_type', operator: 'IN', value: ['String', 'BigString'] }],
-    };
+  private normalizeFieldTypeId(value: any): number {
+    const numericValue = Number(value);
+    const seedCount = this.field_types?.length || commonConfig.field_types?.length || 11;
+    if (!Number.isInteger(numericValue) || numericValue <= 0) return 1;
+    return ((numericValue - 1) % seedCount) + 1;
+  }
 
-    this.gridApiService.getListData(params).subscribe({
-      next: (response: any) => {
-        if (response?.status && response.data?.records) {
-          this.stringFieldTypeIds = response.data.records.map((record: any) => Number(record.id));
-        }
-      },
-    });
+  private normalizeColumnKey(value: any): string {
+    return String(value ?? '').trim();
+  }
+
+  private columnMatches(column: any, selectedValue: any): boolean {
+    const target = this.normalizeColumnKey(selectedValue);
+    if (!target) return false;
+
+    return [column?.field, column?.field_name, column?.column_name, column?.display_name, column?.title, column?.previewTitle, column?.header].some(
+      (candidate) => this.normalizeColumnKey(candidate) === target
+    );
+  }
+
+  private resolveFilterColumn(column: any): any {
+    return this.filteredColumns.find((col) => this.columnMatches(col, column)) || this.selectcolumns.find((col) => this.columnMatches(col, column)) || null;
+  }
+
+  private getColumnBaseFieldTypeId(column: string): number {
+    return this.normalizeFieldTypeId(this.resolveFilterColumn(column)?.field_type_id);
   }
 
   private emitInitialFetchIfNoSavedView(): void {
@@ -1019,8 +1029,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   getOperatorsForColumn(column: string): SearchCondition[] {
-    const columnData = this.filteredColumns.find((col) => col.field === column);
-    const columnType = columnData?.field_type_id;
+    const columnData = this.resolveFilterColumn(column);
+    const columnType = this.normalizeFieldTypeId(columnData?.field_type_id);
     const inputType = this.inputTypes[columnType] || 'text';
     const supportsBetween = this.supportsBetweenInputType(inputType);
     const withBetween = (ops: SearchCondition[]) => {
@@ -1035,7 +1045,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         { id: '2', label: 'Not In', value: 'not_in' },
       ];
     } else if (this.isAggregateFunction(column) && columnData?.clause_type !== 'having') {
-      return withBetween(this.searchConditions[columnType]?.filter((condition) => condition.value !== 'in' && condition.value !== 'not_in') || []);
+      return withBetween(this.searchConditions[columnType]?.filter((condition: SearchCondition) => condition.value !== 'in' && condition.value !== 'not_in') || []);
     } else {
       return withBetween(this.searchConditions[columnType] || []);
     }
@@ -1160,7 +1170,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     // const activeCondition = this.filterConditions[index];
     if (!activeCondition) return [];
 
-    const columnData = this.filteredColumns.find((col) => col.field === activeCondition.field);
+    const columnData = this.resolveFilterColumn(activeCondition.field);
     const enumObj = this.resolveEnumConfig(columnData?.enum_values);
 
     try {
@@ -1221,7 +1231,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   getInputTypeForColumn(column: string): string {
-    const columnType = this.filteredColumns.find((col) => col.field === column)?.field_type_id;
+    const columnType = this.getColumnBaseFieldTypeId(column);
     return this.inputTypes[columnType] || 'text';
   }
 
@@ -1272,8 +1282,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     // const target = event.target as HTMLSelectElement;
     // const column = target.value;
     const column = this.filterConditions[index].field; //(event.target as HTMLSelectElement).value;
-    const data = this.filteredColumns.find((col) => col.field === column);
-    const columnType = data?.field_type_id;
+    const data = this.resolveFilterColumn(column);
+    const columnType = this.normalizeFieldTypeId(data?.field_type_id);
     this.filterConditions[index].clause_type = data?.clause_type || 'where';
     const operator = data?.enum_values ? 'in' : this.searchConditions[columnType]?.[0]?.value ?? '=';
     this.filterConditions[index].operator = operator;
@@ -1303,7 +1313,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       condition.operator = selectedOperator;
     }
 
-    const data = this.filteredColumns.find((col) => col.field === selectedField);
+    const data = this.resolveFilterColumn(selectedField);
     condition.field = selectedField;
     condition.inputType = this.getInputTypeForColumn(selectedField);
     const isNoValue = this.isNoValueOperator(condition.operator);
@@ -1387,6 +1397,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         matchedColumn = {
           colSearchHide: false,
           ...selectCol,
+          field_type_id: this.normalizeFieldTypeId(selectCol.field_type_id),
           field: selectCol.field || selectCol.field_name || col.field_name || col.header,
           title: this.translate.instant(col.header) || selectCol.title || col.header,
         };
@@ -1402,7 +1413,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
           field_name: fieldId,
           display_name: col.header,
           title: this.translate.instant(col.header) || col.header,
-          field_type_id: col.field_type_id ?? 1,
+          field_type_id: this.normalizeFieldTypeId(col.field_type_id),
           clause_type: col.clause_type || 'where',
           searchable: false,
           enum_values: col.enum_values ?? null,
@@ -1492,7 +1503,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   getFilterColumnLabel(field: string): string {
-    const col = this.filteredColumns.find((column) => column.field === field);
+    const col = this.resolveFilterColumn(field);
     return col?.title || col?.previewTitle || field;
   }
 
@@ -1889,7 +1900,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       const condition = this.filterConditions[index];
       if (!condition?.isEnum || !condition.field) continue;
 
-      const columnData = this.filteredColumns.find((col) => col.field === condition.field);
+      const columnData = this.resolveFilterColumn(condition.field);
       if (!columnData) continue;
 
       const fetchedOptions = await this.getEnumValues(columnData, condition.operator);
@@ -1963,6 +1974,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
                 // colFilterHide: false,
                 colSearchHide: false,
                 ...col,
+                field_type_id: this.normalizeFieldTypeId(col.field_type_id),
                 title: this.capitalizeFirstLetter(col.title),
               };
             } else {
@@ -1970,6 +1982,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
                 //colFilterHide: false,
                 colSearchHide: false,
                 ...col,
+                field_type_id: this.normalizeFieldTypeId(col.field_type_id),
                 title: translations[`GRIDS.${this.title}.fields.${col.title}`],
               };
             }
@@ -2002,6 +2015,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private getEntitySlug(): string {
     return String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || 'default_entity');
+  }
+
+  private getCurrentCompanyId(): number {
+    const userData = this.user_info || this.getUserDataObject();
+    return Number(userData?.company?.id || userData?.main?.company_id || this.masterInfo?.ListQuery?.company_id || 0);
+  }
+
+  private isCurrentCompanyConfig(item: any): boolean {
+    return Number(item?.company_id || 0) === this.getCurrentCompanyId();
+  }
+
+  private isCurrentEntityCompanyConfig(item: any, entitySlug: string): boolean {
+    return (item?.entity_slug || item?.key) === entitySlug && this.isCurrentCompanyConfig(item);
   }
 
   private parseJsonSafe(value: any, fallback: any = null): any {
@@ -2057,7 +2083,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private getTempConfigurationForEntity(entitySlug: string): UserSearchConfigurationTemp | null {
     if (!this.save_grid_latest_state) return null;
     const tempConfigs = this.getUserSearchConfigurationsTemp();
-    return tempConfigs.find((item: any) => String(item?.entity_slug || '') === entitySlug) || null;
+    const companyId = this.getCurrentCompanyId();
+    return tempConfigs.find((item: any) => String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId) || null;
   }
 
   private getTempGridStateForCurrentGrid(): GridViewState | null {
@@ -2102,9 +2129,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       return;
     }
 
-    const tempConfigs = this.getUserSearchConfigurationsTemp().filter((item: any) => String(item?.entity_slug || '') !== entitySlug);
+    const companyId = this.getCurrentCompanyId();
+    const tempConfigs = this.getUserSearchConfigurationsTemp().filter(
+      (item: any) => !(String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId)
+    );
     tempConfigs.push({
       entity_slug: entitySlug,
+      company_id: companyId,
       view_name: String(viewName || this.NO_FILTER_VIEW_NAME),
       localstoreOnly: true,
       search_values: searchValues,
@@ -2116,20 +2147,24 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private clearTempConfigurationForEntity(entitySlug: string): void {
     if (!this.save_grid_latest_state) return;
     const tempConfigs = this.getUserSearchConfigurationsTemp();
-    const nextTempConfigs = tempConfigs.filter((item: any) => String(item?.entity_slug || '') !== entitySlug);
+    const companyId = this.getCurrentCompanyId();
+    const nextTempConfigs = tempConfigs.filter(
+      (item: any) => !(String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId)
+    );
     if (nextTempConfigs.length === tempConfigs.length) return;
     this.setUserSearchConfigurationsTemp(nextTempConfigs);
   }
 
   private getEntityViews(): UserSearchConfiguration[] {
     const entitySlug = this.getEntitySlug();
-    return this.getUserSearchConfigurations().filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+    return this.getUserSearchConfigurations().filter((item: any) => this.isCurrentEntityCompanyConfig(item, entitySlug));
   }
 
   private getConsolidatedEntityViews(entitySlug: string, persistedViews: UserSearchConfiguration[]): UserSearchConfiguration[] {
     const normalizedViews = persistedViews.map((item: any) => ({
       ...item,
       entity_slug: entitySlug,
+      company_id: this.getCurrentCompanyId(),
       view_name: String(item?.view_name || 'Default View'),
     }));
 
@@ -2161,11 +2196,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private refreshEntityViews(): void {
     const entitySlug = this.getEntitySlug();
     const allConfigs = this.getUserSearchConfigurations();
-    const currentEntityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug) as UserSearchConfiguration[];
+    const currentEntityViews = allConfigs.filter((item: any) => this.isCurrentEntityCompanyConfig(item, entitySlug)) as UserSearchConfiguration[];
     const syncedViews = this.syncNoFilterViewForEntity(currentEntityViews);
 
     if (syncedViews.changed) {
-      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      const otherConfigs = allConfigs.filter((item: any) => !this.isCurrentEntityCompanyConfig(item, entitySlug));
       this.setUserSearchConfigurations([...otherConfigs, ...syncedViews.views]);
       if (syncedViews.views.length > 0) {
         this.persistSavedViewsToDatabase(entitySlug, syncedViews.views);
@@ -2363,7 +2398,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const normalizedFilters: Array<FilterCondition> = (state.appliedFilterConditions || []).map((condition: any) => {
       const field = condition.field || '';
       const operator = this.normalizeSavedOperator(condition.operator, condition.value);
-      const columnData = this.filteredColumns.find((col) => col.field === field);
+      const columnData = this.resolveFilterColumn(field);
       const isEnum = this.isEnumValue(columnData, operator);
       const enumObj = this.resolveEnumConfig(columnData?.enum_values);
       const rawEnumValues = Array.isArray(condition.enum_values) ? [...condition.enum_values] : [];
@@ -2881,13 +2916,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       this.saveTempConfigurationForEntity(entitySlug, selectedViewName, this.buildCurrentGridViewState());
 
       const allConfigs = this.getUserSearchConfigurations();
-      const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+      const entityViews = allConfigs.filter((item: any) => this.isCurrentEntityCompanyConfig(item, entitySlug));
       if (entityViews.length === 0) return;
 
-      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      const otherConfigs = allConfigs.filter((item: any) => !this.isCurrentEntityCompanyConfig(item, entitySlug));
       const nextEntityViews = entityViews.map((item: any) => ({
         ...item,
         entity_slug: entitySlug,
+        company_id: this.getCurrentCompanyId(),
         view_name: String(item?.view_name || 'Default View'),
         is_default: this.isNoFilterViewName(String(item?.view_name || 'Default View')),
       }));
@@ -2901,8 +2937,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     }
 
     const allConfigs = this.getUserSearchConfigurations();
-    const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
-    const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+    const entityViews = allConfigs.filter((item: any) => this.isCurrentEntityCompanyConfig(item, entitySlug));
+    const otherConfigs = allConfigs.filter((item: any) => !this.isCurrentEntityCompanyConfig(item, entitySlug));
     const searchValues = this.buildCurrentGridViewState();
     const updatedAt = new Date().toISOString();
 
@@ -2913,6 +2949,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       return {
         ...item,
         entity_slug: entitySlug,
+        company_id: this.getCurrentCompanyId(),
         view_name: currentName,
         is_default: isSelected,
         search_values: isSelected ? searchValues : item?.search_values,
@@ -2966,13 +3003,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const allConfigs = this.getUserSearchConfigurations();
 
     const nextConfigs = allConfigs.map((item: any) => {
-      const sameEntity = (item?.entity_slug || item?.key) === entity_slug;
+      const sameEntity = this.isCurrentEntityCompanyConfig(item, entity_slug);
       const sameName = String(item?.view_name || 'Default View') === selectedName;
       if (!sameEntity || !sameName) return item;
 
       return {
         ...item,
         entity_slug,
+        company_id: this.getCurrentCompanyId(),
         view_name: selectedName,
         is_default: !!item?.is_default,
         search_values,
@@ -2980,7 +3018,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       };
     });
 
-    const entityViews = nextConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug) as UserSearchConfiguration[];
+    const entityViews = nextConfigs.filter((item: any) => this.isCurrentEntityCompanyConfig(item, entity_slug)) as UserSearchConfiguration[];
     this.setUserSearchConfigurations(nextConfigs as UserSearchConfiguration[]);
     this.persistSavedViewsToDatabase(entity_slug, entityViews);
     this.clearTempConfigurationForEntity(entity_slug);
@@ -3100,8 +3138,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     const search_values = this.isEditingNoFilterView ? this.buildNoFilterGridViewState() : this.buildCurrentGridViewState();
     const allConfigs = this.getUserSearchConfigurations();
-    const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entity_slug);
-    const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entity_slug);
+    const entityViews = allConfigs.filter((item: any) => this.isCurrentEntityCompanyConfig(item, entity_slug));
+    const otherConfigs = allConfigs.filter((item: any) => !this.isCurrentEntityCompanyConfig(item, entity_slug));
 
     const lowerName = name.toLowerCase();
     const duplicate = entityViews.find(
@@ -3123,6 +3161,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
           return {
             ...item,
             entity_slug,
+            company_id: this.getCurrentCompanyId(),
             view_name: currentName,
             is_default: this.viewFormSetAsDefault ? false : !!item?.is_default,
           };
@@ -3131,6 +3170,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         return {
           ...item,
           entity_slug,
+          company_id: this.getCurrentCompanyId(),
           view_name: name,
           is_default: this.viewFormSetAsDefault,
           search_values: this.isEditingNoFilterView ? this.buildNoFilterGridViewState() : search_values,
@@ -3142,11 +3182,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         ...entityViews.map((item: any) => ({
           ...item,
           entity_slug,
+          company_id: this.getCurrentCompanyId(),
           view_name: String(item?.view_name || 'Default View'),
           is_default: this.viewFormSetAsDefault ? false : !!item?.is_default,
         })),
         {
           entity_slug,
+          company_id: this.getCurrentCompanyId(),
           view_name: name,
           is_default: this.viewFormSetAsDefault,
           search_values,
@@ -3236,7 +3278,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const entitySlug = this.getEntitySlug();
     const allConfigs = this.getUserSearchConfigurations();
     const targetView = allConfigs.find(
-      (item: any) => (item?.entity_slug || item?.key) === entitySlug && String(item?.view_name || 'Default View') === selectedName
+      (item: any) => this.isCurrentEntityCompanyConfig(item, entitySlug) && String(item?.view_name || 'Default View') === selectedName
     );
     if (!targetView) return;
 
@@ -3252,14 +3294,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       if (!result.isConfirmed && !result.value) return;
 
       const allConfigs = this.getUserSearchConfigurations();
-      const entityViews = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) === entitySlug);
+      const entityViews = allConfigs.filter((item: any) => this.isCurrentEntityCompanyConfig(item, entitySlug));
       const remainingEntityViews = entityViews.filter((item: any) => String(item?.view_name || 'Default View') !== selectedName);
 
       if (targetView.is_default && remainingEntityViews.length > 0) {
         remainingEntityViews[0].is_default = true;
       }
 
-      const otherConfigs = allConfigs.filter((item: any) => (item?.entity_slug || item?.key) !== entitySlug);
+      const otherConfigs = allConfigs.filter((item: any) => !this.isCurrentEntityCompanyConfig(item, entitySlug));
       this.setUserSearchConfigurations([...otherConfigs, ...remainingEntityViews]);
 
       if (remainingEntityViews.length > 0) {
@@ -3342,12 +3384,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.upsert_saved_view_json_schema.conditions['table1'] = [
       {
         user_id: userId,
+        company_id: this.getCurrentCompanyId(),
         entity_slug: entitySlug,
       },
     ];
 
     this.upsert_saved_view_json_schema.data['table2'] = views.map((view: UserSearchConfiguration) => ({
       user_id: userId,
+      company_id: this.getCurrentCompanyId(),
       entity_slug: entitySlug,
       view_name: String(view?.view_name || 'Default View'),
       is_default: !!view?.is_default,
@@ -3385,6 +3429,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.delete_saved_view_json_schema.conditions['table1'] = [
       {
         user_id: userId,
+        company_id: this.getCurrentCompanyId(),
         entity_slug: entitySlug,
       },
     ];
@@ -3570,12 +3615,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private buildCommonSearchPayload(searchValue: string) {
     let hereColumns = [...this.filteredColumns];
     const items = this.stringFieldTypeIds;
-    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+    hereColumns = hereColumns.filter((item) => items.includes(this.normalizeFieldTypeId(item.field_type_id)));
 
-    const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
+    const selectedSearchColumns = (this.selectedColumns || []).filter((item: any) =>
+      items.includes(this.normalizeFieldTypeId(item.field_type_id))
+    );
+    const whereSource = selectedSearchColumns.length ? selectedSearchColumns : hereColumns;
 
     const whereData = whereSource
-      .filter((key: any) => key.clause_type === 'where')
+      .filter((key: any) => (key.clause_type || 'where') === 'where')
       .map((key: any) => {
         return {
           column_name: key.field,
@@ -3599,12 +3647,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private buildCommonSearchPayloadLabelPurpose(searchValue: string) {
     let hereColumns = [...this.filteredColumns];
     const items = this.stringFieldTypeIds;
-    hereColumns = hereColumns.filter((item) => items.includes(item.field_type_id));
+    hereColumns = hereColumns.filter((item) => items.includes(this.normalizeFieldTypeId(item.field_type_id)));
 
-    const whereSource = this.selectedColumns.length > 0 ? this.selectedColumns : hereColumns;
+    const selectedSearchColumns = (this.selectedColumns || []).filter((item: any) =>
+      items.includes(this.normalizeFieldTypeId(item.field_type_id))
+    );
+    const whereSource = selectedSearchColumns.length ? selectedSearchColumns : hereColumns;
 
     const whereData = whereSource
-      .filter((key: any) => key.clause_type === 'where')
+      .filter((key: any) => (key.clause_type || 'where') === 'where')
       .map((key: any) => {
         return {
           column_name: key.field,
@@ -3630,7 +3681,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const sourceColumns = this.selectedColumns.length > 0 ? this.selectedColumns : this.filteredColumns;
 
     return (sourceColumns || [])
-      .filter((column: any) => this.stringFieldTypeIds.includes(Number(column?.field_type_id)))
+      .filter((column: any) => this.stringFieldTypeIds.includes(this.normalizeFieldTypeId(column?.field_type_id)))
       .filter(
         (column: any, index: number, allColumns: any[]) =>
           index === allColumns.findIndex((entry: any) => String(entry?.field || '') === String(column?.field || ''))

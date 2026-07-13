@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { catchError, map, of } from 'rxjs';
 import { GridApiService } from '../../service/common/grid.service';
+import { LocalStorageService } from '../../service/common/local-storage.service';
 
 export interface TransferBoxFilterOption {
   value: number | string;
@@ -87,7 +88,7 @@ export class TransferBoxFilterComponent implements OnInit, OnChanges {
   draftValues: Record<string, Array<number | string>> = {};
   private initialized = false;
 
-  constructor(private gridApiService: GridApiService) {}
+  constructor(private gridApiService: GridApiService, private localStorageService: LocalStorageService) {}
 
   ngOnInit(): void {
     this.initialized = true;
@@ -319,9 +320,21 @@ export class TransferBoxFilterComponent implements OnInit, OnChanges {
   }
 
   private get companyId(): number {
+    const selectedCompanyId = Number(this.localStorageService.getData('selected_company_id') || 0);
+    if (selectedCompanyId) {
+      return selectedCompanyId;
+    }
+
     try {
-      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-      return userData?.main?.company_id || 1;
+      const rawUserData = this.localStorageService.getData('user_data');
+      const userData = rawUserData ? JSON.parse(rawUserData) : {};
+      return Number(
+        userData?.main?.company_id ||
+          userData?.company?.id ||
+          userData?.main?.company?.id ||
+          userData?.main?.selected_company_id ||
+          1,
+      );
     } catch {
       return 1;
     }

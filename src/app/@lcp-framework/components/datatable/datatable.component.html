@@ -217,13 +217,13 @@
                       }
                     </div>
                     <select (change)="onColumnChange($event, i)" [(ngModel)]="condition.field" class="form-select h-8 w-full text-xs">
-                      <option value selected disabled>{{ 'table_multiselect_1' | translate }}</option>
+                      <option value="" disabled>{{ 'table_multiselect_1' | translate }}</option>
                       @for (col of filteredColumns; track col.field || col.header || $index) {
                       <option [value]="col.field">{{ col.title || col.previewTitle }}</option>
                       }
                     </select>
                     <select [(ngModel)]="condition.operator" class="form-select h-8 w-full text-xs" (ngModelChange)="onOperatorChange(i)">
-                      <option value selected disabled>{{ 'condition' | translate }}</option>
+                      <option value="" disabled>{{ 'condition' | translate }}</option>
                       @for (op of condition.availableOperators; track op.value || op.label || $index) {
                       <option [value]="op.value">{{ op.label }}</option>
                       }
