@@ -325,6 +325,23 @@ export class HeaderComponent implements OnInit {
     return company?.tenant_name || company?.tenant_code || (company?.tenant_id ? `Tenant ${company.tenant_id}` : '');
   }
 
+  get groupedCompanyList(): any[] {
+    const groups = new Map<string, { key: string; label: string; companies: any[] }>();
+
+    for (const company of this.companyList) {
+      const label = this.getCompanyTenantLabel(company) || 'Other Companies';
+      const key = String(company?.tenant_id || company?.tenant_code || label).toLowerCase();
+
+      if (!groups.has(key)) {
+        groups.set(key, { key, label, companies: [] });
+      }
+
+      groups.get(key)?.companies.push(company);
+    }
+
+    return Array.from(groups.values());
+  }
+
   private getSelectedCompany(): any {
     return this.companyList.find((company: any) => Number(company.id) === Number(this.companyId));
   }

@@ -169,7 +169,8 @@ export class RouteUpdateService {
   /** Builds a Route object from a menu item + permissions */
   private buildRoute(routeData: any, routeDataArray: any[], permissionListJSON: any): Route {
     const keys = this.buildPermissionKeys(routeData.entity_name);
-    const targetPath = routeData.target.startsWith('/') ? routeData.target.slice(1) : routeData.target;
+    const rawTargetPath = routeData.target || routeData.entity_name || '';
+    const targetPath = rawTargetPath.toString().startsWith('/') ? rawTargetPath.toString().slice(1) : rawTargetPath.toString();
     const finalAllCol = this.buildSearchAllCol(routeData);
     const children = this.buildChildren(routeData, routeDataArray);
 
@@ -317,5 +318,3 @@ export class RouteUpdateService {
     }
   }
 }
-
-
