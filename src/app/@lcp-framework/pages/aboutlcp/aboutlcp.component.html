@@ -3,16 +3,7 @@
     {{ isEditMode ? ('title_edit_about_lcp' | translate) : ('title_add_about_lcp' | translate) }}
   </h2>
 
-  <div class="mt-4 grid grid-cols-3 gap-4">
-    <div>
-      <label class="required-mark mb-1 block font-medium">{{ 'type' | translate }}</label>
-      <select formControlName="type" class="form-select w-full">
-        <option value disabled selected>Select Type</option>
-        <option value="lcp">LCP</option>
-        <option value="project">Project</option>
-      </select>
-    </div>
-
+  <div class="mt-4 grid grid-cols-2 gap-4">
     <div>
       <label class="required-mark mb-1 block font-medium">{{ 'topic' | translate }}</label>
       <input type="text" formControlName="name" class="form-input w-full" />
