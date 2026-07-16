@@ -167,6 +167,16 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     return this.loginForm.controls;
   }
 
+  get showTenantRegistration(): boolean {
+    try {
+      const conf = this.localstore.getData('config');
+      const enc_config = conf ? JSON.parse(conf) : null;
+      return !!enc_config && (enc_config.enable_multitenant_registration === true || enc_config.enable_multitenant_registration === 'true');
+    } catch {
+      return false;
+    }
+  }
+
   initStore() {
     this.storeData
       .select((d) => d.index)

@@ -132,6 +132,11 @@ export class CompanySelectionComponent implements OnInit {
     this.searchTerm = '';
   }
 
+  backToLogin(): void {
+    this.localstore.clearAllExceptRememberMe();
+    this.router.navigate(['/login']);
+  }
+
   companyInitials(company: any): string {
     const source = String(company?.name || company?.code || 'C').trim();
     const words = source.split(/\s+/).filter(Boolean);

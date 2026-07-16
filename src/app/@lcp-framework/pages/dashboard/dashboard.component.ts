@@ -181,7 +181,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   companyId: any;
 
   permissionsList: any;
-  customHeaderConfig: { title: string; subtitle: string; customTemplate?: any; } | null = null;
+  customHeaderConfig: { title: string; subtitle: string; customTemplate?: any } | null = null;
 
   showMasterList = false;
   showMasterListPopup = false;
@@ -601,7 +601,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     const activeTab = this.dashboardTabs.find((tab) => tab.id === tabId);
 
     // Update displayDateRangeFilter based on both global config and the active tab's setting
-    const globalShow = this.config?.display_dashboard_daterange_filter === 'true';
+    //const globalShow = this.config?.display_dashboard_daterange_filter === 'true';
     const tabShow = activeTab
       ? activeTab.show_daterange_filter !== false &&
         activeTab.show_daterange_filter !== 'false' &&
