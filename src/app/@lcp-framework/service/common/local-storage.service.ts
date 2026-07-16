@@ -128,6 +128,21 @@ export class LocalStorageService implements OnInit {
     localStorage.removeItem(this.getScopedKey(key));
   }
 
+  public clearAllExceptRememberMe(): void {
+    const scopePrefix = this.getScopedKey('');
+    const rememberMeKey = this.getScopedKey('rememberme');
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(scopePrefix) && key !== rememberMeKey) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+  }
+
   public clearStorage(): void {
     localStorage.setItem(this.getScopedKey('logout-event'), 'logout' + Math.random());
 

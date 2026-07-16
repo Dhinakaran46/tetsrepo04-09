@@ -29,6 +29,11 @@
         </div>
         }
       </div>
+
+      <button type="button" class="back-to-login" (click)="backToLogin()">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Login
+      </button>
     </aside>
 
     <section class="company-panel">
@@ -40,13 +45,7 @@
 
         <label class="company-search">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input
-            type="search"
-            name="companySearch"
-            [(ngModel)]="searchTerm"
-            autocomplete="off"
-            placeholder="Search company or code"
-          />
+          <input type="search" name="companySearch" [(ngModel)]="searchTerm" autocomplete="off" placeholder="Search company or code" />
           @if (hasSearch) {
           <button type="button" class="search-clear" aria-label="Clear search" (click)="clearSearch()">
             <i class="fa-solid fa-xmark"></i>
@@ -56,47 +55,62 @@
       </div>
 
       <div class="company-grid">
-        @for (company of filteredCompanies; track company.id) {
-        <button
-          type="button"
-          class="company-option"
-          [class.active]="company.id === selectedCompanyId"
-          [class.current]="!isSelectionPending && company.id === currentCompanyId"
-          [disabled]="loadingCompanyId !== 0"
-          (click)="selectCompany(company)"
-        >
-          <span class="company-icon" aria-hidden="true">
-            {{ companyInitials(company) }}
-          </span>
+        @for (group of groupedFilteredCompanies; track group.tenantKey; let groupIndex = $index) {
+        <section class="tenant-group" [ngClass]="tenantGroupClass(groupIndex)">
+          <div class="tenant-group-header">
+            <div class="tenant-group-title">
+              <span class="tenant-dot" aria-hidden="true"></span>
+              <strong>{{ group.tenantLabel }}</strong>
+            </div>
+            <!--@if (group.tenantCompanyName) {
+            <span class="tenant-name-badge">{{ group.tenantCompanyName }}</span>
+          }-->
+          </div>
 
-          <span class="company-copy">
-            <span class="company-row">
-              <span class="company-name">{{ company.name }}</span>
-              @if (!isSelectionPending && company.id === currentCompanyId) {
-              <span class="company-badge">Current</span>
-              }
-              @if (company.is_primary) {
-              <span class="company-badge muted">Primary</span>
-              }
-            </span>
-            <span class="company-meta">
-              <span>{{ company.code || 'Company' }}</span>
-              @if (companyTenantLabel(company)) {
-              <span>{{ companyTenantLabel(company) }}</span>
-              }
-            </span>
-          </span>
+          <div class="tenant-company-list">
+            @for (company of group.companies; track company.id) {
+            <button
+              type="button"
+              class="company-option"
+              [class.active]="company.id === selectedCompanyId"
+              [class.current]="!isSelectionPending && company.id === currentCompanyId"
+              [disabled]="loadingCompanyId !== 0"
+              (click)="selectCompany(company)"
+            >
+              <span class="company-icon" aria-hidden="true">
+                {{ companyInitials(company) }}
+              </span>
 
-          @if (loadingCompanyId === company.id) {
-          <span class="company-spinner"></span>
-          } @else if (company.id === selectedCompanyId) {
-          <span class="company-check">
-            <i class="fa-solid fa-check"></i>
-          </span>
-          } @else {
-          <i class="fa-solid fa-arrow-right company-arrow"></i>
-          }
-        </button>
+              <span class="company-copy">
+                <span class="company-row">
+                  <span class="company-name">{{ company.name }}</span>
+                  @if (!isSelectionPending && company.id === currentCompanyId) {
+                  <span class="company-badge">Current</span>
+                  } @if (company.is_primary) {
+                  <span class="company-badge muted">Primary</span>
+                  }
+                </span>
+                <span class="company-meta">
+                  <span>{{ company.code || 'Company' }}</span>
+                  @if (companyTenantLabel(company)) {
+                  <span>{{ companyTenantLabel(company) }}</span>
+                  }
+                </span>
+              </span>
+
+              @if (loadingCompanyId === company.id) {
+              <span class="company-spinner"></span>
+              } @else if (company.id === selectedCompanyId) {
+              <span class="company-check">
+                <i class="fa-solid fa-check"></i>
+              </span>
+              } @else {
+              <i class="fa-solid fa-arrow-right company-arrow"></i>
+              }
+            </button>
+            }
+          </div>
+        </section>
         } @empty {
         <div class="empty-state">
           <i class="fa-regular fa-building"></i>

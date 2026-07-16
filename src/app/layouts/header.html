@@ -43,7 +43,7 @@
       <div class="company-dropdown dropdown relative shrink-0 lg:ltr:mr-8 xl:ltr:mr-14 2xl:ltr:mr-20 lg:rtl:ml-8 xl:rtl:ml-14 2xl:rtl:ml-20">
         <button
           type="button"
-          class="flex max-w-[190px] items-center gap-2 rounded-full bg-white-light/40 px-3 py-2 text-sm font-semibold hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
+          class="flex max-w-[300px] items-center gap-2 rounded-full bg-white-light/40 px-3.5 py-2.5 text-sm font-semibold hover:bg-white-light/90 hover:text-app-hover dark:bg-dark/40 dark:hover:bg-dark/60"
           style="
             background-color: var(--app-header-bg-color, var(--app-header-bg-color-default));
             color: var(--app-header-text-color, var(--app-header-text-color-default));
@@ -51,33 +51,38 @@
           (click)="toggleCompanyMenu($event)"
         >
           <i class="fa-regular fa-building h-5 w-5 text-center text-sm"></i>
-          <span class="hidden max-w-[120px] truncate sm:inline">{{ selectedCompanyName || 'Company' }}</span>
+          <span class="hidden max-w-[200px] truncate sm:inline">{{ selectedCompanyName || 'Company' }}</span>
           <i class="fa-solid fa-chevron-down text-[10px]"></i>
         </button>
         @if (showCompanyMenu) {
         <ul
           @toggleAnimation
-          class="company-dropdown-menu absolute top-11 grid w-[260px] gap-1 rounded-md bg-white !px-2 py-2 font-semibold text-dark shadow-lg dark:bg-[#1b2e4b] dark:text-white-dark dark:text-white-light/90 ltr:-right-14 sm:ltr:-right-2 rtl:-left-14 sm:rtl:-left-2"
+          class="company-dropdown-menu absolute top-12 grid w-[420px] gap-2 rounded-md bg-white !px-2 py-2 font-semibold text-dark shadow-lg dark:bg-[#1b2e4b] dark:text-white-dark dark:text-white-light/90 ltr:-right-14 sm:ltr:-right-2 rtl:-left-14 sm:rtl:-left-2"
         >
-          @for (company of companyList; track company.id) {
-          <li>
-            <button
-              type="button"
-              class="flex w-full items-center gap-2 rounded px-2 py-2 text-left hover:text-primary"
-              [ngClass]="{ 'bg-primary/10 text-primary': company.id == companyId }"
-              (click)="changeCompany(company)"
-            >
-              <i class="fa-regular fa-building h-5 w-5 text-center text-sm"></i>
-              <span class="min-w-0 flex-1">
-                <span class="block truncate">{{ company.name }}</span>
-                @if (getCompanyTenantLabel(company)) {
-                <span class="block truncate text-[11px] font-medium opacity-60">{{ getCompanyTenantLabel(company) }}</span>
+          @for (group of groupedCompanyList; track group.key) {
+          <li class="company-group-block">
+            <div class="company-group-label">{{ group.label }}</div>
+            <div class="company-group-list">
+              @for (company of group.companies; track company.id) {
+              <button
+                type="button"
+                class="company-menu-item"
+                [ngClass]="{ 'bg-primary/10 text-primary': company.id == companyId }"
+                (click)="changeCompany(company)"
+              >
+                <i class="fa-regular fa-building company-menu-icon"></i>
+                <span class="company-menu-copy">
+                  <span class="company-menu-name">{{ company.name }}</span>
+                  @if (getCompanyTenantLabel(company)) {
+                  <span class="company-menu-sub">{{ getCompanyTenantLabel(company) }}</span>
+                  }
+                </span>
+                @if (company.code) {
+                <span class="company-menu-code">{{ company.code }}</span>
                 }
-              </span>
-              @if (company.code) {
-              <span class="text-xs opacity-70">{{ company.code }}</span>
+              </button>
               }
-            </button>
+            </div>
           </li>
           }
         </ul>

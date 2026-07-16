@@ -140,6 +140,37 @@
   }
 }
 
+.back-to-login {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 11px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background-color 120ms ease;
+
+  i {
+    font-size: 12px;
+  }
+
+  &:hover {
+    border-color: var(--app-accent-color, #7a1114);
+    background: rgb(122 17 20 / 4%);
+    color: var(--app-accent-color, #7a1114);
+  }
+}
+
 .company-panel {
   min-width: 0;
   padding: 20px;
@@ -216,6 +247,81 @@
   gap: 10px;
   overflow: auto;
   padding-right: 4px;
+}
+
+.tenant-group {
+  --tenant-color: #0f766e;
+  border: 1px solid #dbe3ef;
+  border-left: 4px solid var(--tenant-color);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(248 250 252 / 76%), #fff);
+  padding: 10px;
+}
+
+.tenant-group.tenant-tone-1 {
+  --tenant-color: #0f766e;
+}
+
+.tenant-group.tenant-tone-2 {
+  --tenant-color: #9a3412;
+}
+
+.tenant-group.tenant-tone-3 {
+  --tenant-color: #1d4ed8;
+}
+
+.tenant-group.tenant-tone-4 {
+  --tenant-color: #be123c;
+}
+
+.tenant-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 2px 2px 6px;
+}
+
+.tenant-group-title {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 800;
+  }
+}
+
+.tenant-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--tenant-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tenant-color) 16%, transparent);
+}
+
+.tenant-name-badge {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--tenant-color) 32%, #fff);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tenant-color) 11%, #fff);
+  color: color-mix(in srgb, var(--tenant-color) 88%, #111827);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.tenant-company-list {
+  display: grid;
+  gap: 10px;
 }
 
 .company-option {
@@ -433,5 +539,10 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 5px;
+  }
+
+  .tenant-group-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

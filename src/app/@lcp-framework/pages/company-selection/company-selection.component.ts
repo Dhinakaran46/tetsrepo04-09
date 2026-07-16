@@ -42,9 +42,7 @@ export class CompanySelectionComponent implements OnInit {
     this.userInfo = this.parseJson(this.localstore.getData('user_data'), null);
     this.currentCompanyId = Number(this.userInfo?.main?.company_id || 0);
     this.companies = this.normalizeCompanies(this.userInfo?.main?.companies || this.userInfo?.companies || []);
-    this.selectedCompanyId = this.localstore.getData('company_selection_pending') === 'true' && this.companies.length > 1
-      ? 0
-      : this.currentCompanyId;
+    this.selectedCompanyId = this.localstore.getData('company_selection_pending') === 'true' && this.companies.length > 1 ? 0 : this.currentCompanyId;
 
     if (this.companies.length <= 1) {
       this.localstore.removeData('company_selection_pending');
@@ -94,6 +92,29 @@ export class CompanySelectionComponent implements OnInit {
     });
   }
 
+  get groupedFilteredCompanies(): any[] {
+    const groups = new Map<string, any>();
+
+    for (const company of this.filteredCompanies) {
+      const tenantLabel = this.companyTenantLabel(company) || 'Unassigned Tenant';
+      const tenantCompanyName = this.companyTenantCompanyName(company);
+      const tenantKey = String(company?.tenant_id || company?.tenant_code || tenantLabel).toLowerCase();
+
+      if (!groups.has(tenantKey)) {
+        groups.set(tenantKey, {
+          tenantKey,
+          tenantLabel,
+          tenantCompanyName,
+          companies: [] as any[],
+        });
+      }
+
+      groups.get(tenantKey).companies.push(company);
+    }
+
+    return Array.from(groups.values());
+  }
+
   get currentCompany(): any {
     if (this.isSelectionPending) return null;
     return this.companies.find((company: any) => company.id === this.currentCompanyId) || null;
@@ -111,6 +132,11 @@ export class CompanySelectionComponent implements OnInit {
     this.searchTerm = '';
   }
 
+  backToLogin(): void {
+    this.localstore.clearAllExceptRememberMe();
+    this.router.navigate(['/login']);
+  }
+
   companyInitials(company: any): string {
     const source = String(company?.name || company?.code || 'C').trim();
     const words = source.split(/\s+/).filter(Boolean);
@@ -119,11 +145,16 @@ export class CompanySelectionComponent implements OnInit {
   }
 
   companyTenantLabel(company: any): string {
-    return (
-      company?.tenant_name ||
-      company?.tenant_code ||
-      (company?.tenant_id ? `Tenant ${company.tenant_id}` : '')
-    );
+    return company?.tenant_name || company?.tenant_code || (company?.tenant_id ? `Tenant ${company.tenant_id}` : '');
+  }
+
+  companyTenantCompanyName(company: any): string {
+    return String(company?.tenant_company_name || company?.tenant?.company_name || company?.tenant_name || '');
+  }
+
+  tenantGroupClass(index: number): string {
+    const palette = ['tenant-tone-1', 'tenant-tone-2', 'tenant-tone-3', 'tenant-tone-4'];
+    return palette[index % palette.length];
   }
 
   private storeSwitchedUser(switchedUser: any, selectedCompany: any): void {
@@ -236,18 +267,19 @@ export class CompanySelectionComponent implements OnInit {
     this.localstore.removeData('unorgmenuList');
     this.localstore.removeData('menu_id');
 
-    this.menuLoadService.fetchConfigData(companyId, userId).pipe(
-      switchMap(() => this.menuLoadService.fetchMenuData(companyId))
-    ).subscribe({
-      next: () => {
-        this.timezoneService.reloadConfig();
-        this.routeUpdateService.addDynamicRoutes();
-        window.location.href = '/';
-      },
-      error: () => {
-        window.location.href = '/';
-      },
-    });
+    this.menuLoadService
+      .fetchConfigData(companyId, userId)
+      .pipe(switchMap(() => this.menuLoadService.fetchMenuData(companyId)))
+      .subscribe({
+        next: () => {
+          this.timezoneService.reloadConfig();
+          this.routeUpdateService.addDynamicRoutes();
+          window.location.href = '/';
+        },
+        error: () => {
+          window.location.href = '/';
+        },
+      });
   }
 
   private normalizeCompanies(companies: any[]): any[] {
@@ -261,6 +293,7 @@ export class CompanySelectionComponent implements OnInit {
         tenant_id: company?.tenant_id,
         tenant_name: company?.tenant_name || company?.tenant?.name || '',
         tenant_code: company?.tenant_code || company?.tenant?.code || '',
+        tenant_company_name: company?.tenant_company_name || company?.tenant?.company_name || '',
       }))
       .filter((company: any) => company.id);
   }

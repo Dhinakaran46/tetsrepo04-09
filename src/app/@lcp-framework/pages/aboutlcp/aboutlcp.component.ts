@@ -28,6 +28,9 @@ export class AboutlcpComponent implements OnInit {
   wordFilePath: string = '';
   isEditMode: boolean = false;
   aboutLcpId: string | null = null;
+  tableName: string = 'about_lcp';
+  basePath: string = 'about-lcp';
+  defaultType: string = 'lcp';
 
   update_json_schema: any = {
     print_query: true,
@@ -63,8 +66,14 @@ export class AboutlcpComponent implements OnInit {
     private translate: TranslateService,
     public localStorageService: LocalStorageService
   ) {
+    this.tableName = this.router.url.includes('about-app') ? 'about_app' : 'about_lcp';
+    this.update_json_schema.table = [this.tableName];
+    this.insert_json_schema.table = [this.tableName];
+    this.basePath = this.router.url.includes('about-app') ? 'about-app' : 'about-lcp';
+    this.defaultType = this.basePath === 'about-app' ? 'project' : 'lcp';
+
     this.form = this.fb.group({
-      type: ['', [Validators.required]],
+      type: [this.defaultType, [Validators.required]],
       name: ['', [Validators.required]],
       order_no: [''],
       description: [''],
@@ -175,7 +184,7 @@ export class AboutlcpComponent implements OnInit {
         (response: any) => {
           if (response.status && response.code === 200) {
             this.toastr.success(this.translate.instant('record_updated_successfully'));
-            this.router.navigate(['/about-lcp']);
+            this.router.navigate([`/${this.basePath}`]);
           } else {
             this.toastr.error(this.translate.instant('record_failed_updated'), 'Error');
           }
@@ -205,7 +214,7 @@ export class AboutlcpComponent implements OnInit {
         (response: any) => {
           if (response.status && response.code === 200) {
             this.toastr.success(this.translate.instant('record_inserted_successfully'));
-            this.router.navigate(['/about-lcp']);
+            this.router.navigate([`/${this.basePath}`]);
           } else {
             this.toastr.error(response.message, 'Error');
           }
@@ -226,20 +235,25 @@ export class AboutlcpComponent implements OnInit {
     const payload = {
       company_id: this.companyId,
       print_query: true,
-      primary_table: 'about_lcp',
+      primary_table: this.tableName,
       start_index: 0,
       limit_range: 1,
-      sort_columns: [['about_lcp.id', 'asc']],
+      sort_columns: [[`${this.tableName}.id`, 'asc']],
       search_all: [
         {
-          column_name: 'about_lcp.uuid',
+          column_name: `${this.tableName}.uuid`,
           value: id,
           operator: '=',
         },
+        {
+          column_name: `${this.tableName}.type`,
+          value: this.defaultType,
+          operator: '=',
+        },
       ],
-      select_columns: [['about_lcp.*']],
+      select_columns: [[`${this.tableName}.*`]],
 
-      group_by: ['about_lcp.id'],
+      group_by: [`${this.tableName}.id`],
     };
 
     this.gridApiService.getAllList(payload).subscribe({
