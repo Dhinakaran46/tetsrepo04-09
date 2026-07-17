@@ -80,6 +80,7 @@ interface FilterCondition {
   isEnum: boolean;
   enumType: string;
   enumValueOptions: Array<{ label: any; value: any }>;
+  enumOptionsLoading: boolean;
   autocompleteLoading: boolean;
   autocompleteSearchText: string;
 }
@@ -1297,9 +1298,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (isEnum) {
       const enumObj = this.resolveEnumConfig(data?.enum_values);
       this.filterConditions[index].enumType = enumObj?.type || '';
+      this.filterConditions[index].enumValueOptions = [];
+      this.filterConditions[index].enumOptionsLoading = true;
       // Pass raw column data — getEnumValues will resolve internally
       const res = await this.getEnumValues(data, operator);
       this.filterConditions[index].enumValueOptions = res;
+      this.filterConditions[index].enumOptionsLoading = false;
+      this.cdr.detectChanges();
     }
     this.currentSearchConditions = this.searchConditions[columnType] || [];
   }
@@ -1335,8 +1340,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       condition.enum_values = [];
       const enumObj = this.resolveEnumConfig(data?.enum_values);
       condition.enumType = enumObj?.type || '';
+      condition.enumValueOptions = [];
+      condition.enumOptionsLoading = true;
       // Pass raw column data — getEnumValues will resolve internally
       condition.enumValueOptions = await this.getEnumValues(data, condition.operator);
+      condition.enumOptionsLoading = false;
+      this.cdr.detectChanges();
       return;
     }
 
@@ -1345,6 +1354,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     }
     condition.enumType = '';
     condition.enumValueOptions = [];
+    condition.enumOptionsLoading = false;
   }
 
   private closeToolbarMenus(except: 'filter' | 'columns' | 'export' | null = null): void {
@@ -1473,6 +1483,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       isEnum: false,
       enumValueOptions: [], // Default options
       enumType: '',
+      enumOptionsLoading: false,
       autocompleteLoading: false,
       autocompleteSearchText: '',
     });
@@ -1903,10 +1914,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       const columnData = this.resolveFilterColumn(condition.field);
       if (!columnData) continue;
 
+      condition.enumOptionsLoading = true;
       const fetchedOptions = await this.getEnumValues(columnData, condition.operator);
       const mergedOptions = this.buildRestoredEnumOptions(fetchedOptions, condition.enum_values || []);
 
       condition.enumValueOptions = mergedOptions;
+      condition.enumOptionsLoading = false;
       if (this.appliedFilterConditions[index]) {
         this.appliedFilterConditions[index].enumValueOptions = [...mergedOptions];
       }
@@ -2415,6 +2428,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         isEnum,
         enumType: isEnum ? enumObj?.type || '' : '',
         enumValueOptions: isEnum ? restoredEnumOptions : [],
+        enumOptionsLoading: false,
         autocompleteLoading: false,
         autocompleteSearchText: '',
       };

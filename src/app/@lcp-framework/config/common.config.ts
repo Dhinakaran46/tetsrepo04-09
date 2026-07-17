@@ -33,6 +33,7 @@ export const commonConfig: any = {
     listdataconfig: 'common/list-data-configuration',
     tenantRegistrationLovValues: 'tenant-registration/lov-values',
     tenantRegistrationRegister: 'tenant-registration/register',
+    tenantRegistrationAddCompany: 'tenant-registration/add-company',
     executeRecords: 'common/execute-transaction',
     executeRecordsCase: 'common/execute-transaction-case',
     executeRecordsConfig: 'common/execute-transaction-configuration',
