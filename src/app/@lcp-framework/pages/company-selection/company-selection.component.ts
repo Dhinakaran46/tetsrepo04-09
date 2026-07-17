@@ -1,6 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
 import { AuthService } from '../../service/common/auth.service';
 import { LocalStorageService } from '../../service/common/local-storage.service';
@@ -8,12 +9,19 @@ import { LanguageService } from '../../service/common/language.service';
 import { MenuLoadService } from '../../service/common/menu-load.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
-import { switchMap } from 'rxjs';
+import { GridApiService } from '../../service/common/grid.service';
+import { catchError, of, switchMap } from 'rxjs';
+
+interface LovOption {
+  id: number;
+  code: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-company-selection',
   standalone: true,
-  imports: [CommonSharedModule],
+  imports: [CommonSharedModule, ReactiveFormsModule],
   templateUrl: './company-selection.component.html',
   styleUrl: './company-selection.component.scss',
 })
@@ -26,6 +34,30 @@ export class CompanySelectionComponent implements OnInit {
   searchTerm = '';
   config: any = null;
 
+  showAddCompanyModal = false;
+  isAddingCompany = false;
+  addCompanyError = '';
+  addCompanyLogoPreviewUrl = '';
+  businessTypes: LovOption[] = [];
+  employeeSizes: LovOption[] = [];
+  countries: LovOption[] = [];
+
+  readonly addCompanyForm = this.fb.group({
+    code: ['', Validators.required],
+    name: ['', Validators.required],
+    tradeName: [''],
+    corporateEmail: ['', [Validators.email]],
+    taxRegistrationNumber: [''],
+    registrationNumber: [''],
+    address: [''],
+    mobileNo: [''],
+    website: [''],
+    logo: [null as File | null],
+    businessTypeId: [null as number | null],
+    employeeSizeId: [null as number | null],
+    countryId: [null as number | null, Validators.required],
+  });
+
   constructor(
     private router: Router,
     private toastr: ToastrService,
@@ -34,7 +66,9 @@ export class CompanySelectionComponent implements OnInit {
     private languageService: LanguageService,
     private menuLoadService: MenuLoadService,
     private timezoneService: TimezoneService,
-    private routeUpdateService: RouteUpdateService
+    private routeUpdateService: RouteUpdateService,
+    private gridApiService: GridApiService,
+    private fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -155,6 +189,109 @@ export class CompanySelectionComponent implements OnInit {
   tenantGroupClass(index: number): string {
     const palette = ['tenant-tone-1', 'tenant-tone-2', 'tenant-tone-3', 'tenant-tone-4'];
     return palette[index % palette.length];
+  }
+
+  openAddCompanyModal(): void {
+    this.showAddCompanyModal = true;
+    this.addCompanyError = '';
+    if (!this.businessTypes.length && !this.employeeSizes.length && !this.countries.length) {
+      this.loadAddCompanyLovOptions();
+    }
+  }
+
+  closeAddCompanyModal(): void {
+    if (this.isAddingCompany) return;
+    this.showAddCompanyModal = false;
+    this.addCompanyError = '';
+    this.revokeAddCompanyLogoPreview();
+    this.addCompanyForm.reset();
+  }
+
+  isAddCompanyInvalid(controlName: keyof typeof this.addCompanyForm.controls): boolean {
+    const control = this.addCompanyForm.controls[controlName];
+    return control.invalid && (control.touched || control.dirty);
+  }
+
+  addCompanyLogoFileName(): string {
+    const logo = this.addCompanyForm.controls.logo.value;
+    return logo instanceof File ? logo.name : '';
+  }
+
+  onAddCompanyLogoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+
+    this.revokeAddCompanyLogoPreview();
+    this.addCompanyForm.patchValue({ logo: file });
+    this.addCompanyForm.controls.logo.markAsDirty();
+    this.addCompanyLogoPreviewUrl = file ? URL.createObjectURL(file) : '';
+  }
+
+  submitAddCompany(): void {
+    if (this.isAddingCompany) return;
+    this.addCompanyError = '';
+
+    if (this.addCompanyForm.invalid) {
+      this.addCompanyForm.markAllAsTouched();
+      return;
+    }
+
+    this.isAddingCompany = true;
+    const formValue = this.addCompanyForm.getRawValue();
+    const logo = formValue.logo;
+
+    const formData = new FormData();
+    formData.append(
+      'company',
+      JSON.stringify({
+        code: formValue.code,
+        name: formValue.name,
+        tradeName: formValue.tradeName,
+        corporateEmail: formValue.corporateEmail,
+        taxRegistrationNumber: formValue.taxRegistrationNumber,
+        registrationNumber: formValue.registrationNumber,
+        address: formValue.address,
+        mobileNo: formValue.mobileNo,
+        website: formValue.website,
+        businessTypeId: formValue.businessTypeId,
+        employeeSizeId: formValue.employeeSizeId,
+        countryId: formValue.countryId,
+        logoFileKey: logo instanceof File ? 'company_logo' : null,
+      })
+    );
+
+    if (logo instanceof File) {
+      formData.append('company_logo', logo, logo.name);
+    }
+
+    this.gridApiService.addTenantCompany(formData).subscribe({
+      next: (response: any) => {
+        this.isAddingCompany = false;
+        const responseBody = response?.body || response;
+
+        if (!responseBody?.status) {
+          const message = responseBody?.message || 'Unable to add company.';
+          this.addCompanyError = message;
+          this.toastr.error(message, 'Error');
+          return;
+        }
+
+        this.toastr.success(
+          responseBody?.message || 'Company added successfully. Company setup will continue in the background.',
+          'Success'
+        );
+        this.applyAddedCompanies(responseBody?.data?.companies);
+        this.showAddCompanyModal = false;
+        this.revokeAddCompanyLogoPreview();
+        this.addCompanyForm.reset();
+      },
+      error: (error: any) => {
+        this.isAddingCompany = false;
+        const message = this.getApiErrorMessage(error);
+        this.addCompanyError = message;
+        this.toastr.error(message, 'Error');
+      },
+    });
   }
 
   private storeSwitchedUser(switchedUser: any, selectedCompany: any): void {
@@ -280,6 +417,66 @@ export class CompanySelectionComponent implements OnInit {
           window.location.href = '/';
         },
       });
+  }
+
+  private loadAddCompanyLovOptions(): void {
+    this.gridApiService
+      .getLovValues({
+        scope: 'global',
+        codes: ['business_type', 'employee_size', 'country'],
+      })
+      .pipe(catchError(() => of(null)))
+      .subscribe((response: any) => {
+        const lovTypes = response?.data || [];
+        if (!lovTypes.length) return;
+
+        const normalizeLovCode = (value: string) => String(value || '').trim().toLowerCase().replace(/[-\s]+/g, '_');
+        const byType = (type: string) => {
+          const lovType = lovTypes.find((record: any) => normalizeLovCode(record.code) === type);
+          return (lovType?.values || []).map((record: any) => ({
+            id: Number(record.id),
+            code: record.code,
+            name: record.name,
+          }));
+        };
+
+        this.businessTypes = byType('business_type') || this.businessTypes;
+        this.employeeSizes = byType('employee_size') || this.employeeSizes;
+        this.countries = byType('country') || this.countries;
+      });
+  }
+
+  private applyAddedCompanies(companies: any[]): void {
+    if (!Array.isArray(companies) || !companies.length) return;
+
+    this.companies = this.normalizeCompanies(companies);
+
+    const nextUserInfo = {
+      ...this.userInfo,
+      main: {
+        ...(this.userInfo?.main || {}),
+        companies,
+      },
+    };
+
+    this.persistUserInfo(nextUserInfo);
+    this.userInfo = nextUserInfo;
+  }
+
+  private revokeAddCompanyLogoPreview(): void {
+    if (this.addCompanyLogoPreviewUrl) {
+      URL.revokeObjectURL(this.addCompanyLogoPreviewUrl);
+      this.addCompanyLogoPreviewUrl = '';
+    }
+  }
+
+  private getApiErrorMessage(error: any): string {
+    const responseError = error?.error;
+    if (typeof responseError === 'string') return responseError;
+
+    const dataMessage = typeof responseError?.data === 'string' ? responseError.data : responseError?.data?.message;
+
+    return responseError?.message || responseError?.errors?.message || dataMessage || error?.message || 'Unable to add company.';
   }
 
   private normalizeCompanies(companies: any[]): any[] {

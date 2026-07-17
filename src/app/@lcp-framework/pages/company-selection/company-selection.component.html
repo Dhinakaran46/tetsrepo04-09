@@ -62,9 +62,10 @@
               <span class="tenant-dot" aria-hidden="true"></span>
               <strong>{{ group.tenantLabel }}</strong>
             </div>
-            <!--@if (group.tenantCompanyName) {
-            <span class="tenant-name-badge">{{ group.tenantCompanyName }}</span>
-          }-->
+            <button type="button" class="add-company-trigger" (click)="openAddCompanyModal()">
+              <i class="fa-solid fa-plus"></i>
+              Add Company
+            </button>
           </div>
 
           <div class="tenant-company-list">
@@ -121,4 +122,139 @@
       </div>
     </section>
   </div>
+
+  @if (showAddCompanyModal) {
+  <div class="add-company-overlay" (click)="closeAddCompanyModal()">
+    <div class="add-company-dialog" (click)="$event.stopPropagation()">
+      <div class="add-company-header">
+        <div>
+          <h2>Add Company</h2>
+          <p>Create another company under your current tenant.</p>
+        </div>
+        <button type="button" class="add-company-close" aria-label="Close" [disabled]="isAddingCompany" (click)="closeAddCompanyModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form class="add-company-body" [formGroup]="addCompanyForm" (ngSubmit)="submitAddCompany()">
+        <div class="cs-field-grid">
+          <label class="cs-field">
+            <span>Company Code <b>*</b></span>
+            <input type="text" formControlName="code" class="form-input" placeholder="e.g. RKD" />
+            @if (isAddCompanyInvalid('code')) {
+            <small>Company code is required.</small>
+            }
+          </label>
+
+          <label class="cs-field">
+            <span>Company Name <b>*</b></span>
+            <input type="text" formControlName="name" class="form-input" placeholder="e.g. RK Distributions" />
+            @if (isAddCompanyInvalid('name')) {
+            <small>Company name is required.</small>
+            }
+          </label>
+
+          <label class="cs-field">
+            <span>Trade Name</span>
+            <input type="text" formControlName="tradeName" class="form-input" placeholder="e.g. RK Trade" />
+          </label>
+
+          <label class="cs-field">
+            <span>Corporate Email</span>
+            <input type="email" formControlName="corporateEmail" class="form-input" placeholder="e.g. corp@rkdist.co" />
+            @if (isAddCompanyInvalid('corporateEmail')) {
+            <small>Enter a valid corporate email.</small>
+            }
+          </label>
+
+          <label class="cs-field">
+            <span>Tax Registration Number</span>
+            <input type="text" formControlName="taxRegistrationNumber" class="form-input" placeholder="e.g. GSTIN91606390" />
+          </label>
+
+          <label class="cs-field">
+            <span>Registration Number</span>
+            <input type="text" formControlName="registrationNumber" class="form-input" placeholder="Company registration number" />
+          </label>
+
+          <label class="cs-field">
+            <span>Mobile No.</span>
+            <input type="tel" formControlName="mobileNo" class="form-input" placeholder="Company mobile number" />
+          </label>
+
+          <label class="cs-field">
+            <span>Website</span>
+            <input type="url" formControlName="website" class="form-input" placeholder="https://example.com" />
+          </label>
+
+          <label class="cs-field">
+            <span>Country <b>*</b></span>
+            <select formControlName="countryId" class="form-input">
+              <option [ngValue]="null">Select Country</option>
+              @for (country of countries; track country.id) {
+              <option [ngValue]="country.id">{{ country.name }}</option>
+              }
+            </select>
+            @if (isAddCompanyInvalid('countryId')) {
+            <small>Country is required.</small>
+            }
+          </label>
+
+          <label class="cs-field">
+            <span>Business Type</span>
+            <select formControlName="businessTypeId" class="form-input">
+              <option [ngValue]="null">Select Business Type</option>
+              @for (type of businessTypes; track type.id) {
+              <option [ngValue]="type.id">{{ type.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="cs-field">
+            <span>Employee Size</span>
+            <select formControlName="employeeSizeId" class="form-input">
+              <option [ngValue]="null">Select Size Range</option>
+              @for (size of employeeSizes; track size.id) {
+              <option [ngValue]="size.id">{{ size.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="cs-field cs-field-logo">
+            <span>Logo</span>
+            <input type="file" class="sr-only" accept="image/*" (change)="onAddCompanyLogoChange($event)" />
+            <span class="cs-logo-box">
+              @if (addCompanyLogoPreviewUrl) {
+              <img [src]="addCompanyLogoPreviewUrl" alt="Company logo preview" />
+              } @else {
+              <i class="fa-solid fa-image"></i>
+              }
+              <span class="cs-logo-copy">
+                <strong>{{ addCompanyLogoFileName() || 'Choose logo image' }}</strong>
+                <small>PNG, JPG, JPEG, or WebP</small>
+              </span>
+            </span>
+          </label>
+
+          <label class="cs-field cs-field-wide">
+            <span>Address</span>
+            <textarea rows="2" formControlName="address" class="form-input" placeholder="Company address"></textarea>
+          </label>
+        </div>
+
+        @if (addCompanyError) {
+        <p class="add-company-error">{{ addCompanyError }}</p>
+        }
+
+        <div class="add-company-footer">
+          <button type="button" class="add-company-btn secondary" [disabled]="isAddingCompany" (click)="closeAddCompanyModal()">Cancel</button>
+          <button type="submit" class="add-company-btn primary" [disabled]="isAddingCompany">
+            {{ isAddingCompany ? 'Adding...' : 'Add Company' }}
+            <i class="fa-solid" [ngClass]="isAddingCompany ? 'fa-spinner fa-spin' : 'fa-arrow-right'"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
 </div>

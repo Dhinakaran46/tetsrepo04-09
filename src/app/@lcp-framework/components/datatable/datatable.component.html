@@ -250,6 +250,8 @@
                         [multiple]="true"
                         [searchable]="true"
                         [loading]="condition.autocompleteLoading"
+                        loadingText="Searching..."
+                        [minTermLength]="2"
                         [typeahead]="autocompleteSearchSubject"
                         placeholder="{{ 'search_and_select' | translate }}"
                         [closeOnSelect]="false"
@@ -259,6 +261,9 @@
                         class="custom-ng-select"
                         appendTo="body"
                       >
+                        <ng-template ng-typetosearch-tmp>
+                          <div class="p-1.5 text-center text-xs text-gray-500">Type at least 2 characters to search</div>
+                        </ng-template>
                         <ng-template ng-notfound-tmp>
                           <div class="p-1.5 text-center text-xs text-gray-500">
                             {{ 'no_results_found' | translate }}
@@ -277,6 +282,8 @@
                         [searchable]="true"
                         [closeOnSelect]="false"
                         [hideSelected]="true"
+                        [loading]="condition.enumOptionsLoading"
+                        loadingText="Loading options..."
                         placeholder="{{ 'select' | translate }}"
                         appendTo="body"
                         (change)="onEnumChange($event, i)"

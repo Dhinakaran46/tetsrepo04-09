@@ -108,6 +108,10 @@ export class GridApiService {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.tenantRegistrationRegister}`, data);
   }
 
+  addTenantCompany(data: FormData): Observable<any> {
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.tenantRegistrationAddCompany}`, data);
+  }
+
   getAllColumns(data: any): Observable<any> {
     return this.cryptoHttp.encryptedGet<any>(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.commongriddata}/${data.entity_name}`);
   }

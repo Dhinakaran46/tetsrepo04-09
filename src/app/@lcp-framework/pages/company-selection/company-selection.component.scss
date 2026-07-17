@@ -319,6 +319,266 @@
   font-weight: 800;
 }
 
+.add-company-trigger {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px dashed color-mix(in srgb, var(--tenant-color) 45%, #fff);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tenant-color) 8%, #fff);
+  color: color-mix(in srgb, var(--tenant-color) 88%, #111827);
+  font-size: 11px;
+  font-weight: 800;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  i {
+    font-size: 10px;
+  }
+
+  &:hover {
+    border-style: solid;
+    background: color-mix(in srgb, var(--tenant-color) 16%, #fff);
+  }
+}
+
+.add-company-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 55%);
+}
+
+.add-company-dialog {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgb(15 23 42 / 25%);
+  overflow: hidden;
+}
+
+.add-company-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eef2f7;
+
+  h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 12px;
+  }
+}
+
+.add-company-close {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+
+  &:hover:not(:disabled) {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.add-company-body {
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+}
+
+.cs-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+.cs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  > span {
+    color: #2c4465;
+    font-size: 13px;
+    font-weight: 800;
+
+    b {
+      color: var(--app-accent-color, #7a1114);
+    }
+  }
+
+  small {
+    color: var(--app-accent-color, #7a1114);
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+.cs-field-wide {
+  grid-column: 1 / -1;
+}
+
+.cs-field-logo {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+
+.cs-logo-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px dashed #cbd7e6;
+  border-radius: 8px;
+  color: #516785;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+
+  &:hover {
+    border-color: var(--app-accent-color, #7a1114);
+    background: rgb(122 17 20 / 4%);
+  }
+
+  i,
+  img {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border-radius: 6px;
+  }
+
+  i {
+    display: grid;
+    place-content: center;
+    background: #eef2f6;
+    color: #94a3b8;
+  }
+
+  img {
+    object-fit: contain;
+  }
+}
+
+.cs-logo-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+
+  strong {
+    overflow: hidden;
+    color: #163154;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: #8a9ab4;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+.add-company-error {
+  margin: 16px 0 0;
+  padding: 9px 12px;
+  border: 1px solid #f0d5d5;
+  border-radius: 8px;
+  background: #fff7f7;
+  color: var(--app-accent-color, #7a1114);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.add-company-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.add-company-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+
+  &.primary {
+    background: var(--app-accent-color, #7a1114);
+    color: #fff;
+  }
+
+  &.primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--app-accent-color, #7a1114) 85%, #000);
+  }
+
+  &.secondary {
+    border: 1px solid #cbd7e6;
+    background: #fff;
+    color: #516785;
+  }
+
+  &.secondary:hover:not(:disabled) {
+    border-color: var(--app-accent-color, #7a1114);
+    color: var(--app-accent-color, #7a1114);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .tenant-company-list {
   display: grid;
   gap: 10px;

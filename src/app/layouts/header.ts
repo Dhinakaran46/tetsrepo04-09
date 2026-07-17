@@ -14,7 +14,7 @@ import { AuthService } from '../@lcp-framework/service/common/auth.service';
 import { initialState } from '../store/index.reducer';
 import { environment } from '../@lcp-framework/../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { commonConfig } from '../@lcp-framework/config/common.config';
@@ -23,6 +23,7 @@ import { MenuLoadService } from '../@lcp-framework/service/common/menu-load.serv
 import { IdleService } from '../@lcp-framework/service/common/idle.service';
 import { WebSocketSubject } from 'rxjs/webSocket';
 import { TimezoneService } from '../@lcp-framework/service/common/timezone.service';
+import { RouteUpdateService } from '../@lcp-framework/service/common/route-update.service';
 import { ApiResponce, GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { htmlToPlainText } from '../@lcp-framework/shared/utils/html-text.util';
 import { FirebaseService } from '../@lcp-framework/service/firebase.service';
@@ -192,6 +193,7 @@ export class HeaderComponent implements OnInit {
     private timezoneService: TimezoneService,
     private gridApiService: GridApiService,
     private firebaseService: FirebaseService,
+    private routeUpdateService: RouteUpdateService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -642,7 +644,34 @@ export class HeaderComponent implements OnInit {
 
         const languageCode = this.languageService.getSavedLanguageCode();
         this.languageService.serviceChangeLanguage(this.companyId, languageCode.toLowerCase());
-        window.location.href = '/';
+
+        // Refresh RouteUpdateService's permissions/menu/dynamic routes for the newly
+        // selected company before redirecting, instead of relying on the browser reload
+        // alone to reset it — a same-URL navigation may not force a real reload.
+        this.routeUpdateService.setPermissionsList(permissionsObj);
+
+        const redirectToApp = () => {
+          const targetUrl = window.location.origin + '/';
+          if (window.location.href === targetUrl) {
+            window.location.reload();
+          } else {
+            window.location.href = targetUrl;
+          }
+        };
+
+        this.menuLoadService
+          .fetchConfigData(this.companyId, switchedUser.id)
+          .pipe(switchMap(() => this.menuLoadService.fetchMenuData(this.companyId)))
+          .subscribe({
+            next: () => {
+              this.timezoneService.reloadConfig();
+              this.routeUpdateService.addDynamicRoutes();
+              redirectToApp();
+            },
+            error: () => {
+              redirectToApp();
+            },
+          });
       },
       error: (error: any) => {
         const key = error?.message || 'error';

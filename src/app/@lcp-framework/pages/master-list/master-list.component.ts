@@ -422,10 +422,12 @@ export class MasterListComponent implements OnChanges {
         const routes = await this.routeUpdateService.getPageInfo(this.entity_name);
 
         pageInfo = routes && routes.length ? routes[0].data.pageInfo : null;
+        console.log(pageInfo);
         const defaultPermission = routes && routes.length ? routes[0].data.defaultPermission : null;
         this.setupPageInfo(pageInfo, defaultPermission);
       } else {
         pageInfo = this.route.snapshot.data['pageInfo'] || '';
+        console.log(pageInfo);
         const defaultPermission = this.route.snapshot.data['defaultPermission'] || '';
         this.setupPageInfo(pageInfo, defaultPermission);
       }
@@ -1910,7 +1912,10 @@ export class MasterListComponent implements OnChanges {
     if (!Array.isArray(parsedTemp)) return null;
 
     const companyId = this.getCurrentCompanyId();
-    return parsedTemp.find((item: any) => String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId && !!item?.localstoreOnly) || null;
+    return (
+      parsedTemp.find((item: any) => String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId && !!item?.localstoreOnly) ||
+      null
+    );
   }
 
   private getTempViewStateForEntity(entitySlug: string): any | null {
@@ -3639,7 +3644,7 @@ export class MasterListComponent implements OnChanges {
     }
   }
 
-processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, properties: any = null) {
+  processPopup(popupName: string, selectedItemUuid: string | null, popupEntityName: string, isViewPopupOpen: boolean, properties: any = null) {
     const gridParams = properties?.['grid_params'] ?? null;
     const searchAll = properties?.['search_all'] ?? null;
     const searchAny = properties?.['search_any'] ?? null;
