@@ -651,7 +651,7 @@ export class HeaderComponent implements OnInit {
         this.routeUpdateService.setPermissionsList(permissionsObj);
 
         const redirectToApp = () => {
-          const targetUrl = window.location.origin + '/';
+          const targetUrl = `${window.location.origin}${this.getApplicationBasePath()}#/`;
           if (window.location.href === targetUrl) {
             window.location.reload();
           } else {
@@ -678,6 +678,12 @@ export class HeaderComponent implements OnInit {
         this.toastr.error(this.translate.instant(key), 'Error');
       },
     });
+  }
+
+  private getApplicationBasePath(): string {
+    const path = window.location.pathname || '/';
+    const normalizedPath = path.replace(/\/index\.html?$/i, '/');
+    return normalizedPath.endsWith('/') ? normalizedPath : `${normalizedPath}/`;
   }
 
   toggleProfileMenu(event: Event) {

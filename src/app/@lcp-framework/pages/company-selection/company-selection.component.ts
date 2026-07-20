@@ -411,12 +411,22 @@ export class CompanySelectionComponent implements OnInit {
         next: () => {
           this.timezoneService.reloadConfig();
           this.routeUpdateService.addDynamicRoutes();
-          window.location.href = '/';
+          this.redirectToApplicationRoot();
         },
         error: () => {
-          window.location.href = '/';
+          this.redirectToApplicationRoot();
         },
       });
+  }
+
+  private redirectToApplicationRoot(): void {
+    window.location.href = `${window.location.origin}${this.getApplicationBasePath()}#/`;
+  }
+
+  private getApplicationBasePath(): string {
+    const path = window.location.pathname || '/';
+    const normalizedPath = path.replace(/\/index\.html?$/i, '/');
+    return normalizedPath.endsWith('/') ? normalizedPath : `${normalizedPath}/`;
   }
 
   private loadAddCompanyLovOptions(): void {
