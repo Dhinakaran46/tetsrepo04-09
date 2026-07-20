@@ -228,6 +228,10 @@ export class MigrateEntityComponent {
     });
   }
 
+  private refreshView(): void {
+    this.cdr.detectChanges();
+  }
+
   async initStore() {
     this.storeData
       .select((d) => d.index)
@@ -245,6 +249,7 @@ export class MigrateEntityComponent {
       this.socket$.subscribe({
         next: (data: any) => {
           this.progress = data.progress;
+          this.refreshView();
         },
         error: (err) => {
           console.error('WebSocket error', err);
@@ -282,7 +287,7 @@ export class MigrateEntityComponent {
       this.headercolumns = [];
       this.items = [];
     }
-    this.cdr.detectChanges();
+    this.refreshView();
   }
 
   // ---------------- EXPORT ----------------
@@ -316,6 +321,7 @@ export class MigrateEntityComponent {
     const exportType: 'download' | 'save' = 'save';
     this.progress = 0;
     this.isLoading = true;
+    this.refreshView();
 
     this.api.exportEntity(this.exportForm.value, exportType).subscribe({
       next: (res) => {
@@ -332,10 +338,12 @@ export class MigrateEntityComponent {
           this.toastr.success(res.message || 'Export saved successfully');
         }
         this.isLoading = false;
+        this.refreshView();
       },
       error: (e) => {
         this.toastr.error(e.message || 'Export failed');
         this.isLoading = false;
+        this.refreshView();
       },
     });
   }
@@ -355,6 +363,7 @@ export class MigrateEntityComponent {
 
     this.file = file;
     this.importForm.patchValue({ file });
+    this.refreshView();
     this.importData(true);
   }
 
@@ -364,6 +373,7 @@ export class MigrateEntityComponent {
     this.file = null;
     this.importForm.reset();
     if (this.fileInput) this.fileInput.nativeElement.value = '';
+    this.refreshView();
   }
 
   // ---------------- IMPORT ----------------
@@ -380,6 +390,7 @@ export class MigrateEntityComponent {
 
     this.progress = 0;
     this.isLoading = true;
+    this.refreshView();
 
     this.api.importEntity(formData, preview).subscribe({
       next: (event: any) => {
@@ -404,10 +415,12 @@ export class MigrateEntityComponent {
             this.isLoading = false;
           }
         }
+        this.refreshView();
       },
       error: () => {
         this.toastr.error('Import failed');
         this.isLoading = false;
+        this.refreshView();
       },
     });
   }
@@ -567,12 +580,14 @@ export class MigrateEntityComponent {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
         }
+        this.refreshView();
       },
       (error) => {
         const key = 'error';
         const errorMessage = this.translate.instant(key);
         this.toastr.error(errorMessage, 'Error');
         this.gridloading = false;
+        this.refreshView();
       }
     );
   }
