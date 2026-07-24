@@ -65,6 +65,7 @@ export class RouteUpdateService {
     dashboard_wizard_builder_module: () => import('../../pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
 
     approval_workflow: () => import('../../pages/approval-workflow/approval-workflow.component').then((m) => m.ApprovalWorkflowComponent),
+    tenant_module: () => import('../../pages/tenants/tenants.component').then((m) => m.TenantsComponent),
   };
 
   constructor(private rendererFactory: RendererFactory2, private router: Router, private localStore: LocalStorageService) {

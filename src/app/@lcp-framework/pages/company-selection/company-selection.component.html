@@ -1,4 +1,24 @@
 <div class="company-selection-page">
+  @if (tenantGateStatus === 'loading') {
+  <app-loader></app-loader>
+  } @else if (showTenantGate) {
+  <div class="tenant-gate-shell">
+    <div class="tenant-gate-card" [class.rejected]="tenantGateStatus === 'rejected'">
+      <div class="brand-mark">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <span class="tenant-gate-icon" [class.rejected]="tenantGateStatus === 'rejected'">
+        <i class="fa-solid" [ngClass]="tenantGateStatus === 'rejected' ? 'fa-circle-xmark' : 'fa-hourglass-half'"></i>
+      </span>
+      <h1>{{ tenantGateTitle }}</h1>
+      <p>{{ tenantGateMessage }}</p>
+      <button type="button" class="back-to-login" (click)="backToLogin()">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Login
+      </button>
+    </div>
+  </div>
+  } @else {
   <div class="company-selection-shell">
     <aside class="company-context">
       <div class="brand-mark">
@@ -62,10 +82,12 @@
               <span class="tenant-dot" aria-hidden="true"></span>
               <strong>{{ group.tenantLabel }}</strong>
             </div>
+            @if (canAddCompany) {
             <button type="button" class="add-company-trigger" (click)="openAddCompanyModal()">
               <i class="fa-solid fa-plus"></i>
               Add Company
             </button>
+            }
           </div>
 
           <div class="tenant-company-list">
@@ -256,5 +278,6 @@
       </form>
     </div>
   </div>
+  }
   }
 </div>

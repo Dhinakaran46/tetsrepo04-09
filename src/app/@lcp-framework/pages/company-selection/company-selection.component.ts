@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+﻿import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,6 +10,7 @@ import { MenuLoadService } from '../../service/common/menu-load.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { GridApiService } from '../../service/common/grid.service';
+import { LoaderComponent } from '../../components/loader/loader.component';
 import { catchError, of, switchMap } from 'rxjs';
 
 interface LovOption {
@@ -21,7 +22,7 @@ interface LovOption {
 @Component({
   selector: 'app-company-selection',
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule],
+  imports: [CommonSharedModule, ReactiveFormsModule, LoaderComponent],
   templateUrl: './company-selection.component.html',
   styleUrl: './company-selection.component.scss',
 })
@@ -37,6 +38,8 @@ export class CompanySelectionComponent implements OnInit {
   showAddCompanyModal = false;
   isAddingCompany = false;
   addCompanyError = '';
+  canAddCompany = false;
+  tenantGateStatus: 'loading' | 'approved' | 'rejected' | 'pending' = 'loading';
   addCompanyLogoPreviewUrl = '';
   businessTypes: LovOption[] = [];
   employeeSizes: LovOption[] = [];
@@ -68,7 +71,8 @@ export class CompanySelectionComponent implements OnInit {
     private timezoneService: TimezoneService,
     private routeUpdateService: RouteUpdateService,
     private gridApiService: GridApiService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -77,11 +81,66 @@ export class CompanySelectionComponent implements OnInit {
     this.currentCompanyId = Number(this.userInfo?.main?.company_id || 0);
     this.companies = this.normalizeCompanies(this.userInfo?.main?.companies || this.userInfo?.companies || []);
     this.selectedCompanyId = this.localstore.getData('company_selection_pending') === 'true' && this.companies.length > 1 ? 0 : this.currentCompanyId;
-
-    if (this.companies.length <= 1) {
+    console.log(this.companies.length);
+    if (this.companies.length <= 1 && !this.isCompanyAdmin()) {
       this.localstore.removeData('company_selection_pending');
       this.router.navigate(['/dashboard']);
+      return;
     }
+
+    this.loadTenantQuota();
+  }
+
+  private isCompanyAdmin(): boolean {
+    const main = this.userInfo?.main || {};
+    console.log(main);
+    const roleCandidates = [main?.role, main?.role_slug, main?.role_name, main?.user_role]
+      .map((item) =>
+        String(item || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean);
+    return roleCandidates.includes('company_admin');
+  }
+
+  private loadTenantQuota(): void {
+    const tenantId = this.userInfo?.main?.tenant_id || this.userInfo?.company?.tenant_id || this.userInfo?.main?.selected_company_tenant_id;
+    if (!tenantId) {
+      this.tenantGateStatus = 'approved';
+      return;
+    }
+
+    this.gridApiService.getTenantSummary(tenantId).subscribe({
+      next: (response: any) => {
+        const responseBody = response?.body || response;
+
+        // The backend always responds with HTTP 200, even on failure, so a bad lookup lands
+        // here rather than in the error callback below — status must be checked explicitly.
+        if (!responseBody?.status) {
+          console.error('Unable to load tenant quota:', responseBody?.message);
+          this.tenantGateStatus = 'approved';
+          return;
+        }
+
+        const processStatus = String(responseBody?.data?.process_status || '').toLowerCase();
+        this.tenantGateStatus = processStatus === 'approved' ? 'approved' : processStatus === 'rejected' ? 'rejected' : 'pending';
+
+        const noOfCompanies = Number(responseBody?.data?.no_of_companies || 0);
+        const companiesCount = Number(responseBody?.data?.companies_count ?? this.companies.length);
+        if (noOfCompanies > 0) {
+          this.canAddCompany = this.tenantGateStatus === 'approved' && noOfCompanies > companiesCount;
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }
+      },
+      error: (error: any) => {
+        console.error('Unable to load tenant quota:', error);
+        // Fail open: an unreachable tenant-quota endpoint shouldn't lock a user
+        // who is otherwise entitled to be on this screen out of company selection.
+        this.tenantGateStatus = 'approved';
+      },
+    });
   }
 
   selectCompany(company: any): void {
@@ -160,6 +219,20 @@ export class CompanySelectionComponent implements OnInit {
 
   get isSelectionPending(): boolean {
     return this.localstore.getData('company_selection_pending') === 'true' && this.companies.length > 1 && !this.selectedCompanyId;
+  }
+
+  get showTenantGate(): boolean {
+    return this.tenantGateStatus === 'rejected' || this.tenantGateStatus === 'pending';
+  }
+
+  get tenantGateTitle(): string {
+    return this.tenantGateStatus === 'rejected' ? 'Registration Rejected' : 'Approval Pending';
+  }
+
+  get tenantGateMessage(): string {
+    return this.tenantGateStatus === 'rejected'
+      ? 'Your tenant registration has been rejected. Please contact your administrator for more details.'
+      : 'Your tenant registration is awaiting approval. Please wait for the backend administrator to approve your account before continuing.';
   }
 
   clearSearch(): void {
@@ -276,10 +349,7 @@ export class CompanySelectionComponent implements OnInit {
           return;
         }
 
-        this.toastr.success(
-          responseBody?.message || 'Company added successfully. Company setup will continue in the background.',
-          'Success'
-        );
+        this.toastr.success(responseBody?.message || 'Company added successfully. Company setup will continue in the background.', 'Success');
         this.applyAddedCompanies(responseBody?.data?.companies);
         this.showAddCompanyModal = false;
         this.revokeAddCompanyLogoPreview();
@@ -440,7 +510,11 @@ export class CompanySelectionComponent implements OnInit {
         const lovTypes = response?.data || [];
         if (!lovTypes.length) return;
 
-        const normalizeLovCode = (value: string) => String(value || '').trim().toLowerCase().replace(/[-\s]+/g, '_');
+        const normalizeLovCode = (value: string) =>
+          String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[-\s]+/g, '_');
         const byType = (type: string) => {
           const lovType = lovTypes.find((record: any) => normalizeLovCode(record.code) === type);
           return (lovType?.values || []).map((record: any) => ({
@@ -471,6 +545,7 @@ export class CompanySelectionComponent implements OnInit {
 
     this.persistUserInfo(nextUserInfo);
     this.userInfo = nextUserInfo;
+    this.loadTenantQuota();
   }
 
   private revokeAddCompanyLogoPreview(): void {

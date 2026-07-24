@@ -1530,6 +1530,7 @@ export class MasterListComponent implements OnChanges {
       'help_page_module',
       'configurations_module',
       'user_configurations_module',
+      'tenant_module',
     ];
 
     const transformed = records.map((record: any) => {

@@ -8,9 +8,7 @@
     </div>
 
     <div class="mb-10 text-center">
-      <h1 class="text-2xl font-extrabold uppercase tracking-normal text-[#0f2948] dark:text-white sm:text-3xl">
-        New Tenant Registration
-      </h1>
+      <h1 class="text-2xl font-extrabold uppercase tracking-normal text-[#0f2948] dark:text-white sm:text-3xl">New Tenant Registration</h1>
 
       <nav class="mt-9 flex flex-col items-start justify-center gap-4 text-sm font-bold sm:flex-row sm:items-center sm:gap-5 md:text-base">
         @for (step of steps; track step.id; let last = $last) {
@@ -34,8 +32,7 @@
         <div class="hidden h-px w-16 bg-[#cbd5e1] sm:block">
           <span class="block h-px w-full" [ngClass]="step.id < currentStep ? 'bg-[#9a0000]' : 'bg-[#cbd5e1]'"></span>
         </div>
-        }
-        }
+        } }
       </nav>
     </div>
 
@@ -76,16 +73,16 @@
         <div class="space-y-7">
           <section class="tenant-section">
             <div class="tenant-section-title">
-              <i class="fa fa-building text-[#9a0000]"></i>
-              <h2>Company Info</h2>
+              <i class="fa fa-user-shield text-[#9a0000]"></i>
+              <h2>Tenant Info</h2>
             </div>
 
             <div class="grid gap-x-6 gap-y-6 md:grid-cols-2">
               <label class="tenant-field">
-                <span>Company Name <b>*</b></span>
+                <span>Tenant Name <b>*</b></span>
                 <input type="text" formControlName="companyName" class="form-input" placeholder="e.g. RK Distributions" />
                 @if (isInvalid('companyName')) {
-                <small>Company name is required.</small>
+                <small>Tenant name is required.</small>
                 }
               </label>
 
@@ -97,41 +94,6 @@
                 }
               </label>
 
-              <label class="tenant-field">
-                <span>Business Type <b>*</b></span>
-                <select formControlName="businessTypeId" class="form-input">
-                  <option [ngValue]="null">Select Business Type</option>
-                  @for (type of businessTypes; track type.id) {
-                  <option [ngValue]="type.id">{{ type.name }}</option>
-                  }
-                </select>
-                @if (isInvalid('businessTypeId')) {
-                <small>Business type is required.</small>
-                }
-              </label>
-
-              <label class="tenant-field">
-                <span>Employee Size <b>*</b></span>
-                <select formControlName="employeeSizeId" class="form-input">
-                  <option [ngValue]="null">Select Size Range</option>
-                  @for (size of employeeSizes; track size.id) {
-                  <option [ngValue]="size.id">{{ size.name }}</option>
-                  }
-                </select>
-                @if (isInvalid('employeeSizeId')) {
-                <small>Employee size is required.</small>
-                }
-              </label>
-            </div>
-          </section>
-
-          <section class="tenant-section">
-            <div class="tenant-section-title">
-              <i class="fa fa-user-shield text-[#9a0000]"></i>
-              <h2>Tenant Info</h2>
-            </div>
-
-            <div class="grid gap-x-6 gap-y-6 md:grid-cols-2">
               <label class="tenant-field">
                 <span>First Name <b>*</b></span>
                 <input type="text" formControlName="firstName" class="form-input" placeholder="e.g. Ravi" />
@@ -149,7 +111,9 @@
                 <span>Email Address <b>*</b></span>
                 <input type="email" formControlName="email" class="form-input" placeholder="name@example.com" />
                 @if (isInvalid('email')) {
-                <small>Enter a valid email address.</small>
+                <small
+                  >{{ tenantForm.controls.email.errors?.['emailExists'] ? 'An account with this email already exists.' : 'Enter a valid email address.' }}</small
+                >
                 }
               </label>
 
@@ -170,7 +134,7 @@
                 <span>Mobile Number <b>*</b></span>
                 <input type="tel" formControlName="mobileNumber" class="form-input" placeholder="Enter mobile number" />
                 @if (isInvalid('mobileNumber')) {
-                <small>Mobile number is required.</small>
+                <small>{{ tenantForm.controls.mobileNumber.errors?.['required'] ? 'Mobile number is required.' : 'Enter a valid mobile number.' }}</small>
                 }
               </label>
 
@@ -194,9 +158,7 @@
             </div>
           </section>
         </div>
-        }
-
-        @if (currentStep === 2) {
+        } @if (currentStep === 2) {
         <div class="space-y-5" [formGroup]="companySetupForm">
           <div class="max-h-[520px] space-y-4 overflow-y-auto pr-1" formArrayName="companies">
             @for (company of companies.controls; track company; let i = $index) {
@@ -208,11 +170,17 @@
               <div class="flex items-center justify-between gap-3 border-b border-[#dce4ee] bg-[#f8fafc] px-4 py-3 dark:border-[#253b5c] dark:bg-[#111c2d]">
                 <button type="button" class="flex min-w-0 items-center gap-2 text-left" (click)="toggleCompany(i)">
                   <i class="fa fa-building text-[#9a0000]"></i>
+                  @if (tenantForm.controls.companyName.value) {
+                  <span
+                    class="shrink-0 rounded-full border border-[#dce4ee] bg-[#eef2f6] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#607088] dark:border-[#253b5c] dark:bg-[#1b2a43] dark:text-white-dark"
+                  >
+                    {{ tenantForm.controls.companyName.value }}
+                  </span>
+                  }
                   <span class="truncate text-sm font-extrabold text-[#163154] dark:text-white">{{ companyTitle(i) }}</span>
                   @if (company.get('isPrimary')?.value) {
                   <span class="rounded-full border border-[#f0d5d5] bg-[#fff7f7] px-2 py-0.5 text-[10px] font-extrabold text-[#9a0000]">PRIMARY</span>
-                  }
-                  @if (companyHasVisibleError(i)) {
+                  } @if (companyHasVisibleError(i)) {
                   <span class="rounded-full bg-[#9a0000] px-2 py-0.5 text-[10px] font-extrabold text-white">NEEDS ATTENTION</span>
                   }
                 </button>
@@ -273,6 +241,9 @@
                 <label class="tenant-field">
                   <span>Mobile No.</span>
                   <input type="tel" formControlName="mobileNo" class="form-input" placeholder="Company mobile number" />
+                  @if (companyInvalid(i, 'mobileNo')) {
+                  <small>Enter a valid mobile number.</small>
+                  }
                 </label>
 
                 <label class="tenant-field">
@@ -282,12 +253,7 @@
 
                 <label class="tenant-field logo-upload-field">
                   <span>Logo</span>
-                  <input
-                    type="file"
-                    class="sr-only"
-                    accept="image/*"
-                    (change)="onCompanyLogoChange(i, $event)"
-                  />
+                  <input type="file" class="sr-only" accept="image/*" (change)="onCompanyLogoChange(i, $event)" />
                   <span class="logo-upload-box">
                     @if (logoPreviewUrls[i]) {
                     <img [src]="logoPreviewUrls[i]" alt="Company logo preview" />
@@ -339,7 +305,9 @@
                   <textarea formControlName="address" class="form-input min-h-[82px]" placeholder="Company address"></textarea>
                 </label>
 
-                <label class="flex cursor-pointer items-center gap-3 rounded-md border border-[#f0d5d5] bg-[#fff7f7] p-3 text-xs font-bold text-[#7a1010] dark:border-[#3b2633] dark:bg-[#1b1018] dark:text-white-dark">
+                <label
+                  class="flex cursor-pointer items-center gap-3 rounded-md border border-[#f0d5d5] bg-[#fff7f7] p-3 text-xs font-bold text-[#7a1010] dark:border-[#3b2633] dark:bg-[#1b1018] dark:text-white-dark"
+                >
                   <input
                     type="checkbox"
                     formControlName="isPrimary"
@@ -364,42 +332,39 @@
             (click)="addCompany()"
           >
             <i class="fa" [ngClass]="companies.length >= maxCompanies ? 'fa-triangle-exclamation' : 'fa-plus-circle'"></i>
-            {{ companies.length >= maxCompanies ? 'Configured company count reached.' : 'Add Another Company (' + companies.length + ' of ' + maxCompanies + ')' }}
+            {{
+              companies.length >= maxCompanies ? 'Configured company count reached.' : 'Add Another Company (' + companies.length + ' of ' + maxCompanies + ')'
+            }}
           </button>
           @if (primaryCompanyInvalid()) {
           <p class="rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
             Please select one primary company before continuing.
           </p>
-          }
-          @if (companyCountInvalid()) {
+          } @if (companyCountInvalid()) {
           <p class="rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
-            Please configure exactly {{ maxCompanies }} compan{{ maxCompanies === 1 ? 'y' : 'ies' }} before continuing. Currently configured:
-            {{ companies.length }}.
+            Please configure at least one company before continuing.
           </p>
           }
         </div>
-        }
-
-        @if (currentStep === 3 && !registrationSubmitted) {
+        } @if (currentStep === 3 && !registrationSubmitted) {
         <div class="space-y-6">
-          <div class="flex gap-3 rounded-md border border-[#fde2a8] bg-[#fffbeb] p-4 text-sm text-[#7c4a03] dark:border-[#4d3613] dark:bg-[#211908] dark:text-[#f8d98a]">
-            <i class="fa fa-exclamation-triangle mt-0.5 text-lg text-[#a86400]"></i>
-            <div>
-              <p class="font-extrabold">Review and Validation Submission</p>
-              <p class="mt-1 text-xs leading-5">
-                Please evaluate all parameters prior to submittal. Registrations move to review state before account activation is sent.
-              </p>
-            </div>
-          </div>
-
-          <div class="grid gap-5 lg:grid-cols-3">
+          <div class="space-y-5">
             <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 shadow-sm dark:border-[#253b5c] dark:bg-[#111c2d]">
               <div class="flex items-center justify-between border-b border-[#dce4ee] pb-3 dark:border-[#253b5c]">
-                <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Tenant User</h2>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Tenant User</h2>
+                  @if (tenantForm.controls.companyName.value) {
+                  <span
+                    class="rounded-full border border-[#dce4ee] bg-[#eef2f6] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#607088] dark:border-[#253b5c] dark:bg-[#1b2a43] dark:text-white-dark"
+                  >
+                    {{ tenantForm.controls.companyName.value }}
+                  </span>
+                  }
+                </div>
                 <button type="button" class="text-xs font-extrabold text-[#9a0000] hover:underline" (click)="goToStep(1)">Edit</button>
               </div>
 
-              <div class="mt-4 space-y-3 text-sm text-[#516785] dark:text-white-dark">
+              <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-[#516785] dark:text-white-dark sm:grid-cols-3 lg:grid-cols-5">
                 <div>
                   <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Name</span>
                   <span class="font-bold text-[#163154] dark:text-white">{{ tenantDisplayName }}</span>
@@ -412,26 +377,24 @@
                   <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Country</span>
                   <span class="font-semibold">{{ tenantCountryName }}</span>
                 </div>
-                <div class="grid grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Business Type</span>
-                    <span class="text-xs font-semibold">{{ tenantBusinessTypeName }}</span>
-                  </div>
-                  <div>
-                    <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Companies</span>
-                    <span class="text-xs font-semibold">{{ tenantForm.controls.noOfCompanies.value || '-' }}</span>
-                  </div>
+                <div>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Tenant Name</span>
+                  <span class="font-semibold">{{ tenantForm.controls.companyName.value || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Companies</span>
+                  <span class="font-semibold">{{ tenantForm.controls.noOfCompanies.value || '-' }}</span>
                 </div>
               </div>
             </section>
 
-            <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 shadow-sm dark:border-[#253b5c] dark:bg-[#111c2d] lg:col-span-2">
+            <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 shadow-sm dark:border-[#253b5c] dark:bg-[#111c2d]">
               <div class="flex items-center justify-between border-b border-[#dce4ee] pb-3 dark:border-[#253b5c]">
                 <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Configured Companies</h2>
                 <button type="button" class="text-xs font-extrabold text-[#9a0000] hover:underline" (click)="goToStep(2)">Edit</button>
               </div>
 
-              <div class="mt-4 max-h-[220px] space-y-3 overflow-y-auto pr-1">
+              <div class="mt-4 max-h-[280px] space-y-3 overflow-y-auto pr-1">
                 @for (company of companies.controls; track company; let i = $index) {
                 <article class="rounded-md border border-[#dce4ee] bg-white p-3 text-xs dark:border-[#253b5c] dark:bg-[#0e1726]">
                   <div class="flex flex-col gap-2 border-b border-[#eef2f6] pb-2 dark:border-[#253b5c] sm:flex-row sm:items-center sm:justify-between">
@@ -447,7 +410,7 @@
                     </span>
                   </div>
 
-                  <div class="mt-3 grid gap-3 text-[#516785] dark:text-white-dark sm:grid-cols-2">
+                  <div class="mt-3 grid gap-3 text-[#516785] dark:text-white-dark sm:grid-cols-4">
                     <div>
                       <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Corp Email</span>
                       <span class="break-all font-semibold">{{ company.get('corporateEmail')?.value || '-' }}</span>
@@ -483,24 +446,24 @@
                 (change)="acceptTerms($any($event.target).checked)"
               />
               <span>
-                By completing this registration process, you affirm all declared company profiles are legally owned and agree to the platform's standard SaaS Terms of Service.
+                By completing this registration process, you affirm all declared company profiles are legally owned and agree to the platform's standard SaaS
+                Terms of Service.
               </span>
             </label>
             @if (termsTouched && !termsAccepted) {
             <p class="mt-2 text-xs font-bold text-[#9a0000]">Please accept the Terms of Service to complete registration.</p>
-            }
-            @if (submitError) {
+            } @if (submitError) {
             <p class="mt-2 rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
               {{ submitError }}
             </p>
             }
           </div>
         </div>
-        }
-
-        @if (registrationSubmitted) {
+        } @if (registrationSubmitted) {
         <div class="flex min-h-[390px] flex-col items-center justify-center py-8 text-center">
-          <div class="grid h-20 w-20 place-content-center rounded-full border-2 border-[#26a269] bg-[#eaf8f0] text-3xl text-[#198754] shadow-lg shadow-[#198754]/10">
+          <div
+            class="grid h-20 w-20 place-content-center rounded-full border-2 border-[#26a269] bg-[#eaf8f0] text-3xl text-[#198754] shadow-lg shadow-[#198754]/10"
+          >
             <i class="fa fa-check-circle"></i>
           </div>
           <h2 class="mt-6 text-2xl font-extrabold text-[#0f2948] dark:text-white">Registration Successful!</h2>
@@ -508,11 +471,13 @@
             Your tenant and company data has been saved. Company setup will continue in the background.
           </p>
 
-          <div class="mt-6 w-full max-w-md rounded-md border border-dashed border-[#cbd7e6] bg-[#f8fafc] p-5 text-left text-xs text-[#516785] dark:border-[#253b5c] dark:bg-[#111c2d] dark:text-white-dark">
+          <div
+            class="mt-6 w-full max-w-md rounded-md border border-dashed border-[#cbd7e6] bg-[#f8fafc] p-5 text-left text-xs text-[#516785] dark:border-[#253b5c] dark:bg-[#111c2d] dark:text-white-dark"
+          >
             <p class="leading-6">
               Our administrators will manually verify the credentials submitted for
-              <strong class="text-[#163154] dark:text-white">{{ tenantForm.controls.companyName.value }}</strong>.
-              Once the setup process is complete, a notification email will be sent to the email address you provided.
+              <strong class="text-[#163154] dark:text-white">{{ tenantForm.controls.companyName.value }}</strong
+              >. Once the setup process is complete, a notification email will be sent to the email address you provided.
             </p>
             <div class="mt-4 flex items-center justify-between border-t border-[#dce4ee] pt-4 dark:border-[#253b5c]">
               <span class="text-[10px] font-extrabold uppercase tracking-wide text-[#8a9ab4]">Reference ID</span>
@@ -531,9 +496,7 @@
             </button>
           </div>
         </div>
-        }
-
-        @if (!registrationSubmitted) {
+        } @if (!registrationSubmitted) {
         <div class="mt-8 border-t border-[#dce4ee] pt-6 dark:border-[#253b5c]">
           @if (submitError) {
           <p class="mb-4 rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-sm font-bold text-[#9a0000]">
@@ -544,9 +507,12 @@
             <button type="button" class="tenant-btn tenant-btn-secondary min-w-[126px] justify-center" (click)="currentStep === 1 ? cancel() : previousStep()">
               {{ currentStep === 1 ? 'Cancel' : 'Back' }}
             </button>
-            <button type="submit" class="tenant-btn tenant-btn-primary login-form min-w-[150px] border-0" [disabled]="isSubmitting">
+            <button type="submit" class="tenant-btn tenant-btn-primary login-form min-w-[150px] border-0" [disabled]="isSubmitting || isCheckingEmail">
               {{ submitButtonLabel }}
-              <i class="fa" [ngClass]="isSubmitting ? 'fa-spinner fa-spin' : currentStep === steps.length ? 'fa-cloud-upload-alt' : 'fa-arrow-right'"></i>
+              <i
+                class="fa"
+                [ngClass]="isSubmitting || isCheckingEmail ? 'fa-spinner fa-spin' : currentStep === steps.length ? 'fa-cloud-upload-alt' : 'fa-arrow-right'"
+              ></i>
             </button>
           </div>
         </div>

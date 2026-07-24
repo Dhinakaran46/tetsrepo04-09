@@ -354,7 +354,7 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               this.localstore.removeData('rememberme');
             }
 
-            if (companies.length > 1) {
+            if (companies.length > 1 || this.isCompanyAdminRole(response.data?.role)) {
               this.localstore.storeData('company_selection_pending', 'true');
               this.localstore.removeData('selected_company_id');
               this.localstore.removeData('menuList');
@@ -421,6 +421,10 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
       });
+  }
+
+  private isCompanyAdminRole(role: any): boolean {
+    return String(role || '').trim().toLowerCase() === 'company_admin';
   }
 
   // Copy of getconfig from AuthLayout

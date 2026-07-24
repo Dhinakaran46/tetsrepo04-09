@@ -1,7 +1,7 @@
 ﻿import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { GridApiService } from '../../service/common/grid.service';
@@ -10,6 +10,14 @@ interface LovOption {
   id: number;
   code: string;
   name: string;
+}
+
+function mobileNumberValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (!value) return null;
+
+  const normalized = String(value).replace(/[\s\-()]/g, '');
+  return /^\+?\d{7,15}$/.test(normalized) ? null : { mobileNumber: true };
 }
 
 @Component({
@@ -28,12 +36,13 @@ export class TenantRegisterationComponent implements OnInit {
   companyCountTouched = false;
   logoPreviewUrls: string[] = [];
   isSubmitting = false;
+  isCheckingEmail = false;
   submitError = '';
 
   readonly steps = [
     { id: 1, label: 'Tenant & User Info' },
     { id: 2, label: 'Company Setup' },
-    { id: 3, label: 'Complete' },
+    { id: 3, label: 'Review & Submit' },
   ];
 
   businessTypes: LovOption[] = [
@@ -63,11 +72,9 @@ export class TenantRegisterationComponent implements OnInit {
     designation: [''],
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
-    mobileNumber: ['', Validators.required],
+    mobileNumber: ['', [Validators.required, mobileNumberValidator]],
     countryId: [null as number | null, Validators.required],
     address: [''],
-    businessTypeId: [null as number | null, Validators.required],
-    employeeSizeId: [null as number | null, Validators.required],
     companyName: ['', Validators.required],
     noOfCompanies: [1, [Validators.required, Validators.min(1), Validators.max(5)]],
   });
@@ -76,12 +83,7 @@ export class TenantRegisterationComponent implements OnInit {
     companies: this.fb.array([]),
   });
 
-  constructor(
-    private fb: FormBuilder,
-    private gridApiService: GridApiService,
-    private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  constructor(private fb: FormBuilder, private gridApiService: GridApiService, private toastr: ToastrService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadLovOptions();
@@ -104,7 +106,7 @@ export class TenantRegisterationComponent implements OnInit {
   }
 
   nextStep(): void {
-    if (this.registrationSubmitted) return;
+    if (this.registrationSubmitted || this.isCheckingEmail) return;
 
     if (this.currentStep === 1 && this.tenantForm.invalid) {
       this.tenantForm.markAllAsTouched();
@@ -112,10 +114,14 @@ export class TenantRegisterationComponent implements OnInit {
     }
 
     if (this.currentStep === 1) {
-      this.ensureInitialCompany();
-      this.ensurePrimaryCompany();
+      this.verifyEmailAvailability();
+      return;
     }
 
+    this.advanceFromCurrentStep();
+  }
+
+  private advanceFromCurrentStep(): void {
     if (this.currentStep === 2) {
       this.primaryCompanyTouched = true;
       this.companyCountTouched = true;
@@ -152,6 +158,43 @@ export class TenantRegisterationComponent implements OnInit {
       this.currentStep -= 1;
       this.termsTouched = false;
     }
+  }
+
+  private verifyEmailAvailability(): void {
+    this.submitError = '';
+    this.isCheckingEmail = true;
+
+    const email = this.tenantForm.controls.email.value || '';
+    this.gridApiService
+      .checkTenantEmailExists(email)
+      .pipe(
+        catchError((error) => {
+          this.submitError = this.getApiErrorMessage(error);
+          return of(null);
+        })
+      )
+      .subscribe((response: any) => {
+        this.isCheckingEmail = false;
+
+        if (response === null) {
+          this.cdr.detectChanges();
+          return;
+        }
+
+        const responseBody = response?.body || response;
+        if (responseBody?.data?.exists) {
+          this.tenantForm.controls.email.setErrors({ emailExists: true });
+          this.tenantForm.controls.email.markAsTouched();
+          this.submitError = 'An account with this email already exists. Please login or use a different email address.';
+          this.cdr.detectChanges();
+          return;
+        }
+
+        this.ensureInitialCompany();
+        this.ensurePrimaryCompany();
+        this.advanceFromCurrentStep();
+        this.cdr.detectChanges();
+      });
   }
 
   cancel(): void {
@@ -218,7 +261,7 @@ export class TenantRegisterationComponent implements OnInit {
   }
 
   hasRequiredCompanyCount(): boolean {
-    return this.companies.length === this.maxCompanies;
+    return this.companies.length >= 1;
   }
 
   companyCountInvalid(): boolean {
@@ -255,19 +298,14 @@ export class TenantRegisterationComponent implements OnInit {
     return [this.tenantForm.controls.firstName.value, this.tenantForm.controls.lastName.value].filter(Boolean).join(' ') || '-';
   }
 
-  get tenantBusinessTypeName(): string {
-    return this.getLovName(this.businessTypes, this.tenantForm.controls.businessTypeId.value);
-  }
-
-  get tenantEmployeeSizeName(): string {
-    return this.getLovName(this.employeeSizes, this.tenantForm.controls.employeeSizeId.value);
-  }
-
   get tenantCountryName(): string {
     return this.getLovName(this.countries, this.tenantForm.controls.countryId.value);
   }
 
   get submitButtonLabel(): string {
+    if (this.isCheckingEmail) {
+      return 'Checking email...';
+    }
     if (this.isSubmitting && this.currentStep === this.steps.length) {
       return 'Submitting registration...';
     }
@@ -304,7 +342,11 @@ export class TenantRegisterationComponent implements OnInit {
         const lovTypes = response?.data || [];
         if (!lovTypes.length) return;
 
-        const normalizeLovCode = (value: string) => String(value || '').trim().toLowerCase().replace(/[-\s]+/g, '_');
+        const normalizeLovCode = (value: string) =>
+          String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[-\s]+/g, '_');
         const byType = (type: string) => {
           const lovType = lovTypes.find((record: any) => normalizeLovCode(record.code) === type);
           return (lovType?.values || []).map((record: any) => ({
@@ -352,7 +394,7 @@ export class TenantRegisterationComponent implements OnInit {
     if (!this.hasRequiredCompanyCount()) {
       this.currentStep = 2;
       this.openFirstCompany();
-      this.submitError = `Please configure exactly ${this.maxCompanies} compan${this.maxCompanies === 1 ? 'y' : 'ies'} before submitting.`;
+      this.submitError = 'Please configure at least one company before submitting.';
       return;
     }
 
@@ -435,8 +477,6 @@ export class TenantRegisterationComponent implements OnInit {
         mobileNumber: tenantValue.mobileNumber,
         countryId: tenantValue.countryId,
         address: tenantValue.address,
-        businessTypeId: tenantValue.businessTypeId,
-        employeeSizeId: tenantValue.employeeSizeId,
         companyName: tenantValue.companyName,
         noOfCompanies: tenantValue.noOfCompanies,
         companies,
@@ -476,8 +516,6 @@ export class TenantRegisterationComponent implements OnInit {
 
     if (!primaryCompany.get('name')?.value) patch.name = this.tenantForm.controls.companyName.value || '';
     if (!primaryCompany.get('corporateEmail')?.value) patch.corporateEmail = this.tenantForm.controls.email.value || '';
-    if (!primaryCompany.get('businessTypeId')?.value) patch.businessTypeId = this.tenantForm.controls.businessTypeId.value;
-    if (!primaryCompany.get('employeeSizeId')?.value) patch.employeeSizeId = this.tenantForm.controls.employeeSizeId.value;
     if (!primaryCompany.get('countryId')?.value) patch.countryId = this.tenantForm.controls.countryId.value;
     if (!primaryCompany.get('address')?.value) patch.address = this.tenantForm.controls.address.value || '';
 
@@ -493,12 +531,12 @@ export class TenantRegisterationComponent implements OnInit {
       taxRegistrationNumber: [''],
       registrationNumber: [''],
       address: [index === 0 ? this.tenantForm.controls.address.value || '' : ''],
-      mobileNo: [''],
+      mobileNo: ['', [mobileNumberValidator]],
       website: [''],
       logo: [null as File | null],
       isPrimary: [false],
-      businessTypeId: [index === 0 ? this.tenantForm.controls.businessTypeId.value : null],
-      employeeSizeId: [index === 0 ? this.tenantForm.controls.employeeSizeId.value : null],
+      businessTypeId: [null as number | null],
+      employeeSizeId: [null as number | null],
       countryId: [index === 0 ? this.tenantForm.controls.countryId.value : null, Validators.required],
       isOpen: [true],
     });
@@ -512,9 +550,7 @@ export class TenantRegisterationComponent implements OnInit {
     const responseError = error?.error;
     if (typeof responseError === 'string') return responseError;
 
-    const dataMessage = typeof responseError?.data === 'string'
-      ? responseError.data
-      : responseError?.data?.message;
+    const dataMessage = typeof responseError?.data === 'string' ? responseError.data : responseError?.data?.message;
 
     return responseError?.message || responseError?.errors?.message || dataMessage || error?.message || 'Unable to submit tenant registration.';
   }

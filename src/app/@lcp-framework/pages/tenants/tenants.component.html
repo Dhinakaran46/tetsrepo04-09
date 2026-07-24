@@ -1,0 +1,48 @@
+<div class="flex justify-between">
+  <div class="mx-2 mt-1">
+    <h1 appdynamicfontsize="title" class="text-base font-bold dark:text-white-light">{{ title | translate }}</h1>
+  </div>
+</div>
+
+<div class="flex-1 p-3 pt-6">
+  <app-datatable
+    [loading]="gridloading"
+    [masterInfo]="masterInfo"
+    [headercolumns]="headercolumns"
+    [selectcolumns]="selectcolumns"
+    [items]="items"
+    [totalItems]="totalItems"
+    [currentPage]="currentPage"
+    [resultsPerPage]="resultsPerPage"
+    [column]="column"
+    [title]="title"
+    [query]="query"
+    (pageChange)="onPageChange($event)"
+    (resultsPerPageChange)="onResultsPerPageChange($event)"
+  ></app-datatable>
+
+  <ng-template #statusTemplate let-item>
+    <span class="badge" [ngClass]="statusBadgeClass[item.process_status] || 'badge-outline-secondary'">
+      {{ item.process_status }}
+    </span>
+  </ng-template>
+
+  <ng-template #actionTemplate let-item>
+    <div class="flex items-center gap-4">
+      @if (isActionable(item)) {
+      <button ngxTippy data-tippy-content="Approve" appDynamicFontSize="body" type="button" (click)="approveTenant(item)">
+        <i class="fa-solid fa-check text-success"></i>
+      </button>
+      <button ngxTippy data-tippy-content="Reject" appDynamicFontSize="body" type="button" (click)="rejectTenant(item)">
+        <i class="fa-solid fa-xmark text-danger"></i>
+      </button>
+      } @else {
+      <span class="text-xs font-semibold uppercase text-white-dark">-</span>
+      }
+    </div>
+  </ng-template>
+</div>
+
+@if (gridloading) {
+<app-loader></app-loader>
+}
