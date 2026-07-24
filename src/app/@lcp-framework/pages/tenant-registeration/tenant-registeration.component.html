@@ -8,9 +8,7 @@
     </div>
 
     <div class="mb-10 text-center">
-      <h1 class="text-2xl font-extrabold uppercase tracking-normal text-[#0f2948] dark:text-white sm:text-3xl">
-        New Tenant Registration
-      </h1>
+      <h1 class="text-2xl font-extrabold uppercase tracking-normal text-[#0f2948] dark:text-white sm:text-3xl">New Tenant Registration</h1>
 
       <nav class="mt-9 flex flex-col items-start justify-center gap-4 text-sm font-bold sm:flex-row sm:items-center sm:gap-5 md:text-base">
         @for (step of steps; track step.id; let last = $last) {
@@ -34,8 +32,7 @@
         <div class="hidden h-px w-16 bg-[#cbd5e1] sm:block">
           <span class="block h-px w-full" [ngClass]="step.id < currentStep ? 'bg-[#9a0000]' : 'bg-[#cbd5e1]'"></span>
         </div>
-        }
-        }
+        } }
       </nav>
     </div>
 
@@ -194,14 +191,14 @@
             </div>
           </section>
         </div>
-        }
-
-        @if (currentStep === 2) {
+        } @if (currentStep === 2) {
         <div class="space-y-5" [formGroup]="companySetupForm">
-          <div class="max-h-[520px] space-y-4 overflow-y-auto pr-1" formArrayName="companies">
+          <div class="space-y-4 pr-1" formArrayName="companies">
             @for (company of companies.controls; track company; let i = $index) {
             <div
-              class="overflow-hidden rounded-md border bg-white shadow-sm dark:bg-[#0e1726]"
+              class="rounded-md border bg-white shadow-sm dark:bg-[#0e1726]"
+              [class.overflow-hidden]="openCurrencyPickerIndex !== i"
+              [class.overflow-visible]="openCurrencyPickerIndex === i"
               [ngClass]="companyHasVisibleError(i) ? 'border-[#9a0000] dark:border-[#9a0000]' : 'border-[#dce4ee] dark:border-[#253b5c]'"
               [formGroupName]="i"
             >
@@ -211,8 +208,7 @@
                   <span class="truncate text-sm font-extrabold text-[#163154] dark:text-white">{{ companyTitle(i) }}</span>
                   @if (company.get('isPrimary')?.value) {
                   <span class="rounded-full border border-[#f0d5d5] bg-[#fff7f7] px-2 py-0.5 text-[10px] font-extrabold text-[#9a0000]">PRIMARY</span>
-                  }
-                  @if (companyHasVisibleError(i)) {
+                  } @if (companyHasVisibleError(i)) {
                   <span class="rounded-full bg-[#9a0000] px-2 py-0.5 text-[10px] font-extrabold text-white">NEEDS ATTENTION</span>
                   }
                 </button>
@@ -282,12 +278,7 @@
 
                 <label class="tenant-field logo-upload-field">
                   <span>Logo</span>
-                  <input
-                    type="file"
-                    class="sr-only"
-                    accept="image/*"
-                    (change)="onCompanyLogoChange(i, $event)"
-                  />
+                  <input type="file" class="sr-only" accept="image/*" (change)="onCompanyLogoChange(i, $event)" />
                   <span class="logo-upload-box">
                     @if (logoPreviewUrls[i]) {
                     <img [src]="logoPreviewUrls[i]" alt="Company logo preview" />
@@ -339,7 +330,159 @@
                   <textarea formControlName="address" class="form-input min-h-[82px]" placeholder="Company address"></textarea>
                 </label>
 
-                <label class="flex cursor-pointer items-center gap-3 rounded-md border border-[#f0d5d5] bg-[#fff7f7] p-3 text-xs font-bold text-[#7a1010] dark:border-[#3b2633] dark:bg-[#1b1018] dark:text-white-dark">
+                <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 dark:border-[#253b5c] dark:bg-[#111c2d] md:col-span-2">
+                  <div class="mb-4 flex flex-col gap-1 border-b border-[#dce4ee] pb-3 dark:border-[#253b5c]">
+                    <div class="flex items-center gap-2">
+                      <i class="fa-solid fa-coins text-[#9a0000]"></i>
+                      <h3 class="text-sm font-extrabold text-[#163154] dark:text-white">Currency Setup</h3>
+                    </div>
+                    <p class="text-[11px] font-medium text-[#607088] dark:text-white-dark">
+                      Choose the currencies available to this company and select its default currency.
+                    </p>
+                  </div>
+
+                  @if (currencies.length) {
+                  <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+                    <div class="min-w-0">
+                      <div class="mb-2 flex items-center justify-between gap-3">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wide text-[#607088] dark:text-white-dark">Selected currencies</span>
+                        <span
+                          class="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-[#607088] shadow-sm dark:bg-[#0e1726] dark:text-white-dark"
+                        >
+                          {{ selectedCurrencies(i).length }} selected
+                        </span>
+                      </div>
+
+                      <div class="min-h-[46px] rounded-md border border-[#dce4ee] bg-white p-2 dark:border-[#253b5c] dark:bg-[#0e1726]">
+                        <div class="flex flex-wrap gap-2">
+                          @for (currency of selectedCurrencies(i); track currency.id) {
+                          <span
+                            class="inline-flex max-w-full items-center gap-2 rounded-full border border-[#efcaca] bg-[#fffafa] px-3 py-1.5 text-xs font-bold text-[#163154] dark:border-[#53303a] dark:bg-[#1b1018] dark:text-white"
+                          >
+                            <span class="font-extrabold text-[#9a0000]">{{ currency.code }}</span>
+                            <span class="max-w-[135px] truncate text-[#607088] dark:text-white-dark">{{ currency.name }}</span>
+                            @if (isDefaultCurrency(i, currency.id)) {
+                            <span class="rounded-full bg-[#9a0000] px-1.5 py-0.5 text-[8px] font-extrabold uppercase text-white">Default</span>
+                            }
+                            <button
+                              type="button"
+                              class="text-[#8a9ab4] transition hover:text-[#9a0000]"
+                              title="Remove currency"
+                              (click)="removeCurrency(i, currency.id)"
+                            >
+                              <i class="fa-solid fa-xmark"></i>
+                            </button>
+                          </span>
+                          } @empty {
+                          <span class="px-1 py-1.5 text-xs font-semibold text-[#8a9ab4]">No currencies selected.</span>
+                          }
+                        </div>
+                      </div>
+
+                      <div data-currency-picker class="relative mt-3">
+                        <button
+                          type="button"
+                          class="flex w-full items-center justify-between rounded-md border border-[#cbd5e1] bg-white px-3 py-2.5 text-left text-sm font-bold text-[#163154] transition hover:border-[#9a0000] dark:border-[#253b5c] dark:bg-[#0e1726] dark:text-white"
+                          (click)="toggleCurrencyPicker(i)"
+                        >
+                          <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-[#9a0000]"></i>
+                            Choose currencies
+                          </span>
+                          <i
+                            class="fa-solid fa-chevron-down text-xs text-[#8a9ab4] transition-transform"
+                            [class.rotate-180]="openCurrencyPickerIndex === i"
+                          ></i>
+                        </button>
+
+                        @if (openCurrencyPickerIndex === i) {
+                        <div
+                          class="absolute left-0 right-0 top-full z-[90] mt-2 overflow-hidden rounded-md border border-[#cbd5e1] bg-white shadow-xl dark:border-[#253b5c] dark:bg-[#0e1726]"
+                        >
+                          <div class="border-b border-[#e5eaf0] p-3 dark:border-[#253b5c]">
+                            <div class="relative">
+                              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#8a9ab4]"></i>
+                              <input
+                                type="search"
+                                class="form-input pl-9"
+                                placeholder="Search by code, name, or symbol..."
+                                [value]="currencySearches[i] || ''"
+                                (input)="updateCurrencySearch(i, $any($event.target).value)"
+                              />
+                            </div>
+                          </div>
+                          <div class="max-h-52 overflow-y-auto p-2">
+                            @for (currency of filteredCurrencies(i); track currency.id) {
+                            <label
+                              class="flex cursor-pointer items-center justify-between gap-3 rounded px-3 py-2 transition hover:bg-[#f8fafc] dark:hover:bg-[#111c2d]"
+                            >
+                              <span class="flex min-w-0 items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  class="form-checkbox shrink-0 bg-white dark:bg-black"
+                                  [checked]="isCurrencySelected(i, currency.id)"
+                                  (change)="toggleCurrency(i, currency.id, $any($event.target).checked)"
+                                />
+                                <span class="min-w-0">
+                                  <strong class="block text-xs text-[#163154] dark:text-white"
+                                    >{{ currency.code }}{{ currency.symbol ? ' · ' + currency.symbol : '' }}</strong
+                                  >
+                                  <small class="block truncate text-[10px] text-[#607088] dark:text-white-dark">{{ currency.name }}</small>
+                                </span>
+                              </span>
+                              @if (isCurrencySelected(i, currency.id)) {
+                              <i class="fa-solid fa-check text-xs text-[#9a0000]"></i>
+                              }
+                            </label>
+                            } @empty {
+                            <div class="px-3 py-6 text-center text-xs font-semibold text-[#8a9ab4]">No matching currencies found.</div>
+                            }
+                          </div>
+                          <div
+                            class="flex items-center justify-between border-t border-[#e5eaf0] bg-[#f8fafc] px-3 py-2 dark:border-[#253b5c] dark:bg-[#111c2d]"
+                          >
+                            <span class="text-[10px] font-bold text-[#607088] dark:text-white-dark">{{ selectedCurrencies(i).length }} selected</span>
+                            <button
+                              type="button"
+                              class="rounded px-3 py-1.5 text-xs font-extrabold text-[#9a0000] hover:bg-[#fff0f0]"
+                              (click)="closeCurrencyPicker()"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        </div>
+                        }
+                      </div>
+                      @if (companyInvalid(i, 'currencyIds')) {
+                      <p class="mt-2 text-xs font-bold text-[#9a0000]">Select at least one currency for this company.</p>
+                      }
+                    </div>
+
+                    <label class="tenant-field self-start">
+                      <span>Default Currency <b>*</b></span>
+                      <select class="form-input" formControlName="defaultCurrencyId" (change)="onDefaultCurrencyChange(i, $any($event.target).value)">
+                        <option value="">Select Default Currency</option>
+                        @for (currency of selectedCurrencies(i); track currency.id) {
+                        <option [value]="currency.id">{{ currency.code }} - {{ currency.name }}</option>
+                        }
+                      </select>
+                      @if (companyInvalid(i, 'defaultCurrencyId')) {
+                      <small>Select one default currency.</small>
+                      } @else {
+                      <small class="!mt-2 !block !text-[#607088] dark:!text-white-dark">The default currency starts with an exchange rate of 1.</small>
+                      }
+                    </label>
+                  </div>
+                  } @else {
+                  <div class="rounded-md border border-[#fde2a8] bg-[#fffbeb] px-4 py-3 text-xs font-bold text-[#7c4a03]">
+                    Currency options are not available. Please try again.
+                  </div>
+                  }
+                </section>
+
+                <label
+                  class="flex cursor-pointer items-center gap-3 rounded-md border border-[#f0d5d5] bg-[#fff7f7] p-3 text-xs font-bold text-[#7a1010] dark:border-[#3b2633] dark:bg-[#1b1018] dark:text-white-dark"
+                >
                   <input
                     type="checkbox"
                     formControlName="isPrimary"
@@ -364,25 +507,26 @@
             (click)="addCompany()"
           >
             <i class="fa" [ngClass]="companies.length >= maxCompanies ? 'fa-triangle-exclamation' : 'fa-plus-circle'"></i>
-            {{ companies.length >= maxCompanies ? 'Configured company count reached.' : 'Add Another Company (' + companies.length + ' of ' + maxCompanies + ')' }}
+            {{
+              companies.length >= maxCompanies ? 'Configured company count reached.' : 'Add Another Company (' + companies.length + ' of ' + maxCompanies + ')'
+            }}
           </button>
           @if (primaryCompanyInvalid()) {
           <p class="rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
             Please select one primary company before continuing.
           </p>
-          }
-          @if (companyCountInvalid()) {
+          } @if (companyCountInvalid()) {
           <p class="rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
             Please configure exactly {{ maxCompanies }} compan{{ maxCompanies === 1 ? 'y' : 'ies' }} before continuing. Currently configured:
             {{ companies.length }}.
           </p>
           }
         </div>
-        }
-
-        @if (currentStep === 3 && !registrationSubmitted) {
+        } @if (currentStep === 3 && !registrationSubmitted) {
         <div class="space-y-6">
-          <div class="flex gap-3 rounded-md border border-[#fde2a8] bg-[#fffbeb] p-4 text-sm text-[#7c4a03] dark:border-[#4d3613] dark:bg-[#211908] dark:text-[#f8d98a]">
+          <div
+            class="flex gap-3 rounded-md border border-[#fde2a8] bg-[#fffbeb] p-4 text-sm text-[#7c4a03] dark:border-[#4d3613] dark:bg-[#211908] dark:text-[#f8d98a]"
+          >
             <i class="fa fa-exclamation-triangle mt-0.5 text-lg text-[#a86400]"></i>
             <div>
               <p class="font-extrabold">Review and Validation Submission</p>
@@ -464,6 +608,18 @@
                       <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Mobile</span>
                       <span class="font-semibold">{{ company.get('mobileNo')?.value || '-' }}</span>
                     </div>
+                    <div>
+                      <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Currencies</span>
+                      <span class="font-semibold">
+                        @for (currency of selectedCurrencies(i); track currency.id; let last = $last) {
+                        {{ currency.code }}{{ last ? '' : ', ' }}
+                        }
+                      </span>
+                    </div>
+                    <div>
+                      <span class="block text-[9px] font-extrabold uppercase text-[#8a9ab4]">Default Currency</span>
+                      <span class="font-semibold">{{ defaultCurrency(i)?.code || '-' }}</span>
+                    </div>
                   </div>
                 </article>
                 }
@@ -483,24 +639,24 @@
                 (change)="acceptTerms($any($event.target).checked)"
               />
               <span>
-                By completing this registration process, you affirm all declared company profiles are legally owned and agree to the platform's standard SaaS Terms of Service.
+                By completing this registration process, you affirm all declared company profiles are legally owned and agree to the platform's standard SaaS
+                Terms of Service.
               </span>
             </label>
             @if (termsTouched && !termsAccepted) {
             <p class="mt-2 text-xs font-bold text-[#9a0000]">Please accept the Terms of Service to complete registration.</p>
-            }
-            @if (submitError) {
+            } @if (submitError) {
             <p class="mt-2 rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-xs font-bold text-[#9a0000]">
               {{ submitError }}
             </p>
             }
           </div>
         </div>
-        }
-
-        @if (registrationSubmitted) {
+        } @if (registrationSubmitted) {
         <div class="flex min-h-[390px] flex-col items-center justify-center py-8 text-center">
-          <div class="grid h-20 w-20 place-content-center rounded-full border-2 border-[#26a269] bg-[#eaf8f0] text-3xl text-[#198754] shadow-lg shadow-[#198754]/10">
+          <div
+            class="grid h-20 w-20 place-content-center rounded-full border-2 border-[#26a269] bg-[#eaf8f0] text-3xl text-[#198754] shadow-lg shadow-[#198754]/10"
+          >
             <i class="fa fa-check-circle"></i>
           </div>
           <h2 class="mt-6 text-2xl font-extrabold text-[#0f2948] dark:text-white">Registration Successful!</h2>
@@ -508,11 +664,13 @@
             Your tenant and company data has been saved. Company setup will continue in the background.
           </p>
 
-          <div class="mt-6 w-full max-w-md rounded-md border border-dashed border-[#cbd7e6] bg-[#f8fafc] p-5 text-left text-xs text-[#516785] dark:border-[#253b5c] dark:bg-[#111c2d] dark:text-white-dark">
+          <div
+            class="mt-6 w-full max-w-md rounded-md border border-dashed border-[#cbd7e6] bg-[#f8fafc] p-5 text-left text-xs text-[#516785] dark:border-[#253b5c] dark:bg-[#111c2d] dark:text-white-dark"
+          >
             <p class="leading-6">
               Our administrators will manually verify the credentials submitted for
-              <strong class="text-[#163154] dark:text-white">{{ tenantForm.controls.companyName.value }}</strong>.
-              Once the setup process is complete, a notification email will be sent to the email address you provided.
+              <strong class="text-[#163154] dark:text-white">{{ tenantForm.controls.companyName.value }}</strong
+              >. Once the setup process is complete, a notification email will be sent to the email address you provided.
             </p>
             <div class="mt-4 flex items-center justify-between border-t border-[#dce4ee] pt-4 dark:border-[#253b5c]">
               <span class="text-[10px] font-extrabold uppercase tracking-wide text-[#8a9ab4]">Reference ID</span>
@@ -531,9 +689,7 @@
             </button>
           </div>
         </div>
-        }
-
-        @if (!registrationSubmitted) {
+        } @if (!registrationSubmitted) {
         <div class="mt-8 border-t border-[#dce4ee] pt-6 dark:border-[#253b5c]">
           @if (submitError) {
           <p class="mb-4 rounded-md border border-[#f0d5d5] bg-[#fff7f7] px-3 py-2 text-sm font-bold text-[#9a0000]">

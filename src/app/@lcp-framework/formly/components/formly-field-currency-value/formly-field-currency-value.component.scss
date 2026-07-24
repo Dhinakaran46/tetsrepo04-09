@@ -1,0 +1,260 @@
+:host {
+  display: block;
+}
+
+// ─── Outer wrapper ────────────────────────────────────────────────────────────
+.currency-value-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+// ─── Shared label ─────────────────────────────────────────────────────────────
+.currency-value-label {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.125rem;
+
+  :host-context(.dark) & {
+    color: #f1f5f9;
+  }
+
+  &__code {
+    font-weight: 500;
+    font-size: 0.7rem;
+    color: #64748b;
+    :host-context(.dark) & {
+      color: #94a3b8;
+    }
+  }
+}
+
+// ─── Combined input row ───────────────────────────────────────────────────────
+.currency-value-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  height: 34px;
+
+  :host-context(.dark) & {
+    border-color: #3b5275;
+    background: #121e32;
+  }
+
+  &:focus-within {
+    border-color: var(--app-form-base-component-color, #881337);
+    box-shadow: 0 0 0 1px rgba(136, 19, 55, 0.15);
+
+    :host-context(.dark) & {
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+    }
+  }
+
+  &--invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.15) !important;
+  }
+}
+
+// ─── Left: Currency select wrapper ───────────────────────────────────────────
+.currency-select-wrap {
+  flex: 0 0 clamp(8.5rem, 34%, 10.25rem);
+  width: clamp(8.5rem, 34%, 10.25rem);
+  min-width: 7.75rem;
+  display: flex;
+  align-items: center;
+
+  .currency-ng-select {
+    width: 100%;
+
+    ::ng-deep .ng-select-container {
+      height: 32px !important;
+      min-height: 32px !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 5px 0 10px !important;
+      font-size: 0.8rem !important;
+      color: #1e293b !important;
+    }
+
+    ::ng-deep .ng-value-container {
+      padding: 0 !important;
+      min-width: 0;
+      flex-wrap: nowrap !important;
+    }
+
+    ::ng-deep .ng-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    ::ng-deep .ng-input input {
+      color: #1e293b !important;
+      font-size: 0.8rem !important;
+    }
+
+    ::ng-deep .ng-arrow-wrapper {
+      width: 18px !important;
+      padding-right: 2px !important;
+
+      .ng-arrow {
+        border-color: #64748b transparent transparent !important;
+        border-width: 5px 4px 0 !important;
+      }
+    }
+
+    ::ng-deep .ng-placeholder {
+      color: #94a3b8 !important;
+      font-size: 0.8rem !important;
+    }
+
+    :host-context(.dark) ::ng-deep .ng-select-container {
+      color: #cbd5e1 !important;
+      background: transparent !important;
+    }
+
+    :host-context(.dark) ::ng-deep .ng-input input {
+      color: #cbd5e1 !important;
+    }
+
+    :host-context(.dark) ::ng-deep .ng-arrow {
+      border-color: #64748b transparent transparent !important;
+    }
+  }
+
+  .currency-select-skeleton {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+
+    &__bar {
+      display: block;
+      width: 80%;
+      height: 12px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.2s infinite;
+
+      :host-context(.dark) & {
+        background: linear-gradient(90deg, #1e293b 25%, #263b5c 50%, #1e293b 75%);
+        background-size: 200% 100%;
+      }
+    }
+  }
+}
+
+// ─── Divider between select and input ────────────────────────────────────────
+.currency-divider {
+  flex: 0 0 1px;
+  background: #94a3b8;
+  align-self: stretch;
+  margin: 5px 0;
+
+  :host-context(.dark) & {
+    background: #3b5275;
+  }
+}
+
+// ─── Right: Value input ───────────────────────────────────────────────────────
+.currency-value-input-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.currency-value-input {
+  width: 100%;
+  height: 100%;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 12px !important;
+  font-size: 0.8rem !important;
+  color: #1e293b;
+  min-width: 0;
+
+  &::placeholder {
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+
+  // Remove number input arrows
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  &[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  :host-context(.dark) & {
+    color: #cbd5e1;
+  }
+}
+
+@media (max-width: 480px) {
+  .currency-select-wrap {
+    flex-basis: 7.25rem;
+    width: 7.25rem;
+    min-width: 7.25rem;
+  }
+
+  .currency-value-input {
+    padding: 0 9px !important;
+  }
+}
+
+// ─── Validation error ─────────────────────────────────────────────────────────
+.currency-value-error {
+  font-size: 0.7rem;
+  color: #ef4444;
+  margin-top: 0.125rem;
+}
+
+// ─── ng-select dropdown panel (appended to body) ──────────────────────────────
+::ng-deep .currency-ng-select .ng-dropdown-panel {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 4px !important;
+
+  .ng-option {
+    font-size: 0.8rem !important;
+    padding: 7px 12px !important;
+    color: #334155 !important;
+    transition: background 0.15s ease !important;
+
+    &.ng-option-marked {
+      background: color-mix(in srgb, var(--app-form-base-component-color, #881337) 8%, #fff) !important;
+      color: var(--app-form-base-component-color, #881337) !important;
+    }
+
+    &.ng-option-selected {
+      background: color-mix(in srgb, var(--app-form-base-component-color, #881337) 14%, #fff) !important;
+      color: var(--app-form-base-component-color, #881337) !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+// ─── Shimmer animation ────────────────────────────────────────────────────────
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

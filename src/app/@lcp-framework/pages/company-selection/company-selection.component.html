@@ -136,7 +136,7 @@
         </button>
       </div>
 
-      <form class="add-company-body" [formGroup]="addCompanyForm" (ngSubmit)="submitAddCompany()">
+      <form class="add-company-body" [class.currency-picker-open]="showCurrencyPicker" [formGroup]="addCompanyForm" (ngSubmit)="submitAddCompany()">
         <div class="cs-field-grid">
           <label class="cs-field">
             <span>Company Code <b>*</b></span>
@@ -240,6 +240,128 @@
             <span>Address</span>
             <textarea rows="2" formControlName="address" class="form-input" placeholder="Company address"></textarea>
           </label>
+
+          <section class="cs-currency-setup cs-field-wide">
+            <div class="cs-currency-heading">
+              <div>
+                <i class="fa-solid fa-coins"></i>
+                <strong>Currency Setup</strong>
+              </div>
+              <small>Choose currencies for this company and select one default.</small>
+            </div>
+
+            @if (currencies.length) {
+            <div class="cs-currency-layout">
+              <div>
+                <div class="cs-currency-label">
+                  <span>Selected currencies</span>
+                  <em>{{ selectedCurrencies.length }} selected</em>
+                </div>
+                <div class="cs-currency-chips">
+                  @for (currency of selectedCurrencies; track currency.id) {
+                  <span class="cs-currency-chip">
+                    <b>{{ currency.code }}</b>
+                    <span>{{ currency.name }}</span>
+                    @if (isDefaultCurrency(currency.id)) {
+                    <em>Default</em>
+                    }
+                    <button type="button" title="Remove currency" (click)="removeCurrency(currency.id)">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </span>
+                  } @empty {
+                  <span class="cs-currency-empty">No currencies selected.</span>
+                  }
+                </div>
+
+                <div data-currency-picker class="cs-currency-anchor">
+                  <button
+                    type="button"
+                    class="cs-currency-toggle"
+                    cdkOverlayOrigin
+                    #currencyOverlayOrigin="cdkOverlayOrigin"
+                    (click)="toggleCurrencyPicker($event)"
+                  >
+                    <span><i class="fa-solid fa-coins"></i> Choose currencies</span>
+                    <i class="fa-solid fa-chevron-down" [class.rotate-180]="showCurrencyPicker"></i>
+                  </button>
+
+                  <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayOrigin]="currencyOverlayOrigin"
+                    [cdkConnectedOverlayOpen]="showCurrencyPicker"
+                    [cdkConnectedOverlayPositions]="currencyOverlayPositions"
+                    [cdkConnectedOverlayWidth]="currencyOverlayWidth"
+                    [cdkConnectedOverlayViewportMargin]="12"
+                    [cdkConnectedOverlayPush]="true"
+                    [cdkConnectedOverlayHasBackdrop]="true"
+                    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                    (backdropClick)="closeCurrencyPicker()"
+                    (detach)="closeCurrencyPicker()"
+                  >
+                    <div data-currency-picker class="cs-currency-picker">
+                      <div class="cs-currency-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input
+                          type="search"
+                          class="form-input"
+                          placeholder="Search by code, name, or symbol..."
+                          [value]="currencySearch"
+                          (input)="currencySearch = $any($event.target).value"
+                        />
+                      </div>
+                      <div class="cs-currency-options">
+                        @for (currency of filteredCurrencies; track currency.id) {
+                        <label>
+                          <input
+                            type="checkbox"
+                            class="form-checkbox"
+                            [checked]="isCurrencySelected(currency.id)"
+                            (change)="toggleCurrency(currency.id, $any($event.target).checked)"
+                          />
+                          <span>
+                            <strong>{{ currency.code }}{{ currency.symbol ? ' · ' + currency.symbol : '' }}</strong>
+                            <small>{{ currency.name }}</small>
+                          </span>
+                          @if (isCurrencySelected(currency.id)) {
+                          <i class="fa-solid fa-check"></i>
+                          }
+                        </label>
+                        } @empty {
+                        <p>No matching currencies found.</p>
+                        }
+                      </div>
+                      <div class="cs-currency-picker-footer">
+                        <span>{{ selectedCurrencies.length }} selected</span>
+                        <button type="button" (click)="closeCurrencyPicker()">Done</button>
+                      </div>
+                    </div>
+                  </ng-template>
+                </div>
+                @if (isAddCompanyInvalid('currencyIds')) {
+                <small class="cs-currency-error">Select at least one currency.</small>
+                }
+              </div>
+
+              <label class="cs-field">
+                <span>Default Currency <b>*</b></span>
+                <select class="form-input" formControlName="defaultCurrencyId" (change)="selectDefaultCurrency($any($event.target).value)">
+                  <option value="">Select Default Currency</option>
+                  @for (currency of selectedCurrencies; track currency.id) {
+                  <option [value]="currency.id">{{ currency.code }} - {{ currency.name }}</option>
+                  }
+                </select>
+                @if (isAddCompanyInvalid('defaultCurrencyId')) {
+                <small>Select one default currency.</small>
+                } @else {
+                <small class="cs-currency-help">The default currency starts with an exchange rate of 1.</small>
+                }
+              </label>
+            </div>
+            } @else {
+            <p class="cs-currency-unavailable">Currency options are not available. Please try again.</p>
+            }
+          </section>
         </div>
 
         @if (addCompanyError) {
