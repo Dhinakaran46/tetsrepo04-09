@@ -26,6 +26,7 @@ import { FormlyFieldColorPickerComponent } from './components/formly-field-color
 import { FormlyOrderedTransferListComponent } from './components/formly-ordered-transfer-list/formly-ordered-transfer-list.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormlyFieldTreeSelectComponent } from './components/formly-field-tree-select/formly-field-tree-select.component';
+import { FormlyFieldCurrencyValueComponent } from './components/formly-field-currency-value/formly-field-currency-value.component';
 
 export function translateMessage(key: string, defaultVal: string) {
   return (error: any, field: FormlyFieldConfig) => {
@@ -211,6 +212,7 @@ export const lcpPresetExtension: FormlyExtension = {
     FormlyRepeatTableFieldComponent,
     FormlyFieldColorPickerComponent,
     FormlyFieldTreeSelectComponent,
+    FormlyFieldCurrencyValueComponent,
     SplitLabelPipe,
   ],
   imports: [
@@ -298,6 +300,9 @@ export const lcpPresetExtension: FormlyExtension = {
             if (!phoneKey || !countryKey) {
               Object.keys(parent.controls).forEach((key) => {
                 const k = key.toLowerCase();
+                if (k.includes('login') || k.includes('allow') || k.includes('status')) {
+                  return;
+                }
                 if (!phoneKey && (k.includes('phone') || k.includes('mobile'))) {
                   phoneKey = key;
                 } else if (!countryKey && (k.includes('country') || k.includes('dial'))) {
@@ -316,7 +321,7 @@ export const lcpPresetExtension: FormlyExtension = {
                 const hasError = (phoneVal && !countryVal) || (!phoneVal && countryVal);
 
                 const siblingControl = c === phoneControl ? countryControl : phoneControl;
-                if (siblingControl) {
+                if (siblingControl && (c.touched || c.dirty)) {
                   const siblingHasError = siblingControl.hasError('phoneAndCountry');
                   if (hasError && !siblingHasError) {
                     siblingControl.setErrors({ ...siblingControl.errors, phoneAndCountry: true }, { emitEvent: false });
@@ -325,7 +330,6 @@ export const lcpPresetExtension: FormlyExtension = {
                     const errors = { ...siblingControl.errors };
                     delete errors['phoneAndCountry'];
                     siblingControl.setErrors(Object.keys(errors).length ? errors : null, { emitEvent: false });
-                    siblingControl.markAsTouched();
                   }
                 }
 
@@ -458,6 +462,7 @@ export const lcpPresetExtension: FormlyExtension = {
         { name: 'color-picker', component: FormlyFieldColorPickerComponent, wrappers: ['form-field'] },
         { name: 'tree-select', component: FormlyFieldTreeSelectComponent, wrappers: ['form-field'] },
         { name: 'ordered-transfer-list', component: FormlyOrderedTransferListComponent, wrappers: ['form-field'] },
+        { name: 'currency-value', component: FormlyFieldCurrencyValueComponent },
       ],
     }),
   ],
@@ -475,6 +480,7 @@ export const lcpPresetExtension: FormlyExtension = {
     NgSelectModule,
     FormlyBootstrapModule,
     SplitLabelPipe,
+    FormlyFieldCurrencyValueComponent,
   ],
 })
 export class FormlyConfigModule {}

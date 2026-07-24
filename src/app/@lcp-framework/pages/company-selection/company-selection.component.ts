@@ -1,5 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HostListener } from '@angular/core';
+import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { ToastrService } from 'ngx-toastr';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonSharedModule } from '../../shared/common/common.module';
@@ -10,7 +12,7 @@ import { MenuLoadService } from '../../service/common/menu-load.service';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { RouteUpdateService } from '../../service/common/route-update.service';
 import { GridApiService } from '../../service/common/grid.service';
-import { catchError, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 interface LovOption {
   id: number;
@@ -18,10 +20,14 @@ interface LovOption {
   name: string;
 }
 
+interface CurrencyOption extends LovOption {
+  symbol?: string | null;
+}
+
 @Component({
   selector: 'app-company-selection',
   standalone: true,
-  imports: [CommonSharedModule, ReactiveFormsModule],
+  imports: [CommonSharedModule, ReactiveFormsModule, OverlayModule],
   templateUrl: './company-selection.component.html',
   styleUrl: './company-selection.component.scss',
 })
@@ -41,6 +47,29 @@ export class CompanySelectionComponent implements OnInit {
   businessTypes: LovOption[] = [];
   employeeSizes: LovOption[] = [];
   countries: LovOption[] = [];
+  currencies: CurrencyOption[] = [];
+  currencySearch = '';
+  showCurrencyPicker = false;
+  currencyOverlayWidth = 360;
+  readonly currencyOverlayPositions: ConnectedPosition[] = [
+    {
+      originX: 'start',
+      originY: 'bottom',
+      overlayX: 'start',
+      overlayY: 'top',
+      offsetY: 8,
+    },
+    {
+      originX: 'start',
+      originY: 'top',
+      overlayX: 'start',
+      overlayY: 'bottom',
+      offsetY: -8,
+    },
+  ];
+  private addCompanyOptionsLoaded = false;
+  private addCompanyOptionsLoading = false;
+  private addCompanyOptionsCallbacks: Array<() => void> = [];
 
   readonly addCompanyForm = this.fb.group({
     code: ['', Validators.required],
@@ -56,6 +85,8 @@ export class CompanySelectionComponent implements OnInit {
     businessTypeId: [null as number | null],
     employeeSizeId: [null as number | null],
     countryId: [null as number | null, Validators.required],
+    currencyIds: [[] as number[], Validators.required],
+    defaultCurrencyId: [null as number | null, Validators.required],
   });
 
   constructor(
@@ -82,6 +113,8 @@ export class CompanySelectionComponent implements OnInit {
       this.localstore.removeData('company_selection_pending');
       this.router.navigate(['/dashboard']);
     }
+
+    this.loadAddCompanyLovOptions();
   }
 
   selectCompany(company: any): void {
@@ -192,19 +225,30 @@ export class CompanySelectionComponent implements OnInit {
   }
 
   openAddCompanyModal(): void {
-    this.showAddCompanyModal = true;
-    this.addCompanyError = '';
-    if (!this.businessTypes.length && !this.employeeSizes.length && !this.countries.length) {
-      this.loadAddCompanyLovOptions();
+    const showModal = () => {
+      this.resetAddCompanyForm();
+      this.addCompanyError = '';
+      this.currencySearch = '';
+      this.showCurrencyPicker = false;
+      this.showAddCompanyModal = true;
+    };
+
+    if (this.addCompanyOptionsLoaded) {
+      showModal();
+      return;
     }
+
+    this.loadAddCompanyLovOptions(showModal);
   }
 
   closeAddCompanyModal(): void {
     if (this.isAddingCompany) return;
     this.showAddCompanyModal = false;
     this.addCompanyError = '';
+    this.currencySearch = '';
+    this.showCurrencyPicker = false;
     this.revokeAddCompanyLogoPreview();
-    this.addCompanyForm.reset();
+    this.resetAddCompanyForm();
   }
 
   isAddCompanyInvalid(controlName: keyof typeof this.addCompanyForm.controls): boolean {
@@ -225,6 +269,83 @@ export class CompanySelectionComponent implements OnInit {
     this.addCompanyForm.patchValue({ logo: file });
     this.addCompanyForm.controls.logo.markAsDirty();
     this.addCompanyLogoPreviewUrl = file ? URL.createObjectURL(file) : '';
+  }
+
+  isCurrencySelected(currencyId: number): boolean {
+    return (this.addCompanyForm.controls.currencyIds.value || []).some((selectedId: number) => Number(selectedId) === Number(currencyId));
+  }
+
+  isDefaultCurrency(currencyId: number): boolean {
+    return Number(this.addCompanyForm.controls.defaultCurrencyId.value) === Number(currencyId);
+  }
+
+  get selectedCurrencies(): CurrencyOption[] {
+    return this.currencies.filter((currency) => this.isCurrencySelected(currency.id));
+  }
+
+  get filteredCurrencies(): CurrencyOption[] {
+    const search = this.currencySearch.trim().toLowerCase();
+    if (!search) return this.currencies;
+    return this.currencies.filter((currency) =>
+      [currency.code, currency.name, currency.symbol].filter(Boolean).some((value) => String(value).toLowerCase().includes(search))
+    );
+  }
+
+  toggleCurrency(currencyId: number, checked: boolean): void {
+    const selected = new Set((this.addCompanyForm.controls.currencyIds.value || []).map((id: number) => Number(id)));
+    if (checked) {
+      selected.add(currencyId);
+    } else {
+      selected.delete(currencyId);
+      if (this.isDefaultCurrency(currencyId)) {
+        this.addCompanyForm.controls.defaultCurrencyId.setValue(null);
+        this.addCompanyForm.controls.defaultCurrencyId.markAsTouched();
+      }
+    }
+    this.addCompanyForm.controls.currencyIds.setValue([...selected]);
+    this.addCompanyForm.controls.currencyIds.markAsDirty();
+    this.addCompanyForm.controls.currencyIds.markAsTouched();
+  }
+
+  removeCurrency(currencyId: number): void {
+    this.toggleCurrency(currencyId, false);
+  }
+
+  selectDefaultCurrency(value: unknown): void {
+    const currencyId = Number(value);
+    if (Number.isInteger(currencyId) && currencyId > 0) {
+      if (!this.isCurrencySelected(currencyId)) this.toggleCurrency(currencyId, true);
+      this.addCompanyForm.controls.defaultCurrencyId.setValue(currencyId);
+      this.addCompanyForm.controls.defaultCurrencyId.markAsDirty();
+      this.addCompanyForm.controls.defaultCurrencyId.markAsTouched();
+      return;
+    }
+    this.addCompanyForm.controls.defaultCurrencyId.setValue(null);
+    this.addCompanyForm.controls.defaultCurrencyId.markAsTouched();
+  }
+
+  toggleCurrencyPicker(event?: MouseEvent): void {
+    if (this.showCurrencyPicker) {
+      this.closeCurrencyPicker();
+      return;
+    }
+    const trigger = event?.currentTarget as HTMLElement | null;
+    this.currencyOverlayWidth = Math.max(trigger?.getBoundingClientRect().width || 360, 300);
+    this.showCurrencyPicker = true;
+  }
+
+  closeCurrencyPicker(): void {
+    this.showCurrencyPicker = false;
+    this.currencySearch = '';
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeCurrencyPickerOnOutsideClick(event: MouseEvent): void {
+    if (!this.showCurrencyPicker) return;
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('[data-currency-picker]')) {
+      this.closeCurrencyPicker();
+    }
   }
 
   submitAddCompany(): void {
@@ -256,6 +377,8 @@ export class CompanySelectionComponent implements OnInit {
         businessTypeId: formValue.businessTypeId,
         employeeSizeId: formValue.employeeSizeId,
         countryId: formValue.countryId,
+        currencyIds: formValue.currencyIds,
+        defaultCurrencyId: formValue.defaultCurrencyId,
         logoFileKey: logo instanceof File ? 'company_logo' : null,
       })
     );
@@ -276,14 +399,11 @@ export class CompanySelectionComponent implements OnInit {
           return;
         }
 
-        this.toastr.success(
-          responseBody?.message || 'Company added successfully. Company setup will continue in the background.',
-          'Success'
-        );
+        this.toastr.success(responseBody?.message || 'Company added successfully. Company setup will continue in the background.', 'Success');
         this.applyAddedCompanies(responseBody?.data?.companies);
         this.showAddCompanyModal = false;
         this.revokeAddCompanyLogoPreview();
-        this.addCompanyForm.reset();
+        this.resetAddCompanyForm();
       },
       error: (error: any) => {
         this.isAddingCompany = false;
@@ -429,31 +549,77 @@ export class CompanySelectionComponent implements OnInit {
     return normalizedPath.endsWith('/') ? normalizedPath : `${normalizedPath}/`;
   }
 
-  private loadAddCompanyLovOptions(): void {
-    this.gridApiService
-      .getLovValues({
-        scope: 'global',
-        codes: ['business_type', 'employee_size', 'country'],
-      })
-      .pipe(catchError(() => of(null)))
-      .subscribe((response: any) => {
-        const lovTypes = response?.data || [];
-        if (!lovTypes.length) return;
+  private loadAddCompanyLovOptions(onLoaded?: () => void): void {
+    if (onLoaded) this.addCompanyOptionsCallbacks.push(onLoaded);
+    if (this.addCompanyOptionsLoaded) {
+      this.flushAddCompanyOptionsCallbacks();
+      return;
+    }
+    if (this.addCompanyOptionsLoading) return;
 
-        const normalizeLovCode = (value: string) => String(value || '').trim().toLowerCase().replace(/[-\s]+/g, '_');
-        const byType = (type: string) => {
-          const lovType = lovTypes.find((record: any) => normalizeLovCode(record.code) === type);
-          return (lovType?.values || []).map((record: any) => ({
-            id: Number(record.id),
-            code: record.code,
-            name: record.name,
-          }));
-        };
+    this.addCompanyOptionsLoading = true;
+    forkJoin({
+      lovResponse: this.gridApiService
+        .getLovValues({
+          scope: 'global',
+          codes: ['business_type', 'employee_size', 'country'],
+        })
+        .pipe(catchError(() => of(null))),
+      currencyResponse: this.gridApiService.getTenantRegistrationCurrencies().pipe(catchError(() => of(null))),
+    }).subscribe(({ lovResponse, currencyResponse }: any) => {
+      const lovTypes = lovResponse?.data || [];
+      const normalizeLovCode = (value: string) =>
+        String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[-\s]+/g, '_');
+      const byType = (type: string) => {
+        const lovType = lovTypes.find((record: any) => normalizeLovCode(record.code) === type);
+        return (lovType?.values || []).map((record: any) => ({
+          id: Number(record.id),
+          code: record.code,
+          name: record.name,
+        }));
+      };
 
+      if (lovTypes.length) {
         this.businessTypes = byType('business_type') || this.businessTypes;
         this.employeeSizes = byType('employee_size') || this.employeeSizes;
         this.countries = byType('country') || this.countries;
-      });
+      }
+
+      this.currencies = (currencyResponse?.data || []).map((record: any) => ({
+        id: Number(record.id),
+        code: String(record.code || ''),
+        name: String(record.name || ''),
+        symbol: record.symbol || null,
+      }));
+      this.addCompanyOptionsLoading = false;
+      this.addCompanyOptionsLoaded = this.currencies.length > 0;
+      this.flushAddCompanyOptionsCallbacks();
+    });
+  }
+
+  private flushAddCompanyOptionsCallbacks(): void {
+    const callbacks = this.addCompanyOptionsCallbacks.splice(0);
+    callbacks.forEach((callback) => callback());
+  }
+
+  private applyInitialCurrencySelection(): void {
+    if (!this.currencies.length || (this.addCompanyForm.controls.currencyIds.value || []).length) return;
+    const initialCurrency = this.currencies.find((currency) => currency.code.trim().toUpperCase() === 'USD') || this.currencies[0];
+    this.addCompanyForm.patchValue({
+      currencyIds: [initialCurrency.id],
+      defaultCurrencyId: initialCurrency.id,
+    });
+  }
+
+  private resetAddCompanyForm(): void {
+    this.addCompanyForm.reset({
+      currencyIds: [],
+      defaultCurrencyId: null,
+    });
+    this.applyInitialCurrencySelection();
   }
 
   private applyAddedCompanies(companies: any[]): void {

@@ -1,0 +1,61 @@
+<div class="currency-value-field">
+  <!-- Shared label -->
+  <label class="currency-value-label">
+    {{ props.label ?? 'Currency and Contract Value' }}
+    @if (isRequired) {
+      <span class="text-red-500 ml-0.5" aria-hidden="true">*</span>
+    }
+    <span class="currency-value-label__code">{{ selectedCurrencyCode }}</span>
+  </label>
+
+  <!-- Combined input row -->
+  <div class="currency-value-group" [class.currency-value-group--invalid]="
+    (currencyControl.invalid && currencyControl.touched) ||
+    (valueControl.invalid && valueControl.touched)
+  ">
+    <!-- Left: Currency select -->
+    <div class="currency-select-wrap">
+      @if (isLoading) {
+        <div class="currency-select-skeleton">
+          <span class="currency-select-skeleton__bar"></span>
+        </div>
+      } @else {
+        <ng-select
+          [items]="currencyOptions"
+          bindLabel="label"
+          bindValue="value"
+          [formControl]="currencyControl"
+          [clearable]="isClearable"
+          [searchable]="true"
+          [placeholder]="props['currencyPlaceholder'] ?? 'Select currency'"
+          class="currency-ng-select"
+          appendTo="body"
+        ></ng-select>
+      }
+    </div>
+
+    <!-- Divider -->
+    <div class="currency-divider" aria-hidden="true"></div>
+
+    <!-- Right: Value input -->
+    <div class="currency-value-input-wrap">
+      <input
+        type="number"
+        [formControl]="valueControl"
+        [placeholder]="valuePlaceholder"
+        class="currency-value-input"
+        [min]="props['min'] ?? 0"
+        [step]="props['step'] ?? 1"
+        autocomplete="off"
+      />
+    </div>
+  </div>
+
+  <!-- Validation messages -->
+  @if (currencyControl.invalid && currencyControl.touched) {
+    <p class="currency-value-error">Currency is required.</p>
+  }
+  @if (valueControl.invalid && valueControl.touched && !currencyControl.invalid) {
+    <p class="currency-value-error">Contract value is required.</p>
+  }
+</div>
