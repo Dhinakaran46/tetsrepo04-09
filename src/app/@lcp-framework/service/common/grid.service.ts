@@ -104,6 +104,10 @@ export class GridApiService {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.tenantRegistrationLovValues}`, data);
   }
 
+  getTenantRegistrationCurrencies(): Observable<any> {
+    return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.tenantRegistrationCurrencies}`, {});
+  }
+
   checkTenantEmailExists(email: string): Observable<any> {
     return this.cryptoHttp.encryptedPost(`${this.apiUrl}${environment.apiAddress}${commonConfig.API.tenantRegistrationCheckEmail}`, { email });
   }

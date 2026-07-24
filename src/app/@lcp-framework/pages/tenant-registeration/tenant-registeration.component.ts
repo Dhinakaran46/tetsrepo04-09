@@ -1,5 +1,6 @@
 ﻿import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HostListener } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { catchError, of } from 'rxjs';
@@ -10,6 +11,10 @@ interface LovOption {
   id: number;
   code: string;
   name: string;
+}
+
+interface CurrencyOption extends LovOption {
+  symbol?: string | null;
 }
 
 function mobileNumberValidator(control: AbstractControl): ValidationErrors | null {
@@ -65,6 +70,10 @@ export class TenantRegisterationComponent implements OnInit {
     { id: 11, code: 'AE', name: 'United Arab Emirates' },
     { id: 12, code: 'US', name: 'United States' },
   ];
+
+  currencies: CurrencyOption[] = [];
+  currencySearches: string[] = [];
+  openCurrencyPickerIndex: number | null = null;
 
   readonly tenantForm = this.fb.group({
     firstName: ['', Validators.required],
@@ -198,7 +207,9 @@ export class TenantRegisterationComponent implements OnInit {
   }
 
   cancel(): void {
-    this.tenantForm.reset({ noOfCompanies: 1 });
+    this.tenantForm.reset({
+      noOfCompanies: 1,
+    });
     this.clearLogoPreviews();
     this.companies.clear();
     this.resetCompletionState();
@@ -227,6 +238,8 @@ export class TenantRegisterationComponent implements OnInit {
     this.revokeLogoPreview(index);
     this.companies.removeAt(index);
     this.logoPreviewUrls.splice(index, 1);
+    this.currencySearches.splice(index, 1);
+    this.openCurrencyPickerIndex = null;
     if (wasPrimary) {
       this.primaryCompanyTouched = true;
     }
@@ -266,6 +279,106 @@ export class TenantRegisterationComponent implements OnInit {
 
   companyCountInvalid(): boolean {
     return this.companyCountTouched && !this.hasRequiredCompanyCount();
+  }
+
+  isCurrencySelected(companyIndex: number, currencyId: number): boolean {
+    return (this.companies.at(companyIndex)?.get('currencyIds')?.value || []).some((selectedId: number) => Number(selectedId) === Number(currencyId));
+  }
+
+  isDefaultCurrency(companyIndex: number, currencyId: number): boolean {
+    return Number(this.companies.at(companyIndex)?.get('defaultCurrencyId')?.value) === Number(currencyId);
+  }
+
+  toggleCurrency(companyIndex: number, currencyId: number, checked: boolean): void {
+    const company = this.companies.at(companyIndex);
+    const currencyIds = company.get('currencyIds');
+    const defaultCurrencyId = company.get('defaultCurrencyId');
+    const selected = new Set((currencyIds?.value || []).map((id: number) => Number(id)));
+
+    if (checked) {
+      selected.add(currencyId);
+    } else {
+      selected.delete(currencyId);
+      if (this.isDefaultCurrency(companyIndex, currencyId)) {
+        defaultCurrencyId?.setValue(null);
+        defaultCurrencyId?.markAsTouched();
+      }
+    }
+
+    currencyIds?.setValue([...selected]);
+    currencyIds?.markAsDirty();
+    currencyIds?.markAsTouched();
+  }
+
+  selectDefaultCurrency(companyIndex: number, currencyId: number): void {
+    if (!this.isCurrencySelected(companyIndex, currencyId)) {
+      this.toggleCurrency(companyIndex, currencyId, true);
+    }
+    const control = this.companies.at(companyIndex).get('defaultCurrencyId');
+    control?.setValue(currencyId);
+    control?.markAsDirty();
+    control?.markAsTouched();
+  }
+
+  onDefaultCurrencyChange(companyIndex: number, value: unknown): void {
+    const currencyId = Number(value);
+    if (Number.isInteger(currencyId) && currencyId > 0) {
+      this.selectDefaultCurrency(companyIndex, currencyId);
+      return;
+    }
+
+    const control = this.companies.at(companyIndex).get('defaultCurrencyId');
+    control?.setValue(null);
+    control?.markAsTouched();
+  }
+
+  selectedCurrencies(companyIndex: number): CurrencyOption[] {
+    return this.currencies.filter((currency) => this.isCurrencySelected(companyIndex, currency.id));
+  }
+
+  filteredCurrencies(companyIndex: number): CurrencyOption[] {
+    const search = (this.currencySearches[companyIndex] || '').trim().toLowerCase();
+    if (!search) return this.currencies;
+
+    return this.currencies.filter((currency) =>
+      [currency.code, currency.name, currency.symbol].filter(Boolean).some((value) => String(value).toLowerCase().includes(search))
+    );
+  }
+
+  defaultCurrency(companyIndex: number): CurrencyOption | undefined {
+    return this.currencies.find((currency) => this.isDefaultCurrency(companyIndex, currency.id));
+  }
+
+  toggleCurrencyPicker(companyIndex: number): void {
+    if (this.openCurrencyPickerIndex === companyIndex) {
+      this.closeCurrencyPicker();
+    } else {
+      this.openCurrencyPickerIndex = companyIndex;
+    }
+  }
+
+  closeCurrencyPicker(): void {
+    if (this.openCurrencyPickerIndex !== null) {
+      this.currencySearches[this.openCurrencyPickerIndex] = '';
+    }
+    this.openCurrencyPickerIndex = null;
+  }
+
+  updateCurrencySearch(companyIndex: number, value: string): void {
+    this.currencySearches[companyIndex] = value;
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeCurrencyPickerOnOutsideClick(event: MouseEvent): void {
+    if (this.openCurrencyPickerIndex === null) return;
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('[data-currency-picker]')) {
+      this.closeCurrencyPicker();
+    }
+  }
+
+  removeCurrency(companyIndex: number, currencyId: number): void {
+    this.toggleCurrency(companyIndex, currencyId, false);
   }
 
   selectPrimaryCompany(index: number, checked: boolean): void {
@@ -360,6 +473,34 @@ export class TenantRegisterationComponent implements OnInit {
         this.employeeSizes = byType('employee_size') || this.employeeSizes;
         this.countries = byType('country') || this.countries;
       });
+
+    this.gridApiService
+      .getTenantRegistrationCurrencies()
+      .pipe(catchError(() => of(null)))
+      .subscribe((response: any) => {
+        const records = response?.data || [];
+        this.currencies = records.map((record: any) => ({
+          id: Number(record.id),
+          code: String(record.code || ''),
+          name: String(record.name || ''),
+          symbol: record.symbol || null,
+        }));
+        this.companies.controls.forEach((_, index) => this.applyInitialCurrencySelection(index));
+        this.cdr.detectChanges();
+      });
+  }
+
+  private applyInitialCurrencySelection(companyIndex: number): void {
+    if (!this.currencies.length) return;
+    const company = this.companies.at(companyIndex);
+    if (!company || (company.get('currencyIds')?.value || []).length) return;
+
+    const usd = this.currencies.find((currency) => currency.code.trim().toUpperCase() === 'USD');
+    const initialCurrency = usd || this.currencies[0];
+    company.patchValue({
+      currencyIds: [initialCurrency.id],
+      defaultCurrencyId: initialCurrency.id,
+    });
   }
 
   private openFirstInvalidCompany(): void {
@@ -439,6 +580,8 @@ export class TenantRegisterationComponent implements OnInit {
     this.submitError = '';
     this.registrationSubmitted = false;
     this.registrationReference = '';
+    this.currencySearches = [];
+    this.openCurrencyPickerIndex = null;
   }
 
   private buildRegistrationFormData(): FormData {
@@ -461,6 +604,8 @@ export class TenantRegisterationComponent implements OnInit {
         businessTypeId: companyValue.businessTypeId,
         employeeSizeId: companyValue.employeeSizeId,
         countryId: companyValue.countryId,
+        currencyIds: companyValue.currencyIds,
+        defaultCurrencyId: companyValue.defaultCurrencyId,
         logoFileKey: logo instanceof File ? `company_logo_${index}` : null,
       };
     });
@@ -523,6 +668,7 @@ export class TenantRegisterationComponent implements OnInit {
   }
 
   private createCompanyGroup(index: number) {
+    const initialCurrency = this.currencies.find((currency) => currency.code.trim().toUpperCase() === 'USD') || this.currencies[0];
     return this.fb.group({
       code: ['', Validators.required],
       name: [index === 0 ? this.tenantForm.controls.companyName.value || '' : '', Validators.required],
@@ -538,6 +684,8 @@ export class TenantRegisterationComponent implements OnInit {
       businessTypeId: [null as number | null],
       employeeSizeId: [null as number | null],
       countryId: [index === 0 ? this.tenantForm.controls.countryId.value : null, Validators.required],
+      currencyIds: [[...(initialCurrency ? [initialCurrency.id] : [])] as number[], Validators.required],
+      defaultCurrencyId: [initialCurrency?.id || (null as number | null), Validators.required],
       isOpen: [true],
     });
   }
