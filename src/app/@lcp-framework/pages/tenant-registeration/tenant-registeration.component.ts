@@ -194,7 +194,7 @@ export class TenantRegisterationComponent implements OnInit {
         if (responseBody?.data?.exists) {
           this.tenantForm.controls.email.setErrors({ emailExists: true });
           this.tenantForm.controls.email.markAsTouched();
-          this.submitError = 'An account with this email already exists. Please login or use a different email address.';
+          this.submitError = 'An account with this email already exists. Please use a different email address.';
           this.cdr.detectChanges();
           return;
         }
@@ -252,7 +252,7 @@ export class TenantRegisterationComponent implements OnInit {
 
   companyTitle(index: number): string {
     const company = this.companies.at(index);
-    return company.get('name')?.value || (index === 0 ? this.tenantForm.controls.companyName.value : `Company ${index + 1}`) || `Company ${index + 1}`;
+    return company.get('name')?.value || `Company ${index + 1}`;
   }
 
   companyInvalid(index: number, controlName: string): boolean {
@@ -659,7 +659,6 @@ export class TenantRegisterationComponent implements OnInit {
     const primaryCompany = this.companies.at(0);
     const patch: any = {};
 
-    if (!primaryCompany.get('name')?.value) patch.name = this.tenantForm.controls.companyName.value || '';
     if (!primaryCompany.get('corporateEmail')?.value) patch.corporateEmail = this.tenantForm.controls.email.value || '';
     if (!primaryCompany.get('countryId')?.value) patch.countryId = this.tenantForm.controls.countryId.value;
     if (!primaryCompany.get('address')?.value) patch.address = this.tenantForm.controls.address.value || '';
@@ -667,11 +666,31 @@ export class TenantRegisterationComponent implements OnInit {
     primaryCompany.patchValue(patch);
   }
 
+  private generateCompanyCode(seedName: string): string {
+    const firstWord = String(seedName || '').trim().split(/\s+/)[0] || 'COMPANY';
+    const prefix = firstWord.replace(/[^a-zA-Z0-9]/g, '') || 'COMPANY';
+    return `${prefix}-${this.generateUniqueCodeSuffix()}`;
+  }
+
+  private generateUniqueCodeSuffix(): string {
+    const randomBytes = new Uint8Array(5);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(randomBytes);
+    } else {
+      for (let i = 0; i < randomBytes.length; i++) {
+        randomBytes[i] = Math.floor(Math.random() * 256);
+      }
+    }
+    const randomPart = Array.from(randomBytes, (byte) => byte.toString(36)).join('').slice(0, 6);
+    const timePart = Date.now().toString(36);
+    return `${timePart}${randomPart}`.toLowerCase();
+  }
+
   private createCompanyGroup(index: number) {
     const initialCurrency = this.currencies.find((currency) => currency.code.trim().toUpperCase() === 'USD') || this.currencies[0];
     return this.fb.group({
-      code: ['', Validators.required],
-      name: [index === 0 ? this.tenantForm.controls.companyName.value || '' : '', Validators.required],
+      code: [this.generateCompanyCode(this.tenantForm.controls.companyName.value || ''), Validators.required],
+      name: ['', Validators.required],
       tradeName: [''],
       corporateEmail: [index === 0 ? this.tenantForm.controls.email.value || '' : '', [Validators.email]],
       taxRegistrationNumber: [''],

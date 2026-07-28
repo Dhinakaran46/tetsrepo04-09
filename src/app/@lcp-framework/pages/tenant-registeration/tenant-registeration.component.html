@@ -176,7 +176,7 @@
                   <span
                     class="shrink-0 rounded-full border border-[#dce4ee] bg-[#eef2f6] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#607088] dark:border-[#253b5c] dark:bg-[#1b2a43] dark:text-white-dark"
                   >
-                    {{ tenantForm.controls.companyName.value }}
+                    Tenant : {{ tenantForm.controls.companyName.value }}
                   </span>
                   }
                   <span class="truncate text-sm font-extrabold text-[#163154] dark:text-white">{{ companyTitle(i) }}</span>
@@ -201,15 +201,7 @@
 
               @if (company.get('isOpen')?.value) {
               <div class="grid gap-x-5 gap-y-4 p-4 md:grid-cols-2">
-                <label class="tenant-field">
-                  <span>Company Code <b>*</b></span>
-                  <input type="text" formControlName="code" class="form-input" placeholder="e.g. RKD" />
-                  @if (companyInvalid(i, 'code')) {
-                  <small>Company code is required.</small>
-                  }
-                </label>
-
-                <label class="tenant-field">
+                <label class="tenant-field md:col-span-2">
                   <span>Company Name <b>*</b></span>
                   <input type="text" formControlName="name" class="form-input" placeholder="e.g. RK Distributions" />
                   @if (companyInvalid(i, 'name')) {
@@ -504,21 +496,25 @@
             <section class="rounded-md border border-[#dce4ee] bg-[#f8fafc] p-4 shadow-sm dark:border-[#253b5c] dark:bg-[#111c2d]">
               <div class="flex items-center justify-between border-b border-[#dce4ee] pb-3 dark:border-[#253b5c]">
                 <div class="flex items-center gap-2">
-                  <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Tenant User</h2>
-                  @if (tenantForm.controls.companyName.value) {
+                  <h2 class="text-xs font-extrabold uppercase tracking-wide text-[#163154] dark:text-white">Tenant Information</h2>
+                  <!--@if (tenantForm.controls.companyName.value) {
                   <span
                     class="rounded-full border border-[#dce4ee] bg-[#eef2f6] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#607088] dark:border-[#253b5c] dark:bg-[#1b2a43] dark:text-white-dark"
                   >
                     {{ tenantForm.controls.companyName.value }}
                   </span>
-                  }
+                  }-->
                 </div>
                 <button type="button" class="text-xs font-extrabold text-[#9a0000] hover:underline" (click)="goToStep(1)">Edit</button>
               </div>
 
               <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-[#516785] dark:text-white-dark sm:grid-cols-3 lg:grid-cols-5">
                 <div>
-                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Name</span>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Tenant Name</span>
+                  <span class="font-semibold">{{ tenantForm.controls.companyName.value || '-' }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Full Name</span>
                   <span class="font-bold text-[#163154] dark:text-white">{{ tenantDisplayName }}</span>
                 </div>
                 <div>
@@ -529,10 +525,7 @@
                   <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Country</span>
                   <span class="font-semibold">{{ tenantCountryName }}</span>
                 </div>
-                <div>
-                  <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Tenant Name</span>
-                  <span class="font-semibold">{{ tenantForm.controls.companyName.value || '-' }}</span>
-                </div>
+
                 <div>
                   <span class="block text-[10px] font-extrabold uppercase text-[#8a9ab4]">Companies</span>
                   <span class="font-semibold">{{ tenantForm.controls.noOfCompanies.value || '-' }}</span>

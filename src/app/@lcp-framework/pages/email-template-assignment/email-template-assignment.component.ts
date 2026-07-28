@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
@@ -42,7 +42,8 @@ export class EmailTemplateAssignmentComponent implements OnInit {
     public commonService: MenuMapService,
     private gridApiService: GridApiService,
     private toastr: ToastrService,
-    public localStorageService: LocalStorageService
+    public localStorageService: LocalStorageService,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       notification_template_process: this.fb.group({
@@ -104,6 +105,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
               });
             });
           }
+          this.cdr.markForCheck();
         }
       },
     });
@@ -149,6 +151,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
               this.templateList.push({ label: each.label, value: each.value });
             }
           }
+          this.cdr.markForCheck();
         }
       },
     });
@@ -186,6 +189,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
             });
             this.form.controls['notification_template_process'].setValue({ notification_template_process_id: response.data.records[0].id });
           }
+          this.cdr.markForCheck();
         }
       },
     });
@@ -268,10 +272,12 @@ export class EmailTemplateAssignmentComponent implements OnInit {
         } else {
           this.loading = false;
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.loading = false;
         console.error('Error fetching URL details:', error);
+        this.cdr.markForCheck();
       },
     });
   }
@@ -338,6 +344,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
               }
             });
           }
+          this.cdr.markForCheck();
         }
       },
     });
@@ -462,6 +469,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
                   } else {
                     formGroup.get('email_tag_mail')?.setValue('No email id is present');
                   }
+                  this.cdr.markForCheck();
                 }
               },
             });
@@ -504,6 +512,7 @@ export class EmailTemplateAssignmentComponent implements OnInit {
           if (response.data.records.length) {
             formGroup.get('user_list')?.setValue(response.data.records);
           }
+          this.cdr.markForCheck();
         }
       },
     });
