@@ -161,14 +161,6 @@
       <form class="add-company-body" [class.currency-picker-open]="showCurrencyPicker" [formGroup]="addCompanyForm" (ngSubmit)="submitAddCompany()">
         <div class="cs-field-grid">
           <label class="cs-field">
-            <span>Company Code <b>*</b></span>
-            <input type="text" formControlName="code" class="form-input" placeholder="e.g. RKD" />
-            @if (isAddCompanyInvalid('code')) {
-            <small>Company code is required.</small>
-            }
-          </label>
-
-          <label class="cs-field">
             <span>Company Name <b>*</b></span>
             <input type="text" formControlName="name" class="form-input" placeholder="e.g. RK Distributions" />
             @if (isAddCompanyInvalid('name')) {

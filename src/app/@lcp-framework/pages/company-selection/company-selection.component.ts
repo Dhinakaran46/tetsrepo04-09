@@ -75,7 +75,6 @@ export class CompanySelectionComponent implements OnInit {
   private addCompanyOptionsCallbacks: Array<() => void> = [];
 
   readonly addCompanyForm = this.fb.group({
-    code: ['', Validators.required],
     name: ['', Validators.required],
     tradeName: [''],
     corporateEmail: ['', [Validators.email]],
@@ -438,7 +437,7 @@ export class CompanySelectionComponent implements OnInit {
     formData.append(
       'company',
       JSON.stringify({
-        code: formValue.code,
+        code: this.generateCompanyCode(formValue.name || ''),
         name: formValue.name,
         tradeName: formValue.tradeName,
         corporateEmail: formValue.corporateEmail,
@@ -729,6 +728,26 @@ export class CompanySelectionComponent implements OnInit {
     const dataMessage = typeof responseError?.data === 'string' ? responseError.data : responseError?.data?.message;
 
     return responseError?.message || responseError?.errors?.message || dataMessage || error?.message || 'Unable to add company.';
+  }
+
+  private generateCompanyCode(seedName: string): string {
+    const firstWord = String(seedName || '').trim().split(/\s+/)[0] || 'COMPANY';
+    const prefix = firstWord.replace(/[^a-zA-Z0-9]/g, '') || 'COMPANY';
+    return `${prefix}-${this.generateUniqueCodeSuffix()}`;
+  }
+
+  private generateUniqueCodeSuffix(): string {
+    const randomBytes = new Uint8Array(5);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(randomBytes);
+    } else {
+      for (let i = 0; i < randomBytes.length; i++) {
+        randomBytes[i] = Math.floor(Math.random() * 256);
+      }
+    }
+    const randomPart = Array.from(randomBytes, (byte) => byte.toString(36)).join('').slice(0, 6);
+    const timePart = Date.now().toString(36);
+    return `${timePart}${randomPart}`.toLowerCase();
   }
 
   private normalizeCompanies(companies: any[]): any[] {
