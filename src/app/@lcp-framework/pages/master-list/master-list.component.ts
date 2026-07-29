@@ -2086,28 +2086,34 @@ export class MasterListComponent implements OnChanges {
     if (savedFilters.length) {
       const whereFilters = savedFilters
         .filter((item: any) => (item?.clause_type || 'where') !== 'having')
-        .map((item: any) => ({
-          column_name: item?.field,
-          operator: this.mapSearchOperator(item?.operator),
-          value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
-            ? this.getNoValueOperatorSQL(item?.operator)
-            : Array.isArray(item?.enum_values) && item.enum_values.length
-            ? item.enum_values
-            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
-        }))
+        .map((item: any) => {
+          const isNoValue = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase());
+          return {
+            column_name: item?.field,
+            operator: isNoValue ? this.getNoValueOperatorSQL(item?.operator) : this.mapSearchOperator(item?.operator),
+            value: isNoValue
+              ? ''
+              : Array.isArray(item?.enum_values) && item.enum_values.length
+              ? item.enum_values
+              : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+          };
+        })
         .filter((item: any) => !!item.column_name);
 
       const havingFilters = savedFilters
         .filter((item: any) => (item?.clause_type || 'where') === 'having')
-        .map((item: any) => ({
-          column_name: item?.field,
-          operator: this.mapSearchOperator(item?.operator),
-          value: ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase())
-            ? this.getNoValueOperatorSQL(item?.operator)
-            : Array.isArray(item?.enum_values) && item.enum_values.length
-            ? item.enum_values
-            : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
-        }))
+        .map((item: any) => {
+          const isNoValue = ['is_empty', 'is_not_empty', 'is_null', 'is_not_null'].includes(String(item?.operator || '').toLowerCase());
+          return {
+            column_name: item?.field,
+            operator: isNoValue ? this.getNoValueOperatorSQL(item?.operator) : this.mapSearchOperator(item?.operator),
+            value: isNoValue
+              ? ''
+              : Array.isArray(item?.enum_values) && item.enum_values.length
+              ? item.enum_values
+              : this.normalizeSavedFilterValue(item?.field, item?.operator, item?.value),
+          };
+        })
         .filter((item: any) => !!item.column_name);
 
       const useAnd = state?.filterCondition !== undefined ? !!state.filterCondition : true;

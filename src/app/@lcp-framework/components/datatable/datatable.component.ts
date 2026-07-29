@@ -2477,9 +2477,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
         return {
           column_name: key.field,
-          operator: isBetween ? this.mapConditionToSQL('between') : normalizedOperator ? this.mapConditionToSQL(normalizedOperator) : '=',
-          value: isNoValue
+          operator: isNoValue
             ? this.getNoValueOperatorSQL(normalizedOperator)
+            : isBetween
+            ? this.mapConditionToSQL('between')
+            : normalizedOperator
+            ? this.mapConditionToSQL(normalizedOperator)
+            : '=',
+          value: isNoValue
+            ? ''
             : isBetween
             ? [
                 this.formatFilterValueByType(type, this.normalizeBetweenValue(key.value).start),
