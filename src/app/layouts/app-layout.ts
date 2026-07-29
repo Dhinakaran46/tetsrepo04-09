@@ -14,7 +14,8 @@ import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { OpenaiService } from '../@lcp-framework/service/common/openai.service';
 import { LayoutReadyService } from '../@lcp-framework/service/common/layout-ready.service';
-import { Subscription } from 'rxjs';
+import { LanguageService } from '../@lcp-framework/service/common/language.service';
+import { race, Subscription, take, timer } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -29,6 +30,9 @@ export class AppLayout implements OnDestroy {
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   enableVoiceSearch = false;
   private menuReadySub?: Subscription;
+  private languageReadySub?: Subscription;
+  private isMenuReady = false;
+  private isLanguageReady = false;
 
   constructor(
     private renderer: Renderer2,
@@ -39,6 +43,7 @@ export class AppLayout implements OnDestroy {
     private localstore: LocalStorageService,
     private openaiService: OpenaiService,
     private layoutReadyService: LayoutReadyService,
+    private languageService: LanguageService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {
@@ -83,15 +88,19 @@ export class AppLayout implements OnDestroy {
       }
     }
 
-    // Wait for sidebar menu to finish loading before hiding the loader
+    // Wait for both the sidebar menu and the lang_contents refresh before hiding the loader
     this.menuReadySub = this.layoutReadyService.menuReady.subscribe((ready) => {
       if (ready) {
-        this.ngZone.run(() => {
-          this.isLoading = false;
-          this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
-          this.cdr.detectChanges();
-        });
+        this.isMenuReady = true;
+        this.tryHideLoader();
       }
+    });
+
+    // header.ts triggers the lang_contents fetch; wait for it (or a timeout fallback so
+    // the loader can't get stuck) before revealing the dashboard.
+    this.languageReadySub = race(this.languageService.getLanguageDataUpdates().pipe(take(1)), timer(8000)).subscribe(() => {
+      this.isLanguageReady = true;
+      this.tryHideLoader();
     });
 
     this.initAnimation();
@@ -111,7 +120,19 @@ export class AppLayout implements OnDestroy {
 
   ngOnDestroy() {
     this.menuReadySub?.unsubscribe();
+    this.languageReadySub?.unsubscribe();
     window.removeEventListener('scroll', () => {});
+  }
+
+  private tryHideLoader(): void {
+    if (!this.isMenuReady || !this.isLanguageReady) {
+      return;
+    }
+    this.ngZone.run(() => {
+      this.isLoading = false;
+      this.storeData.dispatch({ type: 'toggleMainLoader', payload: false });
+      this.cdr.detectChanges();
+    });
   }
 
   initAnimation() {

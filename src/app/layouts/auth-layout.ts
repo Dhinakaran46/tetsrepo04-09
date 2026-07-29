@@ -14,7 +14,7 @@ import { environment } from '../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { ThemeService } from '../@lcp-framework/service/common/theme.service';
-import { Subscription } from 'rxjs';
+import { race, Subscription, take, timer } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -142,9 +142,15 @@ export class AuthLayout {
     }
 
     const languageId = this.languageService.getLanguageId(languageCode);
+
+    // Keep the loader visible until fresh lang_contents has been fetched, stored in
+    // localStorage, and picked up by the translate loader — falls back to a timeout so
+    // the loader can't get stuck if the request never settles.
+    race(this.languageService.getLanguageDataUpdates().pipe(take(1)), timer(8000)).subscribe(() => {
+      this.toggleLoader();
+    });
     this.languageService.fetchLanguageData(this.companyId, languageId);
 
-    this.toggleLoader();
     window.addEventListener('scroll', this.onWindowScroll);
 
     // Get userId from localStorageService if available

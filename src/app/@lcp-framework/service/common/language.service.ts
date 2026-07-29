@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from './auth.service';
 import { LocalStorageService } from './local-storage.service';
 import { Subject } from 'rxjs';
@@ -7,9 +8,17 @@ import { Subject } from 'rxjs';
   providedIn: 'root',
 })
 export class LanguageService {
+  // Emits once per fetchLanguageData attempt (success or failure) once lang_contents
+  // in localStorage is up to date and the translate loader has picked it up — callers
+  // use this to know it's safe to hide a loader and reveal translated content.
   private languageDataUpdated = new Subject<any>();
 
-  constructor(private authservice: AuthService, private localstore: LocalStorageService, private http: HttpClient) {}
+  constructor(
+    private authservice: AuthService,
+    private localstore: LocalStorageService,
+    private http: HttpClient,
+    private translate: TranslateService
+  ) {}
 
   private getLanguageIdFromCode(code: string): any {
     switch (code) {
@@ -42,6 +51,7 @@ export class LanguageService {
     const stLangCode = this.localstore.getData('languageCode');
     const languageIdSt = this.getLanguageId(stLangCode);
     const payload = { company_id: companyId, language_id: languageIdSt ? languageIdSt : languageId };
+    const langCode = stLangCode || 'en';
 
     this.authservice.languageList(payload).subscribe({
       next: (response: any) => {
@@ -49,11 +59,20 @@ export class LanguageService {
           this.localstore.removeData('lang_contents');
           const lang_contents = response.data;
           this.localstore.storeData('lang_contents', JSON.stringify(lang_contents));
+          // Push the fresh translations straight into ngx-translate's in-memory store and
+          // emit onTranslationChange so already-rendered `| translate` pipes/directives
+          // re-render immediately — reloadLang() updates the cache but never emits, so
+          // bound views only picked up new content after a full page reload.
+          this.translate.setTranslation(langCode, lang_contents, false);
           this.languageDataUpdated.next(lang_contents);
+        } else {
+          this.languageDataUpdated.next(null);
         }
       },
       error: (error) => {
         console.error('Error fetching language data:', error);
+        // Still notify so waiting UI (loader) doesn't hang forever — falls back to whatever is cached.
+        this.languageDataUpdated.next(null);
       },
     });
   }
