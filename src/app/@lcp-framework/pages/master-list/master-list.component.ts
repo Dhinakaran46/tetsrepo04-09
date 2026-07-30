@@ -8,6 +8,7 @@ import {
   Input,
   SimpleChanges,
   OnChanges,
+  OnDestroy,
   Output,
   EventEmitter,
 } from '@angular/core';
@@ -27,7 +28,7 @@ import Swal from 'sweetalert2';
 import { ExportService } from '../../service/common/export.service';
 import { commonConfig } from '../../config/common.config';
 import { LocalStorageService } from '../../service/common/local-storage.service';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Subscription } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
@@ -43,6 +44,8 @@ import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { saveAs } from 'file-saver';
+import { MobileListComponent } from '../../components/mobile-list/mobile-list.component';
+import { ViewportService } from '../../service/common/viewport.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -73,7 +76,16 @@ interface AcceptedParentParamRule {
 @Component({
   standalone: true,
   selector: 'master-list',
-  imports: [CommonSharedModule, DataTableComponent, LoaderComponent, ReactiveFormsModule, StaticPageComponent, FormBuilderComponent, MonacoEditorModule],
+  imports: [
+    CommonSharedModule,
+    DataTableComponent,
+    MobileListComponent,
+    LoaderComponent,
+    ReactiveFormsModule,
+    StaticPageComponent,
+    FormBuilderComponent,
+    MonacoEditorModule,
+  ],
 
   templateUrl: './master-list.component.html',
   animations: [
@@ -84,7 +96,7 @@ interface AcceptedParentParamRule {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements OnChanges {
+export class MasterListComponent implements OnChanges, OnDestroy {
   search_all: any[] = [];
   search_any: any[] = [];
 
@@ -97,6 +109,25 @@ export class MasterListComponent implements OnChanges {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
+
+  // True when running in a mobile viewport/native shell, regardless of entity type -
+  // drives whether the view-type selector is shown at all. Recomputed whenever the
+  // viewport changes (e.g. device rotation) via mobileViewSub below.
+  isMobileContext: boolean = false;
+  // User-facing runtime choice (not persisted) - defaults to 'list' whenever a grid
+  // is opened on mobile; switching it re-renders instantly via the getter below.
+  selectedViewType: 'table' | 'list' = 'list';
+  readonly mobileViewTypeOptions: { value: 'table' | 'list'; label: string }[] = [
+    { value: 'list', label: 'List' },
+    { value: 'table', label: 'Table' },
+  ];
+  private mobileViewSub?: Subscription;
+
+  // Whether to render <app-mobile-list> instead of <app-datatable> - true only while
+  // on a mobile viewport/native shell AND the user has the List view selected.
+  get useMobileRenderer(): boolean {
+    return this.isMobileContext && this.selectedViewType === 'list';
+  }
 
   @Input() line_item_configurations: any = null;
   @Input() showBackButton: boolean = true;
@@ -324,7 +355,8 @@ export class MasterListComponent implements OnChanges {
     private formBuilder: FormBuilder,
     private openaiService: OpenaiService,
     private routeUpdateService: RouteUpdateService,
-    private timezoneService: TimezoneService
+    private timezoneService: TimezoneService,
+    private viewportService: ViewportService
   ) {
     const url = this.localStorageService?.getData('base_app_url');
     this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
@@ -468,6 +500,14 @@ export class MasterListComponent implements OnChanges {
       if (masterListConfig.entity_configurations != null) {
         this.stickyHeader = masterListConfig.entity_configurations?.grid_enable_sticky_header === 'yes' ? 'yes' : 'no';
       }
+
+      // Any grid opened on a mobile viewport/native shell defaults to the List view -
+      // the selector below lets the user switch back to Table instantly, per-session.
+      this.selectedViewType = 'list';
+      this.mobileViewSub?.unsubscribe();
+      this.mobileViewSub = this.viewportService.mobileViewChanges().subscribe((isMobile) => {
+        this.isMobileContext = isMobile;
+      });
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
@@ -3727,5 +3767,13 @@ export class MasterListComponent implements OnChanges {
 
   onSelectionChange(data: any) {
     this.selectionChange.emit(data);
+  }
+
+  onViewTypeChange(value: string): void {
+    this.selectedViewType = value === 'table' ? 'table' : 'list';
+  }
+
+  ngOnDestroy(): void {
+    this.mobileViewSub?.unsubscribe();
   }
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LCP</string>
+    <string name="title_activity_main">LCP</string>
+    <string name="package_name">com.lcp.app</string>
+    <string name="custom_url_scheme">com.lcp.app</string>
+</resources>

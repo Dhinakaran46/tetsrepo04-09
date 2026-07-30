@@ -6,7 +6,10 @@
     "start": "ng serve --open",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "build:mobile": "ng build && npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios"
   },
   "private": true,
   "dependencies": {
@@ -22,6 +25,10 @@
     "@angular/router": "^21.2.9",
     "@angular/service-worker": "^21.2.9",
     "@bhplugin/ng-datatable": "^0.1.0",
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/ios": "^8.4.2",
     "@ng-select/ng-select": "^21.8.0",
     "@ngrx/store": "^21.1.0",
     "@ngx-formly/bootstrap": "^7.1.0",
