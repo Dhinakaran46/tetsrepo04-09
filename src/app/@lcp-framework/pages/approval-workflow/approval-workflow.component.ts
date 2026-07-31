@@ -186,14 +186,14 @@ export class ApprovalWorkflowComponent implements OnInit {
     return new Promise<void>((resolve) => {
       const params = {
         company_id: 1,
-        primary_table: 'master_approval_workflows',
+        primary_table: 'approval_workflows',
         start_index: 0,
         limit_range: 1000,
-        sort_columns: [['master_approval_workflows.entity_name', 'asc']],
-        search_all: [{ column_name: 'master_approval_workflows.status_id', value: 3, operator: '!=' }],
+        sort_columns: [['approval_workflows.slug', 'asc']],
+        search_all: [{ column_name: 'approval_workflows.status_id', value: 3, operator: '!=' }],
         select_columns: [
           [
-            'master_approval_workflows.id, master_approval_workflows.name, master_approval_workflows.entity_name, master_approval_workflows.primary_table, master_approval_workflows.query_information, master_approval_workflows.approve_mail_id, master_approval_workflows.reject_mail_id, master_approval_workflows.approve_whatsapp_id, master_approval_workflows.reject_whatsapp_id',
+            'approval_workflows.id, approval_workflows.name, approval_workflows.slug, approval_workflows.primary_table, approval_workflows.query_information, approval_workflows.approve_mail_id, approval_workflows.reject_mail_id, approval_workflows.approve_whatsapp_id, approval_workflows.reject_whatsapp_id',
           ],
         ],
       };
@@ -202,7 +202,7 @@ export class ApprovalWorkflowComponent implements OnInit {
           if (res.status && res.code === 200) {
             this.modules = (res.data.records || []).map((module: any) => ({
               ...module,
-              entity_name: module.entity_name || module.name,
+              slug: module.slug || module.name,
             }));
           }
           resolve();
@@ -276,17 +276,17 @@ export class ApprovalWorkflowComponent implements OnInit {
 
     const params = {
       company_id: 1,
-      primary_table: 'master_approval_workflow_line_items',
+      primary_table: 'approval_workflow_line_items',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [['master_approval_workflow_line_items.order_no', 'asc']],
+      sort_columns: [['approval_workflow_line_items.order_no', 'asc']],
       search_all: [
-        { column_name: 'master_approval_workflow_line_items.master_approval_workflow_id', value: moduleId, operator: '=' },
-        { column_name: 'master_approval_workflow_line_items.status_id', value: 3, operator: '!=' },
+        { column_name: 'approval_workflow_line_items.approval_workflow_id', value: moduleId, operator: '=' },
+        { column_name: 'approval_workflow_line_items.status_id', value: 3, operator: '!=' },
       ],
       select_columns: [
         [
-          'master_approval_workflow_line_items.id, master_approval_workflow_line_items.type, master_approval_workflow_line_items.default_query, master_approval_workflow_line_items.field_name, master_approval_workflow_line_items.display_name, master_approval_workflow_line_items.field_type_id, master_approval_workflow_line_items.enum_values, master_approval_workflow_line_items.order_no, master_approval_workflow_line_items.approve_query_information, master_approval_workflow_line_items.reject_query_information, master_approval_workflow_line_items.is_searchable',
+          'approval_workflow_line_items.id, approval_workflow_line_items.type, approval_workflow_line_items.default_query, approval_workflow_line_items.field_name, approval_workflow_line_items.display_name, approval_workflow_line_items.field_type_id, approval_workflow_line_items.enum_values, approval_workflow_line_items.order_no, approval_workflow_line_items.approve_query_information, approval_workflow_line_items.reject_query_information, approval_workflow_line_items.is_searchable',
         ],
       ],
     };
