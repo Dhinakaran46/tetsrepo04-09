@@ -173,7 +173,7 @@ export class ApprovalWorkflowComponent implements OnInit {
       url: [''],
       description: [''],
       status_id: [1],
-      approval_workflow_module_id: [null, Validators.required],
+      id: [null, Validators.required],
       query_information: [''],
       conditions: this.fb.array([]),
       levels: this.fb.array([]),
@@ -370,7 +370,7 @@ export class ApprovalWorkflowComponent implements OnInit {
   }
 
   private getCurrentSelectedModule(): any {
-    const moduleId = this.form.get('approval_workflow_module_id')?.value;
+    const moduleId = this.form.get('id')?.value;
     return this.modules.find((m: any) => String(m.id) === String(moduleId));
   }
 
@@ -1370,12 +1370,12 @@ export class ApprovalWorkflowComponent implements OnInit {
             url: entity.url || '',
             description: entity.description || '',
             status_id: entity.status_id,
-            approval_workflow_module_id: entity.approval_workflow_module_id || null,
+            id: entity.id || null,
             query_information: entity.query_information || '',
           });
 
-          if (entity.approval_workflow_module_id) {
-            this.onModuleChange(entity.approval_workflow_module_id, 'preserve');
+          if (entity.id) {
+            this.onModuleChange(entity.id, 'preserve');
           }
 
           if (entity.approval_workflow_query_conditions) {
@@ -1468,7 +1468,7 @@ export class ApprovalWorkflowComponent implements OnInit {
     const formData = this.form.value;
     const slug = this.toFullSlug(String(formData.slug || ''));
     const conditions = this.committedConditions || [];
-    const queryInformation = this.buildWorkflowQueryInformation(formData.approval_workflow_module_id, conditions);
+    const queryInformation = this.buildWorkflowQueryInformation(formData.id, conditions);
 
     const masterRecord = {
       name: formData.name,
@@ -1476,7 +1476,7 @@ export class ApprovalWorkflowComponent implements OnInit {
       url: formData.url || null,
       description: formData.description || null,
       status_id: formData.status_id,
-      approval_workflow_module_id: formData.approval_workflow_module_id || null,
+      id: formData.id || null,
       approval_workflow_query_conditions: conditions.length ? JSON.stringify(conditions) : null,
       query_information: queryInformation,
     };
