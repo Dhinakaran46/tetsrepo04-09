@@ -1866,6 +1866,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
         },
       ],
       group_by: ['approval_workflows.id'],
+      search_all: [{ value: id, operator: '=', column_name: 'approval_workflows.uuid' }],
     };
 
     this.gridApiService.getAllList(params).subscribe(
