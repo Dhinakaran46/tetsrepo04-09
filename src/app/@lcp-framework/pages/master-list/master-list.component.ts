@@ -412,6 +412,32 @@ export class MasterListComponent implements OnChanges {
     control.setErrors({ ...(control.errors || {}), passwordInvalid: true });
   }
 
+  private normalizeEntityConfigurations(value: any): any {
+    if (!value) {
+      return null;
+    }
+
+    if (typeof value === 'object') {
+      return value;
+    }
+
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+    } catch {
+      return null;
+    }
+  }
+
   async ngAfterContentInit() {
     this.initStore();
     this.config = JSON.parse(this.localStorageService.getData('config'));
@@ -460,6 +486,9 @@ export class MasterListComponent implements OnChanges {
         this.policyData = this.user_info.main?.policies || null;
       }
       this.masterInfo = pageInfo;
+      this.masterInfo.entity_configurations = this.normalizeEntityConfigurations(this.masterInfo.entity_configurations);
+      this.logStickyConfigDebug('setupPageInfo');
+      this.hydrateMissingEntityConfigurations();
       if (this.masterInfo.ListQuery.entity_name == 'user') {
         this.allowPasswordModal = true;
       }
@@ -514,6 +543,112 @@ export class MasterListComponent implements OnChanges {
     }
     if (!(this.cdr as any).destroyed) {
       this.cdr.detectChanges();
+    }
+  }
+
+  private logStickyConfigDebug(source: string): void {
+    const entityName = String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.fullEntity || this.entity_name || this.title || '');
+    const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
+    const entityConfigurations = this.masterInfo?.entity_configurations;
+    const hasStickyConfig = !!entityConfigurations && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(entityConfigurations, key));
+    const isProjectGrid = entityName.toLowerCase().includes('project_details') || entityName.toLowerCase().includes('project_total_estimation_details');
+
+    if (!hasStickyConfig && !isProjectGrid) {
+      return;
+    }
+
+    console.log('[master-list sticky config]', {
+      source,
+      entity_name: entityName,
+      entity_configurations: entityConfigurations,
+      sticky_first_value: entityConfigurations?.grid_enable_sticky_first_column,
+      sticky_last_value: entityConfigurations?.grid_enable_sticky_last_column,
+      sticky_action_value: entityConfigurations?.grid_enable_sticky_action_column,
+      stickyHeader: this.stickyHeader,
+    });
+  }
+
+  private hydrateMissingEntityConfigurations(): void {
+    if (this.masterInfo?.entity_configurations) {
+      return;
+    }
+
+    const entityName = String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.fullEntity || this.entity_name || '').trim();
+    if (!entityName) {
+      return;
+    }
+
+    const payload = {
+      company_id: this.getCurrentCompanyId() || 1,
+      print_query: true,
+      primary_table: 'master_entities',
+      start_index: 0,
+      limit_range: 1,
+      sort_columns: [['master_entities.id', 'desc']],
+      select_columns: [['master_entities.entity_configurations']],
+      search_all: [
+        { column_name: 'master_entities.entity_name', operator: '=', value: entityName },
+        { column_name: 'master_entities.status_id', operator: '=', value: '1' },
+      ],
+    };
+
+    this.commonService.getCommonList(payload).subscribe({
+      next: (response: any) => {
+        const fetchedConfigurations = this.normalizeEntityConfigurations(response?.data?.records?.[0]?.entity_configurations);
+        console.log('[master-list sticky config api]', {
+          entity_name: entityName,
+          fetched_entity_configurations: fetchedConfigurations,
+          raw_response_record: response?.data?.records?.[0] || null,
+        });
+
+        if (!fetchedConfigurations) {
+          return;
+        }
+
+        this.masterInfo = {
+          ...this.masterInfo,
+          entity_configurations: fetchedConfigurations,
+        };
+        this.stickyHeader = fetchedConfigurations.grid_enable_sticky_header === 'yes' ? 'yes' : 'no';
+        this.updateCachedMenuEntityConfigurations(entityName, fetchedConfigurations);
+        this.logStickyConfigDebug('api-hydrate');
+
+        if (!(this.cdr as any).destroyed) {
+          this.cdr.detectChanges();
+        }
+      },
+      error: (error: any) => {
+        console.warn('[master-list sticky config api] failed', {
+          entity_name: entityName,
+          error,
+        });
+      },
+    });
+  }
+
+  private updateCachedMenuEntityConfigurations(entityName: string, entityConfigurations: any): void {
+    const userData = this.parseJsonField(this.localStorageService.getData('user_data'));
+    if (!userData || !Array.isArray(userData.unorgmenuList)) {
+      return;
+    }
+
+    const updatedUserData = {
+      ...userData,
+      unorgmenuList: userData.unorgmenuList.map((item: any) =>
+        item?.entity_name === entityName
+          ? {
+              ...item,
+              entity_configurations: entityConfigurations,
+            }
+          : item
+      ),
+    };
+    const payload = JSON.stringify(updatedUserData);
+
+    if (this.config?.encrypt_local_storage === 'true') {
+      this.localStorageService.storeDataEncrypted('user_data', payload);
+    } else {
+      this.localStorageService.storeData('user_data', payload);
     }
   }
 

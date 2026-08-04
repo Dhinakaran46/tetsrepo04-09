@@ -1337,7 +1337,8 @@ export class MasterEntityComponent implements OnInit {
             grid_show_global_search: 'yes',
             grid_show_advanced_search: 'yes',
             grid_show_column_filter: 'yes',
-            grid_enable_sticky_action_column: 'yes',
+            grid_enable_sticky_first_column: 'yes',
+            grid_enable_sticky_last_column: 'yes',
           },
         },
       ],
@@ -1438,7 +1439,8 @@ export class MasterEntityComponent implements OnInit {
             grid_show_global_search: 'yes',
             grid_show_advanced_search: 'yes',
             grid_show_column_filter: 'yes',
-            grid_enable_sticky_action_column: 'yes',
+            grid_enable_sticky_first_column: 'yes',
+            grid_enable_sticky_last_column: 'yes',
           };
           this.form.get('entity_configurations')?.setValue(JSON.stringify(defaultGridConfig, null, 2));
         } else {

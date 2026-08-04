@@ -309,6 +309,7 @@ export class MenuLoadService {
         ['master_entities.entity_type', 'component_class_name'],
         ['master_entities.entity_name'],
         ['master_entities.draft_mode'],
+        ['master_entities.entity_configurations'],
         ['master_entities.export_template_file_name'],
         ['master_entities.static_page_content'],
         ['permissions.name', 'action_slug'],

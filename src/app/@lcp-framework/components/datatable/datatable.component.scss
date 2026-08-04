@@ -372,6 +372,62 @@ tbody td.sticky:is(.dark *) {
   right: 0;
 }
 
+.datatable-sticky-column {
+  position: sticky !important;
+  background-clip: padding-box;
+}
+
+.datatable .table-responsive table thead tr th.datatable-sticky-column,
+.datatable .table-responsive table tbody tr td.datatable-sticky-column {
+  position: sticky !important;
+}
+
+thead th.datatable-sticky-column {
+  z-index: 16;
+  background-color: #f9fafb !important;
+}
+
+thead th.datatable-sticky-column:is(.dark *) {
+  background-color: var(--app-table-header-color, #1a2941) !important;
+}
+
+tbody td.datatable-sticky-column {
+  z-index: 12;
+  background-color: var(--app-table-bg-color, #ffffff) !important;
+}
+
+tbody td.datatable-sticky-column:is(.dark *) {
+  background-color: var(--app-table-bg-color, #0e1726) !important;
+}
+
+.datatable-sticky-first-column {
+  left: 0 !important;
+  box-shadow: 1px 0 0 var(--app-table-border-color, #e5e7eb), 6px 0 10px -10px rgba(0, 0, 0, 0.45);
+}
+
+.datatable-sticky-last-column {
+  right: 0 !important;
+  box-shadow: -1px 0 0 var(--app-table-border-color, #e5e7eb), -6px 0 10px -10px rgba(0, 0, 0, 0.45);
+}
+
+.datatable .table-responsive table thead tr th.datatable-sticky-first-column,
+.datatable .table-responsive table tbody tr td.datatable-sticky-first-column {
+  left: 0 !important;
+}
+
+.datatable .table-responsive table thead tr th.datatable-sticky-last-column,
+.datatable .table-responsive table tbody tr td.datatable-sticky-last-column {
+  right: 0 !important;
+}
+
+.datatable-sticky-first-column:is(.dark *) {
+  box-shadow: 1px 0 0 var(--app-table-border-color, #253b5c), 6px 0 10px -10px rgba(0, 0, 0, 0.75);
+}
+
+.datatable-sticky-last-column:is(.dark *) {
+  box-shadow: -1px 0 0 var(--app-table-border-color, #253b5c), -6px 0 10px -10px rgba(0, 0, 0, 0.75);
+}
+
 // Dark mode adjustments
 :is(.dark) {
   th,

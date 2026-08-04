@@ -155,6 +155,10 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   // Add this property to your component class:
   pendingPopupData: { item: any; entityName: string; col?: any } | null = null;
   private childComponentResolvedModes: Record<string, string> = {};
+  private entityConfigurationsSource: any = undefined;
+  private entityConfigurationsCache: any = null;
+  private stickyDebugSignature: string = '';
+  private stickyDebugTimer: ReturnType<typeof setTimeout> | null = null;
 
   expandedItem: any = null;
   selectedRowIndex: number | null = null;
@@ -208,9 +212,159 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private gridCfg(key: string): boolean {
     //console.log(this.masterInfo);
-    const cfg = this.masterInfo?.entity_configurations;
+    const cfg = this.getEntityConfigurations();
     //  console.log('[gridCfg]', key, '→ cfg:', cfg, '| value:', cfg?.[key], '| result:', !cfg || cfg[key] == 'yes');
-    return !cfg || cfg[key] == 'yes';
+    return !cfg || this.isConfigYes(cfg[key]);
+  }
+
+  private getEntityConfigurations(): any {
+    const cfg = this.masterInfo?.entity_configurations;
+    if (this.entityConfigurationsSource === cfg) {
+      return this.entityConfigurationsCache;
+    }
+
+    this.entityConfigurationsSource = cfg;
+
+    if (typeof cfg === 'string') {
+      const trimmedCfg = cfg.trim();
+      if (!trimmedCfg) {
+        this.entityConfigurationsCache = null;
+        return this.entityConfigurationsCache;
+      }
+
+      try {
+        const parsedCfg = JSON.parse(trimmedCfg);
+        this.entityConfigurationsCache = typeof parsedCfg === 'string' ? JSON.parse(parsedCfg) : parsedCfg;
+      } catch {
+        this.entityConfigurationsCache = null;
+      }
+
+      return this.entityConfigurationsCache;
+    }
+
+    this.entityConfigurationsCache = cfg && typeof cfg === 'object' ? cfg : null;
+    return this.entityConfigurationsCache;
+  }
+
+  private isConfigYes(value: any): boolean {
+    if (value === true) {
+      return true;
+    }
+
+    return (
+      String(value ?? '')
+        .trim()
+        .toLowerCase() === 'yes'
+    );
+  }
+
+  private getStickyDebugEntityName(): string {
+    return String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.fullEntity || this.masterInfo?.Listname || this.title || '');
+  }
+
+  private shouldLogStickyDebug(cfg: any): boolean {
+    const entityName = this.getStickyDebugEntityName().toLowerCase();
+    const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
+    const hasStickyConfig = !!cfg && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(cfg, key));
+    return hasStickyConfig || entityName.includes('project_details') || entityName.includes('project_total_estimation_details');
+  }
+
+  private getStickyDebugReason(cfg: any, visibleGridColumns: any[]): string {
+    if (!cfg) {
+      return 'entity_configurations missing in datatable masterInfo';
+    }
+
+    if (!this.hasGridCfgKey('grid_enable_sticky_first_column') && !this.hasGridCfgKey('grid_enable_sticky_last_column') && !this.hasGridCfgKey('grid_enable_sticky_action_column')) {
+      return 'sticky config keys missing';
+    }
+
+    if (!this.enableStickyFirstColumn && !this.enableStickyLastColumn) {
+      return 'sticky flags resolved false';
+    }
+
+    if (!visibleGridColumns.length) {
+      return 'no visible grid columns';
+    }
+
+    return 'sticky classes should apply to first/last visible grid columns';
+  }
+
+  private scheduleStickyDebugLog(source: string): void {
+    if (this.stickyDebugTimer) {
+      clearTimeout(this.stickyDebugTimer);
+    }
+
+    this.stickyDebugTimer = setTimeout(() => {
+      this.stickyDebugTimer = null;
+      this.logStickyDebug(source);
+    }, 0);
+  }
+
+  private logStickyDebug(source: string): void {
+    const cfg = this.getEntityConfigurations();
+    if (!this.shouldLogStickyDebug(cfg)) {
+      return;
+    }
+
+    const visibleGridColumns = this.getVisibleGridColumns();
+    const firstColumn = visibleGridColumns[0] || null;
+    const lastColumn = visibleGridColumns[visibleGridColumns.length - 1] || null;
+    const actionColumn = visibleGridColumns.find((col: any) => this.isActionGridColumn(col)) || null;
+    const debugInfo = {
+      source,
+      entity_name: this.getStickyDebugEntityName(),
+      raw_entity_configurations: this.masterInfo?.entity_configurations,
+      parsed_entity_configurations: cfg,
+      sticky_first_value: cfg?.grid_enable_sticky_first_column,
+      sticky_last_value: cfg?.grid_enable_sticky_last_column,
+      sticky_action_value: cfg?.grid_enable_sticky_action_column,
+      enableStickyFirstColumn: this.enableStickyFirstColumn,
+      enableStickyLastColumn: this.enableStickyLastColumn,
+      stickyHeader: this.stickyHeader,
+      isStickyHeaderEnabled: this.isStickyHeaderEnabled,
+      headerColumnsCount: this.headercolumns?.length || 0,
+      visibleGridColumnsCount: visibleGridColumns.length,
+      visibleGridColumns: visibleGridColumns.map((col: any) => ({
+        header: col?.header,
+        field: col?.field,
+        field_value: col?.field_value,
+        colFilterHide: col?.colFilterHide,
+        is_grid_column: col?.is_grid_column,
+      })),
+      firstVisibleColumn: firstColumn
+        ? {
+            header: firstColumn.header,
+            field: firstColumn.field,
+            field_value: firstColumn.field_value,
+            isStickyFirst: this.isStickyFirstGridColumn(firstColumn),
+          }
+        : null,
+      lastVisibleColumn: lastColumn
+        ? {
+            header: lastColumn.header,
+            field: lastColumn.field,
+            field_value: lastColumn.field_value,
+            isStickyLast: this.isStickyLastGridColumn(lastColumn),
+          }
+        : null,
+      actionColumn: actionColumn
+        ? {
+            header: actionColumn.header,
+            field: actionColumn.field,
+            field_value: actionColumn.field_value,
+            isStickyLast: this.isStickyLastGridColumn(actionColumn),
+          }
+        : null,
+      reason: this.getStickyDebugReason(cfg, visibleGridColumns),
+    };
+    const signature = JSON.stringify(debugInfo);
+
+    if (signature === this.stickyDebugSignature) {
+      return;
+    }
+
+    this.stickyDebugSignature = signature;
+    console.log('[datatable sticky debug]', debugInfo);
   }
 
   get showGridTitle(): boolean {
@@ -226,7 +380,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.gridCfg('grid_show_column_filter');
   }
   get enableStickyActionColumn(): boolean {
-    return this.gridCfg('grid_enable_sticky_action_column');
+    return this.enableStickyLastColumn;
+  }
+  get enableStickyFirstColumn(): boolean {
+    return this.stickyGridCfg('grid_enable_sticky_first_column');
+  }
+  get enableStickyLastColumn(): boolean {
+    if (this.hasGridCfgKey('grid_enable_sticky_last_column')) {
+      return this.stickyGridCfg('grid_enable_sticky_last_column');
+    }
+
+    return this.stickyGridCfg('grid_enable_sticky_action_column');
   }
 
   headerContextMenu = {
@@ -581,6 +745,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   ngOnDestroy(): void {
+    if (this.stickyDebugTimer) {
+      clearTimeout(this.stickyDebugTimer);
+      this.stickyDebugTimer = null;
+    }
+
     this.toolbarResizeObserver?.disconnect();
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
@@ -1968,6 +2137,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    this.scheduleStickyDebugLog('ngOnChanges');
+
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];
@@ -3828,17 +3999,58 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.headercolumns.filter((column) => column.is_grid_column == 'true').length;
   }
 
-  isStickyGridColumn(column: any): boolean {
-    if (!column || column.colFilterHide || column.is_grid_column != 'true') {
-      return false;
-    }
+  private hasGridCfgKey(key: string): boolean {
+    const cfg = this.getEntityConfigurations();
+    return !!cfg && Object.prototype.hasOwnProperty.call(cfg, key);
+  }
 
-    if (column.header === 'table_column_action') {
+  private stickyGridCfg(key: string): boolean {
+    const cfg = this.getEntityConfigurations();
+    return !!cfg && this.isConfigYes(cfg[key]);
+  }
+
+  private getVisibleGridColumns(): any[] {
+    return this.headercolumns.filter((col: any) => col?.is_grid_column == 'true' && !col?.colFilterHide);
+  }
+
+  private isSameGridColumn(leftColumn: any, rightColumn: any): boolean {
+    if (leftColumn === rightColumn) {
       return true;
     }
 
-    const visibleGridColumns = this.headercolumns.filter((col: any) => col?.is_grid_column == 'true' && !col?.colFilterHide);
-    return visibleGridColumns.length > 0 && visibleGridColumns[visibleGridColumns.length - 1] === column;
+    const leftKey = this.getColumnUniqueKey(leftColumn);
+    const rightKey = this.getColumnUniqueKey(rightColumn);
+    return !!leftKey && leftKey === rightKey;
+  }
+
+  private isActionGridColumn(column: any): boolean {
+    return this.getColumnUniqueKey(column) === 'Action' || column?.header === 'table_column_action';
+  }
+
+  isStickyFirstGridColumn(column: any): boolean {
+    if (!this.enableStickyFirstColumn || !column || column.colFilterHide || column.is_grid_column != 'true') {
+      return false;
+    }
+
+    const visibleGridColumns = this.getVisibleGridColumns();
+    return visibleGridColumns.length > 0 && this.isSameGridColumn(visibleGridColumns[0], column);
+  }
+
+  isStickyLastGridColumn(column: any): boolean {
+    if (!this.enableStickyLastColumn || !column || column.colFilterHide || column.is_grid_column != 'true') {
+      return false;
+    }
+
+    if (this.isActionGridColumn(column)) {
+      return true;
+    }
+
+    const visibleGridColumns = this.getVisibleGridColumns();
+    return visibleGridColumns.length > 0 && this.isSameGridColumn(visibleGridColumns[visibleGridColumns.length - 1], column) && !this.isStickyFirstGridColumn(column);
+  }
+
+  isStickyGridColumn(column: any): boolean {
+    return this.isStickyFirstGridColumn(column) || this.isStickyLastGridColumn(column);
   }
 
   private getColumnUniqueKey(column: any): string {
