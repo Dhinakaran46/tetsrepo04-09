@@ -25,7 +25,7 @@
           <label class="required-mark mb-2 block font-medium">Workflow Module</label>
           <!-- <div class="rounded-lg border border-[#d8e0ea] bg-[#fafbfd] p-2 dark:border-[#223a5d] dark:bg-[#101c33]">-->
           <ng-select
-            formControlName="approval_workflow_module_id"
+            formControlName="id"
             bindLabel="name"
             bindValue="id"
             [items]="modules"
@@ -33,12 +33,12 @@
             [searchable]="true"
             placeholder="Select Workflow Entity"
             class="custom-multiselect"
-            [ngClass]="{ 'is-invalid': isFieldInvalid('approval_workflow_module_id') }"
+            [ngClass]="{ 'is-invalid': isFieldInvalid('id') }"
             (change)="onModuleChange($event, 'reset')"
           ></ng-select>
           <!--</div>-->
-          @if (isFieldInvalid('approval_workflow_module_id')) {
-          <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('approval_workflow_module_id') | translate }}</div>
+          @if (isFieldInvalid('id')) {
+          <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('id') | translate }}</div>
           }
         </div>
 
@@ -70,12 +70,22 @@
           </div>
           @if (editTitle && !slugEditable) {
           <div class="flex items-stretch">
-            <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark">approval_workflow_</span>
-            <input type="text" [value]="stripSlugPrefix(originalSlug)" disabled appDynamicFontSize="body" class="form-input w-full rounded-l-none bg-gray-50 dark:bg-[#1b2e4b]" />
+            <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark"
+              >approval_workflow_</span
+            >
+            <input
+              type="text"
+              [value]="stripSlugPrefix(originalSlug)"
+              disabled
+              appDynamicFontSize="body"
+              class="form-input w-full rounded-l-none bg-gray-50 dark:bg-[#1b2e4b]"
+            />
           </div>
           } @else {
           <div class="flex items-stretch">
-            <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark">approval_workflow_</span>
+            <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark"
+              >approval_workflow_</span
+            >
             <input
               type="text"
               formControlName="slug"
@@ -87,8 +97,7 @@
               (blur)="onSlugBlur()"
             />
           </div>
-          }
-          @if (isFieldInvalid('slug')) {
+          } @if (isFieldInvalid('slug')) {
           <div class="invalid-feedback mt-1 text-danger">{{ getErrorMessage('slug') | translate }}</div>
           } @if (!isSlugActive) {
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Enter a name to enable this field.</p>
@@ -140,7 +149,7 @@
 
       <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <span class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Common Approval Rules</span>
-        @if (form.get('approval_workflow_module_id')?.value) {
+        @if (form.get('id')?.value) {
         <button type="button" class="btn btn-primary btn-sm flex w-full items-center justify-center gap-2 md:w-auto" (click)="openConditionsModal()">
           <i class="fa-solid fa-plus"></i> Add / Edit Rule
         </button>
@@ -148,7 +157,7 @@
       </div>
 
       <div class="mt-3 min-h-[56px] rounded-lg border border-[#d8e0ea] bg-[#fafbfd] p-2.5 dark:border-[#223a5d] dark:bg-[#101c33]">
-        @if (!form.get('approval_workflow_module_id')?.value) {
+        @if (!form.get('id')?.value) {
         <p class="py-2 text-center text-sm text-gray-400">Select a workflow module to configure rule conditions.</p>
         } @else if (committedConditions.length === 0) {
         <p class="py-2 text-center text-sm text-gray-400">No rules added yet. Click "+ Add Rule" to create your first condition.</p>
@@ -314,7 +323,9 @@
           <div class="px-6 py-4" [formGroup]="slugModalForm">
             <label class="required-mark mb-2 block font-medium" appDynamicFontSize="body">{{ 'form_label_slug' | translate }}</label>
             <div class="flex items-stretch">
-              <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark">approval_workflow_</span>
+              <span class="form-input flex items-center rounded-r-none border-r-0 bg-gray-100 px-2 text-gray-500 dark:bg-[#22345a] dark:text-white-dark"
+                >approval_workflow_</span
+              >
               <input
                 type="text"
                 formControlName="slug"
@@ -535,11 +546,7 @@
             </div>
 
             <!-- Row 2: Email / Whatsapp / Query templates -->
-            <button
-              type="button"
-              class="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-              (click)="toggleTemplatesSection(levelGroup)"
-            >
+            <button type="button" class="flex items-center gap-2 text-sm font-medium text-primary hover:underline" (click)="toggleTemplatesSection(levelGroup)">
               <i class="fa-solid fa-chevron-down transition-transform" [ngClass]="{ '-rotate-90': !levelGroup.get('templatesExpanded')?.value }"></i>
               Email / WhatsApp / Query Templates
             </button>
