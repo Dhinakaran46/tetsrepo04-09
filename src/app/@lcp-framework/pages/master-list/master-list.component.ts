@@ -3665,6 +3665,10 @@ export class MasterListComponent implements OnChanges {
     if (gridParams !== null) {
       this.grid_params = gridParams;
     }
+    const parentGridFilters = properties?.['parentGridFilters'] ?? null;
+    if (parentGridFilters !== null) {
+      this.parentGridFilters = parentGridFilters;
+    }
 
     this.popupName = popupName;
     // Enhanced permission check using unorgmenuList and permissions
