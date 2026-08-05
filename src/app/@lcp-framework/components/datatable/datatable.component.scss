@@ -303,6 +303,90 @@
   color: var(--app-table-text-color, #495057);
 }
 
+.datatable-resizable-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.datatable-resizable-header,
+.datatable-resizable-cell {
+  min-width: 100px;
+}
+
+.datatable-resizable-header {
+  overflow: visible;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  text-overflow: clip;
+}
+
+.datatable-header-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: calc(100% - 0.5rem);
+  white-space: normal;
+  line-height: 1.25;
+  vertical-align: top;
+}
+
+.datatable-header-label {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.datatable-column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 4;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.datatable-column-resize-handle::before {
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 4px;
+  width: 2px;
+  border-radius: 999px;
+  background-color: var(--app-table-border-color, #cfd6df);
+  content: '';
+  opacity: 0.8;
+  transition: background-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.datatable-column-resize-handle:hover,
+.datatable-resizable-header.datatable-column-resizing-active .datatable-column-resize-handle {
+  background-color: color-mix(in srgb, var(--app-button-bg-color, #4361ee) 12%, transparent);
+}
+
+.datatable-column-resize-handle:hover::before,
+.datatable-resizable-header:hover .datatable-column-resize-handle::before,
+.datatable-resizable-header.datatable-column-resizing-active .datatable-column-resize-handle::before {
+  background-color: var(--app-button-bg-color, #4361ee);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-button-bg-color, #4361ee) 18%, transparent);
+  opacity: 1;
+}
+
+.datatable-column-resizing-active {
+  box-shadow: inset -2px 0 0 var(--app-button-bg-color, #4361ee);
+}
+
+:host-context(.datatable-column-resizing) {
+  .datatable,
+  .datatable * {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+}
+
 .datatable table:is(.dark *) {
   background-color: var(--app-table-bg-color, #0e1726);
   color: var(--app-table-text-color, #888ea8);
@@ -380,10 +464,11 @@ tbody td.sticky:is(.dark *) {
 .datatable .table-responsive table thead tr th.datatable-sticky-column,
 .datatable .table-responsive table tbody tr td.datatable-sticky-column {
   position: sticky !important;
+  background-clip: padding-box;
 }
 
 thead th.datatable-sticky-column {
-  z-index: 16;
+  z-index: 60 !important;
   background-color: #f9fafb !important;
 }
 
@@ -392,7 +477,7 @@ thead th.datatable-sticky-column:is(.dark *) {
 }
 
 tbody td.datatable-sticky-column {
-  z-index: 20;
+  z-index: 20 !important;
   background-color: var(--app-table-bg-color, #ffffff) !important;
 }
 
@@ -408,6 +493,15 @@ tbody td.datatable-sticky-column:is(.dark *) {
 .datatable-sticky-last-column {
   right: 0 !important;
   box-shadow: -1px 0 0 var(--app-table-border-color, #e5e7eb), -6px 0 10px -10px rgba(0, 0, 0, 0.45);
+}
+
+thead th.datatable-sticky-first-column,
+thead th.datatable-sticky-last-column {
+  z-index: 70 !important;
+}
+
+thead th.datatable-sticky-column .datatable-column-resize-handle {
+  z-index: 75;
 }
 
 .datatable .table-responsive table thead tr th.datatable-sticky-first-column,

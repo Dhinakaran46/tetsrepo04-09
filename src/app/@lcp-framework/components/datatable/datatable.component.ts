@@ -19,6 +19,8 @@ import {
   OnDestroy,
   Optional,
   Host,
+  Renderer2,
+  NgZone,
 } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
@@ -120,6 +122,13 @@ interface UserSearchConfigurationTemp {
   localstoreOnly: boolean;
   search_values: GridViewState;
   updated_at: string;
+}
+
+interface ColumnResizeState {
+  columnKey: string;
+  startX: number;
+  startWidth: number;
+  nextWidth: number;
 }
 
 @Component({
@@ -578,6 +587,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private stringFieldTypeIds: number[] = [3, 4];
   isSchemaChunks: boolean = false;
   policyData: any = null;
+  readonly minResizableColumnWidth = 100;
+  columnWidths: Record<string, number> = {};
+  resizingColumnKey: string | null = null;
+  private columnWidthsStorageKey = '';
+  private columnResizeState: ColumnResizeState | null = null;
+  private columnResizeAnimationFrame: number | null = null;
+  private columnResizeMoveUnlisten?: () => void;
+  private columnResizeUpUnlisten?: () => void;
+  private suppressNextHeaderClick = false;
 
   // Quick fix - minimal required settings
   filterDropdownSettings: any = {
@@ -761,6 +779,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
+    private renderer: Renderer2,
+    private ngZone: NgZone,
     @Optional() @Host() private parentMasterList: MasterListComponent
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
@@ -845,6 +865,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     this.toolbarResizeObserver?.disconnect();
     this.scrollContainerResizeObserver?.disconnect();
+    this.finishColumnResize(false);
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
     });
@@ -1181,6 +1202,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       col.sortDirection = '';
       col.colFilterHide = false;
     });
+    this.loadPersistedColumnWidths();
 
     this.filteredItems = [...this.items];
 
@@ -2232,6 +2254,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   ngOnChanges(changes: SimpleChanges) {
     this.scheduleStickyDebugLog('ngOnChanges');
+    this.loadPersistedColumnWidths();
 
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
@@ -2293,6 +2316,248 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private getEntitySlug(): string {
     return String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || 'default_entity');
+  }
+
+  private getColumnWidthsStorageKey(): string {
+    const entitySlug = this.getEntitySlug()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '_');
+    return `datatable_column_widths_${this.getCurrentCompanyId()}_${entitySlug}_${this.tableLevel}`;
+  }
+
+  private normalizeColumnWidth(value: any): number | null {
+    const width = Number(value);
+    if (!Number.isFinite(width)) {
+      return null;
+    }
+
+    return Math.max(this.minResizableColumnWidth, Math.round(width));
+  }
+
+  private loadPersistedColumnWidths(): void {
+    const storageKey = this.getColumnWidthsStorageKey();
+    if (!storageKey || storageKey === this.columnWidthsStorageKey) {
+      return;
+    }
+
+    this.columnWidthsStorageKey = storageKey;
+    const rawWidths = this.localstore.getData(storageKey);
+    const parsedWidths = this.parseJsonSafe(rawWidths, {});
+    const nextWidths: Record<string, number> = {};
+
+    if (parsedWidths && typeof parsedWidths === 'object' && !Array.isArray(parsedWidths)) {
+      Object.entries(parsedWidths).forEach(([key, value]) => {
+        const width = this.normalizeColumnWidth(value);
+        if (width !== null) {
+          nextWidths[key] = width;
+        }
+      });
+    }
+
+    this.columnWidths = nextWidths;
+  }
+
+  private persistColumnWidths(): void {
+    const storageKey = this.columnWidthsStorageKey || this.getColumnWidthsStorageKey();
+    this.columnWidthsStorageKey = storageKey;
+    this.localstore.storeData(storageKey, JSON.stringify(this.columnWidths));
+  }
+
+  getColumnWidth(column: any): number | null {
+    const columnKey = this.getColumnUniqueKey(column);
+    if (!columnKey) {
+      return null;
+    }
+
+    return this.normalizeColumnWidth(this.columnWidths[columnKey]);
+  }
+
+  hasColumnWidth(column: any): boolean {
+    return this.getColumnWidth(column) !== null;
+  }
+
+  getColumnResizeKey(column: any): string {
+    return this.getColumnUniqueKey(column);
+  }
+
+  isColumnBeingResized(column: any): boolean {
+    return !!this.resizingColumnKey && this.getColumnUniqueKey(column) === this.resizingColumnKey;
+  }
+
+  onColumnHeaderClick(event: MouseEvent, column: any): void {
+    if (this.suppressNextHeaderClick || this.resizingColumnKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.suppressNextHeaderClick = false;
+      return;
+    }
+
+    this.sortColumn(column);
+  }
+
+  onColumnResizeHandleClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  startColumnResize(event: MouseEvent, column: any): void {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const columnKey = this.getColumnUniqueKey(column);
+    if (!columnKey) {
+      return;
+    }
+
+    const headerCell = (event.currentTarget as HTMLElement | null)?.closest('th') as HTMLElement | null;
+    const currentWidth = this.getColumnWidth(column) || headerCell?.offsetWidth || this.minResizableColumnWidth;
+    const startWidth = Math.max(this.minResizableColumnWidth, Math.round(currentWidth));
+
+    this.finishColumnResize(false);
+    this.columnResizeState = {
+      columnKey,
+      startX: event.clientX,
+      startWidth,
+      nextWidth: startWidth,
+    };
+    this.resizingColumnKey = columnKey;
+    this.suppressNextHeaderClick = true;
+
+    document.body.classList.add('datatable-column-resizing');
+
+    this.ngZone.runOutsideAngular(() => {
+      this.columnResizeMoveUnlisten = this.renderer.listen('document', 'mousemove', this.handleColumnResizeMouseMove);
+      this.columnResizeUpUnlisten = this.renderer.listen('document', 'mouseup', this.handleColumnResizeMouseUp);
+    });
+  }
+
+  autoFitColumnWidth(event: MouseEvent, column: any): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const columnKey = this.getColumnUniqueKey(column);
+    if (!columnKey) {
+      return;
+    }
+
+    this.finishColumnResize(false);
+    this.setColumnWidth(columnKey, this.calculateAutoFitColumnWidth(columnKey));
+    this.persistColumnWidths();
+    this.cdr.detectChanges();
+  }
+
+  private readonly handleColumnResizeMouseMove = (event: MouseEvent): void => {
+    if (!this.columnResizeState) {
+      return;
+    }
+
+    event.preventDefault();
+    const deltaX = event.clientX - this.columnResizeState.startX;
+    this.columnResizeState.nextWidth = Math.max(this.minResizableColumnWidth, Math.round(this.columnResizeState.startWidth + deltaX));
+
+    if (this.columnResizeAnimationFrame !== null) {
+      return;
+    }
+
+    this.columnResizeAnimationFrame = requestAnimationFrame(() => {
+      this.columnResizeAnimationFrame = null;
+      if (!this.columnResizeState) {
+        return;
+      }
+
+      this.setColumnWidth(this.columnResizeState.columnKey, this.columnResizeState.nextWidth);
+      this.cdr.detectChanges();
+    });
+  };
+
+  private readonly handleColumnResizeMouseUp = (event: MouseEvent): void => {
+    event.preventDefault();
+    this.finishColumnResize(true);
+  };
+
+  private setColumnWidth(columnKey: string, width: number): void {
+    const normalizedWidth = this.normalizeColumnWidth(width);
+    if (normalizedWidth === null) {
+      return;
+    }
+
+    this.columnWidths = {
+      ...this.columnWidths,
+      [columnKey]: normalizedWidth,
+    };
+  }
+
+  private finishColumnResize(shouldPersist: boolean): void {
+    if (this.columnResizeAnimationFrame !== null) {
+      cancelAnimationFrame(this.columnResizeAnimationFrame);
+      this.columnResizeAnimationFrame = null;
+      if (this.columnResizeState) {
+        this.setColumnWidth(this.columnResizeState.columnKey, this.columnResizeState.nextWidth);
+      }
+    }
+
+    if (shouldPersist && this.columnResizeState) {
+      this.setColumnWidth(this.columnResizeState.columnKey, this.columnResizeState.nextWidth);
+      this.persistColumnWidths();
+    }
+
+    this.columnResizeMoveUnlisten?.();
+    this.columnResizeUpUnlisten?.();
+    this.columnResizeMoveUnlisten = undefined;
+    this.columnResizeUpUnlisten = undefined;
+    this.columnResizeState = null;
+    this.resizingColumnKey = null;
+    document.body.classList.remove('datatable-column-resizing');
+
+    if (shouldPersist) {
+      setTimeout(() => {
+        this.suppressNextHeaderClick = false;
+      }, 0);
+      this.cdr.detectChanges();
+    }
+  }
+
+  private calculateAutoFitColumnWidth(columnKey: string): number {
+    const container = this.datatableScrollContainerEl?.nativeElement;
+    if (!container) {
+      return this.minResizableColumnWidth;
+    }
+
+    const matchingCells = Array.from(container.querySelectorAll<HTMLElement>('[data-resize-column-key]')).filter(
+      (element) => element.dataset['resizeColumnKey'] === columnKey
+    );
+    const measuredWidth = matchingCells.reduce((maxWidth, element) => Math.max(maxWidth, this.measureSingleLineContentWidth(element)), 0);
+
+    return Math.max(this.minResizableColumnWidth, Math.ceil(measuredWidth) + 24);
+  }
+
+  private measureSingleLineContentWidth(element: HTMLElement): number {
+    const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+    const style = window.getComputedStyle(element);
+    const measurementEl = document.createElement('span');
+
+    measurementEl.textContent = text;
+    measurementEl.style.position = 'fixed';
+    measurementEl.style.left = '-10000px';
+    measurementEl.style.top = '-10000px';
+    measurementEl.style.visibility = 'hidden';
+    measurementEl.style.whiteSpace = 'nowrap';
+    measurementEl.style.font = style.font;
+    measurementEl.style.letterSpacing = style.letterSpacing;
+
+    document.body.appendChild(measurementEl);
+    const contentWidth = measurementEl.getBoundingClientRect().width;
+    document.body.removeChild(measurementEl);
+
+    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+    const paddingRight = Number.parseFloat(style.paddingRight) || 0;
+
+    return contentWidth + paddingLeft + paddingRight;
   }
 
   private getCurrentCompanyId(): number {

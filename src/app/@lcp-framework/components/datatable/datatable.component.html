@@ -605,8 +605,17 @@
           [class.expanded-rows]="items.length > 10"
           [class.scroll-hidden-hover]="isStickyHeaderEnabled"
         >
-          <table class="table-hover relative min-w-full">
-            <thead class="bg-pink-50 dark:bg-pink-900/20">
+          <table class="datatable-resizable-table table-hover relative min-w-full">
+            <colgroup>
+              @if(permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
+              <col />
+              } @if (enableCheckBox) {
+              <col />
+              } @for (col of headercolumns; track col.field || col.header || $index) { @if (col.is_grid_column == 'true' && !col.colFilterHide) {
+              <col [style.width.px]="getColumnWidth(col)" [style.min-width.px]="minResizableColumnWidth" />
+              } }
+            </colgroup>
+            <thead #datatableTheadRef class="bg-pink-50 dark:bg-pink-900/20">
               <tr>
                 @if(permissions && this.masterInfo?.permissions?.child_details && this.masterInfo?.children?.child_details) {
                 <th class="text-left uppercase tracking-wider" appDynamicFontSize="body">
@@ -620,7 +629,7 @@
                 !col.colFilterHide) {
                 <th
                   scope="col"
-                  class="max-w-140 relative cursor-pointer truncate whitespace-nowrap px-4 py-2 text-left tracking-wider"
+                  class="datatable-resizable-header relative cursor-pointer px-4 py-2 text-left tracking-wider"
                   [class.datatable-sticky-column]="isStickyGridColumn(col)"
                   [class.datatable-sticky-first-column]="isStickyFirstGridColumn(col)"
                   [class.datatable-sticky-last-column]="isStickyLastGridColumn(col)"
@@ -628,31 +637,48 @@
                   [class.left-0]="isStickyFirstGridColumn(col)"
                   [class.right-0]="isStickyLastGridColumn(col)"
                   [class.expanded-column-header]="expandedColumnChildGrid && expandedColumnChildGrid.colHeader === col.header"
+                  [class.datatable-column-resizing-active]="isColumnBeingResized(col)"
+                  [style.width.px]="getColumnWidth(col)"
+                  [style.min-width.px]="minResizableColumnWidth"
+                  [style.max-width.px]="getColumnWidth(col)"
+                  [attr.data-resize-column-key]="getColumnResizeKey(col)"
                   appDynamicFontSize="body"
-                  (click)="sortColumn(col)"
+                  (click)="onColumnHeaderClick($event, col)"
                   (contextmenu)="onHeaderRightClick($event, col)"
                   ngxTippy
                   [attr.data-tippy-content]="col.header | translate"
                 >
-                  {{ col.header | translate }}
-                  @if (col.is_sortable == 'true' && col.is_grid_column == 'true') {
-                  <span class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center id asc ng-star-inserted">
-                    <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                      <polygon
-                        [ngClass]="{ 'bh-text-primary': col.sortDirection === 'asc' }"
-                        points="3.11,6.25 10.89,6.25 7,1.75"
-                        fill="currentColor"
-                        class="bh-text-black"
-                      ></polygon>
-                      <polygon
-                        [ngClass]="{ 'bh-text-primary': col.sortDirection === 'desc' }"
-                        points="7,12.25 10.89,7.75 3.11,7.75"
-                        fill="currentColor"
-                        class="bh-text-black"
-                      ></polygon>
-                    </svg>
+                  <span class="datatable-header-content">
+                    <span class="datatable-header-label">{{ col.header | translate }}</span>
+                    @if (col.is_sortable == 'true' && col.is_grid_column == 'true') {
+                    <span class="arrow-icon bh-ml-3 bh-sort bh-flex bh-items-center id asc ng-star-inserted">
+                      <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                        <polygon
+                          [ngClass]="{ 'bh-text-primary': col.sortDirection === 'asc' }"
+                          points="3.11,6.25 10.89,6.25 7,1.75"
+                          fill="currentColor"
+                          class="bh-text-black"
+                        ></polygon>
+                        <polygon
+                          [ngClass]="{ 'bh-text-primary': col.sortDirection === 'desc' }"
+                          points="7,12.25 10.89,7.75 3.11,7.75"
+                          fill="currentColor"
+                          class="bh-text-black"
+                        ></polygon>
+                      </svg>
+                    </span>
+                    }
                   </span>
-                  }
+                  <span
+                    class="datatable-column-resize-handle"
+                    role="separator"
+                    aria-orientation="vertical"
+                    ngxTippy
+                    data-tippy-content="Resize column"
+                    (mousedown)="startColumnResize($event, col)"
+                    (click)="onColumnResizeHandleClick($event)"
+                    (dblclick)="autoFitColumnWidth($event, col)"
+                  ></span>
                 </th>
                 } }
               </tr>
@@ -693,7 +719,8 @@
                   } @for (col of headercolumns; track col.field || col.header || $index; let last = $last) {
                   @if (!col.colFilterHide) {
                   <td
-                    class="max-w-150 truncate whitespace-nowrap"
+                    class="datatable-resizable-cell truncate whitespace-nowrap"
+                    [class.max-w-150]="!hasColumnWidth(col)"
                     [class.datatable-sticky-column]="isStickyGridColumn(col)"
                     [class.datatable-sticky-first-column]="isStickyFirstGridColumn(col)"
                     [class.datatable-sticky-last-column]="isStickyLastGridColumn(col)"
@@ -702,9 +729,14 @@
                     [class.right-0]="isStickyLastGridColumn(col)"
                     [ngClass]="col.cellClass || ''"
                     [class.expanded-column-cell]="expandedColumnChildGrid && expandedColumnChildGrid.colHeader === col.header"
+                    [class.datatable-column-resizing-active]="isColumnBeingResized(col)"
                     [class.expanded-column-cell-active]="
                       expandedColumnChildGrid && expandedColumnChildGrid.rowIndex === row_index + 1 && expandedColumnChildGrid.colHeader === col.header
                     "
+                    [style.width.px]="getColumnWidth(col)"
+                    [style.min-width.px]="minResizableColumnWidth"
+                    [style.max-width.px]="getColumnWidth(col)"
+                    [attr.data-resize-column-key]="getColumnResizeKey(col)"
                   >
                     @if (!col.customTemplate && col.is_grid_column == 'true') {
                     <!-- NEW: Check if column has field_html_content -->
