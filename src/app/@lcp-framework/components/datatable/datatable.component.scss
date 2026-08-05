@@ -374,7 +374,7 @@ tbody td.sticky:is(.dark *) {
 
 .datatable-sticky-column {
   position: sticky !important;
-  background-clip: padding-box;
+  background-clip: border-box;
 }
 
 .datatable .table-responsive table thead tr th.datatable-sticky-column,
@@ -392,7 +392,7 @@ thead th.datatable-sticky-column:is(.dark *) {
 }
 
 tbody td.datatable-sticky-column {
-  z-index: 12;
+  z-index: 20;
   background-color: var(--app-table-bg-color, #ffffff) !important;
 }
 
@@ -987,7 +987,45 @@ td.expanded-column-cell-active {
   a {
     position: relative;
     z-index: 1;
+    color: inherit !important;
   }
+
+  a.text-primary {
+    color: var(--drilldown-primary) !important;
+  }
+}
+
+table tbody tr.selected-row td.datatable-sticky-column {
+  background-color: #eff6ff !important;
+}
+
+:is(.dark *) table tbody tr.selected-row td.datatable-sticky-column {
+  background-color: #17233a !important;
+}
+
+tr.expanded-row td.datatable-sticky-column {
+  background-color: #f8fbff !important;
+}
+
+:is(.dark *) tr.expanded-row td.datatable-sticky-column {
+  background-color: #101c30 !important;
+}
+
+td.datatable-sticky-column.expanded-column-cell-active {
+  background-color: #ffffff !important;
+  color: var(--drilldown-primary) !important;
+}
+
+tr.selected-row td.datatable-sticky-column.expanded-column-cell-active {
+  background-color: #eff6ff !important;
+}
+
+:is(.dark *) td.datatable-sticky-column.expanded-column-cell-active {
+  background-color: #0e1726 !important;
+}
+
+:is(.dark *) tr.selected-row td.datatable-sticky-column.expanded-column-cell-active {
+  background-color: #17233a !important;
 }
 
 /* Row-level indicator for the active row containing the expanded cell - no border-left to avoid drawing outside the table boundary */
@@ -1000,6 +1038,29 @@ tr.expanded-row:hover {
 tr.expanded-child-row,
 tr.expanded-child-row:hover {
   background-color: var(--drilldown-light) !important;
+}
+
+tr.expanded-child-row > td.datatable-child-cell {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 18;
+  background-color: var(--app-table-bg-color, #ffffff) !important;
+}
+
+:is(.dark *) tr.expanded-child-row > td.datatable-child-cell {
+  background-color: var(--app-table-bg-color, #0e1726) !important;
+}
+
+.datatable-child-host {
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: visible;
+}
+
+.datatable-child-host.expanded-child-highlight {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 19;
 }
 
 /* Premium styling for the nested child table host - borderless, thick left accent indicator */

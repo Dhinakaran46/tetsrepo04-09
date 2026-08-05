@@ -20,6 +20,7 @@
     [footerStaticEntityName]="footerStaticEntityName" [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
     [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
     [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel"
+    [inheritedStickyColumnConfig]="inheritedStickyColumnConfig"
     (rowContextMenu)="onRowContextMenu($event)"></app-datatable>
   }
 
@@ -185,7 +186,7 @@
 
 <!-- Get Code Modal -->
 @if (isGetCodeModalOpen) {
-<div class="fixed inset-0 z-50 overflow-y-auto">
+<div class="popup-modal fixed inset-0 overflow-y-auto" style="z-index: 2147483647">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Panel -->
@@ -234,7 +235,7 @@
 
 <!-- Line Items Modal -->
 @if (isItemModalOpen) {
-<div class="fixed inset-0 z-50 overflow-y-auto">
+<div class="popup-modal fixed inset-0 overflow-y-auto" style="z-index: 2147483647">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Panel -->
@@ -323,7 +324,7 @@
 
 <!-- View Static Page Modal -->
 @if (isViewPopupOpen) {
-<div class="popup-modal fixed inset-0 z-50 overflow-y-auto">
+<div #viewPopupOverlay class="popup-modal fixed inset-0 overflow-y-auto" style="z-index: 2147483647">
   <!-- Modal Backdrop -->
   <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
   <!-- Modal Content -->
@@ -364,7 +365,8 @@
             (linkComponentClick)="onLinkComponentClick($event)" [permissions]="false"
             [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
             [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
-            [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel">
+            [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel"
+            [inheritedStickyColumnConfig]="inheritedStickyColumnConfig">
           </app-datatable>
           }
         </ng-container>
@@ -383,7 +385,8 @@
           [unique_id]="uniqueId" [showBackButton]="showBackButton" [headerStaticEntityName]="headerStaticEntityName"
           [footerStaticEntityName]="footerStaticEntityName" [staticPageUuid]="selectedItemUuid || uniqueId || uuid"
           [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
-          [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel" (rowContextMenu)="onRowContextMenu($event)">
+          [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel"
+          [inheritedStickyColumnConfig]="inheritedStickyColumnConfig" (rowContextMenu)="onRowContextMenu($event)">
         </app-datatable>
         } @if (popupName == 'popup_details') {
         <app-static-page [uuid]="selectedItemUuid" [entityName]="popupEntityName"

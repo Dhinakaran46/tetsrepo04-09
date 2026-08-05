@@ -600,6 +600,7 @@
     <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
       <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
         <div
+          #datatableScrollContainer
           class="table-responsive datatable-scroll-container overflow-x-auto"
           [class.expanded-rows]="items.length > 10"
           [class.scroll-hidden-hover]="isStickyHeaderEnabled"
@@ -819,8 +820,12 @@
                 <!-- Child datatable row -->
                 @if (expandedItem === row_index + 1 && permissions && this.masterInfo?.permissions?.child_details) {
                 <tr class="expanded-child-row">
-                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
-                    <div class="datatable-child-host expanded-child-highlight bg-gray-50 p-3">
+                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="datatable-child-cell p-0">
+                    <div
+                      class="datatable-child-host expanded-child-highlight bg-gray-50 p-3"
+                      [style.width.px]="childHostViewportWidth"
+                      [style.max-width.px]="childHostViewportWidth"
+                    >
                       <!-- Child content -->
                       <ng-template #childMasterListContainer></ng-template>
                     </div>
@@ -831,8 +836,13 @@
                 @for (col of headercolumns; track col.field || col.header || $index) { @if ((col.link_type === 'child_grid' || col.link_type ===
                 'child_component') && isColumnChildGridExpanded(row_index + 1, col)) {
                 <tr [class.expanded-child-row]="isColumnChildGridExpanded(row_index + 1, col)">
-                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="p-0">
-                    <div class="datatable-child-host bg-gray-50 p-3" [class.expanded-child-highlight]="isColumnChildGridExpanded(row_index + 1, col)">
+                  <td [attr.colspan]="gridColumnCount + (enableCheckBox ? 1 : 0) + 1" class="datatable-child-cell p-0">
+                    <div
+                      class="datatable-child-host bg-gray-50 p-3"
+                      [class.expanded-child-highlight]="isColumnChildGridExpanded(row_index + 1, col)"
+                      [style.width.px]="childHostViewportWidth"
+                      [style.max-width.px]="childHostViewportWidth"
+                    >
                       <div class="expanded-child-banner mb-3 flex items-center gap-2 rounded bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
                         <i class="fa-solid fa-circle-info"></i>
                         <span>
@@ -852,14 +862,6 @@
                         [parentGridFilters]="getParentGridFilterContext()"
                         keyword="plain"
                       ></app-static-page>
-                      } @if (getChildComponentMode(col) === 'popup_add' || getChildComponentMode(col) === 'popup_edit') {
-                      <app-form-builder
-                        [uuid]="getChildComponentUuid(item, col)"
-                        [entityName]="col.link_action"
-                        [isModal]="true"
-                        [gridParams]="getGridParamsFromItem(item)"
-                        (closeModal)="clearAllExpandedGrids()"
-                      ></app-form-builder>
                       } }
                     </div>
                   </td>
@@ -997,7 +999,7 @@
   </div>
 
   @if (isViewConfigModalOpen) {
-  <div class="fixed inset-0 z-[70] overflow-y-auto">
+  <div class="popup-modal fixed inset-0 overflow-y-auto" style="z-index: 2147483647">
     <div class="fixed inset-0 bg-black/50" (click)="closeViewConfigurationModal()"></div>
     <div class="flex min-h-full items-center justify-center p-4">
       <div class="relative w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-[#0e1726]">
@@ -1032,7 +1034,7 @@
     </div>
   </div>
   } @if (isViewPopupOpenDirect) {
-  <div class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="popup-modal fixed inset-0 overflow-y-auto" style="z-index: 2147483647">
     <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70"></div>
     <div class="flex min-h-screen items-center justify-center p-4">
       <div

@@ -2,12 +2,15 @@ import {
   Component,
   TemplateRef,
   ViewChild,
+  ElementRef,
   AfterViewInit,
+  AfterViewChecked,
   ChangeDetectorRef,
   HostListener,
   Input,
   SimpleChanges,
   OnChanges,
+  OnDestroy,
   Output,
   EventEmitter,
 } from '@angular/core';
@@ -84,7 +87,7 @@ interface AcceptedParentParamRule {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements OnChanges {
+export class MasterListComponent implements OnChanges, AfterViewChecked, OnDestroy {
   search_all: any[] = [];
   search_any: any[] = [];
 
@@ -96,6 +99,7 @@ export class MasterListComponent implements OnChanges {
   @Input() selectedItemUuid: string | null = null;
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
+  @Input() inheritedStickyColumnConfig: any = null;
   @Input() grid_params: any = null;
 
   @Input() line_item_configurations: any = null;
@@ -159,6 +163,11 @@ export class MasterListComponent implements OnChanges {
   @ViewChild('linkDownloadVideoURLTemplate') linkDownloadVideoURLTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadPdfURLTemplate') linkDownloadPdfURLTemplate!: TemplateRef<any>;
   @ViewChild('linkDownloadWordURLTemplate') linkDownloadWordURLTemplate!: TemplateRef<any>;
+  @ViewChild('viewPopupOverlay') viewPopupOverlay?: ElementRef<HTMLElement>;
+
+  private viewPopupOverlayElement: HTMLElement | null = null;
+  private viewPopupOverlayOriginalParent: Node | null = null;
+  private viewPopupOverlayNextSibling: Node | null = null;
 
   customTemplates: { [key: string]: TemplateRef<any> } = {};
 
@@ -3862,6 +3871,58 @@ export class MasterListComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     // Optionally handle other input changes if needed
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.isViewPopupOpen) {
+      this.attachViewPopupOverlayToBody();
+    } else {
+      this.restoreViewPopupOverlay();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.restoreViewPopupOverlay();
+  }
+
+  private attachViewPopupOverlayToBody(): void {
+    const overlay = this.viewPopupOverlay?.nativeElement;
+    if (!overlay) {
+      return;
+    }
+
+    if (overlay.parentNode === document.body) {
+      this.viewPopupOverlayElement = overlay;
+      return;
+    }
+
+    if (this.viewPopupOverlayElement && this.viewPopupOverlayElement !== overlay) {
+      this.restoreViewPopupOverlay();
+    }
+
+    this.viewPopupOverlayElement = overlay;
+    this.viewPopupOverlayOriginalParent = overlay.parentNode;
+    this.viewPopupOverlayNextSibling = overlay.nextSibling;
+    document.body.appendChild(overlay);
+  }
+
+  private restoreViewPopupOverlay(): void {
+    const overlay = this.viewPopupOverlayElement;
+    if (!overlay) {
+      return;
+    }
+
+    if (overlay.parentNode === document.body) {
+      if (this.viewPopupOverlayOriginalParent?.isConnected) {
+        this.viewPopupOverlayOriginalParent.insertBefore(overlay, this.viewPopupOverlayNextSibling);
+      } else {
+        overlay.remove();
+      }
+    }
+
+    this.viewPopupOverlayElement = null;
+    this.viewPopupOverlayOriginalParent = null;
+    this.viewPopupOverlayNextSibling = null;
   }
 
   onSelectionChange(data: any) {

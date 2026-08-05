@@ -144,7 +144,7 @@
 
   <!-- Popup Modal (only shown when enablePopupLineItem is true) -->
   @if (enablePopupLineItem && isPopupOpen) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="popup-modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" style="z-index: 2147483647">
     <div class="repeat-table-popup max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-white p-5">
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-xl font-semibold">{{ currentRowIndex !== null ? 'Edit' : 'Add' }} {{ field.props.label || 'Item' }}</h3>

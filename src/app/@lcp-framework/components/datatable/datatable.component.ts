@@ -131,7 +131,6 @@ interface UserSearchConfigurationTemp {
     BooleanStatusPipe,
     LoaderComponent,
     StaticPageComponent,
-    FormBuilderComponent,
     FlatpickrDirective,
     NgScrollbarModule,
     FormsModule,
@@ -157,6 +156,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private childComponentResolvedModes: Record<string, string> = {};
   private entityConfigurationsSource: any = undefined;
   private entityConfigurationsCache: any = null;
+  private inheritedStickyColumnConfigSource: any = undefined;
+  private inheritedStickyColumnConfigCache: any = null;
   private stickyDebugSignature: string = '';
   private stickyDebugTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -191,6 +192,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() activeHavingAll: any[] = [];
   @Input() activeHavingAny: any[] = [];
   @Input() parentFilterColumns: any[] = [];
+  @Input() inheritedStickyColumnConfig: any = null;
   @Input() parentGridFilters: {
     search_all?: any[];
     search_any?: any[];
@@ -246,6 +248,56 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.entityConfigurationsCache;
   }
 
+  private getInheritedStickyColumnConfig(): any {
+    const cfg = this.inheritedStickyColumnConfig;
+    if (this.inheritedStickyColumnConfigSource === cfg) {
+      return this.inheritedStickyColumnConfigCache;
+    }
+
+    this.inheritedStickyColumnConfigSource = cfg;
+
+    if (typeof cfg === 'string') {
+      const trimmedCfg = cfg.trim();
+      if (!trimmedCfg) {
+        this.inheritedStickyColumnConfigCache = null;
+        return this.inheritedStickyColumnConfigCache;
+      }
+
+      try {
+        const parsedCfg = JSON.parse(trimmedCfg);
+        this.inheritedStickyColumnConfigCache = typeof parsedCfg === 'string' ? JSON.parse(parsedCfg) : parsedCfg;
+      } catch {
+        this.inheritedStickyColumnConfigCache = null;
+      }
+
+      return this.inheritedStickyColumnConfigCache;
+    }
+
+    this.inheritedStickyColumnConfigCache = cfg && typeof cfg === 'object' ? cfg : null;
+    return this.inheritedStickyColumnConfigCache;
+  }
+
+  private hasOwnConfigKey(config: any, key: string): boolean {
+    return !!config && Object.prototype.hasOwnProperty.call(config, key);
+  }
+
+  private getStickyColumnInheritanceConfig(): any {
+    const localCfg = this.getEntityConfigurations();
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
+    const stickyConfig = stickyKeys.reduce((acc: any, key: string) => {
+      if (this.hasOwnConfigKey(localCfg, key)) {
+        acc[key] = localCfg[key];
+      } else if (this.hasOwnConfigKey(inheritedCfg, key)) {
+        acc[key] = inheritedCfg[key];
+      }
+
+      return acc;
+    }, {});
+
+    return Object.keys(stickyConfig).length ? stickyConfig : null;
+  }
+
   private isConfigYes(value: any): boolean {
     if (value === true) {
       return true;
@@ -266,12 +318,19 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const entityName = this.getStickyDebugEntityName().toLowerCase();
     const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
     const hasStickyConfig = !!cfg && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(cfg, key));
-    return hasStickyConfig || entityName.includes('project_details') || entityName.includes('project_total_estimation_details');
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    const hasInheritedStickyConfig = !!inheritedCfg && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(inheritedCfg, key));
+    return hasStickyConfig || hasInheritedStickyConfig || entityName.includes('project_details') || entityName.includes('project_total_estimation_details');
   }
 
   private getStickyDebugReason(cfg: any, visibleGridColumns: any[]): string {
-    if (!cfg) {
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    if (!cfg && !inheritedCfg) {
       return 'entity_configurations missing in datatable masterInfo';
+    }
+
+    if (!cfg && inheritedCfg) {
+      return 'sticky column flags inherited from parent grid';
     }
 
     if (!this.hasGridCfgKey('grid_enable_sticky_first_column') && !this.hasGridCfgKey('grid_enable_sticky_last_column') && !this.hasGridCfgKey('grid_enable_sticky_action_column')) {
@@ -315,6 +374,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       entity_name: this.getStickyDebugEntityName(),
       raw_entity_configurations: this.masterInfo?.entity_configurations,
       parsed_entity_configurations: cfg,
+      inherited_sticky_column_config: this.getInheritedStickyColumnConfig(),
+      resolved_sticky_column_config: this.getStickyColumnInheritanceConfig(),
       sticky_first_value: cfg?.grid_enable_sticky_first_column,
       sticky_last_value: cfg?.grid_enable_sticky_last_column,
       sticky_action_value: cfg?.grid_enable_sticky_action_column,
@@ -386,11 +447,21 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.stickyGridCfg('grid_enable_sticky_first_column');
   }
   get enableStickyLastColumn(): boolean {
-    if (this.hasGridCfgKey('grid_enable_sticky_last_column')) {
-      return this.stickyGridCfg('grid_enable_sticky_last_column');
+    const cfg = this.getEntityConfigurations();
+    if (this.hasOwnConfigKey(cfg, 'grid_enable_sticky_last_column')) {
+      return this.isConfigYes(cfg.grid_enable_sticky_last_column);
     }
 
-    return this.stickyGridCfg('grid_enable_sticky_action_column');
+    if (this.hasOwnConfigKey(cfg, 'grid_enable_sticky_action_column')) {
+      return this.isConfigYes(cfg.grid_enable_sticky_action_column);
+    }
+
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    if (this.hasOwnConfigKey(inheritedCfg, 'grid_enable_sticky_last_column')) {
+      return this.isConfigYes(inheritedCfg.grid_enable_sticky_last_column);
+    }
+
+    return this.hasOwnConfigKey(inheritedCfg, 'grid_enable_sticky_action_column') && this.isConfigYes(inheritedCfg.grid_enable_sticky_action_column);
   }
 
   headerContextMenu = {
@@ -618,9 +689,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
   @ViewChild('datatableToolbar') toolbarElRef?: ElementRef;
   @ViewChild('datatableTheadRef') theadElRef?: ElementRef;
+  @ViewChild('datatableScrollContainer') datatableScrollContainerEl?: ElementRef<HTMLElement>;
 
   navbarHeight: number = 56;
   private toolbarResizeObserver?: ResizeObserver;
+  private scrollContainerResizeObserver?: ResizeObserver;
+  childHostViewportWidth: number | null = null;
 
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
@@ -715,18 +789,37 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   ngAfterViewInit(): void {
     this.measureNavbarHeight();
+    this.updateChildHostViewportWidth();
     if (this.toolbarElRef?.nativeElement) {
       this.toolbarResizeObserver = new ResizeObserver(() => {
         this.applyStickyTop();
       });
       this.toolbarResizeObserver.observe(this.toolbarElRef.nativeElement);
     }
+    if (this.datatableScrollContainerEl?.nativeElement) {
+      this.scrollContainerResizeObserver = new ResizeObserver(() => {
+        this.updateChildHostViewportWidth();
+      });
+      this.scrollContainerResizeObserver.observe(this.datatableScrollContainerEl.nativeElement);
+    }
   }
 
   @HostListener('window:resize')
   onWindowResize(): void {
     this.measureNavbarHeight();
+    this.updateChildHostViewportWidth();
     this.applyStickyTop();
+  }
+
+  private updateChildHostViewportWidth(): void {
+    const scrollContainerWidth = this.datatableScrollContainerEl?.nativeElement?.clientWidth || 0;
+    const nextWidth = scrollContainerWidth > 40 ? Math.max(0, scrollContainerWidth - 20) : null;
+
+    if (this.childHostViewportWidth === nextWidth) {
+      return;
+    }
+
+    this.childHostViewportWidth = nextWidth;
   }
 
   private applyStickyTop(): void {
@@ -751,6 +844,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     }
 
     this.toolbarResizeObserver?.disconnect();
+    this.scrollContainerResizeObserver?.disconnect();
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
     });
@@ -4001,12 +4095,18 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private hasGridCfgKey(key: string): boolean {
     const cfg = this.getEntityConfigurations();
-    return !!cfg && Object.prototype.hasOwnProperty.call(cfg, key);
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    return this.hasOwnConfigKey(cfg, key) || this.hasOwnConfigKey(inheritedCfg, key);
   }
 
   private stickyGridCfg(key: string): boolean {
     const cfg = this.getEntityConfigurations();
-    return !!cfg && this.isConfigYes(cfg[key]);
+    if (this.hasOwnConfigKey(cfg, key)) {
+      return this.isConfigYes(cfg[key]);
+    }
+
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    return this.hasOwnConfigKey(inheritedCfg, key) && this.isConfigYes(inheritedCfg[key]);
   }
 
   private getVisibleGridColumns(): any[] {
@@ -4233,9 +4333,30 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     // Use setTimeout to ensure the DOM is updated and ViewChild is available
     setTimeout(() => {
-      this.createColumnPopupChildMasterList(item, col.link_action, col);
+      if (!this.pendingPopupData) {
+        return;
+      }
+      const { item: pendingItem, entityName, col: pendingCol } = this.pendingPopupData;
+      this.pendingPopupData = null;
+      this.createColumnPopupChildMasterList(pendingItem, entityName, pendingCol);
     }, 100); // Increased delay to ensure DOM is ready
   }
+
+  private openColumnChildComponentPopup(item: any, col: any): void {
+    this.isViewPopupOpenDirect = true;
+    this.loadingpopup = true;
+    this.pendingPopupData = { item, entityName: col.link_action, col };
+
+    setTimeout(() => {
+      if (!this.pendingPopupData) {
+        return;
+      }
+      const { item: pendingItem, entityName, col: pendingCol } = this.pendingPopupData;
+      this.pendingPopupData = null;
+      this.createColumnPopupChildMasterList(pendingItem, entityName, pendingCol);
+    }, 100);
+  }
+
   toggleColumnChildGrid(item: any, col: any, row_index: number) {
     if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header) {
       this.clearAllExpandedGrids();
@@ -4275,9 +4396,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.persistCurrentSelectedViewStateAsDefault();
     this.hasPersistedViewBeforeDestroy = true;
 
-    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
-
     const resolvedMode = this.getChildComponentMode(col);
+    if (resolvedMode === 'popup_add' || resolvedMode === 'popup_edit') {
+      this.openColumnChildComponentPopup(item, col);
+      return;
+    }
+
+    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
     if (resolvedMode === 'popup_grid') {
       setTimeout(() => {
         this.createColumnChildMasterList(item, col.link_action, col);
@@ -4419,7 +4544,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
-    componentRef.instance.stickyHeader = this.stickyHeader;
+    componentRef.instance.stickyHeader = 'no';
+    componentRef.instance.inheritedStickyColumnConfig = this.getStickyColumnInheritanceConfig();
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
@@ -4441,6 +4567,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   closeViewPopup() {
     this.isViewPopupOpenDirect = false;
+    this.loadingpopup = false;
+    this.pendingPopupData = null;
+    if (this.popupChildMasterListContainer) {
+      this.popupChildMasterListContainer.clear();
+    }
   }
 
   // In your component.ts
@@ -4467,21 +4598,30 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     // Clear any existing components
     this.popupChildMasterListContainer.clear();
 
+    const gridParams = this.getGridParamsFromItem(item);
+    const resolvedMode = this.getChildComponentMode(col);
+    if (resolvedMode === 'popup_add' || resolvedMode === 'popup_edit') {
+      const componentRef = this.popupChildMasterListContainer.createComponent(FormBuilderComponent);
+      componentRef.instance.popupName = resolvedMode;
+      componentRef.instance.uuid = this.getChildComponentUuid(item, col);
+      componentRef.instance.entityName = entityName;
+      componentRef.instance.isModal = true;
+      componentRef.instance.gridParams = gridParams;
+      componentRef.instance.closeModal.subscribe(() => this.closeViewPopup());
+      this.loadingpopup = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
     const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
-    componentRef.instance.stickyHeader = this.stickyHeader;
+    componentRef.instance.stickyHeader = 'no';
+    componentRef.instance.inheritedStickyColumnConfig = this.getStickyColumnInheritanceConfig();
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
     componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
-    const gridParams: any = {};
-    Object.keys(item).forEach((key) => {
-      if (key.startsWith('gparam_')) {
-        let temp_key = '$' + key;
-        gridParams[temp_key] = item[key];
-      }
-    });
     componentRef.instance.grid_params = gridParams;
 
     const lineItemConfig = col?.line_item_configurations;
@@ -4499,7 +4639,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
-    componentRef.instance.stickyHeader = this.stickyHeader;
+    componentRef.instance.stickyHeader = 'no';
+    componentRef.instance.inheritedStickyColumnConfig = this.getStickyColumnInheritanceConfig();
     componentRef.instance.uuid = item['uuid'];
     // Do NOT pass uuid for child_grid — filtering is driven by gparam_ values.
     // Passing uuid here causes the back button to appear in the child datatable.
