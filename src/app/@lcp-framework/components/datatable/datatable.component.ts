@@ -19,6 +19,8 @@ import {
   OnDestroy,
   Optional,
   Host,
+  Renderer2,
+  NgZone,
 } from '@angular/core';
 
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
@@ -123,6 +125,13 @@ interface UserSearchConfigurationTemp {
   updated_at: string;
 }
 
+interface ColumnResizeState {
+  columnKey: string;
+  startX: number;
+  startWidth: number;
+  nextWidth: number;
+}
+
 @Component({
   selector: 'app-datatable',
   standalone: true,
@@ -132,7 +141,6 @@ interface UserSearchConfigurationTemp {
     BooleanStatusPipe,
     LoaderComponent,
     StaticPageComponent,
-    FormBuilderComponent,
     FlatpickrDirective,
     NgScrollbarModule,
     FormsModule,
@@ -156,6 +164,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   // Add this property to your component class:
   pendingPopupData: { item: any; entityName: string; col?: any } | null = null;
   private childComponentResolvedModes: Record<string, string> = {};
+  private entityConfigurationsSource: any = undefined;
+  private entityConfigurationsCache: any = null;
+  private inheritedStickyColumnConfigSource: any = undefined;
+  private inheritedStickyColumnConfigCache: any = null;
+  private stickyDebugSignature: string = '';
+  private stickyDebugTimer: ReturnType<typeof setTimeout> | null = null;
 
   expandedItem: any = null;
   selectedRowIndex: number | null = null;
@@ -188,6 +202,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @Input() activeHavingAll: any[] = [];
   @Input() activeHavingAny: any[] = [];
   @Input() parentFilterColumns: any[] = [];
+  @Input() inheritedStickyColumnConfig: any = null;
   @Input() parentGridFilters: {
     search_all?: any[];
     search_any?: any[];
@@ -279,9 +294,222 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private gridCfg(key: string): boolean {
     //console.log(this.masterInfo);
-    const cfg = this.masterInfo?.entity_configurations;
+    const cfg = this.getEntityConfigurations();
     //  console.log('[gridCfg]', key, '→ cfg:', cfg, '| value:', cfg?.[key], '| result:', !cfg || cfg[key] == 'yes');
-    return !cfg || cfg[key] == 'yes';
+    return !cfg || this.isConfigYes(cfg[key]);
+  }
+
+  private getEntityConfigurations(): any {
+    const cfg = this.masterInfo?.entity_configurations;
+    if (this.entityConfigurationsSource === cfg) {
+      return this.entityConfigurationsCache;
+    }
+
+    this.entityConfigurationsSource = cfg;
+
+    if (typeof cfg === 'string') {
+      const trimmedCfg = cfg.trim();
+      if (!trimmedCfg) {
+        this.entityConfigurationsCache = null;
+        return this.entityConfigurationsCache;
+      }
+
+      try {
+        const parsedCfg = JSON.parse(trimmedCfg);
+        this.entityConfigurationsCache = typeof parsedCfg === 'string' ? JSON.parse(parsedCfg) : parsedCfg;
+      } catch {
+        this.entityConfigurationsCache = null;
+      }
+
+      return this.entityConfigurationsCache;
+    }
+
+    this.entityConfigurationsCache = cfg && typeof cfg === 'object' ? cfg : null;
+    return this.entityConfigurationsCache;
+  }
+
+  private getInheritedStickyColumnConfig(): any {
+    const cfg = this.inheritedStickyColumnConfig;
+    if (this.inheritedStickyColumnConfigSource === cfg) {
+      return this.inheritedStickyColumnConfigCache;
+    }
+
+    this.inheritedStickyColumnConfigSource = cfg;
+
+    if (typeof cfg === 'string') {
+      const trimmedCfg = cfg.trim();
+      if (!trimmedCfg) {
+        this.inheritedStickyColumnConfigCache = null;
+        return this.inheritedStickyColumnConfigCache;
+      }
+
+      try {
+        const parsedCfg = JSON.parse(trimmedCfg);
+        this.inheritedStickyColumnConfigCache = typeof parsedCfg === 'string' ? JSON.parse(parsedCfg) : parsedCfg;
+      } catch {
+        this.inheritedStickyColumnConfigCache = null;
+      }
+
+      return this.inheritedStickyColumnConfigCache;
+    }
+
+    this.inheritedStickyColumnConfigCache = cfg && typeof cfg === 'object' ? cfg : null;
+    return this.inheritedStickyColumnConfigCache;
+  }
+
+  private hasOwnConfigKey(config: any, key: string): boolean {
+    return !!config && Object.prototype.hasOwnProperty.call(config, key);
+  }
+
+  private getStickyColumnInheritanceConfig(): any {
+    const localCfg = this.getEntityConfigurations();
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
+    const stickyConfig = stickyKeys.reduce((acc: any, key: string) => {
+      if (this.hasOwnConfigKey(localCfg, key)) {
+        acc[key] = localCfg[key];
+      } else if (this.hasOwnConfigKey(inheritedCfg, key)) {
+        acc[key] = inheritedCfg[key];
+      }
+
+      return acc;
+    }, {});
+
+    return Object.keys(stickyConfig).length ? stickyConfig : null;
+  }
+
+  private isConfigYes(value: any): boolean {
+    if (value === true) {
+      return true;
+    }
+
+    return (
+      String(value ?? '')
+        .trim()
+        .toLowerCase() === 'yes'
+    );
+  }
+
+  private getStickyDebugEntityName(): string {
+    return String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.fullEntity || this.masterInfo?.Listname || this.title || '');
+  }
+
+  private shouldLogStickyDebug(cfg: any): boolean {
+    const entityName = this.getStickyDebugEntityName().toLowerCase();
+    const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
+    const hasStickyConfig = !!cfg && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(cfg, key));
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    const hasInheritedStickyConfig = !!inheritedCfg && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(inheritedCfg, key));
+    return hasStickyConfig || hasInheritedStickyConfig || entityName.includes('project_details') || entityName.includes('project_total_estimation_details');
+  }
+
+  private getStickyDebugReason(cfg: any, visibleGridColumns: any[]): string {
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    if (!cfg && !inheritedCfg) {
+      return 'entity_configurations missing in datatable masterInfo';
+    }
+
+    if (!cfg && inheritedCfg) {
+      return 'sticky column flags inherited from parent grid';
+    }
+
+    if (
+      !this.hasGridCfgKey('grid_enable_sticky_first_column') &&
+      !this.hasGridCfgKey('grid_enable_sticky_last_column') &&
+      !this.hasGridCfgKey('grid_enable_sticky_action_column')
+    ) {
+      return 'sticky config keys missing';
+    }
+
+    if (!this.enableStickyFirstColumn && !this.enableStickyLastColumn) {
+      return 'sticky flags resolved false';
+    }
+
+    if (!visibleGridColumns.length) {
+      return 'no visible grid columns';
+    }
+
+    return 'sticky classes should apply to first/last visible grid columns';
+  }
+
+  private scheduleStickyDebugLog(source: string): void {
+    if (this.stickyDebugTimer) {
+      clearTimeout(this.stickyDebugTimer);
+    }
+
+    this.stickyDebugTimer = setTimeout(() => {
+      this.stickyDebugTimer = null;
+      this.logStickyDebug(source);
+    }, 0);
+  }
+
+  private logStickyDebug(source: string): void {
+    const cfg = this.getEntityConfigurations();
+    if (!this.shouldLogStickyDebug(cfg)) {
+      return;
+    }
+
+    const visibleGridColumns = this.getVisibleGridColumns();
+    const firstColumn = visibleGridColumns[0] || null;
+    const lastColumn = visibleGridColumns[visibleGridColumns.length - 1] || null;
+    const actionColumn = visibleGridColumns.find((col: any) => this.isActionGridColumn(col)) || null;
+    const debugInfo = {
+      source,
+      entity_name: this.getStickyDebugEntityName(),
+      raw_entity_configurations: this.masterInfo?.entity_configurations,
+      parsed_entity_configurations: cfg,
+      inherited_sticky_column_config: this.getInheritedStickyColumnConfig(),
+      resolved_sticky_column_config: this.getStickyColumnInheritanceConfig(),
+      sticky_first_value: cfg?.grid_enable_sticky_first_column,
+      sticky_last_value: cfg?.grid_enable_sticky_last_column,
+      sticky_action_value: cfg?.grid_enable_sticky_action_column,
+      enableStickyFirstColumn: this.enableStickyFirstColumn,
+      enableStickyLastColumn: this.enableStickyLastColumn,
+      stickyHeader: this.stickyHeader,
+      isStickyHeaderEnabled: this.isStickyHeaderEnabled,
+      headerColumnsCount: this.headercolumns?.length || 0,
+      visibleGridColumnsCount: visibleGridColumns.length,
+      visibleGridColumns: visibleGridColumns.map((col: any) => ({
+        header: col?.header,
+        field: col?.field,
+        field_value: col?.field_value,
+        colFilterHide: col?.colFilterHide,
+        is_grid_column: col?.is_grid_column,
+      })),
+      firstVisibleColumn: firstColumn
+        ? {
+            header: firstColumn.header,
+            field: firstColumn.field,
+            field_value: firstColumn.field_value,
+            isStickyFirst: this.isStickyFirstGridColumn(firstColumn),
+          }
+        : null,
+      lastVisibleColumn: lastColumn
+        ? {
+            header: lastColumn.header,
+            field: lastColumn.field,
+            field_value: lastColumn.field_value,
+            isStickyLast: this.isStickyLastGridColumn(lastColumn),
+          }
+        : null,
+      actionColumn: actionColumn
+        ? {
+            header: actionColumn.header,
+            field: actionColumn.field,
+            field_value: actionColumn.field_value,
+            isStickyLast: this.isStickyLastGridColumn(actionColumn),
+          }
+        : null,
+      reason: this.getStickyDebugReason(cfg, visibleGridColumns),
+    };
+    const signature = JSON.stringify(debugInfo);
+
+    if (signature === this.stickyDebugSignature) {
+      return;
+    }
+
+    this.stickyDebugSignature = signature;
+    console.log('[datatable sticky debug]', debugInfo);
   }
 
   get showGridTitle(): boolean {
@@ -297,7 +525,27 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.gridCfg('grid_show_column_filter');
   }
   get enableStickyActionColumn(): boolean {
-    return this.gridCfg('grid_enable_sticky_action_column');
+    return this.enableStickyLastColumn;
+  }
+  get enableStickyFirstColumn(): boolean {
+    return this.stickyGridCfg('grid_enable_sticky_first_column');
+  }
+  get enableStickyLastColumn(): boolean {
+    const cfg = this.getEntityConfigurations();
+    if (this.hasOwnConfigKey(cfg, 'grid_enable_sticky_last_column')) {
+      return this.isConfigYes(cfg.grid_enable_sticky_last_column);
+    }
+
+    if (this.hasOwnConfigKey(cfg, 'grid_enable_sticky_action_column')) {
+      return this.isConfigYes(cfg.grid_enable_sticky_action_column);
+    }
+
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    if (this.hasOwnConfigKey(inheritedCfg, 'grid_enable_sticky_last_column')) {
+      return this.isConfigYes(inheritedCfg.grid_enable_sticky_last_column);
+    }
+
+    return this.hasOwnConfigKey(inheritedCfg, 'grid_enable_sticky_action_column') && this.isConfigYes(inheritedCfg.grid_enable_sticky_action_column);
   }
 
   headerContextMenu = {
@@ -339,11 +587,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       y = window.innerHeight - menuHeight - 10;
     }
 
-    const norm = (v: any) => String(v ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+    const norm = (v: any) =>
+      String(v ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, '');
     const colNorm = norm(col.header);
-    const isFilterable = !!col.header && this.filteredColumns.some(
-      (fc: any) => fc.display_name === col.header || (colNorm && norm(fc.display_name) === colNorm),
-    );
+    const isFilterable =
+      !!col.header && this.filteredColumns.some((fc: any) => fc.display_name === col.header || (colNorm && norm(fc.display_name) === colNorm));
 
     this.headerContextMenu = {
       visible: true,
@@ -414,6 +665,15 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   private stringFieldTypeIds: number[] = [3, 4];
   isSchemaChunks: boolean = false;
   policyData: any = null;
+  readonly minResizableColumnWidth = 100;
+  columnWidths: Record<string, number> = {};
+  resizingColumnKey: string | null = null;
+  private columnWidthsStorageKey = '';
+  private columnResizeState: ColumnResizeState | null = null;
+  private columnResizeAnimationFrame: number | null = null;
+  private columnResizeMoveUnlisten?: () => void;
+  private columnResizeUpUnlisten?: () => void;
+  private suppressNextHeaderClick = false;
 
   // Quick fix - minimal required settings
   filterDropdownSettings: any = {
@@ -525,9 +785,12 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   @ViewChild('popupChildMasterListContainer', { read: ViewContainerRef }) popupChildMasterListContainer!: ViewContainerRef;
   @ViewChild('datatableToolbar') toolbarElRef?: ElementRef;
   @ViewChild('datatableTheadRef') theadElRef?: ElementRef;
+  @ViewChild('datatableScrollContainer') datatableScrollContainerEl?: ElementRef<HTMLElement>;
 
   navbarHeight: number = 56;
   private toolbarResizeObserver?: ResizeObserver;
+  private scrollContainerResizeObserver?: ResizeObserver;
+  childHostViewportWidth: number | null = null;
 
   public lastRenderedUuid: string | null = null;
   public lastRenderedColumnChildUuid: string | null = null;
@@ -595,6 +858,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
     private viewportService: ViewportService,
+    private renderer: Renderer2,
+    private ngZone: NgZone,
     @Optional() @Host() private parentMasterList: MasterListComponent
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
@@ -625,18 +890,37 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   ngAfterViewInit(): void {
     this.measureNavbarHeight();
+    this.updateChildHostViewportWidth();
     if (this.toolbarElRef?.nativeElement) {
       this.toolbarResizeObserver = new ResizeObserver(() => {
         this.applyStickyTop();
       });
       this.toolbarResizeObserver.observe(this.toolbarElRef.nativeElement);
     }
+    if (this.datatableScrollContainerEl?.nativeElement) {
+      this.scrollContainerResizeObserver = new ResizeObserver(() => {
+        this.updateChildHostViewportWidth();
+      });
+      this.scrollContainerResizeObserver.observe(this.datatableScrollContainerEl.nativeElement);
+    }
   }
 
   @HostListener('window:resize')
   onWindowResize(): void {
     this.measureNavbarHeight();
+    this.updateChildHostViewportWidth();
     this.applyStickyTop();
+  }
+
+  private updateChildHostViewportWidth(): void {
+    const scrollContainerWidth = this.datatableScrollContainerEl?.nativeElement?.clientWidth || 0;
+    const nextWidth = scrollContainerWidth > 40 ? Math.max(0, scrollContainerWidth - 20) : null;
+
+    if (this.childHostViewportWidth === nextWidth) {
+      return;
+    }
+
+    this.childHostViewportWidth = nextWidth;
   }
 
   private applyStickyTop(): void {
@@ -655,7 +939,14 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   ngOnDestroy(): void {
+    if (this.stickyDebugTimer) {
+      clearTimeout(this.stickyDebugTimer);
+      this.stickyDebugTimer = null;
+    }
+
     this.toolbarResizeObserver?.disconnect();
+    this.scrollContainerResizeObserver?.disconnect();
+    this.finishColumnResize(false);
     this.cardScrollObserver?.disconnect();
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
@@ -993,6 +1284,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       col.sortDirection = '';
       col.colFilterHide = false;
     });
+    this.loadPersistedColumnWidths();
 
     this.filteredItems = [...this.items];
 
@@ -1121,7 +1413,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
         { id: '2', label: 'Not In', value: 'not_in' },
       ];
     } else if (this.isAggregateFunction(column) && columnData?.clause_type !== 'having') {
-      return withBetween(this.searchConditions[columnType]?.filter((condition: SearchCondition) => condition.value !== 'in' && condition.value !== 'not_in') || []);
+      return withBetween(
+        this.searchConditions[columnType]?.filter((condition: SearchCondition) => condition.value !== 'in' && condition.value !== 'not_in') || []
+      );
     } else {
       return withBetween(this.searchConditions[columnType] || []);
     }
@@ -2120,6 +2414,9 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    this.scheduleStickyDebugLog('ngOnChanges');
+    this.loadPersistedColumnWidths();
+
     // Default view type: Table on web, Card on a mobile viewport/native shell - only
     // for entities that actually have a card config. Applied once per entity (not on
     // every change-detection pass), so it never overrides a manual selector choice.
@@ -2191,6 +2488,248 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   private getEntitySlug(): string {
     return String(this.masterInfo?.ListQuery?.entity_name || this.masterInfo?.entity_name || this.title || 'default_entity');
+  }
+
+  private getColumnWidthsStorageKey(): string {
+    const entitySlug = this.getEntitySlug()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '_');
+    return `datatable_column_widths_${this.getCurrentCompanyId()}_${entitySlug}_${this.tableLevel}`;
+  }
+
+  private normalizeColumnWidth(value: any): number | null {
+    const width = Number(value);
+    if (!Number.isFinite(width)) {
+      return null;
+    }
+
+    return Math.max(this.minResizableColumnWidth, Math.round(width));
+  }
+
+  private loadPersistedColumnWidths(): void {
+    const storageKey = this.getColumnWidthsStorageKey();
+    if (!storageKey || storageKey === this.columnWidthsStorageKey) {
+      return;
+    }
+
+    this.columnWidthsStorageKey = storageKey;
+    const rawWidths = this.localstore.getData(storageKey);
+    const parsedWidths = this.parseJsonSafe(rawWidths, {});
+    const nextWidths: Record<string, number> = {};
+
+    if (parsedWidths && typeof parsedWidths === 'object' && !Array.isArray(parsedWidths)) {
+      Object.entries(parsedWidths).forEach(([key, value]) => {
+        const width = this.normalizeColumnWidth(value);
+        if (width !== null) {
+          nextWidths[key] = width;
+        }
+      });
+    }
+
+    this.columnWidths = nextWidths;
+  }
+
+  private persistColumnWidths(): void {
+    const storageKey = this.columnWidthsStorageKey || this.getColumnWidthsStorageKey();
+    this.columnWidthsStorageKey = storageKey;
+    this.localstore.storeData(storageKey, JSON.stringify(this.columnWidths));
+  }
+
+  getColumnWidth(column: any): number | null {
+    const columnKey = this.getColumnUniqueKey(column);
+    if (!columnKey) {
+      return null;
+    }
+
+    return this.normalizeColumnWidth(this.columnWidths[columnKey]);
+  }
+
+  hasColumnWidth(column: any): boolean {
+    return this.getColumnWidth(column) !== null;
+  }
+
+  getColumnResizeKey(column: any): string {
+    return this.getColumnUniqueKey(column);
+  }
+
+  isColumnBeingResized(column: any): boolean {
+    return !!this.resizingColumnKey && this.getColumnUniqueKey(column) === this.resizingColumnKey;
+  }
+
+  onColumnHeaderClick(event: MouseEvent, column: any): void {
+    if (this.suppressNextHeaderClick || this.resizingColumnKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.suppressNextHeaderClick = false;
+      return;
+    }
+
+    this.sortColumn(column);
+  }
+
+  onColumnResizeHandleClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  startColumnResize(event: MouseEvent, column: any): void {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const columnKey = this.getColumnUniqueKey(column);
+    if (!columnKey) {
+      return;
+    }
+
+    const headerCell = (event.currentTarget as HTMLElement | null)?.closest('th') as HTMLElement | null;
+    const currentWidth = this.getColumnWidth(column) || headerCell?.offsetWidth || this.minResizableColumnWidth;
+    const startWidth = Math.max(this.minResizableColumnWidth, Math.round(currentWidth));
+
+    this.finishColumnResize(false);
+    this.columnResizeState = {
+      columnKey,
+      startX: event.clientX,
+      startWidth,
+      nextWidth: startWidth,
+    };
+    this.resizingColumnKey = columnKey;
+    this.suppressNextHeaderClick = true;
+
+    document.body.classList.add('datatable-column-resizing');
+
+    this.ngZone.runOutsideAngular(() => {
+      this.columnResizeMoveUnlisten = this.renderer.listen('document', 'mousemove', this.handleColumnResizeMouseMove);
+      this.columnResizeUpUnlisten = this.renderer.listen('document', 'mouseup', this.handleColumnResizeMouseUp);
+    });
+  }
+
+  autoFitColumnWidth(event: MouseEvent, column: any): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const columnKey = this.getColumnUniqueKey(column);
+    if (!columnKey) {
+      return;
+    }
+
+    this.finishColumnResize(false);
+    this.setColumnWidth(columnKey, this.calculateAutoFitColumnWidth(columnKey));
+    this.persistColumnWidths();
+    this.cdr.detectChanges();
+  }
+
+  private readonly handleColumnResizeMouseMove = (event: MouseEvent): void => {
+    if (!this.columnResizeState) {
+      return;
+    }
+
+    event.preventDefault();
+    const deltaX = event.clientX - this.columnResizeState.startX;
+    this.columnResizeState.nextWidth = Math.max(this.minResizableColumnWidth, Math.round(this.columnResizeState.startWidth + deltaX));
+
+    if (this.columnResizeAnimationFrame !== null) {
+      return;
+    }
+
+    this.columnResizeAnimationFrame = requestAnimationFrame(() => {
+      this.columnResizeAnimationFrame = null;
+      if (!this.columnResizeState) {
+        return;
+      }
+
+      this.setColumnWidth(this.columnResizeState.columnKey, this.columnResizeState.nextWidth);
+      this.cdr.detectChanges();
+    });
+  };
+
+  private readonly handleColumnResizeMouseUp = (event: MouseEvent): void => {
+    event.preventDefault();
+    this.finishColumnResize(true);
+  };
+
+  private setColumnWidth(columnKey: string, width: number): void {
+    const normalizedWidth = this.normalizeColumnWidth(width);
+    if (normalizedWidth === null) {
+      return;
+    }
+
+    this.columnWidths = {
+      ...this.columnWidths,
+      [columnKey]: normalizedWidth,
+    };
+  }
+
+  private finishColumnResize(shouldPersist: boolean): void {
+    if (this.columnResizeAnimationFrame !== null) {
+      cancelAnimationFrame(this.columnResizeAnimationFrame);
+      this.columnResizeAnimationFrame = null;
+      if (this.columnResizeState) {
+        this.setColumnWidth(this.columnResizeState.columnKey, this.columnResizeState.nextWidth);
+      }
+    }
+
+    if (shouldPersist && this.columnResizeState) {
+      this.setColumnWidth(this.columnResizeState.columnKey, this.columnResizeState.nextWidth);
+      this.persistColumnWidths();
+    }
+
+    this.columnResizeMoveUnlisten?.();
+    this.columnResizeUpUnlisten?.();
+    this.columnResizeMoveUnlisten = undefined;
+    this.columnResizeUpUnlisten = undefined;
+    this.columnResizeState = null;
+    this.resizingColumnKey = null;
+    document.body.classList.remove('datatable-column-resizing');
+
+    if (shouldPersist) {
+      setTimeout(() => {
+        this.suppressNextHeaderClick = false;
+      }, 0);
+      this.cdr.detectChanges();
+    }
+  }
+
+  private calculateAutoFitColumnWidth(columnKey: string): number {
+    const container = this.datatableScrollContainerEl?.nativeElement;
+    if (!container) {
+      return this.minResizableColumnWidth;
+    }
+
+    const matchingCells = Array.from(container.querySelectorAll<HTMLElement>('[data-resize-column-key]')).filter(
+      (element) => element.dataset['resizeColumnKey'] === columnKey
+    );
+    const measuredWidth = matchingCells.reduce((maxWidth, element) => Math.max(maxWidth, this.measureSingleLineContentWidth(element)), 0);
+
+    return Math.max(this.minResizableColumnWidth, Math.ceil(measuredWidth) + 24);
+  }
+
+  private measureSingleLineContentWidth(element: HTMLElement): number {
+    const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+    const style = window.getComputedStyle(element);
+    const measurementEl = document.createElement('span');
+
+    measurementEl.textContent = text;
+    measurementEl.style.position = 'fixed';
+    measurementEl.style.left = '-10000px';
+    measurementEl.style.top = '-10000px';
+    measurementEl.style.visibility = 'hidden';
+    measurementEl.style.whiteSpace = 'nowrap';
+    measurementEl.style.font = style.font;
+    measurementEl.style.letterSpacing = style.letterSpacing;
+
+    document.body.appendChild(measurementEl);
+    const contentWidth = measurementEl.getBoundingClientRect().width;
+    document.body.removeChild(measurementEl);
+
+    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+    const paddingRight = Number.parseFloat(style.paddingRight) || 0;
+
+    return contentWidth + paddingLeft + paddingRight;
   }
 
   private getCurrentCompanyId(): number {
@@ -2324,9 +2863,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     if (!this.save_grid_latest_state) return;
     const tempConfigs = this.getUserSearchConfigurationsTemp();
     const companyId = this.getCurrentCompanyId();
-    const nextTempConfigs = tempConfigs.filter(
-      (item: any) => !(String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId)
-    );
+    const nextTempConfigs = tempConfigs.filter((item: any) => !(String(item?.entity_slug || '') === entitySlug && Number(item?.company_id || 0) === companyId));
     if (nextTempConfigs.length === tempConfigs.length) return;
     this.setUserSearchConfigurationsTemp(nextTempConfigs);
   }
@@ -3800,9 +4337,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const items = this.stringFieldTypeIds;
     hereColumns = hereColumns.filter((item) => items.includes(this.normalizeFieldTypeId(item.field_type_id)));
 
-    const selectedSearchColumns = (this.selectedColumns || []).filter((item: any) =>
-      items.includes(this.normalizeFieldTypeId(item.field_type_id))
-    );
+    const selectedSearchColumns = (this.selectedColumns || []).filter((item: any) => items.includes(this.normalizeFieldTypeId(item.field_type_id)));
     const whereSource = selectedSearchColumns.length ? selectedSearchColumns : hereColumns;
 
     const whereData = whereSource
@@ -3832,9 +4367,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     const items = this.stringFieldTypeIds;
     hereColumns = hereColumns.filter((item) => items.includes(this.normalizeFieldTypeId(item.field_type_id)));
 
-    const selectedSearchColumns = (this.selectedColumns || []).filter((item: any) =>
-      items.includes(this.normalizeFieldTypeId(item.field_type_id))
-    );
+    const selectedSearchColumns = (this.selectedColumns || []).filter((item: any) => items.includes(this.normalizeFieldTypeId(item.field_type_id)));
     const whereSource = selectedSearchColumns.length ? selectedSearchColumns : hereColumns;
 
     const whereData = whereSource
@@ -3991,17 +4524,66 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.headercolumns.filter((column) => column.is_grid_column == 'true').length;
   }
 
-  isStickyGridColumn(column: any): boolean {
-    if (!column || column.colFilterHide || column.is_grid_column != 'true') {
-      return false;
+  private hasGridCfgKey(key: string): boolean {
+    const cfg = this.getEntityConfigurations();
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    return this.hasOwnConfigKey(cfg, key) || this.hasOwnConfigKey(inheritedCfg, key);
+  }
+
+  private stickyGridCfg(key: string): boolean {
+    const cfg = this.getEntityConfigurations();
+    if (this.hasOwnConfigKey(cfg, key)) {
+      return this.isConfigYes(cfg[key]);
     }
 
-    if (column.header === 'table_column_action') {
+    const inheritedCfg = this.getInheritedStickyColumnConfig();
+    return this.hasOwnConfigKey(inheritedCfg, key) && this.isConfigYes(inheritedCfg[key]);
+  }
+
+  private getVisibleGridColumns(): any[] {
+    return this.headercolumns.filter((col: any) => col?.is_grid_column == 'true' && !col?.colFilterHide);
+  }
+
+  private isSameGridColumn(leftColumn: any, rightColumn: any): boolean {
+    if (leftColumn === rightColumn) {
       return true;
     }
 
-    const visibleGridColumns = this.headercolumns.filter((col: any) => col?.is_grid_column == 'true' && !col?.colFilterHide);
-    return visibleGridColumns.length > 0 && visibleGridColumns[visibleGridColumns.length - 1] === column;
+    const leftKey = this.getColumnUniqueKey(leftColumn);
+    const rightKey = this.getColumnUniqueKey(rightColumn);
+    return !!leftKey && leftKey === rightKey;
+  }
+
+  private isActionGridColumn(column: any): boolean {
+    return this.getColumnUniqueKey(column) === 'Action' || column?.header === 'table_column_action';
+  }
+
+  isStickyFirstGridColumn(column: any): boolean {
+    if (!this.enableStickyFirstColumn || !column || column.colFilterHide || column.is_grid_column != 'true') {
+      return false;
+    }
+
+    const visibleGridColumns = this.getVisibleGridColumns();
+    return visibleGridColumns.length > 0 && this.isSameGridColumn(visibleGridColumns[0], column);
+  }
+
+  isStickyLastGridColumn(column: any): boolean {
+    if (!this.enableStickyLastColumn || !column || column.colFilterHide || column.is_grid_column != 'true') {
+      return false;
+    }
+
+    if (this.isActionGridColumn(column)) {
+      return true;
+    }
+
+    const visibleGridColumns = this.getVisibleGridColumns();
+    return (
+      visibleGridColumns.length > 0 && this.isSameGridColumn(visibleGridColumns[visibleGridColumns.length - 1], column) && !this.isStickyFirstGridColumn(column)
+    );
+  }
+
+  isStickyGridColumn(column: any): boolean {
+    return this.isStickyFirstGridColumn(column) || this.isStickyLastGridColumn(column);
   }
 
   private getColumnUniqueKey(column: any): string {
@@ -4184,9 +4766,30 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
     // Use setTimeout to ensure the DOM is updated and ViewChild is available
     setTimeout(() => {
-      this.createColumnPopupChildMasterList(item, col.link_action, col);
+      if (!this.pendingPopupData) {
+        return;
+      }
+      const { item: pendingItem, entityName, col: pendingCol } = this.pendingPopupData;
+      this.pendingPopupData = null;
+      this.createColumnPopupChildMasterList(pendingItem, entityName, pendingCol);
     }, 100); // Increased delay to ensure DOM is ready
   }
+
+  private openColumnChildComponentPopup(item: any, col: any): void {
+    this.isViewPopupOpenDirect = true;
+    this.loadingpopup = true;
+    this.pendingPopupData = { item, entityName: col.link_action, col };
+
+    setTimeout(() => {
+      if (!this.pendingPopupData) {
+        return;
+      }
+      const { item: pendingItem, entityName, col: pendingCol } = this.pendingPopupData;
+      this.pendingPopupData = null;
+      this.createColumnPopupChildMasterList(pendingItem, entityName, pendingCol);
+    }, 100);
+  }
+
   toggleColumnChildGrid(item: any, col: any, row_index: number) {
     if (this.expandedColumnChildGrid && this.expandedColumnChildGrid.rowIndex === row_index && this.expandedColumnChildGrid.colHeader === col.header) {
       this.clearAllExpandedGrids();
@@ -4226,9 +4829,13 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.persistCurrentSelectedViewStateAsDefault();
     this.hasPersistedViewBeforeDestroy = true;
 
-    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
-
     const resolvedMode = this.getChildComponentMode(col);
+    if (resolvedMode === 'popup_add' || resolvedMode === 'popup_edit') {
+      this.openColumnChildComponentPopup(item, col);
+      return;
+    }
+
+    this.expandedColumnChildGrid = { uuid: item.uuid, colHeader: col.header, rowIndex: row_index };
     if (resolvedMode === 'popup_grid') {
       setTimeout(() => {
         this.createColumnChildMasterList(item, col.link_action, col);
@@ -4370,7 +4977,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.childMasterListContainer.clear();
     const componentRef = this.childMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
-    componentRef.instance.stickyHeader = this.stickyHeader;
+    componentRef.instance.stickyHeader = 'no';
+    componentRef.instance.inheritedStickyColumnConfig = this.getStickyColumnInheritanceConfig();
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
@@ -4392,6 +5000,11 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   closeViewPopup() {
     this.isViewPopupOpenDirect = false;
+    this.loadingpopup = false;
+    this.pendingPopupData = null;
+    if (this.popupChildMasterListContainer) {
+      this.popupChildMasterListContainer.clear();
+    }
   }
 
   // In your component.ts
@@ -4418,21 +5031,30 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     // Clear any existing components
     this.popupChildMasterListContainer.clear();
 
+    const gridParams = this.getGridParamsFromItem(item);
+    const resolvedMode = this.getChildComponentMode(col);
+    if (resolvedMode === 'popup_add' || resolvedMode === 'popup_edit') {
+      const componentRef = this.popupChildMasterListContainer.createComponent(FormBuilderComponent);
+      componentRef.instance.popupName = resolvedMode;
+      componentRef.instance.uuid = this.getChildComponentUuid(item, col);
+      componentRef.instance.entityName = entityName;
+      componentRef.instance.isModal = true;
+      componentRef.instance.gridParams = gridParams;
+      componentRef.instance.closeModal.subscribe(() => this.closeViewPopup());
+      this.loadingpopup = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
     const componentRef = this.popupChildMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
-    componentRef.instance.stickyHeader = this.stickyHeader;
+    componentRef.instance.stickyHeader = 'no';
+    componentRef.instance.inheritedStickyColumnConfig = this.getStickyColumnInheritanceConfig();
     componentRef.instance.uuid = item['uuid'];
     componentRef.instance.entity_name = entityName;
     componentRef.instance.nonGridPage = false;
     componentRef.instance.parentGridFilters = this.getParentGridFilterContext();
 
-    const gridParams: any = {};
-    Object.keys(item).forEach((key) => {
-      if (key.startsWith('gparam_')) {
-        let temp_key = '$' + key;
-        gridParams[temp_key] = item[key];
-      }
-    });
     componentRef.instance.grid_params = gridParams;
 
     const lineItemConfig = col?.line_item_configurations;
@@ -4450,7 +5072,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     this.columnChildMasterListContainer.clear();
     const componentRef = this.columnChildMasterListContainer.createComponent(MasterListComponent);
     componentRef.instance.tableLevel = (this.tableLevel || 0) + 1;
-    componentRef.instance.stickyHeader = this.stickyHeader;
+    componentRef.instance.stickyHeader = 'no';
+    componentRef.instance.inheritedStickyColumnConfig = this.getStickyColumnInheritanceConfig();
     componentRef.instance.uuid = item['uuid'];
     // Do NOT pass uuid for child_grid — filtering is driven by gparam_ values.
     // Passing uuid here causes the back button to appear in the child datatable.

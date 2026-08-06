@@ -157,6 +157,32 @@ export class RouteUpdateService {
     return base;
   }
 
+  private normalizeEntityConfigurations(value: any): any {
+    if (!value) {
+      return null;
+    }
+
+    if (typeof value === 'object') {
+      return value;
+    }
+
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+    } catch {
+      return null;
+    }
+  }
+
   /** Builds the children map for a route entry */
   private buildChildren(routeData: any, routeDataArray: any[]): Record<string, any> {
     return routeDataArray.reduce((acc: any, childRoute: any) => {
@@ -174,6 +200,16 @@ export class RouteUpdateService {
     const targetPath = rawTargetPath.toString().startsWith('/') ? rawTargetPath.toString().slice(1) : rawTargetPath.toString();
     const finalAllCol = this.buildSearchAllCol(routeData);
     const children = this.buildChildren(routeData, routeDataArray);
+    const entityConfigurations = this.normalizeEntityConfigurations(routeData.entity_configurations);
+
+    if (this.shouldLogStickyDebug(routeData.entity_name, entityConfigurations)) {
+      console.log('[route sticky config]', {
+        entity_name: routeData.entity_name,
+        targetPath,
+        raw_entity_configurations: routeData.entity_configurations,
+        parsed_entity_configurations: entityConfigurations,
+      });
+    }
 
     return {
       path: targetPath,
@@ -187,7 +223,7 @@ export class RouteUpdateService {
           Listname: routeData.entity_name,
           action_slug: routeData.action_slug,
           draft_mode: routeData.draft_mode,
-          entity_configurations: routeData.entity_configurations,
+          entity_configurations: entityConfigurations,
           ListQuery: {
             print_query: true,
             company_id: 0,
@@ -229,6 +265,13 @@ export class RouteUpdateService {
         dynamicLcpRoute: true,
       },
     };
+  }
+
+  private shouldLogStickyDebug(entityName: any, entityConfigurations: any): boolean {
+    const entity = String(entityName || '').toLowerCase();
+    const stickyKeys = ['grid_enable_sticky_first_column', 'grid_enable_sticky_last_column', 'grid_enable_sticky_action_column'];
+    const hasStickyConfig = !!entityConfigurations && stickyKeys.some((key) => Object.prototype.hasOwnProperty.call(entityConfigurations, key));
+    return hasStickyConfig || entity.includes('project_details') || entity.includes('project_total_estimation_details');
   }
 
   // ΓöÇΓöÇΓöÇ Public API ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
