@@ -3,33 +3,14 @@
   <div class="flex h-full items-center justify-center">
     <span class="mb-4 text-lg font-semibold text-red-600">No permission to view the details</span>
   </div>
-  } @if (!nonGridPage && !noPermission) { @if (isMobileContext) {
-  <div class="mb-3 flex items-center justify-end gap-2">
-    <label for="mobileViewTypeSelect" class="text-sm text-white-dark">{{ 'view_as' | translate }}</label>
-    <select
-      id="mobileViewTypeSelect"
-      class="form-select w-auto"
-      [value]="selectedViewType"
-      (change)="onViewTypeChange($any($event.target).value)"
-    >
-      @for (option of mobileViewTypeOptions; track option.value) {
-      <option [value]="option.value">{{ option.label | translate }}</option>
-      }
-    </select>
-  </div>
-  } @if (useMobileRenderer) {
-  <app-mobile-list [loading]="gridloading" [masterInfo]="masterInfo" [headercolumns]="headercolumns" [items]="items"
-    [totalItems]="totalItems" [currentPage]="currentPage" [resultsPerPage]="resultsPerPage"
-    (pageChange)="onPageChange($event)" (edit)="editItem($event)" (view)="viewItem($event)"
-    (delete)="deleteItem($event)" (linkComponentClick)="onLinkComponentClick($event)"></app-mobile-list>
-  } @else {
+  } @if (!nonGridPage && !noPermission) {
   <app-datatable [loading]="gridloading" [masterInfo]="masterInfo" [enableCheckBox]="enableCheckBox"
     [customTemplates]="customTemplates" [headercolumns]="headercolumns" [stickyHeader]="stickyHeader"
     [selectcolumns]="selectcolumns" [items]="items" [totalItems]="totalItems" [currentPage]="currentPage"
     [resultsPerPage]="resultsPerPage" [column]="column" [title]="title" [query]="query"
     [activeSearchAll]="listQuery?.search_all || []" [activeSearchAny]="listQuery?.search_any || []"
     [activeHavingAll]="listQuery?.having_conditions || []" [activeHavingAny]="listQuery?.having_any_conditions || []"
-    (delete)="deleteItems($event)" (edit)="editItem($event)" (view)="viewItem($event)"
+    (delete)="deleteItem($event)" (edit)="editItem($event)" (view)="viewItem($event)"
     (customAction)="handleCustomAction($event)" (pageChange)="onPageChange($event)"
     (resultsPerPageChange)="onResultsPerPageChange($event)" (columnSort)="sortColumn($event)"
     (searchQuery)="searchData($event)" (exportType)="exportTable($event)"
@@ -40,7 +21,7 @@
     [staticPageGridParams]="popupComponentGridParams || grid_params" [attachedPolicies]="attachedPolicies"
     [parentGridFilters]="parentGridFilters" [tableLevel]="tableLevel"
     (rowContextMenu)="onRowContextMenu($event)"></app-datatable>
-  } }
+  }
 
   <ng-template #actionTemplate let-item>
     <div class="flex items-center gap-4">
@@ -394,7 +375,7 @@
           [resultsPerPage]="resultsPerPage" [column]="column" [title]="title" [query]="query"
           [activeSearchAll]="listQuery?.search_all || []" [activeSearchAny]="listQuery?.search_any || []"
           [activeHavingAll]="listQuery?.having_conditions || []"
-          [activeHavingAny]="listQuery?.having_any_conditions || []" (delete)="deleteItems($event)"
+          [activeHavingAny]="listQuery?.having_any_conditions || []" (delete)="deleteItem($event)"
           (edit)="editItem($event)" (view)="viewItem($event)" (customAction)="handleCustomAction($event)"
           (pageChange)="onPageChange($event)" (resultsPerPageChange)="onResultsPerPageChange($event)"
           (columnSort)="sortColumn($event)" (searchQuery)="searchData($event)" (exportType)="exportTable($event)"

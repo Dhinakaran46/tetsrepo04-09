@@ -4,12 +4,15 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open",
+    "start:dev": "ng serve --host 0.0.0.0 --configuration development",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build:mobile": "ng build && npx cap sync",
     "cap:android": "npx cap open android",
-    "cap:ios": "npx cap open ios"
+    "cap:ios": "npx cap open ios",
+    "cap:sync:dev": "npx cap sync android",
+    "cap:run:dev": "npx cap run android --live-reload --host=192.168.31.232 --port=4200"
   },
   "private": true,
   "dependencies": {

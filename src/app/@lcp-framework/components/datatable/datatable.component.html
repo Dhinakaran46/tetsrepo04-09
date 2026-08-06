@@ -489,6 +489,22 @@
             }
           </div>
 
+          @if (hasMobileCardConfig) {
+          <div class="flex flex-wrap items-center gap-2">
+            <label for="dataTableViewTypeSelect" class="text-sm text-white-dark">{{ 'view_as' | translate }}</label>
+            <select
+              id="dataTableViewTypeSelect"
+              class="form-select w-auto"
+              [value]="activeViewType"
+              (change)="onViewTypeChange($any($event.target).value)"
+              appDynamicFontSize="body"
+            >
+              <option value="table">{{ 'table' | translate }}</option>
+              <option value="card">{{ 'card' | translate }}</option>
+            </select>
+          </div>
+          }
+
           <div class="flex flex-wrap items-center gap-2">
             @if (permissions && this.masterInfo?.permissions?.popup_create) {
             <button
@@ -599,6 +615,7 @@
 
     <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
       <div class="datatable" [ngClass]="tableHierarchyClass" [class.sticky-enabled]="isStickyHeaderEnabled" [class.sticky-disabled]="!isStickyHeaderEnabled">
+        @if (!isCardViewActive) {
         <div
           class="table-responsive datatable-scroll-container overflow-x-auto"
           [class.expanded-rows]="items.length > 10"
@@ -928,6 +945,97 @@
             </tbody>
           </table>
         </div>
+        } @else {
+        <div class="card-view-container">
+          @if (selectedCardIndex !== null && items[selectedCardIndex]; as selectedCardItem) {
+          <div class="card-action-bar">
+            <button type="button" class="card-action-bar-close" (click)="closeCardSelection()" [attr.aria-label]="'close' | translate">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="card-action-bar-actions">
+              @if (permissions && this.masterInfo?.permissions?.details) {
+              <button type="button" class="card-action-bar-btn" (click)="onCardView(selectedCardItem)">
+                <i class="fa-regular fa-eye"></i>
+                <span>{{ 'view' | translate }}</span>
+              </button>
+              } @if (permissions && this.masterInfo?.permissions?.edit) {
+              <button type="button" class="card-action-bar-btn" (click)="onCardEdit(selectedCardItem)">
+                <i class="fa-regular fa-pen-to-square"></i>
+                <span>{{ 'edit' | translate }}</span>
+              </button>
+              } @if (permissions && this.masterInfo?.permissions?.delete) {
+              <button type="button" class="card-action-bar-btn" (click)="onCardDelete(selectedCardItem)">
+                <i class="fa-regular fa-trash-can"></i>
+                <span>{{ 'delete' | translate }}</span>
+              </button>
+              }
+            </div>
+          </div>
+          }
+          @if (loading && items.length === 0) {
+          <div class="py-4 text-center text-gray-500" appDynamicFontSize="body">
+            <section class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </section>
+          </div>
+          } @else { @if (items && items.length > 0) {
+          <div class="card-view-grid-list">
+            @for (item of items; track item.uuid || item.id || $index; let i = $index) {
+            <div
+              class="card-view-item"
+              [ngClass]="['shape-' + (mobileCardConfig.shape || 'rounded'), 'style-' + (mobileCardConfig.style || 'elevated')]"
+              [class.selected]="selectedCardIndex === i"
+              (click)="onCardTap(i)"
+            >
+              <div
+                class="card-view-grid"
+                [style.grid-template-rows]="'repeat(' + (mobileCardConfig.grid_rows || 4) + ', minmax(34px, auto))'"
+              >
+                @for (column of mobileCardColumns; track column.field_name) {
+                <div
+                  class="card-view-cell"
+                  [style.grid-column]="'span ' + (column.col_span || 1)"
+                  [style.grid-row]="'span ' + (column.row_span || 1)"
+                  [style.text-align]="column.align || 'left'"
+                >
+                  @if (column.show_label !== false) {
+                  <div class="card-view-cell-label">{{ column.label || (column.field_name | translate) }}</div>
+                  }
+                  <div class="card-view-cell-value">{{ getCardCellDisplay(item, column) }}</div>
+                </div>
+                }
+              </div>
+              @if (selectedCardIndex === i) {
+              <div class="card-view-selection-indicator">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              }
+            </div>
+            }
+          </div>
+          @if (hasMoreCardItems) {
+          <div #cardScrollSentinel class="card-view-sentinel">
+            @if (loading) {
+            <section class="dots-container">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </section>
+            }
+          </div>
+          }
+          } @else {
+          <div class="py-4 text-center text-gray-500" appDynamicFontSize="body">{{ 'no_records_found' | translate }}</div>
+          } }
+        </div>
+        }
+        @if (!isCardViewActive) {
         <div class="pagination flex items-center justify-between border-t border-gray-200 py-1 text-xs sm:mb-0">
           <div class="flex items-center">
             <div class="mr-4">
@@ -1031,6 +1139,7 @@
             </nav>
           </div>
         </div>
+        }
       </div>
 
       @if (footerStaticEntityName) {

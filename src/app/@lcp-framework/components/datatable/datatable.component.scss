@@ -1001,3 +1001,198 @@ tr.expanded-child-row:hover {
     background: linear-gradient(135deg, var(--drilldown-light), rgba(18, 30, 49, 0.4)) !important;
   }
 }
+
+/* Card view (entity_configurations.mobile_view.card) - same CSS-grid technique as
+   the Master Entity "Mobile Card Builder" preview, without its phone-mockup frame. */
+.card-view-container {
+  padding: 4px 2px;
+}
+
+.card-view-grid-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-view-item {
+  position: relative;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e0e6ed;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  &.shape-rounded {
+    border-radius: 14px;
+  }
+  &.shape-square {
+    border-radius: 4px;
+  }
+
+  &.style-elevated {
+    box-shadow: 0 2px 10px rgba(16, 30, 66, 0.07);
+  }
+  &.style-outlined {
+    box-shadow: none;
+  }
+  &.style-flat {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  &.selected {
+    border-color: var(--app-primary-color, #0d6efd);
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+  }
+
+  &:is(.dark *) {
+    background: #1b2e4b;
+    border-color: #253b5c;
+  }
+}
+
+.card-view-selection-indicator {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-primary-color, #0d6efd);
+  color: #fff;
+  font-size: 0.65rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  border: 2px solid #fff;
+
+  &:is(.dark *) {
+    border-color: #1b2e4b;
+  }
+}
+
+/* Infinite-scroll sentinel: an invisible trigger the IntersectionObserver
+   watches, doubling as the "loading more" spinner slot while the next page
+   is in flight. Replaces click-through pagination in card view. */
+.card-view-sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 8px 0 2px;
+
+  .dots-container {
+    transform: scale(0.6);
+  }
+}
+
+/* WhatsApp-style tap-to-select action bar, matching the Master Entity
+   "Mobile Card Builder" preview's own .mobile-action-bar pattern. */
+.card-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  animation: card-action-bar-slide-down 0.2s ease;
+}
+
+@keyframes card-action-bar-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-action-bar-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.card-action-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.card-action-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.card-view-grid {
+  display: grid;
+  // Auto-fit rather than a fixed column count: the admin's grid_columns/col_span
+  // is designed against a wide desktop preview, but a rigid column count squeezes
+  // long values into unreadably narrow cells on a phone. auto-fit reflows to
+  // however many columns actually fit, while col_span/row_span still control each
+  // field's relative width/height within whatever that turns out to be.
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 12px 16px;
+}
+
+.card-view-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.card-view-cell-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #8a9bb3;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+
+  &:is(.dark *) {
+    color: #7488a6;
+  }
+}
+
+.card-view-cell-value {
+  margin-top: 3px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  color: #1f2937;
+
+  &:is(.dark *) {
+    color: #e5e9f0;
+  }
+}

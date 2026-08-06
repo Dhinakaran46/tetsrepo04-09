@@ -36,6 +36,7 @@ import { Location } from '@angular/common';
 import { LocalStorageService } from '../../service/common/local-storage.service';
 import { OpenaiService } from '../../service/common/openai.service';
 import { TimezoneService } from '../../service/common/timezone.service';
+import { ViewportService } from '../../service/common/viewport.service';
 import { MasterListComponent } from '../../pages/master-list/master-list.component';
 import { FormBuilderComponent } from '../../pages/form-builder/form-builder.component';
 import { LoaderComponent } from '../loader/loader.component';
@@ -197,6 +198,76 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     columns?: any[];
     grid_params?: any;
   } | null = null;
+
+  // Table/Card view toggle, driven by an admin-authored layout saved at
+  // masterInfo.entity_configurations.mobile_view.card (see the Master Entity ->
+  // Mobile Card Builder UI). Defaults to Table on web, Card on a mobile
+  // viewport/native shell (see ngOnChanges) - the user can still switch manually.
+  activeViewType: 'table' | 'card' = 'table';
+  private defaultViewTypeApplied = false;
+  selectedCardIndex: number | null = null;
+
+  get mobileCardConfig(): any | null {
+    const card = this.masterInfo?.entity_configurations?.mobile_view?.card;
+    if (!card || !Array.isArray(card.row?.columns) || card.row.columns.length === 0) return null;
+    return card;
+  }
+
+  get hasMobileCardConfig(): boolean {
+    return !!this.mobileCardConfig;
+  }
+
+  get mobileCardColumns(): any[] {
+    return (this.mobileCardConfig?.row?.columns || []).filter((column: any) => column?.type !== 'action');
+  }
+
+  onViewTypeChange(value: string): void {
+    this.activeViewType = value === 'card' ? 'card' : 'table';
+    this.selectedCardIndex = null;
+  }
+
+  // Infinite scroll for card view: replaces click-through pagination with an
+  // IntersectionObserver on a sentinel element at the bottom of the card list.
+  // Table view's pagination is untouched.
+  @ViewChild('cardScrollSentinel') cardScrollSentinel?: ElementRef<HTMLElement>;
+  private cardScrollObserver?: IntersectionObserver;
+  private observedCardSentinelEl?: HTMLElement;
+
+  get hasMoreCardItems(): boolean {
+    return this.items.length < this.totalItems;
+  }
+
+  private setupCardScrollObserver(): void {
+    const el = this.cardScrollSentinel?.nativeElement;
+    if (!el) {
+      this.cardScrollObserver?.disconnect();
+      this.observedCardSentinelEl = undefined;
+      return;
+    }
+    if (el === this.observedCardSentinelEl) return;
+
+    this.cardScrollObserver?.disconnect();
+    this.observedCardSentinelEl = el;
+    this.cardScrollObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && this.hasMoreCardItems && !this.loading) {
+          this.loadMoreCardItems();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    this.cardScrollObserver.observe(el);
+  }
+
+  loadMoreCardItems(): void {
+    const startIndex = this.items.length;
+    const nextPage = Math.floor(startIndex / (Number(this.resultsPerPage) || 10)) + 1;
+    this.pageChange.emit({ page: nextPage, start_index: startIndex, source: 'infinite-scroll' });
+  }
+
+  get isCardViewActive(): boolean {
+    return this.activeViewType === 'card' && this.hasMobileCardConfig;
+  }
 
   get isStickyHeaderEnabled(): boolean {
     return (
@@ -523,6 +594,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     private timezoneService: TimezoneService,
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
+    private viewportService: ViewportService,
     @Optional() @Host() private parentMasterList: MasterListComponent
   ) {
     this.config = JSON.parse(this.localstore.getData('config'));
@@ -547,6 +619,8 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
       this.createColumnPopupChildMasterList(item, entityName, col);
       this.cdr.detectChanges(); // flush changes
     }
+
+    this.setupCardScrollObserver();
   }
 
   ngAfterViewInit(): void {
@@ -582,6 +656,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   ngOnDestroy(): void {
     this.toolbarResizeObserver?.disconnect();
+    this.cardScrollObserver?.disconnect();
     Object.keys(this.betweenRangePickers).forEach((key) => {
       this.betweenRangePickers[Number(key)]?.destroy();
     });
@@ -1592,6 +1667,83 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return this.timezoneService.transformTimeOnly(dateTime);
   }
 
+  // Card view field resolution. Confirmed against real saved configs that
+  // column.field_name is NOT reliable at runtime - it can hold a qualified/raw
+  // SQL-side descriptor (e.g. "user_information.full_name") that never matches a
+  // headercolumns[].header or items[] key. column.label, however, does match
+  // (e.g. label "name" <-> header "name") - it's set from the line item's
+  // display_name when the card was authored. Resolution order: label match,
+  // then field_name match, then field_name's trailing ".segment" (stripping any
+  // "::cast"), so entities authored either way still resolve correctly.
+  private cardFieldKeyCandidates(column: any): string[] {
+    const candidates: string[] = [];
+    if (column?.label) candidates.push(String(column.label));
+    if (column?.field_name) {
+      candidates.push(String(column.field_name));
+      const withoutCast = String(column.field_name).split('::')[0];
+      const trailing = withoutCast.includes('.') ? withoutCast.substring(withoutCast.lastIndexOf('.') + 1) : null;
+      if (trailing) candidates.push(trailing);
+    }
+    return candidates;
+  }
+
+  resolveCardHeaderColumn(column: any): any {
+    for (const key of this.cardFieldKeyCandidates(column)) {
+      const match = this.headercolumns.find((col) => col.header === key);
+      if (match) return match;
+    }
+    return null;
+  }
+
+  private cardEnumLabel(enumValues: any, rawValue: any): any {
+    if (!enumValues || rawValue == null) return rawValue;
+    const list = Array.isArray(enumValues) ? enumValues : Array.isArray(enumValues?.value) ? enumValues.value : null;
+    if (!list) return rawValue;
+    const match = list.find((entry: any) => String(entry?.value ?? entry?.id) === String(rawValue));
+    return match?.label ?? rawValue;
+  }
+
+  getCardCellDisplay(item: any, column: any): any {
+    const headerCol = this.resolveCardHeaderColumn(column);
+    const key = headerCol?.header || this.cardFieldKeyCandidates(column).find((k) => item?.[k] !== undefined);
+    if (!key) return '';
+    const rawValue = item?.[key];
+    const fieldTypeId = Number(headerCol?.field_type_id);
+
+    if (fieldTypeId === 5) return this.formatDate(rawValue);
+    if (fieldTypeId === 6) return this.formatTime(rawValue);
+    if (fieldTypeId === 7) return this.formatDateTime(rawValue);
+    if (headerCol?.enum_values) return this.cardEnumLabel(headerCol.enum_values, rawValue);
+    if (typeof rawValue === 'boolean') return rawValue ? 'yes' : 'no';
+    return rawValue;
+  }
+
+  // WhatsApp-style card interaction: tap a card to select it and reveal an action
+  // bar (matching the Master Entity "Mobile Card Builder" preview's own pattern),
+  // rather than showing inline action icons on every card.
+  onCardTap(index: number): void {
+    this.selectedCardIndex = this.selectedCardIndex === index ? null : index;
+  }
+
+  closeCardSelection(): void {
+    this.selectedCardIndex = null;
+  }
+
+  onCardView(item: any): void {
+    this.view.emit(item);
+    this.closeCardSelection();
+  }
+
+  onCardEdit(item: any): void {
+    this.edit.emit(item);
+    this.closeCardSelection();
+  }
+
+  onCardDelete(item: any): void {
+    this.delete.emit(item);
+    this.closeCardSelection();
+  }
+
   getConditionValue(index: number): string | null {
     if (this.isBetweenOperator(this.filterConditions[index]?.operator)) {
       return null;
@@ -1968,6 +2120,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    // Default view type: Table on web, Card on a mobile viewport/native shell - only
+    // for entities that actually have a card config. Applied once per entity (not on
+    // every change-detection pass), so it never overrides a manual selector choice.
+    if (changes['masterInfo'] && !this.defaultViewTypeApplied && this.hasMobileCardConfig) {
+      this.activeViewType = this.viewportService.isMobileView() ? 'card' : 'table';
+      this.defaultViewTypeApplied = true;
+    }
+    if (changes['items']) {
+      this.selectedCardIndex = null;
+    }
+
     if (this.selectcolumns.length > 0) {
       const translationKeys = this.selectcolumns.filter((col) => col.searchable).map((col: any) => `GRIDS.${this.title}.fields.${col.title}`);
       //const allowedFieldTypes = [3, 4];

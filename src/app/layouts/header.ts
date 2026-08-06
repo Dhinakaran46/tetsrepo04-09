@@ -27,6 +27,7 @@ import { RouteUpdateService } from '../@lcp-framework/service/common/route-updat
 import { ApiResponce, GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { htmlToPlainText } from '../@lcp-framework/shared/utils/html-text.util';
 import { FirebaseService } from '../@lcp-framework/service/firebase.service';
+import { ViewportService } from '../@lcp-framework/service/common/viewport.service';
 import Swal from 'sweetalert2';
 
 interface MenuItem {
@@ -194,8 +195,15 @@ export class HeaderComponent implements OnInit {
     private gridApiService: GridApiService,
     private firebaseService: FirebaseService,
     private routeUpdateService: RouteUpdateService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private viewportService: ViewportService
   ) {}
+
+  // Mobile bottom nav (mobile-bottom-nav.ts) replaces the sidebar drawer this
+  // hamburger button used to toggle - no drawer to open in that context.
+  get isMobileNav(): boolean {
+    return this.viewportService.isMobileView();
+  }
 
   async initStore() {
     this.storeData

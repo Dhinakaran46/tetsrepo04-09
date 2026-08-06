@@ -24,6 +24,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
 import { OpenaiService } from '../../service/common/openai.service';
+import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 export function viewMandatoryValidator(): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
@@ -35,10 +36,48 @@ export function viewMandatoryValidator(): ValidatorFn {
   };
 }
 
+interface MobileCardBuilderPaletteField {
+  field_name: string;
+  display_name: string;
+}
+
+interface MobileCardBuilderColumn {
+  id: string;
+  field_name: string | null;
+  label: string;
+  type: 'text' | 'media' | 'badge' | 'icon_text' | 'action';
+  col_span: number;
+  row_span: number;
+  align: 'left' | 'center' | 'right';
+  format: string;
+  label_position: '' | 'inline' | 'top';
+  show_label: boolean;
+  extras_json: string;
+}
+
+interface MobileCardBuilderRow {
+  id: string;
+  row_no: number;
+  divider_after: boolean;
+  columns: MobileCardBuilderColumn[];
+}
+
+interface MobileCardBuilderState {
+  view_type: 'card';
+  card: {
+    style: 'elevated' | 'flat' | 'outlined';
+    shape: 'rounded' | 'square';
+    grid_columns: number;
+    grid_rows: number;
+    action_placement_index: number;
+    row: MobileCardBuilderRow;
+  };
+}
+
 @Component({
   selector: 'app-add-master-entity',
   standalone: true,
-  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule],
+  imports: [CommonSharedModule, MonacoEditorModule, ReactiveFormsModule, DragDropModule],
   templateUrl: './master-entity.component.html',
   styleUrl: './master-entity.component.scss',
   animations: [
@@ -1342,6 +1381,113 @@ export class MasterEntityComponent implements OnInit {
         },
       ],
     },
+    mobileCardActionInfo: {
+      header: 'mobile_card_action_configuration',
+      examples: [
+        {
+          name: 'Basic Actions (View, Edit, Delete)',
+          comments: ['Standard mobile card with basic CRUD actions', 'Uses commonConfig.ACTION_TYPE values'],
+          data: {
+            field_name: null,
+            label: 'Actions',
+            type: 'action',
+            col_span: 2,
+            row_span: 1,
+            align: 'right',
+            show_label: false,
+            action: {
+              actions: ['view', 'edit', 'delete'],
+            },
+          },
+        },
+        {
+          name: 'Export Actions',
+          comments: ['Mobile card with export and share actions', 'Useful for reports and documents'],
+          data: {
+            field_name: null,
+            label: 'Actions',
+            type: 'action',
+            col_span: 2,
+            row_span: 1,
+            align: 'right',
+            show_label: false,
+            action: {
+              actions: ['view', 'export_excel', 'export_pdf', 'share'],
+            },
+          },
+        },
+        {
+          name: 'Popup Actions',
+          comments: ['Quick actions using popup/modal interface', 'Prevents navigation away from list'],
+          data: {
+            field_name: null,
+            label: 'Quick Actions',
+            type: 'action',
+            col_span: 2,
+            row_span: 1,
+            align: 'right',
+            show_label: false,
+            action: {
+              actions: ['popup_details', 'popup_edit', 'delete'],
+            },
+          },
+        },
+        {
+          name: 'User Management Actions',
+          comments: ['Actions for user/employee management', 'Includes password reset and assignment'],
+          data: {
+            field_name: null,
+            label: 'User Actions',
+            type: 'action',
+            col_span: 2,
+            row_span: 1,
+            align: 'right',
+            show_label: false,
+            action: {
+              actions: ['view', 'edit', 'reset_password', 'assign'],
+            },
+          },
+        },
+        {
+          name: 'All Available Actions',
+          comments: [
+            'Complete list of standard actions from commonConfig.ACTION_TYPE:',
+            'Primary: view, add, edit, delete',
+            'Details: details, child_details',
+            'Popup: popup_add, popup_edit, popup_details',
+            'Export: export_excel, export_pdf, record_export',
+            'Import: import',
+            'Communication: email_resend, share',
+            'Utility: assign, print, generate_vector, reset_password, get_code',
+          ],
+          data: {
+            field_name: null,
+            label: 'All Actions',
+            type: 'action',
+            col_span: 4,
+            row_span: 1,
+            align: 'right',
+            show_label: false,
+            action: {
+              actions: [
+                'view',
+                'edit',
+                'delete',
+                'add',
+                'details',
+                'popup_details',
+                'export_excel',
+                'export_pdf',
+                'share',
+                'assign',
+                'print',
+                'reset_password',
+              ],
+            },
+          },
+        },
+      ],
+    },
   };
   selectedInfoTab: number = 0;
   popupInformation: any = null;
@@ -1391,6 +1537,29 @@ export class MasterEntityComponent implements OnInit {
   entityNameModalError = '';
   entityNameModalSuggestions: string[] = [];
   entityNameModalForm!: FormGroup;
+  isMobileCardBuilderModalOpen = false;
+  isMobileCardColumnModalOpen = false;
+  isMobileCardPreviewModalOpen = false;
+  mobileCardColumnEditTarget: { rowIndex: number; colIndex: number } | null = null;
+  mobileCardColumnDraft: MobileCardBuilderColumn | null = null;
+  mobileCardColumnTypeConfig: any = {};
+  mobileCardBuilderError = '';
+  mobileCardPreviewSearch = '';
+  selectedMobileCardIndex: number | null = null;
+  selectedCardActions: any[] = [];
+  readonly mobileCardPreviewRows: Array<{ title: string; status: 'active' | 'inactive'; subtitle: string }> = [
+    { title: 'Order #1001', status: 'active', subtitle: 'Created 2h ago' },
+    { title: 'Order #1002', status: 'inactive', subtitle: 'Created yesterday' },
+    { title: 'Order #1003', status: 'active', subtitle: 'Created last week' },
+  ];
+  private mobileCardBuilderCounter = 0;
+  mobileCardEditorOptions = {
+    ...this.editorOptions,
+    language: 'json',
+    automaticLayout: true,
+    minimap: { enabled: false },
+  };
+  mobileCardBuilderState: MobileCardBuilderState = this.getDefaultMobileCardBuilderState();
 
   constructor(
     private fb: FormBuilder,
@@ -1444,6 +1613,11 @@ export class MasterEntityComponent implements OnInit {
         } else {
           this.form.get('entity_configurations')?.setValue('');
         }
+      }
+      if (this.isGridBuilderEntityType(value)) {
+        this.ensureMobileCardConfigInitialized();
+      } else {
+        this.form.get('mobileCardViewConfig')?.setValue('');
       }
     });
 
@@ -1535,6 +1709,904 @@ export class MasterEntityComponent implements OnInit {
     return this.gridStructuredEntityTypes.includes(entityType ?? '');
   }
 
+  isGridBuilderEntityType(entityType: string | null | undefined): boolean {
+    return entityType === this.commonConfig.ENTITY_TYPES.GRID_BUILDER_MODULE.name;
+  }
+
+  get mobileCardBuilderRows(): MobileCardBuilderRow[] {
+    // For backward compatibility, return row as single-item array
+    return [this.mobileCardBuilderState.card.row];
+  }
+
+  get mobileCardBuilderPaletteFields(): MobileCardBuilderPaletteField[] {
+    const controls = (this.form?.get('items') as FormArray | null)?.controls || [];
+    const unique = new Set<string>();
+    const fields: MobileCardBuilderPaletteField[] = controls
+      .filter((control) => this.isGridColumnEnabled(control.get('isGridColumn')?.value))
+      .map((control) => ({
+        field_name: String(control.get('fieldName')?.value || '').trim(),
+        display_name: String(control.get('displayName')?.value || '').trim(),
+      }))
+      .filter((item) => item.field_name.length > 0)
+      .filter((item) => {
+        if (unique.has(item.field_name)) return false;
+        unique.add(item.field_name);
+        return true;
+      })
+      .sort((a, b) => (a.display_name || a.field_name).localeCompare(b.display_name || b.field_name));
+
+    // Actions now come from API response (available_actions per row)
+    return fields;
+  }
+
+  private isGridColumnEnabled(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    const normalized = String(value ?? '')
+      .trim()
+      .toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'y';
+  }
+
+  get mobileCardBuilderConnectedDropLists(): string[] {
+    return ['mobile-card-field-palette', this.getMobileCardRowDropListId(this.mobileCardBuilderPrimaryRow.id)];
+  }
+
+  get mobileCardBuilderPrimaryRow(): MobileCardBuilderRow {
+    if (!this.mobileCardBuilderState.card.row) {
+      this.mobileCardBuilderState.card.row = this.getDefaultMobileCardBuilderState().card.row;
+    }
+    return this.mobileCardBuilderState.card.row;
+  }
+
+  get mobileCardBuilderGridColumnsMin(): number {
+    const maxColSpan = this.mobileCardBuilderRows.reduce((rowMax, row) => {
+      const colMax = (row.columns || []).reduce((columnMax, column) => {
+        return Math.max(columnMax, Math.max(1, Number(column?.col_span) || 1));
+      }, 1);
+      return Math.max(rowMax, colMax);
+    }, 1);
+
+    return Math.max(1, maxColSpan);
+  }
+
+  get mobileCardBuilderGridRowsMin(): number {
+    const maxRowSpan = this.mobileCardBuilderRows.reduce((rowMax, row) => {
+      const colMax = (row.columns || []).reduce((columnMax, column) => {
+        return Math.max(columnMax, Math.max(1, Number(column?.row_span) || 1));
+      }, 1);
+      return Math.max(rowMax, colMax);
+    }, 1);
+
+    return Math.max(1, maxRowSpan);
+  }
+
+  private normalizeMobileCardGridBounds(): void {
+    const cols = Math.max(this.mobileCardBuilderGridColumnsMin, Math.floor(Number(this.mobileCardBuilderState.card.grid_columns) || 1));
+    const rows = Math.max(this.mobileCardBuilderGridRowsMin, Math.floor(Number(this.mobileCardBuilderState.card.grid_rows) || 1));
+
+    this.mobileCardBuilderState.card.grid_columns = cols;
+    this.mobileCardBuilderState.card.grid_rows = rows;
+
+    this.mobileCardBuilderRows.forEach((row) => {
+      row.columns.forEach((column) => {
+        column.col_span = Math.max(1, Math.min(cols, Number(column.col_span) || 1));
+        column.row_span = Math.max(1, Math.min(rows, Number(column.row_span) || 1));
+      });
+    });
+  }
+
+  onMobileCardGridColumnsChange(value: number): void {
+    this.mobileCardBuilderState.card.grid_columns = Math.floor(Number(value) || 1);
+    this.normalizeMobileCardGridBounds();
+  }
+
+  onMobileCardGridRowsChange(value: number): void {
+    this.mobileCardBuilderState.card.grid_rows = Math.floor(Number(value) || 1);
+    this.normalizeMobileCardGridBounds();
+  }
+
+  getMobileCardRowDropListId(rowId: string): string {
+    return `mobile-card-row-${rowId}`;
+  }
+
+  trackByMobileCardColumnId(index: number, column: MobileCardBuilderColumn): string {
+    return column?.id || String(index);
+  }
+
+  private nextMobileCardBuilderId(prefix: string): string {
+    this.mobileCardBuilderCounter += 1;
+    return `${prefix}_${this.mobileCardBuilderCounter}`;
+  }
+
+  private getDefaultMobileCardBuilderState(): MobileCardBuilderState {
+    return {
+      view_type: 'card',
+      card: {
+        style: 'elevated',
+        shape: 'rounded',
+        grid_columns: 4,
+        grid_rows: 4,
+        action_placement_index: 0,
+        row: {
+          id: 'row_1',
+          row_no: 1,
+          divider_after: true,
+          columns: [],
+        },
+      },
+    };
+  }
+
+  private extractMobileCardConfig(entityConfigurations: any): any | null {
+    if (!entityConfigurations || typeof entityConfigurations !== 'object') return null;
+    if (entityConfigurations.mobile_view && typeof entityConfigurations.mobile_view === 'object') {
+      return entityConfigurations.mobile_view;
+    }
+    if (entityConfigurations.view_type === 'card' && entityConfigurations.card) {
+      return entityConfigurations;
+    }
+    return null;
+  }
+
+  private buildDefaultMobileCardConfigFromLineItems(): any {
+    const palette = this.mobileCardBuilderPaletteFields;
+    const defaultColumns = palette.map((field, index) => ({
+      field_name: field.field_name,
+      label: field.display_name || this.getLabelFromFieldName(field.field_name),
+      type: 'text',
+      col_span: 1,
+      row_span: 1,
+      align: index % 4 === 3 ? 'right' : 'left',
+    }));
+
+    // Actions now come from API response (available_actions per row)
+
+    return {
+      view_type: 'card',
+      card: {
+        style: 'elevated',
+        shape: 'rounded',
+        row: {
+          row_no: 1,
+          divider_after: true,
+          columns: defaultColumns,
+        },
+      },
+    };
+  }
+
+  private getLabelFromFieldName(fieldName: string): string {
+    if (!fieldName) return 'Field';
+    const token = fieldName.split('.').pop() || fieldName;
+    return token.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  /**
+   * Get default extras JSON configuration for each column type
+   * For action type, uses standard ACTION_TYPE from commonConfig
+   */
+  private getDefaultExtrasJsonForType(type: MobileCardBuilderColumn['type']): string {
+    if (type === 'media') {
+      return JSON.stringify(
+        {
+          media: {
+            media_type: 'icon',
+            shape: 'circle',
+            size: 36,
+            fallback_icon: 'cash-outline',
+            source_type: 'field',
+          },
+        },
+        null,
+        2
+      );
+    }
+    if (type === 'badge') {
+      return JSON.stringify(
+        {
+          badge: {
+            value_map: {},
+          },
+        },
+        null,
+        2
+      );
+    }
+    if (type === 'icon_text') {
+      return JSON.stringify(
+        {
+          icon: {
+            icon_name: 'information-circle-outline',
+            icon_position: 'leading',
+          },
+        },
+        null,
+        2
+      );
+    }
+    if (type === 'action') {
+      return JSON.stringify(
+        {
+          action: {
+            // Standard mobile actions using commonConfig.ACTION_TYPE
+            actions: [this.commonConfig.ACTION_TYPE.VIEW, this.commonConfig.ACTION_TYPE.EDIT, this.commonConfig.ACTION_TYPE.DELETE],
+            // Optional: configure action behavior
+            // action_mode: 'icon_only',  // or 'icon_label', 'label_only'
+            // icon_size: 'medium',        // or 'small', 'large'
+            // show_tooltips: true,
+          },
+        },
+        null,
+        2
+      );
+    }
+    return '';
+  }
+
+  /**
+   * Get default type-specific configuration object
+   * For action type, returns standard mobile action configuration
+   */
+  private getDefaultTypeConfig(type: MobileCardBuilderColumn['type']): any {
+    if (type === 'media') {
+      return {
+        media_type: 'icon',
+        shape: 'circle',
+        size: 36,
+        fallback_icon: 'cash-outline',
+        source_type: 'field',
+      };
+    }
+    if (type === 'badge') {
+      return {
+        tone: 'info',
+      };
+    }
+    if (type === 'icon_text') {
+      return {
+        icon_name: 'information-circle-outline',
+        icon_position: 'leading',
+      };
+    }
+    return {};
+  }
+
+  private getTypeConfigFromExtras(type: MobileCardBuilderColumn['type'], extrasJson: string): any {
+    const defaults = this.getDefaultTypeConfig(type);
+    let parsed: any = {};
+    try {
+      parsed = this.parseOptionalJsonObject(extrasJson || '', 'column extras') || {};
+    } catch {
+      parsed = {};
+    }
+
+    if (type === 'media') {
+      return { ...defaults, ...(parsed.media || {}) };
+    }
+    if (type === 'badge') {
+      return { ...defaults, ...(parsed.badge || {}) };
+    }
+    if (type === 'icon_text') {
+      return { ...defaults, ...(parsed.icon || {}) };
+    }
+
+    return defaults;
+  }
+
+  /**
+   * Build extras JSON string from type-specific configuration
+   * Validates and normalizes action types against commonConfig.ACTION_TYPE
+   */
+  private buildExtrasJsonFromTypeConfig(type: MobileCardBuilderColumn['type'], config: any): string {
+    if (type === 'media') {
+      return JSON.stringify(
+        {
+          media: {
+            media_type: config?.media_type || 'icon',
+            shape: config?.shape || 'circle',
+            size: Math.max(12, Number(config?.size) || 36),
+            fallback_icon: config?.fallback_icon || 'cash-outline',
+            source_type: config?.source_type || 'field',
+          },
+        },
+        null,
+        2
+      );
+    }
+
+    if (type === 'badge') {
+      return JSON.stringify(
+        {
+          badge: {
+            tone: config?.tone || 'info',
+          },
+        },
+        null,
+        2
+      );
+    }
+
+    if (type === 'icon_text') {
+      return JSON.stringify(
+        {
+          icon: {
+            icon_name: config?.icon_name || 'information-circle-outline',
+            icon_position: config?.icon_position || 'leading',
+          },
+        },
+        null,
+        2
+      );
+    }
+
+    return '';
+  }
+
+  /**
+   * Validate if action type is a standard commonConfig.ACTION_TYPE value
+   * Note: Actions now come from API, but keeping this for compatibility
+   */
+  private isValidActionType(action: string): boolean {
+    const normalized = (action || '').toLowerCase();
+    return (
+      Object.values(this.commonConfig.ACTION_TYPE)
+        .map((v: any) => String(v).toLowerCase())
+        .includes(normalized) || normalized === 'share'
+    );
+  }
+
+  private createBuilderColumn(field: MobileCardBuilderPaletteField): MobileCardBuilderColumn {
+    return {
+      id: this.nextMobileCardBuilderId('col'),
+      field_name: field.field_name,
+      label: field.display_name || this.getLabelFromFieldName(field.field_name),
+      type: 'text',
+      col_span: 1,
+      row_span: 1,
+      align: 'left',
+      format: '',
+      label_position: '',
+      show_label: true,
+      extras_json: this.getDefaultExtrasJsonForType('text'),
+    };
+  }
+
+  private parseOptionalJsonObject(raw: string, fieldName: string): any | null {
+    const input = (raw || '').trim();
+    if (!input) return null;
+    let parsed: any;
+    try {
+      parsed = JSON.parse(input);
+    } catch {
+      throw new Error(`Invalid JSON syntax in ${fieldName}.`);
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error(`${fieldName} must be a JSON object.`);
+    }
+    return parsed;
+  }
+
+  private parseOptionalJsonArray(raw: string, fieldName: string): any[] | null {
+    const input = (raw || '').trim();
+    if (!input) return null;
+    let parsed: any;
+    try {
+      parsed = JSON.parse(input);
+    } catch {
+      throw new Error(`Invalid JSON syntax in ${fieldName}.`);
+    }
+    if (!Array.isArray(parsed)) {
+      throw new Error(`${fieldName} must be a JSON array.`);
+    }
+    return parsed;
+  }
+
+  private normalizeMobileCardConfig(config: any): any {
+    if (!config || typeof config !== 'object') {
+      throw new Error('Mobile card configuration must be a JSON object.');
+    }
+    if (config.view_type !== 'card') {
+      throw new Error('Mobile card configuration must have view_type="card".');
+    }
+    if (!config.card || typeof config.card !== 'object') {
+      throw new Error('Mobile card configuration must include a card object.');
+    }
+
+    // Handle both old format (rows array) and new format (single row)
+    let row: any;
+    if (config.card.row) {
+      row = config.card.row;
+    } else if (Array.isArray(config.card.rows) && config.card.rows.length > 0) {
+      row = config.card.rows[0];
+    } else {
+      row = { row_no: 1, divider_after: true, columns: [] };
+    }
+
+    const columns = Array.isArray(row?.columns) ? row.columns : [];
+
+    return {
+      view_type: 'card',
+      card: {
+        style: config.card.style || 'elevated',
+        shape: config.card.shape || 'rounded',
+        grid_columns: Math.max(1, Number(config.card?.grid_columns) || 4),
+        grid_rows: Math.max(1, Number(config.card?.grid_rows) || 4),
+        action_placement_index: Math.max(0, Number(config.card?.action_placement_index) || 0),
+        row: {
+          row_no: 1,
+          divider_after: !!row?.divider_after,
+          columns,
+        },
+      },
+    };
+  }
+
+  private deserializeMobileCardBuilderState(config: any): MobileCardBuilderState {
+    const normalized = this.normalizeMobileCardConfig(config);
+    const maxColumns = Math.max(1, Number((normalized.card as any)?.grid_columns) || 4);
+    const maxRows = Math.max(1, Number((normalized.card as any)?.grid_rows) || 4);
+
+    const row: any = normalized.card.row || {};
+    const columns: MobileCardBuilderColumn[] = (row.columns || []).map((column: any) => {
+      const { field_name, label, type, align, format, label_position, ...extras } = column || {};
+      const extrasJson = Object.keys(extras).length > 0 ? JSON.stringify(extras, null, 2) : this.getDefaultExtrasJsonForType(type || 'text');
+      return {
+        id: this.nextMobileCardBuilderId('col'),
+        field_name: field_name ?? null,
+        label: label || '',
+        type: (type || 'text') as MobileCardBuilderColumn['type'],
+        col_span: Math.max(1, Math.min(maxColumns, Number((column as any)?.col_span) || 1)),
+        row_span: Math.max(1, Math.min(maxRows, Number((column as any)?.row_span) || 1)),
+        align: (align || 'left') as MobileCardBuilderColumn['align'],
+        format: format || '',
+        label_position: (label_position || '') as MobileCardBuilderColumn['label_position'],
+        show_label: column?.show_label !== false,
+        extras_json: extrasJson,
+      };
+    });
+
+    const deserializedRow: MobileCardBuilderRow = {
+      id: this.nextMobileCardBuilderId('row'),
+      row_no: 1,
+      divider_after: !!row.divider_after,
+      columns,
+    };
+
+    return {
+      view_type: 'card',
+      card: {
+        style: normalized.card.style,
+        shape: normalized.card.shape,
+        grid_columns: Math.max(1, Number((normalized.card as any)?.grid_columns) || 4),
+        grid_rows: Math.max(1, Number((normalized.card as any)?.grid_rows) || 4),
+        action_placement_index: Math.max(0, Number((normalized.card as any)?.action_placement_index) || 0),
+        row: columns.length > 0 ? deserializedRow : this.getDefaultMobileCardBuilderState().card.row,
+      },
+    };
+  }
+
+  private serializeMobileCardBuilderState(state: MobileCardBuilderState): any {
+    const maxColumns = Math.max(1, Number(state.card.grid_columns) || 1);
+    const maxRows = Math.max(1, Number(state.card.grid_rows) || 1);
+
+    const row = state.card.row;
+    const columns = row.columns.map((column, colIndex) => {
+      const extras = this.parseOptionalJsonObject(column.extras_json || '', `column extras for column ${colIndex + 1}`) || {};
+
+      const base: any = {
+        field_name: column.field_name,
+        type: column.type,
+        col_span: Math.max(1, Math.min(maxColumns, Number(column.col_span) || 1)),
+        row_span: Math.max(1, Math.min(maxRows, Number(column.row_span) || 1)),
+        align: column.align,
+      };
+
+      if ((column.label || '').trim()) {
+        base.label = column.label.trim();
+      }
+      if ((column.format || '').trim()) {
+        base.format = column.format.trim();
+      }
+      if ((column.label_position || '').trim()) {
+        base.label_position = column.label_position.trim();
+      }
+      base.show_label = !!column.show_label;
+
+      return {
+        ...base,
+        ...extras,
+      };
+    });
+
+    const serializedRow = {
+      row_no: 1,
+      divider_after: !!row.divider_after,
+      columns,
+    };
+
+    return {
+      view_type: 'card',
+      card: {
+        style: state.card.style,
+        shape: state.card.shape,
+        grid_columns: Math.max(1, Number(state.card.grid_columns) || 4),
+        grid_rows: Math.max(1, Number(state.card.grid_rows) || 4),
+        row: serializedRow,
+      },
+    };
+  }
+
+  private ensureMobileCardConfigInitialized(): void {
+    if (!this.isGridBuilderEntityType(this.form.get('entityType')?.value)) {
+      return;
+    }
+
+    const mobileCardControl = this.form.get('mobileCardViewConfig');
+    if ((mobileCardControl?.value || '').trim()) {
+      return;
+    }
+
+    const entityConfigurations = this.parseJsonSafe(this.form.get('entity_configurations')?.value, {}) || {};
+    const extracted = this.extractMobileCardConfig(entityConfigurations);
+    if (extracted) {
+      mobileCardControl?.setValue(this.prettyJSON(extracted), { emitEvent: false });
+      return;
+    }
+
+    mobileCardControl?.setValue(this.prettyJSON(this.buildDefaultMobileCardConfigFromLineItems()), { emitEvent: false });
+  }
+
+  private syncMobileCardConfigIntoEntityConfigurations(): void {
+    if (!this.isGridBuilderEntityType(this.form.get('entityType')?.value)) {
+      return;
+    }
+
+    const entityConfigurationsControl = this.form.get('entity_configurations');
+    const mobileCardControl = this.form.get('mobileCardViewConfig');
+    const entityConfigurations = this.parseJsonSafe(entityConfigurationsControl?.value, {}) || {};
+    const mobileCardRaw = (mobileCardControl?.value || '').trim();
+
+    if (!mobileCardRaw) {
+      delete entityConfigurations.mobile_view;
+
+      entityConfigurationsControl?.setValue(this.prettyJSON(entityConfigurations), { emitEvent: false });
+      return;
+    }
+
+    const mobileCardConfig = this.normalizeMobileCardConfig(JSON.parse(mobileCardRaw));
+
+    entityConfigurations.mobile_view = mobileCardConfig;
+
+    entityConfigurationsControl?.setValue(this.prettyJSON(entityConfigurations), { emitEvent: false });
+    mobileCardControl?.setValue(this.prettyJSON(mobileCardConfig), { emitEvent: false });
+  }
+
+  openMobileCardBuilderModal(): void {
+    if (!this.isGridBuilderEntityType(this.form.get('entityType')?.value)) {
+      return;
+    }
+
+    this.ensureMobileCardConfigInitialized();
+    this.mobileCardBuilderError = '';
+    const raw = (this.form.get('mobileCardViewConfig')?.value || '').trim();
+    if (raw) {
+      try {
+        this.mobileCardBuilderState = this.deserializeMobileCardBuilderState(JSON.parse(raw));
+      } catch (error: any) {
+        this.mobileCardBuilderState = this.deserializeMobileCardBuilderState(this.buildDefaultMobileCardConfigFromLineItems());
+        this.mobileCardBuilderError = error?.message || 'Mobile card JSON was invalid. Loaded default layout.';
+      }
+    } else {
+      this.mobileCardBuilderState = this.deserializeMobileCardBuilderState(this.buildDefaultMobileCardConfigFromLineItems());
+    }
+
+    this.normalizeMobileCardGridBounds();
+
+    this.isMobileCardBuilderModalOpen = true;
+  }
+
+  closeMobileCardBuilderModal(): void {
+    this.isMobileCardBuilderModalOpen = false;
+    this.closeMobileCardColumnEditor();
+    this.mobileCardBuilderError = '';
+  }
+
+  openMobileCardColumnEditor(rowIndex: number, colIndex: number): void {
+    const column = this.mobileCardBuilderRows[rowIndex]?.columns[colIndex];
+    if (!column) return;
+
+    this.mobileCardColumnEditTarget = { rowIndex, colIndex };
+    this.mobileCardColumnDraft = {
+      ...column,
+      extras_json: column.extras_json || this.getDefaultExtrasJsonForType(column.type),
+    };
+    this.mobileCardColumnTypeConfig = this.getTypeConfigFromExtras(column.type, this.mobileCardColumnDraft.extras_json);
+    this.isMobileCardColumnModalOpen = true;
+  }
+
+  closeMobileCardColumnEditor(): void {
+    this.isMobileCardColumnModalOpen = false;
+    this.mobileCardColumnEditTarget = null;
+    this.mobileCardColumnDraft = null;
+    this.mobileCardColumnTypeConfig = {};
+  }
+
+  openMobileCardPreviewModal(): void {
+    this.mobileCardPreviewSearch = '';
+    this.selectedMobileCardIndex = null;
+    this.selectedCardActions = [];
+    this.isMobileCardPreviewModalOpen = true;
+  }
+
+  closeMobileCardPreviewModal(): void {
+    this.isMobileCardPreviewModalOpen = false;
+    this.selectedMobileCardIndex = null;
+    this.selectedCardActions = [];
+  }
+
+  /**
+   * Handles mobile card click - WhatsApp-like interaction.
+   * Clicking a card selects it and shows available actions in top action bar.
+   * Actions come from API response (available_actions per row).
+   * @param rowIndex - Index of clicked card in preview data
+   */
+  onMobileCardClick(rowIndex: number): void {
+    const row = this.filteredMobileCardPreviewRows[rowIndex];
+
+    // Toggle selection: click same card to deselect
+    if (this.selectedMobileCardIndex === rowIndex) {
+      this.selectedMobileCardIndex = null;
+      this.selectedCardActions = [];
+    } else {
+      // Select card and load its available actions from API response
+      this.selectedMobileCardIndex = rowIndex;
+
+      // In production: actions come from grid API response
+      // Each row has available_actions array based on:
+      // - User permissions
+      // - Row state (locked, status, etc.)
+      // - Entity configuration
+      this.selectedCardActions = this.getMobileCardActionsFromRow(row);
+
+      console.log('Card selected:', { rowIndex, row, actions: this.selectedCardActions });
+    }
+  }
+
+  /**
+   * Gets available actions for a row from API response.
+   * In production, this data comes from the grid API call.
+   * Backend determines which actions are available based on:
+   * - User permissions (role-based access)
+   * - Row state (status, locked, archived, etc.)
+   * - Entity configuration (allowed_actions)
+   *
+   * @param row - Row data from grid API
+   * @returns Array of action objects with type, icon, label
+   */
+  private getMobileCardActionsFromRow(row: any): any[] {
+    // Sample: Simulate API response with permission-based actions
+    // In production, this comes directly from backend:
+    // GET /api/entity/{entity}/data
+    // Response: { data: [{ id, ...fields, available_actions: [...] }] }
+
+    const allActions = [
+      { action_type: 'view', icon: 'fa-regular fa-eye', label: 'View' },
+      { action_type: 'edit', icon: 'fa-regular fa-pen-to-square', label: 'Edit' },
+      { action_type: 'delete', icon: 'fa-regular fa-trash-can', label: 'Delete' },
+      { action_type: 'share', icon: 'fa-solid fa-share-nodes', label: 'Share' },
+      { action_type: 'export_pdf', icon: 'fa-regular fa-file-pdf', label: 'Export PDF' },
+    ];
+
+    // Simulate backend logic: different permissions per row
+    // Even rows: full access, Odd rows: view only
+    const titleNumber = parseInt(row.title.match(/\d+/)?.[0] || '0');
+    if (titleNumber % 2 === 0) {
+      return allActions; // Full access
+    } else {
+      return [allActions[0], allActions[3]]; // View + Share only
+    }
+  }
+
+  /**
+   * Handles action bar button clicks (WhatsApp-style top action bar).
+   * Actions are dynamic per row, coming from API response.
+   * @param action - Action object from API { action_type, icon, label }
+   */
+  onMobileCardActionBarClick(action: any): void {
+    if (this.selectedMobileCardIndex === null) return;
+
+    const row = this.filteredMobileCardPreviewRows[this.selectedMobileCardIndex];
+    const actionType = (action.action_type || action.type || action || '').toLowerCase();
+
+    console.log('Action Bar Click:', { action, row });
+
+    // In production: implement actual routing and API calls
+    switch (actionType) {
+      case 'view':
+      case 'details':
+        this.toastr.info(`Viewing: ${row.title}`);
+        // this.router.navigate(['/entity', this.entityId, 'view', row.id]);
+        // Close selection after navigation
+        this.selectedMobileCardIndex = null;
+        this.selectedCardActions = [];
+        break;
+
+      case 'edit':
+        this.toastr.info(`Editing: ${row.title}`);
+        // this.router.navigate(['/entity', this.entityId, 'edit', row.id]);
+        this.selectedMobileCardIndex = null;
+        this.selectedCardActions = [];
+        break;
+
+      case 'delete':
+        this.toastr.warning(`Delete: ${row.title}`);
+        // Show confirmation dialog
+        // this.confirmService.confirm({
+        //   message: 'Are you sure?',
+        //   accept: () => this.deleteRecord(row.id)
+        // });
+        break;
+
+      case 'share':
+        this.toastr.info(`Sharing: ${row.title}`);
+        // Native apps: use Capacitor Share plugin
+        // import { Share } from '@capacitor/share';
+        // await Share.share({ title: row.title, text: row.subtitle, url });
+        break;
+
+      case 'export_pdf':
+      case 'export_excel':
+        this.toastr.success(`Exporting ${actionType}: ${row.title}`);
+        // Call export API with row.id
+        break;
+
+      case 'assign':
+      case 'popup_edit':
+      case 'popup_details':
+        this.toastr.info(`Opening ${actionType}: ${row.title}`);
+        // Open modal/dialog without navigation
+        break;
+
+      default:
+        this.toastr.info(`${action.label || actionType}: ${row.title}`);
+        // Handle custom actions from backend
+        break;
+    }
+  }
+
+  /**
+   * Checks if a card is currently selected.
+   * @param rowIndex - Index of card to check
+   * @returns True if card is selected
+   */
+  isCardSelected(rowIndex: number): boolean {
+    return this.selectedMobileCardIndex === rowIndex;
+  }
+
+  get mobileCardPreviewColumns(): MobileCardBuilderColumn[] {
+    return this.mobileCardBuilderPrimaryRow.columns;
+  }
+
+  get mobileCardPreviewTitle(): string {
+    return String(this.form?.get('name')?.value || 'Master Entity').trim() || 'Master Entity';
+  }
+
+  get mobileCardPreviewResultsText(): string {
+    const total = this.filteredMobileCardPreviewRows.length;
+    if (total === 0) {
+      return '0 - 0 of 0 results';
+    }
+    return `1 - ${total} of ${total} results`;
+  }
+
+  get filteredMobileCardPreviewRows(): Array<{ title: string; status: 'active' | 'inactive'; subtitle: string }> {
+    const term = (this.mobileCardPreviewSearch || '').trim().toLowerCase();
+    return this.mobileCardPreviewRows.filter((row) => !term || row.title.toLowerCase().includes(term) || row.subtitle.toLowerCase().includes(term));
+  }
+
+  getMobileCardPreviewValue(column: MobileCardBuilderColumn, rowIndex: number): string {
+    if (column.type === 'media') {
+      return 'Media';
+    }
+    const token = (column.field_name || column.label || 'value').split('.').pop() || 'value';
+    const normalized = token.replace(/_/g, ' ');
+    return `${normalized} ${rowIndex + 1}`;
+  }
+
+  /**
+   * Get human-readable label for action type
+   */
+  private getActionLabel(actionType: string): string {
+    const actionTypeEntry = this.commonConfig.action_types.find((a: any) => a.value === actionType);
+    return actionTypeEntry?.label || actionType;
+  }
+
+  saveMobileCardColumnEditor(): void {
+    if (!this.mobileCardColumnDraft || !this.mobileCardColumnEditTarget) {
+      return;
+    }
+
+    try {
+      const { rowIndex, colIndex } = this.mobileCardColumnEditTarget;
+      const target = this.mobileCardBuilderRows[rowIndex]?.columns[colIndex];
+      if (!target) {
+        this.closeMobileCardColumnEditor();
+        return;
+      }
+
+      target.field_name = this.mobileCardColumnDraft.field_name;
+      target.type = this.mobileCardColumnDraft.type;
+      target.label = this.mobileCardColumnDraft.label;
+      const maxColumns = Math.max(1, Number(this.mobileCardBuilderState.card.grid_columns) || 1);
+      const maxRows = Math.max(1, Number(this.mobileCardBuilderState.card.grid_rows) || 1);
+      target.col_span = Math.max(1, Math.min(maxColumns, Number(this.mobileCardColumnDraft.col_span) || 1));
+      target.row_span = Math.max(1, Math.min(maxRows, Number(this.mobileCardColumnDraft.row_span) || 1));
+      target.align = this.mobileCardColumnDraft.align;
+      target.format = '';
+      target.label_position = this.mobileCardColumnDraft.label_position;
+      target.show_label = this.mobileCardColumnDraft.show_label;
+      target.extras_json = this.buildExtrasJsonFromTypeConfig(this.mobileCardColumnDraft.type, this.mobileCardColumnTypeConfig);
+
+      this.normalizeMobileCardGridBounds();
+      this.closeMobileCardColumnEditor();
+    } catch (error: any) {
+      this.mobileCardBuilderError = error?.message || 'Invalid column configuration JSON.';
+    }
+  }
+
+  setMobileCardColumnAlignment(column: MobileCardBuilderColumn, align: 'left' | 'center' | 'right'): void {
+    column.align = align;
+  }
+
+  submitMobileCardBuilderModal(): void {
+    try {
+      const serialized = this.serializeMobileCardBuilderState(this.mobileCardBuilderState);
+      this.form.get('mobileCardViewConfig')?.setValue(this.prettyJSON(serialized), { emitEvent: false });
+      this.syncMobileCardConfigIntoEntityConfigurations();
+      this.toastr.success('Mobile card view JSON updated.');
+      this.closeMobileCardBuilderModal();
+    } catch (error: any) {
+      this.mobileCardBuilderError = error?.message || 'Failed to transform playground data to JSON.';
+    }
+  }
+
+  // Row management methods removed - mobile cards now use single row only
+
+  addMobileCardColumnFromPalette(rowIndex: number, field: MobileCardBuilderPaletteField): void {
+    this.mobileCardBuilderRows[rowIndex]?.columns.push(this.createBuilderColumn(field));
+  }
+
+  removeMobileCardColumn(rowIndex: number, colIndex: number): void {
+    this.mobileCardBuilderRows[rowIndex]?.columns.splice(colIndex, 1);
+  }
+
+  onMobileCardColumnTypeChange(column: MobileCardBuilderColumn): void {
+    this.mobileCardColumnTypeConfig = this.getDefaultTypeConfig(column.type);
+    if (column.type !== 'text') {
+      column.format = '';
+    }
+  }
+
+  // Row drag-drop removed - single row only
+
+  dropMobileCardColumns(event: CdkDragDrop<MobileCardBuilderColumn[]>, rowIndex: number): void {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(this.mobileCardBuilderRows[rowIndex].columns, event.previousIndex, event.currentIndex);
+      return;
+    }
+
+    if (event.previousContainer.id === 'mobile-card-field-palette') {
+      const palette = event.previousContainer.data as unknown as MobileCardBuilderPaletteField[];
+      const paletteField = palette[event.previousIndex];
+      if (!paletteField) return;
+      this.mobileCardBuilderRows[rowIndex].columns.splice(event.currentIndex, 0, this.createBuilderColumn(paletteField));
+      return;
+    }
+
+    transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+  }
+
   decimalValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
     if (value !== null && value !== undefined && !/^\d+(\.\d{1,2})?$/.test(value)) {
@@ -1572,6 +2644,7 @@ export class MasterEntityComponent implements OnInit {
       addQueryInformation: [''],
       editQueryInformation: [''],
       presetQueryInformation: [''],
+      mobileCardViewConfig: [''],
       entity_configurations: [''],
       staticPageContent: [''],
       items: this.fb.array([]),
@@ -1914,6 +2987,8 @@ export class MasterEntityComponent implements OnInit {
             entity.entity_name && entityTypePrefix && entity.entity_name.startsWith(entityTypePrefix + '_')
               ? entity.entity_name.slice(entityTypePrefix.length + 1)
               : entity.entity_name || '';
+          const parsedEntityConfigurations = this.parseJsonSafe(entity.entity_configurations, {});
+          const mobileCardConfig = this.extractMobileCardConfig(parsedEntityConfigurations);
 
           this.form.patchValue({
             name: entity.name,
@@ -1928,6 +3003,7 @@ export class MasterEntityComponent implements OnInit {
             draftMode: entity.draft_mode || false,
             entityType: entity.entity_type,
             entity_configurations: entity.entity_configurations ? this.prettyJSON(entity.entity_configurations) : '',
+            mobileCardViewConfig: mobileCardConfig ? this.prettyJSON(mobileCardConfig) : '',
             queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
             reportInformation: entity.report_information ? this.prettyJSON(entity.report_information) : '',
             formInformation: entity.form_information ? this.prettyJSON(entity.form_information) : '',
@@ -1974,6 +3050,7 @@ export class MasterEntityComponent implements OnInit {
               items.push(group);
             });
           }
+          this.ensureMobileCardConfigInitialized();
         }
       },
       (error) => {
@@ -2291,6 +3368,13 @@ export class MasterEntityComponent implements OnInit {
 
   onSubmit() {
     this.submitted = true;
+
+    try {
+      this.syncMobileCardConfigIntoEntityConfigurations();
+    } catch (error: any) {
+      this.toastr.error(error?.message || 'Invalid mobile card configuration JSON.', 'Error');
+      return;
+    }
 
     const formData = this.form.getRawValue();
     let payload;

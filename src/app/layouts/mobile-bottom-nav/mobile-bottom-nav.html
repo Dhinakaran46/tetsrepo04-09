@@ -1,0 +1,47 @@
+<nav class="mobile-bottom-nav">
+  <a routerLink="/dashboard" class="mobile-bottom-nav-tab" [class.active]="isDashboardActive()">
+    <i class="fa-solid fa-house"></i>
+    <span>{{ 'dashboard' | translate }}</span>
+  </a>
+
+  @for (tab of primaryTabs; track tab.id) {
+  <a [routerLink]="tab.target" class="mobile-bottom-nav-tab" [class.active]="isTabActive(tab)">
+    <i class="fas" [ngClass]="tab.menu_img || 'fa-circle'"></i>
+    <span>{{ tab.name | translate }}</span>
+  </a>
+  }
+
+  <button type="button" class="mobile-bottom-nav-tab" [class.active]="isMorePanelOpen" (click)="openMore()">
+    <i class="fa-solid fa-bars"></i>
+    <span>{{ 'more' | translate }}</span>
+  </button>
+</nav>
+
+@if (isMorePanelOpen) {
+<div class="mobile-more-panel">
+  <div class="mobile-more-panel-header">
+    <span class="mobile-more-panel-title">{{ 'menu' | translate }}</span>
+    <button type="button" class="mobile-more-panel-close" (click)="closeMore()" [attr.aria-label]="'close' | translate">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <ng-scrollbar class="mobile-more-panel-body" appearance="compact">
+    @for (section of menuSections; track section.id) { @if (!isHiddenOrAction(section) && section.children?.length) {
+    <div class="mobile-more-section">
+      <h3 class="mobile-more-section-title">{{ section.name | translate }}</h3>
+      @for (child of section.children; track child.id) { @if (!isHiddenOrAction(child)) {
+      <a [routerLink]="child.target" class="mobile-more-item" (click)="onMoreItemClick(child)">
+        <i class="fas" [ngClass]="child.menu_img || 'fa-circle'"></i>
+        <span>{{ child.name | translate }}</span>
+      </a>
+      @if (child.children?.length) { @for (grandchild of child.children; track grandchild.id) { @if (!isHiddenOrAction(grandchild)) {
+      <a [routerLink]="grandchild.target" class="mobile-more-item mobile-more-item-nested" (click)="onMoreItemClick(grandchild)">
+        <i class="fas" [ngClass]="grandchild.menu_img || 'fa-circle'"></i>
+        <span>{{ grandchild.name | translate }}</span>
+      </a>
+      } } } } }
+    </div>
+    } }
+  </ng-scrollbar>
+</div>
+}

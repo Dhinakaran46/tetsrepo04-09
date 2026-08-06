@@ -576,6 +576,32 @@
               ></textarea>
             </div>
           </div>
+
+          @if (isGridBuilderEntityType(form.get('entityType')?.value)) {
+          <div class="mt-3">
+            <div class="mb-2 flex items-center justify-between gap-3">
+              <label for="mobileCardViewConfig" class="block font-medium">Mobile Card View Configuration</label>
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="openMobileCardBuilderModal()" title="Open visual playground">
+                <i class="fa-solid fa-pen-to-square mr-1"></i>
+                Open Playground
+              </button>
+            </div>
+            <div class="text-xs text-white-dark">Drag and drop columns in the playground, then submit to transform into JSON.</div>
+            <div class="monaco-editor-container mt-2" appDynamicFontSize="body">
+              <button type="button" class="copy-editor-btn" (click)="copyEditorContent('mobileCardViewConfig')" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+                <span>Copy</span>
+              </button>
+              <ngx-monaco-editor
+                monacoEditor
+                [options]="mobileCardEditorOptions"
+                id="mobileCardViewConfig"
+                formControlName="mobileCardViewConfig"
+                class="monaco-editor"
+              ></ngx-monaco-editor>
+            </div>
+          </div>
+          }
         </div>
 
         @if ( commonConfig.ENTITY_TYPES.STATIC_PAGE_BUILDER_MODULE.name === form.get('entityType')?.value || commonConfig.ENTITY_TYPES.CHART_BUILDER_MODULE.name
@@ -1244,6 +1270,434 @@
     }
   </div>
 </div>
+
+<!-- Mobile Card Builder Modal -->
+@if (isMobileCardBuilderModalOpen) {
+<div class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeMobileCardBuilderModal()"></div>
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-7xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Mobile Card Playground</h3>
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-outline-info btn-sm" (click)="openMobileCardPreviewModal()" title="Preview mobile card">
+              <i class="fa-regular fa-eye mr-1"></i>
+              Preview
+            </button>
+            <button type="button" class="close-btn" (click)="closeMobileCardBuilderModal()">
+              <span class="sr-only">Close</span>
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-h-[75vh] overflow-y-auto px-6 py-4">
+        @if (mobileCardBuilderError) {
+        <div class="mb-3 rounded border border-warning/40 bg-warning/10 px-3 py-2 text-warning">{{ mobileCardBuilderError }}</div>
+        }
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div class="space-y-4">
+            <div class="rounded border border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+              <h4 class="mb-3 text-sm font-semibold">Card Settings</h4>
+              <div class="grid grid-cols-1 gap-3">
+                <div>
+                  <label class="mb-1 block text-xs text-white-dark">Style</label>
+                  <select class="form-select w-full" [(ngModel)]="mobileCardBuilderState.card.style">
+                    <option value="elevated">elevated</option>
+                    <option value="flat">flat</option>
+                    <option value="outlined">outlined</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs text-white-dark">Shape</label>
+                  <select class="form-select w-full" [(ngModel)]="mobileCardBuilderState.card.shape">
+                    <option value="rounded">rounded</option>
+                    <option value="square">square</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs text-white-dark">Grid Size</label>
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      [min]="mobileCardBuilderGridColumnsMin"
+                      class="form-input w-full"
+                      [(ngModel)]="mobileCardBuilderState.card.grid_columns"
+                      (ngModelChange)="onMobileCardGridColumnsChange($event)"
+                    />
+                    <span class="text-sm text-white-dark">*</span>
+                    <input
+                      type="number"
+                      min="1"
+                      [min]="mobileCardBuilderGridRowsMin"
+                      class="form-input w-full"
+                      [(ngModel)]="mobileCardBuilderState.card.grid_rows"
+                      (ngModelChange)="onMobileCardGridRowsChange($event)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded border border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+              <div class="mb-2 flex items-center justify-between">
+                <h4 class="text-sm font-semibold">Available Fields</h4>
+                <span class="text-xs text-white-dark">Drag into card</span>
+              </div>
+              <div
+                id="mobile-card-field-palette"
+                cdkDropList
+                [cdkDropListData]="mobileCardBuilderPaletteFields"
+                [cdkDropListConnectedTo]="mobileCardBuilderConnectedDropLists"
+                class="max-h-[35vh] space-y-2 overflow-y-auto"
+              >
+                @for (field of mobileCardBuilderPaletteFields; track field.field_name) {
+                <button type="button" class="mobile-card-palette-item w-full" cdkDrag (click)="addMobileCardColumnFromPalette(0, field)">
+                  <div class="truncate text-left text-sm font-medium">{{ field.display_name || field.field_name }}</div>
+                  <div class="truncate text-left text-xs text-white-dark">{{ field.field_name }}</div>
+                </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2">
+            <div class="mb-3">
+              <h4 class="text-sm font-semibold">Single Row Card Builder</h4>
+              <p class="text-xs text-white-dark">Edit each card span freely.</p>
+            </div>
+
+            <div
+              class="mobile-card-row mobile-card-shell"
+              [ngClass]="mobileCardBuilderState.card.shape === 'rounded' ? 'shape-rounded' : 'shape-square'"
+              [style.--mobile-card-grid-columns]="mobileCardBuilderState.card.grid_columns"
+              [style.--mobile-card-grid-rows]="mobileCardBuilderState.card.grid_rows"
+            >
+              <div
+                [id]="getMobileCardRowDropListId(mobileCardBuilderPrimaryRow.id)"
+                cdkDropList
+                cdkDropListOrientation="mixed"
+                [cdkDropListData]="mobileCardBuilderPrimaryRow.columns"
+                [cdkDropListConnectedTo]="mobileCardBuilderConnectedDropLists"
+                (cdkDropListDropped)="dropMobileCardColumns($event, 0)"
+                class="mobile-card-preview-columns"
+              >
+                @if (mobileCardBuilderPrimaryRow.columns.length === 0) {
+                <div class="mobile-card-drop-hint mobile-card-drop-hint-full">Drop fields here</div>
+                }
+
+                <ng-container *ngFor="let column of mobileCardBuilderPrimaryRow.columns; let colIndex = index; trackBy: trackByMobileCardColumnId">
+                <div
+                  class="mobile-card-column-card"
+                  cdkDrag
+                  [style.grid-column]="'span ' + column.col_span"
+                  [style.grid-row]="'span ' + column.row_span"
+                  [class.text-right]="column.align === 'right'"
+                  [class.text-center]="column.align === 'center'"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-white-dark">{{ column.type }}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="cursor-move text-xs text-white-dark" cdkDragHandle><i class="fa-solid fa-grip"></i></span>
+                      <button type="button" class="text-info" (click)="openMobileCardColumnEditor(0, colIndex)" title="Edit column">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      <button type="button" class="text-danger" (click)="removeMobileCardColumn(0, colIndex)" title="Remove column">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (column.show_label !== false) {
+                  <input type="text" class="form-input w-full" [(ngModel)]="column.label" placeholder="Column label" />
+                  }
+                  <div class="truncate text-[11px] text-white-dark">{{ column.field_name || 'No field binding' }}</div>
+                </div>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-end gap-3">
+          <button type="button" class="btn btn-secondary" (click)="closeMobileCardBuilderModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="submitMobileCardBuilderModal()">Submit And Transform</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if (isMobileCardColumnModalOpen && mobileCardColumnDraft) {
+<div class="fixed inset-0 z-[60] overflow-y-auto">
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeMobileCardColumnEditor()"></div>
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="relative w-full max-w-2xl transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:border dark:border-gray-700 dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Card Column</h3>
+          <button type="button" class="close-btn" (click)="closeMobileCardColumnEditor()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="max-h-[70vh] overflow-y-auto px-6 py-4">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Field</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnDraft.field_name">
+              <option [ngValue]="null">none</option>
+              @for (field of mobileCardBuilderPaletteFields; track field.field_name) {
+              <option [ngValue]="field.field_name">{{ field.display_name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Type</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnDraft.type" (change)="onMobileCardColumnTypeChange(mobileCardColumnDraft)">
+              <option value="text">text</option>
+              <option value="media">media</option>
+              <option value="badge">badge</option>
+              <option value="icon_text">icon_text</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Label</label>
+            <input type="text" class="form-input w-full" [(ngModel)]="mobileCardColumnDraft.label" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Col Span</label>
+            <input type="number" min="1" [max]="mobileCardBuilderState.card.grid_columns" class="form-input w-full" [(ngModel)]="mobileCardColumnDraft.col_span" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Row Span</label>
+            <input type="number" min="1" [max]="mobileCardBuilderState.card.grid_rows" class="form-input w-full" [(ngModel)]="mobileCardColumnDraft.row_span" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Align</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnDraft.align">
+              <option value="left">left</option>
+              <option value="center">center</option>
+              <option value="right">right</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Label Position</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnDraft.label_position">
+              <option value="">default</option>
+              <option value="inline">inline</option>
+              <option value="top">top</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Show Label</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnDraft.show_label">
+              <option [ngValue]="true">Yes</option>
+              <option [ngValue]="false">No</option>
+            </select>
+          </div>
+
+          @if (mobileCardColumnDraft.type === 'media') {
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Media Type</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnTypeConfig.media_type">
+              <option value="icon">icon</option>
+              <option value="image">image</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Fallback Icon</label>
+            <input type="text" class="form-input w-full" [(ngModel)]="mobileCardColumnTypeConfig.fallback_icon" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Shape</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnTypeConfig.shape">
+              <option value="circle">circle</option>
+              <option value="square">square</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Size</label>
+            <input type="number" min="12" class="form-input w-full" [(ngModel)]="mobileCardColumnTypeConfig.size" />
+          </div>
+          }
+
+          @if (mobileCardColumnDraft.type === 'badge') {
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Badge Tone</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnTypeConfig.tone">
+              <option value="info">info</option>
+              <option value="success">success</option>
+              <option value="warning">warning</option>
+              <option value="danger">danger</option>
+            </select>
+          </div>
+          }
+
+          @if (mobileCardColumnDraft.type === 'icon_text') {
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Icon Name</label>
+            <input type="text" class="form-input w-full" [(ngModel)]="mobileCardColumnTypeConfig.icon_name" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs text-white-dark">Icon Position</label>
+            <select class="form-select w-full" [(ngModel)]="mobileCardColumnTypeConfig.icon_position">
+              <option value="leading">leading</option>
+              <option value="trailing">trailing</option>
+            </select>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="border-t bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-end gap-3">
+          <button type="button" class="btn btn-secondary" (click)="closeMobileCardColumnEditor()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="saveMobileCardColumnEditor()">Update Column</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if (isMobileCardPreviewModalOpen) {
+<div class="fixed inset-0 z-[70] overflow-y-auto">
+  <div class="fixed inset-0 bg-black/50 transition-opacity dark:bg-black/70" (click)="closeMobileCardPreviewModal()"></div>
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div class="relative w-full max-w-3xl rounded-lg bg-white shadow-xl dark:border dark:border-gray-700 dark:bg-gray-800" (click)="$event.stopPropagation()">
+      <div class="border-b bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Mobile Card Preview</h3>
+          <button type="button" class="close-btn" (click)="closeMobileCardPreviewModal()">
+            <span class="sr-only">Close</span>
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="max-h-[75vh] overflow-y-auto px-6 py-5">
+        <div class="mobile-preview-phone mx-auto">
+          <div class="mobile-preview-appbar">
+            <div class="mobile-preview-appbar-left">
+              <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="mobile-preview-appbar-right">
+              <i class="fa-regular fa-bell"></i>
+              <i class="fa-solid fa-gear"></i>
+              <span class="mobile-preview-avatar">U</span>
+            </div>
+          </div>
+
+          <div class="mobile-preview-content-card">
+            <!-- WhatsApp-style Action Bar (shown when card selected) -->
+            @if (selectedMobileCardIndex !== null && selectedCardActions.length > 0) {
+            <div class="mobile-action-bar">
+              <button type="button" class="mobile-action-bar-close" (click)="selectedMobileCardIndex = null; selectedCardActions = []" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <div class="mobile-action-bar-title">
+                <span>1 selected</span>
+              </div>
+              <div class="mobile-action-bar-actions">
+                @for (action of selectedCardActions; track action.action_type) {
+                <button 
+                  type="button" 
+                  class="mobile-action-bar-btn" 
+                  [title]="action.label"
+                  (click)="onMobileCardActionBarClick(action)">
+                  <i [class]="action.icon"></i>
+                  <span>{{ action.label }}</span>
+                </button>
+                }
+              </div>
+            </div>
+            }
+
+            <div class="mobile-preview-header">
+              <h4 class="mobile-preview-title">{{ mobileCardPreviewTitle }}</h4>
+            </div>
+
+            <div class="mobile-preview-toolbar">
+              <div class="mobile-preview-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" class="form-input w-full" [(ngModel)]="mobileCardPreviewSearch" placeholder="Search..." />
+              </div>
+
+              <div class="mobile-preview-actions-grid">
+                <button type="button" class="mobile-preview-action-btn icon-only" title="Filter"><i class="fa-solid fa-filter"></i></button>
+                <button type="button" class="mobile-preview-action-btn"><i class="fa-regular fa-rectangle-list"></i><span>Columns</span></button>
+                <button type="button" class="mobile-preview-action-btn icon-only" title="Export"><i class="fa-solid fa-download"></i></button>
+              </div>
+
+              <div class="mobile-preview-add-row">
+                <button type="button" class="mobile-preview-action-btn add-new"><i class="fa-solid fa-plus"></i><span>Add New</span></button>
+              </div>
+
+              <div class="mobile-preview-results">{{ mobileCardPreviewResultsText }}</div>
+            </div>
+
+            <div class="mobile-preview-list">
+              @if (filteredMobileCardPreviewRows.length === 0) {
+              <div class="mobile-preview-empty">No cards matched your search.</div>
+              }
+
+              @for (previewRow of filteredMobileCardPreviewRows; track previewRow.title; let rowIndex = $index) {
+              <div 
+                class="mobile-preview-card" 
+                [class.selected]="isCardSelected(rowIndex)"
+                (click)="onMobileCardClick(rowIndex)">
+                <div class="mobile-preview-grid" [style.--mobile-card-grid-columns]="mobileCardBuilderState.card.grid_columns" [style.--mobile-card-grid-rows]="mobileCardBuilderState.card.grid_rows">
+                  @for (column of mobileCardPreviewColumns; track column.id) {
+                  <!-- Skip action columns - actions shown in top bar when selected -->
+                  @if (column.type !== 'action') {
+                  <div class="mobile-preview-cell" [style.grid-column]="'span ' + column.col_span" [style.grid-row]="'span ' + column.row_span">
+                    @if (column.show_label !== false) {
+                    <div class="mobile-preview-cell-label">{{ column.label || (column.field_name || 'Field') }}</div>
+                    }
+                    <div class="mobile-preview-cell-value">{{ getMobileCardPreviewValue(column, rowIndex) }}</div>
+                  </div>
+                  }
+                  }
+                </div>
+                @if (isCardSelected(rowIndex)) {
+                <div class="mobile-card-selection-indicator">
+                  <i class="fa-solid fa-check"></i>
+                </div>
+                }
+              </div>
+              }
+
+              <div class="mobile-preview-pagination">
+                <button type="button" class="mobile-preview-page-btn"><i class="fa-solid fa-angles-left"></i></button>
+                <button type="button" class="mobile-preview-page-btn"><i class="fa-solid fa-angle-left"></i></button>
+                <span class="mobile-preview-page-indicator">1</span>
+                <button type="button" class="mobile-preview-page-btn"><i class="fa-solid fa-angle-right"></i></button>
+                <button type="button" class="mobile-preview-page-btn"><i class="fa-solid fa-angles-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
 
 <!-- Edit Item Modal -->
 @if (isEditModalOpen) {

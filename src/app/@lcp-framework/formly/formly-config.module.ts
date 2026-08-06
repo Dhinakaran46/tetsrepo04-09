@@ -292,6 +292,30 @@ export const lcpPresetExtension: FormlyExtension = {
             const parent = c.parent;
             if (!parent) return null;
 
+            const hasMeaningfulValue = (value: any): boolean => {
+              if (value === null || value === undefined) return false;
+              if (typeof value === 'string') return value.trim().length > 0;
+              if (Array.isArray(value)) return value.length > 0;
+              if (typeof value === 'object') return Object.keys(value).length > 0;
+              return true;
+            };
+
+            const mergeControlError = (control: import('@angular/forms').AbstractControl, hasError: boolean) => {
+              const existing = control.errors || {};
+              if (hasError) {
+                if (!existing['phoneAndCountry']) {
+                  control.setErrors({ ...existing, phoneAndCountry: true }, { emitEvent: false });
+                }
+                return;
+              }
+
+              if (existing['phoneAndCountry']) {
+                const nextErrors = { ...existing };
+                delete nextErrors['phoneAndCountry'];
+                control.setErrors(Object.keys(nextErrors).length ? nextErrors : null, { emitEvent: false });
+              }
+            };
+
             // 1. Check if explicit keys are configured in the field props
             let phoneKey = field?.props?.['phoneNumberField'] || field?.templateOptions?.['phoneNumberField'];
             let countryKey = field?.props?.['countryCodeField'] || field?.templateOptions?.['countryCodeField'];
@@ -316,22 +340,13 @@ export const lcpPresetExtension: FormlyExtension = {
               const countryControl = parent.get(countryKey);
 
               if (phoneControl && countryControl) {
-                const phoneVal = phoneControl.value;
-                const countryVal = countryControl.value;
-                const hasError = (phoneVal && !countryVal) || (!phoneVal && countryVal);
+                const hasPhone = hasMeaningfulValue(phoneControl.value);
+                const hasCountry = hasMeaningfulValue(countryControl.value);
+                const hasError = (hasPhone && !hasCountry) || (!hasPhone && hasCountry);
 
-                const siblingControl = c === phoneControl ? countryControl : phoneControl;
-                if (siblingControl && (c.touched || c.dirty)) {
-                  const siblingHasError = siblingControl.hasError('phoneAndCountry');
-                  if (hasError && !siblingHasError) {
-                    siblingControl.setErrors({ ...siblingControl.errors, phoneAndCountry: true }, { emitEvent: false });
-                    siblingControl.markAsTouched();
-                  } else if (!hasError && siblingHasError) {
-                    const errors = { ...siblingControl.errors };
-                    delete errors['phoneAndCountry'];
-                    siblingControl.setErrors(Object.keys(errors).length ? errors : null, { emitEvent: false });
-                  }
-                }
+                // Keep both controls in sync to avoid stale cross-field errors on edit forms.
+                mergeControlError(phoneControl, hasError);
+                mergeControlError(countryControl, hasError);
 
                 return hasError ? { phoneAndCountry: true } : null;
               }

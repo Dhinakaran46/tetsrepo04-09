@@ -8,7 +8,6 @@ import {
   Input,
   SimpleChanges,
   OnChanges,
-  OnDestroy,
   Output,
   EventEmitter,
 } from '@angular/core';
@@ -28,7 +27,7 @@ import Swal from 'sweetalert2';
 import { ExportService } from '../../service/common/export.service';
 import { commonConfig } from '../../config/common.config';
 import { LocalStorageService } from '../../service/common/local-storage.service';
-import { lastValueFrom, Subscription } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { Title } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
@@ -44,8 +43,6 @@ import { FormBuilderComponent } from '../form-builder/form-builder.component';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { TimezoneService } from '../../service/common/timezone.service';
 import { saveAs } from 'file-saver';
-import { MobileListComponent } from '../../components/mobile-list/mobile-list.component';
-import { ViewportService } from '../../service/common/viewport.service';
 
 export interface ExportResponse {
   blob: Blob;
@@ -79,7 +76,6 @@ interface AcceptedParentParamRule {
   imports: [
     CommonSharedModule,
     DataTableComponent,
-    MobileListComponent,
     LoaderComponent,
     ReactiveFormsModule,
     StaticPageComponent,
@@ -96,7 +92,7 @@ interface AcceptedParentParamRule {
   ],
   providers: [DatePipe],
 })
-export class MasterListComponent implements OnChanges, OnDestroy {
+export class MasterListComponent implements OnChanges {
   search_all: any[] = [];
   search_any: any[] = [];
 
@@ -109,25 +105,6 @@ export class MasterListComponent implements OnChanges, OnDestroy {
   @Input() tableLevel: number = 0;
   @Input() stickyHeader: any = null;
   @Input() grid_params: any = null;
-
-  // True when running in a mobile viewport/native shell, regardless of entity type -
-  // drives whether the view-type selector is shown at all. Recomputed whenever the
-  // viewport changes (e.g. device rotation) via mobileViewSub below.
-  isMobileContext: boolean = false;
-  // User-facing runtime choice (not persisted) - defaults to 'list' whenever a grid
-  // is opened on mobile; switching it re-renders instantly via the getter below.
-  selectedViewType: 'table' | 'list' = 'list';
-  readonly mobileViewTypeOptions: { value: 'table' | 'list'; label: string }[] = [
-    { value: 'list', label: 'List' },
-    { value: 'table', label: 'Table' },
-  ];
-  private mobileViewSub?: Subscription;
-
-  // Whether to render <app-mobile-list> instead of <app-datatable> - true only while
-  // on a mobile viewport/native shell AND the user has the List view selected.
-  get useMobileRenderer(): boolean {
-    return this.isMobileContext && this.selectedViewType === 'list';
-  }
 
   @Input() line_item_configurations: any = null;
   @Input() showBackButton: boolean = true;
@@ -304,6 +281,11 @@ export class MasterListComponent implements OnChanges, OnDestroy {
   private pendingGridFetchRequest: boolean = false;
   private queuedInitialFetchParams: FetchDataParams | null = null;
   private hasInitialGridFetchStarted: boolean = false;
+  // Card view's infinite scroll requests the next page but appends rather than
+  // replacing items - set by onPageChange when the request came from the
+  // datatable's scroll sentinel (source: 'infinite-scroll'), consumed once in
+  // fetchData. Table view's click-through pagination is unaffected.
+  private appendNextFetchResults: boolean = false;
   private savedViewInitialFallbackTimer: ReturnType<typeof setTimeout> | null = null;
   private ignoreNextSavedViewPageChange: boolean = false;
   private readonly USER_SEARCH_CONFIGURATIONS_TEMP_KEY = 'user_search_confgurations_temp';
@@ -355,8 +337,7 @@ export class MasterListComponent implements OnChanges, OnDestroy {
     private formBuilder: FormBuilder,
     private openaiService: OpenaiService,
     private routeUpdateService: RouteUpdateService,
-    private timezoneService: TimezoneService,
-    private viewportService: ViewportService
+    private timezoneService: TimezoneService
   ) {
     const url = this.localStorageService?.getData('base_app_url');
     this.adminUrl = url && url !== 'undefined' ? JSON.parse(url) : '/#';
@@ -500,14 +481,6 @@ export class MasterListComponent implements OnChanges, OnDestroy {
       if (masterListConfig.entity_configurations != null) {
         this.stickyHeader = masterListConfig.entity_configurations?.grid_enable_sticky_header === 'yes' ? 'yes' : 'no';
       }
-
-      // Any grid opened on a mobile viewport/native shell defaults to the List view -
-      // the selector below lets the user switch back to Table instantly, per-session.
-      this.selectedViewType = 'list';
-      this.mobileViewSub?.unsubscribe();
-      this.mobileViewSub = this.viewportService.mobileViewChanges().subscribe((isMobile) => {
-        this.isMobileContext = isMobile;
-      });
 
       const translateTitle = this.translate.instant(masterListConfig.fullEntity);
       this.titleService.setTitle(translateTitle);
@@ -2413,7 +2386,7 @@ export class MasterListComponent implements OnChanges, OnDestroy {
 
             // Processing records
             if (response.data.records) {
-              this.items = response.data.records.map((item: any, index: any) => {
+              const mappedRecords = response.data.records.map((item: any, index: any) => {
                 const formattedItem = { ...item };
                 for (const key in formattedItem) {
                   if (formattedItem.hasOwnProperty(key) && this.isDate(formattedItem[key])) {
@@ -2454,6 +2427,13 @@ export class MasterListComponent implements OnChanges, OnDestroy {
                 };
               });
 
+              if (this.appendNextFetchResults) {
+                this.items = [...this.items, ...mappedRecords];
+              } else {
+                this.items = mappedRecords;
+              }
+              this.appendNextFetchResults = false;
+
               const selectedRecord = this.resolveRecordForStaticPageContext(response.data.records);
               if (selectedRecord) {
                 if (!this.selectedItemUuid && selectedRecord.uuid) {
@@ -2469,9 +2449,11 @@ export class MasterListComponent implements OnChanges, OnDestroy {
               this.items = [];
               this.totalItems = 0;
               this.gridloading = false;
+              this.appendNextFetchResults = false;
               this.cdr.detectChanges();
             }
           } else {
+            this.appendNextFetchResults = false;
             this.entities = [];
             this.headerStaticEntityName = '';
             this.footerStaticEntityName = '';
@@ -2491,6 +2473,7 @@ export class MasterListComponent implements OnChanges, OnDestroy {
           const errorMessage = this.translate.instant(key);
           this.toastr.error(errorMessage, 'Error');
           this.gridloading = false;
+          this.appendNextFetchResults = false;
           this.entities = [];
           this.headerStaticEntityName = '';
           this.footerStaticEntityName = '';
@@ -3561,6 +3544,7 @@ export class MasterListComponent implements OnChanges, OnDestroy {
     this.currentPage = event.page;
     this.listQuery.start_index = event.start_index;
     this.listQuery.limit_range = this.resultsPerPage;
+    this.appendNextFetchResults = event?.source === 'infinite-scroll';
     if (event?.skipFetch) return;
     this.requestGridFetch(this.listQuery);
   }
@@ -3767,13 +3751,5 @@ export class MasterListComponent implements OnChanges, OnDestroy {
 
   onSelectionChange(data: any) {
     this.selectionChange.emit(data);
-  }
-
-  onViewTypeChange(value: string): void {
-    this.selectedViewType = value === 'table' ? 'table' : 'list';
-  }
-
-  ngOnDestroy(): void {
-    this.mobileViewSub?.unsubscribe();
   }
 }

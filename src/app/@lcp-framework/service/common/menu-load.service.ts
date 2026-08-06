@@ -41,9 +41,7 @@ export class MenuLoadService {
 
   private resolveMenuSlugsFromStoredMenus(userData: any): string[] {
     const unorgList = Array.isArray(userData?.unorgmenuList) ? userData.unorgmenuList : [];
-    const menuSlugs = unorgList
-      .map((item: any) => String(item?.menu_slug || item?.slug || '').trim())
-      .filter(Boolean);
+    const menuSlugs = unorgList.map((item: any) => String(item?.menu_slug || item?.slug || '').trim()).filter(Boolean);
 
     if (menuSlugs.length > 0) {
       return Array.from(new Set<string>(menuSlugs)).sort();
@@ -285,8 +283,8 @@ export class MenuLoadService {
     this.menu_slug = Array.isArray(menuSlug)
       ? menuSlug.map((slug) => String(slug).trim()).filter(Boolean)
       : menuSlug
-        ? [String(menuSlug).trim()].filter(Boolean)
-        : this.resolveMenuSlugsFromUserData(this.user_info);
+      ? [String(menuSlug).trim()].filter(Boolean)
+      : this.resolveMenuSlugsFromUserData(this.user_info);
 
     const payload = {
       print_query: true,
@@ -312,6 +310,7 @@ export class MenuLoadService {
         ['master_entities.export_template_file_name'],
         ['master_entities.static_page_content'],
         ['permissions.name', 'action_slug'],
+        ['master_entities.entity_configurations', 'entity_configurations'],
       ],
       includes: [
         {
