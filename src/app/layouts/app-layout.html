@@ -42,11 +42,7 @@
 
     <!-- Voice Search Section -->
     @if (enableVoiceSearch) {
-    <div
-      class="fixed z-50 flex flex-col items-center space-y-2 ltr:right-8 rtl:left-6"
-      [class.bottom-20]="!isMobileNav"
-      [class.bottom-[92px]]="isMobileNav"
-    >
+    <div class="fixed bottom-20 z-50 flex flex-col items-center space-y-2 ltr:right-8 rtl:left-6">
       <div class="relative">
         <button
           class="btn btn-outline-primary relative rounded-full bg-[#fafafa] p-3 dark:bg-[#060818] dark:hover:bg-primary"
@@ -174,7 +170,7 @@
       </div>
     </div>
     } @if (showTopButton) {
-    <div class="fixed z-50 ltr:right-6 rtl:left-6" [class.bottom-6]="!isMobileNav" [class.bottom-[76px]]="isMobileNav">
+    <div class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6">
       <button
         type="button"
         class="btn btn-outline-primary animate-pulse rounded-full bg-[#fafafa] p-2 dark:bg-[#060818] dark:hover:bg-primary"
@@ -208,9 +204,7 @@
       style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))"
     >
       <!--  BEGIN SIDEBAR  -->
-      @if (!isMobileNav) {
       <sidebar></sidebar>
-      }
       <!--  END SIDEBAR  -->
 
       <div
@@ -224,7 +218,6 @@
         <!--  BEGIN CONTENT AREA  -->
         <div
           class="animation p-6"
-          [class.pb-24]="isMobileNav"
           style="background-color: var(--app-bg-color, var(--app-bg-color-default)); color: var(--app-text-color, var(--app-text-color-default))"
         >
           <router-outlet></router-outlet>
@@ -237,8 +230,4 @@
       </div>
     </div>
   </div>
-
-  @if (isMobileNav) {
-  <mobile-bottom-nav></mobile-bottom-nav>
-  }
 </div>

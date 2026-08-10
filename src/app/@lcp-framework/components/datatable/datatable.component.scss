@@ -135,6 +135,31 @@
   }
 }
 
+/* Compact icon-only toolbar triggers on mobile (Filter/Columns/Export plus
+   Save New/Clear/Add New View/Update View/Reset) - same buttons, same click
+   handlers/dropdown panels, just sized down to uniform circles so several of
+   them sit comfortably in one row instead of each stretching full-width.
+   !important throughout: these buttons already carry Tailwind utility
+   classes (px-2.5, px-4 py-2, etc.) at the same specificity as a single
+   class selector, so a plain override can lose the cascade depending on
+   stylesheet order - !important guarantees this one wins. */
+.mobile-toolbar-btn {
+  padding: 0 !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  margin-right: 0 !important;
+  border-radius: 50% !important;
+
+  .badge {
+    top: -6px !important;
+  }
+}
+
 /* Sticky header for all tables when page scrolls */
 .datatable {
   table {
@@ -1266,27 +1291,6 @@ tr.expanded-child-row > td.datatable-child-cell {
   }
 }
 
-.card-view-selection-indicator {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--app-primary-color, #0d6efd);
-  color: #fff;
-  font-size: 0.65rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-  border: 2px solid #fff;
-
-  &:is(.dark *) {
-    border-color: #1b2e4b;
-  }
-}
-
 /* Infinite-scroll sentinel: an invisible trigger the IntersectionObserver
    watches, doubling as the "loading more" spinner slot while the next page
    is in flight. Replaces click-through pagination in card view. */
@@ -1302,65 +1306,158 @@ tr.expanded-child-row > td.datatable-child-cell {
   }
 }
 
-/* WhatsApp-style tap-to-select action bar, matching the Master Entity
-   "Mobile Card Builder" preview's own .mobile-action-bar pattern. */
-.card-action-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-  animation: card-action-bar-slide-down 0.2s ease;
+/* Tap-to-select actions, shown as a right-side slide-in drawer so any number
+   of dynamic actions - view/edit/delete plus whatever else an entity has -
+   get a full-width, roomy tap target each instead of being squeezed into
+   small icons in a horizontal bar. */
+.card-action-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.35);
+  animation: card-action-drawer-fade-in 0.15s ease;
 }
 
-@keyframes card-action-bar-slide-down {
+.card-action-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 1201;
+  width: min(80vw, 320px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  animation: card-action-drawer-slide-in 0.2s ease;
+
+  &:is(.dark *) {
+    background: #1b2e4b;
+  }
+}
+
+@keyframes card-action-drawer-fade-in {
   from {
     opacity: 0;
-    transform: translateY(-6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
+@keyframes card-action-drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.card-action-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e0e6ed;
+  flex-shrink: 0;
+
+  &:is(.dark *) {
+    border-color: #253b5c;
+  }
+}
+
+.card-action-drawer-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 .card-action-bar-close {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
   flex-shrink: 0;
+
+  &:is(.dark *) {
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
 
-.card-action-bar-actions {
+.card-action-drawer-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-left: auto;
-}
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  overflow-y: auto;
 
-.card-action-bar-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 600;
+  // This renders master-list.component.html's own #actionTemplate (the same
+  // one the desktop table's action column uses) via ngTemplateOutlet. That
+  // template is DECLARED in MasterListComponent, so its elements carry
+  // MasterListComponent's own view-encapsulation attribute, not this
+  // component's - a plain scoped `button { ... }` rule here silently never
+  // matches it. ::ng-deep is the standard, deliberate escape hatch for
+  // exactly this cross-component-projected-content case.
+  ::ng-deep {
+    // The template's own wrapper (`class="flex items-center gap-4"`) lays its
+    // buttons out in a row for the compact desktop table cell - override just
+    // for this drawer so each action stacks as its own big row instead.
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+    }
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.28);
+    button,
+    a {
+      display: flex !important;
+      align-items: center;
+      gap: 12px;
+      width: 100% !important;
+      height: 46px;
+      padding: 0 14px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: inherit !important;
+
+      i,
+      svg {
+        flex-shrink: 0;
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 1.05rem;
+      }
+
+      // These buttons only carry a tooltip (data-tippy-content), no visible
+      // text, by design for the compact desktop row - surface that same text
+      // here as a real label instead of touching the shared template markup.
+      &::after {
+        content: attr(data-tippy-content);
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &:hover,
+      &:active {
+        background: rgba(0, 0, 0, 0.06);
+      }
+    }
+
+    :is(.dark *) button:hover,
+    :is(.dark *) button:active,
+    :is(.dark *) a:hover,
+    :is(.dark *) a:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
   }
 }
 

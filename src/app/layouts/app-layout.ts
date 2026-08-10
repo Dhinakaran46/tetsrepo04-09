@@ -16,23 +16,17 @@ import { OpenaiService } from '../@lcp-framework/service/common/openai.service';
 import { LayoutReadyService } from '../@lcp-framework/service/common/layout-ready.service';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
 import { race, Subscription, take, timer } from 'rxjs';
-import { ViewportService } from '../@lcp-framework/service/common/viewport.service';
-import { MobileBottomNavComponent } from './mobile-bottom-nav/mobile-bottom-nav';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app-layout.html',
   standalone: true,
-  imports: [CommonSharedModule, RouterModule, SidebarComponent, ThemeCustomizerComponent, HeaderComponent, MobileBottomNavComponent, TranslateModule, FormsModule],
+  imports: [CommonSharedModule, RouterModule, SidebarComponent, ThemeCustomizerComponent, HeaderComponent, TranslateModule, FormsModule],
 })
 export class AppLayout implements OnDestroy {
   store: any = initialState;
   isLoading = true;
   showTopButton = false;
-  // WhatsApp/Instagram/Teams-style bottom tab bar replaces the sidebar drawer in
-  // this context; computed once (not reactively) - a layout shell doesn't need
-  // live rotation-handling, unlike a single grid component.
-  isMobileNav = this.viewportService.isMobileView();
   apiUrl = localStorage.getItem('lcp_api_base_url') || environment.apiUrl;
   enableVoiceSearch = false;
   private menuReadySub?: Subscription;
@@ -51,8 +45,7 @@ export class AppLayout implements OnDestroy {
     private layoutReadyService: LayoutReadyService,
     private languageService: LanguageService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone,
-    private viewportService: ViewportService
+    private ngZone: NgZone
   ) {
     // Reset ready state so loader shows on each fresh navigation to app layout
     this.layoutReadyService.reset();

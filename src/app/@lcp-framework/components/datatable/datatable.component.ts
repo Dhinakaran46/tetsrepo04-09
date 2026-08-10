@@ -232,13 +232,26 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
     return !!this.mobileCardConfig;
   }
 
-  get mobileCardColumns(): any[] {
-    return (this.mobileCardConfig?.row?.columns || []).filter((column: any) => column?.type !== 'action');
+  // Drives the compact mobile toolbar layout (icon-only Filter/Columns/Export
+  // triggers, FAB instead of an inline Add New button) - same viewport check
+  // already used to default the card view on, kept as its own getter since it
+  // applies regardless of whether this entity even has a mobile card config.
+  get isMobileToolbar(): boolean {
+    return this.viewportService.isMobileView();
   }
 
-  onViewTypeChange(value: string): void {
-    this.activeViewType = value === 'card' ? 'card' : 'table';
-    this.selectedCardIndex = null;
+  // The card view's action bar reuses the exact same customTemplate the table's
+  // own "table_column_action" column already renders (master-list.component.html's
+  // #actionTemplate) - same dynamic, permission-gated action set (view/edit/delete
+  // plus whatever else an entity has: resend email, export, assign, print, etc.),
+  // same click handlers, automatically staying in sync with the table. No
+  // hardcoded/duplicated action list to maintain here.
+  get actionColumnTemplate(): TemplateRef<any> | null {
+    return this.headercolumns.find((col) => col.header === 'table_column_action')?.customTemplate || null;
+  }
+
+  get mobileCardColumns(): any[] {
+    return (this.mobileCardConfig?.row?.columns || []).filter((column: any) => column?.type !== 'action');
   }
 
   // Infinite scroll for card view: replaces click-through pagination with an
@@ -2021,21 +2034,6 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked, 
 
   closeCardSelection(): void {
     this.selectedCardIndex = null;
-  }
-
-  onCardView(item: any): void {
-    this.view.emit(item);
-    this.closeCardSelection();
-  }
-
-  onCardEdit(item: any): void {
-    this.edit.emit(item);
-    this.closeCardSelection();
-  }
-
-  onCardDelete(item: any): void {
-    this.delete.emit(item);
-    this.closeCardSelection();
   }
 
   getConditionValue(index: number): string | null {
