@@ -173,7 +173,7 @@ export class ApprovalWorkflowComponent implements OnInit {
       url: [''],
       description: [''],
       status_id: [1],
-      id: [null, Validators.required],
+      approval_workflow_module_id: [null, Validators.required],
       query_information: [''],
       conditions: this.fb.array([]),
       levels: this.fb.array([]),
@@ -186,14 +186,14 @@ export class ApprovalWorkflowComponent implements OnInit {
     return new Promise<void>((resolve) => {
       const params = {
         company_id: 1,
-        primary_table: 'approval_workflows',
+        primary_table: 'master_approval_workflows',
         start_index: 0,
         limit_range: 1000,
-        sort_columns: [['approval_workflows.slug', 'asc']],
-        search_all: [{ column_name: 'approval_workflows.status_id', value: 3, operator: '!=' }],
+        sort_columns: [['master_approval_workflows.entity_name', 'asc']],
+        search_all: [{ column_name: 'master_approval_workflows.status_id', value: 3, operator: '!=' }],
         select_columns: [
           [
-            'approval_workflows.id, approval_workflows.name, approval_workflows.slug, approval_workflows.primary_table, approval_workflows.query_information, approval_workflows.approve_mail_id, approval_workflows.reject_mail_id, approval_workflows.approve_whatsapp_id, approval_workflows.reject_whatsapp_id',
+            'master_approval_workflows.id, master_approval_workflows.name, master_approval_workflows.entity_name, master_approval_workflows.primary_table, master_approval_workflows.query_information, master_approval_workflows.approve_mail_id, master_approval_workflows.reject_mail_id, master_approval_workflows.approve_whatsapp_id, master_approval_workflows.reject_whatsapp_id',
           ],
         ],
       };
@@ -202,7 +202,7 @@ export class ApprovalWorkflowComponent implements OnInit {
           if (res.status && res.code === 200) {
             this.modules = (res.data.records || []).map((module: any) => ({
               ...module,
-              slug: module.slug || module.name,
+              entity_name: module.entity_name || module.name,
             }));
           }
           resolve();
@@ -276,17 +276,17 @@ export class ApprovalWorkflowComponent implements OnInit {
 
     const params = {
       company_id: 1,
-      primary_table: 'approval_workflow_line_items',
+      primary_table: 'master_approval_workflow_line_items',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [['approval_workflow_line_items.order_no', 'asc']],
+      sort_columns: [['master_approval_workflow_line_items.order_no', 'asc']],
       search_all: [
-        { column_name: 'approval_workflow_line_items.approval_workflow_id', value: moduleId, operator: '=' },
-        { column_name: 'approval_workflow_line_items.status_id', value: 3, operator: '!=' },
+        { column_name: 'master_approval_workflow_line_items.master_approval_workflow_id', value: moduleId, operator: '=' },
+        { column_name: 'master_approval_workflow_line_items.status_id', value: 3, operator: '!=' },
       ],
       select_columns: [
         [
-          'approval_workflow_line_items.id, approval_workflow_line_items.type, approval_workflow_line_items.default_query, approval_workflow_line_items.field_name, approval_workflow_line_items.display_name, approval_workflow_line_items.field_type_id, approval_workflow_line_items.enum_values, approval_workflow_line_items.order_no, approval_workflow_line_items.approve_query_information, approval_workflow_line_items.reject_query_information, approval_workflow_line_items.is_searchable',
+          'master_approval_workflow_line_items.id, master_approval_workflow_line_items.type, master_approval_workflow_line_items.default_query, master_approval_workflow_line_items.field_name, master_approval_workflow_line_items.display_name, master_approval_workflow_line_items.field_type_id, master_approval_workflow_line_items.enum_values, master_approval_workflow_line_items.order_no, master_approval_workflow_line_items.approve_query_information, master_approval_workflow_line_items.reject_query_information, master_approval_workflow_line_items.is_searchable',
         ],
       ],
     };
@@ -370,7 +370,7 @@ export class ApprovalWorkflowComponent implements OnInit {
   }
 
   private getCurrentSelectedModule(): any {
-    const moduleId = this.form.get('id')?.value;
+    const moduleId = this.form.get('approval_workflow_module_id')?.value;
     return this.modules.find((m: any) => String(m.id) === String(moduleId));
   }
 
@@ -1370,12 +1370,12 @@ export class ApprovalWorkflowComponent implements OnInit {
             url: entity.url || '',
             description: entity.description || '',
             status_id: entity.status_id,
-            id: entity.id || null,
+            approval_workflow_module_id: entity.approval_workflow_module_id || null,
             query_information: entity.query_information || '',
           });
 
-          if (entity.id) {
-            this.onModuleChange(entity.id, 'preserve');
+          if (entity.approval_workflow_module_id) {
+            this.onModuleChange(entity.approval_workflow_module_id, 'preserve');
           }
 
           if (entity.approval_workflow_query_conditions) {
@@ -1468,7 +1468,7 @@ export class ApprovalWorkflowComponent implements OnInit {
     const formData = this.form.value;
     const slug = this.toFullSlug(String(formData.slug || ''));
     const conditions = this.committedConditions || [];
-    const queryInformation = this.buildWorkflowQueryInformation(formData.id, conditions);
+    const queryInformation = this.buildWorkflowQueryInformation(formData.approval_workflow_module_id, conditions);
 
     const masterRecord = {
       name: formData.name,
@@ -1476,7 +1476,7 @@ export class ApprovalWorkflowComponent implements OnInit {
       url: formData.url || null,
       description: formData.description || null,
       status_id: formData.status_id,
-      id: formData.id || null,
+      approval_workflow_module_id: formData.approval_workflow_module_id || null,
       approval_workflow_query_conditions: conditions.length ? JSON.stringify(conditions) : null,
       query_information: queryInformation,
     };
