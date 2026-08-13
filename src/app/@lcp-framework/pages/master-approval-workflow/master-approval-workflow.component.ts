@@ -78,7 +78,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
   insert_json_schema: any = {
     // it will be removed
     action: ['insert', 'insert'],
-    table: ['approval_workflows', 'approval_workflow_line_items'],
+    table: ['master_approval_workflows', 'master_approval_workflow_line_items'],
     table_mapping: ['table1', 'table2'],
     data: {
       table1: [],
@@ -88,7 +88,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
 
   update_json_schema: any = {
     action: ['update', 'hard_delete', 'insert'],
-    table: ['approval_workflows', 'approval_workflow_line_items', 'approval_workflow_line_items'],
+    table: ['master_approval_workflows', 'master_approval_workflow_line_items', 'master_approval_workflow_line_items'],
     table_mapping: ['table1', 'table2', 'table3'],
     data: {
       table1: [],
@@ -1323,8 +1323,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
             grid_show_global_search: 'yes',
             grid_show_advanced_search: 'yes',
             grid_show_column_filter: 'yes',
-            grid_enable_sticky_first_column: 'yes',
-            grid_enable_sticky_last_column: 'yes',
+            grid_enable_sticky_action_column: 'yes',
           },
         },
       ],
@@ -1475,7 +1474,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
       dashboard_wizard_columns: [''],
       dashboard_wizard_order_no: ['0.01', [this.decimalValidator]],
       reload_timeout: [''],
-      dashboard_slug: [''],
+      dashboard_entity_name: [''],
       queryInformation: [''],
       reportInformation: [''],
       dashboard_wizard_options: [''],
@@ -1848,43 +1847,51 @@ export class MasterApprovalWorkflowComponent implements OnInit {
     const params = {
       company_id: 1,
       print_query: true,
-      primary_table: 'approval_workflows',
+      primary_table: 'master_approval_workflows',
       start_index: 0,
       limit_range: 1,
-      sort_columns: [['approval_workflows.id', 'desc']],
+      sort_columns: [['master_approval_workflows.id', 'desc']],
       select_columns: [
-        ['approval_workflows.*'],
+        ['master_approval_workflows.*'],
         [
-          "CASE WHEN COUNT(approval_workflow_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', approval_workflow_line_items.id,'type', approval_workflow_line_items.type,'default_query', approval_workflow_line_items.default_query,'field_name', approval_workflow_line_items.field_name,'display_name', approval_workflow_line_items.display_name,'order_no', approval_workflow_line_items.order_no,'is_searchable', approval_workflow_line_items.is_searchable,'field_type_id', approval_workflow_line_items.field_type_id,'enum_values', approval_workflow_line_items.enum_values,'approve_query_information', approval_workflow_line_items.approve_query_information, 'reject_query_information', approval_workflow_line_items.reject_query_information))) END",
+          "CASE WHEN COUNT(master_approval_workflow_line_items.id) = 0 THEN null ELSE COALESCE(Json_agg(DISTINCT jsonb_build_object('id', master_approval_workflow_line_items.id,'type', master_approval_workflow_line_items.type,'default_query', master_approval_workflow_line_items.default_query,'field_name', master_approval_workflow_line_items.field_name,'display_name', master_approval_workflow_line_items.display_name,'order_no', master_approval_workflow_line_items.order_no,'is_searchable', master_approval_workflow_line_items.is_searchable,'field_type_id', master_approval_workflow_line_items.field_type_id,'enum_values', master_approval_workflow_line_items.enum_values,'approve_query_information', master_approval_workflow_line_items.approve_query_information, 'reject_query_information', master_approval_workflow_line_items.reject_query_information))) END",
           'items',
         ],
       ],
       includes: [
         {
-          table_name: 'approval_workflow_line_items',
+          table_name: 'master_approval_workflow_line_items',
           join_type: 'LEFT',
-          join_condition: `approval_workflows.id = approval_workflow_line_items.approval_workflow_id AND approval_workflows.uuid = '${id}'`,
+          join_condition: `master_approval_workflows.id = master_approval_workflow_line_items.master_approval_workflow_id AND master_approval_workflows.uuid = '${id}'`,
         },
       ],
-      group_by: ['approval_workflows.id'],
-      search_all: [{ value: id, operator: '=', column_name: 'approval_workflows.uuid' }],
+      search_all: [
+        {
+          column_name: 'master_approval_workflows.uuid',
+          value: this.id,
+          operator: '=',
+        },
+      ],
+
+      group_by: ['master_approval_workflows.id'],
     };
 
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
         if (response.status && response.code === 200) {
           const entity = response.data.records[0];
-          this.originalEntityName = entity.slug || '';
+          this.originalEntityName = entity.entity_name || '';
 
           const prefix = this.approvalWorkflowEntityNamePrefix;
-          const entityNameSuffix = entity.slug && entity.slug.startsWith(prefix + '_') ? entity.slug.slice(prefix.length + 1) : entity.slug || '';
+          const entityNameSuffix =
+            entity.entity_name && entity.entity_name.startsWith(prefix + '_') ? entity.entity_name.slice(prefix.length + 1) : entity.entity_name || '';
 
           this.form.patchValue({
             name: entity.name,
             entityName: entityNameSuffix,
             primaryTable: entity.primary_table && entity.primary_table != 'null' ? entity.primary_table : '',
             statusId: entity.status_id,
-            queryInformation: entity.query_builder_information ? this.prettyJSON(entity.query_builder_information) : '',
+            queryInformation: entity.query_information ? this.prettyJSON(entity.query_information) : '',
             approve_mail_id: entity.approve_mail_id,
             reject_mail_id: entity.reject_mail_id,
             approve_whatsapp_id: entity.approve_whatsapp_id,
@@ -1937,10 +1944,10 @@ export class MasterApprovalWorkflowComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        slug: entitySlug,
+        entity_name: entitySlug,
         ...(formData.primaryTable && { primary_table: formData.primaryTable }),
         ...(formData.statusId && { status_id: formData.statusId }),
-        ...(formData.queryInformation && { query_builder_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }),
+        ...(formData.queryInformation && { query_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }),
         ...(formData.approve_mail_id && { approve_mail_id: formData.approve_mail_id }),
         ...(formData.reject_mail_id && { reject_mail_id: formData.reject_mail_id }),
         ...(formData.approve_whatsapp_id && { approve_whatsapp_id: formData.approve_whatsapp_id }),
@@ -1957,7 +1964,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
         const isRejectQuery = this.isRejectQueryType(itemType);
 
         return {
-          approval_workflow_id: '@table1.id',
+          master_approval_workflow_id: '@table1.id',
           type: itemType,
           default_query: isQueryLineItem ? !!control.value.defaultQuery : false,
           field_name: control.value.fieldName,
@@ -1996,12 +2003,12 @@ export class MasterApprovalWorkflowComponent implements OnInit {
     const master = [
       {
         name: formData.name,
-        slug: newEntityName || null,
+        entity_name: newEntityName || null,
         ...(formData.primaryTable ? { primary_table: formData.primaryTable } : { primary_table: null }),
         ...(formData.statusId ? { status_id: formData.statusId } : { status_id: null }),
         ...(formData.queryInformation
-          ? { query_builder_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }
-          : { query_builder_information: null }),
+          ? { query_information: this.prepareJSON(formData.queryInformation, true, 'Query Information') }
+          : { query_information: null }),
         ...(formData.approve_mail_id ? { approve_mail_id: formData.approve_mail_id } : { approve_mail_id: null }),
         ...(formData.reject_mail_id ? { reject_mail_id: formData.reject_mail_id } : { reject_mail_id: null }),
         ...(formData.approve_whatsapp_id ? { approve_whatsapp_id: formData.approve_whatsapp_id } : { approve_whatsapp_id: null }),
@@ -2012,7 +2019,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
     this.update_json_schema.data['table1'] = master;
     this.update_json_schema.conditions['table1'] = [{ uuid: id }];
 
-    this.update_json_schema.conditions['table2'] = [{ approval_workflow_id: '@table1.id' }];
+    this.update_json_schema.conditions['table2'] = [{ master_approval_workflow_id: '@table1.id' }];
     const itemsArray = this.form.get('items') as FormArray;
     if (itemsArray && itemsArray.length > 0) {
       const items = itemsArray.controls.map((control: any) => {
@@ -2022,7 +2029,7 @@ export class MasterApprovalWorkflowComponent implements OnInit {
         const isRejectQuery = this.isRejectQueryType(itemType);
 
         return {
-          approval_workflow_id: '@table1.id',
+          master_approval_workflow_id: '@table1.id',
           type: itemType,
           default_query: isQueryLineItem ? !!control.value.defaultQuery : false,
           field_name: control.value.fieldName,
@@ -2820,10 +2827,10 @@ export class MasterApprovalWorkflowComponent implements OnInit {
 
     const payload = {
       action: ['update'],
-      table: ['approval_workflows'],
+      table: ['master_approval_workflows'],
       table_mapping: ['table1'],
       data: {
-        table1: [{ slug: newEntityName }],
+        table1: [{ entity_name: newEntityName }],
       },
       conditions: {
         table1: [{ uuid: this.id }],
@@ -2873,11 +2880,11 @@ export class MasterApprovalWorkflowComponent implements OnInit {
     const params = {
       company_id: 1,
       print_query: false,
-      primary_table: 'approval_workflows',
+      primary_table: 'master_approval_workflows',
       start_index: 0,
       limit_range: 1000,
-      sort_columns: [['approval_workflows.id', 'desc']],
-      select_columns: [['approval_workflows.slug', 'value']],
+      sort_columns: [['master_approval_workflows.id', 'desc']],
+      select_columns: [['master_approval_workflows.entity_name', 'value']],
     };
     this.gridApiService.getAllList(params).subscribe(
       (response) => {
