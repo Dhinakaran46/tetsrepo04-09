@@ -35,7 +35,7 @@
       }
       <div class="datatable-toolbar-main flex items-center gap-4 md:flex-row md:items-center md:ltr:ml-auto md:rtl:mr-auto">
         <div
-          class="flex gap-2 md:flex-row md:items-center"
+          class="datatable-toolbar-actions flex gap-2 md:flex-row md:items-center"
           [class.flex-col]="!isMobileToolbar"
           [class.flex-row]="isMobileToolbar"
           [class.flex-wrap]="isMobileToolbar"
@@ -407,7 +407,7 @@
               </div>
             </div>
             } @if (showColumnFilter) {
-            <div class="dropdown relative !z-[10] mb-2 md:mb-0" (click)="$event.stopPropagation()">
+            <div class="mobile-columns-trigger dropdown relative !z-[10] mb-2 md:mb-0" (click)="$event.stopPropagation()">
               <button
                 type="button"
                 (click)="toggleColumnsMenu($event)"
@@ -446,7 +446,7 @@
               }
             </div>
             } @if (permissions && (this.masterInfo?.permissions?.export_excel || this.masterInfo?.permissions?.export_pdf)) {
-            <div class="flex">
+            <div class="mobile-export-trigger flex">
               <div class="dropdown relative !z-[10] mb-2 md:mb-0">
                 <button
                   type="button"
@@ -959,7 +959,11 @@
               [class.selected]="selectedCardIndex === i"
               (click)="onCardTap(i)"
             >
-              <div class="card-view-grid" [style.grid-template-rows]="'repeat(' + (mobileCardConfig.grid_rows || 4) + ', minmax(34px, auto))'">
+              <div
+                class="card-view-grid"
+                [style.grid-template-columns]="'repeat(' + (mobileCardConfig.grid_columns || 4) + ', minmax(0, 1fr))'"
+                [style.grid-template-rows]="'repeat(' + (mobileCardConfig.grid_rows || 4) + ', minmax(34px, auto))'"
+              >
                 @for (column of mobileCardColumns; track column.field_name) {
                 <div
                   class="card-view-cell"

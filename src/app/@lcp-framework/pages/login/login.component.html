@@ -2,6 +2,27 @@
   <h1 class="text-3xl uppercase !leading-snug md:text-4xl">{{ this.title_key | translate }}</h1>
   <!--<p class="text-base font-bold leading-normal text-white-dark">{{ 'form_label_login_description' | translate }}</p>-->
 </div>
+
+@if (loginMode === 'biometric') {
+<div class="flex flex-col items-center gap-3 py-10 dark:text-white">
+  <button
+    type="button"
+    (click)="loginWithBiometrics()"
+    [disabled]="biometricLoading"
+    class="flex h-24 w-24 items-center justify-center rounded-full border-2 border-primary bg-primary/5 text-primary shadow-[0_10px_24px_-8px_rgba(67,97,238,0.55)] transition hover:scale-105 hover:bg-primary/10 disabled:opacity-60"
+    aria-label="Log in with fingerprint"
+  >
+    <i class="fa-solid fa-fingerprint text-5xl"></i>
+  </button>
+  <p class="font-semibold">{{ biometricLoading ? 'Verifying...' : 'Tap to log in with fingerprint' }}</p>
+  @if (biometricEmail) {
+  <p class="text-sm text-white-dark">{{ biometricEmail }}</p>
+  }
+  <button type="button" (click)="switchToPasswordLogin()" class="mt-6 text-sm font-semibold text-primary underline">Use email &amp; password instead</button>
+</div>
+}
+
+@if (loginMode === 'password') {
 <form class="space-y-5 dark:text-white" [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off">
   <div class="login-form">
     <label for="Email">{{ 'form_label_email' | translate }}</label>
@@ -66,10 +87,19 @@
       {{ 'forget_pwd' | translate }}
     </a>
   </div>
-  <button type="submit" class="btn btn-primary login-form !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+  <button type="submit" class="btn btn-primary login-form !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]" [disabled]="loading">
     {{ 'submit' | translate }}
   </button>
+
+  @if (showBiometricLogin) {
+  <div class="!mt-4 text-center">
+    <button type="button" (click)="switchToBiometricLogin()" class="text-sm font-semibold text-primary underline">
+      <i class="fa-solid fa-fingerprint"></i>&nbsp; Use fingerprint instead
+    </button>
+  </div>
+  }
 </form>
+}
 <!--<div class="relative my-7 text-center md:mb-9">
     <span class="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-white-light dark:bg-white-dark"></span>
     <span class="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light">or</span>
@@ -115,8 +145,8 @@
   </ul>
 </div>-->
 @if (showTenantRegistration) {
-<div class="text-center dark:text-white mt-5">
-Don't have an account?
-<a routerLink="/tenant/registration" class="uppercase text-primary underline transition hover:text-black dark:hover:text-white"> Register As Tenant </a>
+<div class="mt-5 text-center dark:text-white">
+  Don't have an account?
+  <a routerLink="/tenant/registration" class="uppercase text-primary underline transition hover:text-black dark:hover:text-white"> Register As Tenant </a>
 </div>
 }

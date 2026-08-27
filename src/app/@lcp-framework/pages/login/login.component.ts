@@ -1,5 +1,5 @@
 ﻿import { animate, style, transition, trigger } from '@angular/animations';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,6 +14,8 @@ import { TimezoneService } from '../../service/common/timezone.service';
 import { MenuMapService } from '../../service/common/menu-map.service';
 import { ThemeService } from '../../service/common/theme.service';
 import { initialState } from '../../../store/index.reducer';
+import { BiometricAuthService } from '../../service/common/biometric-auth.service';
+import Swal from 'sweetalert2';
 
 interface MenuItem {
   id: number;
@@ -95,7 +97,20 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
 
   title_key: string = 'login';
 
+  showBiometricLogin = false;
+  biometricLoading = false;
+  biometricEmail = '';
+  // Which half of the login screen is showing - once fingerprint login is
+  // enabled it's the default view (mirrors standard mobile-app behaviour:
+  // fingerprint first, "use password instead" as the fallback), otherwise
+  // it's the only option and 'password' is the sole mode ever used.
+  loginMode: 'password' | 'biometric' = 'password';
+  private biometricAttempt = false;
+  private readonly BIOMETRIC_DECLINED_KEY = 'biometric_login_declined';
+
   private focusListener: any;
+  private biometricRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private destroyed = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -113,7 +128,10 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     private menuLoadService: MenuLoadService,
     private timezoneService: TimezoneService,
     private commonService: MenuMapService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private biometricAuthService: BiometricAuthService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/)]],
@@ -154,13 +172,163 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.focusListener = () => this.checkIfLoggedIn();
+    this.focusListener = () => {
+      this.checkIfLoggedIn();
+      // Re-check on resume too, not just at mount - covers the native
+      // biometric bridge not being ready yet on a cold app start.
+      this.checkBiometricLoginAvailability();
+    };
     window.addEventListener('focus', this.focusListener);
+
+    this.checkBiometricLoginAvailability();
+    // Guards a cold-start race where the native biometric bridge isn't fully
+    // ready the instant this component mounts, so the very first check can
+    // come back empty even though credentials are saved - one retry shortly
+    // after covers it without needing a dedicated "bridge ready" plugin.
+    this.biometricRetryTimer = setTimeout(() => this.checkBiometricLoginAvailability(), 500);
+  }
+
+  // Only auto-switch the view into biometric mode once - later re-checks (on
+  // resume, on the cold-start retry) should still refresh showBiometricLogin
+  // so the "use fingerprint instead" link stays accurate, but shouldn't yank
+  // the user back to the fingerprint screen if they deliberately switched to
+  // the password form.
+  private biometricModeAutoApplied = false;
+
+  private async checkBiometricLoginAvailability(): Promise<void> {
+    if (!this.biometricAuthService.isSupported) return;
+    const available = await this.biometricAuthService.isAvailable();
+    if (!available) return;
+    const hasSaved = await this.biometricAuthService.hasSavedCredentials();
+
+    // Capacitor plugin calls resolve via the native bridge, outside Angular's
+    // zone - without this, the state below is set correctly but the view
+    // doesn't re-render until some unrelated zone-patched event (a click,
+    // etc.) happens to run change detection afterwards.
+    this.ngZone.run(() => {
+      this.showBiometricLogin = hasSaved;
+      if (hasSaved) {
+        this.biometricEmail = this.biometricAuthService.getSavedEmail();
+        if (!this.biometricModeAutoApplied) {
+          this.loginMode = 'biometric';
+          this.biometricModeAutoApplied = true;
+        }
+      }
+      // Belt-and-suspenders: force a synchronous check pass right here rather
+      // than trusting zone.js to schedule one on its own - on this build the
+      // view was staying on the old template until an unrelated click forced
+      // a check, which points at something not reliably re-entering the zone.
+      this.safeDetectChanges();
+    });
+  }
+
+  switchToPasswordLogin(): void {
+    this.loginMode = 'password';
+  }
+
+  switchToBiometricLogin(): void {
+    this.biometricEmail = this.biometricAuthService.getSavedEmail();
+    this.loginMode = 'biometric';
+  }
+
+  async loginWithBiometrics(): Promise<void> {
+    if (this.biometricLoading || this.loading) return;
+    this.biometricLoading = true;
+    try {
+      const credentials = await this.biometricAuthService.loginWithBiometrics();
+      // The native fingerprint prompt resolves via Capacitor's bridge, outside
+      // Angular's zone - patchValue/onSubmit (and everything onSubmit kicks
+      // off, including the HTTP call) need to run inside it, or the rest of
+      // the login flow silently stops updating the view.
+      this.ngZone.run(() => {
+        this.loginForm.patchValue({ email: credentials.email, password: credentials.password });
+        this.biometricAttempt = true;
+        this.onSubmit();
+        this.safeDetectChanges();
+      });
+    } catch (error) {
+      // User cancelled the prompt or verification failed - fall back to the
+      // manual form silently, no need to surface the raw plugin error.
+      console.warn('Biometric login cancelled or failed:', error);
+    } finally {
+      this.ngZone.run(() => {
+        this.biometricLoading = false;
+        this.safeDetectChanges();
+      });
+    }
+  }
+
+  private async offerBiometricSetup(email: string, password: string): Promise<void> {
+    if (!this.biometricAuthService.isSupported) return;
+    const available = await this.biometricAuthService.isAvailable();
+    if (!available) return;
+
+    const alreadySaved = await this.biometricAuthService.hasSavedCredentials();
+    if (alreadySaved) {
+      // Keep the stored credentials in sync in case the password just changed -
+      // this is a silent background refresh of an already-enrolled fingerprint,
+      // not a new enrollment, so it doesn't need another scan.
+      await this.biometricAuthService.saveCredentials({ email, password });
+      this.ngZone.run(() => {
+        this.showBiometricLogin = true;
+        this.biometricEmail = email;
+        this.safeDetectChanges();
+      });
+      return;
+    }
+
+    if (this.localstore.getData(this.BIOMETRIC_DECLINED_KEY) === 'true') return;
+
+    const result = await Swal.fire({
+      title: 'Enable Fingerprint Login?',
+      text: 'Scan your fingerprint to log in faster next time.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Enable',
+      cancelButtonText: 'Not now',
+    });
+
+    if (!result.isConfirmed) {
+      this.localstore.storeData(this.BIOMETRIC_DECLINED_KEY, 'true');
+      return;
+    }
+
+    try {
+      // Standard pattern: require an actual fingerprint scan to confirm
+      // enrollment, rather than saving credentials silently in the background.
+      await this.biometricAuthService.enrollCredentials({ email, password });
+      this.ngZone.run(() => {
+        this.showBiometricLogin = true;
+        this.biometricEmail = email;
+        this.safeDetectChanges();
+      });
+    } catch (error) {
+      // Scan cancelled/failed - don't mark as declined, just try again on the
+      // next successful login.
+      console.warn('Fingerprint enrollment cancelled or failed:', error);
+    }
   }
 
   ngOnDestroy(): void {
     document.documentElement.classList.remove('login-page');
     window.removeEventListener('focus', this.focusListener);
+    this.destroyed = true;
+    if (this.biometricRetryTimer) {
+      clearTimeout(this.biometricRetryTimer);
+    }
+  }
+
+  // detectChanges() throws (NG0911) if the view was already torn down by the
+  // time an in-flight biometric plugin call resolves (e.g. the user
+  // navigated away right after a successful login) - guard every call site
+  // through here instead of repeating the destroyed check everywhere.
+  private safeDetectChanges(): void {
+    if (this.destroyed) return;
+    try {
+      this.cdr.detectChanges();
+    } catch {
+      // View was torn down between the check above and this call - ignore.
+    }
   }
 
   get formControls() {
@@ -270,6 +438,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     const loginData = this.loginForm.value;
+    const attemptedViaBiometrics = this.biometricAttempt;
+    this.biometricAttempt = false;
 
     this.authService
       .login({
@@ -279,6 +449,8 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
       .subscribe({
         next: async (response: any) => {
           if (response.status) {
+            await this.offerBiometricSetup(loginData.email, loginData.password);
+
             const userID = response.data.id;
             const activeCompanyId = Number(response.data.company_id || this.companyId);
             this.companyId = activeCompanyId;
@@ -400,6 +572,14 @@ export class CoverLoginComponent implements OnInit, OnDestroy {
               const key = 'incorrect_username_or_password';
               const errorMessage = this.translate.instant(key);
               this.toastr.error(errorMessage, 'Error');
+              if (attemptedViaBiometrics) {
+                // The saved credentials no longer work (e.g. password changed
+                // elsewhere) - drop them so fingerprint login doesn't keep
+                // failing silently, and fall back to the manual form.
+                this.biometricAuthService.clearSavedCredentials();
+                this.showBiometricLogin = false;
+                this.loginMode = 'password';
+              }
             } else {
               const key = 'login_failed';
               const errorMessage = this.translate.instant(key);

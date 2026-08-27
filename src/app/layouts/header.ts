@@ -15,7 +15,7 @@ import { initialState } from '../store/index.reducer';
 import { environment } from '../@lcp-framework/../../environments/environment';
 import { LocalStorageService } from '../@lcp-framework/service/common/local-storage.service';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of, firstValueFrom } from 'rxjs';
 
 import { commonConfig } from '../@lcp-framework/config/common.config';
 import { LanguageService } from '../@lcp-framework/service/common/language.service';
@@ -27,6 +27,7 @@ import { RouteUpdateService } from '../@lcp-framework/service/common/route-updat
 import { ApiResponce, GridApiService } from '../@lcp-framework/service/common/grid.service';
 import { htmlToPlainText } from '../@lcp-framework/shared/utils/html-text.util';
 import { FirebaseService } from '../@lcp-framework/service/firebase.service';
+import { BiometricAuthService } from '../@lcp-framework/service/common/biometric-auth.service';
 import Swal from 'sweetalert2';
 
 interface MenuItem {
@@ -117,6 +118,12 @@ export class HeaderComponent implements OnInit {
   showCompanyMenu = false;
   showLanguageMenu = false;
   showProfileMenu = false;
+
+  // Fingerprint login toggle in the profile menu - mobile app only, a browser
+  // tab has no fingerprint sensor to enroll against.
+  isNativeMobile = false;
+  biometricLoginEnabled = false;
+  biometricToggleBusy = false;
   companyList: any[] = [];
   selectedCompanyName = '';
 
@@ -194,7 +201,8 @@ export class HeaderComponent implements OnInit {
     private gridApiService: GridApiService,
     private firebaseService: FirebaseService,
     private routeUpdateService: RouteUpdateService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private biometricAuthService: BiometricAuthService
   ) {}
 
   async initStore() {
@@ -260,6 +268,8 @@ export class HeaderComponent implements OnInit {
 
     // Cache profile info once — do not call getProfileInfo() in the template
     this.profileInfo = this.getProfileInfo();
+
+    this.initBiometricLoginState();
 
     const languageCode = this.languageService.getSavedLanguageCode();
     if (this.languageService.checkReloadFlag()) {
@@ -691,6 +701,78 @@ export class HeaderComponent implements OnInit {
     this.showProfileMenu = !this.showProfileMenu;
     this.showCompanyMenu = false;
     this.showLanguageMenu = false;
+  }
+
+  private async initBiometricLoginState(): Promise<void> {
+    this.isNativeMobile = this.biometricAuthService.isSupported;
+    if (!this.isNativeMobile) return;
+    this.biometricLoginEnabled = await this.biometricAuthService.hasSavedCredentials();
+    this.cdr.detectChanges();
+  }
+
+  async toggleBiometricLogin(event: Event): Promise<void> {
+    event.stopPropagation();
+    if (this.biometricToggleBusy) return;
+
+    if (this.biometricLoginEnabled) {
+      const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Disable Fingerprint Login?',
+        text: "You'll need your email and password to log in next time.",
+        showCancelButton: true,
+        confirmButtonText: 'Disable',
+        cancelButtonText: 'Cancel',
+      });
+      if (!result.isConfirmed) return;
+
+      this.biometricToggleBusy = true;
+      try {
+        await this.biometricAuthService.clearSavedCredentials();
+        this.biometricLoginEnabled = false;
+        this.toastr.success('Fingerprint login disabled');
+      } finally {
+        this.biometricToggleBusy = false;
+        this.cdr.detectChanges();
+      }
+      return;
+    }
+
+    const available = await this.biometricAuthService.isAvailable();
+    if (!available) {
+      this.toastr.error('No fingerprint/biometric sensor is set up on this device.');
+      return;
+    }
+
+    const { value: password } = await Swal.fire({
+      title: 'Enable Fingerprint Login',
+      text: `Confirm your password for ${this.profileInfo.email}`,
+      input: 'password',
+      inputPlaceholder: 'Password',
+      showCancelButton: true,
+      confirmButtonText: 'Continue',
+      inputValidator: (value) => (value ? undefined : 'Password is required'),
+    });
+    if (!password) return;
+
+    this.biometricToggleBusy = true;
+    try {
+      const verifyResponse: any = await firstValueFrom(this.authService.login({ email: this.profileInfo.email, password, from_source: 1 } as any));
+      if (!verifyResponse?.status) {
+        this.toastr.error('Incorrect password.');
+        return;
+      }
+
+      // Standard pattern: an actual fingerprint scan confirms enrollment,
+      // rather than saving the credentials silently.
+      await this.biometricAuthService.enrollCredentials({ email: this.profileInfo.email, password });
+      this.biometricLoginEnabled = true;
+      this.toastr.success('Fingerprint login enabled');
+    } catch (error) {
+      console.warn('Fingerprint enrollment cancelled or failed:', error);
+    } finally {
+      this.biometricToggleBusy = false;
+      this.cdr.detectChanges();
+    }
   }
 
   hasVisibleChildren(item: any): boolean {

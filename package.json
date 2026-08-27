@@ -8,11 +8,16 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "build:mobile": "ng build && npx cap sync",
+    "cap:config:dev": "node scripts/use-capacitor-config.js dev",
+    "cap:config:prod": "node scripts/use-capacitor-config.js prod",
+    "build:mobile": "npm run cap:config:prod && ng build && npx cap sync",
+    "build:android:release": "npm run cap:config:prod && ng build && npx cap sync android && node scripts/gradle-release.js bundleRelease",
+    "build:android:apk": "npm run cap:config:prod && ng build && npx cap sync android && node scripts/gradle-release.js assembleRelease",
+    "build:ios:release": "npm run cap:config:prod && ng build && npx cap sync ios && npx cap open ios",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
-    "cap:sync:dev": "npx cap sync android",
-    "cap:run:dev": "npx cap run android --live-reload --host=192.168.31.232 --port=4200"
+    "cap:sync:dev": "npm run cap:config:dev && npx cap sync android",
+    "cap:run:dev": "npm run cap:config:dev && npx cap run android --live-reload --host=10.71.200.224 --port=4200"
   },
   "private": true,
   "dependencies": {
@@ -43,6 +48,7 @@
     "apexcharts": "^5.3.5",
     "axios": "^1.7.7",
     "bn-ng-idle": "^2.0.5",
+    "capacitor-native-biometric": "^4.2.2",
     "crypto-js": "^4.2.0",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",

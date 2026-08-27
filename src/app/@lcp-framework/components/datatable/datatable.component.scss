@@ -1027,6 +1027,69 @@ thead th.datatable-sticky-column .datatable-column-resize-handle {
   .advanced-filter-row > :nth-child(5) {
     justify-self: start;
   }
+
+  /* Icon row order: search (own full-width line above) - then Filter, Columns,
+     Save/Reset, Export in that visual sequence, so Save/Reset sit next to the
+     other icon triggers instead of floating in their own row above the search
+     bar.
+     .datatable-filter-controls is NOT a sibling of .saved-view-toolbar - it's
+     a single wrapper box that contains the Filter button, the Columns
+     trigger AND the Export trigger nested inside it (see datatable.component
+     .html around the "Filter Button" comment). display: contents drops that
+     wrapper's own box so its three children become direct flex items of
+     .datatable-toolbar-actions, sitting in the same row as Save/Reset -
+     otherwise `order` on the wrapper can't interleave with a true sibling.
+     Also strips the pre-icon-mode `.dropdown { width: 100% }` rule further
+     down this file (still matches by descendant selector even through
+     display:contents) that was stretching the Columns/Export boxes full-width
+     and shoving Export out to the far right. */
+  .datatable-toolbar-actions {
+    // Overrides a generic `.flex-wrap { flex-direction: column }` rule
+    // elsewhere in this file (max-width: 640px block) that blanket-targets
+    // Tailwind's flex-wrap utility class - this element carries that class
+    // via [class.flex-wrap]="isMobileToolbar", so without this it silently
+    // gets flipped to a column stack instead of the intended icon row.
+    flex-direction: row !important;
+    align-items: center;
+  }
+
+  .saved-view-toolbar {
+    // Same generic .flex-wrap column override hits this element too - it
+    // carries a hardcoded "flex-wrap" class in the template.
+    flex-direction: row !important;
+  }
+
+  .datatable-filter-controls {
+    display: contents !important;
+  }
+
+  .filter-button {
+    order: 1;
+  }
+
+  .mobile-columns-trigger {
+    order: 2;
+    width: auto !important;
+    margin-bottom: 0 !important;
+  }
+
+  .saved-view-toolbar {
+    order: 3;
+    width: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  .mobile-export-trigger {
+    order: 4;
+    width: auto !important;
+    margin-bottom: 0 !important;
+
+    .dropdown {
+      width: auto !important;
+      margin-bottom: 0 !important;
+    }
+  }
 }
 
 /* ==========================================
@@ -1463,19 +1526,24 @@ tr.expanded-child-row > td.datatable-child-cell {
 
 .card-view-grid {
   display: grid;
-  // Auto-fit rather than a fixed column count: the admin's grid_columns/col_span
-  // is designed against a wide desktop preview, but a rigid column count squeezes
-  // long values into unreadably narrow cells on a phone. auto-fit reflows to
-  // however many columns actually fit, while col_span/row_span still control each
-  // field's relative width/height within whatever that turns out to be.
+  // Fallback only - the template binds grid-template-columns inline to the
+  // Mobile Card Builder's actual grid_columns count. Every field's col_span/
+  // row_span is authored against that fixed column count, so the rendered
+  // grid must use the same column count or spans land in the wrong place
+  // (fields drift out of alignment). auto-fit here only applies if a card
+  // has no builder config and mobileCardColumns ends up empty.
   grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 12px 16px;
+  // Cells align to the top of their row track rather than stretching+centering,
+  // so a field spanning multiple rows (e.g. a wrapped long value) doesn't push
+  // its label down below shorter, single-row neighbors in the same row.
+  align-items: start;
 }
 
 .card-view-cell {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
 }
 

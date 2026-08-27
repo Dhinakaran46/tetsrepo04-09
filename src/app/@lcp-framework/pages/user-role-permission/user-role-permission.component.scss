@@ -8,3 +8,49 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+@media (max-width: 767px) {
+  // The template forces min-width: 700px/1200px at sm:/lg: so the tree can
+  // scroll horizontally like a table on desktop - on a phone that just makes
+  // the whole page pan sideways instead of wrapping.
+  [formarrayname='entities'] {
+    min-width: 100% !important;
+  }
+
+  // Each entity/child/grandchild row wrapper gets [ngClass]="{'flex
+  // items-center': ...}" whenever it has rights checkboxes - that puts the
+  // title button and its expanded rights/children content side-by-side,
+  // which is fine on desktop's wide layout but on a phone pushes the rights
+  // checkboxes into the overflow-x-auto scroll area instead of letting them
+  // stack below the title. Force it back to a normal top-to-bottom stack.
+  .mb-2.overflow-x-auto {
+    display: block !important;
+  }
+
+  // Title row (checkbox + icon + name + expand chevron + inline "Select
+  // All"): the desktop width only kicks in at md: (768px+), so below that it
+  // was shrinking to content and overflowing instead of wrapping. Let it use
+  // the full row width and wrap onto more than one line when the name is long.
+  button.md\:w-80 {
+    display: flex !important;
+    flex-wrap: wrap;
+    width: 100%;
+    row-gap: 0.35rem;
+  }
+
+  // Nested indentation (children, grandchildren, rights rows) eats less of a
+  // narrow screen per level.
+  .ml-7 {
+    margin-left: 1rem;
+  }
+
+  // Rights checkboxes (View/Add/Edit/Delete/...): roomier touch targets and
+  // consistent wrap spacing now that they have their own full-width row.
+  [formarrayname='rights'].flex-wrap {
+    gap: 0.6rem 1rem;
+  }
+
+  [formarrayname='rights'].flex-wrap label {
+    min-height: 32px;
+  }
+}
