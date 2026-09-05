@@ -1,4 +1,4 @@
-name: Login Automation
+name: Login Automations
 
 on:
   push:
