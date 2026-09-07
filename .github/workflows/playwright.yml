@@ -29,6 +29,9 @@ jobs:
 
       - name: Run Login Automation
         run: npx playwright test
+        env:
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ always() }}
