@@ -2,10 +2,10 @@ name: Login Automations
 
 on:
   push:
-    branches: [testsample/04/09]
+    branches: [testsample04/09]
 
   pull_request:
-    branches: [testsample/04/09]
+    branches: [testsample04/09]
 
   workflow_dispatch:
 
