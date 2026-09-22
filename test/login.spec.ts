@@ -13,6 +13,6 @@ test('TC01 - Verify user can login with valid credentials', async ({ page }) => 
   // Click Login
   await page.getByRole('button', { name: 'Submit' }).click();
 
-  // Verify successful login
+  // Verify successful login T
   await expect(page).toHaveURL(/lcp/);
 });
